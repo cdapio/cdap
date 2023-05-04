@@ -120,17 +120,25 @@ public class FieldLineageProcessor {
 
       List<FieldOperation> fieldOperations = allOperations.computeIfAbsent(stageName,
           stage -> Collections.emptyList());
+      LOG.info("-----all operations size {}-----", fieldOperations.size());
+      for (FieldOperation op : fieldOperations) {
+        LOG.info("-----op name: {}-----", op.getName());
+        LOG.info("-----op type: {}-----", op.getType());
+      }
       StageOperationsValidator.Builder builder = new StageOperationsValidator.Builder(
           fieldOperations);
       builder.addStageInputs(stageInputs);
+      LOG.info("-----Stage inputs: {}-----", stageInputs);
       builder.addStageOutputs(stageOutputs);
+      LOG.info("-----Stage outputs: {}-----", stageOutputs);
       StageOperationsValidator stageOperationsValidator = builder.build();
       stageOperationsValidator.validate();
-      LOG.trace("Stage Name: {}", stageName);
-      LOG.trace("Stage Operations {}", GSON.toJson(fieldOperations));
-      LOG.trace("Stage inputs: {}", stageInputs);
-      LOG.trace("Stage outputs: {}", stageOutputs);
+      LOG.info("-----Stage Name: {}-----", stageName);
+      LOG.info("-----Stage Operations {}-----", GSON.toJson(fieldOperations));
+      LOG.info("-----Stage inputs: {}-----", stageInputs);
+      LOG.info("-----Stage outputs: {}-----", stageOutputs);
       InvalidFieldOperations invalidFieldOperations = stageOperationsValidator.getStageInvalids();
+      LOG.info("-----Invalid field operations: {}-----", invalidFieldOperations);
       if (invalidFieldOperations != null) {
         stageInvalids.put(stageName, invalidFieldOperations);
       }
