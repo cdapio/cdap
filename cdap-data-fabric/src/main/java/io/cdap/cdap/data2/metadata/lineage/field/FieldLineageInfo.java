@@ -171,12 +171,14 @@ public class FieldLineageInfo {
         case READ:
           ReadOperation read = (ReadOperation) operation;
           EndPoint source = read.getSource();
+          LOG.info("------source - {}-----", source);
           if (source == null) {
             throw new IllegalArgumentException(
                 String.format("Source endpoint cannot be null for the read "
                     + "operation '%s'.", read.getName()));
           }
           readOperations.add(read);
+          LOG.info("------added to read operations - {}-----", readOperations);
           break;
         case TRANSFORM:
           TransformOperation transform = (TransformOperation) operation;
@@ -196,22 +198,27 @@ public class FieldLineageInfo {
         case WRITE:
           WriteOperation write = (WriteOperation) operation;
           EndPoint destination = write.getDestination();
+          LOG.info("------dest - {}-----", destination);
           if (destination == null) {
             throw new IllegalArgumentException(
                 String.format("Destination endpoint cannot be null for the write "
                     + "operation '%s'.", write.getName()));
           }
-
+          LOG.info("------write inputs - {}-----", write.getInputs());
           origins = write.getInputs().stream().map(InputField::getOrigin)
               .collect(Collectors.toSet());
+          LOG.info("------origins - {}-----", origins);
           // for each origin corresponding to the input fields there is a connection from that origin to this operation
           for (String origin : origins) {
             Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin,
                 k -> new HashSet<>());
             connections.add(write);
+            LOG.info("------origin - {}-----", origin);
           }
           allOrigins.addAll(origins);
+          LOG.info("------all origins - {}-----", allOrigins);
           writeOperations.add(write);
+          LOG.info("------write operations - {}-----", writeOperations);
           break;
         default:
           // no-op
@@ -220,6 +227,7 @@ public class FieldLineageInfo {
 
     Set<String> operationsWithNoOutgoingConnections
         = Sets.difference(operationsMap.keySet(), operationOutgoingConnections.keySet());
+    LOG.info("------operationsWithNoOutgoingConnections - {}-----", operationsWithNoOutgoingConnections);
     // put empty set for operations with no outgoing connection rather than checking for null later
     for (String operation : operationsWithNoOutgoingConnections) {
       operationOutgoingConnections.put(operation, new HashSet<>());
@@ -241,6 +249,7 @@ public class FieldLineageInfo {
           String.format("No operation is associated with the origins '%s'.",
               invalidOrigins));
     }
+    LOG.info("------invalidOrigins - {}-----", invalidOrigins);
   }
 
   /**
@@ -337,33 +346,50 @@ public class FieldLineageInfo {
 
   private Map<EndPointField, Set<EndPointField>> computeIncomingSummary() {
     if (writeOperations == null) {
+      LOG.info("------write operations is not null-----");
       computeAndValidateFieldLineageInfo(this.operations);
     }
 
     Map<String, Set<EndPointField>> operationEndPointMap = new HashMap<>();
     Map<EndPointField, Set<EndPointField>> summary = new HashMap<>();
     for (WriteOperation write : writeOperations) {
+      LOG.info("------write operations size - {}-----", writeOperations.size());
       List<InputField> inputs = write.getInputs();
       for (InputField input : inputs) {
+        LOG.info("------input name - {}, origin - {}-----", input.getName(), input.getOrigin());
         EndPointField dest = new EndPointField(write.getDestination(), input.getName());
+        LOG.info("------dest ep - {}, field - {}, isValid - {}-----", dest.getEndPoint(), dest.getField(),
+                 dest.isValid());
         Set<EndPointField> fields = summary.computeIfAbsent(dest, k -> new HashSet<>());
+        LOG.info("------fields - {}-----", fields);
         if (operationEndPointMap.containsKey(input.getOrigin())) {
+          LOG.info("------operationEndPointMap - {} contains origin - {}-----", operationEndPointMap,
+                   input.getOrigin());
           fields.addAll(operationEndPointMap.get(input.getOrigin()));
+          LOG.info("------fields - {}}-----", fields);
         } else {
           // handle a special case for read -> write
           // in this case, the write operation has to be one to one relation with the fields in the read operation,
           // since a write operation can only take a list of input fields that come from the previous stage
+          LOG.info("------operationEndPointMap does not contain origin-----");
           Operation origin = operationsMap.get(input.getOrigin());
+          LOG.info("------origin name - {}, type - {}, desc - {}-----", origin.getName(), origin.getType(),
+                   origin.getDescription());
           if (origin.getType() == OperationType.READ) {
+            LOG.info("------oprn type is read-----");
             fields.add(new EndPointField(((ReadOperation) origin).getSource(), input.getName()));
+            LOG.info("------added to fields - {}-----", fields);
             continue;
           }
+          LOG.info("------oprn type is not read-----");
           fields.addAll(computeIncomingSummaryHelper(origin, write, operationEndPointMap));
+          LOG.info("------added to fields-----");
         }
       }
     }
 
     for (TransformOperation transform : dropTransforms) {
+      LOG.info("------transform operations size - {}-----", dropTransforms.size());
       for (InputField input : transform.getInputs()) {
         Operation previous = operationsMap.get(input.getOrigin());
         // drop transforms uses a common NULL endpoint as key
