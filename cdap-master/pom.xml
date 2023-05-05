@@ -301,19 +301,36 @@
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
 
-      <!-- Add dependencies on spark api and core. It just for making sure those artifacts are built before this -->
+      <!--
+        Add dependencies on modules that are needed to be copied into the stage directory.
+        It just for making sure those artifacts are built before this module.
+        We also exclude all transitive dependencies since all these modules are extensions,
+        and their dependencies should be isolated from CDAP itself.
+      -->
       <dependencies>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-api-spark3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-spark-core3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <!-- Add dependencies on various extensions to make sure they are built before master -->
         <dependency>
@@ -321,60 +338,120 @@
           <artifactId>cdap-operational-stats-core</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-emr</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-dataproc</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-cloudkms</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-gcp-secretstore</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-authenticator-ext-gcp</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-pipeline3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-streams3_2.12</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-storage-ext-spanner</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>*</groupId>
+              <artifactId>*</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
       </dependencies>
 
