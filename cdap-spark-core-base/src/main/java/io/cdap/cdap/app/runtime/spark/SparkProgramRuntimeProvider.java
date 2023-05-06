@@ -433,6 +433,11 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       }
       // resource = jar:file:/path/to/cdap/lib/org.scala-lang.scala-library-2.10.4.jar!/library.properties
       // baseClasspath = /path/to/cdap/lib/org.scala-lang.scala-library-2.10.4.jar
+
+      // ignoring jrt scheme for java11 support
+      if (resource.getProtocol().equals("jrt")) {
+        return null;
+      }
       String baseClasspath = ClassLoaders.getClassPathURL(name, resource).getPath();
       String jarName = baseClasspath.substring(baseClasspath.lastIndexOf('/') + 1, baseClasspath.length());
       return jarName.startsWith("org.scala-lang") ? null : resource;
