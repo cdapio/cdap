@@ -35,6 +35,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.async.KeyedExecutor;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -56,6 +57,7 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.VersionInfo;
@@ -67,6 +69,8 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
@@ -106,7 +110,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service for provisioning related operations
+ * Service for provisioning related operations.
  */
 public class ProvisioningService extends AbstractIdleService {
 
@@ -340,8 +344,9 @@ public class ProvisioningService extends AbstractIdleService {
    * actually perform the cluster provisioning. This method must be run within a transaction. The
    * task returned should only be executed after the transaction that ran this method has completed.
    * Running the returned Runnable will start the actual task using an executor within this service
-   * so that it can be tracked and optionally cancelled using {@link #cancelProvisionTask(ProgramRunId)}.
-   * The caller does not need to submit the runnable using their own executor.
+   * so that it can be tracked and optionally cancelled using
+   * {@link #cancelProvisionTask(ProgramRunId)}. The caller does not need to submit the runnable
+   * using their own executor.
    *
    * @param provisionRequest the provision request
    * @param context context for the transaction
@@ -422,7 +427,9 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
     ProvisionerContext context = createContext(cConf, programOptions, programRunId, user,
         properties, null);
-    return provisioner.getRuntimeJobManager(context);
+    return provisioner.getRuntimeJobManager(context)
+        .map(manager ->
+            new RuntimeJobManagerCallWrapper(provisioner.getClass().getClassLoader(), manager));
   }
 
   /**
@@ -1000,6 +1007,93 @@ public class ProvisioningService extends AbstractIdleService {
         Map<String, ProvisionerDetail> details) {
       this.provisioners = Collections.unmodifiableMap(provisioners);
       this.details = Collections.unmodifiableMap(details);
+    }
+  }
+
+  /**
+   * A {@link RuntimeJobManager} that set the context classloader before delegating calls to another
+   * {@link RuntimeJobManager} instance.
+   */
+  private static final class RuntimeJobManagerCallWrapper implements RuntimeJobManager {
+
+    private final ClassLoader classLoader;
+    private final RuntimeJobManager delegate;
+
+    private RuntimeJobManagerCallWrapper(ClassLoader classLoader, RuntimeJobManager delegate) {
+      this.classLoader = classLoader;
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        delegate.launch(runtimeJobInfo);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
+    }
+
+    @Override
+    public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        return delegate.getDetail(programRunInfo);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
+    }
+
+    @Override
+    @Deprecated
+    public List<RuntimeJobDetail> list() {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        return delegate.list();
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
+    }
+
+    @Override
+    public void stop(ProgramRunInfo programRunInfo) throws Exception {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        delegate.stop(programRunInfo);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
+    }
+
+    @Override
+    @Deprecated
+    public void kill(ProgramRunInfo programRunInfo) throws Exception {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        delegate.kill(programRunInfo);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
+    }
+
+    @Override
+    public void kill(RuntimeJobDetail runtimeJobDetail) throws Exception {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        delegate.kill(runtimeJobDetail);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
+    }
+
+    @Override
+    public void close() {
+      ClassLoader oldCl = ClassLoaders.setContextClassLoader(classLoader);
+      try {
+        delegate.close();
+      } finally {
+        ClassLoaders.setContextClassLoader(oldCl);
+      }
     }
   }
 }
