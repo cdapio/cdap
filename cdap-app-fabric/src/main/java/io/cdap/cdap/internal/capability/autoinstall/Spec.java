@@ -149,7 +149,7 @@ public class Spec {
     public String getJarName() {
       for (Argument argument : arguments) {
         if (argument.getName().equals("jar")) {
-          return argument.getValue();
+          return argument.getValueAsString();
         }
       }
       return null;
@@ -158,7 +158,7 @@ public class Spec {
     public String getConfigFilename() {
       for (Argument argument : arguments) {
         if (argument.getName().equals("config")) {
-          return argument.getValue();
+          return argument.getValueAsString();
         }
       }
       return null;
@@ -190,10 +190,10 @@ public class Spec {
     public static class Argument {
 
       private final String name;
-      private final String value;
+      private final Object value;
       private final Boolean canModify;
 
-      public Argument(String name, String value, Boolean canModify) {
+      public Argument(String name, Object value, Boolean canModify) {
         this.name = name;
         this.value = value;
         this.canModify = canModify;
@@ -203,9 +203,14 @@ public class Spec {
         return name;
       }
 
-      public String getValue() {
+      public Object getValue() {
         return value;
       }
+
+      public String getValueAsString() {
+        return value.toString();
+      }
+
 
       public Boolean getCanModify() {
         return canModify;
