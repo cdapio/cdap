@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -132,6 +133,8 @@ public class DataprocProvisionerTest {
     props.put("vTpmEnabled", "true");
     props.put("integrityMonitoringEnabled", "true");
     props.put("idleTTL", "20");
+    props.put("clusterReuseRetryDelayMs", "20");
+    props.put("clusterReuseRetryMaxMs", "200");
 
     DataprocConf conf = DataprocConf.create(props);
 
@@ -158,6 +161,9 @@ public class DataprocProvisionerTest {
     Assert.assertFalse(conf.isSecureBootEnabled());
     Assert.assertTrue(conf.isvTpmEnabled());
     Assert.assertTrue(conf.isIntegrityMonitoringEnabled());
+
+    Assert.assertEquals(20, conf.getClusterReuseRetryDelayMs());
+    Assert.assertEquals(200, conf.getClusterReuseRetryMaxMs());
   }
 
   @Test
@@ -300,6 +306,7 @@ public class DataprocProvisionerTest {
     context.addProperty("idleTTL", "5");
     context.addProperty(DataprocConf.SKIP_DELETE, "true");
     context.setProfileName("testProfile");
+    context.addProperty(DataprocConf.CLUSTER_REUSE_RETRY_DELAY_MS, "0");
     ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
       .setNamespace("ns")
       .setApplication("app")
@@ -318,16 +325,25 @@ public class DataprocProvisionerTest {
     Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.RUNNING);
     Assert.assertEquals(cluster, provisioner.createCluster(context));
 
-    //B. With preallocated cluster in "bad" state new allocation should happen
-    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+    //B. With preallocated cluster in "bad" state new allocation should happen.
     Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.FAILED);
     Mockito.when(cluster2.getName()).thenReturn("cluster2");
-    Mockito.when(dataprocClient.getClusters(Mockito.eq(ClusterStatus.RUNNING), Mockito.eq(ImmutableMap.of(
-      AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
-      AbstractDataprocProvisioner.LABEL_REUSE_UNTIL, "*",
-      AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
-      AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
-    )), Mockito.any()))
+    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+    ImmutableMap<String, String> reuseClusterFilter = ImmutableMap.of(
+        AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
+        AbstractDataprocProvisioner.LABEL_REUSE_UNTIL, "*",
+        AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
+        AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
+    );
+
+    //B.1. When there is no cluster found, a retry should happen
+    Mockito.when(dataprocClient.getClusters(
+            Mockito.eq(ClusterStatus.RUNNING),Mockito.eq(reuseClusterFilter), Mockito.any()))
+        .thenAnswer(i -> Stream.of());
+
+    //B.2. Finally a reuse cluster found
+    Mockito.when(dataprocClient.getClusters(
+        Mockito.eq(ClusterStatus.RUNNING), Mockito.eq(reuseClusterFilter), Mockito.any()))
       .thenAnswer(i -> Stream.of(cluster2));
     Assert.assertEquals(cluster2, provisioner.createCluster(context));
 

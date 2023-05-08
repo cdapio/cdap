@@ -18,6 +18,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -256,7 +257,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   @Nullable
   private Cluster tryReuseCluster(DataprocClient client, ProvisionerContext context,
       DataprocConf conf)
-      throws RetryableProvisionException {
+      throws RetryableProvisionException, InterruptedException {
     if (!isReuseSupported(conf)) {
       LOG.debug(
           "Not checking cluster reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
@@ -267,73 +268,82 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
     String clusterKey = getRunKey(context);
 
-    //For idempotency, check if we already have the cluster allocated
-    Optional<Cluster> clusterOptional = findCluster(clusterKey, client);
-    if (clusterOptional.isPresent()) {
-      Cluster cluster = clusterOptional.get();
-      if (cluster.getStatus() == ClusterStatus.CREATING
-          || cluster.getStatus() == ClusterStatus.RUNNING) {
-        LOG.debug("Found allocated cluster {}", cluster.getName());
-        return cluster;
-      } else {
-        LOG.debug("Preallocated cluster {} has expired, will find a new one", cluster.getName());
-        //Let's remove the reuse label to ensure new cluster will be picked up by findCluster
-        try {
-          client.updateClusterLabels(cluster.getName(), Collections.emptyMap(),
-              Collections.singleton(LABEL_RUN_KEY));
-        } catch (Exception e) {
-          LOG.trace("Unable to remove reuse label, cluster may have died already", e);
-          if (!LOG.isTraceEnabled()) {
-            LOG.debug("Unable to remove reuse label, cluster may have died already");
+    for (Stopwatch stopwatch = Stopwatch.createStarted();;) {
+      //For idempotency, check if we already have the cluster allocated
+      Optional<Cluster> clusterOptional = findCluster(clusterKey, client);
+      if (clusterOptional.isPresent()) {
+        Cluster cluster = clusterOptional.get();
+        if (cluster.getStatus() == ClusterStatus.CREATING
+            || cluster.getStatus() == ClusterStatus.RUNNING) {
+          LOG.debug("Found allocated cluster {}", cluster.getName());
+          return cluster;
+        } else {
+          LOG.debug("Preallocated cluster {} has expired, will find a new one", cluster.getName());
+          //Let's remove the reuse label to ensure new cluster will be picked up by findCluster
+          try {
+            client.updateClusterLabels(cluster.getName(), Collections.emptyMap(),
+                Collections.singleton(LABEL_RUN_KEY));
+          } catch (Exception e) {
+            LOG.trace("Unable to remove reuse label, cluster may have died already", e);
+            if (!LOG.isTraceEnabled()) {
+              LOG.debug("Unable to remove reuse label, cluster may have died already");
+            }
           }
         }
       }
-    }
 
-    Lock reuseLock = getSystemContext().getLock(REUSE_LOCK);
-    reuseLock.lock();
-    try {
-      Map<String, String> filter = new HashMap<>();
-      String normalizedProfileName = getNormalizedProfileName(context);
-      if (normalizedProfileName != null) {
-        filter.put(LABEL_PROFILE, normalizedProfileName);
+      Lock reuseLock = getSystemContext().getLock(REUSE_LOCK);
+      reuseLock.lock();
+      try {
+        Map<String, String> filter = new HashMap<>();
+        String normalizedProfileName = getNormalizedProfileName(context);
+        if (normalizedProfileName != null) {
+          filter.put(LABEL_PROFILE, normalizedProfileName);
+        }
+        filter.put(LABEL_VERSON, getVersionLabel());
+        filter.put(LABEL_REUSE_KEY, conf.getClusterReuseKey());
+        filter.put(LABEL_REUSE_UNTIL, "*");
+
+        Optional<Cluster> cluster = client.getClusters(ClusterStatus.RUNNING, filter,
+            clientCluster -> {
+              //Verify reuse label
+              long reuseUntil = Long.parseLong(
+                  clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
+              long now = System.currentTimeMillis();
+              if (reuseUntil < now) {
+                LOG.debug("Skipping expired cluster {}, reuse until {} is before now {}",
+                    clientCluster.getClusterName(), reuseUntil, now);
+                return false;
+              }
+              return true;
+            }).findAny();
+
+        if (cluster.isPresent()) {
+          String clusterName = cluster.get().getName();
+          LOG.info("Found cluster to reuse: {}", clusterName);
+          // Add cdap-reuse-for to find cluster later if needed
+          // And remove reuseUntil to indicate the cluster is taken
+          client.updateClusterLabels(clusterName,
+              Collections.singletonMap(LABEL_RUN_KEY, clusterKey),
+              Collections.singleton(LABEL_REUSE_UNTIL)
+          );
+          return cluster.get();
+        } else if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseRetryMaxMs()){
+          // With pipelines chained with triggers it's possible that next pipeline starts before
+          // previous pipeline cluster was released. To ensure we don't create an extra cluster
+          // in such scenario, we retry reuse lookup up to 3 seconds with 300ms delay (default).
+          LOG.trace("Could not find any available cluster to reuse, will retry.");
+          Thread.sleep(conf.getClusterReuseRetryDelayMs());
+        } else {
+          LOG.debug("Could not find any available cluster to reuse.");
+          return null;
+        }
+      } catch (Exception e) {
+        LOG.warn("Error retrieving clusters to reuse, will create a new one", e);
+        return null;
+      } finally {
+        reuseLock.unlock();
       }
-      filter.put(LABEL_VERSON, getVersionLabel());
-      filter.put(LABEL_REUSE_KEY, conf.getClusterReuseKey());
-      filter.put(LABEL_REUSE_UNTIL, "*");
-
-      Optional<Cluster> cluster = client.getClusters(ClusterStatus.RUNNING, filter,
-          clientCluster -> {
-            //Verify reuse label
-            long reuseUntil = Long.parseLong(
-                clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
-            long now = System.currentTimeMillis();
-            if (reuseUntil < now) {
-              LOG.debug("Skipping expired cluster {}, reuse until {} is before now {}",
-                  clientCluster.getClusterName(), reuseUntil, now);
-              return false;
-            }
-            return true;
-          }).findAny();
-
-      if (cluster.isPresent()) {
-        String clusterName = cluster.get().getName();
-        LOG.info("Found cluster to reuse: {}", clusterName);
-        // Add cdap-reuse-for to find cluster later if needed
-        // And remove reuseUntil to indicate the cluster is taken
-        client.updateClusterLabels(clusterName,
-            Collections.singletonMap(LABEL_RUN_KEY, clusterKey),
-            Collections.singleton(LABEL_REUSE_UNTIL)
-        );
-      } else {
-        LOG.debug("Could not find any available cluster to reuse.");
-      }
-      return cluster.orElse(null);
-    } catch (Exception e) {
-      LOG.warn("Error retrieving clusters to reuse, will create a new one", e);
-      return null;
-    } finally {
-      reuseLock.unlock();
     }
   }
 
