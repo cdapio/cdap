@@ -187,7 +187,7 @@ public class AutoInstallTest {
   }
 
   @Test
-  public void testDeserializeSpecJson() throws Exception {
+  public void testDeserializePluginSpecJson() throws Exception {
     Spec deserializedSpec = readFile("spec.json", Spec.class);
     List<Spec.Action.Argument> arguments = Arrays.asList(
       new Spec.Action.Argument("name", "my-plugin", false),
@@ -202,4 +202,21 @@ public class AutoInstallTest {
                                  Collections.singletonList("hydrator-plugin"), true, actions);
     Assert.assertEquals(expectedSpec, deserializedSpec);
   }
+
+  @Test
+  public void testDeserializePipelineSpecJson() throws Exception {
+    Spec deserializedSpec = readFile("spec2.json", Spec.class);
+    Map<String, String> artifactDetails = ImmutableMap.of("scope", "system", "name", "cdap-data-pipeline",
+        "version", "[6.4.0,7.0.0-SNAPSHOT)");
+    List<Spec.Action.Argument> arguments = Arrays.asList(
+        new Spec.Action.Argument("name", "my-pipeline", false),
+        new Spec.Action.Argument("config", "pipeline.json", false),
+        new Spec.Action.Argument("artifact", artifactDetails, false));
+    List<Spec.Action> actions = Collections.singletonList(
+        new Spec.Action("create_pipeline_draft", "Label", arguments));
+    Spec expectedSpec = new Spec("1.0", "Label", "Description", "Author",
+        "Org", 1603825065, "[6.1.1,7.0.0-SNAPSHOT)",
+        Collections.singletonList("hydrator-plugin"), true, actions);
+    Assert.assertEquals(expectedSpec, deserializedSpec);
+    }
 }
