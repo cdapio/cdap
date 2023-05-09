@@ -116,7 +116,13 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
     }
     ProgramRunId programRunId = GSON.fromJson(programRunIdStr, ProgramRunId.class);
     ApplicationId applicationId = programRunId.getParent().getParent();
-    return topicIds.get(Math.abs(applicationId.hashCode()) % topicIds.size());
+    int index = Math.abs(applicationId.hashCode()) % topicIds.size();
+    LOG.error(
+        ">>> topicId for programRunId {} and applicationId {} is {}",
+        programRunId,
+        applicationId,
+        topicIds.get(index));
+    return topicIds.get(index);
   }
 
   /**
