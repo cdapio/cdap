@@ -58,7 +58,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
         .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
         .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
-        .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer))
+        .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer),
+            new GCPMetadataHttpHandlerInternal(cConf))
         .build();
 
     this.cacheCleanupInterval = cConf.getInt(
