@@ -48,6 +48,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.profile.Profile;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.junit.After;
@@ -55,7 +56,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.cdap.cdap.proto.profile.Profile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

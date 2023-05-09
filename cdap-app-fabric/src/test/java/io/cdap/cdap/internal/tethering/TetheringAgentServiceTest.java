@@ -26,14 +26,16 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 public class TetheringAgentServiceTest {
 
   private TetheringAgentService tetheringAgentService;
