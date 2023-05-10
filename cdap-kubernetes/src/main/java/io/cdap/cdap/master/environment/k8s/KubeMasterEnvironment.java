@@ -565,7 +565,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Query pod information.
     V1Pod pod;
     try {
-      pod = coreV1Api.readNamespacedPod(podName, namespace, null, null, null);
+      pod = coreV1Api.readNamespacedPod(podName, namespace, null);
     } catch (ApiException e) {
       throw new IOException("Error occurred while getting pod. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
@@ -674,7 +674,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                               .withLabels(podInfo.getLabels())
                                               .withOwnerReferences(podInfo.getOwnerReferences())
                                               .build()).build(),
-                                          null, null, null);
+                                          null, null, null, null);
       this.configMapName = configMapName;
 
       // Add configmap and secrets as a volume to be added to the pod template

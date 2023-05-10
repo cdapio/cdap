@@ -29,7 +29,7 @@
   <packaging>jar</packaging>
 
   <properties>
-    <k8s.version>12.0.1</k8s.version>
+    <k8s.version>16.0.2</k8s.version>
     <!-- Needs to bump the okhttp version for fixing https://github.com/square/okhttp/issues/4029 that hangs on exit -->
     <okhttp.version>4.9.1</okhttp.version>
     <!-- Needs to define the gson and guava versions to override the one from dependency management in cdap pom.xml -->
@@ -67,6 +67,11 @@
     <dependency>
       <groupId>io.kubernetes</groupId>
       <artifactId>client-java</artifactId>
+      <version>${k8s.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.kubernetes</groupId>
+      <artifactId>client-java-api-fluent</artifactId>
       <version>${k8s.version}</version>
     </dependency>
     <dependency>

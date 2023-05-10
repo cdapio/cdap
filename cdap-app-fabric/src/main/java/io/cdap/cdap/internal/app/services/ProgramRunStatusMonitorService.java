@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -63,23 +64,29 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
   private final int txBatchSize;
   private final long intervalMillis;
   private final long terminateTimeBufferSecs;
+  private final long tetheredProgramTerminateTimeSecs;
   private final int numThreads;
   private ExecutorService executorService;
   private final MetricsCollectionService metricsCollectionService;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
   ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService,
-                                 MetricsCollectionService metricsCollectionService) {
-    this(cConf, store, runtimeService, metricsCollectionService,
+                                 MetricsCollectionService metricsCollectionService,
+                                 ProgramStateWriter programStateWriter) {
+    this(cConf, store, runtimeService, metricsCollectionService, programStateWriter,
          cConf.getInt(Constants.AppFabric.PROGRAM_TERMINATOR_TX_BATCH_SIZE),
          cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATOR_INTERVAL_SECS),
-         cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATE_TIME_BUFFER_SECS));
+         cConf.getLong(Constants.AppFabric.PROGRAM_TERMINATE_TIME_BUFFER_SECS),
+         cConf.getLong(Constants.AppFabric.TETHERED_PROGRAM_TERMINATE_TIME_SECS));
   }
 
   @VisibleForTesting
   ProgramRunStatusMonitorService(CConfiguration cConf, Store store, ProgramRuntimeService runtimeService,
-                                 MetricsCollectionService metricsCollectionService, int txBatchSize,
-                                 long specifiedIntervalSecs, long terminateTimeBufferSecs) {
+                                 MetricsCollectionService metricsCollectionService,
+                                 ProgramStateWriter programStateWriter, int txBatchSize,
+                                 long specifiedIntervalSecs, long terminateTimeBufferSecs,
+                                 long tetheredProgramTerminateTimeSecs) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.store = store;
     this.runtimeService = runtimeService;
@@ -93,6 +100,8 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
     this.terminateTimeBufferSecs = terminateTimeBufferSecs;
     this.numThreads = cConf.getInt(Constants.AppFabric.PROGRAM_KILL_THREADS);
     this.metricsCollectionService = metricsCollectionService;
+    this.programStateWriter = programStateWriter;
+    this.tetheredProgramTerminateTimeSecs = tetheredProgramTerminateTimeSecs;
   }
 
   @Override
@@ -147,14 +156,19 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         break;
       }
       for (RunRecordDetail record : stoppingRuns.values()) {
+        String provisionerName = SystemArguments.getProfileProvisioner(record.getSystemArgs());
+        ProgramRunId programRunId = record.getProgramRunId();
         // If this run was initiated by this CDAP instance to run on another instance, it will use the tethering
         // provisioner. The instance that actually runs it on the other side will have a non-null peer name.
-        String provisionerName = SystemArguments.getProfileProvisioner(record.getSystemArgs());
         if (record.getPeerName() == null && TetheringProvisioner.TETHERING_NAME.equals(provisionerName)) {
+          LOG.info("Forcing the termination of tethered program run {} as it should have stopped at {} ",
+                   programRunId, record.getTerminateTs());
+          programScannedForTermination.add(programRunId);
+          programStateWriter.killed(programRunId);
+          emitForceTerminatedRunsMetric(programRunId, record);
           continue;
         }
 
-        ProgramRunId programRunId = record.getProgramRunId();
         programScannedForTermination.add(programRunId);
         RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(),
                                                         RunIds.fromString(programRunId.getRun()));
@@ -178,7 +192,25 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         return false;
       }
       Long terminateTime = record.getTerminateTs();
-      return terminateTime != null && terminateTime <= currentTimeInSecs;
+      Long stoppingTime = record.getStoppingTs();
+      if (terminateTime == null) {
+        // should not happen when state is STOPPING
+        return false;
+      }
+      String provisionerName = SystemArguments.getProfileProvisioner(record.getSystemArgs());
+      // If this run was initiated by this CDAP instance to run on another instance, it will use the tethering
+      // provisioner. The instance that actually runs it on the other side will have a non-null peer name.
+      if (record.getPeerName() == null && TetheringProvisioner.TETHERING_NAME.equals(provisionerName)) {
+        if (stoppingTime == null) {
+          // should not happen when state is STOPPING
+          return false;
+        }
+        // Give additional grace period (= tetheredProgramTerminateTimeSecs) for tethered programs running on another
+        // instance to terminate.
+        return currentTimeInSecs - tetheredProgramTerminateTimeSecs > stoppingTime &&
+          terminateTime <= currentTimeInSecs;
+      }
+      return terminateTime <= currentTimeInSecs;
     };
   }
 

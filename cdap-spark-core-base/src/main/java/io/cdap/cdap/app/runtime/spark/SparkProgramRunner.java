@@ -56,6 +56,7 @@ import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.BasicProgramContext;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
@@ -227,9 +228,11 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                           options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
       }
 
+      String jvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
       SparkRuntimeService sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                                        runtimeContext, submitter, locationFactory,
-                                                                        isLocal, fieldLineageWriter, masterEnv,
+                                                                        jvmOpts, runtimeContext, submitter,
+                                                                        locationFactory, isLocal,
+                                                                        fieldLineageWriter, masterEnv,
                                                                         commonNettyHttpServiceFactory);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);

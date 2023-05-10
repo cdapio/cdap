@@ -99,12 +99,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocRuntimeJobManager.class);
 
   // dataproc job properties
-  private static final String CDAP_RUNTIME_NAMESPACE = "cdap.runtime.namespace";
-  private static final String CDAP_RUNTIME_APPLICATION = "cdap.runtime.application";
-  private static final String CDAP_RUNTIME_VERSION = "cdap.runtime.version";
-  private static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap.runtime.program.type";
-  private static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
-  private static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
+  public static final String CDAP_RUNTIME_NAMESPACE = "cdap.runtime.namespace";
+  public static final String CDAP_RUNTIME_APPLICATION = "cdap.runtime.application";
+  public static final String CDAP_RUNTIME_VERSION = "cdap.runtime.version";
+  public static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap.runtime.program.type";
+  public static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
+  public static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
   private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
 
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
@@ -630,38 +630,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Creates and returns dataproc job submit request.
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
-                                               List<LocalFile> localFiles) throws IOException {
-    String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
-    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    String runId = runInfo.getRun();
-
-    // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
-    List<String> arguments = new ArrayList<>();
-    arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
-    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat().getCompat());
-    localFiles.stream()
-      .filter(LocalFile::isArchive)
-      .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
-      .forEach(arguments::add);
-    for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
-      arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
-    }
-    arguments.add("--" + Constants.Files.APPLICATION_JAR + "=" + applicationJarLocalizedName);
-
-    Map<String, String> properties = new LinkedHashMap<>();
-    properties.put(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace());
-    properties.put(CDAP_RUNTIME_APPLICATION, runInfo.getApplication());
-    properties.put(CDAP_RUNTIME_VERSION, runInfo.getVersion());
-    properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
-    properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
-    properties.put(CDAP_RUNTIME_RUNID, runId);
-
+      List<LocalFile> localFiles) throws IOException {
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
-      // set main class
-      .setMainClass(DataprocJobMain.class.getName())
-      // set main class arguments
-      .addAllArgs(arguments)
-      .putAllProperties(properties);
+        // set main class
+        .setMainClass(DataprocJobMain.class.getName())
+        // set main class arguments
+        .addAllArgs(getArguments(runtimeJobInfo, localFiles, provisionerContext.getSparkCompat().getCompat()))
+        .putAllProperties(getProperties(runtimeJobInfo));
 
     for (LocalFile localFile : localFiles) {
       // add jar file
@@ -673,6 +648,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
     }
 
+    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     Job.Builder dataprocJobBuilder = Job.newBuilder()
       // use program run uuid as hadoop job id on dataproc
       .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
@@ -709,6 +685,36 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       .setProjectId(projectId)
       .setJob(dataprocJobBuilder.build())
       .build();
+  }
+
+  @VisibleForTesting
+  public static List<String> getArguments(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles,
+                                          String sparkCompat) {
+    // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
+    List<String> arguments = new ArrayList<>();
+    arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
+    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + sparkCompat);
+    localFiles.stream()
+      .filter(LocalFile::isArchive)
+      .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
+      .forEach(arguments::add);
+    for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
+      arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
+    }
+    return arguments;
+  }
+
+  @VisibleForTesting
+  public static Map<String, String> getProperties(RuntimeJobInfo runtimeJobInfo) {
+    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
+    Map<String, String> properties = new LinkedHashMap<>();
+    properties.put(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace());
+    properties.put(CDAP_RUNTIME_APPLICATION, runInfo.getApplication());
+    properties.put(CDAP_RUNTIME_VERSION, runInfo.getVersion());
+    properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
+    properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
+    properties.put(CDAP_RUNTIME_RUNID, runInfo.getRun());
+    return properties;
   }
 
   private ProgramRunInfo getProgramRunInfo(Job job) {
