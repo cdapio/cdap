@@ -117,7 +117,7 @@ public class KubeTwillRunnerServiceTest {
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
     V1Namespace returnedNamespace = new V1Namespace().metadata(new V1ObjectMeta().name(KUBE_NAMESPACE));
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any())).thenReturn(returnedNamespace);
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any())).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
     thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP", KUBE_NAMESPACE));
@@ -133,7 +133,7 @@ public class KubeTwillRunnerServiceTest {
     V1ObjectMeta returnedMeta = new V1ObjectMeta().name(KUBE_NAMESPACE)
       .putLabelsItem("cdap.namespace", "wrong namespace");
     V1Namespace returnedNamespace = new V1Namespace().metadata(returnedMeta);
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any())).thenReturn(returnedNamespace);
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any())).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
     thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
@@ -164,7 +164,7 @@ public class KubeTwillRunnerServiceTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     skipRbacSteps();
     try {
@@ -172,7 +172,7 @@ public class KubeTwillRunnerServiceTest {
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any());
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -187,10 +187,10 @@ public class KubeTwillRunnerServiceTest {
 
     // throw ApiException when coreV1Api.readNamespace() is called in findOrCreateKubeNamespace()
     // return returnedNamespace when coreV1Api.readNamespace() is called in deleteKubeNamespace()
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"))
       .thenReturn(returnedNamespace);
-    when(coreV1Api.createNamespace(any(), any(), any(), any()))
+    when(coreV1Api.createNamespace(any(), any(), any(), any(), any()))
       .thenThrow(new ApiException());
     when(coreV1Api.deleteNamespace(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error message"));
@@ -212,7 +212,7 @@ public class KubeTwillRunnerServiceTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
       twillRunnerService.onNamespaceDeletion(namespaceDetail);
@@ -233,9 +233,9 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any(), any(), any()))
+    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
     skipRbacSteps();
     try {
@@ -243,7 +243,7 @@ public class KubeTwillRunnerServiceTest {
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(1)).createNamespacedConfigMap(any(), any(), any(), any(), any());
+    verify(coreV1Api, times(1)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -257,9 +257,9 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any(), any(), any()))
+    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any()))
       .thenReturn(new V1ConfigMap().metadata(new V1ObjectMeta().name("workload-identity-config")
                                                .namespace(KUBE_NAMESPACE)));
     skipRbacSteps();
@@ -268,7 +268,7 @@ public class KubeTwillRunnerServiceTest {
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any());
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
   }
 
   @Test(expected = IOException.class)
@@ -282,11 +282,11 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(any(), any(), any(), any(), any()))
+    when(coreV1Api.readNamespacedConfigMap(any(), any(), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error"));
-    when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any())).thenThrow(new ApiException());
+    when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any(), any())).thenThrow(new ApiException());
     skipRbacSteps();
     twillRunnerService.onNamespaceCreation(namespaceDetail);
   }
@@ -302,11 +302,11 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any(), any(), any()))
+    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
-    when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any())).thenThrow(new ApiException());
+    when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any(), any())).thenThrow(new ApiException());
     skipRbacSteps();
     twillRunnerService.onNamespaceCreation(namespaceDetail);
   }
@@ -320,7 +320,7 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any(), any(), any()))
+    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
       .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     skipRbacSteps();
     try {
@@ -328,8 +328,8 @@ public class KubeTwillRunnerServiceTest {
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any());
-    verify(coreV1Api, times(0)).readNamespacedConfigMap(any(), any(), any(), any(), any());
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
+    verify(coreV1Api, times(0)).readNamespacedConfigMap(any(), any(), any());
 
   }
 

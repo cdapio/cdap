@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,7 +51,6 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
-import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -206,22 +206,9 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     String lastMessageId = null;
     for (TetheringControlMessageWithId messageWithId : response.getControlMessages()) {
       TetheringControlMessage controlMessage = messageWithId.getControlMessage();
+      lastMessageId = messageWithId.getMessageId();
       try {
-        LOG.trace("Got message type {} from {}", controlMessage.getType(), peerInfo.getName());
-        switch (controlMessage.getType()) {
-          case KEEPALIVE:
-            break;
-          case START_PROGRAM:
-            publishStartProgram(Bytes.toString(controlMessage.getPayload()), peerInfo);
-            break;
-          case STOP_PROGRAM:
-            publishStopProgram(Bytes.toString(controlMessage.getPayload()));
-            break;
-          case KILL_PROGRAM:
-            publishKillProgram(Bytes.toString(controlMessage.getPayload()));
-            break;
-        }
-        lastMessageId = messageWithId.getMessageId();
+        processControlMessage(controlMessage, peerInfo);
       } catch (IOException e) {
         LOG.warn("Failed to process control message of type {} from peer {}",
                  controlMessage.getType(), peerInfo.getName(), e);
@@ -229,6 +216,25 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       }
     }
     return lastMessageId;
+  }
+
+  @VisibleForTesting
+  void processControlMessage(TetheringControlMessage controlMessage, PeerInfo peerInfo)
+      throws IOException {
+    LOG.trace("Got message type {} from {}", controlMessage.getType(), peerInfo.getName());
+    switch (controlMessage.getType()) {
+      case KEEPALIVE:
+        break;
+      case START_PROGRAM:
+        publishStartProgram(Bytes.toString(controlMessage.getPayload()), peerInfo);
+        break;
+      case STOP_PROGRAM:
+        publishStopProgram(Bytes.toString(controlMessage.getPayload()));
+        break;
+      case KILL_PROGRAM:
+        publishKillProgram(Bytes.toString(controlMessage.getPayload()));
+        break;
+    }
   }
 
   /**
@@ -317,10 +323,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   private void publishStopProgram(String stopPayload) {
-    ProgramRunInfo programRunInfo = GSON.fromJson(stopPayload, ProgramRunInfo.class);
-    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
-                                                 ProgramType.valueOf(programRunInfo.getProgramType()),
-                                                 programRunInfo.getProgram(), programRunInfo.getRun());
+    ProgramRunId programRunId = new ProgramRunId(GSON.fromJson(stopPayload, ProgramRunInfo.class));
     // Do a graceful stop without a timeout. ProgramStopSubscriberService on the tethered peer will send a kill if the
     // graceful shutdown time is exceeded.
     programStateWriter.stop(programRunId, Integer.MAX_VALUE);
@@ -328,10 +331,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   private void publishKillProgram(String stopPayload) {
-    ProgramRunInfo programRunInfo = GSON.fromJson(stopPayload, ProgramRunInfo.class);
-    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
-                                                 ProgramType.valueOf(programRunInfo.getProgramType()),
-                                                 programRunInfo.getProgram(), programRunInfo.getRun());
+    ProgramRunId programRunId = new ProgramRunId(GSON.fromJson(stopPayload, ProgramRunInfo.class));
     // Kill the program
     programStateWriter.stop(programRunId, 0);
     LOG.debug("Published program kill message for program run {}", programRunId);

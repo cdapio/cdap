@@ -20,6 +20,9 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.kubernetes.client.openapi.models.V1Job;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import org.apache.twill.api.AbstractTwillRunnable;
@@ -173,6 +176,31 @@ public class KubeTwillPreparerTest {
     V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
     Assert.assertEquals("1", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("100Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
+  }
+
+  @Test
+  public void testOwnerReferencesNotSetOnUserRuns() throws Exception {
+    V1OwnerReference ownerReference = new V1OwnerReference()
+        .apiVersion("apps/v1")
+        .kind("ReplicaSet")
+        .name("system-worker");
+    PodInfo podInfo = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
+        "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
+        "test-pod-namespace", Collections.emptyMap(), Collections.singletonList(ownerReference),
+        "test-pod-service-account", "test-pod-runtime-class",
+        Collections.emptyList(), "test-pod-container-label", "test-pod-container-image",
+        Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
+        "test-pod-image-pull-policy");
+
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(),
+        null, "default", podInfo, createTwillSpecification(),
+        null, null, null, null, null);
+    Map<String, String> config = new HashMap<>();
+    config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "ns1");
+    preparer.withConfiguration(config);
+
+    V1ObjectMeta objectMeta = preparer.createResourceMetadata(V1Job.class, "runnable", 0, true);
+    Assert.assertNull(objectMeta.getOwnerReferences());
   }
 
   @Test

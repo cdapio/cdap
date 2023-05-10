@@ -236,6 +236,8 @@ public final class Constants {
       = "app.program.local.dataset.deleter.initial.delay";
     public static final String PROGRAM_TERMINATOR_INTERVAL_SECS = "app.program.terminator.interval.secs";
     public static final String PROGRAM_TERMINATE_TIME_BUFFER_SECS = "app.program.terminate.time.buffer.secs";
+    public static final String TETHERED_PROGRAM_TERMINATE_TIME_SECS
+      = "app.program.terminate.tethered.time.buffer.secs";
     public static final String PROGRAM_TERMINATOR_TX_BATCH_SIZE = "app.program.terminator.tx.batch.size";
     public static final String ARTIFACTS_COMPUTE_HASH = "app.artifact.compute.hash";
     public static final String ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS = "app.artifact.compute.hash.time.bucket.days";

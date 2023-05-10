@@ -447,7 +447,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         break;
       case RUNNING:
         long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
-                                                   ProgramOptionConstants.LOGICAL_START_TIME);
+                                                   ProgramOptionConstants.LOGICAL_START_TIME, -1);
         if (logicalStartTimeSecs == -1) {
           LOG.warn("Ignore program running notification for program {} without {} specified, {}",
                    programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
@@ -462,7 +462,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         break;
       case SUSPENDED:
         long suspendTime = getTimeSeconds(notification.getProperties(),
-                                          ProgramOptionConstants.SUSPEND_TIME);
+                                          ProgramOptionConstants.SUSPEND_TIME, -1);
         // since we are adding suspend time recently, there might be old suspended notifications for which time
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramSuspend(programRunId, messageIdBytes, suspendTime);
@@ -470,21 +470,23 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         break;
       case RESUMING:
         long resumeTime = getTimeSeconds(notification.getProperties(),
-                                         ProgramOptionConstants.RESUME_TIME);
-        // since we are adding suspend time recently, there might be old suspended notifications for which time
+                                         ProgramOptionConstants.RESUME_TIME, -1);
+        // since we are adding resume time recently, there might be old resumed notifications for which time
         // can be -1.
         recordedRunRecord = appMetadataStore.recordProgramResumed(programRunId, messageIdBytes, resumeTime);
         writeToHeartBeatTable(recordedRunRecord, resumeTime, programHeartbeatTable);
         break;
       case STOPPING:
         Map<String, String> notificationProperties = notification.getProperties();
-        long stoppingTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.STOPPING_TIME);
-        if (stoppingTsSecs == -1L) {
+        long stoppingTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.STOPPING_TIME,
+                                             -1);
+        if (stoppingTsSecs == -1) {
           LOG.warn("Ignore program stopping notification for program {} without {} specified, {}",
                    programRunId, ProgramOptionConstants.STOPPING_TIME, notification);
           return;
         }
-        long terminateTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.TERMINATE_TIME);
+        long terminateTsSecs = getTimeSeconds(notificationProperties, ProgramOptionConstants.TERMINATE_TIME,
+                                              Long.MAX_VALUE);
         recordedRunRecord = appMetadataStore.recordProgramStopping(programRunId, messageIdBytes, stoppingTsSecs,
                                                                    terminateTsSecs);
         writeToHeartBeatTable(recordedRunRecord, stoppingTsSecs, programHeartbeatTable);
@@ -556,7 +558,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
                                                   List<Runnable> runnables) throws Exception {
     Map<String, String> properties = notification.getProperties();
 
-    long endTimeSecs = getTimeSeconds(properties, ProgramOptionConstants.END_TIME);
+    long endTimeSecs = getTimeSeconds(properties, ProgramOptionConstants.END_TIME, -1);
     if (endTimeSecs == -1) {
       LOG.warn("Ignore program {} notification for program {} without end time specified, {}",
                programRunStatus.name().toLowerCase(), programRunId, notification);
@@ -706,7 +708,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
 
-    long endTs = getTimeSeconds(properties, ProgramOptionConstants.CLUSTER_END_TIME);
+    long endTs = getTimeSeconds(properties, ProgramOptionConstants.CLUSTER_END_TIME, -1);
     ProgramDescriptor programDescriptor =
       GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
     switch (clusterStatus) {
@@ -802,11 +804,12 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
    *
    * @param properties the properties map
    * @param option the key to lookup in the properties map
-   * @return the time in seconds, or -1 if not found
+   * @param defaultValue the default value to return if there is no such property.
+   * @return the time in seconds, or {@code defaultValue} if not found
    */
-  private long getTimeSeconds(Map<String, String> properties, String option) {
+  private long getTimeSeconds(Map<String, String> properties, String option, long defaultValue) {
     String timeString = properties.get(option);
-    return (timeString == null) ? -1L : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
+    return (timeString == null) ? defaultValue : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 
   /**

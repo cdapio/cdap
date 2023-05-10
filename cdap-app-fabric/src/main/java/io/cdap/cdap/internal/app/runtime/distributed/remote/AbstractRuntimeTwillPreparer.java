@@ -124,7 +124,7 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
 
   private JvmOptions.DebugOptions debugOptions = JvmOptions.DebugOptions.NO_DEBUG;
   private ClassAcceptor classAcceptor = new ClassAcceptor();
-  private String extraOptions;
+  private String extraOptions = "";
   private String classLoaderClassName;
 
   AbstractRuntimeTwillPreparer(CConfiguration cConf, Configuration hConf,
@@ -144,7 +144,6 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
     this.locationCache = locationCache;
     this.locationFactory = locationFactory;
     this.controllerFactory = controllerFactory;
-    this.extraOptions = cConf.get(io.cdap.cdap.common.conf.Constants.AppFabric.PROGRAM_JVM_OPTS);
   }
 
   /**

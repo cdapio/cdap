@@ -354,6 +354,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
         // Set JVM options based on configuration
         String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
+        String runtimeJvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
+        if (!Strings.isNullOrEmpty(runtimeJvmOpts)) {
+          if (!Strings.isNullOrEmpty(jvmOpts)) {
+            jvmOpts = jvmOpts + " " + runtimeJvmOpts;
+          } else {
+            jvmOpts = runtimeJvmOpts;
+          }
+        }
         if (!Strings.isNullOrEmpty(jvmOpts)) {
           twillPreparer.addJVMOptions(jvmOpts);
         }
