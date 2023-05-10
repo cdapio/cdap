@@ -1,0 +1,40 @@
+{
+  "specVersion": "1.0",
+  "label": "Label",
+  "description": "Description",
+  "author": "Author",
+  "org": "Org",
+  "created": 1603825065,
+  "categories": [
+    "hydrator-plugin"
+  ],
+  "cdapVersion": "[6.1.1,7.0.0-SNAPSHOT)",
+  "preview": true,
+  "actions": [
+    {
+      "type": "create_pipeline_draft",
+      "label": "Label",
+      "arguments": [
+        {
+          "name": "name",
+          "value": "my-pipeline",
+          "canModify": false
+        },
+        {
+          "name": "config",
+          "value": "pipeline.json",
+          "canModify": false
+        },
+        {
+          "name": "artifact",
+          "value": {
+            "scope": "system",
+            "name": "cdap-data-pipeline",
+            "version": "[6.4.0,7.0.0-SNAPSHOT)"
+          },
+          "canModify": false
+        }
+      ]
+    }
+  ]
+}
