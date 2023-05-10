@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -292,6 +294,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         }
       }
 
+      AtomicBoolean foundUsedCluster = new AtomicBoolean(false);
+      AtomicBoolean foundUpdatingCluster = new AtomicBoolean(false);
       Lock reuseLock = getSystemContext().getLock(REUSE_LOCK);
       reuseLock.lock();
       try {
@@ -302,10 +306,22 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         }
         filter.put(LABEL_VERSON, getVersionLabel());
         filter.put(LABEL_REUSE_KEY, conf.getClusterReuseKey());
-        filter.put(LABEL_REUSE_UNTIL, "*");
 
-        Optional<Cluster> cluster = client.getClusters(ClusterStatus.RUNNING, filter,
+        Optional<Cluster> cluster = client.getClusters(filter,
             clientCluster -> {
+              //Check if cluster is used. We query those only to see if retries make sense
+              if (!clientCluster.containsLabels(LABEL_REUSE_UNTIL)) {
+                foundUsedCluster.set(true);
+                return false;
+              }
+              if (clientCluster.getStatus().getState() == State.UPDATING) {
+                //If there are updating clusters, we retry for longer to allow update to finish
+                foundUpdatingCluster.set(true);
+                return false;
+              }
+              if (clientCluster.getStatus().getState() != State.RUNNING) {
+                return false;
+              }
               //Verify reuse label
               long reuseUntil = Long.parseLong(
                   clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
@@ -328,21 +344,27 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
               Collections.singleton(LABEL_REUSE_UNTIL)
           );
           return cluster.get();
-        } else if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseRetryMaxMs()){
-          // With pipelines chained with triggers it's possible that next pipeline starts before
-          // previous pipeline cluster was released. To ensure we don't create an extra cluster
-          // in such scenario, we retry reuse lookup up to 3 seconds with 300ms delay (default).
-          LOG.trace("Could not find any available cluster to reuse, will retry.");
-          Thread.sleep(conf.getClusterReuseRetryDelayMs());
-        } else {
-          LOG.debug("Could not find any available cluster to reuse.");
-          return null;
         }
       } catch (Exception e) {
         LOG.warn("Error retrieving clusters to reuse, will create a new one", e);
         return null;
       } finally {
         reuseLock.unlock();
+      }
+      if (foundUpdatingCluster.get()
+          && stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseUpdateMaxMs()) {
+        LOG.trace("A suitable cluster is updating, will retry the poll.");
+        Thread.sleep(conf.getClusterReuseRetryDelayMs());
+      } else if (foundUsedCluster.get()
+          && stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseRetryMaxMs()){
+        // With pipelines chained with triggers it's possible that next pipeline starts before
+        // previous pipeline cluster was released. To ensure we don't create an extra cluster
+        // in such scenario, we retry reuse lookup up to 3 seconds with 1s delay (default).
+        LOG.trace("Could not find any available cluster to reuse, will retry.");
+        Thread.sleep(conf.getClusterReuseRetryDelayMs());
+      } else {
+        LOG.debug("Could not find any available cluster to reuse.");
+        return null;
       }
     }
   }
@@ -469,7 +491,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   private Optional<Cluster> findCluster(String clusterKey, DataprocClient client)
       throws RetryableProvisionException {
-    return client.getClusters(null, Collections.singletonMap(LABEL_RUN_KEY, clusterKey)).findAny();
+    return client.getClusters(Collections.singletonMap(LABEL_RUN_KEY, clusterKey)).findAny();
   }
 
   @Override

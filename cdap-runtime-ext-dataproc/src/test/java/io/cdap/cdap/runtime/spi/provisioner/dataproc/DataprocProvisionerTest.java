@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -29,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -319,7 +320,6 @@ public class DataprocProvisionerTest {
 
     //A. Check with existing client, probably after a retry
     Mockito.when(dataprocClient.getClusters(
-      null,
       Collections.singletonMap(AbstractDataprocProvisioner.LABEL_RUN_KEY, "cdap-app-runId")))
       .thenAnswer(i -> Stream.of(cluster));
     Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.RUNNING);
@@ -331,20 +331,32 @@ public class DataprocProvisionerTest {
     DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
     ImmutableMap<String, String> reuseClusterFilter = ImmutableMap.of(
         AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
-        AbstractDataprocProvisioner.LABEL_REUSE_UNTIL, "*",
         AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
         AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
     );
 
-    //B.1. When there is no cluster found, a retry should happen
-    Mockito.when(dataprocClient.getClusters(
-            Mockito.eq(ClusterStatus.RUNNING),Mockito.eq(reuseClusterFilter), Mockito.any()))
-        .thenAnswer(i -> Stream.of());
+    Mockito.when(dataprocClient.getClusters(Mockito.eq(reuseClusterFilter), Mockito.any()))
+        //B.1. When there is no good cluster found, a retry should happen
+        .thenAnswer(i -> {
+          //Ensure we call the predicate
+          Predicate clusterPredicate = i.getArgumentAt(1, Predicate.class);
+          com.google.cloud.dataproc.v1.Cluster updatingCluster =
+              com.google.cloud.dataproc.v1.Cluster.newBuilder()
+                  .setStatus(com.google.cloud.dataproc.v1.ClusterStatus
+                      .newBuilder().setState(State.UPDATING))
+                  .build();
+          com.google.cloud.dataproc.v1.Cluster deletingCluster =
+              com.google.cloud.dataproc.v1.Cluster.newBuilder()
+                  .setStatus(com.google.cloud.dataproc.v1.ClusterStatus
+                      .newBuilder().setState(State.DELETING))
+                  .build();
+          Assert.assertFalse(clusterPredicate.test(updatingCluster));
+          Assert.assertFalse(clusterPredicate.test(deletingCluster));
+          return Stream.empty();
+        })
+        //B.2. Finally a reuse cluster found
+        .thenAnswer(i -> Stream.of(cluster2));
 
-    //B.2. Finally a reuse cluster found
-    Mockito.when(dataprocClient.getClusters(
-        Mockito.eq(ClusterStatus.RUNNING), Mockito.eq(reuseClusterFilter), Mockito.any()))
-      .thenAnswer(i -> Stream.of(cluster2));
     Assert.assertEquals(cluster2, provisioner.createCluster(context));
 
     Mockito.verify(dataprocClient).updateClusterLabels(

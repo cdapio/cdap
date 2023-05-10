@@ -40,6 +40,8 @@ import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.LifecycleConfig;
+import com.google.cloud.dataproc.v1.ListClustersRequest;
+import com.google.cloud.dataproc.v1.ListClustersRequestOrBuilder;
 import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.ShieldedInstanceConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
@@ -847,20 +849,17 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * @param status if not null, return only clusters in the specified state
    * @param labels labels map to use as filters. A value can be "*" to indicate that label must
    *     be present with any value.
    * @return iterable list of clusters that conform to the filter
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
-      @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
       Map<String, String> labels) throws RetryableProvisionException {
-    return getClusters(status, labels, c -> true);
+    return getClusters(labels, c -> true);
   }
 
   /**
-   * @param status if not null, return only clusters in the specified state
    * @param labels labels map to use as filters. A value can be "*" to indicate that label must
    *     be present with any value.
    * @param postFilter additional filter to apply before converting into provisioner cluster
@@ -868,20 +867,20 @@ abstract class DataprocClient implements AutoCloseable {
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
-      @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
       Map<String, String> labels,
       Predicate<Cluster> postFilter) throws RetryableProvisionException {
 
     try {
-      String filter = Stream.concat(
-              Optional.ofNullable(status).map(s -> Stream.of(String.format("status.state=%s", s)))
-                  .orElse(Stream.empty()),
-              labels.entrySet().stream()
-                  .map(e -> String.format("labels.%s=%s", e.getKey(), e.getValue())))
-          .collect(Collectors.joining(" AND "));
+      ListClustersRequest.Builder builder = ListClustersRequest.newBuilder()
+          .setProjectId(conf.getProjectId())
+          .setRegion(conf.getRegion());
+      if (!labels.isEmpty()) {
+        builder.setFilter(labels.entrySet().stream()
+            .map(e -> String.format("labels.%s=%s", e.getKey(), e.getValue()))
+            .collect(Collectors.joining(" AND ")));
+      }
       return StreamSupport.stream(
-              client.listClusters(conf.getProjectId(), conf.getRegion(), filter).iterateAll()
-                  .spliterator(), false)
+              client.listClusters(builder.build()).iterateAll().spliterator(), false)
           .filter(postFilter)
           .map(this::getClusterUnchecked);
     } catch (ApiException e) {
