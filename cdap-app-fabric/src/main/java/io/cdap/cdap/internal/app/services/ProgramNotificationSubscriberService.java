@@ -74,10 +74,6 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import org.apache.twill.internal.CompositeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -95,6 +91,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import org.apache.twill.internal.CompositeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service that creates children services, each to handle a single partition of program status events topic
@@ -111,6 +110,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
   private final Store store;
   private final RunRecordMonitorService runRecordMonitorService;
   private final Service delegate;
+  private Set<ProgramCompletionNotifier> programCompletionNotifiers;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -132,6 +132,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
     this.transactionRunner = transactionRunner;
     this.store = store;
     this.runRecordMonitorService = runRecordMonitorService;
+    this.programCompletionNotifiers = Collections.emptySet();
     List<Service> children = new ArrayList<>();
     String topicPrefix = cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     int numPartitions = cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS);
@@ -155,12 +156,17 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
     delegate.stopAndWait();
   }
 
+  @Inject(optional = true)
+  void setProgramCompletionNotifiers(Set<ProgramCompletionNotifier> notifiers) {
+    this.programCompletionNotifiers = notifiers;
+  }
+
   private ProgramNotificationSingleTopicSubscriberService createChildService(String name, String topicName) {
     return new ProgramNotificationSingleTopicSubscriberService(messagingService, cConf, metricsCollectionService,
                                                                provisionerNotifier, programLifecycleService,
                                                                provisioningService, programStateWriter,
                                                                transactionRunner, store, runRecordMonitorService,
-                                                               name, topicName);
+                                                               name, topicName, programCompletionNotifiers);
   }
 }
 
@@ -198,16 +204,20 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
   private final Store store;
   private final RunRecordMonitorService runRecordMonitorService;
 
-  ProgramNotificationSingleTopicSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                                  MetricsCollectionService metricsCollectionService,
-                                                  ProvisionerNotifier provisionerNotifier,
-                                                  ProgramLifecycleService programLifecycleService,
-                                                  ProvisioningService provisioningService,
-                                                  ProgramStateWriter programStateWriter,
-                                                  TransactionRunner transactionRunner,
-                                                  Store store,
-                                                  RunRecordMonitorService runRecordMonitorService,
-                                                  String name, String topicName) {
+  ProgramNotificationSingleTopicSubscriberService(
+      MessagingService messagingService,
+      CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      ProvisionerNotifier provisionerNotifier,
+      ProgramLifecycleService programLifecycleService,
+      ProvisioningService provisioningService,
+      ProgramStateWriter programStateWriter,
+      TransactionRunner transactionRunner,
+      Store store,
+      RunRecordMonitorService runRecordMonitorService,
+      String name,
+      String topicName,
+      Set<ProgramCompletionNotifier> programCompletionNotifiers) {
     super(name, cConf, topicName,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
@@ -219,7 +229,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
-    this.programCompletionNotifiers = Collections.emptySet();
+    this.programCompletionNotifiers = programCompletionNotifiers;
     this.runRecordMonitorService = runRecordMonitorService;
     this.cConf = cConf;
     this.store = store;
@@ -261,11 +271,6 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         programStateWriter.error(programRunId, e);
       }
     }), retryStrategy, e -> true);
-  }
-
-  @Inject(optional = true)
-  void setProgramCompletionNotifiers(Set<ProgramCompletionNotifier> notifiers) {
-    this.programCompletionNotifiers = notifiers;
   }
 
   @Nullable
