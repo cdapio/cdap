@@ -82,12 +82,16 @@ final class DataprocConf {
   /**
    * With pipelines chained with triggers it's possible that next pipeline starts before
    * previous pipeline cluster was released. To ensure we don't create an extra cluster
-   * in such scenario, we retry reuse lookup up to 3 seconds with 300ms delay (default).
+   * in such scenario, we retry reuse lookup up to 3 seconds with 1000ms delay (default).
+   * Also if there is a cluster update operation going (e.g. a label change) we give
+   * up to 40 seconds for it to finish.
    */
   static final String CLUSTER_REUSE_RETRY_DELAY_MS = "clusterReuseRetryDelayMs";
-  static final long CLUSTER_REUSE_RETRY_DELAY_MS_DEFAULT = 300;
+  static final long CLUSTER_REUSE_RETRY_DELAY_MS_DEFAULT = 1000;
   static final String CLUSTER_REUSE_RETRY_MAX_MS = "clusterReuseRetryMaxMs";
   static final long CLUSTER_REUSE_RETRY_MAX_DEFAULT = 3000;
+  static final String CLUSTER_REUSE_UPDATE_MAX_MS = "clusterReuseUpdateMaxMs";
+  static final long CLUSTER_REUSE_UPDATE_MAX_DEFAULT = 40000;
   static final String CLUSTER_IDLE_TTL_MINUTES = "idleTTL";
   static final int CLUSTER_IDLE_TTL_MINUTES_DEFAULT = 30;
   static final String PREDEFINED_AUTOSCALE_ENABLED = "enablePredefinedAutoScaling";
@@ -161,6 +165,7 @@ final class DataprocConf {
   private final long clusterReuseThresholdMinutes;
   private final long clusterReuseRetryDelayMs;
   private final long clusterReuseRetryMaxMs;
+  private final long clusterReuseUpdateMaxMs;
   private final String clusterReuseKey;
   private final boolean enablePredefinedAutoScaling;
   private final boolean disableLocalCaching;
@@ -194,7 +199,7 @@ final class DataprocConf {
       @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
       boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
       long clusterReuseThresholdMinutes, long clusterReuseRetryDelayMs, long clusterReuseRetryMaxMs,
-      @Nullable String clusterReuseKey,
+      long clusterReuseUpdateMaxMs, @Nullable String clusterReuseKey,
       boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
       @Nullable String rootUrl, boolean gcsCacheEnabled, boolean disableLocalCaching,
       String troubleshootingDocsUrl) {
@@ -206,6 +211,7 @@ final class DataprocConf {
     this.clusterReuseThresholdMinutes = clusterReuseThresholdMinutes;
     this.clusterReuseRetryDelayMs = clusterReuseRetryDelayMs;
     this.clusterReuseRetryMaxMs = clusterReuseRetryMaxMs;
+    this.clusterReuseUpdateMaxMs = clusterReuseUpdateMaxMs;
     this.clusterReuseKey = clusterReuseKey;
     this.networkHostProjectID =
         Strings.isNullOrEmpty(networkHostProjectId) ? projectId : networkHostProjectId;
@@ -467,6 +473,10 @@ final class DataprocConf {
     return clusterReuseRetryMaxMs;
   }
 
+  public long getClusterReuseUpdateMaxMs() {
+    return clusterReuseUpdateMaxMs;
+  }
+
   public boolean isPredefinedAutoScaleEnabled() {
     return enablePredefinedAutoScaling;
   }
@@ -706,6 +716,8 @@ final class DataprocConf {
         CLUSTER_REUSE_RETRY_DELAY_MS_DEFAULT);
     long clusterReuseRetryMaxMs = getLong(properties, CLUSTER_REUSE_RETRY_MAX_MS,
         CLUSTER_REUSE_RETRY_MAX_DEFAULT);
+    long clusterReuseUpdateMaxMs = getLong(properties, CLUSTER_REUSE_UPDATE_MAX_MS,
+        CLUSTER_REUSE_UPDATE_MAX_DEFAULT);
     String clusterReuseKey = null;
     if (clusterReuseEnabled) {
       try {
@@ -752,7 +764,7 @@ final class DataprocConf {
         initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
         tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
         clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseRetryDelayMs,
-        clusterReuseRetryMaxMs, clusterReuseKey,
+        clusterReuseRetryMaxMs, clusterReuseUpdateMaxMs, clusterReuseKey,
         enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
         gcsCacheEnabled, disableLocalCaching, troubleshootingDocsURL);
   }

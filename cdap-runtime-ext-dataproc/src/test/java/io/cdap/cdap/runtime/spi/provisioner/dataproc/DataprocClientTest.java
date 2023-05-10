@@ -179,7 +179,7 @@ public class DataprocClientTest {
       .thenThrow(e);
     thrown.expect(RetryableProvisionException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
+    sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
   }
 
   @Test
@@ -192,7 +192,7 @@ public class DataprocClientTest {
       .thenThrow(e);
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
+    sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
   }
 
   @Test
