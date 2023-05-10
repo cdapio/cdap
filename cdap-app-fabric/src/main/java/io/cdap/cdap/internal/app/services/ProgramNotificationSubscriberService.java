@@ -74,6 +74,10 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import org.apache.twill.internal.CompositeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -91,9 +95,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
-import org.apache.twill.internal.CompositeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Service that creates children services, each to handle a single partition of program status events topic
