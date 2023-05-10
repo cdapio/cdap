@@ -323,7 +323,7 @@ public abstract class EntityId {
 
   @Override
   public int hashCode() {
-    return Objects.hash(entity);
+    return entity.ordinal();
   }
 
   protected static String next(Iterator<String> iterator, String fieldName) {
