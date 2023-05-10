@@ -35,7 +35,6 @@ import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
-import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -86,7 +85,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
-  private final EventPublishManager eventPublishManager;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -98,26 +96,25 @@ public class AppFabricServer extends AbstractIdleService {
    */
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
-                         DiscoveryService discoveryService,
-                         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                         @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
-                         @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService,
-                         RunRecordCorrectorService runRecordCorrectorService,
-                         ProgramRunStatusMonitorService programRunStatusMonitorService,
-                         ApplicationLifecycleService applicationLifecycleService,
-                         ProgramNotificationSubscriberService programNotificationSubscriberService,
-                         ProgramStopSubscriberService programStopSubscriberService,
-                         @Named("appfabric.services.names") Set<String> servicesNames,
-                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                         CoreSchedulerService coreSchedulerService,
-                         ProvisioningService provisioningService,
-                         BootstrapService bootstrapService,
-                         SystemAppManagementService systemAppManagementService,
-                         TransactionRunner transactionRunner,
-                         EventPublishManager eventPublishManager,
-                         RunRecordMonitorService runRecordCounterService,
-                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      DiscoveryService discoveryService,
+      @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+      @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+      @Nullable MetricsCollectionService metricsCollectionService,
+      ProgramRuntimeService programRuntimeService,
+      RunRecordCorrectorService runRecordCorrectorService,
+      ProgramRunStatusMonitorService programRunStatusMonitorService,
+      ApplicationLifecycleService applicationLifecycleService,
+      ProgramNotificationSubscriberService programNotificationSubscriberService,
+      ProgramStopSubscriberService programStopSubscriberService,
+      @Named("appfabric.services.names") Set<String> servicesNames,
+      @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+      CoreSchedulerService coreSchedulerService,
+      ProvisioningService provisioningService,
+      BootstrapService bootstrapService,
+      SystemAppManagementService systemAppManagementService,
+      TransactionRunner transactionRunner,
+      RunRecordMonitorService runRecordCounterService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -138,7 +135,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
-    this.eventPublishManager = eventPublishManager;
     this.runRecordCounterService = runRecordCounterService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
@@ -152,19 +148,18 @@ public class AppFabricServer extends AbstractIdleService {
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
     Futures.allAsList(
-      ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
-        eventPublishManager.start(),
-        runRecordCounterService.start()
-      )
+        ImmutableList.of(
+            provisioningService.start(),
+            applicationLifecycleService.start(),
+            bootstrapService.start(),
+            programRuntimeService.start(),
+            programNotificationSubscriberService.start(),
+            programStopSubscriberService.start(),
+            runRecordCorrectorService.start(),
+            programRunStatusMonitorService.start(),
+            coreSchedulerService.start(),
+            runRecordCounterService.start()
+        )
     ).get();
 
     // Create handler hooks
@@ -216,7 +211,6 @@ public class AppFabricServer extends AbstractIdleService {
     runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
-    eventPublishManager.stopAndWait();
     runRecordCounterService.stopAndWait();
   }
 
