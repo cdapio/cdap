@@ -174,9 +174,7 @@ public class DataprocClientTest {
     // 500
     ApiException e = new ApiException(new Throwable(), GrpcStatusCode.of(Status.Code.UNKNOWN), true);
 
-    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.anyString(), Mockito.anyString(),
-                                                               Mockito.anyString()))
-      .thenThrow(e);
+    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(RetryableProvisionException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
     sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
@@ -187,9 +185,7 @@ public class DataprocClientTest {
     // 500
     ApiException e = new ApiException(new Throwable(), GrpcStatusCode.of(Status.Code.UNAUTHENTICATED), true);
 
-    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.anyString(), Mockito.anyString(),
-                                                               Mockito.anyString()))
-      .thenThrow(e);
+    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
     sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
