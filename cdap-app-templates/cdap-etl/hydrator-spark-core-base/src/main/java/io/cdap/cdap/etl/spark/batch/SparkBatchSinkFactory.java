@@ -148,6 +148,8 @@ public final class SparkBatchSinkFactory {
       }
     }
 
+    RDDUtils.logExecutionPlan(combinedRDD);
+
     Configuration hConf = new Configuration();
     Map<String, Set<String>> groupSinkOutputs = new HashMap<>();
     for (String sink : sinkNames) {
