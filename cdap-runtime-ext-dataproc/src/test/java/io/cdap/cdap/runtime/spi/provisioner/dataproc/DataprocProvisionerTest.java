@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -29,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,7 +57,9 @@ public class DataprocProvisionerTest {
   @Mock
   private DataprocClient dataprocClient;
   @Mock
-  private Cluster cluster, cluster2;
+  private Cluster cluster;
+  @Mock
+  private Cluster cluster2;
 
   private DataprocProvisioner provisioner;
   @Captor
@@ -66,7 +69,7 @@ public class DataprocProvisionerTest {
 
   @Before
   public void init() {
-    provisioner = new DataprocProvisioner((conf, requireSSH) -> dataprocClient);
+    provisioner = new DataprocProvisioner((conf, requireSsh) -> dataprocClient);
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
 
     //default system properties defined by DataprocProvisioner
@@ -142,7 +145,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("region1", conf.getRegion());
     Assert.assertEquals("region1-a", conf.getZone());
     Assert.assertEquals("point1", conf.getTokenEndpoint());
-    Assert.assertEquals(20, conf.getIdleTTLMinutes());
+    Assert.assertEquals(20, conf.getIdleTtlMinutes());
     Map<String, String> clusterMetaData = conf.getClusterMetaData();
     Assert.assertEquals("metadata-val1", clusterMetaData.get("metadata-key1"));
     Assert.assertEquals("metadata-val2", clusterMetaData.get("metadata-key2"));
@@ -167,13 +170,13 @@ public class DataprocProvisionerTest {
   }
 
   @Test
-  public void testDataprocConfDefaultIdleTTL() {
+  public void testDataprocConfDefaultIdleTtl() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
     props.put("accountKey", "key");
     props.put("region", "region1");
     DataprocConf conf = DataprocConf.create(props);
-    Assert.assertEquals(30, conf.getIdleTTLMinutes());
+    Assert.assertEquals(30, conf.getIdleTtlMinutes());
   }
 
   @Test
@@ -219,17 +222,16 @@ public class DataprocProvisionerTest {
   }
 
   @Test
-  public void testCustomImageURI() {
+  public void testCustomImageUri() {
     Map<String, String> props = new HashMap<>();
-    String customURI = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
-    props.put(DataprocConf.CUSTOM_IMAGE_URI,
-              customURI);
+    String customUri = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
+    props.put(DataprocConf.CUSTOM_IMAGE_URI, customUri);
     props.put("accountKey", "key");
     props.put("projectId", "my project");
     props.put("zone", "region1-a");
 
     DataprocConf conf = DataprocConf.create(props);
-    Assert.assertEquals(customURI, conf.getCustomImageUri());
+    Assert.assertEquals(customUri, conf.getCustomImageUri());
   }
 
   @Test
@@ -319,7 +321,6 @@ public class DataprocProvisionerTest {
 
     //A. Check with existing client, probably after a retry
     Mockito.when(dataprocClient.getClusters(
-      null,
       Collections.singletonMap(AbstractDataprocProvisioner.LABEL_RUN_KEY, "cdap-app-runId")))
       .thenAnswer(i -> Stream.of(cluster));
     Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.RUNNING);
@@ -331,20 +332,32 @@ public class DataprocProvisionerTest {
     DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
     ImmutableMap<String, String> reuseClusterFilter = ImmutableMap.of(
         AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
-        AbstractDataprocProvisioner.LABEL_REUSE_UNTIL, "*",
         AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
         AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
     );
 
-    //B.1. When there is no cluster found, a retry should happen
-    Mockito.when(dataprocClient.getClusters(
-            Mockito.eq(ClusterStatus.RUNNING),Mockito.eq(reuseClusterFilter), Mockito.any()))
-        .thenAnswer(i -> Stream.of());
+    Mockito.when(dataprocClient.getClusters(Mockito.eq(reuseClusterFilter), Mockito.any()))
+        //B.1. When there is no good cluster found, a retry should happen
+        .thenAnswer(i -> {
+          //Ensure we call the predicate
+          Predicate clusterPredicate = i.getArgumentAt(1, Predicate.class);
+          com.google.cloud.dataproc.v1.Cluster updatingCluster =
+              com.google.cloud.dataproc.v1.Cluster.newBuilder()
+                  .setStatus(com.google.cloud.dataproc.v1.ClusterStatus
+                      .newBuilder().setState(State.UPDATING))
+                  .build();
+          com.google.cloud.dataproc.v1.Cluster deletingCluster =
+              com.google.cloud.dataproc.v1.Cluster.newBuilder()
+                  .setStatus(com.google.cloud.dataproc.v1.ClusterStatus
+                      .newBuilder().setState(State.DELETING))
+                  .build();
+          Assert.assertFalse(clusterPredicate.test(updatingCluster));
+          Assert.assertFalse(clusterPredicate.test(deletingCluster));
+          return Stream.empty();
+        })
+        //B.2. Finally a reuse cluster found
+        .thenAnswer(i -> Stream.of(cluster2));
 
-    //B.2. Finally a reuse cluster found
-    Mockito.when(dataprocClient.getClusters(
-        Mockito.eq(ClusterStatus.RUNNING), Mockito.eq(reuseClusterFilter), Mockito.any()))
-      .thenAnswer(i -> Stream.of(cluster2));
     Assert.assertEquals(cluster2, provisioner.createCluster(context));
 
     Mockito.verify(dataprocClient).updateClusterLabels(

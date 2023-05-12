@@ -50,26 +50,26 @@ import org.slf4j.LoggerFactory;
  * Wrapper around the dataproc client that adheres to our configuration settings. Creates Dataproc
  * clusters that are accessible through SSH.
  */
-class SSHDataprocClient extends DataprocClient {
+class SshDataprocClient extends DataprocClient {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SSHDataprocClient.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SshDataprocClient.class);
   private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIPRanges(
       Arrays.asList("10.0.0.0/8",
           "172.16.0.0/12",
           "192.168.0.0/16"));
 
-  SSHDataprocClient(DataprocConf conf, ClusterControllerClient client,
+  SshDataprocClient(DataprocConf conf, ClusterControllerClient client,
       ComputeFactory computeFactory) {
     super(conf, client, computeFactory);
   }
 
   @Override
   protected void addNetworkTags(GceClusterConfig.Builder clusterConfig, Network networkInfo,
-      boolean internalIPOnly) throws RetryableProvisionException, IOException {
+      boolean internalIpOnly) throws RetryableProvisionException, IOException {
 
     // if public key is not null that means ssh is used to launch / monitor job on dataproc
     int maxTags = Math.max(0, DataprocConf.MAX_NETWORK_TAGS - clusterConfig.getTagsCount());
-    List<String> tags = getFirewallTargetTags(networkInfo, internalIPOnly);
+    List<String> tags = getFirewallTargetTags(networkInfo, internalIpOnly);
     if (tags.size() > maxTags) {
       LOG.warn("No more than 64 tags can be added. Firewall tags ignored: {}",
           tags.subList(maxTags, tags.size()));
@@ -132,11 +132,11 @@ class SSHDataprocClient extends DataprocClient {
    *     rules applies
    * @throws IOException If failed to discover those firewall rules
    */
-  private List<String> getFirewallTargetTags(Network network, boolean useInternalIP)
+  private List<String> getFirewallTargetTags(Network network, boolean useInternalIp)
       throws IOException, RetryableProvisionException {
     FirewallList firewalls;
     try {
-      firewalls = getOrCreateCompute().firewalls().list(conf.getNetworkHostProjectID()).execute();
+      firewalls = getOrCreateCompute().firewalls().list(conf.getNetworkHostProjectId()).execute();
     } catch (Exception e) {
       handleRetryableExceptions(e);
       throw new DataprocRuntimeException(e);
@@ -161,7 +161,7 @@ class SSHDataprocClient extends DataprocClient {
         continue;
       }
 
-      if (useInternalIP) {
+      if (useInternalIp) {
         // If the Dataproc cluster is using internal IP only, we are only interested in firewall rule that has source
         // IP range overlap with one of the private IP block or doesn't have source IP at all.
         // This is because if Dataproc cluster is using internal IP, the CDAP itself must be running inside one of the
@@ -207,7 +207,7 @@ class SSHDataprocClient extends DataprocClient {
           "Could not find an ingress firewall rule for network '%s' in project '%s' for ports '%s'. "
 
               + "Please create a rule to allow incoming traffic on those ports for your IP range.",
-          network.getName(), conf.getNetworkHostProjectID(), portList));
+          network.getName(), conf.getNetworkHostProjectId(), portList));
     }
     return tags;
   }

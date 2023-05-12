@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -87,7 +89,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     boolean privateInstance = Boolean.parseBoolean(
         getSystemContext().getProperties().get(PRIVATE_INSTANCE));
 
-    if (privateInstance && conf.isPreferExternalIP()) {
+    if (privateInstance && conf.isPreferExternalIp()) {
       // When prefer external IP is set to true it means only Dataproc external ip can be used to for communication
       // the instance being private instance is incapable of using external ip for communication
       throw new DataprocRuntimeException(
@@ -135,7 +137,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
 
     int totalCpus =
-        conf.getTotalWorkerCPUs() > 0 ? conf.getTotalWorkerCPUs() : conf.getTotalMasterCpus();
+        conf.getTotalWorkerCpus() > 0 ? conf.getTotalWorkerCpus() : conf.getTotalMasterCpus();
     label.append(totalCpus);
     return Optional.of(label.toString());
   }
@@ -151,7 +153,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
 
     SSHPublicKey sshPublicKey = null;
-    if (shouldUseSSH(context, conf)) {
+    if (shouldUseSsh(context, conf)) {
       // Generates and set the ssh key if it does not have one.
       // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
       SSHContext sshContext = context.getSSHContext();
@@ -261,7 +263,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     if (!isReuseSupported(conf)) {
       LOG.debug(
           "Not checking cluster reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
-          conf.isClusterReuseEnabled(), conf.isSkipDelete(), conf.getIdleTTLMinutes(),
+          conf.isClusterReuseEnabled(), conf.isSkipDelete(), conf.getIdleTtlMinutes(),
           conf.getClusterReuseThresholdMinutes());
       return null;
     }
@@ -292,6 +294,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         }
       }
 
+      AtomicBoolean foundUsedCluster = new AtomicBoolean(false);
+      AtomicBoolean foundUpdatingCluster = new AtomicBoolean(false);
       Lock reuseLock = getSystemContext().getLock(REUSE_LOCK);
       reuseLock.lock();
       try {
@@ -302,10 +306,22 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         }
         filter.put(LABEL_VERSON, getVersionLabel());
         filter.put(LABEL_REUSE_KEY, conf.getClusterReuseKey());
-        filter.put(LABEL_REUSE_UNTIL, "*");
 
-        Optional<Cluster> cluster = client.getClusters(ClusterStatus.RUNNING, filter,
+        Optional<Cluster> cluster = client.getClusters(filter,
             clientCluster -> {
+              //Check if cluster is used. We query those only to see if retries make sense
+              if (!clientCluster.containsLabels(LABEL_REUSE_UNTIL)) {
+                foundUsedCluster.set(true);
+                return false;
+              }
+              if (clientCluster.getStatus().getState() == State.UPDATING) {
+                //If there are updating clusters, we retry for longer to allow update to finish
+                foundUpdatingCluster.set(true);
+                return false;
+              }
+              if (clientCluster.getStatus().getState() != State.RUNNING) {
+                return false;
+              }
               //Verify reuse label
               long reuseUntil = Long.parseLong(
                   clientCluster.getLabelsOrDefault(LABEL_REUSE_UNTIL, "0"));
@@ -328,15 +344,6 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
               Collections.singleton(LABEL_REUSE_UNTIL)
           );
           return cluster.get();
-        } else if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseRetryMaxMs()){
-          // With pipelines chained with triggers it's possible that next pipeline starts before
-          // previous pipeline cluster was released. To ensure we don't create an extra cluster
-          // in such scenario, we retry reuse lookup up to 3 seconds with 300ms delay (default).
-          LOG.trace("Could not find any available cluster to reuse, will retry.");
-          Thread.sleep(conf.getClusterReuseRetryDelayMs());
-        } else {
-          LOG.debug("Could not find any available cluster to reuse.");
-          return null;
         }
       } catch (Exception e) {
         LOG.warn("Error retrieving clusters to reuse, will create a new one", e);
@@ -344,13 +351,28 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       } finally {
         reuseLock.unlock();
       }
+      if (foundUpdatingCluster.get()
+          && stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseUpdateMaxMs()) {
+        LOG.trace("A suitable cluster is updating, will retry the poll.");
+        Thread.sleep(conf.getClusterReuseRetryDelayMs());
+      } else if (foundUsedCluster.get()
+          && stopwatch.elapsed(TimeUnit.MILLISECONDS) < conf.getClusterReuseRetryMaxMs()) {
+        // With pipelines chained with triggers it's possible that next pipeline starts before
+        // previous pipeline cluster was released. To ensure we don't create an extra cluster
+        // in such scenario, we retry reuse lookup up to 3 seconds with 1s delay (default).
+        LOG.trace("Could not find any available cluster to reuse, will retry.");
+        Thread.sleep(conf.getClusterReuseRetryDelayMs());
+      } else {
+        LOG.debug("Could not find any available cluster to reuse.");
+        return null;
+      }
     }
   }
 
   private boolean isReuseSupported(DataprocConf conf) {
     return conf.isClusterReuseEnabled() && conf.isSkipDelete()
-        && (conf.getIdleTTLMinutes() <= 0
-        || conf.getIdleTTLMinutes() > conf.getClusterReuseThresholdMinutes());
+        && (conf.getIdleTtlMinutes() <= 0
+        || conf.getIdleTtlMinutes() > conf.getClusterReuseThresholdMinutes());
   }
 
   @Nullable
@@ -410,7 +432,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
-    try (DataprocClient client = clientFactory.create(conf, shouldUseSSH(context, conf))) {
+    try (DataprocClient client = clientFactory.create(conf, shouldUseSsh(context, conf))) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
           "provisioner.clusterDetail.response.count");
@@ -433,10 +455,10 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       if (isReuseSupported(conf)) {
         long reuseUntil = System.currentTimeMillis()
             + TimeUnit.MINUTES.toMillis(
-            conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
+            conf.getIdleTtlMinutes() - conf.getClusterReuseThresholdMinutes());
         LOG.debug("Marking cluster {} reusable for {} minutes",
             clusterName,
-            conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
+            conf.getIdleTtlMinutes() - conf.getClusterReuseThresholdMinutes());
         client.updateClusterLabels(clusterName,
             //Add reuse until
             Collections.singletonMap(LABEL_REUSE_UNTIL, Long.toString(reuseUntil)),
@@ -469,7 +491,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   private Optional<Cluster> findCluster(String clusterKey, DataprocClient client)
       throws RetryableProvisionException {
-    return client.getClusters(null, Collections.singletonMap(LABEL_RUN_KEY, clusterKey)).findAny();
+    return client.getClusters(Collections.singletonMap(LABEL_RUN_KEY, clusterKey)).findAny();
   }
 
   @Override
@@ -484,10 +506,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       case DELETING:
         return PollingStrategies.initialDelay(strategy, conf.getPollDeleteDelay(),
             TimeUnit.SECONDS);
+      default:
+        LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}",
+            cluster.getStatus());
+        return strategy;
     }
-    LOG.warn("Received a request to get the polling strategy for unexpected cluster status {}",
-        cluster.getStatus());
-    return strategy;
   }
 
   @Override
@@ -557,7 +580,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
   }
 
-  private boolean shouldUseSSH(ProvisionerContext context, DataprocConf conf) {
+  private boolean shouldUseSsh(ProvisionerContext context, DataprocConf conf) {
     return context.getRuntimeMonitorType() == RuntimeMonitorType.SSH
         || !conf.isRuntimeJobManagerEnabled();
   }
