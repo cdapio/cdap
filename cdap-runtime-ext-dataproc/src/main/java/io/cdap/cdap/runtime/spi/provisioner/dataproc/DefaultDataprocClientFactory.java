@@ -43,7 +43,7 @@ public class DefaultDataprocClientFactory implements DataprocClientFactory {
   public DataprocClient create(DataprocConf conf, boolean requireSSH)
       throws IOException, GeneralSecurityException {
     ClusterControllerClient clusterControllerClient = getClusterControllerClient(conf);
-    return requireSSH ? new SSHDataprocClient(conf, clusterControllerClient, computeFactory) :
+    return requireSSH ? new SshDataprocClient(conf, clusterControllerClient, computeFactory) :
         new RuntimeMonitorDataprocClient(conf, clusterControllerClient, computeFactory);
   }
 
