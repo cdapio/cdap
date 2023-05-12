@@ -57,7 +57,9 @@ public class DataprocProvisionerTest {
   @Mock
   private DataprocClient dataprocClient;
   @Mock
-  private Cluster cluster, cluster2;
+  private Cluster cluster;
+  @Mock
+  private Cluster cluster2;
 
   private DataprocProvisioner provisioner;
   @Captor
@@ -67,7 +69,7 @@ public class DataprocProvisionerTest {
 
   @Before
   public void init() {
-    provisioner = new DataprocProvisioner((conf, requireSSH) -> dataprocClient);
+    provisioner = new DataprocProvisioner((conf, requireSsh) -> dataprocClient);
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
 
     //default system properties defined by DataprocProvisioner
@@ -143,7 +145,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("region1", conf.getRegion());
     Assert.assertEquals("region1-a", conf.getZone());
     Assert.assertEquals("point1", conf.getTokenEndpoint());
-    Assert.assertEquals(20, conf.getIdleTTLMinutes());
+    Assert.assertEquals(20, conf.getIdleTtlMinutes());
     Map<String, String> clusterMetaData = conf.getClusterMetaData();
     Assert.assertEquals("metadata-val1", clusterMetaData.get("metadata-key1"));
     Assert.assertEquals("metadata-val2", clusterMetaData.get("metadata-key2"));
@@ -168,13 +170,13 @@ public class DataprocProvisionerTest {
   }
 
   @Test
-  public void testDataprocConfDefaultIdleTTL() {
+  public void testDataprocConfDefaultIdleTtl() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
     props.put("accountKey", "key");
     props.put("region", "region1");
     DataprocConf conf = DataprocConf.create(props);
-    Assert.assertEquals(30, conf.getIdleTTLMinutes());
+    Assert.assertEquals(30, conf.getIdleTtlMinutes());
   }
 
   @Test
@@ -220,17 +222,16 @@ public class DataprocProvisionerTest {
   }
 
   @Test
-  public void testCustomImageURI() {
+  public void testCustomImageUri() {
     Map<String, String> props = new HashMap<>();
-    String customURI = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
-    props.put(DataprocConf.CUSTOM_IMAGE_URI,
-              customURI);
+    String customUri = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
+    props.put(DataprocConf.CUSTOM_IMAGE_URI, customUri);
     props.put("accountKey", "key");
     props.put("projectId", "my project");
     props.put("zone", "region1-a");
 
     DataprocConf conf = DataprocConf.create(props);
-    Assert.assertEquals(customURI, conf.getCustomImageUri());
+    Assert.assertEquals(customUri, conf.getCustomImageUri());
   }
 
   @Test
