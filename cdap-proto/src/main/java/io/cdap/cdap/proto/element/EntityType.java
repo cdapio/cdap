@@ -18,6 +18,8 @@ package io.cdap.cdap.proto.element;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.CredentialIdentityId;
+import io.cdap.cdap.proto.id.CredentialProvisionerProfileId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
@@ -72,7 +74,10 @@ public enum EntityType {
   QUERY(QueryId.class),
   SUPPORT_BUNDLE(SupportBundleEntityId.class),
   SYSTEM_SERVICE(SystemServiceId.class),
-  SYSTEM_APP_ENTITY(SystemAppEntityId.class);
+  SYSTEM_APP_ENTITY(SystemAppEntityId.class),
+
+  CREDENTIAL_PROVISIONER_PROFILE(CredentialProvisionerProfileId.class),
+  CREDENTIAL_IDENTITY(CredentialIdentityId.class);
 
   private final Class<? extends EntityId> idClass;
   @Nullable
