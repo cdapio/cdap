@@ -140,6 +140,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -350,7 +351,10 @@ public class DefaultRuntimeJob implements RuntimeJob {
     String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
     Location programJarLocation = Locations.toLocation(
       new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
-    
+
+    userArguments = SystemArguments.skipNormalMacroEvaluation(userArguments)
+        ? Collections.emptyMap() : userArguments;
+
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
       .setArtifactId(programDescriptor.getArtifactId())
       .setArtifactLocation(programJarLocation)
