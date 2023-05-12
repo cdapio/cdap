@@ -41,7 +41,6 @@ import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.LifecycleConfig;
 import com.google.cloud.dataproc.v1.ListClustersRequest;
-import com.google.cloud.dataproc.v1.ListClustersRequestOrBuilder;
 import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.ShieldedInstanceConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
@@ -211,7 +210,7 @@ abstract class DataprocClient implements AutoCloseable {
           Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
       DiskConfig workerDiskConfig = DiskConfig.newBuilder()
-          .setBootDiskSizeGb(conf.getWorkerDiskGB())
+          .setBootDiskSizeGb(conf.getWorkerDiskGb())
           .setBootDiskType(conf.getWorkerDiskType())
           .setNumLocalSsds(0)
           .build();
@@ -231,12 +230,12 @@ abstract class DataprocClient implements AutoCloseable {
         //Set spark.default.parallelism according to cluster size.
         //Spark defaults it to number of current executors, but when we configure the job
         //executors may not have started yet, so this value gets artificially low.
-        int defaultConcurrency = Math.max(conf.getTotalWorkerCPUs(), MIN_DEFAULT_CONCURRENCY);
+        int defaultConcurrency = Math.max(conf.getTotalWorkerCpus(), MIN_DEFAULT_CONCURRENCY);
         //Set spark.sql.adaptive.coalescePartitions.initialPartitionNum as 32x of default parallelism,
         //but no more than 8192. This value is used only in spark 3 with adaptive execution and
         //according to our tests spark can handle really large numbers and 32x is a reasonable default.
         int initialPartitionNum = Math.min(
-            Math.max(conf.getTotalWorkerCPUs() * PARTITION_NUM_FACTOR,
+            Math.max(conf.getTotalWorkerCpus() * PARTITION_NUM_FACTOR,
                 MIN_INITIAL_PARTITIONS_DEFAULT),
             MAX_INITIAL_PARTITIONS_DEFAULT);
         clusterProperties.putIfAbsent("spark:spark.default.parallelism",
@@ -266,7 +265,7 @@ abstract class DataprocClient implements AutoCloseable {
               .setMachineTypeUri(conf.getMasterMachineType())
               .setDiskConfig(DiskConfig.newBuilder()
                   .setBootDiskType(conf.getMasterDiskType())
-                  .setBootDiskSizeGb(conf.getMasterDiskGB())
+                  .setBootDiskSizeGb(conf.getMasterDiskGb())
                   .setNumLocalSsds(0)
                   .build())
               .build())
@@ -276,8 +275,8 @@ abstract class DataprocClient implements AutoCloseable {
           .setSoftwareConfig(softwareConfigBuilder);
 
       //Cluster TTL if one should be set
-      if (conf.getIdleTTLMinutes() > 0) {
-        long seconds = TimeUnit.MINUTES.toSeconds(conf.getIdleTTLMinutes());
+      if (conf.getIdleTtlMinutes() > 0) {
+        long seconds = TimeUnit.MINUTES.toSeconds(conf.getIdleTtlMinutes());
         builder.setLifecycleConfig(LifecycleConfig.newBuilder()
             .setIdleDeleteTtl(Duration.newBuilder().setSeconds(seconds).build()).build());
       }
@@ -347,7 +346,7 @@ abstract class DataprocClient implements AutoCloseable {
     }
 
     String projectId = conf.getProjectId();
-    String networkHostProjectId = conf.getNetworkHostProjectID();
+    String networkHostProjectId = conf.getNetworkHostProjectId();
     String systemProjectId = null;
     try {
       systemProjectId = DataprocUtils.getSystemProjectId();
@@ -402,7 +401,7 @@ abstract class DataprocClient implements AutoCloseable {
 
     //Add any defined Network Tags
     clusterConfig.addAllTags(conf.getNetworkTags());
-    boolean isInternalIpOnly = isInternalIPOnly(networkInfo, privateInstance);
+    boolean isInternalIpOnly = isInternalIpOnly(networkInfo, privateInstance);
     clusterConfig.setInternalIpOnly(isInternalIpOnly);
     addNetworkTags(clusterConfig, networkInfo, isInternalIpOnly);
   }
@@ -477,7 +476,7 @@ abstract class DataprocClient implements AutoCloseable {
    * @param privateInstance a system config to force using private instance
    * @return {@code true} for pribvate IP only Dataproc cluster
    */
-  private boolean isInternalIPOnly(Network network, boolean privateInstance) {
+  private boolean isInternalIpOnly(Network network, boolean privateInstance) {
     String systemProjectId = null;
     String systemNetwork = null;
     try {
@@ -488,7 +487,7 @@ abstract class DataprocClient implements AutoCloseable {
     }
 
     // Use private IP only cluster if privateInstance is true or if the compute profile required
-    if (!privateInstance && conf.isPreferExternalIP()) {
+    if (!privateInstance && conf.isPreferExternalIp()) {
       return false;
     }
 
@@ -506,7 +505,7 @@ abstract class DataprocClient implements AutoCloseable {
 
     // SSH will be used for job launching and/or monitoring, we need to validate network connectivity
     // CDAP and Dataproc are in the same network, should be able to use private IP only cluster
-    if (systemProjectId.equals(conf.getNetworkHostProjectID()) && systemNetwork.equals(
+    if (systemProjectId.equals(conf.getNetworkHostProjectId()) && systemNetwork.equals(
         network.getName())) {
       return true;
     }
@@ -521,7 +520,7 @@ abstract class DataprocClient implements AutoCloseable {
     throw new DataprocRuntimeException(
         String.format(
             "Direct network connectivity is needed for private Dataproc cluster between VPC %s/%s and %s/%s",
-            systemProjectId, systemNetwork, conf.getNetworkHostProjectID(), network.getName()),
+            systemProjectId, systemNetwork, conf.getNetworkHostProjectId(), network.getName()),
         ErrorTag.CONFIGURATION);
   }
 
@@ -766,7 +765,7 @@ abstract class DataprocClient implements AutoCloseable {
     }
 
     Cluster cluster = clusterOptional.get();
-    return Optional.of(getCluster(cluster));
+    return Optional.of(convertCluster(cluster));
   }
 
   /**
@@ -797,9 +796,9 @@ abstract class DataprocClient implements AutoCloseable {
    * @return provisioner cluster object
    * @throws DataprocRuntimeException if there was an error
    */
-  private io.cdap.cdap.runtime.spi.provisioner.Cluster getClusterUnchecked(Cluster cluster) {
+  private io.cdap.cdap.runtime.spi.provisioner.Cluster convertClusterUnchecked(Cluster cluster) {
     try {
-      return getCluster(cluster);
+      return convertCluster(cluster);
     } catch (IOException e) {
       throw new DataprocRuntimeException(e);
     }
@@ -812,7 +811,7 @@ abstract class DataprocClient implements AutoCloseable {
    * @return provisioner cluster object
    * @throws IOException if there was an error
    */
-  private io.cdap.cdap.runtime.spi.provisioner.Cluster getCluster(Cluster cluster)
+  private io.cdap.cdap.runtime.spi.provisioner.Cluster convertCluster(Cluster cluster)
       throws IOException {
     String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri());
 
@@ -849,6 +848,8 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
+   * Retrieve clusters filtering by labels.
+   *
    * @param labels labels map to use as filters. A value can be "*" to indicate that label must
    *     be present with any value.
    * @return iterable list of clusters that conform to the filter
@@ -860,6 +861,8 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
+   * Retrieve clusters filtering by labels and postFilter.
+   *
    * @param labels labels map to use as filters. A value can be "*" to indicate that label must
    *     be present with any value.
    * @param postFilter additional filter to apply before converting into provisioner cluster
@@ -882,14 +885,14 @@ abstract class DataprocClient implements AutoCloseable {
       return StreamSupport.stream(
               client.listClusters(builder.build()).iterateAll().spliterator(), false)
           .filter(postFilter)
-          .map(this::getClusterUnchecked);
+          .map(this::convertClusterUnchecked);
     } catch (ApiException e) {
       throw handleApiException(e);
     }
   }
 
   /**
-   * Converts Google Dataproc cluster status to CDAP Cluster Status
+   * Converts Google Dataproc cluster status to CDAP Cluster Status.
    */
   private io.cdap.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
     switch (status.getState()) {

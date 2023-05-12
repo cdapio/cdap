@@ -109,24 +109,24 @@ final class DataprocConf {
   private final String zone;
   private final String projectId;
   private final String network;
-  private final String networkHostProjectID;
+  private final String networkHostProjectId;
   private final String subnet;
   private final String imageVersion;
   private final String customImageUri;
   private final String rootUrl;
 
   private final int masterNumNodes;
-  private final int masterCPUs;
-  private final int masterMemoryMB;
-  private final int masterDiskGB;
+  private final int masterCpus;
+  private final int masterMemoryMb;
+  private final int masterDiskGb;
   private final String masterDiskType;
   private final String masterMachineType;
 
   private final int workerNumNodes;
   private final int secondaryWorkerNumNodes;
-  private final int workerCPUs;
-  private final int workerMemoryMB;
-  private final int workerDiskGB;
+  private final int workerCpus;
+  private final int workerMemoryMb;
+  private final int workerDiskGb;
   private final String workerDiskType;
   private final String workerMachineType;
 
@@ -139,7 +139,7 @@ final class DataprocConf {
   private final String gcsBucket;
 
   private final String serviceAccount;
-  private final boolean preferExternalIP;
+  private final boolean preferExternalIp;
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final boolean componentGatewayEnabled;
@@ -151,7 +151,7 @@ final class DataprocConf {
   private final List<String> networkTags;
   private final String initActions;
   private final String autoScalingPolicy;
-  private final int idleTTLMinutes;
+  private final int idleTtlMinutes;
 
   private final boolean secureBootEnabled;
   private final boolean vTpmEnabled;
@@ -182,20 +182,20 @@ final class DataprocConf {
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
-      int masterNumNodes, int masterCPUs, int masterMemoryMB,
-      int masterDiskGB, String masterDiskType, @Nullable String masterMachineType,
-      int workerNumNodes, int secondaryWorkerNumNodes, int workerCPUs, int workerMemoryMB,
-      int workerDiskGB, String workerDiskType, @Nullable String workerMachineType,
+      int masterNumNodes, int masterCpus, int masterMemoryMb,
+      int masterDiskGb, String masterDiskType, @Nullable String masterMachineType,
+      int workerNumNodes, int secondaryWorkerNumNodes, int workerCpus, int workerMemoryMb,
+      int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
-      @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
+      @Nullable String serviceAccount, boolean preferExternalIp, boolean stackdriverLoggingEnabled,
       boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable, boolean skipDelete,
       @Nullable String imageVersion,
       @Nullable String customImageUri,
       @Nullable Map<String, String> clusterMetaData,
       @Nullable Map<String, String> clusterLabels, List<String> networkTags,
       @Nullable String initActions, boolean runtimeJobManagerEnabled,
-      Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTTLMinutes,
+      Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTtlMinutes,
       @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
       boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
       long clusterReuseThresholdMinutes, long clusterReuseRetryDelayMs, long clusterReuseRetryMaxMs,
@@ -213,21 +213,21 @@ final class DataprocConf {
     this.clusterReuseRetryMaxMs = clusterReuseRetryMaxMs;
     this.clusterReuseUpdateMaxMs = clusterReuseUpdateMaxMs;
     this.clusterReuseKey = clusterReuseKey;
-    this.networkHostProjectID =
+    this.networkHostProjectId =
         Strings.isNullOrEmpty(networkHostProjectId) ? projectId : networkHostProjectId;
     this.network = network;
     this.subnet = subnet;
     this.masterNumNodes = masterNumNodes;
-    this.masterCPUs = masterCPUs;
-    this.masterMemoryMB = masterMemoryMB;
-    this.masterDiskGB = masterDiskGB;
+    this.masterCpus = masterCpus;
+    this.masterMemoryMb = masterMemoryMb;
+    this.masterDiskGb = masterDiskGb;
     this.masterDiskType = masterDiskType;
     this.masterMachineType = masterMachineType;
     this.workerNumNodes = workerNumNodes;
     this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
-    this.workerCPUs = workerCPUs;
-    this.workerMemoryMB = workerMemoryMB;
-    this.workerDiskGB = workerDiskGB;
+    this.workerCpus = workerCpus;
+    this.workerMemoryMb = workerMemoryMb;
+    this.workerDiskGb = workerDiskGb;
     this.workerDiskType = workerDiskType;
     this.workerMachineType = workerMachineType;
     this.pollCreateDelay = pollCreateDelay;
@@ -237,7 +237,7 @@ final class DataprocConf {
     this.encryptionKeyName = encryptionKeyName;
     this.gcsBucket = gcsBucket;
     this.serviceAccount = serviceAccount;
-    this.preferExternalIP = preferExternalIP;
+    this.preferExternalIp = preferExternalIp;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.componentGatewayEnabled = componentGatewayEnable;
@@ -251,7 +251,7 @@ final class DataprocConf {
     this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.clusterProperties = clusterProperties;
     this.autoScalingPolicy = autoScalingPolicy;
-    this.idleTTLMinutes = idleTTLMinutes;
+    this.idleTtlMinutes = idleTtlMinutes;
     this.tokenEndpoint = tokenEndpoint;
     this.secureBootEnabled = secureBootEnabled;
     this.vTpmEnabled = vTpmEnabled;
@@ -283,8 +283,8 @@ final class DataprocConf {
     return network;
   }
 
-  String getNetworkHostProjectID() {
-    return networkHostProjectID;
+  String getNetworkHostProjectId() {
+    return networkHostProjectId;
   }
 
   @Nullable
@@ -296,8 +296,8 @@ final class DataprocConf {
     return masterNumNodes;
   }
 
-  int getMasterDiskGB() {
-    return masterDiskGB;
+  int getMasterDiskGb() {
+    return masterDiskGb;
   }
 
   String getMasterDiskType() {
@@ -305,7 +305,7 @@ final class DataprocConf {
   }
 
   int getTotalMasterCpus() {
-    return masterCPUs * masterNumNodes;
+    return masterCpus * masterNumNodes;
   }
 
   int getWorkerNumNodes() {
@@ -316,8 +316,8 @@ final class DataprocConf {
     return secondaryWorkerNumNodes;
   }
 
-  int getWorkerDiskGB() {
-    return workerDiskGB;
+  int getWorkerDiskGb() {
+    return workerDiskGb;
   }
 
   String getWorkerDiskType() {
@@ -325,21 +325,21 @@ final class DataprocConf {
   }
 
   String getMasterMachineType() {
-    return getMachineType(masterMachineType, masterCPUs, masterMemoryMB);
+    return getMachineType(masterMachineType, masterCpus, masterMemoryMb);
   }
 
   String getWorkerMachineType() {
-    return getMachineType(workerMachineType, workerCPUs, workerMemoryMB);
+    return getMachineType(workerMachineType, workerCpus, workerMemoryMb);
   }
 
-  int getTotalWorkerCPUs() {
+  int getTotalWorkerCpus() {
     if (enablePredefinedAutoScaling) {
-      return workerCPUs *
-          (PredefinedAutoScaling.getMaxSecondaryWorkerInstances()
-              + PredefinedAutoScaling.getPrimaryWorkerInstances());
+      return workerCpus
+          * (PredefinedAutoScaling.getMaxSecondaryWorkerInstances()
+          + PredefinedAutoScaling.getPrimaryWorkerInstances());
     }
 
-    return workerCPUs * (workerNumNodes + secondaryWorkerNumNodes);
+    return workerCpus * (workerNumNodes + secondaryWorkerNumNodes);
   }
 
   @Nullable
@@ -383,8 +383,8 @@ final class DataprocConf {
     return serviceAccount;
   }
 
-  boolean isPreferExternalIP() {
-    return preferExternalIP;
+  boolean isPreferExternalIp() {
+    return preferExternalIp;
   }
 
   boolean isStackdriverLoggingEnabled() {
@@ -436,8 +436,8 @@ final class DataprocConf {
     return autoScalingPolicy;
   }
 
-  public int getIdleTTLMinutes() {
-    return idleTTLMinutes;
+  public int getIdleTtlMinutes() {
+    return idleTtlMinutes;
   }
 
   @Nullable
@@ -498,6 +498,8 @@ final class DataprocConf {
   }
 
   /**
+   * Returns a key that represents cluster configuration.
+   *
    * @return a key that should be used along with the profile name to filter clusters with the same
    *     configuration. Always returns a value if cluster reuse is enabled, returns null otherwise.
    */
@@ -507,6 +509,8 @@ final class DataprocConf {
   }
 
   /**
+   * Returns GoogleCredentials for use with Compute.
+   *
    * @return GoogleCredentials for use with Compute
    * @throws IOException if there was an error reading the account key
    */
@@ -522,6 +526,8 @@ final class DataprocConf {
   }
 
   /**
+   * Returns GoogleCredentials for use with Dataproc.
+   *
    * @return GoogleCredentials for use with Dataproc
    * @throws IOException if there was an error reading the account key
    */
@@ -535,12 +541,12 @@ final class DataprocConf {
     }
   }
 
-  private String getMachineType(@Nullable String type, int cpus, int memoryMB) {
+  private String getMachineType(@Nullable String type, int cpus, int memoryMb) {
     // n1 is of format custom-cpu-memory
     // other types are of format type-custom-cpu-memory. For example, n2d-custom-4-16
     String typePrefix = type == null || type.isEmpty() || "n1".equals(type.toLowerCase())
         ? "" : type.toLowerCase() + "-";
-    return String.format("%scustom-%d-%d", typePrefix, cpus, memoryMB);
+    return String.format("%scustom-%d-%d", typePrefix, cpus, memoryMb);
   }
 
   /**
@@ -586,12 +592,12 @@ final class DataprocConf {
             "Provided zone " + zone + " is not in the region " + region);
       }
     }
-    String networkHostProjectID = getString(properties, NETWORK_HOST_PROJECT_ID);
+    final String networkHostProjectId = getString(properties, NETWORK_HOST_PROJECT_ID);
     String network = getString(properties, NETWORK);
     if (network == null || AUTO_DETECT.equals(network)) {
       network = null;
     }
-    String subnet = getString(properties, "subnet");
+    final String subnet = getString(properties, "subnet");
 
     int masterNumNodes = getInt(properties, "masterNumNodes", 1);
     if (masterNumNodes != 1 && masterNumNodes != 3) {
@@ -629,43 +635,43 @@ final class DataprocConf {
     // TODO: more extensive validation. Each cpu number has a different allowed memory range
     // for example, 1 cpu requires memory from 3.5gb to 6.5gb in .25gb increments
     // 3 cpu requires memory from 3.6gb to 26gb in .25gb increments
-    int masterCPUs = getInt(properties, "masterCPUs", 4);
-    int workerCPUs = getInt(properties, "workerCPUs", 4);
-    int masterMemoryGB = getInt(properties, "masterMemoryMB", 15 * 1024);
-    int workerMemoryGB = getInt(properties, "workerMemoryMB", 15 * 1024);
+    final int masterCpus = getInt(properties, "masterCPUs", 4);
+    final int workerCpus = getInt(properties, "workerCPUs", 4);
+    final int masterMemoryMb = getInt(properties, "masterMemoryMB", 15 * 1024);
+    final int workerMemoryMb = getInt(properties, "workerMemoryMB", 15 * 1024);
 
-    int masterDiskGB = getInt(properties, "masterDiskGB", 1000);
+    final int masterDiskGb = getInt(properties, "masterDiskGB", 1000);
     String masterDiskType = getString(properties, "masterDiskType");
-    String masterMachineType = getString(properties, "masterMachineType");
+    final String masterMachineType = getString(properties, "masterMachineType");
     if (masterDiskType == null) {
       masterDiskType = "pd-standard";
     }
-    int workerDiskGB = getInt(properties, "workerDiskGB", 1000);
+    final int workerDiskGb = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
-    String workerMachineType = getString(properties, "workerMachineType");
+    final String workerMachineType = getString(properties, "workerMachineType");
     if (workerDiskType == null) {
       workerDiskType = "pd-standard";
     }
 
-    long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
-    long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
-    long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
-    long pollInterval = getLong(properties, "pollInterval", 2);
+    final long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
+    final long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
+    final long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
+    final long pollInterval = getLong(properties, "pollInterval", 2);
 
-    String serviceAccount = getString(properties, "serviceAccount");
-    boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
+    final String serviceAccount = getString(properties, "serviceAccount");
+    final boolean preferExternalIp = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
     // By default stackdriver is enabled. This is for backward compatibility
-    boolean stackdriverLoggingEnabled = Boolean.parseBoolean(
+    final boolean stackdriverLoggingEnabled = Boolean.parseBoolean(
         properties.getOrDefault(STACKDRIVER_LOGGING_ENABLED,
             "true"));
-    boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(
+    final boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(
         properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
             "true"));
-    boolean componentGatewayEnabled = Boolean.parseBoolean(
+    final boolean componentGatewayEnabled = Boolean.parseBoolean(
         properties.get(COMPONENT_GATEWAY_ENABLED));
-    boolean skipDelete = Boolean.parseBoolean(properties.get(SKIP_DELETE));
+    final boolean skipDelete = Boolean.parseBoolean(properties.get(SKIP_DELETE));
 
-    Map<String, String> clusterPropOverrides =
+    final Map<String, String> clusterPropOverrides =
         DataprocUtils.parseKeyValueConfig(getString(properties, "clusterProperties"), ";", "=");
 
     Map<String, String> clusterProps = properties.entrySet().stream()
@@ -673,20 +679,20 @@ final class DataprocConf {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     clusterProps.putAll(clusterPropOverrides);
 
-    String imageVersion = getString(properties, IMAGE_VERSION);
-    String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
-    String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
-    String gcpCmekBucket = getString(properties, "gcsBucket");
+    final String imageVersion = getString(properties, IMAGE_VERSION);
+    final String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
+    final String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
+    final String gcpCmekBucket = getString(properties, "gcsBucket");
 
-    Map<String, String> clusterMetaData = Collections.unmodifiableMap(
+    final Map<String, String> clusterMetaData = Collections.unmodifiableMap(
         DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_META_DATA), ";", "\\|"));
 
-    Map<String, String> clusterLabels = Collections.unmodifiableMap(
+    final Map<String, String> clusterLabels = Collections.unmodifiableMap(
         DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_LABELS), ";", "\\|"));
 
-    String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags"))
+    final String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags"))
         .orElse("");
-    List<String> networkTags = Collections.unmodifiableList(
+    final List<String> networkTags = Collections.unmodifiableList(
         Arrays.stream(networkTagsProperty.split(","))
             .map(String::trim)
             .filter(s -> !s.isEmpty())
@@ -697,26 +703,29 @@ final class DataprocConf {
           "Number of network tags cannot be more than " + MAX_NETWORK_TAGS);
     }
 
-    String initActions = getString(properties, "initActions");
-    boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
-    int idleTTL = getInt(properties, CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
+    final String initActions = getString(properties, "initActions");
+    final boolean runtimeJobManagerEnabled = Boolean.parseBoolean(
+        properties.get(RUNTIME_JOB_MANAGER));
+    final int idleTtl = getInt(properties,
+        CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
-    String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
-    boolean secureBootEnabled = Boolean.parseBoolean(
+    final String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
+    final boolean secureBootEnabled = Boolean.parseBoolean(
         properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
-    boolean vTpmEnabled = Boolean.parseBoolean(properties.getOrDefault(VTPM_ENABLED, "false"));
-    boolean integrityMonitoringEnabled = Boolean.parseBoolean(
+    final boolean vTpmEnabled = Boolean.parseBoolean(
+        properties.getOrDefault(VTPM_ENABLED, "false"));
+    final boolean integrityMonitoringEnabled = Boolean.parseBoolean(
         properties.getOrDefault(INTEGRITY_MONITORING_ENABLED, "false"));
 
-    boolean clusterReuseEnabled = Boolean.parseBoolean(
+    final boolean clusterReuseEnabled = Boolean.parseBoolean(
         properties.getOrDefault(CLUSTER_REUSE_ENABLED, "true"));
-    int clusterReuseThresholdMinutes = getInt(properties, CLUSTER_REUSE_THRESHOLD_MINUTES,
+    final int clusterReuseThresholdMinutes = getInt(properties, CLUSTER_REUSE_THRESHOLD_MINUTES,
         CLUSTER_REUSE_THRESHOLD_MINUTES_DEFAULT);
-    long clusterReuseRetryDelayMs = getLong(properties, CLUSTER_REUSE_RETRY_DELAY_MS,
+    final long clusterReuseRetryDelayMs = getLong(properties, CLUSTER_REUSE_RETRY_DELAY_MS,
         CLUSTER_REUSE_RETRY_DELAY_MS_DEFAULT);
-    long clusterReuseRetryMaxMs = getLong(properties, CLUSTER_REUSE_RETRY_MAX_MS,
+    final long clusterReuseRetryMaxMs = getLong(properties, CLUSTER_REUSE_RETRY_MAX_MS,
         CLUSTER_REUSE_RETRY_MAX_DEFAULT);
-    long clusterReuseUpdateMaxMs = getLong(properties, CLUSTER_REUSE_UPDATE_MAX_MS,
+    final long clusterReuseUpdateMaxMs = getLong(properties, CLUSTER_REUSE_UPDATE_MAX_MS,
         CLUSTER_REUSE_UPDATE_MAX_DEFAULT);
     String clusterReuseKey = null;
     if (clusterReuseEnabled) {
@@ -734,39 +743,39 @@ final class DataprocConf {
         throw new IllegalStateException("SHA-1 algorithm is not available for cluster reuse", e);
       }
     }
-    int computeReadTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_READ_TIMEOUT,
+    final int computeReadTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_READ_TIMEOUT,
         COMPUTE_HTTP_REQUEST_READ_TIMEOUT_DEFAULT);
-    int computeConnectionTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+    final int computeConnectionTimeout = getInt(properties, COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
         COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT_DEFAULT);
-    String rootUrl = getString(properties, ROOT_URL);
+    final String rootUrl = getString(properties, ROOT_URL);
 
     // If false, artifacts will not be cached in GCS regardless of cConf setting.
-    boolean gcsCacheEnabled = Boolean.parseBoolean(
+    final boolean gcsCacheEnabled = Boolean.parseBoolean(
         properties.getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"));
     // If true, artifacts will not be cached locally.
-    boolean disableLocalCaching =
+    final boolean disableLocalCaching =
         Boolean.parseBoolean(properties.getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED, "false"));
-    String troubleshootingDocsURL =
+    final String troubleshootingDocsUrl =
         properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
             DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
 
-    return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network,
+    return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectId, network,
         subnet,
-        masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
+        masterNumNodes, masterCpus, masterMemoryMb, masterDiskGb,
         masterDiskType, masterMachineType,
-        workerNumNodes, secondaryWorkerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
+        workerNumNodes, secondaryWorkerNumNodes, workerCpus, workerMemoryMb, workerDiskGb,
         workerDiskType, workerMachineType,
         pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-        gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
+        gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIp,
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
         componentGatewayEnabled, skipDelete,
         imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
-        initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL,
+        initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTtl,
         tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
         clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseRetryDelayMs,
         clusterReuseRetryMaxMs, clusterReuseUpdateMaxMs, clusterReuseKey,
         enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-        gcsCacheEnabled, disableLocalCaching, troubleshootingDocsURL);
+        gcsCacheEnabled, disableLocalCaching, troubleshootingDocsUrl);
   }
 
   // the UI never sends nulls, it only sends empty strings.
