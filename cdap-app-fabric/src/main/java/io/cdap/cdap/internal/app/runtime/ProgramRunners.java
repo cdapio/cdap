@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.util.ConfigurationWatchListUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -42,9 +43,11 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -161,12 +164,7 @@ public final class ProgramRunners {
    */
   @Nullable
   public static Location createLogbackJar(Location targetLocation) throws IOException {
-    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-    if (!(loggerFactory instanceof Context)) {
-      return null;
-    }
-
-    URL logbackURL = ConfigurationWatchListUtil.getMainWatchURL((Context) loggerFactory);
+    URL logbackURL = getLogbackURL(System.getProperties());
     if (logbackURL == null) {
       return null;
     }
@@ -178,6 +176,22 @@ public final class ProgramRunners {
       }
       return targetLocation;
     }
+  }
+
+  @VisibleForTesting
+  @Nullable
+  static URL getLogbackURL(Properties properties) throws MalformedURLException {
+    String configurationFile = properties.getProperty("logback.configurationFile");
+    if (configurationFile != null) {
+      return new File(configurationFile).toURI().toURL();
+    }
+
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (!(loggerFactory instanceof Context)) {
+      return null;
+    }
+
+    return ConfigurationWatchListUtil.getMainWatchURL((Context) loggerFactory);
   }
 
   /**
