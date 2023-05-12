@@ -31,6 +31,7 @@ ARG base_image
 FROM openjdk:8-jdk AS sources
 ENV DIR /cdap/build
 COPY . $DIR/
+
 RUN tar -zcvf /tmp/cdap-build-sources.tar.gz --exclude='.git*' --exclude='node_modules' --exclude='target' $DIR && \
   apt-get update && \
   apt-get -y install curl && \
@@ -50,6 +51,10 @@ RUN tar -zcvf /tmp/cdap-build-sources.tar.gz --exclude='.git*' --exclude='node_m
   mkdir /tmp/LICENSES/commons-lang-2.6 && jar xvf /tmp/connectors/commons-lang-2.6.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/commons-lang-2.6 && rm -r ./META-INF
 
 FROM ${base_image} AS build
+USER root
+RUN rm -rf /var/lib/apt/lists/lock
+RUN apt-get update \
+    && apt-get upgrade -y
 
 # copy cdap-spark-core and its dependencies
 COPY cdap-spark-core3_2.12/target/k8s /opt/cdap/cdap-spark-core
@@ -75,5 +80,9 @@ COPY cdap-authenticator-ext-gcp/target/libexec /opt/cdap/master/ext/authenticato
 
 # modified version of the Spark entrypoint that calls the CDAP SparkContainerLauncher
 COPY cdap-spark-core3_2.12/src/k8s/entrypoint.sh /opt/cdap/cdap-spark-core/entrypoint.sh
+
+RUN chown root:root /etc/passwd
+RUN chmod 644 /etc/passwd
+RUN passwd -l root
 ENTRYPOINT [ "/opt/cdap/cdap-spark-core/entrypoint.sh" ]
 
