@@ -106,6 +106,8 @@ public final class SystemArguments {
   public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
 
   public static final String JVM_OPTS = "system.program.jvm.opts";
+  // Runtime argument to skip the normal macro evaluation during app spec regeneration.
+  public static final String SKIP_NORMAL_MACRO_EVALUATION = "system.skip.normal.macro.evaluation";
 
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
@@ -541,6 +543,16 @@ public final class SystemArguments {
       }
     }
     return properties;
+  }
+
+  /**
+   * @param args runtime arguments
+   * @return boolean which helps to determine whether to skip normal macro evaluation during
+   * app spec regeneration
+   */
+  public static boolean skipNormalMacroEvaluation(Map<String, String> args) {
+    return Boolean.parseBoolean(args.getOrDefault(
+        SystemArguments.SKIP_NORMAL_MACRO_EVALUATION, "false"));
   }
 
   /**
