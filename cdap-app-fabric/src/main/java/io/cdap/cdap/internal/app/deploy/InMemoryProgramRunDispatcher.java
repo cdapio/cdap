@@ -351,9 +351,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
           String.format("No application class found in artifact '%s' in namespace '%s'.",
               artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
     }
-    Map <String, String> runtimeArguments =
-        SystemArguments.skipNormalMacroEvaluation(options.getUserArguments().asMap()) ?
-            Collections.emptyMap() : options.getUserArguments().asMap();
+    Map<String, String> runtimeArguments =
+        SystemArguments.skipNormalMacroEvaluation(options.getUserArguments().asMap())
+            ? Collections.emptyMap() : options.getUserArguments().asMap();
 
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
         .setArtifactId(artifactId)

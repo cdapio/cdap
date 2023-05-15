@@ -400,8 +400,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     Location programJarLocation = Locations.toLocation(
         new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
 
-    userArguments = SystemArguments.skipNormalMacroEvaluation(userArguments) ?
-        Collections.emptyMap() : userArguments;
+    userArguments = SystemArguments.skipNormalMacroEvaluation(userArguments)
+        ? Collections.emptyMap() : userArguments;
 
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
         .setArtifactId(programDescriptor.getArtifactId())
