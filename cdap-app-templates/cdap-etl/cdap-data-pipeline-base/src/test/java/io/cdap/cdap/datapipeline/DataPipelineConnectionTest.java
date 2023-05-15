@@ -41,6 +41,7 @@ import io.cdap.cdap.etl.api.connector.BrowseRequest;
 import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.connector.SampleRequest;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.mock.action.MockAction;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.connector.FileConnector;
@@ -681,6 +682,86 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     deleteConnection(sourceConnName);
     deleteConnection(sinkConnName);
     deleteConnection(transformConnName);
+
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName));
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sinkTableName));
+  }
+
+  @Test
+  public void testConnectionsWithArgumentSetterAction() throws Exception {
+    testConnectionsWithArgumentSetterAction(Engine.MAPREDUCE);
+    testConnectionsWithArgumentSetterAction(Engine.SPARK);
+  }
+
+  private void testConnectionsWithArgumentSetterAction(Engine engine) throws Exception {
+    String sourceConnName = "sourceConn" + engine;
+    String sinkConnName = "sinkConn" + engine;
+    String srcTableName = "src" + engine;
+    String sinkTableName = "sink" + engine;
+    String actionTableName = "action" + engine;
+
+    Schema schema = Schema.recordOf("x", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+
+    // add secure macro to verify json value of secure data does not fail the macro evaluation in connections
+    String schemaJson = schema.toString();
+    getSecureStoreManager().put(NamespaceId.DEFAULT.getNamespace(), "json", schemaJson, "", Collections.emptyMap());
+
+    // 'row1column1' is the macro key for src table name which should be set by the action plugin
+    addConnection(
+        sourceConnName, new ConnectionCreationRequest(
+            "", new PluginInfo("test", "dummy", null, ImmutableMap.of("tableName", "${row1column1}",
+            "schema", "${secure(json)}"),
+            new ArtifactSelectorConfig())));
+
+    addConnection(
+        sinkConnName, new ConnectionCreationRequest(
+            "", new PluginInfo("test", "dummy", null, Collections.singletonMap("tableName",
+            sinkTableName), new ArtifactSelectorConfig())));
+
+    ETLBatchConfig config = ETLBatchConfig.builder()
+        // 'row1column1' is configured in runtime arg to 'dummy'
+        // but action will set an argument that will make it 'srcTableName'
+        .addStage(new ETLStage("action1", MockAction.getPlugin(actionTableName, "row1", "column1",
+            String.format("%s", srcTableName))))
+        .addStage(new ETLStage("source", MockSource.getPluginUsingConnection(sourceConnName)))
+        .addStage(new ETLStage("sink", MockSink.getPluginUsingConnection(sinkConnName)))
+        .addConnection("action1", "source")
+        .addConnection("source", "sink")
+        .build();
+    // runtime arguments
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>builder()
+        .put("row1column1", "dummy")
+        .build();
+
+    StructuredRecord samuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord dwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
+
+    addDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName), Table.class.getName());
+    DataSetManager<Table> sourceTable = getDataset(srcTableName);
+    MockSource.writeInput(sourceTable, ImmutableList.of(samuel, dwayne));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("testConnectionsWithArgumentSetterAction" + engine);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // start the actual pipeline run
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    manager.startAndWaitForRun(runtimeArguments, ProgramRunStatus.FAILED, 3,
+        TimeUnit.MINUTES);
+
+    runtimeArguments = ImmutableMap.<String, String>builder()
+        .put("row1column1", "dummy")
+        .put("system.skip.normal.macro.evaluation", "true")
+        .build();
+    manager.startAndWaitForRun(runtimeArguments, ProgramRunStatus.COMPLETED, 3,
+        TimeUnit.MINUTES);
+
+    DataSetManager<Table> sinkTable = getDataset(sinkTableName);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(sinkTable);
+    Assert.assertEquals(ImmutableSet.of(dwayne, samuel), new HashSet<>(outputRecords));
+
+    deleteConnection(sourceConnName);
+    deleteConnection(sinkConnName);
 
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(srcTableName));
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sinkTableName));
