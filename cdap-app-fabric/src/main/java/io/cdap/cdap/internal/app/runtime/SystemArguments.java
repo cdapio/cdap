@@ -56,7 +56,8 @@ public final class SystemArguments {
   // Keys for container resources
   public static final String MEMORY_KEY = "system.resources.memory";
   public static final String CORES_KEY = "system.resources.cores";
-  public static final String RESERVED_MEMORY_KEY_OVERRIDE = "system.resources.reserved.memory.override";
+  public static final String RESERVED_MEMORY_KEY_OVERRIDE =
+      "system.resources.reserved.memory.override";
 
   // Keys for log levels
   private static final String LOG_LEVEL = "system.log.level";
@@ -106,6 +107,8 @@ public final class SystemArguments {
   public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
 
   public static final String JVM_OPTS = "system.program.jvm.opts";
+  // Runtime argument to skip the normal macro evaluation during app spec regeneration.
+  public static final String SKIP_NORMAL_MACRO_EVALUATION = "system.skip.normal.macro.evaluation";
 
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
@@ -209,9 +212,11 @@ public final class SystemArguments {
     }
     int maxTimeout = cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT);
     if (timeout > maxTimeout) {
-      throw new IllegalArgumentException(String.format(
-          "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit (%s) of %d",
-          TRANSACTION_TIMEOUT, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
+      throw new IllegalArgumentException(
+          String.format(
+              "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit"
+                  + " (%s) of %d",
+              TRANSACTION_TIMEOUT, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
     }
     return timeout;
   }
@@ -243,9 +248,11 @@ public final class SystemArguments {
     if (timeout != null) {
       int maxTimeout = cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT);
       if (timeout > maxTimeout) {
-        throw new IllegalArgumentException(String.format(
-            "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit (%s) of %d",
-            argName, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
+        throw new IllegalArgumentException(
+            String.format(
+                "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout"
+                    + " limit (%s) of %d",
+                argName, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
       }
     }
   }
@@ -541,6 +548,16 @@ public final class SystemArguments {
       }
     }
     return properties;
+  }
+
+  /**
+   * returns boolean whether to skip normal macro evaluation during app spec regeneration
+   * @param args runtime arguments
+   * @return true or false
+   */
+  public static boolean skipNormalMacroEvaluation(Map<String, String> args) {
+    return Boolean.parseBoolean(args.getOrDefault(
+        SystemArguments.SKIP_NORMAL_MACRO_EVALUATION, "false"));
   }
 
   /**
