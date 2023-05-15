@@ -551,9 +551,9 @@ public final class SystemArguments {
   }
 
   /**
-   * returns boolean whether to skip normal macro evaluation during app spec regeneration
+   * return boolean whether to skip normal macro evaluation during app spec regeneration
    * @param args runtime arguments
-   * @return true or false
+   * @return true if flag is set otherwise false
    */
   public static boolean skipNormalMacroEvaluation(Map<String, String> args) {
     return Boolean.parseBoolean(args.getOrDefault(
