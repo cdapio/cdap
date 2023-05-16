@@ -25,12 +25,12 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
- * Interface for fetching {@code ApplicationDetail}
+ * Interface for fetching {@code ApplicationDetail}.
  */
 public interface ApplicationDetailFetcher {
 
   /**
-   * Get the application detail for the given application reference
+   * Get the application detail for the given application reference.
    *
    * @param appRef the versionless ID of the application
    * @return the detail of the given application
@@ -42,7 +42,7 @@ public interface ApplicationDetailFetcher {
       throws IOException, NotFoundException, UnauthorizedException;
 
   /**
-   * Scans all the latest version of application details in the given namespace
+   * Scans all the latest version of application details in the given namespace.
    *
    * @param namespace the namespace to scan application details from
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned

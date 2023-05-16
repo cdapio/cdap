@@ -206,11 +206,8 @@ public abstract class DefaultStoreTest {
     String appName = "app1";
     String workflowName = "workflow1";
     String mapReduceName = "mapReduce1";
-    String sparkName = "spark1";
 
     ApplicationId appId = Ids.namespace(namespaceName).app(appName);
-    ProgramId mapReduceProgram = appId.mr(mapReduceName);
-    ProgramId sparkProgram = appId.spark(sparkName);
 
     long currentTime = System.currentTimeMillis();
     String workflowRunId = RunIds.generate(currentTime).getId();
@@ -226,6 +223,7 @@ public abstract class DefaultStoreTest {
                                                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId mapReduceRunId = RunIds.generate(currentTime + 10);
+    ProgramId mapReduceProgram = appId.mr(mapReduceName);
 
     setStartAndRunning(mapReduceProgram.run(mapReduceRunId.getId()), ImmutableMap.of(), systemArgs, artifactId);
 
@@ -234,11 +232,14 @@ public abstract class DefaultStoreTest {
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     // start Spark program as a part of Workflow
+    String sparkName = "spark1";
     systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
                                  ProgramOptionConstants.WORKFLOW_NAME, workflowName,
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
+    ProgramId sparkProgram = appId.spark(sparkName);
+    
     setStartAndRunning(sparkProgram.run(sparkRunId.getId()), ImmutableMap.of(), systemArgs, artifactId);
 
     // stop the Spark program with failure
@@ -306,8 +307,6 @@ public abstract class DefaultStoreTest {
 
   @Test
   public void testLogProgramRunHistory() {
-    Map<String, String> noRuntimeArgsProps = ImmutableMap.of("runtimeArgs",
-                                                             GSON.toJson(ImmutableMap.<String, String>of()));
     // record finished Workflow
     ProgramId programId = new ProgramId("account1", "application1", ProgramType.WORKFLOW, "wf1");
     long now = System.currentTimeMillis();
@@ -422,6 +421,9 @@ public abstract class DefaultStoreTest {
     setStart(programId.run(run7.getId()), emptyArgs, emptyArgs, artifactId);
     store.setStop(programId.run(run7.getId()), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
+    Map<String, String> noRuntimeArgsProps = ImmutableMap.of("runtimeArgs",
+        GSON.toJson(ImmutableMap.<String, String>of()));
+
     RunRecordDetail expectedRunRecord7 = RunRecordDetail.builder()
       .setProgramRunId(programId.run(run7))
       .setStartTime(startTimeSecs)
@@ -697,8 +699,8 @@ public abstract class DefaultStoreTest {
     for (RunCountResult runCountResult : result) {
       ProgramReference programReference = runCountResult.getProgramReference();
       Long count = runCountResult.getCount();
-      if (programReference.equals(nonExistingAppProgramId.getProgramReference()) ||
-        programReference.equals(nonExistingProgramId.getProgramReference())) {
+      if (programReference.equals(nonExistingAppProgramId.getProgramReference())
+          || programReference.equals(nonExistingProgramId.getProgramReference())) {
         Assert.assertNull(count);
         Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
       } else {
@@ -735,14 +737,15 @@ public abstract class DefaultStoreTest {
     String mapreduceRunId = RunIds.generate(nowMillis).getId();
     String workflowRunId = RunIds.generate(nowMillis).getId();
 
-    ProgramRunId mapreduceProgramRunId = mapreduceProgramId.run(mapreduceRunId);
-    ProgramRunId workflowProgramRunId = workflowProgramId.run(workflowRunId);
     ArtifactId artifactId = appId.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
     setStartAndRunning(mapreduceProgramId.run(mapreduceRunId),
                        ImmutableMap.of("path", "/data"), new HashMap<>(), artifactId);
     setStartAndRunning(workflowProgramId.run(workflowRunId),
                        ImmutableMap.of("whitelist", "cask"), new HashMap<>(), artifactId);
+    
+    ProgramRunId mapreduceProgramRunId = mapreduceProgramId.run(mapreduceRunId);
+    ProgramRunId workflowProgramRunId = workflowProgramId.run(workflowRunId);
 
     Map<String, String> args = store.getRuntimeArguments(mapreduceProgramRunId);
     Assert.assertEquals(1, args.size());
@@ -784,16 +787,14 @@ public abstract class DefaultStoreTest {
                                                    System.currentTimeMillis()));
     store.addApplication(appId2, appMeta);
 
-    ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
-    ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
     ArtifactId artifactId = appId1.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
-
-    ProgramId serviceId = appId2.service(AppWithServices.SERVICE_NAME);
 
     Assert.assertNotNull(store.getApplication(appId1));
     Assert.assertNotNull(store.getApplication(appId2));
 
     long now = System.currentTimeMillis();
+    ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
+    ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
 
     ProgramRunId mapreduceProgramRunId1 = mapreduceProgramId1.run(RunIds.generate(now - 1000));
     setStartAndRunning(mapreduceProgramRunId1, artifactId);
@@ -805,6 +806,7 @@ public abstract class DefaultStoreTest {
     store.setStop(workflowProgramId1.run(runId.getId()), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
+    ProgramId serviceId = appId2.service(AppWithServices.SERVICE_NAME);
     ProgramRunId serviceRunId = serviceId.run(RunIds.generate(now - 1000));
     setStartAndRunning(serviceRunId, artifactId);
     store.setStop(serviceRunId, now, ProgramController.State.COMPLETED.getRunStatus(),
@@ -1071,12 +1073,12 @@ public abstract class DefaultStoreTest {
   @Test
   public void testRunningInRangeSimple() {
     NamespaceId ns = new NamespaceId("d");
-    ProgramRunId run1 = ns.app("a1").program(ProgramType.SERVICE, "f1").run(RunIds.generate(20000).getId());
-    ProgramRunId run2 = ns.app("a2").program(ProgramType.MAPREDUCE, "f2").run(RunIds.generate(10000).getId());
-    ProgramRunId run3 = ns.app("a3").program(ProgramType.WORKER, "f3").run(RunIds.generate(40000).getId());
-    ProgramRunId run4 = ns.app("a4").program(ProgramType.SERVICE, "f4").run(RunIds.generate(70000).getId());
-    ProgramRunId run5 = ns.app("a5").program(ProgramType.SPARK, "f5").run(RunIds.generate(30000).getId());
-    ProgramRunId run6 = ns.app("a6").program(ProgramType.WORKFLOW, "f6").run(RunIds.generate(60000).getId());
+    final ProgramRunId run1 = ns.app("a1").program(ProgramType.SERVICE, "f1").run(RunIds.generate(20000).getId());
+    final ProgramRunId run2 = ns.app("a2").program(ProgramType.MAPREDUCE, "f2").run(RunIds.generate(10000).getId());
+    final ProgramRunId run3 = ns.app("a3").program(ProgramType.WORKER, "f3").run(RunIds.generate(40000).getId());
+    final ProgramRunId run4 = ns.app("a4").program(ProgramType.SERVICE, "f4").run(RunIds.generate(70000).getId());
+    final ProgramRunId run5 = ns.app("a5").program(ProgramType.SPARK, "f5").run(RunIds.generate(30000).getId());
+    final ProgramRunId run6 = ns.app("a6").program(ProgramType.WORKFLOW, "f6").run(RunIds.generate(60000).getId());
     ArtifactId artifactId = ns.artifact("testArtifact", "1.0").toApiArtifactId();
     writeStartRecord(run1, artifactId);
     writeStartRecord(run2, artifactId);
@@ -1180,9 +1182,9 @@ public abstract class DefaultStoreTest {
   @Test
   public void testStateRemovedOnRemoveApplication() throws ApplicationNotFoundException, ConflictException {
     String stateKey = "kafka";
-    byte[] stateValue = ("{\n" +
-                         "\"offset\" : 12345\n" +
-                         "}").getBytes(StandardCharsets.UTF_8);
+    byte[] stateValue = ("{\n"
+        + "\"offset\" : 12345\n"
+        + "}").getBytes(StandardCharsets.UTF_8);
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
@@ -1206,9 +1208,9 @@ public abstract class DefaultStoreTest {
   @Test
   public void testStateRemovedOnRemoveAll() throws ApplicationNotFoundException, ConflictException {
     String stateKey = "kafka";
-    byte[] stateValue = ("{\n" +
-                         "\"offset\" : 12345\n" +
-                         "}").getBytes(StandardCharsets.UTF_8);
+    byte[] stateValue = ("{\n"
+        + "\"offset\" : 12345\n"
+        + "}").getBytes(StandardCharsets.UTF_8);
     String appName = "application1";
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
@@ -1246,7 +1248,6 @@ public abstract class DefaultStoreTest {
     ApplicationSpecification spec = createDummyAppSpec(appId.getApplication(), appId.getVersion(), artifactId);
     ApplicationMeta appMeta = new ApplicationMeta(appId.getApplication(), spec, null);
     List<ApplicationId> expectedApps = new ArrayList<>();
-    long currentTime = System.currentTimeMillis();
 
     // Insert a row that is null for changeDetail
     store.addApplication(appId, appMeta);
@@ -1254,6 +1255,8 @@ public abstract class DefaultStoreTest {
 
     ApplicationId newVersionAppId = appId.getAppReference().app("new_version");
     spec = createDummyAppSpec(newVersionAppId.getApplication(), newVersionAppId.getVersion(), artifactId);
+    long currentTime = System.currentTimeMillis();
+
     ApplicationMeta newAppMeta = new ApplicationMeta(newVersionAppId.getApplication(), spec,
                                                      new ChangeDetail(null, null,
                                                                       null, currentTime));

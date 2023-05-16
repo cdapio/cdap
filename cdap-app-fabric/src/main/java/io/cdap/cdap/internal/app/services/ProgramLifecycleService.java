@@ -214,6 +214,29 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Returns the program status based on the active run records of a program. A program is RUNNING
+   * if there are any RUNNING, STOPPING, or SUSPENDED run records. A program is starting if there
+   * are any PENDING or STARTING run records and no RUNNING run records. Otherwise, it is STOPPED.
+   *
+   * @param runRecords run records for the program
+   * @return the program status
+   */
+  @VisibleForTesting
+  static ProgramStatus getProgramStatus(Collection<RunRecordDetail> runRecords) {
+    boolean hasStarting = false;
+    for (RunRecordDetail runRecord : runRecords) {
+      ProgramRunStatus runStatus = runRecord.getStatus();
+      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED
+          || runStatus == ProgramRunStatus.STOPPING) {
+        return ProgramStatus.RUNNING;
+      }
+      hasStarting = hasStarting || runStatus == ProgramRunStatus.STARTING
+          || runStatus == ProgramRunStatus.PENDING;
+    }
+    return hasStarting ? ProgramStatus.STARTING : ProgramStatus.STOPPED;
+  }
+
+  /**
    * Gets the {@link ProgramStatus} for the given set of programs.
    *
    * @param programRefs collection of versionless program ids for retrieving status
@@ -366,12 +389,6 @@ public class ProgramLifecycleService {
     return new ArrayList<>(store.getRuns(programId, programRunStatus, start, end, limit).values());
   }
 
-  public List<RunRecord> getRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
-      long start, long end, int limit) throws Exception {
-    return getRunRecordMetas(programId, programRunStatus, start, end, limit).stream()
-        .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
-  }
-
   /**
    * Get the all runs within the specified start and end times for the specified program.
    *
@@ -400,12 +417,30 @@ public class ProgramLifecycleService {
         store.getAllRuns(programReference, programRunStatus, start, end, limit, filter).values());
   }
 
+  /**
+   * Get all the {@link RunRecord} for a {@link ProgramReference} during a time range.
+   *
+   * @param programReference the {@link ProgramReference}
+   * @param programRunStatus the {@link ProgramRunStatus}
+   * @param start the start time
+   * @param end the end time
+   * @param limit the limit
+   * @param filter a list of {@link RunRecordDetail} predicates
+   * @return a list of {@link RunRecord}
+   * @throws Exception when getAllRunRecordMetas throws
+   */
   public List<RunRecord> getAllRunRecords(ProgramReference programReference,
       ProgramRunStatus programRunStatus,
       long start, long end, int limit, Predicate<RunRecordDetail> filter)
       throws Exception {
     return getAllRunRecordMetas(programReference, programRunStatus, start, end, limit,
         filter).stream()
+        .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
+  }
+
+  public List<RunRecord> getRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
+      long start, long end, int limit) throws Exception {
+    return getRunRecordMetas(programId, programRunStatus, start, end, limit).stream()
         .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
   }
 
@@ -490,29 +525,6 @@ public class ProgramLifecycleService {
     }
 
     return getProgramStatus(store.getActiveRuns(programId).values());
-  }
-
-  /**
-   * Returns the program status based on the active run records of a program. A program is RUNNING
-   * if there are any RUNNING, STOPPING, or SUSPENDED run records. A program is starting if there
-   * are any PENDING or STARTING run records and no RUNNING run records. Otherwise, it is STOPPED.
-   *
-   * @param runRecords run records for the program
-   * @return the program status
-   */
-  @VisibleForTesting
-  static ProgramStatus getProgramStatus(Collection<RunRecordDetail> runRecords) {
-    boolean hasStarting = false;
-    for (RunRecordDetail runRecord : runRecords) {
-      ProgramRunStatus runStatus = runRecord.getStatus();
-      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED
-          || runStatus == ProgramRunStatus.STOPPING) {
-        return ProgramStatus.RUNNING;
-      }
-      hasStarting = hasStarting || runStatus == ProgramRunStatus.STARTING
-          || runStatus == ProgramRunStatus.PENDING;
-    }
-    return hasStarting ? ProgramStatus.STARTING : ProgramStatus.STOPPED;
   }
 
   /**
@@ -643,7 +655,7 @@ public class ProgramLifecycleService {
    * @param applicationId the application to restart programs in
    * @param startTimeSeconds earliest stop time in seconds of programs to restart
    * @param endTimeSeconds latest stop time in seconds of programs to restart
-   * @return {@link Set<RunId>} of runs restarted
+   * @return a set of {@link RunId} of runs restarted
    * @throws ConflictException if the specified program is already running, and if concurrent
    *     runs are not allowed
    * @throws NotFoundException if the specified program or the app it belongs to is not found in
@@ -679,7 +691,7 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Stop all active programs for the given application across all versions
+   * Stop all active programs for the given application across all versions.
    *
    * @param applicationReference application reference of the app to stop all active programs
    */
@@ -693,7 +705,7 @@ public class ProgramLifecycleService {
   /**
    * Runs a Program without authorization.
    *
-   * Note that this method should only be called through internal service, it does not have auth
+   * <p>Note that this method should only be called through internal service, it does not have auth
    * check for starting the program.
    *
    * @param programId the {@link ProgramId program} to run
@@ -800,7 +812,7 @@ public class ProgramLifecycleService {
     if (programSpecification == null) {
       throw new NotFoundException(programId);
     }
-    addAppCDAPVersion(programId, systemArgs);
+    addAppCdapVersion(programId, systemArgs);
     // put all the plugin requirements if any involved in the run
     systemArgs.put(ProgramOptionConstants.PLUGIN_REQUIREMENTS,
         GSON.toJson(getPluginRequirements(programSpecification)));
@@ -837,7 +849,7 @@ public class ProgramLifecycleService {
     checkConcurrentExecution(programId);
 
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
-    addAppCDAPVersion(programId, sysArgs);
+    addAppCdapVersion(programId, sysArgs);
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     sysArgs.put(ProgramOptionConstants.IS_PREVIEW, Boolean.toString(isPreview));
@@ -1108,7 +1120,7 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Gets runtime arguments for the program from the {@link PreferencesService}
+   * Gets runtime arguments for the program from the {@link PreferencesService}.
    *
    * @param programId the {@link ProgramId program} for which runtime arguments needs to be
    *     retrieved
@@ -1530,7 +1542,7 @@ public class ProgramLifecycleService {
    * @param programId program that corresponds to application with version information
    * @param systemArgs map to add version information to
    */
-  public void addAppCDAPVersion(ProgramId programId, Map<String, String> systemArgs) {
+  public void addAppCdapVersion(ProgramId programId, Map<String, String> systemArgs) {
     ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec != null) {
       String appCDAPVersion = appSpec.getAppCDAPVersion();
