@@ -246,7 +246,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Scans all the latest applications in the specified namespace, filtered to only include application details
+   * Scans all the latest applications in the specified namespace, filtered to only include application details.
    * which satisfy the filters
    *
    * @param namespace the namespace to scan apps from
@@ -264,7 +264,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Scans all applications in the specified namespace, filtered to only include application details
+   * Scans all applications in the specified namespace, filtered to only include application details.
    * which satisfy the filters
    *
    * @param request application scan request. Must name namespace filled
@@ -328,7 +328,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get detail about the specified application
+   * Get detail about the specified application.
    *
    * @param appId the id of the application to get
    * @return detail about the specified application
@@ -354,7 +354,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get details about the latest version of the specified application
+   * Get details about the latest version of the specified application.
    *
    * @param appRef the application reference
    * @param getSourceControlMeta the boolean indicating if we return {@link SourceControlMeta}
@@ -1049,8 +1049,86 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         appRequest.canUpdateSchedules(), false, Collections.emptyMap());
   }
 
+  private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
+      @Nullable String appVersion,
+      @Nullable String configStr,
+      @Nullable ChangeSummary changeSummary,
+      @Nullable SourceControlMeta sourceControlMeta,
+      ProgramTerminator programTerminator,
+      ArtifactDetail artifactDetail,
+      @Nullable KerberosPrincipalId ownerPrincipal,
+      boolean updateSchedules, boolean isPreview,
+      Map<String, String> userProps) throws Exception {
+    // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
+    // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
+    // pipeline - LocalArtifactLoaderStage
+
+    // need to enforce on the principal id if impersonation is involved
+    KerberosPrincipalId effectiveOwner =
+        SecurityUtil.getEffectiveOwner(ownerAdmin, namespaceId,
+            ownerPrincipal == null ? null : ownerPrincipal.getPrincipal());
+
+    Principal requestingUser = authenticationContext.getPrincipal();
+    // enforce that the current principal, if not the same as the owner principal, has the admin privilege on the
+    // impersonated principal
+    if (effectiveOwner != null) {
+      accessEnforcer.enforce(effectiveOwner, requestingUser, AccessPermission.SET_OWNER);
+    }
+
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
+        null);
+    if (appClass == null) {
+      throw new InvalidArtifactException(
+          String.format("No application class found in artifact '%s' in namespace '%s'.",
+              artifactDetail.getDescriptor().getArtifactId(), namespaceId));
+    }
+    if (!NamespaceId.SYSTEM.equals(namespaceId)) {
+      capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
+    }
+
+    // TODO @sansans : Fetch owner info JIRA: CDAP-19491
+    ChangeDetail change = new ChangeDetail(
+        changeSummary == null ? null : changeSummary.getDescription(),
+        changeSummary == null ? null : changeSummary.getParentVersion(),
+        requestingUser == null ? null : requestingUser.getName(),
+        System.currentTimeMillis());
+    // deploy application with newly added artifact
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+        .setArtifactId(Artifacts.toProtoArtifactId(namespaceId,
+            artifactDetail.getDescriptor().getArtifactId()))
+        .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+        .setApplicationClass(appClass)
+        .setNamespaceId(namespaceId)
+        .setAppName(appName)
+        .setAppVersion(appVersion)
+        .setConfigString(configStr)
+        .setOwnerPrincipal(ownerPrincipal)
+        .setUpdateSchedules(updateSchedules)
+        .setRuntimeInfo(
+            isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap())
+                : null)
+        .setChangeDetail(change)
+        .setSourceControlMeta(sourceControlMeta)
+        .build();
+
+    Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(
+        programTerminator);
+    // TODO: (CDAP-3258) Manager needs MUCH better error handling.
+    ApplicationWithPrograms applicationWithPrograms;
+    try {
+      applicationWithPrograms = manager.deploy(deploymentInfo).get();
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), Exception.class);
+      throw Throwables.propagate(e.getCause());
+    }
+
+    adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
+        applicationWithPrograms.getSpecification());
+    return applicationWithPrograms;
+  }
+
   /**
-   * Remove all the applications inside the given {@link Id.Namespace}
+   * Remove all the applications inside the given {@link Id.Namespace}.
    *
    * @param namespaceId the {@link NamespaceId} under which all application should be deleted
    * @throws CannotBeDeletedException if there are active programs running
@@ -1136,7 +1214,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Find if the given application has running programs
+   * Find if the given application has running programs.
    *
    * @param appId the id of the application to find running programs for
    * @throws CannotBeDeletedException : the application cannot be deleted because of running
@@ -1148,7 +1226,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Find if the given application has running programs
+   * Find if the given application has running programs.
    *
    * @param appRef the reference for a versionless application
    * @throws CannotBeDeletedException : the application cannot be deleted because of running
@@ -1176,7 +1254,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Get plugin details for the latest version of the given application
+   * Get plugin details for the latest version of the given application.
    *
    * @param appRef application reference
    * @return a list of {@link PluginInstanceDetail} for the latest version of the given application
@@ -1236,84 +1314,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     preferencesService.deleteProperties(appId);
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespace(),
         appId.getApplication());
-  }
-
-  private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
-      @Nullable String appVersion,
-      @Nullable String configStr,
-      @Nullable ChangeSummary changeSummary,
-      @Nullable SourceControlMeta sourceControlMeta,
-      ProgramTerminator programTerminator,
-      ArtifactDetail artifactDetail,
-      @Nullable KerberosPrincipalId ownerPrincipal,
-      boolean updateSchedules, boolean isPreview,
-      Map<String, String> userProps) throws Exception {
-    // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
-    // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
-    // pipeline - LocalArtifactLoaderStage
-
-    // need to enforce on the principal id if impersonation is involved
-    KerberosPrincipalId effectiveOwner =
-        SecurityUtil.getEffectiveOwner(ownerAdmin, namespaceId,
-            ownerPrincipal == null ? null : ownerPrincipal.getPrincipal());
-
-    Principal requestingUser = authenticationContext.getPrincipal();
-    // enforce that the current principal, if not the same as the owner principal, has the admin privilege on the
-    // impersonated principal
-    if (effectiveOwner != null) {
-      accessEnforcer.enforce(effectiveOwner, requestingUser, AccessPermission.SET_OWNER);
-    }
-
-    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
-        null);
-    if (appClass == null) {
-      throw new InvalidArtifactException(
-          String.format("No application class found in artifact '%s' in namespace '%s'.",
-              artifactDetail.getDescriptor().getArtifactId(), namespaceId));
-    }
-    if (!NamespaceId.SYSTEM.equals(namespaceId)) {
-      capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
-    }
-
-    // TODO @sansans : Fetch owner info JIRA: CDAP-19491
-    ChangeDetail change = new ChangeDetail(
-        changeSummary == null ? null : changeSummary.getDescription(),
-        changeSummary == null ? null : changeSummary.getParentVersion(),
-        requestingUser == null ? null : requestingUser.getName(),
-        System.currentTimeMillis());
-    // deploy application with newly added artifact
-    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
-        .setArtifactId(Artifacts.toProtoArtifactId(namespaceId,
-            artifactDetail.getDescriptor().getArtifactId()))
-        .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
-        .setApplicationClass(appClass)
-        .setNamespaceId(namespaceId)
-        .setAppName(appName)
-        .setAppVersion(appVersion)
-        .setConfigString(configStr)
-        .setOwnerPrincipal(ownerPrincipal)
-        .setUpdateSchedules(updateSchedules)
-        .setRuntimeInfo(
-            isPreview ? new AppDeploymentRuntimeInfo(null, userProps, Collections.emptyMap())
-                : null)
-        .setChangeDetail(change)
-        .setSourceControlMeta(sourceControlMeta)
-        .build();
-
-    Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(
-        programTerminator);
-    // TODO: (CDAP-3258) Manager needs MUCH better error handling.
-    ApplicationWithPrograms applicationWithPrograms;
-    try {
-      applicationWithPrograms = manager.deploy(deploymentInfo).get();
-    } catch (ExecutionException e) {
-      Throwables.propagateIfPossible(e.getCause(), Exception.class);
-      throw Throwables.propagate(e.getCause());
-    }
-
-    adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
-        applicationWithPrograms.getSpecification());
-    return applicationWithPrograms;
   }
 
   // deletes without performs checks that no programs are running
@@ -1421,7 +1421,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Creates list of scan filters for artifact names / version
+   * Creates list of scan filters for artifact names / version.
    *
    * @param artifactNames allow set of artifact names. All artifacts are allowed if empty
    * @param artifactVersion allowed artifact version. Any version is allowed if null
@@ -1439,6 +1439,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return builder.build();
   }
 
+  /**
+   * Decode User Id from {@link AuthenticationContext}.
+   *
+   * @return the User Id
+   */
   public String decodeUserId(AuthenticationContext authenticationContext) {
     String decodedUserId = "emptyUserId";
     try {

@@ -265,7 +265,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   /**
-   * Helper method to emit plugin metadata for a given application
+   * Helper method to emit plugin metadata for a given application.
    *
    * @param namespace the namespace that the app is deployed to
    * @param appSpec Application specification for the app
