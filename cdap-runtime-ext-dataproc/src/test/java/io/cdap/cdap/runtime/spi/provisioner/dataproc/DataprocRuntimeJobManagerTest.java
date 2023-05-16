@@ -22,6 +22,7 @@ import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import org.apache.twill.api.LocalFile;
+import org.apache.twill.internal.Constants;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -104,8 +105,9 @@ public class DataprocRuntimeJobManagerTest {
   @Test
   public void getArgumentsTest() {
     List<String> arguments = DataprocRuntimeJobManager.getArguments(runtimeJobInfo, Collections.emptyList(),
-                                                                    SparkCompat.SPARK3_2_12.getCompat());
-    Assert.assertEquals(3, arguments.size());
+                                                                    SparkCompat.SPARK3_2_12.getCompat(),
+                                                                    Constants.Files.APPLICATION_JAR);
+    Assert.assertEquals(4, arguments.size());
     Assert.assertTrue(arguments.contains("--propkey=\"val\""));
     Assert.assertTrue(arguments.contains("--runtimeJobClass=" + runtimeJobInfo.getRuntimeJobClassname()));
     Assert.assertTrue(arguments.contains("--sparkCompat=" + SparkCompat.SPARK3_2_12.getCompat()));

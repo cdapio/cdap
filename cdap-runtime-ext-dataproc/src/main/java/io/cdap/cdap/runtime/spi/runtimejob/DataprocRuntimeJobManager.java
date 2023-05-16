@@ -631,11 +631,14 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
       List<LocalFile> localFiles) throws IOException {
+    String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
+
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
         // set main class
         .setMainClass(DataprocJobMain.class.getName())
         // set main class arguments
-        .addAllArgs(getArguments(runtimeJobInfo, localFiles, provisionerContext.getSparkCompat().getCompat()))
+        .addAllArgs(getArguments(runtimeJobInfo, localFiles, provisionerContext.getSparkCompat().getCompat(),
+                                 applicationJarLocalizedName))
         .putAllProperties(getProperties(runtimeJobInfo));
 
     for (LocalFile localFile : localFiles) {
@@ -689,7 +692,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @VisibleForTesting
   public static List<String> getArguments(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles,
-                                          String sparkCompat) {
+                                          String sparkCompat, String applicationJarLocalizedName) {
     // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
     List<String> arguments = new ArrayList<>();
     arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
@@ -701,6 +704,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
       arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
     }
+    arguments.add("--" + Constants.Files.APPLICATION_JAR + "=" + applicationJarLocalizedName);
     return arguments;
   }
 
