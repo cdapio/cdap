@@ -732,7 +732,7 @@ public class DefaultStore implements Store {
   @Override
   public void scanApplications(int txBatchSize,
       BiConsumer<ApplicationId, ApplicationMeta> consumer) {
-    scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
+    scanApplications(ScanApplicationsRequest.builder().setLatestOnly(true).build(), txBatchSize, consumer);
   }
 
   @Override

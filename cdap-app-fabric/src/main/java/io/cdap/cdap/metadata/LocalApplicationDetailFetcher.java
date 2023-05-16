@@ -65,7 +65,7 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
   }
 
   /**
-   * Scans all application details in the given namespace
+   * Scans all the latest application details in the given namespace
    */
   @Override
   public void scan(String namespace, Consumer<ApplicationDetail> consumer, Integer batchSize)

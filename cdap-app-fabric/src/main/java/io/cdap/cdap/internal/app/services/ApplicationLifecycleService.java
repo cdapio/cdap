@@ -246,7 +246,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Scans all applications in the specified namespace, filtered to only include application details
+   * Scans all the latest applications in the specified namespace, filtered to only include application details
    * which satisfy the filters
    *
    * @param namespace the namespace to scan apps from
@@ -259,6 +259,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     scanApplications(ScanApplicationsRequest.builder()
         .setNamespaceId(namespace)
         .addFilters(filters)
+        .setLatestOnly(true)
         .build(), consumer);
   }
 
@@ -1071,6 +1072,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // All Apps are STOPPED, delete them in a streaming fashion
     store.scanApplications(
+        // Scan and delete all app versions across the namespace
         ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
         batchSize,
         (appId, appMeta) -> {

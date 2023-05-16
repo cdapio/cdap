@@ -190,6 +190,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         }
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
         appMetadataStore.scanApplications(
+            // Scan all versions
             ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
             entry -> {
               ApplicationMeta meta = entry.getValue();

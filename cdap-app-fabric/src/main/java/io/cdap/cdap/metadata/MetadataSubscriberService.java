@@ -215,6 +215,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       AtomicInteger appCount = new AtomicInteger();
       List<MetadataMutation> updates = TransactionRunners.run(this.transactionRunner, context -> {
         List<MetadataMutation> mutateUpdates = new ArrayList<>();
+        // Scan all versions since it should be metadata update for all versions
         AppMetadataStore.create(context).scanApplications(
             ScanApplicationsRequest.builder().setNamespaceId(new NamespaceId(namespace)).build(),
             entry -> {

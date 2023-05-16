@@ -145,6 +145,8 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
           Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(pageToken))
       )));
     }
+    // Scan the latest applications only for internal apps list api.
+    builder.setLatestOnly(true);
     return builder.build();
   }
 

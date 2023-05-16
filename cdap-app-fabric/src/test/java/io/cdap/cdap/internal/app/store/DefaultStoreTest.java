@@ -70,7 +70,6 @@ import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -79,12 +78,6 @@ import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.store.DefaultNamespaceStore;
-import org.apache.twill.api.RunId;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -101,6 +94,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import org.apache.twill.api.RunId;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for {@link DefaultStore}.
@@ -928,25 +926,42 @@ public abstract class DefaultStoreTest {
       store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appMeta);
     }
 
-    List<ApplicationId> apps = new ArrayList<ApplicationId>();
-    store.scanApplications(20, (appId, spec) -> apps.add(appId));
+    // Mimicking editing the first count / 2 apps
+    for (int i = 0; i < count / 2; i++) {
+      String appName = "test" + i;
+      String version = "version" + i;
+      ApplicationMeta appMeta = new ApplicationMeta(appName, appSpec,
+          new ChangeDetail("edited" + i, null, null,
+              System.currentTimeMillis()));
+      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName, version), appMeta);
+    }
 
-    Assert.assertEquals(count, apps.size());
+    List<ApplicationId> allAppsVersion = new ArrayList<>();
+    store.scanApplications(ScanApplicationsRequest.builder().build(),
+        20, (appId, spec) -> allAppsVersion.add(appId));
+
+    Assert.assertEquals(count + count / 2, allAppsVersion.size());
+
+    List<ApplicationId> latestApps = new ArrayList<>();
+    store.scanApplications(20, (appId, spec) -> latestApps.add(appId));
+
+    Assert.assertEquals(count, latestApps.size());
 
     //Reverse
     List<ApplicationId> reverseApps = new ArrayList<>();
     Assert.assertFalse(store.scanApplications(ScanApplicationsRequest.builder()
-                             .setSortOrder(SortOrder.DESC)
-                             .build(), 20, (appId, spec) -> reverseApps.add(appId)));
-    Assert.assertEquals(Lists.reverse(apps), reverseApps);
+        .setSortOrder(SortOrder.DESC)
+        .setLatestOnly(true)
+        .build(), 20, (appId, spec) -> reverseApps.add(appId)));
+    Assert.assertEquals(Lists.reverse(latestApps), reverseApps);
 
     //Second page
     int firstPageSize = 10;
     List<ApplicationId> restartApps = new ArrayList<>();
     Assert.assertFalse(store.scanApplications(ScanApplicationsRequest.builder()
-                             .setScanFrom(apps.get(firstPageSize - 1))
-                             .build(), 20, (appId, spec) -> restartApps.add(appId)));
-    Assert.assertEquals(apps.subList(firstPageSize, apps.size()), restartApps);
+        .setScanFrom(latestApps.get(firstPageSize - 1)).setLatestOnly(true)
+        .build(), 20, (appId, spec) -> restartApps.add(appId)));
+    Assert.assertEquals(latestApps.subList(firstPageSize, latestApps.size()), restartApps);
   }
 
   @Test
