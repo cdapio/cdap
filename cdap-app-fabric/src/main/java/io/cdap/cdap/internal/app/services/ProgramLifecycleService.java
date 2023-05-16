@@ -1376,7 +1376,8 @@ public class ProgramLifecycleService {
 
     List<ProgramRecord> programRecords = new ArrayList<>();
     store.scanApplications(
-        ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
+        // Only scan the latest versions for the public program list api
+        ScanApplicationsRequest.builder().setNamespaceId(namespaceId).setLatestOnly(true).build(),
         batchSize,
         (appId, appMeta) -> {
           ApplicationSpecification appSpec = appMeta.getSpec();

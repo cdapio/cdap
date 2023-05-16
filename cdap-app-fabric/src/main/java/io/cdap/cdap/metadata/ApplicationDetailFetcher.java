@@ -42,7 +42,7 @@ public interface ApplicationDetailFetcher {
       throws IOException, NotFoundException, UnauthorizedException;
 
   /**
-   * Scans all application details in the given namespace
+   * Scans all the latest version of application details in the given namespace
    *
    * @param namespace the namespace to scan application details from
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned

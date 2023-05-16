@@ -387,7 +387,7 @@ public interface Store {
   ApplicationMeta getLatest(ApplicationReference appRef);
 
   /**
-   * Scans for applications across all namespaces.
+   * Scans for the latest applications across all namespaces.
    *
    * @param txBatchSize maximum number of applications to scan in one transaction to
    *                    prevent holding a single transaction for too long
