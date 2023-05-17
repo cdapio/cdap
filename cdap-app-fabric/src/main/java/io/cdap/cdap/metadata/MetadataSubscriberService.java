@@ -215,6 +215,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       AtomicInteger appCount = new AtomicInteger();
       List<MetadataMutation> updates = TransactionRunners.run(this.transactionRunner, context -> {
         List<MetadataMutation> mutateUpdates = new ArrayList<>();
+        // Scan all versions since it should be metadata update for all versions
         AppMetadataStore.create(context).scanApplications(
             ScanApplicationsRequest.builder().setNamespaceId(new NamespaceId(namespace)).build(),
             entry -> {
@@ -264,7 +265,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   /**
-   * Helper method to emit plugin metadata for a given application
+   * Helper method to emit plugin metadata for a given application.
    *
    * @param namespace the namespace that the app is deployed to
    * @param appSpec Application specification for the app
