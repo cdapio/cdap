@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2016-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,478 +16,338 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
-import io.cdap.cdap.etl.api.join.JoinField;
+import io.cdap.cdap.etl.api.Alert;
+import io.cdap.cdap.etl.api.AlertPublisher;
+import io.cdap.cdap.etl.api.AlertPublisherContext;
+import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.lineage.AccessType;
+import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
+import io.cdap.cdap.etl.common.DefaultStageMetrics;
+import io.cdap.cdap.etl.common.ExternalDatasets;
+import io.cdap.cdap.etl.common.PhaseSpec;
+import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.TrackedIterator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.SparkPairCollection;
+import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
+import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorFinalizeFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorInitializeFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergePartitionFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergeValueFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
-import io.cdap.cdap.etl.spark.function.DatasetAggregationAccumulator;
-import io.cdap.cdap.etl.spark.function.DatasetAggregationFinalizeFunction;
-import io.cdap.cdap.etl.spark.function.DatasetAggregationGetKeyFunction;
-import io.cdap.cdap.etl.spark.function.DatasetAggregationReduceFunction;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
+import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
+import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
-import io.cdap.cdap.etl.spark.join.JoinCollection;
+import io.cdap.cdap.etl.spark.function.TransformFunction;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
-import io.cdap.cdap.etl.spark.plugin.LiteralsBridge;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.sql.Column;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoder;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
-import scala.collection.JavaConversions;
-import scala.collection.Seq;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.Set;
 import javax.annotation.Nullable;
 
-import static org.apache.spark.sql.functions.coalesce;
 
 /**
- * Spark2 RDD collection.
+ * Implementation of {@link SparkCollection} that is backed by a JavaRDD.
  *
  * @param <T> type of object in the collection
  */
-public class RDDCollection<T> extends BaseRDDCollection<T> {
+public class RDDCollection<T> implements BatchCollection<T> {
   private static final Logger LOG = LoggerFactory.getLogger(RDDCollection.class);
-  private static final Encoder KRYO_OBJECT_ENCODER = Encoders.kryo(Object.class);
-  private static final Encoder KRYO_TUPLE_ENCODER = Encoders.tuple(
-    KRYO_OBJECT_ENCODER, KRYO_OBJECT_ENCODER);
-  private static final Encoder JAVA_OBJECT_ENCODER = Encoders.javaSerialization(Object.class);
-  private static final Encoder JAVA_TUPLE_ENCODER = Encoders.tuple(
-    JAVA_OBJECT_ENCODER, JAVA_OBJECT_ENCODER);
-
-  private final boolean useDatasetAggregation;
-  private final boolean useKryoForDatasets;
-  private final boolean ignorePartitionsDuringDatasetAggregation;
+  private static final Gson GSON = new Gson();
+  protected final JavaSparkExecutionContext sec;
+  protected final JavaSparkContext jsc;
+  protected final SQLContext sqlContext;
+  protected final DatasetContext datasetContext;
+  protected final SparkBatchSinkFactory sinkFactory;
+  protected final JavaRDD<T> rdd;
+  protected final FunctionCache.Factory functionCacheFactory;
+  protected final boolean useDatasetAggregation;
 
   public RDDCollection(JavaSparkExecutionContext sec, FunctionCache.Factory functionCacheFactory,
-                       JavaSparkContext jsc, SQLContext sqlContext,
-                       DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
-                       JavaRDD<T> rdd) {
-    super(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+                              JavaSparkContext jsc, SQLContext sqlContext,
+                              DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
+                              JavaRDD<T> rdd) {
+    this.sec = sec;
+    this.jsc = jsc;
+    this.sqlContext = sqlContext;
+    this.datasetContext = datasetContext;
+    this.sinkFactory = sinkFactory;
+    this.functionCacheFactory = functionCacheFactory;
+    this.rdd = rdd;
     this.useDatasetAggregation = Boolean.parseBoolean(
       sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_ENABLED, Boolean.TRUE.toString()));
-    this.useKryoForDatasets = Boolean.parseBoolean(
-      sec.getRuntimeArguments().getOrDefault(Constants.DATASET_KRYO_ENABLED, Boolean.TRUE.toString()));
-    this.ignorePartitionsDuringDatasetAggregation = Boolean.parseBoolean(
-      sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, Boolean.TRUE.toString()));
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public JavaRDD<T> getUnderlying() {
+    return rdd;
+  }
+
+  @Override
+  public SparkCollection<T> cache() {
+    SparkConf sparkConf = jsc.getConf();
+    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL,
+                                                     Constants.DEFAULT_CACHING_STORAGE_LEVEL);
+      StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
+      return wrap(rdd.persist(cacheStorageLevel));
+    } else {
+      return wrap(rdd);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public SparkCollection<T> union(SparkCollection<T> other) {
+    return wrap(rdd.union((JavaRDD<T>) other.getUnderlying()));
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    return wrap(rdd.flatMap(new TransformFunction<T>(
+      pluginFunctionContext, functionCacheFactory.newCache())));
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
+                                                                  StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    return wrap(rdd.flatMap(new MultiOutputTransformFunction<T>(
+      pluginFunctionContext, functionCacheFactory.newCache())));
+  }
+
+  @Override
+  public <U> SparkCollection<U> map(Function<T, U> function) {
+    return wrap(rdd.map(function));
+  }
+
+  @Override
+  public <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function) {
+    return wrap(rdd.flatMap(function));
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
+                                                       StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    PairFlatMapFunction<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+
+    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(groupByFunction);
+
+    JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null
+      ? keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
+
+    FlatMapFunction<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> sparkAggregateFunction =
+      new AggregatorAggregateFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
+
+    return wrap(groupedCollection.flatMap(sparkAggregateFunction));
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public SparkCollection<T> join(JoinRequest joinRequest) {
-    Map<String, Dataset> collections = new HashMap<>();
-    String stageName = joinRequest.getStageName();
-    Function<StructuredRecord, StructuredRecord> recordsInCounter =
-      new CountingFunction<>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, sec.getDataTracer(stageName));
-    StructType leftSparkSchema = DataFrames.toDataType(joinRequest.getLeftSchema());
-    Dataset<Row> left = toDataset(((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), leftSparkSchema);
-    collections.put(joinRequest.getLeftStage(), left);
-
-    List<Column> leftJoinColumns = joinRequest.getLeftKey().stream()
-      .map(left::col)
-      .collect(Collectors.toList());
-
-    /*
-        This flag keeps track of whether there is at least one required stage in the join.
-        This is needed in case there is a join like:
-
-        A (optional), B (required), C (optional), D (required)
-
-        The correct thing to do here is:
-
-        1. A right outer join B as TMP1
-        2. TMP1 left outer join C as TMP2
-        3. TMP2 inner join D
-
-        Join #1 is a straightforward join between 2 sides.
-        Join #2 is a left outer because TMP1 becomes 'required', since it uses required input B.
-        Join #3 is an inner join even though it contains 2 optional datasets, because 'B' is still required.
-     */
-    Integer joinPartitions = joinRequest.getNumPartitions();
-    boolean seenRequired = joinRequest.isLeftRequired();
-    Dataset<Row> joined = left;
-    List<List<Column>> listOfListOfLeftCols = new ArrayList<>();
-
-    for (JoinCollection toJoin : joinRequest.getToJoin()) {
-      SparkCollection<StructuredRecord> data = (SparkCollection<StructuredRecord>) toJoin.getData();
-      StructType sparkSchema = DataFrames.toDataType(toJoin.getSchema());
-      Dataset<Row> right = toDataset(((JavaRDD<StructuredRecord>) data.getUnderlying()).map(recordsInCounter),
-                                     sparkSchema);
-      collections.put(toJoin.getStage(), right);
-
-      List<Column> rightJoinColumns = toJoin.getKey().stream()
-        .map(right::col)
-        .collect(Collectors.toList());
-
-      // UUID for salt column name to avoid name collisions
-      String saltColumn = UUID.randomUUID().toString();
-      if (joinRequest.isDistributionEnabled()) {
-
-        boolean isLeftStageSkewed =
-          joinRequest.getLeftStage().equals(joinRequest.getDistribution().getSkewedStageName());
-
-        // Apply salt/explode transformations to each Dataset
-        if (isLeftStageSkewed) {
-          left = saltDataset(left, saltColumn, joinRequest.getDistribution().getDistributionFactor());
-          right = explodeDataset(right, saltColumn, joinRequest.getDistribution().getDistributionFactor());
-        } else {
-          left = explodeDataset(left, saltColumn, joinRequest.getDistribution().getDistributionFactor());
-          right = saltDataset(right, saltColumn, joinRequest.getDistribution().getDistributionFactor());
-        }
-
-        // Add the salt column to the join key
-        leftJoinColumns.add(left.col(saltColumn));
-        rightJoinColumns.add(right.col(saltColumn));
-
-        // Updating other values that will be used later in join
-        joined = left;
-        sparkSchema = sparkSchema.add(saltColumn, DataTypes.IntegerType, false);
-        leftSparkSchema = leftSparkSchema.add(saltColumn, DataTypes.IntegerType, false);
-      }
-
-      Column joinOn;
-      List<Column> finalLeftJoinColumns = leftJoinColumns; //Making effectively final to use in streams
-
-      if (seenRequired) {
-        joinOn = IntStream.range(0, leftJoinColumns.size())
-          .mapToObj(i -> eq(finalLeftJoinColumns.get(i), rightJoinColumns.get(i), joinRequest.isNullSafe()))
-          .reduce((a, b) -> a.and(b)).get();
-      } else {
-        // For the case when all joins are outer. Collect left keys at each level (each iteration)
-        // coalesce these keys at each level and compare with right
-        joinOn = IntStream.range(0, leftJoinColumns.size())
-          .mapToObj(i -> {
-            collectLeftJoinOnCols(listOfListOfLeftCols, i, finalLeftJoinColumns.get(i));
-            return eq(getLeftJoinOnCoalescedColumn(finalLeftJoinColumns.get(i), i, listOfListOfLeftCols),
-                      rightJoinColumns.get(i),
-                      joinRequest.isNullSafe());
-          })
-          .reduce((a, b) -> a.and(b)).get();
-      }
-
-      String joinType;
-      if (seenRequired && toJoin.isRequired()) {
-        joinType = "inner";
-      } else if (seenRequired && !toJoin.isRequired()) {
-        joinType = "leftouter";
-      } else if (!seenRequired && toJoin.isRequired()) {
-        joinType = "rightouter";
-      } else {
-        joinType = "outer";
-      }
-      seenRequired = seenRequired || toJoin.isRequired();
-
-      if (toJoin.isBroadcast()) {
-        right = functions.broadcast(right);
-      }
-      // repartition on the join keys with the number of partitions specified in the join request.
-      // since they are partitioned on the same thing, spark will not repartition during the join,
-      // which allows us to use a different number of partitions per joiner instead of using the global
-      // spark.sql.shuffle.partitions setting in the spark conf.
-      // Note that it does not work with Spark 2.3+ as they changed partitioning column set in
-      // https://github.com/apache/spark/pull/19937. Now we ignore user setting unless
-      // we are forced to with spark.cdap.pipeline.aggregate.dataset.partitions.ignore = false
-      if (!ignorePartitionsDuringDatasetAggregation && joinPartitions != null && !toJoin.isBroadcast()) {
-        List<String> rightKeys = new ArrayList<>(toJoin.getKey());
-        List<String> leftKeys = new ArrayList<>(joinRequest.getLeftKey());
-
-        // If distribution is enabled we need to add it to the partition keys to ensure we end up with the desired
-        // number of partitions
-        if (joinRequest.isDistributionEnabled()) {
-          rightKeys.add(saltColumn);
-          leftKeys.add(saltColumn);
-        }
-        right = partitionOnKey(right, rightKeys, joinRequest.isNullSafe(), sparkSchema, joinPartitions);
-        // only need to repartition the left side if this is the first join,
-        // as intermediate joins will already be partitioned on the key
-        if (joined == left) {
-          joined = partitionOnKey(joined, leftKeys, joinRequest.isNullSafe(),
-                                  leftSparkSchema, joinPartitions);
-        }
-      }
-      joined = joined.join(right, joinOn, joinType);
-
-      /*
-           Consider stages A, B, C:
-
-           A (id, email) = (2, charles@example.com)
-           B (id, name) = (0, alice), (1, bob)
-           C (id, age) = (0, 25)
-
-           where A, B, C are joined on A.id = B.id = C.id, where B and C are required and A is optional.
-           This RDDCollection is the data for stage A.
-
-           this is implemented as a join of (A right outer join B on A.id = B.id) as TMP1
-           followed by (TMP1 inner join C on TMP1.B.id = C.id) as OUT
-
-           TMP1 looks like:
-           TMP1 (A.id, A.name, B.id, B.email) = (null, null, 0, alice), (null, null, 1, bob)
-
-           and the final output looks like:
-           OUT (A.id, A.name, B.id, B.email, C.id, C.age) = (null, null, 0, alice, 0, 25)
-
-           It's important to join on B.id = C.id and not on A.id = C.id, because joining on A.id = C.id will result
-           in an empty output, as A.id is always null in the TMP1 dataset. In general, the principle is to join on the
-           required fields and not on the optional fields when possible.
-       */
-      /*
-           Additionally if none of the datasets are required until now, which means all of the joines will outer.
-           In this case also we need to pass on the join columns as we need to compare using coalesce of all previous
-           columns with the right dataset
-       */
-      if (toJoin.isRequired() || !seenRequired) {
-        leftJoinColumns = rightJoinColumns;
-      }
-    }
-
-    // select and alias fields in the expected order
-    List<Column> outputColumns = new ArrayList<>(joinRequest.getFields().size());
-    for (JoinField field : joinRequest.getFields()) {
-      Column column = collections.get(field.getStageName()).col(field.getFieldName());
-      if (field.getAlias() != null) {
-        column = column.alias(field.getAlias());
-      }
-      outputColumns.add(column);
-    }
-
-    Seq<Column> outputColumnSeq = JavaConversions.asScalaBuffer(outputColumns).toSeq();
-    joined = joined.select(outputColumnSeq);
-
-    Schema outputSchema = joinRequest.getOutputSchema();
-    JavaRDD<StructuredRecord> output = joined.javaRDD()
-      .map(r -> DataFrames.fromRow(r, outputSchema))
-      .map(new CountingFunction<>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
-                                  sec.getDataTracer(stageName)));
-    return (SparkCollection<T>) wrap(output);
+    return (SparkCollection<T>) toDataframeCollection(
+        joinRequest.getLeftSchema()).join(joinRequest);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public SparkCollection<T> join(JoinExpressionRequest joinRequest) {
-    Function<StructuredRecord, StructuredRecord> recordsInCounter =
-      new CountingFunction<>(joinRequest.getStageName(), sec.getMetrics(), Constants.Metrics.RECORDS_IN,
-                             sec.getDataTracer(joinRequest.getStageName()));
-
-    JoinCollection leftInfo = joinRequest.getLeft();
-    StructType leftSchema = DataFrames.toDataType(leftInfo.getSchema());
-    Dataset<Row> leftDF = toDataset(((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), leftSchema);
-
-    JoinCollection rightInfo = joinRequest.getRight();
-    SparkCollection<?> rightData = rightInfo.getData();
-    StructType rightSchema = DataFrames.toDataType(rightInfo.getSchema());
-    Dataset<Row> rightDF = toDataset(((JavaRDD<StructuredRecord>) rightData.getUnderlying()).map(recordsInCounter),
-                                     rightSchema);
-
-    // if this is not a broadcast join, Spark will reprocess each side multiple times, depending on the number
-    // of partitions. If the left side has N partitions and the right side has M partitions,
-    // the left side gets reprocessed M times and the right side gets reprocessed N times.
-    // Cache the input to prevent confusing metrics and potential source re-reading.
-    // this is only necessary for inner joins, since outer joins are automatically changed to
-    // BroadcastNestedLoopJoins by Spark
-    boolean isInner = joinRequest.getLeft().isRequired() && joinRequest.getRight().isRequired();
-    boolean isBroadcast = joinRequest.getLeft().isBroadcast() || joinRequest.getRight().isBroadcast();
-    if (isInner && !isBroadcast) {
-      leftDF = leftDF.persist(StorageLevel.DISK_ONLY());
-      rightDF = rightDF.persist(StorageLevel.DISK_ONLY());
-    }
-
-    // register using unique names to avoid collisions.
-    String leftId = UUID.randomUUID().toString().replaceAll("-", "");
-    String rightId = UUID.randomUUID().toString().replaceAll("-", "");
-    leftDF.registerTempTable(leftId);
-    rightDF.registerTempTable(rightId);
-
-    /*
-        Suppose the join was originally:
-
-          select P.id as id, users.name as username
-          from purchases as P join users
-          on P.user_id = users.id or P.user_id = 0
-
-        After registering purchases as uuid0 and users as uuid1,
-        the query needs to be rewritten to replace the original names with the new generated ids,
-        as the query needs to be:
-
-          select P.id as id, uuid1.name as username
-          from uuid0 as P join uuid1
-          on P.user_id = uuid1.id or P.user_id = 0
-     */
-    String sql = getSQL(joinRequest.rename(leftId, rightId));
-    LOG.debug("Executing join stage {} using SQL: \n{}", joinRequest.getStageName(), sql);
-    Dataset<Row> joined = sqlContext.sql(sql);
-
-    Schema outputSchema = joinRequest.getOutputSchema();
-    JavaRDD<StructuredRecord> output = joined.javaRDD()
-      .map(r -> DataFrames.fromRow(r, outputSchema))
-      .map(new CountingFunction<>(joinRequest.getStageName(), sec.getMetrics(),
-                                  Constants.Metrics.RECORDS_OUT,
-                                  sec.getDataTracer(joinRequest.getStageName())));
-    return (SparkCollection<T>) wrap(output);
-  }
-
-  /**
-   * Helper method that adds a salt column to a dataframe for join distribution
-   *
-   * @param data               Dataframe add salt to
-   * @param saltColumnName     Name to use for the new salt column
-   * @param distributionFactor The desired salt size, values in the salt column will range [0,distributionFactor)
-   * @return Dataframe with an additional salt column
-   */
-  private Dataset saltDataset(Dataset data, String saltColumnName, int distributionFactor) {
-    Dataset saltedData = data.withColumn(saltColumnName, functions.rand().multiply(distributionFactor));
-    saltedData = saltedData.withColumn(saltColumnName,
-                                       functions.floor(saltedData.col(saltColumnName)).cast(DataTypes.IntegerType));
-    return saltedData;
-  }
-
-  /**
-   * Helper method that adds salt column to a dataframe and explodes the rows
-   *
-   * @param data               Dataframe to explode
-   * @param saltColumnName     Name to use for the new salt column
-   * @param distributionFactor The desired salt size, this will increase the number of rows by a factor of
-   *                           distributionFactor
-   * @return Dataframe with an additional salt column
-   */
-  private Dataset explodeDataset(Dataset data, String saltColumnName, int distributionFactor) {
-    //Array of [0,distributionFactor) to be used in to prepare for the explode
-    Integer[] numbers = IntStream.range(0, distributionFactor).boxed().toArray(Integer[]::new);
-
-    // Add a column that uses the 'numbers' array as the value for every row
-    Dataset explodedData = data.withColumn(saltColumnName,
-                                           functions.array(
-                                             Arrays.stream(numbers).map(functions::lit).toArray(Column[]::new)
-                                           ));
-    explodedData = explodedData.withColumn(saltColumnName, functions.explode(explodedData.col(saltColumnName)));
-    return explodedData;
-  }
-
-  protected Dataset<Row> toDataset(JavaRDD<StructuredRecord> rdd, StructType sparkSchema) {
-    JavaRDD<Row> rowRDD = rdd.map(record -> DataFrames.toRow(record, sparkSchema));
-    return sqlContext.createDataFrame(rowRDD.rdd(), sparkSchema);
-  }
-
-  private Dataset<Row> partitionOnKey(Dataset<Row> df, List<String> key, boolean isNullSafe, StructType sparkSchema,
-                                      int numPartitions) {
-    List<Column> columns = getPartitionColumns(df, key, isNullSafe, sparkSchema);
-    return df.repartition(numPartitions, JavaConversions.asScalaBuffer(columns).toSeq());
-  }
-
-  private List<Column> getPartitionColumns(Dataset<Row> df, List<String> key, boolean isNullSafe,
-                                           StructType sparkSchema) {
-    if (!isNullSafe) {
-      return key.stream().map(df::col).collect(Collectors.toList());
-    }
-
-    // if a null safe join is happening, spark will partition on coalesce(col, [default val]),
-    // where the default val is dependent on the column type and defined in
-    // org.apache.spark.sql.catalyst.expressions.Literal
-    return key.stream().map(keyCol -> {
-      int fieldIndex = sparkSchema.fieldIndex(keyCol);
-      DataType dataType = sparkSchema.fields()[fieldIndex].dataType();
-      Column defaultCol = new Column(LiteralsBridge.defaultLiteral(dataType));
-      return functions.coalesce(df.col(keyCol), defaultCol);
-    }).collect(Collectors.toList());
+    return (SparkCollection<T>) toDataframeCollection(
+        joinRequest.getLeft().getSchema()).join(joinRequest);
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec,
-                                                             @Nullable Integer partitions,
+  public DataframeCollection toDataframeCollection(Schema schema) {
+    StructType sparkSchema = DataFrames.toDataType(schema);
+    JavaRDD<Row> rowRDD = ((JavaRDD<StructuredRecord>) rdd)
+        .map(record -> DataFrames.toRow(record, sparkSchema));
+    Dataset<Row> dataframe = sqlContext.createDataFrame(rowRDD.rdd(), sparkSchema);
+    return new DataframeCollection(
+        schema, dataframe, sec, jsc, sqlContext, datasetContext,
+        sinkFactory, functionCacheFactory);
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                              StageStatisticsCollector collector) {
-    if (!useDatasetAggregation) {
-      return super.reduceAggregate(stageSpec, partitions, collector);
+
+    if (useDatasetAggregation) {
+      return OpaqueDatasetCollection.fromRdd(
+              rdd, sec, jsc, sqlContext, datasetContext, sinkFactory, functionCacheFactory)
+          .reduceAggregate(stageSpec, partitions, collector);
     }
-    return this.reduceDatasetAggregate(stageSpec, partitions, collector);
-  }
 
-  /**
-   * helper function to provide a generified encoder for any serializable type
-   */
-  private <V> Encoder<V> objectEncoder() {
-    return useKryoForDatasets ? KRYO_OBJECT_ENCODER : JAVA_OBJECT_ENCODER;
-  }
-
-  /**
-   * helper function to provide a generified encoder for tuple of two serializable types
-   */
-  private <V1, V2> Encoder<Tuple2<V1, V2>> tupleEncoder() {
-    return useKryoForDatasets ? KRYO_TUPLE_ENCODER : JAVA_TUPLE_ENCODER;
-  }
-
-  /**
-   * Performs reduce aggregate using Dataset API. This allows SPARK to perform various optimizations that
-   * are not available when working on the RDD level.
-   */
-  private <GROUP_KEY, AGG_VALUE> SparkCollection<RecordInfo<Object>> reduceDatasetAggregate(
-    StageSpec stageSpec, @Nullable Integer partitions, StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    DatasetAggregationGetKeyFunction<GROUP_KEY, T, AGG_VALUE> groupByFunction = new DatasetAggregationGetKeyFunction<>(
+    PairFlatMapFunction<T, Object, T> groupByFunction = new AggregatorReduceGroupByFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache());
-    DatasetAggregationReduceFunction<T, AGG_VALUE> reduceFunction = new DatasetAggregationReduceFunction<>(
+
+    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(groupByFunction);
+
+    Function<T, Object> initializeFunction = new AggregatorInitializeFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache());
-    DatasetAggregationFinalizeFunction<GROUP_KEY, T, AGG_VALUE, ?> postFunction =
-      new DatasetAggregationFinalizeFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
-    MapFunction<Tuple2<GROUP_KEY, DatasetAggregationAccumulator<T, AGG_VALUE>>, GROUP_KEY> keyFromTuple = Tuple2::_1;
-    MapFunction<Tuple2<GROUP_KEY, DatasetAggregationAccumulator<T, AGG_VALUE>>,
-      DatasetAggregationAccumulator<T, AGG_VALUE>> valueFromTuple = Tuple2::_2;
+    Function2<Object, T, Object> mergeValueFunction = new AggregatorMergeValueFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+    Function2<Object, Object, Object> mergePartitionFunction =
+      new AggregatorMergePartitionFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
+    JavaPairRDD<Object, Object> groupedCollection = partitions == null
+      ? keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction) :
+      keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction, partitions);
 
-    Dataset<T> dataset = sqlContext.createDataset(rdd.rdd(), objectEncoder());
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =
+      new AggregatorFinalizeFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
 
-    Dataset<RecordInfo<Object>> groupedDataset = dataset
-      .flatMap(groupByFunction, tupleEncoder())
-      .groupByKey(keyFromTuple, objectEncoder())
-      .mapValues(valueFromTuple, objectEncoder())
-      .reduceGroups(reduceFunction)
-      .flatMap(postFunction, objectEncoder());
-
-    if (!ignorePartitionsDuringDatasetAggregation && partitions != null) {
-      groupedDataset = groupedDataset.coalesce(partitions);
-    }
-
-    return wrap(groupedDataset.toJavaRDD());
+    return wrap(groupedCollection.flatMap(postFunction));
   }
 
-  private void collectLeftJoinOnCols(List<List<Column>> listOfListOfColumns, int index, Column leftJoinOnCurrent) {
-    if (listOfListOfColumns.size() <= index) {
-      listOfListOfColumns.add(new ArrayList<Column>());
-    }
-    listOfListOfColumns.get(index).add(leftJoinOnCurrent);
+  @Override
+  public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function) {
+    return new PairRDDCollection<>(sec, functionCacheFactory, jsc,
+                                   sqlContext, datasetContext, sinkFactory,
+                                   rdd.flatMapToPair(function));
   }
 
-  private Column getLeftJoinOnCoalescedColumn(Column leftJoinOnCurrent, int index,
-                                              List<List<Column>> listOfListOfColumns) {
-    Column[] colArray = new Column[listOfListOfColumns.get(index).size()];
-    Column coalesedCol = coalesce(listOfListOfColumns.get(index).toArray(colArray));
-    return coalesedCol;
+  @Override
+  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+    String stageName = stageSpec.getName();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    SparkExecutionPluginContext sparkPluginContext =
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
+    compute.initialize(sparkPluginContext);
+
+    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(),
+                                                              Constants.Metrics.RECORDS_IN, null));
+    SparkConf sparkConf = jsc.getConf();
+
+    return wrap(compute.transform(sparkPluginContext, countedInput)
+                  .map(new CountingFunction<U>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
+                                               sec.getDataTracer(stageName))));
+  }
+
+  @Override
+  public Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
+        for (String outputName : sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName())) {
+          recordLineage(outputName);
+        }
+      }
+    };
+  }
+
+  @Override
+  public Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
+                                       Map<String, StageStatisticsCollector> collectors) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        PairFlatMapFunction<T, String, KeyValue<Object, Object>> multiSinkFunction =
+          (PairFlatMapFunction<T, String, KeyValue<Object, Object>>)
+            new MultiSinkFunction(sec, phaseSpec, group, collectors);
+        JavaPairRDD<String, KeyValue<Object, Object>> taggedOutput = rdd.flatMapToPair(multiSinkFunction);
+        for (String outputName : sinkFactory.writeCombinedRDD(taggedOutput, sec, sinks)) {
+          recordLineage(outputName);
+        }
+      }
+    };
+  }
+
+  private void recordLineage(String name) {
+    try {
+      ExternalDatasets.registerLineage(sec.getAdmin(), name, AccessType.WRITE, null,
+                                       () -> datasetContext.getDataset(name));
+    } catch (DatasetManagementException e) {
+      LOG.warn("Unable to register dataset lineage for {}", name);
+    }
+  }
+
+  @Override
+  public Runnable createStoreTask(final StageSpec stageSpec, final SparkSink<T> sink) throws Exception {
+    return new Runnable() {
+      @Override
+      public void run() {
+        String stageName = stageSpec.getName();
+        PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+        SparkExecutionPluginContext sparkPluginContext =
+          new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
+
+        JavaRDD<T> countedRDD =
+          rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, null));
+        SparkConf sparkConf = jsc.getConf();
+        try {
+          sink.run(sparkPluginContext, countedRDD);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
+
+  @Override
+  public void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    AlertPublisher alertPublisher = pluginFunctionContext.createPlugin();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+
+    AlertPublisherContext alertPublisherContext =
+      new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, sec.getMessagingContext(), sec.getAdmin());
+    alertPublisher.initialize(alertPublisherContext);
+    StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageSpec.getName());
+    TrackedIterator<Alert> trackedAlerts =
+      new TrackedIterator<>(((JavaRDD<Alert>) rdd).collect().iterator(), stageMetrics, Constants.Metrics.RECORDS_IN);
+    alertPublisher.publish(trackedAlerts);
+    alertPublisher.destroy();
+  }
+
+  @Override
+  public SparkCollection<T> window(StageSpec stageSpec, Windower windower) {
+    throw new UnsupportedOperationException("Windowing is not supported on RDDs.");
+  }
+
+  protected <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
+    return new RDDCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
   }
 }

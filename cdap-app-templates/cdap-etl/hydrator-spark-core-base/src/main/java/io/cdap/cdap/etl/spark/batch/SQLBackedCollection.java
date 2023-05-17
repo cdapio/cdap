@@ -27,7 +27,7 @@ import java.util.Set;
  *
  * @param <T> type of elements in the spark collection
  */
-public interface SQLBackedCollection<T> extends SparkCollection<T> {
+public interface SQLBackedCollection<T> extends BatchCollection<T> {
   /**
    * Method used to store results from the SQL engine into an output sink implemented in the same engine without
    * having to read records into Spark.

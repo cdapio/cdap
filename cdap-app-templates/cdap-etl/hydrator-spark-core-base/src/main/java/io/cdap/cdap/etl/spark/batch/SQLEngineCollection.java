@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
@@ -74,7 +75,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private final String datasetName;
   private final BatchSQLEngineAdapter adapter;
   private final SQLEngineJob<SQLDataset> job;
-  private SparkCollection<T> localCollection;
+  private BatchCollection<T> localCollection;
 
   public SQLEngineCollection(JavaSparkExecutionContext sec,
                              FunctionCache.Factory functionCacheFactory,
@@ -82,7 +83,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
                              SQLContext sqlContext,
                              DatasetContext datasetContext,
                              SparkBatchSinkFactory sinkFactory,
-                             SparkCollection<T> localCollection,
+                             BatchCollection<T> localCollection,
                              String datasetName,
                              BatchSQLEngineAdapter adapter,
                              SQLEngineJob<SQLDataset> job) {
@@ -126,7 +127,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
    * @return (@ link RDDCollection } representing the records pulled from the SQL Engine.
    */
   @SuppressWarnings("raw")
-  protected SparkCollection<T> pull() {
+  protected BatchCollection<T> pull() {
     // Ensure the local collection is only generated once across multiple threads
     synchronized (this) {
       if (localCollection == null) {
@@ -143,6 +144,11 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   @Override
   public <C> C getUnderlying() {
     return (C) pull().getUnderlying();
+  }
+
+  @Override
+  public DataframeCollection toDataframeCollection(Schema schema) {
+    return pull().toDataframeCollection(schema);
   }
 
   @Override

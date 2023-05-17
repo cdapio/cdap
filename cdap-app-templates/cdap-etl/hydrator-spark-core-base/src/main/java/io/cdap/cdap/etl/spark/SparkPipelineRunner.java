@@ -50,7 +50,6 @@ import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
-import io.cdap.cdap.etl.api.relational.LinearRelationalTransform;
 import io.cdap.cdap.etl.api.relational.RelationalTransform;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -487,8 +486,8 @@ public abstract class SparkPipelineRunner {
 
       SparkCompute<Object, Object> sparkCompute = (SparkCompute<Object, Object>) plugin;
       SparkCollection<Object> computed = stageData.compute(stageSpec, sparkCompute);
-      return getEmittedRecords(pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, computed),
-                               groupedDag, branchers, shufflers, false, false);
+      return getEmittedRecords(pipelinePhase, stageSpec, computed, groupedDag, branchers, shufflers, stageName
+      );
 
     } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -511,21 +510,38 @@ public abstract class SparkPipelineRunner {
       SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
                                                   stageSpec, functionCacheFactory, plugin,
                                                   numPartitions, collector, shufflers);
-      return getEmittedRecords(pipelinePhase, stageSpec,
-                               mapToRecordInfoCollection(stageName, joined),
-                               groupedDag, branchers, shufflers, false, false);
+      return getEmittedRecords(pipelinePhase, stageSpec, joined, groupedDag, branchers, shufflers, stageName
+      );
 
     } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
       Windower windower = (Windower) plugin;
       SparkCollection<Object> windowed = stageData.window(stageSpec, windower);
-      return getEmittedRecords(pipelinePhase, stageSpec, mapToRecordInfoCollection(stageName, windowed),
-                               groupedDag, branchers, shufflers, false, false);
+      return getEmittedRecords(pipelinePhase, stageSpec, windowed, groupedDag, branchers, shufflers, stageName
+      );
 
     } else {
       throw new IllegalStateException(String.format("Stage %s is of unsupported plugin type %s.",
                                                     stageName, pluginType));
     }
+  }
+
+  /**
+   * Provides mapping for a simple plugins that don't produce errors / alerts and has a sinlge
+   * output port.
+   */
+  private EmittedRecords getEmittedRecords(PipelinePhase pipelinePhase, StageSpec stageSpec,
+      SparkCollection<Object> records, CombinerDag groupedDag,
+      Set<String> branchers, Set<String> shufflers, String stageName) {
+    if (shouldCache(groupedDag, stageSpec.getName(), branchers, shufflers, records)) {
+      records = records.cache();
+    }
+    SparkCollection<RecordInfo<Object>> stageData = mapToRecordInfoCollection(stageName, records);
+    EmittedRecords.Builder builder = EmittedRecords.builder();
+    builder.setRawData(stageData);
+    builder.setOutput(records);
+
+    return builder.build();
   }
 
   /**
@@ -1081,7 +1097,7 @@ public abstract class SparkPipelineRunner {
                               String stageName,
                               Set<String> branchers,
                               Set<String> shufflers,
-                              SparkCollection<RecordInfo<Object>> stageData) {
+                              SparkCollection<?> stageData) {
     if (!branchers.contains(stageName) || shufflers.contains(stageName)) {
       return false;
     }
