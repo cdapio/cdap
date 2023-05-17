@@ -88,8 +88,9 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     artifacts += artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, false).size();
 
     for (NamespaceMeta meta : namespaceMetas) {
+      // Scan the latest active versions for stats
       ScanApplicationsRequest scanApplicationsRequest =
-          ScanApplicationsRequest.builder().setNamespaceId(meta.getNamespaceId()).build();
+          ScanApplicationsRequest.builder().setNamespaceId(meta.getNamespaceId()).setLatestOnly(true).build();
 
       appLifecycleService.scanApplications(scanApplicationsRequest,
           d -> {

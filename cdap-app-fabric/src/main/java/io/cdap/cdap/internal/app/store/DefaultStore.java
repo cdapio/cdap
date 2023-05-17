@@ -400,14 +400,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
-      long startTime, long endTime, int limit) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null);
-    });
-  }
-
-  @Override
   public Map<ProgramRunId, RunRecordDetail> getAllRuns(ProgramReference programReference,
       ProgramRunStatus status,
       long startTime, long endTime, int limit,
@@ -416,6 +408,14 @@ public class DefaultStore implements Store {
       return getAppMetadataStore(context).getAllProgramRuns(programReference, status, startTime,
           endTime, limit,
           filter);
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
+      long startTime, long endTime, int limit) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null);
     });
   }
 
@@ -451,6 +451,39 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public List<ProgramHistory> getRuns(Collection<ProgramReference> programs,
+      ProgramRunStatus status,
+      long startTime, long endTime, int limitPerProgram) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      List<ProgramHistory> result = new ArrayList<>(programs.size());
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+
+      Set<ProgramId> existingPrograms = appMetadataStore.filterProgramsExistence(programs);
+      Map<ProgramReference, ProgramId> programRefsMap =
+          existingPrograms.stream()
+              .collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
+
+      for (ProgramReference programRef : programs) {
+        ProgramId latestProgramId = programRefsMap.get(programRef);
+        if (latestProgramId == null) {
+          ProgramId defaultVersion = programRef.id(ApplicationId.DEFAULT_VERSION);
+          result.add(new ProgramHistory(defaultVersion, Collections.emptyList(),
+              new ProgramNotFoundException(defaultVersion)));
+          continue;
+        }
+
+        List<RunRecord> runs = appMetadataStore.getRuns(latestProgramId, status, startTime, endTime,
+                limitPerProgram, null)
+            .values().stream()
+            .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
+        result.add(new ProgramHistory(latestProgramId, runs, null));
+      }
+
+      return result;
+    });
+  }
+
+  @Override
   public int countActiveRuns(@Nullable Integer limit) {
     return TransactionRunners.run(transactionRunner,
         context -> (int) getAppMetadataStore(context).countActiveRuns(limit));
@@ -472,8 +505,15 @@ public class DefaultStore implements Store {
               consumer.accept(runRecordDetail);
             });
       });
-    }
-    while (count.get() > 0);
+    } while (count.get() > 0);
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(
+      ApplicationReference applicationReference) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getActiveRuns(applicationReference);
+    });
   }
 
   @Override
@@ -495,14 +535,6 @@ public class DefaultStore implements Store {
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(applicationId);
-    });
-  }
-
-  @Override
-  public Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(
-      ApplicationReference applicationReference) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getActiveRuns(applicationReference);
     });
   }
 
@@ -732,7 +764,7 @@ public class DefaultStore implements Store {
   @Override
   public void scanApplications(int txBatchSize,
       BiConsumer<ApplicationId, ApplicationMeta> consumer) {
-    scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
+    scanApplications(ScanApplicationsRequest.builder().setLatestOnly(true).build(), txBatchSize, consumer);
   }
 
   @Override
@@ -1070,39 +1102,6 @@ public class DefaultStore implements Store {
           result.add(new RunCountResult(programRef, runCounts.get(programRef), null));
         }
       }
-      return result;
-    });
-  }
-
-  @Override
-  public List<ProgramHistory> getRuns(Collection<ProgramReference> programs,
-      ProgramRunStatus status,
-      long startTime, long endTime, int limitPerProgram) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      List<ProgramHistory> result = new ArrayList<>(programs.size());
-      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
-
-      Set<ProgramId> existingPrograms = appMetadataStore.filterProgramsExistence(programs);
-      Map<ProgramReference, ProgramId> programRefsMap =
-          existingPrograms.stream()
-              .collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
-
-      for (ProgramReference programRef : programs) {
-        ProgramId latestProgramId = programRefsMap.get(programRef);
-        if (latestProgramId == null) {
-          ProgramId defaultVersion = programRef.id(ApplicationId.DEFAULT_VERSION);
-          result.add(new ProgramHistory(defaultVersion, Collections.emptyList(),
-              new ProgramNotFoundException(defaultVersion)));
-          continue;
-        }
-
-        List<RunRecord> runs = appMetadataStore.getRuns(latestProgramId, status, startTime, endTime,
-                limitPerProgram, null)
-            .values().stream()
-            .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
-        result.add(new ProgramHistory(latestProgramId, runs, null));
-      }
-
       return result;
     });
   }

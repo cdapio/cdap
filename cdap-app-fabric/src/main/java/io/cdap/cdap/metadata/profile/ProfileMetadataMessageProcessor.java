@@ -75,7 +75,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class to process the profile metadata request
+ * Class to process the profile metadata request.
  */
 public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor {
 
@@ -98,6 +98,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private final PreferencesTable preferencesTable;
   private final MetricsCollectionService metricsCollectionService;
 
+  /**
+   * The message processor of profile metadata.
+   *
+   * @param metadataStorage {@link MetadataStorage}
+   * @param structuredTableContext {@link StructuredTableContext}
+   * @param metricsCollectionService {@link MetricsCollectionService}
+   */
   public ProfileMetadataMessageProcessor(MetadataStorage metadataStorage,
       StructuredTableContext structuredTableContext,
       MetricsCollectionService metricsCollectionService) {
@@ -190,6 +197,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         }
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
         appMetadataStore.scanApplications(
+            // Scan all versions
             ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
             entry -> {
               ApplicationMeta meta = entry.getValue();
@@ -362,7 +370,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   /**
    * Get the profile id for the provided entity id from the resolved preferences from preference
-   * dataset, if no profile is inside, it will return the default profile
+   * dataset, if no profile is inside, it will return the default profile.
    *
    * @param entityId entity id to lookup the profile id
    * @return the profile id which will be used by this entity id, default profile if not find
@@ -394,7 +402,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   /**
-   * Get the schedule id from the schedule spec
+   * Get the schedule id from the schedule spec.
    */
   private Set<ScheduleId> getSchedulesInApp(ApplicationId appId,
       Map<String, ? extends ScheduleCreationSpec> scheduleSpecs) {
