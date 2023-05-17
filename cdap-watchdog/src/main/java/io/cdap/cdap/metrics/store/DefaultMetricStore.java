@@ -161,8 +161,7 @@ public class DefaultMetricStore implements MetricStore {
     aggs.put(BY_WORKFLOW, new DefaultAggregation(
         ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
             Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.DATASET,
-            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.NODE,
-            Constants.Metrics.Tag.APP_ENTITY_TYPE, Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME),
+            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.NODE),
         // i.e. for workflow only
         ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
             Constants.Metrics.Tag.WORKFLOW)));
