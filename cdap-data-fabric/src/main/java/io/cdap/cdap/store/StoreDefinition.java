@@ -1154,4 +1154,35 @@ public final class StoreDefinition {
       createIfNotExists(tableAdmin, STATE_TABLE_SPEC);
     }
   }
+
+  /**
+   * Schemas for credential provisioning.
+   */
+  public static final class CredentialProvisionerStore {
+    public static final StructuredTableId CREDENTIAL_PROVISIONER_PROFILES =
+        new StructuredTableId("credential_provisioner_profiles");
+    public static final StructuredTableId CREDENTIAL_IDENTITIES =
+        new StructuredTableId("credential_identities");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String PROFILE_ID_FIELD = "profile_id";
+    public static final String PROFILE_DATA_FIELD = "profile_data";
+    public static final String IDENTITY_ID_FIELD = "identity_id";
+
+    public static final StructuredTableSpecification PROFILE_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(CREDENTIAL_PROVISIONER_PROFILES)
+            .withFields(Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(PROFILE_ID_FIELD),
+                Fields.stringType(PROFILE_DATA_FIELD))
+            .build();
+
+    public static final StructuredTableSpecification IDENTITY_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(CREDENTIAL_IDENTITIES)
+            .withFields(Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(IDENTITY_ID_FIELD),
+                Fields.stringType(PROFILE_ID_FIELD))
+            .build();
+  }
 }

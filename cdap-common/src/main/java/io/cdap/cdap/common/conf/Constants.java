@@ -2111,6 +2111,13 @@ public final class Constants {
   }
 
   /**
+   * Constants for credential provisioners.
+   */
+  public static final class CredentialProvisioner {
+    public static final String EXTENSIONS_DIR = "credential.provisioner.extensions.dir";
+  }
+
+  /**
    * Constants for Replication.
    */
   public static final class Replication {
