@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
- * Fetch {@link ApplicationDetail} from local store via {@link ApplicationLifecycleService}
+ * Fetch {@link ApplicationDetail} from local store via {@link ApplicationLifecycleService}.
  */
 public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
 
@@ -46,7 +46,7 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
   }
 
   /**
-   * Get {@link ApplicationDetail} for the given {@link ApplicationId}
+   * Get {@link ApplicationDetail} for the given {@link ApplicationId}.
    *
    * @param appRef the versionless id of the application
    * @return {@link ApplicationDetail} for the given application
@@ -65,7 +65,7 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
   }
 
   /**
-   * Scans all application details in the given namespace
+   * Scans all the latest application details in the given namespace.
    */
   @Override
   public void scan(String namespace, Consumer<ApplicationDetail> consumer, Integer batchSize)

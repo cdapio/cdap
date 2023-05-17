@@ -50,7 +50,7 @@ import javax.ws.rs.QueryParam;
 
 
 /**
- * Internal {@link HttpHandler} for Application Lifecycle Management
+ * Internal {@link HttpHandler} for Application Lifecycle Management.
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/namespaces/{namespace-id}")
@@ -70,7 +70,7 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
   }
 
   /**
-   * Get a list of {@link ApplicationDetail} for all applications in the given namespace
+   * Get a list of {@link ApplicationDetail} for all applications in the given namespace.
    *
    * @param request {@link HttpRequest}
    * @param responder {@link HttpResponse}
@@ -145,11 +145,13 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
           Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(pageToken))
       )));
     }
+    // Scan the latest applications only for internal apps list api.
+    builder.setLatestOnly(true);
     return builder.build();
   }
 
   /**
-   * Get {@link ApplicationDetail} for a given application
+   * Get {@link ApplicationDetail} for a given application.
    *
    * @param request {@link HttpRequest}
    * @param responder {@link HttpResponse}
@@ -173,7 +175,7 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
   }
 
   /**
-   * Get {@link ApplicationDetail} for a given application
+   * Get {@link ApplicationDetail} for a given application.
    *
    * @param request {@link HttpRequest}
    * @param responder {@link HttpResponse}

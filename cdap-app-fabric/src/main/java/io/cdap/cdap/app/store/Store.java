@@ -64,7 +64,6 @@ import org.apache.twill.api.RunId;
 
 /**
  * Responsible for managing {@link Program} and {@link Application} metadata.
- *
  * TODO: set state methods are only called from unit tests. They should be removed in favor of using AppMetadataStore.
  */
 public interface Store {
@@ -176,7 +175,7 @@ public interface Store {
    *
    * @param program id of the program
    * @return An instance of {@link ProgramDescriptor} if found.
-   * @throws IOException
+   * @throws IOException when Store fails to get application
    */
   ProgramDescriptor loadProgram(ProgramId program) throws IOException, NotFoundException;
 
@@ -185,9 +184,24 @@ public interface Store {
    *
    * @param programReference reference of the program
    * @return An instance of {@link ProgramDescriptor} if found.
-   * @throws IOException
+   * @throws IOException when Store fails to get application
    */
   ProgramDescriptor loadProgram(ProgramReference programReference) throws IOException, NotFoundException;
+
+  /**
+   * Fetches all run records for all versions of a program.
+   * Returned ProgramRunRecords are sorted by their startTime.
+   *
+   * @param programReference programReference of the program
+   * @param status           status of the program running/completed/failed or all
+   * @param startTime        fetch run history that has started after the startTime in seconds
+   * @param endTime          fetch run history that has started before the endTime in seconds
+   * @param limit            max number of entries to fetch for this history call
+   * @return                 map of logged runs
+   */
+  Map<ProgramRunId, RunRecordDetail> getAllRuns(ProgramReference programReference, ProgramRunStatus status,
+      long startTime, long endTime, int limit,
+      Predicate<RunRecordDetail> filter);
 
   /**
    * Fetches run records for particular program.
@@ -202,21 +216,6 @@ public interface Store {
    */
   Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
                                              long startTime, long endTime, int limit);
-
-  /**
-   * Fetches all run records for all versions of a program.
-   * Returned ProgramRunRecords are sorted by their startTime.
-   *
-   * @param programReference programReference of the program
-   * @param status           status of the program running/completed/failed or all
-   * @param startTime        fetch run history that has started after the startTime in seconds
-   * @param endTime          fetch run history that has started before the endTime in seconds
-   * @param limit            max number of entries to fetch for this history call
-   * @return                 map of logged runs
-   */
-  Map<ProgramRunId, RunRecordDetail> getAllRuns(ProgramReference programReference, ProgramRunStatus status,
-                                                long startTime, long endTime, int limit,
-                                                Predicate<RunRecordDetail> filter);
 
   /**
    * Fetches the run records for the particular status. Same as calling
@@ -237,6 +236,7 @@ public interface Store {
    */
   Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status, long startTime,
                                              long endTime, int limit, Predicate<RunRecordDetail> filter);
+
   /**
    * Fetches run records for the particular status.
    *
@@ -251,10 +251,24 @@ public interface Store {
 
   /**
    * Fetches the run records for given ProgramRunIds.
+   *
    * @param programRunIds  list of program RunIds to match against
    * @return        map of logged runs
    */
   Map<ProgramRunId, RunRecordDetail> getRuns(Set<ProgramRunId> programRunIds);
+
+  /**
+   * Fetches run records for multiple programs.
+   *
+   * @param programs  the programs to get run records for
+   * @param status    status of the program running/completed/failed or all
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limitPerProgram     max number of runs to fetch for each program
+   * @return          runs for each program
+   */
+  List<ProgramHistory> getRuns(Collection<ProgramReference> programs, ProgramRunStatus status,
+      long startTime, long endTime, int limitPerProgram);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records across all namespaces.
@@ -275,6 +289,7 @@ public interface Store {
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
+   *
    * @param namespaceId the namespace id to match against
    * @return map of logged runs
    */
@@ -282,6 +297,7 @@ public interface Store {
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records from the given NamespaceId's.
+   *
    * @param namespaces the namespace id's to get active run records from
    * @param filter predicate to be passed to filter the records
    * @return map of logged runs
@@ -290,21 +306,15 @@ public interface Store {
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ApplicationId.
+   *
    * @param applicationId the application id to match against
    * @return map of logged runs
    */
   Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId);
 
   /**
-   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records for the
-   * given application.
-   * @param applicationReference versionless reference of the application
-   * @return map of logged runs. If no active run exists, return an empty map.
-   */
-  Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ApplicationReference applicationReference);
-
-  /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ProgramId.
+   *
    * @param programId the program id to match against
    * @return map of logged runs
    */
@@ -315,9 +325,18 @@ public interface Store {
    *
    * @param programRefs collection of program ids for fetching active run records.
    * @return a {@link Map} from the {@link ProgramId} to the list of run records; there will be no entry for programs
-   * that do not exist.
+   *     that do not exist.
    */
   Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramReference> programRefs);
+
+  /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records for the
+   * given application.
+   *
+   * @param applicationReference versionless reference of the application
+   * @return map of logged runs. If no active run exists, return an empty map.
+   */
+  Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ApplicationReference applicationReference);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -340,11 +359,12 @@ public interface Store {
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
+   *
    * @param id            application id
    * @param meta          application metadata to store
    * @return              the number of edits to the application. A new application will return 0.
    * @throws ConflictException if the app cannot be deployed when the user provided parent-version doesn't match the
-   * current latest version
+   *     current latest version
    */
   int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
 
@@ -378,7 +398,7 @@ public interface Store {
   ApplicationMeta getApplicationMetadata(ApplicationId id);
 
   /**
-   * Returns the latest version of an application in a namespace
+   * Returns the latest version of an application in a namespace.
    *
    * @param appRef application reference
    * @return The metadata information of the latest application version.
@@ -387,7 +407,7 @@ public interface Store {
   ApplicationMeta getLatest(ApplicationReference appRef);
 
   /**
-   * Scans for applications across all namespaces.
+   * Scans for the latest applications across all namespaces.
    *
    * @param txBatchSize maximum number of applications to scan in one transaction to
    *                    prevent holding a single transaction for too long
@@ -396,7 +416,7 @@ public interface Store {
   void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationMeta> consumer);
 
   /**
-   * Scans for applications according to the parameters passed in request
+   * Scans for applications according to the parameters passed in request.
    *
    * @param request  parameters defining filters and sorting
    * @param txBatchSize maximum number of applications to scan in one transaction to
@@ -417,6 +437,7 @@ public interface Store {
 
   /**
    * Update an applications with provided SourceControlMeta.
+   *
    * @param appId the application ID
    * @param sourceControlMeta the source control metadata of the application synced with linked repository.
    */
@@ -424,13 +445,14 @@ public interface Store {
 
   /**
    * Get source control metadata of provided application.
+   *
    * @param appRef the application reference
    * @return {@link SourceControlMeta}
    */
   SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef);
 
   /**
-   * Returns a map of latest programIds given programReferences
+   * Returns a map of latest programIds given programReferences.
    *
    * @param references the list of programReferences to get the latest programIds
    * @return collection of programIds. For applications that don't exist, there will be no entry in the result.
@@ -438,7 +460,7 @@ public interface Store {
   Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references);
 
   /**
-   * Returns a list of all versions' ApplicationId's of the application by reference
+   * Returns a list of all versions' ApplicationId's of the application by reference.
    *
    * @param appRef application reference
    * @return collection of versionIds of the application's versions
@@ -455,13 +477,14 @@ public interface Store {
 
   /**
    * Returns the number of instances of a service.
+   *
    * @param id id of the program
    * @return number of instances
    */
   int getServiceInstances(ProgramId id);
 
   /**
-   * Sets the number of instances of a {@link Worker}
+   * Sets the number of instances of a {@link Worker}.
    *
    * @param id id of the program
    * @param instances number of instances
@@ -469,7 +492,7 @@ public interface Store {
   void setWorkerInstances(ProgramId id, int instances);
 
   /**
-   * Gets the number of instances of a {@link Worker}
+   * Gets the number of instances of a {@link Worker}.
    *
    * @param id id of the program
    * @return number of instances
@@ -506,7 +529,8 @@ public interface Store {
   Map<String, String> getRuntimeArguments(ProgramRunId runId);
 
   /**
-   * Deletes data for an application from the WorkflowTable table
+   * Deletes data for an application from the WorkflowTable table.
+   *
    * @param id id of application to be deleted
    */
   void deleteWorkflowStats(ApplicationId id);
@@ -580,6 +604,8 @@ public interface Store {
                                                                     long timeInterval);
 
   /**
+   * Get the running Ids in a time range.
+   *
    * @return programs that were running between given start and end time.
    */
   Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs);
@@ -603,26 +629,12 @@ public interface Store {
   long getProgramTotalRunCount(ProgramReference programReference) throws NotFoundException;
 
   /**
-   * Get the run count of the given program collection
+   * Get the run count of the given program collection.
    *
    * @param programRefs collection of program ids to get the count
    * @return the run count result of each program in the collection
    */
   List<RunCountResult> getProgramTotalRunCounts(Collection<ProgramReference> programRefs);
-
-  /**
-   * Fetches run records for multiple programs.
-   *
-   * @param programs  the programs to get run records for
-   * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime in seconds
-   * @param endTime   fetch run history that has started before the endTime in seconds
-   * @param limitPerProgram     max number of runs to fetch for each program
-   * @return          runs for each program
-   */
-  List<ProgramHistory> getRuns(Collection<ProgramReference> programs, ProgramRunStatus status,
-                               long startTime, long endTime, int limitPerProgram);
-
 
   /**
    * Get application state.
@@ -670,8 +682,8 @@ public interface Store {
     }
     if (!Objects.equals(programId.getApplication(), appSpec.getName())
       || !Objects.equals(programId.getVersion(), appSpec.getAppVersion())) {
-      throw new IllegalArgumentException("Program " + programId + " does not belong to application " +
-                                           appSpec.getName() + ":" + appSpec.getAppVersion());
+      throw new IllegalArgumentException("Program " + programId + " does not belong to application "
+          + appSpec.getName() + ":" + appSpec.getAppVersion());
     }
 
     if (!appSpec.getProgramsByType(programId.getType().getApiProgramType()).contains(programId.getProgram())) {
