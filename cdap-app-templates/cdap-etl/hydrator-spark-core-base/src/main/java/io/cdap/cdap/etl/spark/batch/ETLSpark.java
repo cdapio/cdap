@@ -109,6 +109,9 @@ public class ETLSpark extends AbstractSpark {
     // to make sure fields that are the same but different casing are treated as different fields in auto-joins
     // see CDAP-17024
     sparkConf.set("spark.sql.caseSensitive", "true");
+    //For spark 3.2 onwards the spark.hadoopRDD.ignoreEmptySplits is set to true, which created ZERO stages while using
+    //database plugins : see CDAP-20651
+    sparkConf.set("spark.hadoopRDD.ignoreEmptySplits", "false");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
