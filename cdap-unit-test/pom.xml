@@ -137,6 +137,20 @@
       <artifactId>spark-streaming-kafka-0-10_2.12</artifactId>
       <version>${spark3.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <!--
+          We still use hadoop2,
+          so excluding hadoop3 dependencies from spark
+        -->
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-client-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-client-runtime</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 

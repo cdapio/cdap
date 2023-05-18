@@ -144,6 +144,13 @@ object SparkRuntimeEnv {
   }
 
   /**
+   * Provides spark version to be easily fetched from java.
+   *
+   * @return spark version
+   */
+  def getVersion(): String = org.apache.spark.SPARK_VERSION
+
+  /**
     * Adds the reference to BatchedWriteAheadLog instance.
     */
   def addBatchedWriteAheadLog(batchedWAL: AnyRef): Unit = {
