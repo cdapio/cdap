@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -604,15 +605,20 @@ public class RepositoryManager implements AutoCloseable {
    *
    * @param directoryPath the path of the root directory.
    * @return the size of the directory in bytes.
-   * @throws IOException when there are failures while reading the file.
+   * @throws IOException when there are failures while reading the file or {@link UncheckedIOException}
+   *     is thrown out and we throw to the cause.
    */
   @VisibleForTesting
   static long calculateDirectorySize(Path directoryPath) throws IOException {
     try (Stream<Path> walk = Files.walk(directoryPath.toAbsolutePath())) {
-      return walk
-          .filter(p -> Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS))
-          .mapToLong(p -> p.toFile().length())
-          .sum();
+      try {
+        return walk
+            .filter(p -> Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS))
+            .mapToLong(p -> p.toFile().length())
+            .sum();
+      } catch (UncheckedIOException e) {
+        throw e.getCause();
+      }
     }
   }
 }
