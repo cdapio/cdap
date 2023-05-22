@@ -65,6 +65,7 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -350,6 +351,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
           String.format("No application class found in artifact '%s' in namespace '%s'.",
               artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
     }
+    Map<String, String> runtimeArguments =
+        SystemArguments.skipNormalMacroEvaluation(options.getUserArguments().asMap())
+            ? Collections.emptyMap() : options.getUserArguments().asMap();
 
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
         .setArtifactId(artifactId)
@@ -361,7 +365,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         .setConfigString(existingAppSpec.getConfiguration())
         .setUpdateSchedules(false)
         .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec,
-            options.getUserArguments().asMap(), options.getArguments().asMap()))
+            runtimeArguments, options.getArguments().asMap()))
         .setDeployedApplicationSpec(existingAppSpec)
         .build();
     Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,

@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,7 +57,9 @@ public class DataprocProvisionerTest {
   @Mock
   private DataprocClient dataprocClient;
   @Mock
-  private Cluster cluster, cluster2;
+  private Cluster cluster;
+  @Mock
+  private Cluster cluster2;
 
   private DataprocProvisioner provisioner;
   @Captor
@@ -65,7 +69,7 @@ public class DataprocProvisionerTest {
 
   @Before
   public void init() {
-    provisioner = new DataprocProvisioner((conf, requireSSH) -> dataprocClient);
+    provisioner = new DataprocProvisioner((conf, requireSsh) -> dataprocClient);
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
 
     //default system properties defined by DataprocProvisioner
@@ -132,6 +136,8 @@ public class DataprocProvisionerTest {
     props.put("vTpmEnabled", "true");
     props.put("integrityMonitoringEnabled", "true");
     props.put("idleTTL", "20");
+    props.put("clusterReuseRetryDelayMs", "20");
+    props.put("clusterReuseRetryMaxMs", "200");
 
     DataprocConf conf = DataprocConf.create(props);
 
@@ -139,7 +145,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("region1", conf.getRegion());
     Assert.assertEquals("region1-a", conf.getZone());
     Assert.assertEquals("point1", conf.getTokenEndpoint());
-    Assert.assertEquals(20, conf.getIdleTTLMinutes());
+    Assert.assertEquals(20, conf.getIdleTtlMinutes());
     Map<String, String> clusterMetaData = conf.getClusterMetaData();
     Assert.assertEquals("metadata-val1", clusterMetaData.get("metadata-key1"));
     Assert.assertEquals("metadata-val2", clusterMetaData.get("metadata-key2"));
@@ -158,16 +164,19 @@ public class DataprocProvisionerTest {
     Assert.assertFalse(conf.isSecureBootEnabled());
     Assert.assertTrue(conf.isvTpmEnabled());
     Assert.assertTrue(conf.isIntegrityMonitoringEnabled());
+
+    Assert.assertEquals(20, conf.getClusterReuseRetryDelayMs());
+    Assert.assertEquals(200, conf.getClusterReuseRetryMaxMs());
   }
 
   @Test
-  public void testDataprocConfDefaultIdleTTL() {
+  public void testDataprocConfDefaultIdleTtl() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
     props.put("accountKey", "key");
     props.put("region", "region1");
     DataprocConf conf = DataprocConf.create(props);
-    Assert.assertEquals(30, conf.getIdleTTLMinutes());
+    Assert.assertEquals(30, conf.getIdleTtlMinutes());
   }
 
   @Test
@@ -213,17 +222,16 @@ public class DataprocProvisionerTest {
   }
 
   @Test
-  public void testCustomImageURI() {
+  public void testCustomImageUri() {
     Map<String, String> props = new HashMap<>();
-    String customURI = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
-    props.put(DataprocConf.CUSTOM_IMAGE_URI,
-              customURI);
+    String customUri = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
+    props.put(DataprocConf.CUSTOM_IMAGE_URI, customUri);
     props.put("accountKey", "key");
     props.put("projectId", "my project");
     props.put("zone", "region1-a");
 
     DataprocConf conf = DataprocConf.create(props);
-    Assert.assertEquals(customURI, conf.getCustomImageUri());
+    Assert.assertEquals(customUri, conf.getCustomImageUri());
   }
 
   @Test
@@ -241,20 +249,20 @@ public class DataprocProvisionerTest {
     ));
 
     context.setSparkCompat(SparkCompat.SPARK3_2_12);
-    Assert.assertEquals("2.1", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.5.0"));
-    Assert.assertEquals("2.1", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.4.0"));
-    Assert.assertEquals("2.1", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     //Doublecheck we still get 2.0 for Spark 3 even with CDAP 6.4
     context.setSparkCompat(SparkCompat.SPARK3_2_12);
-    Assert.assertEquals("2.1", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.0", provisioner.getImageVersion(context, defaultConf));
 
   }
 
@@ -280,7 +288,7 @@ public class DataprocProvisionerTest {
 
     Mockito.when(dataprocClient.getCluster("cdap-app-runId")).thenReturn(Optional.empty());
     Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
-                                              Mockito.eq("2.1"),
+                                              Mockito.eq("2.0"),
                                               addedLabelsCaptor.capture(),
                                               Mockito.eq(false),
                                               Mockito.any()))
@@ -300,6 +308,7 @@ public class DataprocProvisionerTest {
     context.addProperty("idleTTL", "5");
     context.addProperty(DataprocConf.SKIP_DELETE, "true");
     context.setProfileName("testProfile");
+    context.addProperty(DataprocConf.CLUSTER_REUSE_RETRY_DELAY_MS, "0");
     ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
       .setNamespace("ns")
       .setApplication("app")
@@ -312,23 +321,43 @@ public class DataprocProvisionerTest {
 
     //A. Check with existing client, probably after a retry
     Mockito.when(dataprocClient.getClusters(
-      null,
       Collections.singletonMap(AbstractDataprocProvisioner.LABEL_RUN_KEY, "cdap-app-runId")))
       .thenAnswer(i -> Stream.of(cluster));
     Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.RUNNING);
     Assert.assertEquals(cluster, provisioner.createCluster(context));
 
-    //B. With preallocated cluster in "bad" state new allocation should happen
-    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+    //B. With preallocated cluster in "bad" state new allocation should happen.
     Mockito.when(cluster.getStatus()).thenReturn(ClusterStatus.FAILED);
     Mockito.when(cluster2.getName()).thenReturn("cluster2");
-    Mockito.when(dataprocClient.getClusters(Mockito.eq(ClusterStatus.RUNNING), Mockito.eq(ImmutableMap.of(
-      AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
-      AbstractDataprocProvisioner.LABEL_REUSE_UNTIL, "*",
-      AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
-      AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
-    )), Mockito.any()))
-      .thenAnswer(i -> Stream.of(cluster2));
+    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+    ImmutableMap<String, String> reuseClusterFilter = ImmutableMap.of(
+        AbstractDataprocProvisioner.LABEL_VERSON, "6_4",
+        AbstractDataprocProvisioner.LABEL_REUSE_KEY, conf.getClusterReuseKey(),
+        AbstractDataprocProvisioner.LABEL_PROFILE, "testProfile"
+    );
+
+    Mockito.when(dataprocClient.getClusters(Mockito.eq(reuseClusterFilter), Mockito.any()))
+        //B.1. When there is no good cluster found, a retry should happen
+        .thenAnswer(i -> {
+          //Ensure we call the predicate
+          Predicate clusterPredicate = i.getArgumentAt(1, Predicate.class);
+          com.google.cloud.dataproc.v1.Cluster updatingCluster =
+              com.google.cloud.dataproc.v1.Cluster.newBuilder()
+                  .setStatus(com.google.cloud.dataproc.v1.ClusterStatus
+                      .newBuilder().setState(State.UPDATING))
+                  .build();
+          com.google.cloud.dataproc.v1.Cluster deletingCluster =
+              com.google.cloud.dataproc.v1.Cluster.newBuilder()
+                  .setStatus(com.google.cloud.dataproc.v1.ClusterStatus
+                      .newBuilder().setState(State.DELETING))
+                  .build();
+          Assert.assertFalse(clusterPredicate.test(updatingCluster));
+          Assert.assertFalse(clusterPredicate.test(deletingCluster));
+          return Stream.empty();
+        })
+        //B.2. Finally a reuse cluster found
+        .thenAnswer(i -> Stream.of(cluster2));
+
     Assert.assertEquals(cluster2, provisioner.createCluster(context));
 
     Mockito.verify(dataprocClient).updateClusterLabels(

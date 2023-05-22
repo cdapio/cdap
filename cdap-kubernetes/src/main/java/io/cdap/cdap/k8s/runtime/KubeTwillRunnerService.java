@@ -337,7 +337,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
             workloadIdentityProvider);
       }
     }
-    addAndStartWatchers(cdapNamespace);
+    addAndStartWatchers(namespace);
   }
 
   @Override

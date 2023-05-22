@@ -101,9 +101,9 @@ public class DataprocClientTest {
     properties.put("zone", "us-test1-c");
     dataprocConf = DataprocConf.create(properties);
 
-    sshDataprocClientFactory = (conf, requireSSH) ->
-      new SSHDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
-    mockDataprocClientFactory = (conf, requireSSH) ->
+    sshDataprocClientFactory = (conf, requireSsh) ->
+      new SshDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
+    mockDataprocClientFactory = (conf, requireSsh) ->
       new MockDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
 
     Compute.Networks networksMock = Mockito.mock(Compute.Networks.class);
@@ -170,29 +170,25 @@ public class DataprocClientTest {
 
 
   @Test
-  public void apiExceptionWithNon4XXThrowsRetryableException() throws Exception {
+  public void apiExceptionWithNon4xxThrowsRetryableException() throws Exception {
     // 500
     ApiException e = new ApiException(new Throwable(), GrpcStatusCode.of(Status.Code.UNKNOWN), true);
 
-    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.anyString(), Mockito.anyString(),
-                                                               Mockito.anyString()))
-      .thenThrow(e);
+    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(RetryableProvisionException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
+    sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
   }
 
   @Test
-  public void apiExceptionWith4XXNotThrowRetryableException() throws Exception {
+  public void apiExceptionWith4xxNotThrowRetryableException() throws Exception {
     // 500
     ApiException e = new ApiException(new Throwable(), GrpcStatusCode.of(Status.Code.UNAUTHENTICATED), true);
 
-    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.anyString(), Mockito.anyString(),
-                                                               Mockito.anyString()))
-      .thenThrow(e);
+    PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf).getClusters(null, new HashMap<>());
+    sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
   }
 
   @Test
@@ -322,8 +318,8 @@ public class DataprocClientTest {
   @Test
   public void testGetClusterStatusCapturesErrorMessage() throws GeneralSecurityException, IOException,
     RetryableProvisionException {
-    Cluster cluster = Cluster.newBuilder().setStatus(ClusterStatus.newBuilder().
-                                                       setState(ClusterStatus.State.ERROR)).build();
+    Cluster cluster = Cluster.newBuilder().setStatus(ClusterStatus.newBuilder()
+        .setState(ClusterStatus.State.ERROR)).build();
     // PowerMockito.when(clusterControllerClientMock.getCluster(Mockito.any())).thenReturn(cluster);
     DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
 
@@ -332,16 +328,16 @@ public class DataprocClientTest {
 
     OperationsClient.ListOperationsPagedResponse listOperationsPagedResponse =
       PowerMockito.mock(OperationsClient.ListOperationsPagedResponse.class);
-    PowerMockito.when(operationsClient.listOperations(Mockito.any(), Mockito.any())).
-      thenReturn(listOperationsPagedResponse);
+    PowerMockito.when(operationsClient.listOperations(Mockito.any(), Mockito.any()))
+        .thenReturn(listOperationsPagedResponse);
 
     OperationsClient.ListOperationsPage page = Mockito.mock(OperationsClient.ListOperationsPage.class);
     Mockito.when(listOperationsPagedResponse.getPage()).thenReturn(page);
 
     String errorMsg = "Unexpected failure";
     Any any = Any.newBuilder().setValue(ByteString.copyFrom("First Detail".getBytes(StandardCharsets.UTF_8))).build();
-    com.google.rpc.Status operationError = com.google.rpc.Status.newBuilder().setMessage(errorMsg).
-      addDetails(any).build();
+    com.google.rpc.Status operationError = com.google.rpc.Status.newBuilder().setMessage(errorMsg)
+        .addDetails(any).build();
     Operation operation = Operation.newBuilder().setError(operationError).build();
     List<Operation> operations = Collections.singletonList(operation);
     Mockito.when(page.getPageElementCount()).thenReturn(1);
