@@ -125,8 +125,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   public static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   public static final String APP_SPEC_FILE_NAME = "appSpec.json";
   public static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
-  public static final String PLUGIN_DIR = "artifacts";
-  public static final String PLUGIN_ARCHIVE = "artifacts_archive.jar";
   public static final String LOGBACK_FILE_NAME = "logback.xml";
   public static final String TETHER_CONF_FILE_NAME = "cdap-tether.xml";
 
@@ -646,31 +644,25 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
     newSystemArgs.putAll(extraSystemArgs);
 
-    String pluginDirFileName = PLUGIN_DIR;
-    String pluginArchiveFileName = PLUGIN_ARCHIVE;
+    String pluginDirFileName = ProgramRunners.PLUGIN_DIR;
+    String pluginArchiveFileName = ProgramRunners.PLUGIN_ARCHIVE;
     if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
       // If the archive already exists locally, we just need to re-localize it to remote containers
       File archiveFile = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
       // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put(PLUGIN_DIR, new LocalizeResource(archiveFile, true));
-      localizeResources.put(PLUGIN_ARCHIVE, new LocalizeResource(archiveFile, false));
+      localizeResources.put(pluginDirFileName, new LocalizeResource(archiveFile, true));
+      localizeResources.put(pluginArchiveFileName, new LocalizeResource(archiveFile, false));
     } else if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
-      // If there is a plugin directory, then we need to create an archive and localize it to remote containers
-      File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
-      File archiveFile = new File(tempDir, PLUGIN_DIR + ".jar");
-
-      // Store all artifact jars into a new jar file for localization without compression
-      try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(archiveFile))) {
-        jarOut.setLevel(0);
-        BundleJarUtil.addToArchive(localDir, jarOut);
-      }
+      // If there is a plugin directory,
+      // then we need to create an archive and localize it to remote containers
+      File archiveFile = ProgramRunners.createPluginArchive(options, tempDir);
 
       if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR_HASH)) {
         // if hash value for plugins has been provided, we append it to filename.
         String pluginDirHash = systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR_HASH);
         newSystemArgs.remove(ProgramOptionConstants.PLUGIN_DIR_HASH);
-        pluginDirFileName = String.format("%s_%s", PLUGIN_DIR, pluginDirHash);
-        pluginArchiveFileName = PLUGIN_ARCHIVE.replace(".jar",
+        pluginDirFileName = String.format("%s_%s", ProgramRunners.PLUGIN_DIR, pluginDirHash);
+        pluginArchiveFileName = ProgramRunners.PLUGIN_ARCHIVE.replace(".jar",
             String.format("_%s%s", pluginDirHash, ".jar"));
 
         Set<String> cacheableFiles = new HashSet<>();

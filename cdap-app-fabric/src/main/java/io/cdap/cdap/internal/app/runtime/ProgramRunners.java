@@ -36,11 +36,13 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -62,12 +64,14 @@ import org.slf4j.LoggerFactory;
  * Utility class to provide common functionality that shares among different {@link ProgramRunner}.
  */
 public final class ProgramRunners {
+  public static final String PLUGIN_DIR = "artifacts";
+  public static final String PLUGIN_ARCHIVE = "artifacts_archive.jar";
 
   /**
    * Impersonates as the given user to start a guava service
    *
    * @param user user to impersonate
-   * @param service guava service start start
+   * @param service guava service to start
    */
   public static void startAsUser(String user, final Service service)
       throws IOException, InterruptedException {
@@ -213,6 +217,27 @@ public final class ProgramRunners {
 
     // Default to ON_PREMISE for backward compatibility.
     return clusterMode == null ? ClusterMode.ON_PREMISE : ClusterMode.valueOf(clusterMode);
+  }
+
+  /**
+   * Create a jar containing all the plugin artifacts contained in the local plugin directory.
+   *
+   * @param options program options, which should contain the path to the local plugin directory
+   * @return jar file containing all the local plugin artifacts
+   * @throws IOException if there was an error creating the plugin archive.
+   */
+  public static File createPluginArchive(ProgramOptions options, File tempDir) throws IOException {
+    Arguments systemArgs = options.getArguments();
+    File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+    File archiveFile = new File(tempDir, PLUGIN_DIR + ".jar");
+
+    // Store all artifact jars into a new jar file for localization without compression
+    try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(archiveFile))) {
+      jarOut.setLevel(0);
+      BundleJarUtil.addToArchive(localDir, jarOut);
+    }
+
+    return archiveFile;
   }
 
   /**

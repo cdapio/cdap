@@ -237,12 +237,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
       Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
       File pluginDir = new File(
           programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
-              DistributedProgramRunner.PLUGIN_DIR));
+              ProgramRunners.PLUGIN_DIR));
       // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
       DirUtils.mkdirs(pluginDir);
 
       if (!programOpts.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
-        systemArguments.put(ProgramOptionConstants.PLUGIN_DIR, DistributedProgramRunner.PLUGIN_DIR);
+        systemArguments.put(ProgramOptionConstants.PLUGIN_DIR, ProgramRunners.PLUGIN_DIR);
       }
 
       // remember the file names in the artifact folder before app regeneration
@@ -265,10 +265,14 @@ public class DefaultRuntimeJob implements RuntimeJob {
         systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
       }
 
-      // if different, we will need to remove the plugin artifact archive argument from options and let program runner
-      // recreate it from the folders
+      // if different, create an updated plugin archive
       if (!pluginFiles.equals(pluginFilesAfter)) {
-        systemArguments.remove(ProgramOptionConstants.PLUGIN_ARCHIVE);
+        File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+        File tempArchiveDir = DirUtils.createTempDir(tempDir);
+        File rebuiltPluginArchive = ProgramRunners.createPluginArchive(programOpts, tempArchiveDir);
+        systemArguments.put(ProgramOptionConstants.PLUGIN_ARCHIVE,
+            rebuiltPluginArchive.getAbsolutePath());
       }
 
       // update program options
@@ -588,7 +592,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(String.class)
             .annotatedWith(Names.named(RemoteIsolatedPluginFinder.ISOLATED_PLUGIN_DIR))
             .toInstance(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
-                DistributedProgramRunner.PLUGIN_DIR));
+                ProgramRunners.PLUGIN_DIR));
         bind(PluginFinder.class).to(RemoteIsolatedPluginFinder.class);
         bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class)
             .in(Scopes.SINGLETON);
