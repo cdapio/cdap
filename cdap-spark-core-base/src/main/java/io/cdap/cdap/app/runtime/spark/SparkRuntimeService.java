@@ -521,6 +521,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       final Thread t = new Thread(() -> {
         // note: this sets logging context on the thread level
         LoggingContextAccessor.setLoggingContext(runtimeContext.getLoggingContext());
+        Thread.currentThread().setContextClassLoader(runtimeContext.getProgramInvocationClassLoader());
         runnable.run();
       });
       t.setDaemon(true);
