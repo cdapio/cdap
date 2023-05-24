@@ -111,6 +111,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
   private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
+  private static final String LABEL_CDAP_LAUNCH_MODE = "cdap-program-launch-mode";
 
   // Dataproc specific error groups
   private static final String ERRGP_GCS = "gcs";
@@ -714,6 +715,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         // capitals
         .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
         .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
+        .putLabels(LABEL_CDAP_LAUNCH_MODE, launchMode.name().toLowerCase())
         .setHadoopJob(hadoopJobBuilder.build());
 
     GetClusterRequest getClusterRequest = GetClusterRequest.newBuilder()
