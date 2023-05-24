@@ -23,13 +23,14 @@ import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import org.apache.spark.api.java.function.Function;
 
 import javax.annotation.Nullable;
+import org.apache.spark.api.java.function.MapFunction;
 
 /**
  * Function that doesn't transform anything, but just emits counts for the number of records from that stage.
  *
  * @param <T> the type of input object
  */
-public class CountingFunction<T> implements Function<T, T> {
+public class CountingFunction<T> implements Function<T, T>, MapFunction<T, T> {
   private final String stageName;
   private final Metrics metrics;
   private final String metricName;

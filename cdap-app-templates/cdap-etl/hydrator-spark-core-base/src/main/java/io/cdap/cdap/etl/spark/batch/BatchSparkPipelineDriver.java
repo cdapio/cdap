@@ -324,7 +324,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
           continue;
         }
 
-        SparkCollection<Object> collection = inputDataCollections.get(joinStage.getStageName());
+        BatchCollection<Object> collection =
+            (BatchCollection<Object>) inputDataCollections.get(joinStage.getStageName());
 
         SQLEngineJob<SQLDataset> pushJob = sqlEngineAdapter.push(joinStageName,
                                                                  joinStage.getSchema(),

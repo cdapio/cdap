@@ -245,10 +245,8 @@ public class BatchSQLEngineAdapter implements Closeable {
 
       // If a consumer is able to consume this request, we delegate the execution to the consumer.
       if (consumer != null) {
-        StructType sparkSchema = DataFrames.toDataType(schema);
-        JavaRDD<Row> rowRDD = ((JavaRDD<StructuredRecord>) collection.getUnderlying())
-          .map(r -> DataFrames.toRow(r, sparkSchema));
-        Dataset<Row> ds = sqlContext.createDataFrame(rowRDD, sparkSchema);
+        Dataset<Row> ds = ((BatchCollection<StructuredRecord>) collection)
+            .toDataframeCollection(schema).getDataframe();
         RecordCollection recordCollection = new SparkRecordCollectionImpl(ds);
         // Consume records and collect metrics
         SQLDataset pushedDataset =  consumer.consume(recordCollection);
