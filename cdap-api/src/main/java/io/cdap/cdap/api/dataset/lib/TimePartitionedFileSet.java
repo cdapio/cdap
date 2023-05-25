@@ -34,8 +34,11 @@ import javax.annotation.Nullable;
  * retrieving partitions via time or time range using {@link #getPartitionByTime}, {@link
  * #getPartitionsByTime}, or when writing a partition using {@link #getPartitionOutput}, the seconds
  * and milliseconds on the time or time range are ignored.
+ *
+ * @deprecated table based datasets will be removed in a future version
  */
 @Beta
+@Deprecated
 public interface TimePartitionedFileSet extends PartitionedFileSet {
 
   /**
