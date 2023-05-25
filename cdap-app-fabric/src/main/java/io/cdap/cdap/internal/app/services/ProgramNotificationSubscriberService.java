@@ -599,6 +599,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
         });
 
       runnables.add(() -> {
+        programCompletionNotifiers.forEach(notifier -> LOG.error(">> {}", notifier.toString()));
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
                                                                                    recordedRunRecord.getStatus()));
         runRecordMonitorService.removeRequest(programRunId, true);
