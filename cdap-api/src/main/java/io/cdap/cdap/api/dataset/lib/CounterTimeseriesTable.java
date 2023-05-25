@@ -33,7 +33,9 @@ import java.util.NoSuchElementException;
  * usage, please see the {@link TimeseriesTable} class description.</p>
  *
  * @see TimeseriesTable
+ * @deprecated table based datasets will be removed in a future version
  */
+@Deprecated
 public class CounterTimeseriesTable extends TimeseriesDataset {
 
   /**

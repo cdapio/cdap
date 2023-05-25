@@ -42,8 +42,9 @@ import javax.annotation.Nullable;
  * {@link ObjectMappedTableProperties} for more information on properties for this Dataset.
  *
  * @param <T> the type of objects in the table
+ * @deprecated table based datasets will be removed in a future version
  */
-@Beta
+@Deprecated
 public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
     BatchWritable<byte[], T>, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
