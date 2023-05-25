@@ -37,7 +37,9 @@ import java.util.stream.Collectors;
  * the index.
  *
  * @param <T> the type of objects in the store
+ * @deprecated table based datasets will be removed in a future version
  */
+@Deprecated
 public class IndexedObjectStore<T> extends AbstractDataset {
 
   /**
