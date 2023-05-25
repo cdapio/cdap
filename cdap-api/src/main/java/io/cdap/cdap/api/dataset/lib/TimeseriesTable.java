@@ -110,7 +110,9 @@ import java.util.Objects;
  * </p>
  *
  * @see CounterTimeseriesTable
+ * @deprecated table based datasets will be removed in a future version
  */
+@Deprecated
 public class TimeseriesTable extends TimeseriesDataset
     implements BatchReadable<byte[], TimeseriesTable.Entry>,
     BatchWritable<byte[], TimeseriesTable.Entry> {

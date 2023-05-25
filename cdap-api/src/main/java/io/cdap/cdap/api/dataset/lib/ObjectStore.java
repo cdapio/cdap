@@ -40,8 +40,9 @@ import java.util.List;
  * columns.
  *
  * @param <T> the type of objects in the store
+ * @deprecated table based datasets will be removed in a future version
  */
-@Beta
+@Deprecated
 public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>,
     BatchWritable<byte[], T> {
 

@@ -95,7 +95,9 @@ import org.slf4j.LoggerFactory;
  * </p>
  *
  * @see #INDEX_COLUMNS_CONF_KEY
+ * @deprecated table based datasets will be removed in a future version
  */
+@Deprecated
 public class IndexedTable extends AbstractDataset implements Table {
 
   /**

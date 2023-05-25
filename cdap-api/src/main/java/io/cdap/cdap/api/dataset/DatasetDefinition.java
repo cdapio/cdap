@@ -43,8 +43,9 @@ import java.util.Map;
  *
  * @param <D> defines data operations that can be performed on this dataset instance
  * @param <A> defines administrative operations that can be performed on this dataset instance
+ * @deprecated custom datasets will be removed in a future version
  */
-@Beta
+@Deprecated
 public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
 
   /**

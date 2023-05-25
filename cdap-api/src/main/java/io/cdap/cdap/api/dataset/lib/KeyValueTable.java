@@ -45,7 +45,10 @@ import javax.annotation.Nullable;
 /**
  * A key/value map implementation on top of {@link Table} supporting read, write and delete
  * operations.
+ *
+ * @deprecated table based datasets will be removed in a future version
  */
+@Deprecated
 public class KeyValueTable extends AbstractDataset implements
     BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
     RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
