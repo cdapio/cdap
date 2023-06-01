@@ -20,6 +20,7 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
+import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.api.java.function.Function;
 
 import javax.annotation.Nullable;
@@ -56,5 +57,21 @@ public class CountingFunction<T> implements Function<T, T>, MapFunction<T, T> {
     }
     stageMetrics.count(metricName, 1);
     return in;
+  }
+
+  private boolean filter(T in) throws Exception {
+    call(in);
+    return true;
+  }
+
+  /**
+   * Helper method to represent this as {@link FilterFunction}. It's easier for Spark DataSet API
+   * as mapping requires to provides a result encoder, while filter automatically reuses original
+   * encoder.
+   *
+   * @return this function as {@link FilterFunction}.
+   */
+  public FilterFunction<T> asFilter() {
+    return this::filter;
   }
 }
