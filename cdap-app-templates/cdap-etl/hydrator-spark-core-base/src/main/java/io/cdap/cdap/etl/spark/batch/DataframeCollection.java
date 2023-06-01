@@ -46,8 +46,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -120,10 +120,11 @@ public class DataframeCollection extends DatasetCollection<StructuredRecord>
   public SparkCollection<StructuredRecord> join(JoinRequest joinRequest) {
     Map<String, Dataset> collections = new HashMap<>();
     String stageName = joinRequest.getStageName();
-    MapFunction<Row, Row> recordsInCounter = new CountingFunction<>(
-        stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, sec.getDataTracer(stageName));
+    FilterFunction<Row> recordsInCounter = new CountingFunction<Row>(
+        stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, sec.getDataTracer(stageName))
+        .asFilter();
     StructType leftSparkSchema = DataFrames.toDataType(joinRequest.getLeftSchema());
-    Dataset<Row> left = getDataframe().map(recordsInCounter, getDataframe().encoder());
+    Dataset<Row> left = getDataframe().filter(recordsInCounter);
     collections.put(joinRequest.getLeftStage(), left);
 
     List<Column> leftJoinColumns = joinRequest.getLeftKey().stream()
@@ -155,8 +156,7 @@ public class DataframeCollection extends DatasetCollection<StructuredRecord>
       BatchCollection<StructuredRecord> data = (BatchCollection<StructuredRecord>) toJoin.getData();
       StructType sparkSchema = DataFrames.toDataType(toJoin.getSchema());
       DataframeCollection dataframeCollection = data.toDataframeCollection(toJoin.getSchema());
-      Dataset<Row> right = dataframeCollection.getDataframe()
-          .map(recordsInCounter, dataframeCollection.getDataframe().encoder());
+      Dataset<Row> right = dataframeCollection.getDataframe().filter(recordsInCounter);
       collections.put(toJoin.getStage(), right);
 
       List<Column> rightJoinColumns = toJoin.getKey().stream()
@@ -296,9 +296,9 @@ public class DataframeCollection extends DatasetCollection<StructuredRecord>
 
     Seq<Column> outputColumnSeq = JavaConversions.asScalaBuffer(outputColumns).toSeq();
     joined = joined.select(outputColumnSeq);
-    joined = joined.map(new CountingFunction<>(
+    joined = joined.filter(new CountingFunction<Row>(
         stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
-        sec.getDataTracer(stageName)), joined.encoder());
+        sec.getDataTracer(stageName)).asFilter());
     Schema outputSchema = joinRequest.getOutputSchema();
     return wrap(joined, outputSchema);
   }
@@ -311,21 +311,20 @@ public class DataframeCollection extends DatasetCollection<StructuredRecord>
 
   @Override
   public SparkCollection<StructuredRecord> join(JoinExpressionRequest joinRequest) {
-    MapFunction<Row, Row> recordsInCounter = new CountingFunction<>(
+    FilterFunction<Row> recordsInCounter = new CountingFunction<Row>(
         joinRequest.getStageName(), sec.getMetrics(), Constants.Metrics.RECORDS_IN,
-        sec.getDataTracer(joinRequest.getStageName()));
+        sec.getDataTracer(joinRequest.getStageName())).asFilter();
 
     JoinCollection leftInfo = joinRequest.getLeft();
     StructType leftSchema = DataFrames.toDataType(leftInfo.getSchema());
-    Dataset<Row> leftDF = getDataframe().map(recordsInCounter, getDataframe().encoder());;
+    Dataset<Row> leftDF = getDataframe().filter(recordsInCounter);
 
     JoinCollection rightInfo = joinRequest.getRight();
     BatchCollection<?> rightData = (BatchCollection<?>) rightInfo.getData();
     StructType rightSchema = DataFrames.toDataType(rightInfo.getSchema());
     DataframeCollection rightCollection = rightData.toDataframeCollection(
         rightInfo.getSchema());
-    Dataset<Row> rightDF = rightCollection.getDataframe().map(
-        recordsInCounter, rightCollection.getDataframe().encoder());
+    Dataset<Row> rightDF = rightCollection.getDataframe().filter(recordsInCounter);
 
     // if this is not a broadcast join, Spark will reprocess each side multiple times, depending on the number
     // of partitions. If the left side has N partitions and the right side has M partitions,
@@ -365,9 +364,9 @@ public class DataframeCollection extends DatasetCollection<StructuredRecord>
     LOG.debug("Executing join stage {} using SQL: \n{}", joinRequest.getStageName(), sql);
     Dataset<Row> joined = sqlContext.sql(sql);
 
-    joined = joined.map(new CountingFunction<>(
+    joined = joined.filter(new CountingFunction<Row>(
         joinRequest.getStageName(), sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
-        sec.getDataTracer(joinRequest.getStageName())), joined.encoder());
+        sec.getDataTracer(joinRequest.getStageName())).asFilter());
     Schema outputSchema = joinRequest.getOutputSchema();
     return wrap(joined, outputSchema);
   }
