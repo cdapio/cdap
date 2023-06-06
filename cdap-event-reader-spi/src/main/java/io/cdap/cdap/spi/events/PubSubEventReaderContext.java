@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,18 @@
 
 package io.cdap.cdap.spi.events;
 
+import java.util.Map;
+
 /**
- * Enum representing a CDAP {@link Event} type
+ * Interface for an {@link PubSubEventReaderContext} context.
  */
-public enum EventType {
+public interface PubSubEventReaderContext {
+
   /**
-   * Event for program status
+   * Returns a map of string key value properties
+   *
+   * @return {@link Map<String, String>}
    */
-  PROGRAM_STATUS
+  Map<String, String> getProperties();
+
 }
