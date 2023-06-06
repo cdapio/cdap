@@ -16,14 +16,18 @@
 
 package io.cdap.cdap.spi.events;
 
+import java.util.Map;
+
 /**
- * Enum representing a CDAP {@link Event} type
+ * Interface for an {@link PubSubEventReaderContext} context
  */
-public enum EventType {
+public interface PubSubEventReaderContext {
+
   /**
-   * Event for program status
+   * Returns a map of string key value properties
+   *
+   * @return {@link Map<String, String>}
    */
-  PROGRAM_STATUS,
-  RECEIVED_EVENT,
-  START_PIPELINE
+  Map<String, String> getProperties();
+
 }
