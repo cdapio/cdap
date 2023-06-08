@@ -70,6 +70,7 @@ public final class StoreDefinition {
     CapabilitiesStore.create(tableAdmin);
     TetheringStore.create(tableAdmin);
     AppStateStore.create(tableAdmin);
+    CredentialProvisionerStore.create(tableAdmin);
   }
 
   /**
@@ -1152,6 +1153,68 @@ public final class StoreDefinition {
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, STATE_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schemas for credential provisioning.
+   */
+  public static final class CredentialProvisionerStore {
+    public static final StructuredTableId SECURE_STORE_INDEX =
+        new StructuredTableId("secure_store_index");
+    public static final StructuredTableId CREDENTIAL_PROVISIONER_PROFILES =
+        new StructuredTableId("credential_provisioner_profiles");
+    public static final StructuredTableId CREDENTIAL_IDENTITIES =
+        new StructuredTableId("credential_identities");
+
+    public static final String INDEX_RESOURCE_TYPE = "resource_type";
+    public static final String INDEX_RESOURCE_IDENTIFIER = "resource_id";
+    public static final String INDEX_TIMESTAMP = "timestamp";
+    public static final String INDEX_ALIVE = "alive";
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String PROFILE_NAME_FIELD = "profile_name";
+    public static final String PROFILE_DATA_FIELD = "profile_data";
+    public static final String IDENTITY_NAME_FIELD = "identity_name";
+    public static final String IDENTITY_VALUE_FIELD = "identity_value";
+    public static final String IDENTITY_PROFILE_INDEX_FIELD = "profile_index";
+    public static final String SECURE_STORE_VERSION = "secure_store_version";
+
+    public static final StructuredTableSpecification SECURE_STORE_INDEX_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(SECURE_STORE_INDEX)
+            .withFields(Fields.stringType(INDEX_RESOURCE_TYPE),
+                Fields.stringType(INDEX_RESOURCE_IDENTIFIER),
+                Fields.longType(INDEX_TIMESTAMP),
+                Fields.booleanType(INDEX_ALIVE))
+            .withPrimaryKeys(INDEX_RESOURCE_TYPE, INDEX_RESOURCE_IDENTIFIER)
+            .build();
+
+    public static final StructuredTableSpecification PROFILE_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(CREDENTIAL_PROVISIONER_PROFILES)
+            .withFields(Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(PROFILE_NAME_FIELD),
+                Fields.stringType(PROFILE_DATA_FIELD),
+                Fields.stringType(SECURE_STORE_VERSION))
+            .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_NAME_FIELD)
+            .build();
+
+    public static final StructuredTableSpecification IDENTITY_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(CREDENTIAL_IDENTITIES)
+            .withFields(Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(IDENTITY_NAME_FIELD),
+                Fields.stringType(IDENTITY_VALUE_FIELD),
+                Fields.stringType(IDENTITY_PROFILE_INDEX_FIELD),
+                Fields.stringType(SECURE_STORE_VERSION))
+            .withPrimaryKeys(NAMESPACE_FIELD, IDENTITY_NAME_FIELD)
+            .withIndexes(IDENTITY_PROFILE_INDEX_FIELD)
+            .build();
+
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, SECURE_STORE_INDEX_SPEC);
+      createIfNotExists(tableAdmin, PROFILE_TABLE_SPEC);
+      createIfNotExists(tableAdmin, IDENTITY_TABLE_SPEC);
     }
   }
 }
