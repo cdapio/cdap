@@ -287,10 +287,10 @@ public class StandaloneMain {
     metricsQueryService.startAndWait();
     logQueryService.startAndWait();
     router.startAndWait();
-
+/*
     if (userInterfaceService != null) {
       userInterfaceService.startAndWait();
-    }
+    }*/
 
     if (SecurityUtil.isManagedSecurity(cConf)) {
       externalAuthenticationServer.startAndWait();

@@ -116,6 +116,8 @@ import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
+import io.cdap.cdap.internal.credential.CredentialProvisionerHttpHandler;
+import io.cdap.cdap.internal.credential.CredentialProvisionerModule;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.events.EventPublisher;
 import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
@@ -184,6 +186,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new SourceControlModule(),
         new EntityVerifierModule(),
         BootstrapModules.getInMemoryModule(),
+        new CredentialProvisionerModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -225,6 +228,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new EntityVerifierModule(),
         new ProvisionerModule(),
         BootstrapModules.getFileBasedModule(),
+        new CredentialProvisionerModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -278,6 +282,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new EntityVerifierModule(),
         new ProvisionerModule(),
         BootstrapModules.getFileBasedModule(),
+        new CredentialProvisionerModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -435,6 +440,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TetheringServerHandler.class);
       handlerBinder.addBinding().to(TetheringClientHandler.class);
       handlerBinder.addBinding().to(AppStateHandler.class);
+      handlerBinder.addBinding().to(CredentialProvisionerHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
