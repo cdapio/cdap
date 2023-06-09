@@ -224,12 +224,12 @@ public class RemoteClient {
   public HttpURLConnection openConnection(String resource) throws IOException {
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
+      new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
+    }
     if (urlConn instanceof HttpsURLConnection) {
       urlConn.connect();
       LOG.info("HTTPS Connection Suite: {}", ((HttpsURLConnection) urlConn).getCipherSuite());
-    }
-    if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
-      new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
     }
     urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
     urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());
