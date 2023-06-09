@@ -52,11 +52,15 @@ import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
@@ -220,6 +224,10 @@ public class RemoteClient {
   public HttpURLConnection openConnection(String resource) throws IOException {
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+    if (urlConn instanceof HttpsURLConnection) {
+      urlConn.connect();
+      LOG.info("HTTPS Connection Suite: {}", ((HttpsURLConnection) urlConn).getCipherSuite());
+    }
     if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
       new HttpsEnabler().setTrustAll(true).enable((HttpsURLConnection) urlConn);
     }
