@@ -36,15 +36,18 @@ public class GitPatAuthenticationStrategy implements AuthenticationStrategy {
 
   /**
    * Construct a Git PAT auth strategy.
-
+   *
    * @param secureStore {@link SecureStore} to fetch the secrets with.
    * @param config {@link RepositoryConfig}
    * @param namespaceId the namespaceId
    */
   public GitPatAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
       String namespaceId) {
+    // String username =
+    //     config.getProvider() == Provider.BITBUCKET ? config.getAuth().getPatConfig().getUsername()
+    //         : GITHUB_PAT_USERNAME;
     this.credentialsProvider =
-        new SecureStorePasswordProvider(secureStore, GITHUB_PAT_USERNAME,
+        new SecureStorePasswordProvider(secureStore, config.getAuth().getPatConfig().getUsername(),
             config.getAuth().getPatConfig().getPasswordName(), namespaceId);
   }
 

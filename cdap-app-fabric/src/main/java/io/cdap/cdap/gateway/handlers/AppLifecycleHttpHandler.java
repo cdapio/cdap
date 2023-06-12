@@ -375,9 +375,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
+    ApplicationDetail applicationDetail = applicationLifecycleService.getLatestAppDetail(
+        new ApplicationReference(namespaceId, appName));
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(applicationLifecycleService.getLatestAppDetail(
-            new ApplicationReference(namespaceId, appName))));
+        GSON.toJson(applicationDetail));
   }
 
   /**

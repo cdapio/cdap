@@ -16,19 +16,30 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import io.cdap.cdap.proto.PreferencesDetail;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import java.util.List;
+import javax.annotation.Nullable;
 
 public class PullAppResponse<T> {
 
   private final String applicationName;
   private final String applicationFileHash;
   private final AppRequest<T> appRequest;
+  @Nullable
+  private final PreferencesDetail preferences;
+  @Nullable
+  private final List<ScheduleDetail> schedules;
 
   public PullAppResponse(String applicationName, String applicationFileHash,
-      AppRequest<T> appRequest) {
+      AppRequest<T> appRequest, @Nullable PreferencesDetail preferences,
+      @Nullable List<ScheduleDetail> schedules) {
     this.applicationName = applicationName;
     this.applicationFileHash = applicationFileHash;
     this.appRequest = appRequest;
+    this.preferences = preferences;
+    this.schedules = schedules;
   }
 
   public String getApplicationName() {
@@ -41,5 +52,15 @@ public class PullAppResponse<T> {
 
   public AppRequest<?> getAppRequest() {
     return appRequest;
+  }
+
+  @Nullable
+  public PreferencesDetail getPreferences() {
+    return preferences;
+  }
+
+  @Nullable
+  public List<ScheduleDetail> getSchedules() {
+    return schedules;
   }
 }

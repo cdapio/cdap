@@ -16,9 +16,12 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -29,6 +32,7 @@ import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -53,6 +57,11 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReaderWithLocalization;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryWithLocalization;
+import io.cdap.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
+import io.cdap.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import io.cdap.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -77,6 +86,17 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import org.apache.twill.filesystem.LocationFactory;
+import org.quartz.SchedulerException;
+import org.quartz.core.JobRunShellFactory;
+import org.quartz.core.QuartzScheduler;
+import org.quartz.core.QuartzSchedulerResources;
+import org.quartz.impl.DefaultThreadExecutor;
+import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.impl.StdJobRunShellFactory;
+import org.quartz.impl.StdScheduler;
+import org.quartz.simpl.CascadingClassLoadHelper;
+import org.quartz.spi.ClassLoadHelper;
+import org.quartz.spi.JobStore;
 
 /**
  * Provides bindings required to create injector for running preview.
@@ -133,6 +153,9 @@ public class PreviewRunnerModule extends PrivateModule {
         .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
         .toInstance(messagingService);
     expose(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS));
+
+    bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
+        .in(Scopes.SINGLETON);
 
     bind(AccessEnforcer.class).toInstance(accessEnforcer);
     expose(AccessEnforcer.class);
@@ -201,6 +224,62 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerAdmin.class);
 
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
+  }
+
+  @Provides
+  @SuppressWarnings("unused")
+  public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(
+      final DatasetBasedTimeScheduleStore scheduleStore,
+      final CConfiguration cConf) {
+    return new Supplier<org.quartz.Scheduler>() {
+      private org.quartz.Scheduler scheduler;
+
+      @Override
+      public synchronized org.quartz.Scheduler get() {
+        try {
+          if (scheduler == null) {
+            scheduler = getScheduler(scheduleStore, cConf);
+          }
+          return scheduler;
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
+
+  private org.quartz.Scheduler getScheduler(JobStore store,
+      CConfiguration cConf) throws SchedulerException {
+
+    int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
+    ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
+    threadPool.initialize();
+    String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
+    String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;
+
+    QuartzSchedulerResources qrs = new QuartzSchedulerResources();
+    JobRunShellFactory jrsf = new StdJobRunShellFactory();
+
+    qrs.setName(schedulerName);
+    qrs.setInstanceId(schedulerInstanceId);
+    qrs.setJobRunShellFactory(jrsf);
+    qrs.setThreadPool(threadPool);
+    qrs.setThreadExecutor(new DefaultThreadExecutor());
+    qrs.setJobStore(store);
+    qrs.setRunUpdateCheck(false);
+    QuartzScheduler qs = new QuartzScheduler(qrs, -1, -1);
+
+    ClassLoadHelper cch = new CascadingClassLoadHelper();
+    cch.initialize();
+
+    store.initialize(cch, qs.getSchedulerSignaler());
+    org.quartz.Scheduler scheduler = new StdScheduler(qs);
+
+    jrsf.initialize(scheduler);
+    qs.initialize();
+
+    scheduler.getListenerManager().addTriggerListener(new TriggerMisfireLogger());
+    return scheduler;
   }
 
   /**

@@ -78,6 +78,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -89,7 +90,9 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
@@ -107,6 +110,7 @@ import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -136,6 +140,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -175,6 +181,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int batchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final ProgramScheduleService programScheduleService;
+
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -190,7 +198,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      ProgramScheduleService programScheduleService
+  ) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -212,6 +222,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.programScheduleService = programScheduleService;
   }
 
   @Override
@@ -246,8 +257,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Scans all the latest applications in the specified namespace, filtered to only include application details.
-   * which satisfy the filters
+   * Scans all the latest applications in the specified namespace, filtered to only include
+   * application details. which satisfy the filters
    *
    * @param namespace the namespace to scan apps from
    * @param filters the filters that must be satisfied  by ApplicationDetail in order to be
@@ -264,8 +275,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Scans all applications in the specified namespace, filtered to only include application details.
-   * which satisfy the filters
+   * Scans all applications in the specified namespace, filtered to only include application
+   * details. which satisfy the filters
    *
    * @param request application scan request. Must name namespace filled
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
@@ -293,7 +304,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,
-      Consumer<ApplicationDetail> consumer) {
+      Consumer<ApplicationDetail> consumer){
 
     Set<ApplicationId> appIds = list.stream().map(Map.Entry::getKey).collect(Collectors.toSet());
 
@@ -310,7 +321,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue().getSpec(),
             owners.get(entry.getKey()),
             entry.getValue().getChange(),
-            entry.getValue().getSourceControlMeta());
+            entry.getValue().getSourceControlMeta(),
+            preferencesService.getPreferences(entry.getKey()),
+            getAllSchedulesForApplication(entry.getKey())
+        );
 
         try {
           capabilityReader.checkAllEnabled(entry.getValue().getSpec());
@@ -345,7 +359,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return enforceApplicationDetailAccess(appId,
         ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
             appMeta.getChange(),
-            appMeta.getSourceControlMeta()));
+            appMeta.getSourceControlMeta(),
+            preferencesService.getPreferences(appId),
+            getAllSchedulesForApplication(appId)
+            )
+        );
   }
 
   public ApplicationDetail getLatestAppDetail(ApplicationReference appRef)
@@ -373,8 +391,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return enforceApplicationDetailAccess(appId,
         ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
             appMeta.getChange(),
-            getSourceControlMeta
-                ? appMeta.getSourceControlMeta() : null));
+            getSourceControlMeta ? appMeta.getSourceControlMeta() : null,
+            preferencesService.getPreferences(appId),
+            getAllSchedulesForApplication(appId)
+        ));
   }
 
   /**
@@ -394,12 +414,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Map<ApplicationId, ApplicationMeta> appMetas = store.getApplications(filterIds);
     Map<ApplicationId, String> principals = ownerAdmin.getOwnerPrincipals(filterIds);
 
+    Map<ApplicationId, PreferencesDetail> preferences = filterIds.stream()
+        .collect(Collectors.toMap(
+            Function.identity(), preferencesService::getPreferences));
+    Map<ApplicationId, List<ScheduleDetail>> schedules = filterIds.stream()
+        .collect(Collectors.toMap(
+            Function.identity(), this::getAllSchedulesForApplication));
+
     return appMetas.entrySet().stream().collect(Collectors.toMap(
         Entry::getKey,
         entry -> ApplicationDetail.fromSpec(entry.getValue().getSpec(),
             principals.get(entry.getKey()),
             entry.getValue().getChange(),
-            entry.getValue().getSourceControlMeta())
+            entry.getValue().getSourceControlMeta(),
+            preferences.get(entry.getKey()),
+            schedules.get(entry.getKey())
+        )
     ));
   }
 
@@ -428,7 +458,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       try {
         ApplicationDetail applicationDetail = enforceApplicationDetailAccess(
             appId, ApplicationDetail.fromSpec(appMeta.getSpec(), null,
-                appMeta.getChange(), appMeta.getSourceControlMeta()));
+                appMeta.getChange(), appMeta.getSourceControlMeta(),
+                preferencesService.getPreferences(appId),
+                getAllSchedulesForApplication(appId)));
         // Add a directory for the namespace
         if (namespaces.add(appId.getParent())) {
           ZipEntry entry = new ZipEntry(appId.getNamespace() + "/");
@@ -867,8 +899,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   /**
    * Deploy an application using the specified artifact and configuration. When an app is deployed,
-   * the Application class is instantiated and configure() is called in order to generate an {@link
-   * ApplicationSpecification}. Programs, datasets, and streams are created based on the
+   * the Application class is instantiated and configure() is called in order to generate an
+   * {@link ApplicationSpecification}. Programs, datasets, and streams are created based on the
    * specification before the spec is persisted in the {@link Store}. This method can create a new
    * application as well as update an existing one.
    *
@@ -900,8 +932,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   /**
    * Deploy an application using the specified artifact and configuration. When an app is deployed,
-   * the Application class is instantiated and configure() is called in order to generate an {@link
-   * ApplicationSpecification}. Programs, datasets, and streams are created based on the
+   * the Application class is instantiated and configure() is called in order to generate an
+   * {@link ApplicationSpecification}. Programs, datasets, and streams are created based on the
    * specification before the spec is persisted in the {@link Store}. This method can create a new
    * application as well as update an existing one.
    *
@@ -943,8 +975,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   /**
    * Deploy an application using the specified artifact and configuration. When an app is deployed,
-   * the Application class is instantiated and configure() is called in order to generate an {@link
-   * ApplicationSpecification}. Programs, datasets, and streams are created based on the
+   * the Application class is instantiated and configure() is called in order to generate an
+   * {@link ApplicationSpecification}. Programs, datasets, and streams are created based on the
    * specification before the spec is persisted in the {@link Store}. This method can create a new
    * application as well as update an existing one (when LifecycleManagement feature is disabled).
    *
@@ -995,7 +1027,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1,
         ArtifactSortOrder.DESC);
     if (artifactDetail.isEmpty()) {
-      throw new ArtifactNotFoundException(range.getNamespace(), range.getName(), range.getVersionString());
+      throw new ArtifactNotFoundException(range.getNamespace(), range.getName(),
+          range.getVersionString());
     }
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, sourceControlMeta,
         programTerminator,
@@ -1005,8 +1038,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   /**
    * Deploy an application using the specified {@link AppRequest}. When an app is deployed, the
-   * Application class is instantiated and configure() is called in order to generate an {@link
-   * ApplicationSpecification}. Programs, datasets, and streams are created based on the
+   * Application class is instantiated and configure() is called in order to generate an
+   * {@link ApplicationSpecification}. Programs, datasets, and streams are created based on the
    * specification before the spec is persisted in the {@link Store}. This method can create a new
    * application as well as update an existing one (when LifecycleManagement feature is disabled).
    *
@@ -1172,7 +1205,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws CannotBeDeletedException if there are active programs running
    */
   public void removeApplication(ApplicationReference appRef)
-    throws ApplicationNotFoundException, CannotBeDeletedException, IOException {
+      throws ApplicationNotFoundException, CannotBeDeletedException, IOException {
     // enforce DELETE privileges on the app
     accessEnforcer.enforce(appRef.app(ApplicationId.DEFAULT_VERSION),
         authenticationContext.getPrincipal(), StandardPermission.DELETE);
@@ -1188,7 +1221,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // ensure no running programs across all versions of the application
     ensureNoRunningPrograms(appRef);
     ApplicationId appId = new ApplicationId(appRef.getNamespace(), appRef.getApplication(),
-                                            appMeta.getSpec().getAppVersion());
+        appMeta.getSpec().getAppVersion());
     // TODO :refactor to take application reference - CDAP-20425
     deleteApp(appId, appMeta.getSpec());
   }
@@ -1526,5 +1559,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         Constants.Metrics.Tag.APP, appName);
     long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
     metricsCollectionService.getContext(tags).gauge(metricName, timeTaken);
+  }
+
+  private List<ScheduleDetail> getAllSchedulesForApplication(ApplicationId appId) {
+      Predicate<ProgramScheduleRecord> alwaysTruePredicate = record -> true;
+      Collection<ProgramScheduleRecord> schedules = programScheduleService.list(appId, alwaysTruePredicate);
+      return schedules.stream()
+          .map(ProgramScheduleRecord::toScheduleDetail)
+          .collect(Collectors.toList());
   }
 }

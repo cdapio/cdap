@@ -20,5 +20,6 @@ package io.cdap.cdap.proto.sourcecontrol;
  * The Provider Enum.
  */
 public enum Provider {
-  GITHUB;
+  GITHUB,
+  BITBUCKET
 }

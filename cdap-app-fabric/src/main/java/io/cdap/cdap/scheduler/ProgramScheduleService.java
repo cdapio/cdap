@@ -244,7 +244,7 @@ public class ProgramScheduleService {
    *     enforcement check
    */
   public Collection<ProgramScheduleRecord> list(ApplicationId applicationId,
-      Predicate<ProgramScheduleRecord> predicate) throws Exception {
+      Predicate<ProgramScheduleRecord> predicate) {
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
         StandardPermission.GET);
     return scheduler.listScheduleRecords(applicationId).stream().filter(predicate)
@@ -262,7 +262,7 @@ public class ProgramScheduleService {
    *     enforcement check
    */
   public Collection<ProgramScheduleRecord> list(ProgramId programId,
-      Predicate<ProgramScheduleRecord> predicate) throws Exception {
+      Predicate<ProgramScheduleRecord> predicate) {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
     return scheduler.listScheduleRecords(programId).stream().filter(predicate)
         .collect(Collectors.toList());

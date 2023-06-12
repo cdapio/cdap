@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.base.Objects;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.security.store.SecureStore;
@@ -25,20 +26,30 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.PreferencesDetail;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -62,15 +73,19 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service that manages source control for repositories and applications.
- * It exposes repository CRUD apis and source control tasks that do pull/pull/list applications in linked repository.
+ * Service that manages source control for repositories and applications. It exposes repository CRUD
+ * apis and source control tasks that do pull/pull/list applications in linked repository.
  */
 public class SourceControlManagementService {
+
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final TransactionRunner transactionRunner;
@@ -78,8 +93,12 @@ public class SourceControlManagementService {
   private final SecureStore secureStore;
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
+  private final PreferencesService preferencesService;
+  private final ProgramScheduleService programScheduleService;
+
   private final Store store;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
+  private static final List<Constraint> NO_CONSTRAINTS = Collections.emptyList();
 
 
   /**
@@ -87,13 +106,15 @@ public class SourceControlManagementService {
    */
   @Inject
   public SourceControlManagementService(CConfiguration cConf,
-                                        SecureStore secureStore,
-                                        TransactionRunner transactionRunner,
-                                        AccessEnforcer accessEnforcer,
-                                        AuthenticationContext authenticationContext,
-                                        SourceControlOperationRunner sourceControlOperationRunner,
-                                        ApplicationLifecycleService applicationLifecycleService,
-                                        Store store) {
+      SecureStore secureStore,
+      TransactionRunner transactionRunner,
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext,
+      SourceControlOperationRunner sourceControlOperationRunner,
+      ApplicationLifecycleService applicationLifecycleService,
+      PreferencesService preferencesService,
+      ProgramScheduleService programScheduleService,
+      Store store) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -101,14 +122,18 @@ public class SourceControlManagementService {
     this.authenticationContext = authenticationContext;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
+    this.preferencesService = preferencesService;
+    this.programScheduleService = programScheduleService;
     this.store = store;
   }
 
-  private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
+  private RepositoryTable getRepositoryTable(StructuredTableContext context)
+      throws TableNotFoundException {
     return new RepositoryTable(context);
   }
 
-  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws TableNotFoundException {
+  private NamespaceTable getNamespaceTable(StructuredTableContext context)
+      throws TableNotFoundException {
     return new NamespaceTable(context);
   }
 
@@ -121,7 +146,7 @@ public class SourceControlManagementService {
    * @throws NamespaceNotFoundException if the namespace is non-existent
    */
   public RepositoryMeta setRepository(NamespaceId namespace, RepositoryConfig repository)
-    throws NamespaceNotFoundException {
+      throws NamespaceNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.UPDATE_REPOSITORY_METADATA);
 
@@ -155,9 +180,11 @@ public class SourceControlManagementService {
   /**
    * Return the repository config for the given namespace.
    *
-   * @throws RepositoryNotFoundException if repository config is not available for the namespace
+   * @throws RepositoryNotFoundException if repository config is not available for the
+   *     namespace
    */
-  public RepositoryMeta getRepositoryMeta(NamespaceId namespace) throws RepositoryNotFoundException {
+  public RepositoryMeta getRepositoryMeta(NamespaceId namespace)
+      throws RepositoryNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
 
     return TransactionRunners.run(transactionRunner, context -> {
@@ -177,10 +204,11 @@ public class SourceControlManagementService {
    * @throws RemoteRepositoryValidationException if validation of remote repository fails
    */
   public void validateRepository(NamespaceId namespace, RepositoryConfig repoConfig)
-    throws RemoteRepositoryValidationException {
+      throws RemoteRepositoryValidationException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.UPDATE_REPOSITORY_METADATA);
-    RepositoryManager.validateConfig(secureStore, new SourceControlConfig(namespace, repoConfig, cConf));
+    RepositoryManager.validateConfig(secureStore,
+        new SourceControlConfig(namespace, repoConfig, cConf));
   }
 
   /**
@@ -189,27 +217,31 @@ public class SourceControlManagementService {
    * @param appRef {@link ApplicationReference}
    * @param commitMessage enforced commit message from user
    * @return {@link PushAppResponse}
-   * @throws NotFoundException if the application is not found or the repository config is not found
-   * @throws IOException if {@link ApplicationLifecycleService} fails to get the adminOwner store
+   * @throws NotFoundException if the application is not found or the repository config is not
+   *     found
+   * @throws IOException if {@link ApplicationLifecycleService} fails to get the adminOwner
+   *     store
    * @throws SourceControlException if {@link SourceControlOperationRunner} fails to push
    * @throws AuthenticationConfigException if the repository configuration authentication fails
-   * @throws NoChangesToPushException if there's no change of the application between namespace and linked repository
+   * @throws NoChangesToPushException if there's no change of the application between namespace
+   *     and linked repository
    */
   public PushAppResponse pushApp(ApplicationReference appRef, String commitMessage)
-    throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
+      throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
 
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
-    
+
     // AppLifecycleService already enforces ApplicationDetail Access
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
     String committer = authenticationContext.getPrincipal().getName();
     // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
-    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
+    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(),
+        commitMessage);
 
     LOG.info("Start to push app {} in namespace {} to linked repository by user {}",
         appRef.getApplication(),
@@ -217,14 +249,14 @@ public class SourceControlManagementService {
         appLifecycleService.decodeUserId(authenticationContext));
 
     PushAppResponse pushResponse = sourceControlOperationRunner.push(
-      new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
+        new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
     );
 
     LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
         appRef.getApplication(),
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
-    
+
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
@@ -239,7 +271,8 @@ public class SourceControlManagementService {
    * @return {@link ApplicationRecord} of the deployed application.
    * @throws Exception when {@link ApplicationLifecycleService} fails to deploy.
    * @throws NoChangesToPullException if the fileHashes are the same
-   * @throws NotFoundException if the repository config is not found or the application in repository is not found
+   * @throws NotFoundException if the repository config is not found or the application in
+   *     repository is not found
    * @throws SourceControlException if unexpected errors happen when pulling the application.
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    */
@@ -251,11 +284,14 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    
+
     PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
     AppRequest<?> appRequest = pullResponse.getAppRequest();
-    SourceControlMeta sourceControlMeta = new SourceControlMeta(pullResponse.getApplicationFileHash());
+    SourceControlMeta sourceControlMeta = new SourceControlMeta(
+        pullResponse.getApplicationFileHash());
+    PreferencesDetail preferences = pullResponse.getPreferences();
+    List<ScheduleDetail> schedules = pullResponse.getSchedules();
 
     LOG.info("Start to deploy app {} in namespace {} by user {}",
         appId.getApplication(),
@@ -263,43 +299,91 @@ public class SourceControlManagementService {
         appLifecycleService.decodeUserId(authenticationContext));
 
     ApplicationWithPrograms app = appLifecycleService.deployApp(appId, appRequest,
-                                                                sourceControlMeta, x -> { });
+        sourceControlMeta, x -> {
+        });
 
-    LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
-            + "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
-             app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal()
-    );
+    LOG.info(
+        "Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
+            + "principal {}", app.getApplicationId().getApplication(),
+        app.getApplicationId().getNamespace(),
+        app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal());
+
+    if (preferences != null) {
+      LOG.info("Updating configuration {} for app {} in namespace {} by user {}",
+          preferences.getProperties(), app.getApplicationId(),
+          appId.getParent(), appLifecycleService.decodeUserId(authenticationContext));
+
+      preferencesService.setProperties(app.getApplicationId(), preferences.getProperties());
+    }
+
+    if (schedules != null) {
+      LOG.info("Updating schedules {} for app {} in namespace {} by user {}",
+          schedules, app.getApplicationId(),
+          appId.getParent(), appLifecycleService.decodeUserId(authenticationContext));
+
+      for (ScheduleDetail scheduleDetail : schedules) {
+        try {
+          ScheduleId scheduleId = appId.schedule(scheduleDetail.getName());
+          try {
+            programScheduleService.update(scheduleId, scheduleDetail);
+          } catch (NotFoundException e) {
+            ProgramType programType = ProgramType.valueOfSchedulableType(
+                scheduleDetail.getProgram().getProgramType());
+            String programName = scheduleDetail.getProgram().getProgramName();
+            ProgramId programId = appId.program(programType, programName);
+            String description = Objects.firstNonNull(scheduleDetail.getDescription(), "");
+            Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(),
+                Collections.emptyMap());
+            List<? extends Constraint> constraints = Objects.firstNonNull(
+                scheduleDetail.getConstraints(), NO_CONSTRAINTS);
+            long timeoutMillis =
+                Objects.firstNonNull(scheduleDetail.getTimeoutMillis(),
+                    Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+            ProgramSchedule schedule = new ProgramSchedule(scheduleDetail.getName(), description,
+                programId, properties, scheduleDetail.getTrigger(), constraints, timeoutMillis);
+            programScheduleService.add(schedule);
+          }
+        } catch (Exception e) {
+          LOG.warn("Failed to update schedule {} : {} \n {}", scheduleDetail.getName(), e.getMessage(), e.getStackTrace());
+        }
+      }
+
+    }
 
     return new ApplicationRecord(
-      ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
-      app.getApplicationId().getApplication(),
-      app.getApplicationId().getVersion(),
-      app.getSpecification().getDescription(),
-      Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
-      app.getChangeDetail(), app.getSourceControlMeta());
+        ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
+        app.getApplicationId().getApplication(),
+        app.getApplicationId().getVersion(),
+        app.getSpecification().getDescription(),
+        Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal)
+            .orElse(null),
+        app.getChangeDetail(), app.getSourceControlMeta());
   }
 
   /**
-   * Pull the application from repository, look up the fileHash in store and compare it with the cone in repository.
+   * Pull the application from repository, look up the fileHash in store and compare it with the
+   * cone in repository.
    *
    * @param appRef {@link ApplicationReference} to fetch the application with
    * @return {@link PullAppResponse}
    * @throws NoChangesToPullException if the fileHashes are the same
-   * @throws NotFoundException if the repository config is not found or the application in repository is not found
+   * @throws NotFoundException if the repository config is not found or the application in
+   *     repository is not found
    * @throws SourceControlException if unexpected errors happen when pulling the application.
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    */
   private PullAppResponse<?> pullAndValidateApplication(ApplicationReference appRef)
-    throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
+      throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
-    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
+    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(
+        new PulAppOperationRequest(appRef, repoConfig));
 
-    if (latestMeta != null
-        && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
-      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
-          + "no new change for the pulled application: %s", appRef));
-    }
+    // if (latestMeta != null
+    //     && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
+    //   throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
+    //       + "no new change for the pulled application: %s", appRef));
+    // }
     return pullResponse;
   }
 
@@ -307,12 +391,13 @@ public class SourceControlManagementService {
    * The method to list all applications found in linked repository.
    *
    * @return {@link RepositoryAppsResponse}
-   * @throws RepositoryNotFoundException   if the repository config is not found
+   * @throws RepositoryNotFoundException if the repository config is not found
    * @throws AuthenticationConfigException if git auth config is not found
-   * @throws SourceControlException if {@link SourceControlOperationRunner} fails to list applications
+   * @throws SourceControlException if {@link SourceControlOperationRunner} fails to list
+   *     applications
    */
   public RepositoryAppsResponse listApps(NamespaceId namespace) throws NotFoundException,
-    AuthenticationConfigException {
+      AuthenticationConfigException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();

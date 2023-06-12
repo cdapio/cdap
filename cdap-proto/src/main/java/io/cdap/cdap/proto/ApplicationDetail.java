@@ -46,6 +46,10 @@ public class ApplicationDetail {
   private final List<ProgramRecord> programs;
   private final List<PluginDetail> plugins;
   private final ArtifactSummary artifact;
+  @Nullable
+  private final PreferencesDetail preferences;
+  @Nullable
+  private final List<ScheduleDetail> schedules;
   @SerializedName("principal")
   private final String ownerPrincipal;
 
@@ -59,6 +63,8 @@ public class ApplicationDetail {
       List<ProgramRecord> programs,
       List<PluginDetail> plugins,
       ArtifactSummary artifact,
+      @Nullable PreferencesDetail preferences,
+      @Nullable List<ScheduleDetail> schedules,
       @Nullable String ownerPrincipal) {
     this.name = name;
     this.appVersion = appVersion;
@@ -70,6 +76,8 @@ public class ApplicationDetail {
     this.programs = programs;
     this.plugins = plugins;
     this.artifact = artifact;
+    this.schedules = schedules;
+    this.preferences = preferences;
     this.ownerPrincipal = ownerPrincipal;
   }
 
@@ -87,7 +95,7 @@ public class ApplicationDetail {
       ArtifactSummary artifact,
       @Nullable String ownerPrincipal) {
     this(name, appVersion, description, null, null,
-        configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+        configuration, datasets, programs, plugins, artifact, null, null, ownerPrincipal);
   }
 
   /**
@@ -104,7 +112,7 @@ public class ApplicationDetail {
       ArtifactSummary artifact,
       @Nullable String ownerPrincipal) {
     this(name, appVersion, description, change, null,
-        configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+        configuration, datasets, programs, plugins, artifact, null, null, ownerPrincipal);
   }
 
   public String getName() {
@@ -149,6 +157,14 @@ public class ApplicationDetail {
     return artifact;
   }
 
+  public PreferencesDetail getPreferences() {
+    return preferences;
+  }
+
+  public List<ScheduleDetail> getSchedules() {
+    return schedules;
+  }
+
   @Nullable
   public String getOwnerPrincipal() {
     return ownerPrincipal;
@@ -157,7 +173,10 @@ public class ApplicationDetail {
   public static ApplicationDetail fromSpec(ApplicationSpecification spec,
       @Nullable String ownerPrincipal,
       @Nullable ChangeDetail change,
-      @Nullable SourceControlMeta sourceControlMeta) {
+      @Nullable SourceControlMeta sourceControlMeta,
+      @Nullable PreferencesDetail preferences,
+      @Nullable List<ScheduleDetail> schedules
+  ) {
     // Adding owner, creation time and change summary description fields to the app detail
 
     List<ProgramRecord> programs = new ArrayList<>();
@@ -200,6 +219,7 @@ public class ApplicationDetail {
         ? new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(),
         change, sourceControlMeta,
-        spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
+        spec.getConfiguration(), datasets, programs, plugins, summary, preferences, schedules,
+        ownerPrincipal);
   }
 }

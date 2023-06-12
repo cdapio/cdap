@@ -55,7 +55,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
   private static final String FAKE_COMMIT_HASH = "5905258bb958ceda80b6a37938050ad876920f10";
   private static final ApplicationDetail testAppDetails = new ApplicationDetail(
     TEST_APP_NAME, "v1", "description1", null, null, "conf1", new ArrayList<>(),
-    new ArrayList<>(), new ArrayList<>(), null, null);
+    new ArrayList<>(), new ArrayList<>(), null, null, null, null);
   private static final RepositoryConfig testRepoConfig = new RepositoryConfig.Builder()
       .setProvider(Provider.GITHUB)
       .setLink("ignored")

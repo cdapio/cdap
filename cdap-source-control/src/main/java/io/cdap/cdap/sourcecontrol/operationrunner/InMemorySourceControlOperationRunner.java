@@ -16,17 +16,41 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.plugin.Requirements;
+import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ProtoConstraint;
+import io.cdap.cdap.proto.ProtoConstraint.ConcurrencyConstraint;
+import io.cdap.cdap.proto.ProtoConstraint.DelayConstraint;
+import io.cdap.cdap.proto.ProtoConstraint.LastRunConstraint;
+import io.cdap.cdap.proto.ProtoConstraint.TimeRangeConstraint;
+import io.cdap.cdap.proto.ProtoConstraintCodec;
+import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.ProtoTrigger.AndTrigger;
+import io.cdap.cdap.proto.ProtoTrigger.OrTrigger;
+import io.cdap.cdap.proto.ProtoTrigger.PartitionTrigger;
+import io.cdap.cdap.proto.ProtoTrigger.ProgramStatusTrigger;
+import io.cdap.cdap.proto.ProtoTrigger.TimeTrigger;
+import io.cdap.cdap.proto.ProtoTriggerCodec;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
@@ -41,12 +65,16 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,10 +88,80 @@ public class InMemorySourceControlOperationRunner extends
     AbstractIdleService implements SourceControlOperationRunner {
   // Gson for decoding request
   private static final Gson DECODE_GSON =
-    new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    new GsonBuilder()
+        .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+        .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
+      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+        .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+      .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
+      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec()).setPrettyPrinting().create();
   private static final Logger LOG = LoggerFactory.getLogger(InMemorySourceControlOperationRunner.class);
   private final RepositoryManagerFactory repoManagerFactory;
+
+  public static class TriggerCodec extends ProtoTriggerCodec {
+    private static final Map<ProtoTrigger.Type, Class<? extends Trigger>> TYPE_TO_INTERNAL_TRIGGER =
+        ImmutableMap.<ProtoTrigger.Type, Class<? extends Trigger>>builder()
+            .put(ProtoTrigger.Type.TIME, TimeTrigger.class)
+            .put(ProtoTrigger.Type.PARTITION, PartitionTrigger.class)
+            .put(ProtoTrigger.Type.PROGRAM_STATUS, ProgramStatusTrigger.class)
+            .put(ProtoTrigger.Type.AND, AndTrigger.class)
+            .put(ProtoTrigger.Type.OR, OrTrigger.class)
+            .build();
+
+    public TriggerCodec() {
+      super(TYPE_TO_INTERNAL_TRIGGER);
+    }
+  }
+
+  public static class ConstraintCodec extends ProtoConstraintCodec {
+
+    private static final Map<ProtoConstraint.Type, Class<? extends ProtoConstraint>> TYPE_TO_CONSTRAINT =
+        ImmutableMap.<ProtoConstraint.Type, Class<? extends ProtoConstraint>>builder()
+            .put(ProtoConstraint.Type.CONCURRENCY, ConcurrencyConstraint.class)
+            .put(ProtoConstraint.Type.DELAY, DelayConstraint.class)
+            .put(ProtoConstraint.Type.LAST_RUN, LastRunConstraint.class)
+            .put(ProtoConstraint.Type.TIME_RANGE, TimeRangeConstraint.class)
+            .build();
+
+    public ConstraintCodec() {
+      super(TYPE_TO_CONSTRAINT);
+    }
+  }
+
+  public static class RequirementsCodec implements JsonDeserializer<Requirements>,
+      JsonSerializer<Requirements> {
+
+    public static final String DATASET_TYPES = "datasetTypes";
+    public static final String CAPABILITIES = "capabilities";
+
+    @Override
+    public Requirements deserialize(JsonElement json, Type typeOfT,
+        JsonDeserializationContext context) throws JsonParseException {
+      JsonObject jsonObject = json.getAsJsonObject();
+      return new Requirements(getSet(jsonObject, context, DATASET_TYPES),
+          getSet(jsonObject, context, CAPABILITIES));
+    }
+
+    private Set<String> getSet(JsonObject jsonObject, JsonDeserializationContext context,
+        String fieldName) {
+      JsonElement jsonElement = jsonObject.get(fieldName);
+      if (jsonElement == null) {
+        return Collections.emptySet();
+      }
+      return context.deserialize(jsonElement, Set.class);
+    }
+
+    @Override
+    public JsonElement serialize(Requirements src, Type typeOfSrc, JsonSerializationContext context) {
+      JsonObject jsonObject = new JsonObject();
+      jsonObject.add(DATASET_TYPES, context.serialize(src.getDatasetTypes()));
+      jsonObject.add(CAPABILITIES, context.serialize(src.getCapabilities()));
+      return jsonObject;
+    }
+  }
 
   @Inject
   InMemorySourceControlOperationRunner(RepositoryManagerFactory repoManagerFactory) {
@@ -117,7 +215,8 @@ public class InMemorySourceControlOperationRunner extends
       String fileHash = repositoryManager.getFileHash(appRelativePath, commitId);
       String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
-      return new PullAppResponse<>(applicationName, fileHash, appRequest);
+      ApplicationDetail detail = DECODE_GSON.fromJson(contents, ApplicationDetail.class);
+      return new PullAppResponse<>(applicationName, fileHash, appRequest, detail.getPreferences(), detail.getSchedules());
     } catch (GitAPIException e) {
       throw new GitOperationException(String.format("Failed to pull application %s: %s",
                                                      applicationName,

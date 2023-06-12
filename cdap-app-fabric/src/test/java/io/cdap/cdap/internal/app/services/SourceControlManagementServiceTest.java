@@ -303,8 +303,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
-    PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
-                                                                  appId1.getId() + " " + "hash", mockAppRequest);
+    PullAppResponse<?> expectedPullResponse = new PullAppResponse(
+        appId1.getId(), appId1.getId() + " " + "hash", mockAppRequest, null, null
+    );
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     // Assert the result is as expected
@@ -336,7 +337,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Do not set the repository config
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
-                                                                  appId1.getId() + " hash", mockAppRequest);
+                                                                  appId1.getId() + " hash", mockAppRequest, null, null);
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
@@ -424,7 +425,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
 
     // Set up the pullResponse so that the fileHashes are the same
-    PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(), mockedFileHash, mockAppRequest);
+    PullAppResponse<?> expectedPullResponse = new PullAppResponse(
+        appId1.getId(), mockedFileHash, mockAppRequest, null, null
+    );
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy).pull(Mockito.any());
     try {
       ApplicationReference appRef = namespaceId.appReference(appId1.getId());

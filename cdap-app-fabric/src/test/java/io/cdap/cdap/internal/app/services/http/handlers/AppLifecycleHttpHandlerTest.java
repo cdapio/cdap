@@ -75,6 +75,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -142,12 +143,16 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MetadataServiceClient metadataServiceClient,
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
-          CapabilityReader capabilityReader) {
+          CapabilityReader capabilityReader,
+          ProgramScheduleService programScheduleService
+      ) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(),
+            programScheduleService
+        ));
       }
     });
   }

@@ -81,7 +81,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   private static final ApplicationReference mockAppRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
   private static final ApplicationDetail mockAppDetails = new ApplicationDetail(
     TEST_APP_NAME, "v1", "description1", null, null, "conf1", new ArrayList<>(),
-    new ArrayList<>(), new ArrayList<>(), null, null);
+    new ArrayList<>(), new ArrayList<>(), null, null, null, null);
   private static final CommitMeta mockCommit = new CommitMeta("author", "commiter", System.currentTimeMillis(),
                                                               "commit");
   private static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, null));
