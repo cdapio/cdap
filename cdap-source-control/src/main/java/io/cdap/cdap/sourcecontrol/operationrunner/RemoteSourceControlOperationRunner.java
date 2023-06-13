@@ -74,6 +74,13 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
+  public PushNamespaceConfigResponse pushNamespaceConfig(PushNamespaceConfigOperationRequest pushNsRequest)
+      throws NoChangesToPushException, AuthenticationConfigException {
+    // Not implemented yet
+    return null;
+  }
+
+  @Override
   public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
     AuthenticationConfigException {
     try {

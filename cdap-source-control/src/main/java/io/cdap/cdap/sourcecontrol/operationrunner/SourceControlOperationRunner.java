@@ -27,6 +27,20 @@ import io.cdap.cdap.sourcecontrol.SourceControlException;
  */
 public interface SourceControlOperationRunner extends Service {
   /**
+   * Push a namespace config to remote git repository.
+   *
+   * @param pushNsConfigRequest {@link PushNamespaceConfigOperationRequest} of the namespace to be pushed
+   * @return file-paths and file-hashes for the updated configs.
+   * @throws NoChangesToPushException      if there is no effective changes on the config file to commit
+   * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
+   *                                       call remote Git.
+   * @throws SourceControlException when the push operation fails for any other reason.
+   */
+  PushNamespaceConfigResponse pushNamespaceConfig(
+      PushNamespaceConfigOperationRequest pushNsConfigRequest) throws NoChangesToPushException,
+    AuthenticationConfigException;
+
+  /**
    * Push an application config to remote git repository.
    *
    * @param pushAppOperationRequest {@link PushAppOperationRequest} of the application to be pushed

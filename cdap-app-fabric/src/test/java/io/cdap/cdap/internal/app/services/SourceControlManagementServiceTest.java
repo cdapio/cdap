@@ -54,6 +54,8 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushNamespaceConfigOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushNamespaceConfigResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
@@ -483,6 +485,13 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static class MockSourceControlOperationRunner extends
       AbstractIdleService implements
       SourceControlOperationRunner {
+
+    @Override
+    public PushNamespaceConfigResponse pushNamespaceConfig(
+        PushNamespaceConfigOperationRequest pushNsRequest)
+      throws NoChangesToPushException, AuthenticationConfigException {
+      return null;
+    }
 
     @Override
     public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest)
