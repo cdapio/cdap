@@ -39,8 +39,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * A provisioner that does not create or tear down clusters, but just uses an existing cluster.
@@ -52,6 +55,9 @@ public class RemoteHadoopProvisioner implements Provisioner {
     "remote-hadoop", "Remote Hadoop Provisioner",
     "Runs programs on a pre-existing Hadoop cluster. The cluster must contain compatible software, must not use "
       + "Kerberos, and must be accessible via ssh and https (ports 22 and 443).");
+
+  static final ConcurrentHashMap<String, Integer> LATEST_EDGE_NODE = new ConcurrentHashMap<>();
+  private static final String HOSTS_SEPARATOR = ",";
 
   @Override
   public ProvisionerSpecification getSpec() {
@@ -108,8 +114,9 @@ public class RemoteHadoopProvisioner implements Provisioner {
   @Override
   public Cluster createCluster(ProvisionerContext context) {
     RemoteHadoopConf conf = RemoteHadoopConf.fromProperties(context.getProperties());
+    String host = selectEdgeNode(conf.getHost(), context.getProfileName());
     context.getSSHContext().setSSHKeyPair(conf.getKeyPair());
-    Collection<Node> nodes = Collections.singletonList(new Node(conf.getHost(), Node.Type.MASTER, conf.getHost(),
+    Collection<Node> nodes = Collections.singletonList(new Node(host, Node.Type.MASTER, host,
                                                                 0, Collections.emptyMap()));
     Map<String, String> properties = new HashMap<>();
     String principal = conf.getKerberosPrincipal();
@@ -119,7 +126,27 @@ public class RemoteHadoopProvisioner implements Provisioner {
       properties.put(ClusterProperties.KERBEROS_KEYTAB, keytab);
     }
 
-    return new Cluster(conf.getHost(), ClusterStatus.RUNNING, nodes, properties);
+    return new Cluster(host, ClusterStatus.RUNNING, nodes, properties);
+  }
+
+  String selectEdgeNode(String hostConfigValue, String profileName) {
+    String host;
+    LOG.debug("Retrieved edge nodes: " + hostConfigValue + " for profile: " + profileName);
+    if (hostConfigValue.contains(HOSTS_SEPARATOR)) {
+      List<String> hosts = Arrays.stream(hostConfigValue.split(HOSTS_SEPARATOR))
+        .map(String::trim).collect(Collectors.toList());
+      int counterValue = LATEST_EDGE_NODE
+        .compute(profileName, (pn, c) -> pn == null ? 0 : c == null ? 0 : c == Integer.MAX_VALUE ? 0 : ++c);
+      LOG.debug("Current counter value for profile: " + profileName + " is: " + counterValue);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("All counters for profile: " + profileName + " are: " + LATEST_EDGE_NODE.toString());
+      }
+      host = hosts.get(counterValue % hosts.size());
+    } else {
+      host = hostConfigValue;
+    }
+    LOG.info("Hadoop edge node to use: " + host  + " for profile: " + profileName);
+    return host;
   }
 
   @Override
