@@ -17,10 +17,14 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
@@ -36,6 +40,7 @@ import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
@@ -43,8 +48,12 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.proto.id.ProfileId;
+import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.sourcecontrol.NamespaceConfigData;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
@@ -64,6 +73,8 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushNamespaceConfigOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushNamespaceConfigResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -74,6 +85,7 @@ import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,6 +111,8 @@ public class SourceControlManagementService {
   private final Store store;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
   private static final List<Constraint> NO_CONSTRAINTS = Collections.emptyList();
+  private final ProfileService profileService;
+  private static final Gson GSON = new GsonBuilder().create();
 
 
   /**
@@ -106,15 +120,16 @@ public class SourceControlManagementService {
    */
   @Inject
   public SourceControlManagementService(CConfiguration cConf,
-      SecureStore secureStore,
-      TransactionRunner transactionRunner,
-      AccessEnforcer accessEnforcer,
-      AuthenticationContext authenticationContext,
-      SourceControlOperationRunner sourceControlOperationRunner,
-      ApplicationLifecycleService applicationLifecycleService,
-      PreferencesService preferencesService,
-      ProgramScheduleService programScheduleService,
-      Store store) {
+                                        SecureStore secureStore,
+                                        TransactionRunner transactionRunner,
+                                        AccessEnforcer accessEnforcer,
+                                        AuthenticationContext authenticationContext,
+                                        SourceControlOperationRunner sourceControlOperationRunner,
+                                        ApplicationLifecycleService applicationLifecycleService,
+                                        ProfileService profileService,
+                                        PreferencesService preferencesService,
+                                        ProgramScheduleService programScheduleService,
+                                        Store store) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -122,8 +137,9 @@ public class SourceControlManagementService {
     this.authenticationContext = authenticationContext;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
-    this.preferencesService = preferencesService;
     this.programScheduleService = programScheduleService;
+    this.profileService = profileService;
+    this.preferencesService = preferencesService;
     this.store = store;
   }
 
@@ -209,6 +225,79 @@ public class SourceControlManagementService {
         NamespacePermission.UPDATE_REPOSITORY_METADATA);
     RepositoryManager.validateConfig(secureStore,
         new SourceControlConfig(namespace, repoConfig, cConf));
+  }
+
+  /**
+   * The method to push the namespace config to linked repository.
+   *
+   * @param namespace {@link NamespaceId}
+   * @param commitMessage enforced commit message from user
+   * @return {@link PushNamespaceConfigResponse}
+   * @throws NotFoundException if the namespace is not found or the repository config is not found
+   * @throws IOException if {@link ApplicationLifecycleService} fails to get the adminOwner store
+   * @throws SourceControlException if {@link SourceControlOperationRunner} fails to push
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
+   * @throws NoChangesToPushException if there's no change of the application between namespace and linked repository
+   */
+  public PushNamespaceConfigResponse pushNamespaceConfig(NamespaceId namespace, String commitMessage)
+      throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
+
+    // TODO Add the accessEnforcement with correct permissions and uncomment the following line
+    // accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
+
+    // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
+    //  Need to fix it and avoid passing it in RepositoryManagerFactory
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+
+    List<Profile> profiles = profileService.getProfiles(namespace, true);
+    PreferencesDetail preferences = preferencesService.getPreferences(namespace);
+    // TODO Figure out how to get the list of connections in a namespace.
+    List<String> connections = new ArrayList<String>();
+    NamespaceConfigData nsConfig = new NamespaceConfigData(
+        namespace.getEntityName(), profiles, preferences, connections);
+
+    String committer = authenticationContext.getPrincipal().getName();
+    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
+    CommitMeta commitMeta = new CommitMeta(
+        committer, committer, System.currentTimeMillis(), commitMessage);
+
+    LOG.info("Start to push namespace {} config to linked repository by user {}",
+        namespace,
+        appLifecycleService.decodeUserId(authenticationContext));
+
+    PushNamespaceConfigResponse pushResponse = sourceControlOperationRunner.pushNamespaceConfig(
+        new PushNamespaceConfigOperationRequest(namespace, repoConfig, nsConfig, commitMeta)
+    );
+
+    LOG.info("Successfully pushed namespace {} config to linked repository by user {}",
+        namespace,
+        appLifecycleService.decodeUserId(authenticationContext));
+
+    SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
+    //ApplicationId appId = appRef.app(appDetail.getAppVersion());
+    //store.setAppSourceControlMeta(appId, sourceControlMeta);
+
+    return pushResponse;
+  }
+
+  /**
+   * Pull the namespace config from linked repository and deploy it.
+   *
+   * @param appRef application reference to deploy with
+   * @return {@link ApplicationRecord} of the deployed application.
+   * @throws Exception when {@link ApplicationLifecycleService} fails to deploy.
+   * @throws NoChangesToPullException if the fileHashes are the same
+   * @throws NotFoundException if the repository config is not found or the application in repository is not found
+   * @throws SourceControlException if unexpected errors happen when pulling the application.
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
+   */
+  public NamespaceConfigData pullAndDeployNamespace(NamespaceId namespace) throws Exception {
+    // Enforcing namespace CREATE permission and Namespace READ_REPOSITORY permission upfront
+    // accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    // accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
+    //    NamespacePermission.READ_REPOSITORY);
+
+    return null;
   }
 
   /**
@@ -403,4 +492,5 @@ public class SourceControlManagementService {
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     return sourceControlOperationRunner.list(new NamespaceRepository(namespace, repoConfig));
   }
+
 }

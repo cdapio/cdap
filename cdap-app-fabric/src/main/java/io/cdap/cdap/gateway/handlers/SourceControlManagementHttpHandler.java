@@ -34,7 +34,9 @@ import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.NamespaceConfigData;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
+import io.cdap.cdap.proto.sourcecontrol.PushNamespaceConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
@@ -43,6 +45,7 @@ import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushNamespaceConfigResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -151,6 +154,57 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   }
 
   /**
+   * Pushes the namespace configs of the latest version to linked repository in Json format.
+   * It expects a post body that has an optional commit message
+   * E.g.
+   *
+   * <pre>
+   * {@code
+   * {
+   *   "commitMessage": "pushed namespace config XYZ"
+   * }
+   * }
+   *
+   * </pre>
+   * The response will be a {@link PushNamespaceConfigResponse} object,
+   * which encapsulates the namespace name, profiles, preferences and connections.
+   */
+  @POST
+  @Path("/configs/push")
+  public void pushNamespaceConfig(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    PushNamespaceConfigRequest nsConfigRequest = validateAndGetNamespaceConfigRequest(request);
+
+    try {
+      PushNamespaceConfigResponse pushResponse = sourceControlService.pushNamespaceConfig(namespace,
+          nsConfigRequest.getCommitMessage());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pushResponse));
+    } catch (NoChangesToPushException e) {
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
+    }
+  }
+
+  /**
+   * Pull the requested namespace config from linked repository and deploy it.
+   */
+  @POST
+  @Path("/configs/pull")
+  public void pullNamespaceConfig(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+
+    try {
+      NamespaceConfigData namespaceRecord = sourceControlService.pullAndDeployNamespace(namespace);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(namespaceRecord));
+    } catch (NoChangesToPullException e) {
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
+    }
+  }
+
+  /**
    * Pushes an application configs of the latest version to linked repository in Json format. It expects a post body
    * that has an optional commit message
    * E.g.
@@ -200,6 +254,23 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     } catch (NoChangesToPullException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());
     }
+  }
+
+  private PushNamespaceConfigRequest validateAndGetNamespaceConfigRequest(FullHttpRequest request)
+      throws BadRequestException {
+    PushNamespaceConfigRequest pushNamespaceConfigRequest;
+    try {
+      pushNamespaceConfigRequest = parseBody(request, PushNamespaceConfigRequest.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid request body: " + e.getMessage());
+    }
+
+    if (pushNamespaceConfigRequest == null
+        || Strings.isNullOrEmpty(pushNamespaceConfigRequest.getCommitMessage())) {
+      throw new BadRequestException("Please specify commit message in the request body.");
+    }
+
+    return pushNamespaceConfigRequest;
   }
 
   private PushAppRequest validateAndGetAppsRequest(FullHttpRequest request) throws BadRequestException {

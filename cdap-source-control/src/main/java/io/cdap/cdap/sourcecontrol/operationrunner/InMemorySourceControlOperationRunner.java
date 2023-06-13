@@ -52,6 +52,7 @@ import io.cdap.cdap.proto.ProtoTrigger.ProgramStatusTrigger;
 import io.cdap.cdap.proto.ProtoTrigger.TimeTrigger;
 import io.cdap.cdap.proto.ProtoTriggerCodec;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.sourcecontrol.NamespaceConfigData;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
@@ -168,6 +169,34 @@ public class InMemorySourceControlOperationRunner extends
     this.repoManagerFactory = repoManagerFactory;
   }
 
+
+  @Override
+  public PushNamespaceConfigResponse pushNamespaceConfig(
+      PushNamespaceConfigOperationRequest pushNsRequest)
+    throws NoChangesToPushException, AuthenticationConfigException {
+    try (
+        RepositoryManager repositoryManager = repoManagerFactory.create(
+            pushNsRequest.getNamespaceId(), pushNsRequest.getRepositoryConfig())
+    ) {
+      try {
+        repositoryManager.cloneRemote();
+      } catch (GitAPIException | IOException e) {
+        throw new GitOperationException(String.format("Failed to clone remote repository: %s",
+            e.getMessage()), e);
+      }
+
+      LOG.info("Pushing namespace configs for : {}", pushNsRequest.getNamespaceId().getEntityName());
+
+      //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
+      return writeNamespaceConfigAndPush(
+          repositoryManager,
+          pushNsRequest.getNamespaceConfig(),
+          pushNsRequest.getCommitDetails()
+      );
+    }
+  }
+
+
   @Override
   public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
     AuthenticationConfigException {
@@ -230,6 +259,62 @@ public class InMemorySourceControlOperationRunner extends
       throw e;
     } catch (Exception e) {
       throw new SourceControlException(String.format("Failed to pull application %s.", applicationName), e);
+    }
+  }
+
+  /**
+   * Atomic operation of writing namespace config and push, return the push response.
+   *
+   * @param repositoryManager {@link RepositoryManager} to conduct git operations
+   * @param nsToPush         {@link NamespaceConfigData} to push
+   * @param commitDetails     {@link CommitMeta} from user input
+   * @return {@link PushNamespaceConfigResponse}
+   * @throws NoChangesToPushException if there's no change between the application in namespace and git repository
+   * @throws SourceControlException   for failures while writing config file or doing git operations
+   */
+  private PushNamespaceConfigResponse writeNamespaceConfigAndPush(
+      RepositoryManager repositoryManager,
+      NamespaceConfigData nsToPush,
+      CommitMeta commitDetails)
+      throws NoChangesToPushException {
+    try {
+      // Creates the base directory if it does not exist. This method does not throw an exception if the directory
+      // already exists. This is for the case that the repo is new and user configured prefix path.
+      Files.createDirectories(repositoryManager.getBasePath());
+    } catch (IOException e) {
+      throw new SourceControlException("Failed to create repository base directory", e);
+    }
+
+    String configFileName = generateNamepaceConfigFileName(nsToPush.getName());
+
+    Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
+    Path filePathToWrite;
+    try {
+      filePathToWrite = validateAppConfigRelativePath(repositoryManager, appRelativePath);
+    } catch (IllegalArgumentException e) {
+      throw new SourceControlException(String.format("Failed to push namespace %s: %s",
+          nsToPush.getName(),
+          e.getMessage()), e);
+    }
+    // Opens the file for writing, creating the file if it doesn't exist,
+    // or truncating an existing regular-file to a size of 0
+    try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
+      GSON.toJson(nsToPush, writer);
+    } catch (IOException e) {
+      throw new ConfigFileWriteException(
+          String.format("Failed to write namespace config to path %s", appRelativePath), e
+      );
+    }
+
+    LOG.debug("Wrote namespace configs for {} in file {}", nsToPush.getName(), appRelativePath);
+
+    try {
+      // TODO: CDAP-20383, handle NoChangesToPushException
+      //  Define the case that the application to push does not have any changes
+      String gitFileHash = repositoryManager.commitAndPush(commitDetails, appRelativePath);
+      return new PushNamespaceConfigResponse(nsToPush.getName(), gitFileHash);
+    } catch (GitAPIException e) {
+      throw new GitOperationException(String.format("Failed to push config to git: %s", e.getMessage()), e);
     }
   }
 
@@ -297,6 +382,17 @@ public class InMemorySourceControlOperationRunner extends
    */
   private String generateConfigFileName(String appName) {
     return String.format("%s.json", appName);
+  }
+
+  /**
+   * Generate config file name from namespace name.
+   * Currently, it only adds `namespace.json` as extension with namespace name being the filename.
+   *
+   * @param nsName Name of the namespace
+   * @return The file name we want to store application config in
+   */
+  private String generateNamepaceConfigFileName(String nsName) {
+    return String.format("%s.namespace.json", nsName);
   }
 
   /**

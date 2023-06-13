@@ -34,6 +34,7 @@ import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -121,13 +122,15 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         AuthenticationContext authenticationContext,
         SourceControlOperationRunner sourceControlRunner,
         ApplicationLifecycleService applicationLifecycleService,
-        PreferencesService preferencesService,
         ProgramScheduleService programScheduleService,
+        ProfileService profileService,
+        PreferencesService preferencesService,
         Store store) {
         return Mockito.spy(new SourceControlManagementService(cConf, secureStore, transactionRunner,
                                                               accessEnforcer, authenticationContext,
                                                               sourceControlRunner, applicationLifecycleService,
                                                               preferencesService, programScheduleService,
+                                                              profileService,
                                                               store));
       }
     });
