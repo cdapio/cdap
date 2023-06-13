@@ -29,7 +29,7 @@
 
   <properties>
     <!-- Used only for unit tests -->
-    <jetty.version>9.4.50.v20221201</jetty.version>
+    <jetty.version>9.4.51.v20230217</jetty.version>
   </properties>
 
   <dependencies>
