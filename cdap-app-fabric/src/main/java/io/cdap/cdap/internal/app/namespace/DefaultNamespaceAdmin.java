@@ -59,7 +59,10 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.store.NamespaceStore;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -206,9 +209,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
       // if needed, run master environment specific logic
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
-          && masterEnv != null) {
-        masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
+      if (masterEnv != null) {
+        String namespaceName = NamespaceId.DEFAULT.getNamespace();
+        if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)) {
+          masterEnv.onNamespaceCreation(namespace.getNamespace(),
+              metadata.getConfig().getConfigs());
+          namespaceName = namespace.getNamespace();
+        }
+        String credentialIdentityName = getCredentialIdentityName(namespace.getNamespace());
+        LOG.info("Credential Identity Name: {}", credentialIdentityName);
+        masterEnv.createCredentialIdentity(namespaceName, credentialIdentityName);
       }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to create namespace '%s'", namespace.getNamespace()), t);
@@ -232,6 +242,35 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
     emitNamespaceCountMetric();
     LOG.info("Namespace {} created with meta {}", metadata.getNamespaceId(), metadata);
+  }
+
+  private String getCredentialIdentityName(String namespace) throws NoSuchAlgorithmException {
+
+    String sha256Hex = sha256Hex(namespace).substring(0, 15);
+    if (namespace.length() > 15) {
+      namespace = namespace.substring(0, 15);
+    }
+    return String.format("%s-%s", namespace, sha256Hex);
+  }
+
+  private String sha256Hex(String input) throws NoSuchAlgorithmException {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+
+      StringBuilder hexString = new StringBuilder();
+      for (byte b : hash) {
+        String hex = Integer.toHexString(0xff & b);
+        if (hex.length() == 1) {
+          hexString.append('0');
+        }
+        hexString.append(hex);
+      }
+      return hexString.toString();
+    } catch (NoSuchAlgorithmException e) {
+      LOG.error(String.format("Unable to generate SHA-256 hash for input %s", input), e);
+      throw e;
+    }
   }
 
   private void validateCustomMapping(NamespaceMeta metadata) throws Exception {

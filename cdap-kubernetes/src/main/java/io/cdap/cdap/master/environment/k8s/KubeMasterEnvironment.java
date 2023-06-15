@@ -53,6 +53,7 @@ import io.kubernetes.client.openapi.models.V1OwnerReferenceBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
+import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.util.Yaml;
@@ -507,6 +508,23 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       throws Exception {
     NamespaceDetail namespaceDetail = new NamespaceDetail(cdapNamespace, properties);
     twillRunner.onNamespaceCreation(namespaceDetail);
+  }
+
+  @Override
+  public void createCredentialIdentity(String cdapNamespace, String identity) throws ApiException {
+    V1ObjectMeta serviceAccountMetadata = new V1ObjectMeta();
+    serviceAccountMetadata.setName(identity);
+    V1ServiceAccount serviceAccount = new V1ServiceAccount();
+    serviceAccount.setMetadata(serviceAccountMetadata);
+    try {
+      coreV1Api.createNamespacedServiceAccount(cdapNamespace, serviceAccount,
+          null, null, null, null);
+    } catch (ApiException e) {
+      LOG.error(
+          String.format("Unable to create the service account %s with code %s and body: %s",
+              serviceAccount.getMetadata().getName(), e.getCode(), e.getResponseBody()), e);
+      throw e;
+    }
   }
 
   @Override
