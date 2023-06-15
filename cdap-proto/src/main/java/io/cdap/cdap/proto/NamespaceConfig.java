@@ -130,7 +130,7 @@ public class NamespaceConfig {
    * @return the keytab URI without the fragment containing version.
    */
   @Nullable
-  public String getKeytabURIWithoutVersion() {
+  public String getKeytabUriWithoutVersion() {
     // try to get the keytab URI version if the keytab URI is not null
     String keytabURI = getKeytabURI();
     if (keytabURI != null) {
@@ -144,7 +144,7 @@ public class NamespaceConfig {
   /**
    * @return the version of the keytab URI or 0 if no version is present in the keytab URI.
    */
-  public int getKeytabURIVersion() {
+  public int getKeytabUriVersion() {
     // try to get the keytab URI version if the keytab URI is not null
     String keytabURI = getKeytabURI();
     if (keytabURI != null) {

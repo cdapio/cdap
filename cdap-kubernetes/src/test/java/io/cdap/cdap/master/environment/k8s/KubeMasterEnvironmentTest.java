@@ -147,8 +147,8 @@ public class KubeMasterEnvironmentTest {
             + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
-    kubeMasterEnvironment.setCDAPInstallNamespace(KUBE_INSTALL_NAMESPACE);
+    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
+    kubeMasterEnvironment.setCdapInstallNamespace(KUBE_INSTALL_NAMESPACE);
 
     Map<String, String> conf = new HashMap<>();
     conf.put(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
@@ -179,8 +179,8 @@ public class KubeMasterEnvironmentTest {
             + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
-    kubeMasterEnvironment.setCDAPInstallNamespace(KUBE_INSTALL_NAMESPACE);
+    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
+    kubeMasterEnvironment.setCdapInstallNamespace(KUBE_INSTALL_NAMESPACE);
 
     Map<String, String> conf = new HashMap<>();
     conf.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_INSTALL_NAMESPACE);
@@ -208,8 +208,8 @@ public class KubeMasterEnvironmentTest {
         "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
             + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
-    kubeMasterEnvironment.setCDAPInstallNamespace(KUBE_INSTALL_NAMESPACE);
+    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
+    kubeMasterEnvironment.setCdapInstallNamespace(KUBE_INSTALL_NAMESPACE);
 
     Map<String, String> conf = new HashMap<>();
     conf.put(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
@@ -240,8 +240,8 @@ public class KubeMasterEnvironmentTest {
             + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
-    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
-    kubeMasterEnvironment.setCDAPInstallNamespace(KUBE_INSTALL_NAMESPACE);
+    kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
+    kubeMasterEnvironment.setCdapInstallNamespace(KUBE_INSTALL_NAMESPACE);
 
     Map<String, String> conf = new HashMap<>();
     conf.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
@@ -317,19 +317,19 @@ public class KubeMasterEnvironmentTest {
                                                   V1Pod executorPod) {
     // NOTE: Several of these values are hard-coded to ensure that it is not changed by accident as it can cause other
     // pieces to fail. If one of the values changed, the other constants must be validated!
-    V1ServiceAccountTokenProjection workloadIdentityKSATokenProjection = new V1ServiceAccountTokenProjection()
+    V1ServiceAccountTokenProjection workloadIdentityKsaTokenProjection = new V1ServiceAccountTokenProjection()
       .path("token")
       .expirationSeconds(172800L)
       .audience(workloadIdentityPool);
-    V1ConfigMapProjection workloadIdentityGSAConfigMapProjection = new V1ConfigMapProjection()
+    V1ConfigMapProjection workloadIdentityGsaConfigMapProjection = new V1ConfigMapProjection()
       .name("workload-identity-config")
       .optional(false)
       .addItemsItem(new V1KeyToPath().key("config").path("google-application-credentials.json"));
     V1Volume expectedWorkloadIdentityProjectedVolume = new V1Volume().name("gcp-ksa")
       .projected(new V1ProjectedVolumeSource()
                    .defaultMode(420)
-                   .addSourcesItem(new V1VolumeProjection().serviceAccountToken(workloadIdentityKSATokenProjection))
-                   .addSourcesItem(new V1VolumeProjection().configMap(workloadIdentityGSAConfigMapProjection)));
+                   .addSourcesItem(new V1VolumeProjection().serviceAccountToken(workloadIdentityKsaTokenProjection))
+                   .addSourcesItem(new V1VolumeProjection().configMap(workloadIdentityGsaConfigMapProjection)));
     V1VolumeMount expectedWorkloadIdentityProjectedVolumeMount = new V1VolumeMount().name("gcp-ksa")
       .mountPath("/var/run/secrets/tokens/gcp-ksa").readOnly(true);
     V1EnvVar expectedGoogleApplicationCredentialsEnvVar = new V1EnvVar().name("GOOGLE_APPLICATION_CREDENTIALS")

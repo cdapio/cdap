@@ -30,6 +30,7 @@ public final class NamespaceMeta {
   public static final NamespaceMeta DEFAULT =
       new NamespaceMeta.Builder()
           .setName(NamespaceId.DEFAULT)
+          .setIdentity(NamespaceId.DEFAULT.getNamespace())
           .setDescription(
               "This is the default namespace, which is automatically created, and is always available.")
           .build();
@@ -37,23 +38,31 @@ public final class NamespaceMeta {
   public static final NamespaceMeta SYSTEM =
       new NamespaceMeta.Builder()
           .setName(NamespaceId.SYSTEM)
+          .setIdentity(NamespaceId.SYSTEM.getNamespace())
           .setDescription("The system namespace, which is used for internal purposes.")
           .build();
 
   private final String name;
+  private final String identity;
   private final String description;
   private final long generation;
   private final NamespaceConfig config;
 
-  private NamespaceMeta(String name, String description, long generation, NamespaceConfig config) {
+  private NamespaceMeta(String name, String description, long generation, NamespaceConfig config,
+      String identity) {
     this.name = name;
     this.description = description;
     this.generation = generation;
     this.config = config;
+    this.identity = identity;
   }
 
   public String getName() {
     return name;
+  }
+
+  public String getIdentity() {
+    return identity;
   }
 
   public String getDescription() {
@@ -81,14 +90,15 @@ public final class NamespaceMeta {
 
     private String name;
     private String description;
+    private String identity;
     private String schedulerQueueName;
     private String rootDirectory;
     private String hbaseNamespace;
     private String hiveDatabase;
     private String principal;
     private String groupName;
-    private String keytabURIWithoutVersion;
-    private int keytabURIVersion;
+    private String keytabUriWithoutVersion;
+    private int keytabUriVersion;
     private long generation;
     private Map<String, String> configMap = new HashMap<>();
 
@@ -96,10 +106,15 @@ public final class NamespaceMeta {
       // No-Op
     }
 
+    /**
+     * Constructs the namespace meta instance.
+     * @param meta {@link NamespaceMeta}
+     */
     public Builder(NamespaceMeta meta) {
       this.name = meta.getName();
       this.description = meta.getDescription();
       this.generation = meta.getGeneration();
+      this.identity = meta.getIdentity();
       NamespaceConfig config = meta.getConfig();
       if (config != null) {
         this.configMap = config.getConfigs();
@@ -109,8 +124,8 @@ public final class NamespaceMeta {
         this.hiveDatabase = config.getHiveDatabase();
         this.principal = config.getPrincipal();
         this.groupName = config.getGroupName();
-        this.keytabURIWithoutVersion = config.getKeytabURIWithoutVersion();
-        this.keytabURIVersion = config.getKeytabURIVersion();
+        this.keytabUriWithoutVersion = config.getKeytabUriWithoutVersion();
+        this.keytabUriVersion = config.getKeytabUriVersion();
       }
     }
 
@@ -126,6 +141,11 @@ public final class NamespaceMeta {
 
     public Builder setDescription(String description) {
       this.description = description;
+      return this;
+    }
+
+    public Builder setIdentity(String identity) {
+      this.identity = identity;
       return this;
     }
 
@@ -159,24 +179,24 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setKeytabURI(String keytabURI) {
-      this.keytabURIWithoutVersion = keytabURI;
-      this.keytabURIVersion = 0;
+    public Builder setKeytabUri(String keytabUri) {
+      this.keytabUriWithoutVersion = keytabUri;
+      this.keytabUriVersion = 0;
       return this;
     }
 
-    public Builder setKeytabURIWithoutVersion(String keytabURIWithoutVersion) {
-      this.keytabURIWithoutVersion = keytabURIWithoutVersion;
+    public Builder setKeytabUriWithoutVersion(String keytabUriWithoutVersion) {
+      this.keytabUriWithoutVersion = keytabUriWithoutVersion;
       return this;
     }
 
-    public Builder incrementKeytabURIVersion() {
-      keytabURIVersion++;
+    public Builder incrementKeytabUriVersion() {
+      keytabUriVersion++;
       return this;
     }
 
-    public void setKeytabURIVersion(int keytabURIVersion) {
-      this.keytabURIVersion = keytabURIVersion;
+    public void setKeytabUriVersion(int keytabUriVersion) {
+      this.keytabUriVersion = keytabUriVersion;
     }
 
     public Builder setGeneration(long generation) {
@@ -189,18 +209,23 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public NamespaceMeta buildWithoutKeytabUriVersion() {
+      return build(keytabUriWithoutVersion);
+    }
+
+    /**
+     * Builds the namespace metadata.
+     *
+     * @return {@link NamespaceMeta}.
+     */
     public NamespaceMeta build() {
-      // combine the keytab URI with the version if the version is not 0
-      String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion
-          : keytabURIWithoutVersion + "#" + keytabURIVersion;
+      // combine the keytab Uri with the version if the version is not 0
+      String uri = keytabUriVersion == 0 ? keytabUriWithoutVersion
+          : keytabUriWithoutVersion + "#" + keytabUriVersion;
       return build(uri);
     }
 
-    public NamespaceMeta buildWithoutKeytabURIVersion() {
-      return build(keytabURIWithoutVersion);
-    }
-
-    private NamespaceMeta build(@Nullable String keytabURI) {
+    private NamespaceMeta build(@Nullable String keytabUri) {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
       }
@@ -217,8 +242,8 @@ public final class NamespaceMeta {
       return new NamespaceMeta(name, description, generation,
           new NamespaceConfig(schedulerQueueName, rootDirectory,
               hbaseNamespace, hiveDatabase,
-              principal, groupName, keytabURI,
-              configMap));
+              principal, groupName, keytabUri,
+              configMap), identity);
     }
   }
 

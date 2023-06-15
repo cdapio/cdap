@@ -619,7 +619,7 @@ public abstract class CLITestBase {
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
         .setName(name).setDescription(description).setPrincipal(principal).setGroupName(group)
-        .setKeytabURI(keytab)
+        .setKeytabUri(keytab)
         .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
         .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);

@@ -95,8 +95,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = listAllNamespaces();
     assertResponseCode(200, response);
     List<JsonObject> namespaces = readListResponse(response);
-    int initialSize = namespaces.size();
     // create and verify
+    final int initialSize = namespaces.size();
     response = createNamespace(METADATA_VALID, NAME);
     assertResponseCode(200, response);
     response = listAllNamespaces();
@@ -106,7 +106,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(DESCRIPTION, namespaces.get(0).get(DESCRIPTION_FIELD).getAsString());
     // verify that keytab URI cannot be updated since the namespace was created with no principal
     NamespaceMeta meta =
-      new NamespaceMeta.Builder().setName(NAME).setKeytabURI("new.keytab").build();
+      new NamespaceMeta.Builder().setName(NAME).setKeytabUri("new.keytab").build();
     response = setProperties(NAME, meta);
     assertResponseCode(400, response);
     // cleanup
@@ -256,6 +256,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDeleteAll() throws Exception {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     // test deleting non-existent namespace
     assertResponseCode(404, deleteNamespace("doesnotexist"));
     assertResponseCode(200, createNamespace(NAME));
@@ -267,23 +268,20 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Location nsLocation = namespacePathLocator.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
-    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-
     deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppForUnrecoverableResetTest.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
     DatasetId myDataset = new DatasetId(NAME, "myds");
-
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
     waitState(program, ProgramStatus.RUNNING.name());
-    boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because unrecoverable reset is disabled
     assertResponseCode(403, deleteNamespace(NAME));
-    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     // because service is running
     assertResponseCode(409, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
@@ -304,7 +302,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testDeleteDatasetsOnly() throws Exception {
-    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     // test deleting non-existent namespace
     assertResponseCode(200, createNamespace(NAME));
     assertResponseCode(200, getNamespace(NAME));
@@ -324,12 +321,12 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
     waitState(program, ProgramStatus.RUNNING.name());
-    boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because reset is not enabled
     assertResponseCode(403, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
-    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     // because service is running
     assertResponseCode(409, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
@@ -406,9 +403,9 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testProperties() throws Exception {
     // create a namespace with principal
     String nsPrincipal = "nsCreator/somehost.net@somekdc.net";
-    String nsKeytabURI = "some/path";
+    String nsKeytabUri = "some/path";
     NamespaceMeta impNsMeta =
-      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal).setKeytabURI(nsKeytabURI).build();
+      new NamespaceMeta.Builder().setName(NAME).setPrincipal(nsPrincipal).setKeytabUri(nsKeytabUri).build();
     HttpResponse response = createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
     assertResponseCode(200, response);
     // verify
@@ -453,7 +450,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("prod", config.getSchedulerQueueName());
 
     // verify updating keytab URI with version initialized
-    setProperties(NAME, new NamespaceMeta.Builder(impNsMeta).setKeytabURI("new/url").build());
+    setProperties(NAME, new NamespaceMeta.Builder(impNsMeta).setKeytabUri("new/url").build());
     response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
@@ -463,5 +460,61 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // cleanup
     response = deleteNamespace(NAME);
     Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  @Test
+  public void testNamespaceIdentity() throws Exception {
+    NamespaceId fooNamespace = new NamespaceId("Foo_Namespace");
+
+    //get non-existent namespace
+    HttpResponse response = getNamespace(fooNamespace.getNamespace());
+    Assert.assertEquals(404, response.getResponseCode());
+
+    // create Namespace
+    response = createNamespace(METADATA_VALID, fooNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    NamespaceId longNamespace = new NamespaceId("Test_Long_Namespace");
+    response = createNamespace(METADATA_VALID, longNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+
+    //get identity
+    String expectedIdentity = "foo-namespace-396fb5b48c8bbdb";
+    response = getNamespace(fooNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    NamespaceMeta ns = GSON.fromJson(response.getResponseBodyAsString(), NamespaceMeta.class);
+    Assert.assertEquals(expectedIdentity, ns.getIdentity());
+
+    expectedIdentity = "test-long-names-e190a7e512d7030";
+    response = getNamespace(longNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    ns = GSON.fromJson(response.getResponseBodyAsString(), NamespaceMeta.class);
+    Assert.assertEquals(expectedIdentity, ns.getIdentity());
+
+    //deleteNamespace
+    response = deleteNamespace(fooNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    response = deleteNamespace(longNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+
+    //reserved namespace
+    expectedIdentity = NamespaceId.DEFAULT.getNamespace();
+    response = getNamespace(NamespaceId.DEFAULT.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    ns = GSON.fromJson(response.getResponseBodyAsString(), NamespaceMeta.class);
+    Assert.assertEquals(expectedIdentity, ns.getIdentity());
+
+    // namespace creation hook enabled
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    cConf.setBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED, true);
+    response = createNamespace(METADATA_VALID, fooNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    expectedIdentity = "default";
+    response = getNamespace(fooNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    ns = GSON.fromJson(response.getResponseBodyAsString(), NamespaceMeta.class);
+    Assert.assertEquals(expectedIdentity, ns.getIdentity());
+    response = deleteNamespace(fooNamespace.getNamespace());
+    Assert.assertEquals(200, response.getResponseCode());
+    cConf.setBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED, false);
   }
 }

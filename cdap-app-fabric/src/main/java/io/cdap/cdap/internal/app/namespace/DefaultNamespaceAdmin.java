@@ -78,6 +78,7 @@ import org.slf4j.LoggerFactory;
 public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
+  private static final String DEFAULT = "default";
 
   private final NamespaceStore nsStore;
   private final Store store;
@@ -97,6 +98,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final TetheringStore tetheringStore;
   private final CConfiguration cConf;
 
+  /**
+   * Constructs the {@link DefaultNamespaceAdmin} using specified parameters.
+   */
   @Inject
   @VisibleForTesting
   public DefaultNamespaceAdmin(NamespaceStore nsStore,
@@ -142,7 +146,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   /**
-   * Creates a new namespace
+   * Creates a new namespace.
    *
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
@@ -175,16 +179,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     boolean hasValidKerberosConf = false;
     if (metadata.getConfig() != null) {
       String configuredPrincipal = metadata.getConfig().getPrincipal();
-      String configuredKeytabURI = metadata.getConfig().getKeytabURI();
+      String configuredKeytabUri = metadata.getConfig().getKeytabURI();
       if ((!Strings.isNullOrEmpty(configuredPrincipal) && Strings.isNullOrEmpty(
-          configuredKeytabURI))
+          configuredKeytabUri))
           || (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(
-          configuredKeytabURI))) {
+          configuredKeytabUri))) {
         throw new BadRequestException(
             String.format(
                 "Either both or none of the following two configurations must be configured. "
                     + "Configured principal: %s, Configured keytabURI: %s",
-                configuredPrincipal, configuredKeytabURI));
+                configuredPrincipal, configuredKeytabUri));
       }
       hasValidKerberosConf = true;
     }
@@ -206,9 +210,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
       // if needed, run master environment specific logic
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
-          && masterEnv != null) {
-        masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
+      if (masterEnv != null) {
+        if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)) {
+          masterEnv.onNamespaceCreation(namespace.getNamespace(),
+              metadata.getConfig().getConfigs());
+        } else {
+          masterEnv.createIdentity(NamespaceId.DEFAULT.getNamespace(),
+              getIdentity(namespace.getNamespaceId()));
+        }
       }
     } catch (Throwable t) {
       LOG.error(String.format("Failed to create namespace '%s'", namespace.getNamespace()), t);
@@ -300,7 +309,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   /**
-   * Deletes the specified namespace
+   * Deletes the specified namespace.
    *
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
@@ -409,23 +418,23 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     if (config != null && config.getKeytabURI() != null) {
-      String keytabURI = config.getKeytabURI();
-      if (keytabURI.isEmpty()) {
+      String keytabUri = config.getKeytabURI();
+      if (keytabUri.isEmpty()) {
         throw new BadRequestException("Cannot update keytab URI with an empty URI.");
       }
-      String existingKeytabURI = existingMeta.getConfig().getKeytabURIWithoutVersion();
-      if (existingKeytabURI == null) {
+      String existingKeytabUri = existingMeta.getConfig().getKeytabUriWithoutVersion();
+      if (existingKeytabUri == null) {
         throw new BadRequestException(
             "Cannot update keytab URI since there is no existing principal or keytab URI.");
       }
-      if (keytabURI.equals(existingKeytabURI)) {
+      if (keytabUri.equals(existingKeytabUri)) {
         // The given keytab URI is the same as the existing one, but the content of the keytab file might be changed.
         // Increment the keytab URI version so that the cache will reload content in the updated keytab file.
-        builder.incrementKeytabURIVersion();
+        builder.incrementKeytabUriVersion();
       } else {
-        builder.setKeytabURIWithoutVersion(keytabURI);
+        builder.setKeytabUriWithoutVersion(keytabUri);
         // clear keytab URI version
-        builder.setKeytabURIVersion(0);
+        builder.setKeytabUriVersion(0);
       }
     }
 
@@ -443,7 +452,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   /**
-   * Lists all namespaces
+   * Lists all namespaces.
    *
    * @return a list of {@link NamespaceMeta} for all namespaces
    */
@@ -459,7 +468,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   /**
-   * Gets details of a namespace
+   * Gets details of a namespace.
    *
    * @param namespaceId the {@link Id.Namespace} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
@@ -508,10 +517,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   /**
-   * Checks if the specified namespace exists
+   * Checks if the specified namespace exists.
    *
    * @param namespaceId the {@link Id.Namespace} to check for existence
-   * @returnexists( true, if the specified namespace exists, false otherwise
+   * @returns true, if the specified namespace exists, false otherwise
    */
   @Override
   public boolean exists(NamespaceId namespaceId) throws Exception {
@@ -523,6 +532,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     } catch (NamespaceNotFoundException e) {
       return false;
     }
+  }
+
+  @Override
+  public String getIdentity(NamespaceId namespaceId) {
+    if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)) {
+      // if namespace creation hook is enabled, use the default identity.
+      return DEFAULT;
+    }
+    return NamespaceAdmin.super.getIdentity(namespaceId);
   }
 
   @VisibleForTesting
@@ -545,14 +563,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private List<String> getTetheredPeersUsingNamespace(NamespaceId namespaceId) throws IOException {
     return tetheringStore.getPeers()
         .stream()
-        .filter(p -> p.getMetadata().getNamespaceAllocations().stream().
-            anyMatch(na -> na.getNamespace().equals(namespaceId.getNamespace())))
+        .filter(p -> p.getMetadata().getNamespaceAllocations().stream()
+            .anyMatch(na -> na.getNamespace().equals(namespaceId.getNamespace())))
         .map(PeerInfo::getName)
         .collect(Collectors.toList());
   }
 
   /**
-   * Deletes the namespace meta and also invalidates the cache
+   * Deletes the namespace meta and also invalidates the cache.
    *
    * @param namespaceId of namespace whose meta needs to be deleted
    */

@@ -1262,7 +1262,7 @@ public class AuthorizationTest extends TestBase {
     // We will create a namespace as owner bob, the keytab url is provided to pass the check for DefaultNamespaceAdmin
     // in unit test, it is useless, since impersonation will never happen
     NamespaceMeta ownerNSMeta = new NamespaceMeta.Builder().setName(namespaceId.getNamespace())
-      .setPrincipal(BOB.getName()).setKeytabURI("/tmp/").build();
+      .setPrincipal(BOB.getName()).setKeytabUri("/tmp/").build();
     KerberosPrincipalId bobPrincipalId = new KerberosPrincipalId(BOB.getName());
 
     // grant alice admin to the namespace, but creation should still fail since alice needs to have privilege on
