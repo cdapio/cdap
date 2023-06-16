@@ -18,26 +18,40 @@ package io.cdap.cdap.spi.events;
 
 import javax.annotation.Nullable;
 
+/**
+ * Event from PubSub that signals to start a program.
+ */
 public class StartProgramEvent implements Event<StartProgramEventDetails> {
 
+    private final String ackId;
     private final long publishTime;
     private final String version;
-    private final String projectName;
     private final StartProgramEventDetails startProgramEventDetails;
 
-    public StartProgramEvent(long publishTime, String version,
-                             @Nullable String projectName,
+    /**
+     * Construct a new StartProgramEvent.
+     *
+     * @param publishTime publish time of event
+     * @param version version of event
+     * @param startProgramEventDetails Details needed to start program
+     */
+    public StartProgramEvent(String ackId, long publishTime, String version,
                              StartProgramEventDetails startProgramEventDetails) {
+        this.ackId = ackId;
         this.publishTime = publishTime;
         this.version = version;
-        this.projectName = projectName;
         this.startProgramEventDetails = startProgramEventDetails;
+    }
+
+    public String getAckId() {
+        return ackId;
     }
 
     @Override
     public EventType getType() {
         return EventType.PROGRAM_START;
     }
+
 
     @Override
     public long getPublishTime() {
@@ -49,16 +63,15 @@ public class StartProgramEvent implements Event<StartProgramEventDetails> {
         return version;
     }
 
+    /**
+     * Get instance name is N/A for incoming events.
+     *
+     * @return null
+     */
     @Nullable
     @Override
     public String getInstanceName() {
         return null;
-    }
-
-    @Nullable
-    @Override
-    public String getProjectName() {
-        return projectName;
     }
 
     @Override

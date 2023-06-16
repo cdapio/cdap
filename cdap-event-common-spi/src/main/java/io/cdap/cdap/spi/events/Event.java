@@ -19,35 +19,35 @@ package io.cdap.cdap.spi.events;
 import javax.annotation.Nullable;
 
 /**
- * Interface that represents a CDAP event
+ * Interface that represents a CDAP event.
  *
  * @param <T> Event detail type
  */
 public interface Event<T> {
 
   /**
-   * Returns {@link EventType} for the event
+   * Returns {@link EventType} for the event.
    *
    * @return {@link EventType}
    */
   EventType getType();
 
   /**
-   * Returns the timestamp at which event was published
+   * Returns the timestamp at which event was published.
    *
    * @return long
    */
   long getPublishTime();
 
   /**
-   * Returns the version string for this event
+   * Returns the version string for this event.
    *
    * @return String version
    */
   String getVersion();
 
   /**
-   * Returns the CDAP instance name associated with this event or null
+   * Returns the CDAP instance name associated with this event or null.
    *
    * @return String instance name or null
    */
@@ -55,7 +55,7 @@ public interface Event<T> {
   String getInstanceName();
 
   /**
-   * Returns the project name associated with this instance or null
+   * Returns the project name associated with this instance or null.
    *
    * @return String project name or null
    */
@@ -65,7 +65,7 @@ public interface Event<T> {
   }
 
   /**
-   * Returns the object that holds specific details of the event
+   * Returns the object that holds specific details of the event.
    *
    * @return event details
    */
