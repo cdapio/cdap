@@ -16,9 +16,12 @@
 
 package io.cdap.cdap.spi.events;
 
-import javax.annotation.Nullable;
 import java.util.Map;
+import javax.annotation.Nullable;
 
+/**
+ * Details necessary for starting program.
+ */
 public class StartProgramEventDetails {
 
   private final String appId;
@@ -28,7 +31,16 @@ public class StartProgramEventDetails {
   @Nullable
   private final Map<String, String> args;
 
-  private StartProgramEventDetails(String appId, String namespaceId, String programId,
+  /**
+   * Construct StartProgramEventDetails.
+   *
+   * @param appId AppId of program
+   * @param namespaceId NamespaceId
+   * @param programId ProgramId
+   * @param programType ProgramType
+   * @param args Map of args
+   */
+  public StartProgramEventDetails(String appId, String namespaceId, String programId,
                                    String programType,
                                    @Nullable Map<String, String> args) {
     this.appId = appId;
@@ -38,11 +50,20 @@ public class StartProgramEventDetails {
     this.programType = programType;
   }
 
-
+  /**
+   * Get App Id of program.
+   *
+   * @return appId;
+   */
   public String getAppId() {
     return appId;
   }
 
+  /**
+   * Get args of program.
+   *
+   * @return args;
+   */
   @Nullable
   public Map<String, String> getArgs() {
     return args;
@@ -60,14 +81,29 @@ public class StartProgramEventDetails {
         + '}';
   }
 
+  /**
+   * Get Program Id of program.
+   *
+   * @return programId
+   */
   public String getProgramId() {
     return programId;
   }
 
+  /**
+   * Get namespace Id of program.
+   *
+   * @return namespaceId
+   */
   public String getNamespaceId() {
     return namespaceId;
   }
 
+  /**
+   * Get program type of program.
+   *
+   * @return programType
+   */
   public String getProgramType() {
     return programType;
   }

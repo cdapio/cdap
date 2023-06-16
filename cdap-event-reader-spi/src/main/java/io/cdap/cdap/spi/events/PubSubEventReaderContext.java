@@ -24,9 +24,9 @@ import java.util.Map;
 public interface PubSubEventReaderContext {
 
   /**
-   * Returns a map of string key value properties
+   * Returns a map of string key value properties.
    *
-   * @return {@link Map<String, String>}
+   * @return {@link Map}
    */
   Map<String, String> getProperties();
 

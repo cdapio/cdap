@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * {@link PubSubEventReader} Interface for listening for events from Pub/Sub.
  */
-public interface PubSubEventReader {
+public interface PubSubEventReader<T extends Event> extends AutoCloseable {
   /**
    * Method to initialize PubSubEventReader.
    *
@@ -30,36 +30,36 @@ public interface PubSubEventReader {
   void initialize(PubSubEventReaderContext context);
 
   /**
-   * Pull exactly messages from PubSub if available.
+   * Pull messages from PubSub if available.
    *
-   * @param maxMessages: maximum messages to pull
+   * @param maxMessages maximum messages to pull
    * @return List of Messages
    */
-  List<ReceivedEvent> pull(int maxMessages);
+  List<T> pull(int maxMessages);
 
   /**
-   * Sends an acknowledgement response to PubSub.
+   * Action to perform on successful processing of event.
    *
    * @param ackId Ack Id of Message to acknowledge
    * @throws Exception Invalid ACK ID / Expired ACK ID
    */
-  void ack(String ackId) throws Exception;
+  void success(String ackId) throws Exception;
 
   /**
-   * Sends an non-acknowledgement response to PubSub
-   * causing the message to be redelivered.
+   * Action to perform on failure of processing event.
    *
    * @param ackId Ack Id of Message
+   * @param retry whether to retry event
    * @throws Exception Invalid ACK ID / Expired ACK ID
    */
-  void nack(String ackId) throws Exception;
+  void failure(String ackId, boolean retry) throws Exception;
 
   /**
    * Returns the identifier for this reader.
    *
    * @return String id for the reader
    */
-  String getID();
+  String getId();
 
   /**
    * Close connection to PubSub.

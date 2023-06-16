@@ -17,11 +17,11 @@
 package io.cdap.cdap.spi.events;
 
 /**
- * Enum representing a CDAP {@link Event} type
+ * Enum representing a CDAP {@link Event} type.
  */
 public enum EventType {
   /**
-   * Event for program status
+   * Event for program status.
    */
   PROGRAM_STATUS,
   PROGRAM_START,
