@@ -16,22 +16,24 @@
 
 package io.cdap.cdap.proto.sourcecontrol;
 
-public class PushNamespaceConfigRequest {
-  private final String commitMessage;
-  private final NamespaceConnectionConfig[] connections;
+public class NamespaceConnectionArtifact {
+  private final String name;
+  private final String scope;
+  private final String version;
 
-  public PushNamespaceConfigRequest(
-      String commitMessage,
-      NamespaceConnectionConfig[] connections
+  public NamespaceConnectionArtifact(
+      String name,
+      String scope,
+      String version
   ) {
-    this.commitMessage = commitMessage;
-    this.connections = connections;
+    this.name = name;
+    this.scope = scope;
+    this.version = version;
   }
 
-  public String getCommitMessage() {
-    return commitMessage;
-  }
+  public String getName() { return name; }
 
-  public NamespaceConnectionConfig[] getConnections() { return connections; }
+  public String getScope() { return scope; }
 
+  public String getVersion() { return version; }
 }

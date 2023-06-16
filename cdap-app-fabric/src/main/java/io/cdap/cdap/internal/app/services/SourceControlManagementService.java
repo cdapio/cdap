@@ -54,6 +54,7 @@ import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.NamespaceConfigData;
+import io.cdap.cdap.proto.sourcecontrol.NamespaceConnectionConfig;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
@@ -239,7 +240,7 @@ public class SourceControlManagementService {
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    * @throws NoChangesToPushException if there's no change of the application between namespace and linked repository
    */
-  public PushNamespaceConfigResponse pushNamespaceConfig(NamespaceId namespace, String commitMessage)
+  public PushNamespaceConfigResponse pushNamespaceConfig(NamespaceId namespace, String commitMessage, NamespaceConnectionConfig[] connections)
       throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
 
     // TODO Add the accessEnforcement with correct permissions and uncomment the following line
@@ -252,7 +253,6 @@ public class SourceControlManagementService {
     List<Profile> profiles = profileService.getProfiles(namespace, true);
     PreferencesDetail preferences = preferencesService.getPreferences(namespace);
     // TODO Figure out how to get the list of connections in a namespace.
-    List<String> connections = new ArrayList<String>();
     NamespaceConfigData nsConfig = new NamespaceConfigData(
         namespace.getEntityName(), profiles, preferences, connections);
 
