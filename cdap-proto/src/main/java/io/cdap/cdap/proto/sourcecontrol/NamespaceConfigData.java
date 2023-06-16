@@ -25,13 +25,13 @@ public class NamespaceConfigData {
   private String name;
   private final List<Profile> profiles;
   private final PreferencesDetail preferences;
-  private List<String> connections;
+  private final NamespaceConnectionConfig[] connections;
 
   public NamespaceConfigData(
       String name,
       List<Profile> profiles,
       PreferencesDetail preferences,
-      List<String> connections) {
+      NamespaceConnectionConfig[] connections) {
     this.name = name;
     this.profiles = profiles;
     this.preferences = preferences;
@@ -48,7 +48,7 @@ public class NamespaceConfigData {
     return preferences;
   }
 
-  public List<String> getConnections() {
+  public NamespaceConnectionConfig[] getConnections() {
     return connections;
   }
 

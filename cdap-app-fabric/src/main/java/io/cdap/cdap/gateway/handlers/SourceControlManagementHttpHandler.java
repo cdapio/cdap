@@ -179,7 +179,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
 
     try {
       PushNamespaceConfigResponse pushResponse = sourceControlService.pushNamespaceConfig(namespace,
-          nsConfigRequest.getCommitMessage());
+          nsConfigRequest.getCommitMessage(), nsConfigRequest.getConnections());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pushResponse));
     } catch (NoChangesToPushException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());
