@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.proto.id;
 
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -25,7 +26,6 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -69,11 +69,19 @@ public abstract class EntityId {
   private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow '.' for versionId
   private static final Pattern versionIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
+  // Allow only hyphens for credential profile and identity ids.
+  private static final Pattern credentialIdPattern = Pattern.compile("[a-z][a-z0-9-]*");
   /**
-   * Estimate of maximum height of entity tree (max length of {@link #getHierarchy()}
+   * Estimate of maximum height of entity tree (max length of {@link #getHierarchy()}.
    */
   public static final int ENTITY_TREE_MAX_HEIGHTS = 5;
 
+  /**
+   * Checks if an entity ID property is valid, otherwise throws an exception.
+   *
+   * @param propertyName The property name.
+   * @param name The value.
+   */
   public static void ensureValidId(String propertyName, String name) {
     if (!isValidId(name)) {
       throw new IllegalArgumentException(
@@ -82,6 +90,12 @@ public abstract class EntityId {
     }
   }
 
+  /**
+   * Checks if an artifact ID property is valid, otherwise throws an exception.
+   *
+   * @param propertyName The property name.
+   * @param name The value.
+   */
   public static void ensureValidArtifactId(String propertyName, String name) {
     if (!isValidArtifactId(name)) {
       throw new IllegalArgumentException(
@@ -90,15 +104,32 @@ public abstract class EntityId {
     }
   }
 
+  /**
+   * Returns true if the name is a valid ID.
+   *
+   * @param name The name.
+   * @return Whether the name is valid.
+   */
   public static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
   }
 
+  /**
+   * Returns true if the artifact name is a valid artifact ID.
+   *
+   * @param name The artifact name.
+   * @return Whether the name is valid.
+   */
   public static boolean isValidArtifactId(String name) {
     return artifactIdPattern.matcher(name).matches();
   }
 
-
+  /**
+   * Checks if a dataset ID is valid, otherwise throws an exception.
+   *
+   * @param propertyName The property name.
+   * @param datasetId The name.
+   */
   public static void ensureValidDatasetId(String propertyName, String datasetId) {
     if (!isValidDatasetId(datasetId)) {
       throw new IllegalArgumentException(
@@ -107,10 +138,21 @@ public abstract class EntityId {
     }
   }
 
+  /**
+   * Returns true if the dataset name is a valid dataset ID.
+   *
+   * @param datasetId The dataset ID.
+   * @return Whether the name is valid.
+   */
   public static boolean isValidDatasetId(String datasetId) {
     return datasetIdPattern.matcher(datasetId).matches();
   }
 
+  /**
+   * Checks if a namespace is valid, otherwise throws an exception.
+   *
+   * @param namespace The namespace.
+   */
   public static void ensureValidNamespace(String namespace) {
     if (!isValidNamespace(namespace)) {
       throw new IllegalArgumentException(
@@ -119,12 +161,47 @@ public abstract class EntityId {
     }
   }
 
+  /**
+   * Returns true if the namespace name is valid.
+   *
+   * @param namespace The namespace.
+   * @return Whether the namespace is valid.
+   */
   public static boolean isValidNamespace(String namespace) {
     return namespacePattern.matcher(namespace).matches();
   }
 
-  public static boolean isValidVersionId(String datasetId) {
-    return versionIdPattern.matcher(datasetId).matches();
+  /**
+   * Returns true if the version ID is a valid version.
+   *
+   * @param versionId The version ID.
+   * @return Whether the version ID is valid.
+   */
+  public static boolean isValidVersionId(String versionId) {
+    return versionIdPattern.matcher(versionId).matches();
+  }
+
+  /**
+   * Returns true if the credential ID is valid.
+   *
+   * @param credentialId The credential ID.
+   * @return Whether the credential ID is valid.
+   */
+  public static boolean isValidCredentialId(String credentialId) {
+    return credentialIdPattern.matcher(credentialId).matches();
+  }
+
+  /**
+   * Checks if a credential ID is valid, otherwise throws an exception.
+   *
+   * @param name The name of the credential identity or profile..
+   */
+  public static void ensureValidCredentialId(String name) {
+    if (!isValidCredentialId(name)) {
+      throw new IllegalArgumentException(
+          String.format("Invalid credential ID: %s. Should only contain alphanumeric "
+              + "characters and _ or -.", name));
+    }
   }
 
   private final EntityType entity;
@@ -143,6 +220,8 @@ public abstract class EntityId {
   public abstract String getEntityName();
 
   /**
+   * Returns a metadata entity which represents this entity ID.
+   *
    * @return The {@link MetadataEntity} which represents this {@link EntityId}. If an Entity
    *     supports metadata the Entityid of the entity must override this method and provide the
    *     correct implementation to convert the EntityId to {@link MetadataEntity}
@@ -187,7 +266,6 @@ public abstract class EntityId {
       throw new IllegalArgumentException(
           String.format("No known type found in the hierarchy of %s", metadataEntity));
     }
-    List<String> values = new LinkedList<>();
     // get the key-value pair till the known entity-type. Note: for application the version comes after application
     // key-value pair and needs to be included too
     List<MetadataEntity.KeyValue> extractedParts = metadataEntity.head(entityType.toString());
@@ -215,13 +293,14 @@ public abstract class EntityId {
     if (entityType == EntityType.PLUGIN) {
       extractedParts = metadataEntity.head(MetadataEntity.PLUGIN);
     }
+    List<String> values = new LinkedList<>();
     extractedParts.iterator().forEachRemaining(keyValue -> values.add(keyValue.getValue()));
     return entityType.fromIdParts(values);
   }
 
   /**
    * Finds a valid known CDAP entity which can be considered as the parent for the MetadataEntity by
-   * walking up the key-value hierarchy of the MetadataEntity
+   * walking up the key-value hierarchy of the MetadataEntity.
    *
    * @param metadataEntity whose EntityType needs to be determined
    * @return {@link EntityType} of the given metadataEntity
@@ -360,10 +439,21 @@ public abstract class EntityId {
     return remaining(iterator, null);
   }
 
+  /**
+   * Gets the hierarchy of the entity ID.
+   *
+   * @return The hierarchy of the entity ID.
+   */
   public Iterable<EntityId> getHierarchy() {
     return getHierarchy(false);
   }
 
+  /**
+   * Gets the hierarchy of the entity ID.
+   *
+   * @param reverse Whether to return the hierarchy in reverse order.
+   * @return The hierarchy of the entity ID.
+   */
   public Iterable<EntityId> getHierarchy(boolean reverse) {
     if (hierarchy == null) {
       Deque<EntityId> hierarchy = new ArrayDeque<>(ENTITY_TREE_MAX_HEIGHTS);
