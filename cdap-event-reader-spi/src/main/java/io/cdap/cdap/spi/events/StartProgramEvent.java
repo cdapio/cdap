@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
  */
 public class StartProgramEvent implements Event<StartProgramEventDetails> {
 
-    private final String ackId;
     private final long publishTime;
     private final String version;
     private final StartProgramEventDetails startProgramEventDetails;
@@ -35,23 +34,17 @@ public class StartProgramEvent implements Event<StartProgramEventDetails> {
      * @param version version of event
      * @param startProgramEventDetails Details needed to start program
      */
-    public StartProgramEvent(String ackId, long publishTime, String version,
+    public StartProgramEvent(long publishTime, String version,
                              StartProgramEventDetails startProgramEventDetails) {
-        this.ackId = ackId;
         this.publishTime = publishTime;
         this.version = version;
         this.startProgramEventDetails = startProgramEventDetails;
-    }
-
-    public String getAckId() {
-        return ackId;
     }
 
     @Override
     public EventType getType() {
         return EventType.PROGRAM_START;
     }
-
 
     @Override
     public long getPublishTime() {

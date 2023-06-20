@@ -19,12 +19,13 @@ package io.cdap.cdap.spi.events;
 import java.util.Map;
 
 /**
- * Interface for an {@link PubSubEventReaderContext} context.
+ * Interface for an {@link EventReaderContext} context.
  */
-public interface PubSubEventReaderContext {
+public interface EventReaderContext {
 
   /**
-   * Returns a map of string key value properties.
+   * Returns a map of string key value properties, likely coming from config.
+   * Ex: subscription name, topic id, acknowledgement deadline, etc...
    *
    * @return {@link Map}
    */

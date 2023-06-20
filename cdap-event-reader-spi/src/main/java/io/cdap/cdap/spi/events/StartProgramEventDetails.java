@@ -69,7 +69,6 @@ public class StartProgramEventDetails {
     return args;
   }
 
-
   @Override
   public String toString() {
     return "ProgramStatusEventDetails{"
@@ -107,5 +106,4 @@ public class StartProgramEventDetails {
   public String getProgramType() {
     return programType;
   }
-
 }
