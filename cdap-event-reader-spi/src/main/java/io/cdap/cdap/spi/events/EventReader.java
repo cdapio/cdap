@@ -19,40 +19,23 @@ package io.cdap.cdap.spi.events;
 import java.util.List;
 
 /**
- * {@link PubSubEventReader} Interface for listening for events from Pub/Sub.
+ * {@link EventReader} Interface for listening for events
  */
-public interface PubSubEventReader<T extends Event> extends AutoCloseable {
+public interface EventReader<T extends Event> extends AutoCloseable {
   /**
-   * Method to initialize PubSubEventReader.
+   * Method to initialize EventReader.
    *
    * @param context Configuration properties of reader
    */
-  void initialize(PubSubEventReaderContext context);
+  void initialize(EventReaderContext context);
 
   /**
-   * Pull messages from PubSub if available.
+   * Pull messages if available.
    *
    * @param maxMessages maximum messages to pull
-   * @return List of Messages
+   * @return Result containing events
    */
-  List<T> pull(int maxMessages);
-
-  /**
-   * Action to perform on successful processing of event.
-   *
-   * @param ackId Ack Id of Message to acknowledge
-   * @throws Exception Invalid ACK ID / Expired ACK ID
-   */
-  void success(String ackId) throws Exception;
-
-  /**
-   * Action to perform on failure of processing event.
-   *
-   * @param ackId Ack Id of Message
-   * @param retry whether to retry event
-   * @throws Exception Invalid ACK ID / Expired ACK ID
-   */
-  void failure(String ackId, boolean retry) throws Exception;
+  EventResult<T> pull(int maxMessages);
 
   /**
    * Returns the identifier for this reader.
@@ -62,7 +45,7 @@ public interface PubSubEventReader<T extends Event> extends AutoCloseable {
   String getId();
 
   /**
-   * Close connection to PubSub.
+   * Close connection.
    */
   void close();
 }

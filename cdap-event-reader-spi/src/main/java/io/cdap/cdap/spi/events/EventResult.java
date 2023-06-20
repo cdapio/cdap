@@ -16,16 +16,19 @@
 
 package io.cdap.cdap.spi.events;
 
+import java.util.function.Consumer;
+
 /**
- * Enum representing a CDAP {@link Event} type.
+ * Result of reading event.
+ *
+ * @param <T> Event received
  */
-public enum EventType {
-  /**
-   * Event for program status.
-   */
-  PROGRAM_STATUS,
-  /**
-   * Event to start program
-   */
-  PROGRAM_START,
+public interface EventResult<T extends Event> extends AutoCloseable {
+
+    /**
+     * Process messages
+     *
+     * @param consumer
+     */
+    void consumeMessages(Consumer<T> consumer);
 }
