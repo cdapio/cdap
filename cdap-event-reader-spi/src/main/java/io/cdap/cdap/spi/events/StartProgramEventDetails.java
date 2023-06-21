@@ -48,7 +48,7 @@ public class StartProgramEventDetails {
     this.namespaceId = namespaceId;
     this.programId = programId;
     this.programType = programType;
-    this.args = Collections.unmodifiableMap(args);
+    this.args = args != null ? Collections.unmodifiableMap(args) : Collections.emptyMap();
   }
 
   /**
@@ -65,7 +65,6 @@ public class StartProgramEventDetails {
    *
    * @return user args
    */
-  @Nullable
   public Map<String, String> getArgs() {
     return args;
   }
