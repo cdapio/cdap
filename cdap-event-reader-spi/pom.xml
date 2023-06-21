@@ -36,7 +36,6 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-event-common-spi</artifactId>
       <version>${project.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
