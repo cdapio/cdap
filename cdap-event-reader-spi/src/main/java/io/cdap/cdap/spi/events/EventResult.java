@@ -19,16 +19,16 @@ package io.cdap.cdap.spi.events;
 import java.util.function.Consumer;
 
 /**
- * Result of reading event.
+ * Result of incoming event.
  *
  * @param <T> Event received
  */
 public interface EventResult<T extends Event> extends AutoCloseable {
 
     /**
-     * Process messages
+     * Provide events to consumer.
      *
-     * @param consumer
+     * @param consumer Consumer that accepts events
      */
     void consumeMessages(Consumer<T> consumer);
 }

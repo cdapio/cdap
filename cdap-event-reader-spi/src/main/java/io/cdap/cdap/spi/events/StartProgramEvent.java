@@ -19,7 +19,7 @@ package io.cdap.cdap.spi.events;
 import javax.annotation.Nullable;
 
 /**
- * Event from PubSub that signals to start a program.
+ * Event that signals to start a program.
  */
 public class StartProgramEvent implements Event<StartProgramEventDetails> {
 

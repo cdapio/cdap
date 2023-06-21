@@ -16,10 +16,9 @@
 
 package io.cdap.cdap.spi.events;
 
-import java.util.List;
 
 /**
- * {@link EventReader} Interface for listening for events
+ * {@link EventReader} Interface for listening for events.
  */
 public interface EventReader<T extends Event> extends AutoCloseable {
   /**
