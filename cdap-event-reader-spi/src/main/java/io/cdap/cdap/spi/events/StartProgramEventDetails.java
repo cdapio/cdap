@@ -17,6 +17,7 @@
 package io.cdap.cdap.spi.events;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -47,7 +48,8 @@ public class StartProgramEventDetails {
     this.namespaceId = namespaceId;
     this.programId = programId;
     this.programType = programType;
-    this.args = args != null ? Collections.unmodifiableMap(args) : Collections.emptyMap();
+    this.args = args != null ? Collections.unmodifiableMap(new HashMap<>(args))
+            : Collections.emptyMap();
   }
 
   /**

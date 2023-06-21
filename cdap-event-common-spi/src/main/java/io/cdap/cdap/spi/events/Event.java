@@ -52,7 +52,9 @@ public interface Event<T> {
    * @return String instance name or null
    */
   @Nullable
-  String getInstanceName();
+  default String getInstanceName() {
+    return null;
+  }
 
   /**
    * Returns the project name associated with this instance or null.

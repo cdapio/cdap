@@ -29,18 +29,12 @@ public interface EventReader<T extends Event> extends AutoCloseable {
   void initialize(EventReaderContext context);
 
   /**
-   * Pull messages if available.
+   * Pull messages if available. If no messages are available,
+   * the consumer of the returned (empty) {@link EventResult} will not consume any messages.
    *
    * @param maxMessages maximum messages to pull
    * @return Result containing events
    */
   EventResult<T> pull(int maxMessages);
-
-  /**
-   * Returns the identifier for this reader.
-   *
-   * @return String id for the reader
-   */
-  String getId();
 }
 

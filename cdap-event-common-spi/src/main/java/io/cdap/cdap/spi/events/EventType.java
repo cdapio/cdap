@@ -25,7 +25,7 @@ public enum EventType {
    */
   PROGRAM_STATUS,
   /**
-   * Event to start program
+   * Event to start program.
    */
   PROGRAM_START,
 }

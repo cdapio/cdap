@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.spi.events;
 
-import javax.annotation.Nullable;
-
 /**
  * Event that signals to start a program.
  */
@@ -54,17 +52,6 @@ public class StartProgramEvent implements Event<StartProgramEventDetails> {
     @Override
     public String getVersion() {
         return version;
-    }
-
-    /**
-     * Get instance name is N/A for incoming events.
-     *
-     * @return null
-     */
-    @Nullable
-    @Override
-    public String getInstanceName() {
-        return null;
     }
 
     /**

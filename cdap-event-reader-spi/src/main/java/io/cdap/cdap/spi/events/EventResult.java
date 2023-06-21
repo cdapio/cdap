@@ -25,9 +25,9 @@ import java.util.function.Consumer;
  */
 public interface EventResult<T extends Event> extends AutoCloseable {
   /**
-   * Provide events to consumer.
+   * Consume events through consumer.
    *
    * @param consumer Consumer that accepts events
    */
-  void consumeMessages(Consumer<T> consumer);
+  void consumeEvents(Consumer<T> consumer);
 }

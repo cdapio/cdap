@@ -19,7 +19,7 @@ package io.cdap.cdap.spi.events;
 import java.util.Map;
 
 /**
- * Interface for an {@link EventReaderContext} context.
+ * Interface for an {@link EventReader} context.
  */
 public interface EventReaderContext {
 
