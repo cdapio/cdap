@@ -42,10 +42,5 @@ public interface EventReader<T extends Event> extends AutoCloseable {
    * @return String id for the reader
    */
   String getId();
-
-  /**
-   * Close connection.
-   */
-  void close();
 }
 
