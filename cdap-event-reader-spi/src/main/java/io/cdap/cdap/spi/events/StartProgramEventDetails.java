@@ -29,7 +29,6 @@ public class StartProgramEventDetails {
   private final String namespaceId;
   private final String programType;
   private final String programId;
-  @Nullable
   private final Map<String, String> args;
 
   /**
