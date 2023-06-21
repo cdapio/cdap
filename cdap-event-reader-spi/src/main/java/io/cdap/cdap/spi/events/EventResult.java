@@ -24,11 +24,10 @@ import java.util.function.Consumer;
  * @param <T> Event received
  */
 public interface EventResult<T extends Event> extends AutoCloseable {
-
-    /**
-     * Provide events to consumer.
-     *
-     * @param consumer Consumer that accepts events
-     */
-    void consumeMessages(Consumer<T> consumer);
+  /**
+   * Provide events to consumer.
+   *
+   * @param consumer Consumer that accepts events
+   */
+  void consumeMessages(Consumer<T> consumer);
 }

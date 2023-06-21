@@ -67,6 +67,11 @@ public class StartProgramEvent implements Event<StartProgramEventDetails> {
         return null;
     }
 
+    /**
+     * Information needed to start program.
+     *
+     * @return event details
+     */
     @Override
     public StartProgramEventDetails getEventDetails() {
         return startProgramEventDetails;

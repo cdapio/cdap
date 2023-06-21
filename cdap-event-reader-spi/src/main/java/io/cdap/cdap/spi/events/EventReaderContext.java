@@ -30,5 +30,4 @@ public interface EventReaderContext {
    * @return {@link Map}
    */
   Map<String, String> getProperties();
-
 }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.events;
 
+import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -46,8 +47,8 @@ public class StartProgramEventDetails {
     this.appId = appId;
     this.namespaceId = namespaceId;
     this.programId = programId;
-    this.args = args;
     this.programType = programType;
+    this.args = Collections.unmodifiableMap(args);
   }
 
   /**
@@ -62,7 +63,7 @@ public class StartProgramEventDetails {
   /**
    * Get args of program.
    *
-   * @return args;
+   * @return user args
    */
   @Nullable
   public Map<String, String> getArgs() {
