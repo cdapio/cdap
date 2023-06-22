@@ -27,32 +27,21 @@
     <version>6.10.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-event-writer-spi</artifactId>
-  <name>CDAP Event Writer API</name>
+  <artifactId>cdap-event-reader-spi</artifactId>
+  <name>CDAP Event Reader API</name>
   <packaging>jar</packaging>
 
   <dependencies>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-api</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.gson</groupId>
-          <artifactId>gson</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-event-common-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
+
   </dependencies>
 
 </project>

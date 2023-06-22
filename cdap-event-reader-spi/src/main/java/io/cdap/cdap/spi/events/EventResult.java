@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,18 @@
 
 package io.cdap.cdap.spi.events;
 
+import java.util.function.Consumer;
+
 /**
- * Enum representing a CDAP {@link Event} type
+ * Result of incoming event.
+ *
+ * @param <T> Event received
  */
-public enum EventType {
+public interface EventResult<T extends Event> extends AutoCloseable {
   /**
-   * Event for program status
+   * Consume events through consumer.
+   *
+   * @param consumer Consumer that accepts events
    */
-  PROGRAM_STATUS
+  void consumeEvents(Consumer<T> consumer);
 }
