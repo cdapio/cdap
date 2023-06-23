@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
@@ -31,9 +30,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link io.cdap.cdap.internal.credential.DefaultCredentialIdentityManager}.
+ * Tests for {@link CredentialIdentityManager}.
  */
-public class DefaultCredentialIdentityManagerTest extends CredentialManagerTestBase {
+public class CredentialIdentityManagerTest extends CredentialManagerTestBase {
 
   private void assertCredentialIdentitiesEqual(CredentialIdentity expected,
       CredentialIdentity actual) {
@@ -67,16 +66,6 @@ public class DefaultCredentialIdentityManagerTest extends CredentialManagerTestB
     Collection<CredentialIdentityId> returnedIdentities = credentialIdentityManager
         .list(namespace);
     Assert.assertEquals(Arrays.asList(id1, id2), returnedIdentities);
-  }
-
-  @Test(expected = BadRequestException.class)
-  public void testCreateInvalidName() throws Exception {
-    String namespace = "testCreateInvalidName";
-    CredentialProfileId profileId = createDummyProfile(namespace, "test-profile");
-    CredentialIdentityId id = new CredentialIdentityId(namespace, "_invalid");
-    CredentialIdentity identity = new CredentialIdentity(profileId, "some-identity",
-        "some-secure-value");
-    credentialIdentityManager.create(id, identity);
   }
 
   @Test
@@ -121,7 +110,7 @@ public class DefaultCredentialIdentityManagerTest extends CredentialManagerTestB
     credentialIdentityManager.create(id, identity2);
   }
 
-  @Test(expected = BadRequestException.class)
+  @Test(expected = NotFoundException.class)
   public void testCreateThrowsExceptionWhenProfileDoesNotExist() throws Exception {
     String namespace = "testCreateThrowsExceptionWhenProfileDoesNotExist";
     CredentialProfileId nonexistentProfile = new CredentialProfileId(namespace,

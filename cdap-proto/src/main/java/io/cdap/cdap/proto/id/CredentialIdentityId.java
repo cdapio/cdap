@@ -35,7 +35,7 @@ public class CredentialIdentityId extends NamespacedEntityId implements Parented
     if (name == null) {
       throw new NullPointerException("Credential identity name cannot be null.");
     }
-    ensureValidId("credentialidentity", name);
+    ensureValidCredentialId(name);
     this.name = name;
   }
 

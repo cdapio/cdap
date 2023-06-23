@@ -25,7 +25,6 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -69,6 +68,8 @@ public abstract class EntityId {
   private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow '.' for versionId
   private static final Pattern versionIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
+  // Allow only hyphens for credential profile and identity ids.
+  private static final Pattern credentialIdPattern = Pattern.compile("[a-z][a-z0-9-]*");
   /**
    * Estimate of maximum height of entity tree (max length of {@link #getHierarchy()}
    */
@@ -125,6 +126,18 @@ public abstract class EntityId {
 
   public static boolean isValidVersionId(String datasetId) {
     return versionIdPattern.matcher(datasetId).matches();
+  }
+
+  public static boolean isValidCredentialId(String credentialId) {
+    return credentialIdPattern.matcher(credentialId).matches();
+  }
+
+  public static void ensureValidCredentialId(String name) {
+    if (!isValidCredentialId(name)) {
+      throw new IllegalArgumentException(
+          String.format("Invalid credential ID: %s. Should only contain alphanumeric "
+              + "characters and _ or -.", name));
+    }
   }
 
   private final EntityType entity;

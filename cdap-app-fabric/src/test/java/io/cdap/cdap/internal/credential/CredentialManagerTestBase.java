@@ -64,9 +64,9 @@ public class CredentialManagerTestBase {
         .getInstance(StructuredTableAdmin.class));
     CredentialProfileStore profileStore = new CredentialProfileStore();
     CredentialIdentityStore identityStore = new CredentialIdentityStore();
-    credentialProfileManager = new DefaultCredentialProfileManager(identityStore, profileStore,
+    credentialProfileManager = new CredentialProfileManager(identityStore, profileStore,
         runner);
-    credentialIdentityManager = new DefaultCredentialIdentityManager(identityStore, profileStore,
+    credentialIdentityManager = new CredentialIdentityManager(identityStore, profileStore,
         runner);
   }
 

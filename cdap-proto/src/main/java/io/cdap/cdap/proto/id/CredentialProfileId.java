@@ -36,7 +36,7 @@ public class CredentialProfileId extends NamespacedEntityId
     if (name == null) {
       throw new NullPointerException("Credential provisioner profile name cannot be null.");
     }
-    ensureValidId("credentialprovisionerprofile", name);
+    ensureValidCredentialId(name);
     this.name = name;
   }
 

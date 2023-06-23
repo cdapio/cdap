@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
@@ -35,7 +34,7 @@ import org.junit.Test;
 /**
  * Tests for {@link CredentialProfileStore}.
  */
-public class DefaultCredentialProfileManagerTest extends CredentialManagerTestBase {
+public class CredentialProfileManagerTest extends CredentialManagerTestBase {
 
   private void assertCredentialProfilesEqual(CredentialProfile expected, CredentialProfile actual) {
     Assert.assertEquals(expected.getCredentialProviderType(), actual.getCredentialProviderType());
@@ -87,15 +86,6 @@ public class DefaultCredentialProfileManagerTest extends CredentialManagerTestBa
     credentialProfileManager.delete(id);
     Optional<CredentialProfile> emptyProfile = credentialProfileManager.get(id);
     Assert.assertFalse(emptyProfile.isPresent());
-  }
-
-  @Test(expected = BadRequestException.class)
-  public void testCreateInvalidName() throws Exception {
-    String namespace = "testCreateInvalidName";
-    CredentialProfileId id = new CredentialProfileId(namespace, "_invalid");
-    CredentialProfile profile = new CredentialProfile("test", "some description",
-        Collections.singletonMap("some-key", "some-value"));
-    credentialProfileManager.create(id, profile);
   }
 
   @Test(expected = AlreadyExistsException.class)

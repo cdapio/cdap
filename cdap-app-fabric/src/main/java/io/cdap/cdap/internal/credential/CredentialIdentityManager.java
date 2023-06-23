@@ -19,68 +19,89 @@ package io.cdap.cdap.internal.credential;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
+import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
+import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /**
- * Manager for {@link io.cdap.cdap.proto.credential.CredentialIdentity} resources.
+ * Manages {@link CredentialIdentity} resources.
  */
-public interface CredentialIdentityManager {
+public class CredentialIdentityManager {
 
-  /**
-   * Lists credential identities in the given namespace.
-   * @param namespace The namespace to list from.
-   * @return A collection of identity references.
-   * @throws IOException If experiencing failure fetching from the underlying storage.
-   */
-  Collection<CredentialIdentityId> list(String namespace) throws IOException;
+  private final CredentialIdentityStore identityStore;
+  private final CredentialProfileStore profileStore;
+  private final TransactionRunner transactionRunner;
 
-  /**
-   * Fetches a credential identity.
-   *
-   * @param id The credential identity to fetch.
-   * @return An optional encapsulating the credential identity.
-   * @throws BadRequestException If the reference is in an invalid format.
-   * @throws IOException If experiencing failure fetching from the underlying storage.
-   */
-  Optional<CredentialIdentity> get(CredentialIdentityId id) throws BadRequestException, IOException;
+  @Inject
+  CredentialIdentityManager(CredentialIdentityStore identityStore,
+      CredentialProfileStore profileStore, TransactionRunner transactionRunner) {
+    this.identityStore = identityStore;
+    this.profileStore = profileStore;
+    this.transactionRunner = transactionRunner;
+  }
 
-  /**
-   * Creates a credential identity.
-   *
-   * @param id The reference to the identity.
-   * @param identity The identity to create.
-   * @throws AlreadyExistsException If the identity already exists.
-   * @throws BadRequestException If the reference is in an invalid format or the profile referenced
-   *                             in the identity does not exist.
-   * @throws IOException If experiencing failure writing to the underlying storage.
-   */
-  void create(CredentialIdentityId id, CredentialIdentity identity)
-      throws AlreadyExistsException, BadRequestException, IOException;
+  public Collection<CredentialIdentityId> list(String namespace) throws IOException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return identityStore.list(context, namespace);
+    }, IOException.class);
+  }
 
-  /**
-   * Updates an existing credential identity.
-   *
-   * @param id The reference to the identity.
-   * @param identity The updated identity.
-   * @throws BadRequestException If the reference is in an invalid format or the profile referenced
-   *    *                        in the identity does not exist.
-   * @throws IOException If experiencing failure writing to the underlying storage.
-   * @throws NotFoundException If the identity does not exist.
-   */
-  void update(CredentialIdentityId id, CredentialIdentity identity)
-      throws BadRequestException, IOException, NotFoundException;
+  public Optional<CredentialIdentity> get(CredentialIdentityId id)
+      throws BadRequestException, IOException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return identityStore.get(context, id);
+    }, IOException.class);
+  }
 
-  /**
-   * Deletes a credential identity.
-   *
-   * @param id The reference to the identity.
-   * @throws BadRequestException If the reference is in an invalid format.
-   * @throws IOException If experiencing failure writing to the underlying storage.
-   * @throws NotFoundException If the identity does not exist.
-   */
-  void delete(CredentialIdentityId id) throws BadRequestException, IOException, NotFoundException;
+  public void create(CredentialIdentityId id, CredentialIdentity identity)
+      throws AlreadyExistsException, IOException, NotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      if (identityStore.get(context, id).isPresent()) {
+        throw new AlreadyExistsException(String.format("Credential identity '%s:%s' already exists",
+            id.getNamespace(), id.getName()));
+      }
+      validateAndWriteIdentity(context, id, identity);
+    }, AlreadyExistsException.class, IOException.class, NotFoundException.class);
+  }
+
+  public void update(CredentialIdentityId id, CredentialIdentity identity)
+      throws BadRequestException, IOException, NotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      if (!identityStore.get(context, id).isPresent()) {
+        throw new NotFoundException(String.format("Credential identity '%s:%s' not found",
+            id.getNamespace(), id.getName()));
+      }
+      validateAndWriteIdentity(context, id, identity);
+    }, BadRequestException.class, IOException.class, NotFoundException.class);
+  }
+
+  public void delete(CredentialIdentityId id) throws IOException, NotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      if (!identityStore.get(context, id).isPresent()) {
+        throw new NotFoundException(String.format("Credential identity '%s:%s' not found",
+            id.getNamespace(), id.getName()));
+      }
+      identityStore.delete(context, id);
+    }, IOException.class, NotFoundException.class);
+  }
+
+  private void validateAndWriteIdentity(StructuredTableContext context, CredentialIdentityId id,
+      CredentialIdentity identity) throws IOException, NotFoundException {
+    // Validate the referenced profile exists.
+    CredentialProfileId profileId = identity.getCredentialProfile();
+    if (!profileStore.get(context, profileId).isPresent()) {
+      throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
+          profileId.getNamespace(), profileId.getName()));
+    }
+    identityStore.write(context, id, identity);
+  }
 }

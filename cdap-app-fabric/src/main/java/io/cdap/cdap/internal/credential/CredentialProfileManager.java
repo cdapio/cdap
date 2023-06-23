@@ -16,72 +16,90 @@
 
 package io.cdap.cdap.internal.credential;
 
+import com.google.gson.Gson;
 import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
+import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /**
- * Manager for {@link CredentialProfile} resources.
+ * Manages {@link CredentialProfile} resources.
  */
-public interface CredentialProfileManager {
+public class CredentialProfileManager {
 
-  /**
-   * Lists credential profiles in the given namespace.
-   * @param namespace The namespace to list from.
-   * @return A collection of profile references.
-   * @throws IOException If experiencing failure fetching from the underlying storage.
-   */
-  Collection<CredentialProfileId> list(String namespace) throws IOException;
+  private static final Gson GSON = new Gson();
 
-  /**
-   * Fetches a credential profile.
-   *
-   * @param id The credential profile to fetch.
-   * @return An optional encapsulating the credential profile.
-   * @throws BadRequestException If the reference is in an invalid format.
-   * @throws IOException If experiencing failure fetching from the underlying storage.
-   */
-  Optional<CredentialProfile> get(CredentialProfileId id) throws BadRequestException, IOException;
+  private final CredentialIdentityStore identityStore;
+  private final CredentialProfileStore profileStore;
+  private final TransactionRunner transactionRunner;
 
-  /**
-   * Creates a credential profile.
-   *
-   * @param id The reference to the profile.
-   * @param profile The profile to create.
-   * @throws AlreadyExistsException If the profile already exists.
-   * @throws BadRequestException If the reference is in an invalid format.
-   * @throws IOException If experiencing failure writing to the underlying storage.
-   */
-  void create(CredentialProfileId id, CredentialProfile profile)
-      throws AlreadyExistsException, BadRequestException, IOException;
+  @Inject
+  CredentialProfileManager(CredentialIdentityStore identityStore,
+      CredentialProfileStore profileStore, TransactionRunner transactionRunner) {
+    this.identityStore = identityStore;
+    this.profileStore = profileStore;
+    this.transactionRunner = transactionRunner;
+  }
 
-  /**
-   * Updates an existing credential profile.
-   *
-   * @param id The reference to the profile.
-   * @param profile The updated profile.
-   * @throws BadRequestException If the reference is in an invalid format.
-   * @throws IOException If experiencing failure writing to the underlying storage.
-   * @throws NotFoundException If the profile does not exist.
-   */
-  void update(CredentialProfileId id, CredentialProfile profile)
-      throws BadRequestException, IOException, NotFoundException;
+  public Collection<CredentialProfileId> list(String namespace) throws IOException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return profileStore.list(context, namespace);
+    }, IOException.class);
+  }
 
-  /**
-   * Deletes a credential profile.
-   *
-   * @param id The reference to the profile.
-   * @throws BadRequestException If the reference is in an invalid format.
-   * @throws ConflictException If the profile still has associated identities.
-   * @throws IOException If experiencing failure writing to the underlying storage.
-   * @throws NotFoundException If the profile does not exist.
-   */
-  void delete(CredentialProfileId id)
-      throws BadRequestException, ConflictException, IOException, NotFoundException;
+  public Optional<CredentialProfile> get(CredentialProfileId id) throws IOException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return profileStore.get(context, id);
+    }, IOException.class);
+  }
+
+  public void create(CredentialProfileId id, CredentialProfile profile)
+      throws AlreadyExistsException, IOException {
+    TransactionRunners.run(transactionRunner, context -> {
+      if (profileStore.get(context, id).isPresent()) {
+        throw new AlreadyExistsException(String.format("Credential profile '%s:%s' already exists",
+            id.getNamespace(), id.getName()));
+      }
+      profileStore.write(context, id, profile);
+    }, AlreadyExistsException.class, IOException.class);
+  }
+
+  public void update(CredentialProfileId id, CredentialProfile profile)
+      throws IOException, NotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      if (!profileStore.get(context, id).isPresent()) {
+        throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
+            id.getNamespace(), id.getName()));
+      }
+      profileStore.write(context, id, profile);
+    }, IOException.class, NotFoundException.class);
+  }
+
+  public void delete(CredentialProfileId id)
+      throws ConflictException, IOException, NotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      if (!profileStore.get(context, id).isPresent()) {
+        throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
+            id.getNamespace(), id.getName()));
+      }
+      // Check if any existing identities are using this profile.
+      Collection<CredentialIdentityId> profileIdentities = identityStore
+          .listForProfile(context, id);
+      if (!profileIdentities.isEmpty()) {
+        throw new ConflictException(String.format("Failed to delete profile; profile still "
+            + "has the following attached identities: %s", GSON.toJson(profileIdentities)));
+      }
+      profileStore.delete(context, id);
+    }, ConflictException.class, IOException.class, NotFoundException.class);
+  }
 }
