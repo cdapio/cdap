@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
@@ -49,19 +48,41 @@ public class CredentialIdentityManager {
     this.transactionRunner = transactionRunner;
   }
 
+  /**
+   * Lists credential identities in a namespace.
+   *
+   * @param namespace The namespace to list identities from.
+   * @return A collection of identities in the namespace.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public Collection<CredentialIdentityId> list(String namespace) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       return identityStore.list(context, namespace);
     }, IOException.class);
   }
 
-  public Optional<CredentialIdentity> get(CredentialIdentityId id)
-      throws BadRequestException, IOException {
+  /**
+   * Fetch a credential identity.
+   *
+   * @param id The identity reference to fetch.
+   * @return The fetched credential identity.
+   * @throws IOException If any failure reading from storage occurs.
+   */
+  public Optional<CredentialIdentity> get(CredentialIdentityId id) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       return identityStore.get(context, id);
     }, IOException.class);
   }
 
+  /**
+   * Creates a credential identity.
+   *
+   * @param id The identity reference to create.
+   * @param identity The identity to create.
+   * @throws AlreadyExistsException If the identity already exists.
+   * @throws IOException If any failure writing to storage occurs.
+   * @throws NotFoundException If the profile the identity is attached to does not exist.
+   */
   public void create(CredentialIdentityId id, CredentialIdentity identity)
       throws AlreadyExistsException, IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
@@ -73,17 +94,33 @@ public class CredentialIdentityManager {
     }, AlreadyExistsException.class, IOException.class, NotFoundException.class);
   }
 
+  /**
+   * Updates a credential identity.
+   *
+   * @param id The identity reference to update.
+   * @param identity The identity to update.
+   * @throws IOException If any failure writing to storage occurs.
+   * @throws NotFoundException If the identity does not exist or if the profile the identity is
+   *                           attached to does not exist.
+   */
   public void update(CredentialIdentityId id, CredentialIdentity identity)
-      throws BadRequestException, IOException, NotFoundException {
+      throws IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       if (!identityStore.get(context, id).isPresent()) {
         throw new NotFoundException(String.format("Credential identity '%s:%s' not found",
             id.getNamespace(), id.getName()));
       }
       validateAndWriteIdentity(context, id, identity);
-    }, BadRequestException.class, IOException.class, NotFoundException.class);
+    }, IOException.class, NotFoundException.class);
   }
 
+  /**
+   * Deletes a credential identity.
+   *
+   * @param id The identity reference to update.
+   * @throws IOException If any failure writing to storage occurs.
+   * @throws NotFoundException If the identity does not exist.
+   */
   public void delete(CredentialIdentityId id) throws IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       if (!identityStore.get(context, id).isPresent()) {

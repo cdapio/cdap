@@ -51,18 +51,40 @@ public class CredentialProfileManager {
     this.transactionRunner = transactionRunner;
   }
 
+  /**
+   * Lists credential profiles in a namespace.
+   *
+   * @param namespace The namespace to list profiles from.
+   * @return A collection of profiles in the namespace.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public Collection<CredentialProfileId> list(String namespace) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       return profileStore.list(context, namespace);
     }, IOException.class);
   }
 
+  /**
+   * Fetch a credential profile.
+   *
+   * @param id The profile reference to fetch.
+   * @return The fetched credential profile.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public Optional<CredentialProfile> get(CredentialProfileId id) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       return profileStore.get(context, id);
     }, IOException.class);
   }
 
+  /**
+   * Creates a credential profile.
+   *
+   * @param id The profile reference to create.
+   * @param profile The profile to create.
+   * @throws AlreadyExistsException If the profile already exists.
+   * @throws IOException If any failure writing to storage occurs.
+   */
   public void create(CredentialProfileId id, CredentialProfile profile)
       throws AlreadyExistsException, IOException {
     TransactionRunners.run(transactionRunner, context -> {
@@ -74,6 +96,14 @@ public class CredentialProfileManager {
     }, AlreadyExistsException.class, IOException.class);
   }
 
+  /**
+   * Updates a credential profile.
+   *
+   * @param id The profile reference to update.
+   * @param profile The updated profile.
+   * @throws IOException If any failure writing to storage occurs.
+   * @throws NotFoundException If the profile does not exist.
+   */
   public void update(CredentialProfileId id, CredentialProfile profile)
       throws IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
@@ -85,6 +115,14 @@ public class CredentialProfileManager {
     }, IOException.class, NotFoundException.class);
   }
 
+  /**
+   * Deletes a credential profile.
+   *
+   * @param id The profile reference to delete.
+   * @throws ConflictException If the profile still has attached identities.
+   * @throws IOException If any failure writing to storage occurs.
+   * @throws NotFoundException If the profile does not exist.
+   */
   public void delete(CredentialProfileId id)
       throws ConflictException, IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {

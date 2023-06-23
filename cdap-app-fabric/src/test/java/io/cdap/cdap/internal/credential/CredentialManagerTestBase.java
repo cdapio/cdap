@@ -30,7 +30,7 @@ import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.store.StoreDefinition.CredentialProviderStore;
 import java.io.IOException;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
@@ -60,7 +60,7 @@ public class CredentialManagerTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     TransactionRunner runner = injector.getInstance(TransactionRunner.class);
-    StoreDefinition.CredentialProvisionerStore.create(injector
+    CredentialProviderStore.create(injector
         .getInstance(StructuredTableAdmin.class));
     CredentialProfileStore profileStore = new CredentialProfileStore();
     CredentialIdentityStore identityStore = new CredentialIdentityStore();

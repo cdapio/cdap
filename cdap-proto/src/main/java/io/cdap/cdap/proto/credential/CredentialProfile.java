@@ -27,6 +27,13 @@ public class CredentialProfile {
   private final String description;
   private final Map<String, String> properties;
 
+  /**
+   * Constructs a profile.
+   *
+   * @param credentialProviderType The credential provider type to use for provisioning.
+   * @param description A description for the profile.
+   * @param properties Properties for the profile.
+   */
   public CredentialProfile(String credentialProviderType, String description,
       Map<String, String> properties) {
     this.credentialProviderType = credentialProviderType;

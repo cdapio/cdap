@@ -31,10 +31,16 @@ public class CredentialProfileId extends NamespacedEntityId
   private final String name;
   private transient Integer hashCode;
 
+  /**
+   * Constructs a credential profile ID.
+   *
+   * @param namespace The namespace of the profile.
+   * @param name The name of the profile.
+   */
   public CredentialProfileId(String namespace, String name) {
     super(namespace, EntityType.CREDENTIAL_PROVISIONER_PROFILE);
     if (name == null) {
-      throw new NullPointerException("Credential provisioner profile name cannot be null.");
+      throw new NullPointerException("Credential profile name cannot be null.");
     }
     ensureValidCredentialId(name);
     this.name = name;
@@ -59,11 +65,17 @@ public class CredentialProfileId extends NamespacedEntityId
     return Collections.unmodifiableList(Arrays.asList(namespace, name));
   }
 
+  /**
+   * Constructs a credential profile from ID parts.
+   *
+   * @param idString Iterable ID parts.
+   * @return A credential profile ID.
+   */
   @SuppressWarnings("unused")
   public static CredentialProfileId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new CredentialProfileId(next(iterator, "namespace"),
-        nextAndEnd(iterator, "credentialprovisionerprofile"));
+        nextAndEnd(iterator, "name"));
   }
 
   @Override

@@ -27,6 +27,13 @@ public class CredentialIdentity {
   private final String identity;
   private final String secureValue;
 
+  /**
+   * Constructs an identity.
+   *
+   * @param credentialProfile The associated profile.
+   * @param identity The identity.
+   * @param secureValue The secure value to store for the identity.
+   */
   public CredentialIdentity(CredentialProfileId credentialProfile, String identity,
       String secureValue) {
     this.credentialProfile = credentialProfile;

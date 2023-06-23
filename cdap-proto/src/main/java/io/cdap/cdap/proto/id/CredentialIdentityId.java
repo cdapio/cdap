@@ -30,6 +30,12 @@ public class CredentialIdentityId extends NamespacedEntityId implements Parented
   private final String name;
   private transient Integer hashCode;
 
+  /**
+   * Constructs a credential identity ID.
+   *
+   * @param namespace The namespace of the identity.
+   * @param name The name of the identity.
+   */
   public CredentialIdentityId(String namespace, String name) {
     super(namespace, EntityType.CREDENTIAL_IDENTITY);
     if (name == null) {
@@ -58,11 +64,17 @@ public class CredentialIdentityId extends NamespacedEntityId implements Parented
     return Collections.unmodifiableList(Arrays.asList(namespace, name));
   }
 
+  /**
+   * Constructs a credential identity ID from ID parts.
+   *
+   * @param idString Iterable ID parts.
+   * @return The credential identity ID.
+   */
   @SuppressWarnings("unused")
   public static CredentialIdentityId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new CredentialIdentityId(next(iterator, "namespace"),
-        nextAndEnd(iterator, "credentialidentity"));
+        nextAndEnd(iterator, "name"));
   }
 
   @Override

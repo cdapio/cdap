@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.proto.element;
 
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -97,6 +98,13 @@ public enum EntityType {
     return idClass;
   }
 
+  /**
+   * Constructs the entity ID from an ID parts iterable.
+   *
+   * @param idParts The components of the ID.
+   * @param <T> The entity type.
+   * @return An instance of the entity ID.
+   */
   public <T extends EntityId> T fromIdParts(Iterable<String> idParts) {
     try {
       return (T) fromIdParts.invoke(idParts);

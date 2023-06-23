@@ -27,7 +27,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
-import io.cdap.cdap.store.StoreDefinition.CredentialProvisionerStore;
+import io.cdap.cdap.store.StoreDefinition.CredentialProviderStore;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,10 +46,18 @@ public class CredentialProfileStore {
 
   private static final Gson GSON = new Gson();
 
+  /**
+   * Lists entries in the credential profile table for a given namespace.
+   *
+   * @param context The transaction context to use.
+   * @param namespace The namespace to list profiles from.
+   * @return A collection of profiles in the namespace.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public Collection<CredentialProfileId> list(StructuredTableContext context, String namespace)
       throws IOException {
-    StructuredTable table = context.getTable(CredentialProvisionerStore.CREDENTIAL_PROFILES);
-    Field<?> namespaceIndex = Fields.stringField(CredentialProvisionerStore.NAMESPACE_FIELD,
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_PROFILES);
+    Field<?> namespaceIndex = Fields.stringField(CredentialProviderStore.NAMESPACE_FIELD,
         namespace);
     try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(
         Collections.singleton(namespaceIndex)), Integer.MAX_VALUE)) {
@@ -57,48 +65,71 @@ public class CredentialProfileStore {
     }
   }
 
+  /**
+   * Fetch an entry from the profile table.
+   *
+   * @param context The transaction context to use.
+   * @param id The profile reference to fetch.
+   * @return The fetched credential profile.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public Optional<CredentialProfile> get(StructuredTableContext context, CredentialProfileId id)
       throws IOException {
-    StructuredTable table = context.getTable(CredentialProvisionerStore.CREDENTIAL_PROFILES);
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_PROFILES);
     Collection<Field<?>> key = Arrays.asList(
-        Fields.stringField(CredentialProvisionerStore.NAMESPACE_FIELD,
+        Fields.stringField(CredentialProviderStore.NAMESPACE_FIELD,
             id.getNamespace()),
-        Fields.stringField(CredentialProvisionerStore.PROFILE_NAME_FIELD,
+        Fields.stringField(CredentialProviderStore.PROFILE_NAME_FIELD,
             id.getName()));
     return table.read(key).map(row -> GSON.fromJson(row
-        .getString(CredentialProvisionerStore.PROFILE_DATA_FIELD), CredentialProfile.class));
+        .getString(CredentialProviderStore.PROFILE_DATA_FIELD), CredentialProfile.class));
   }
 
+  /**
+   * Write an entry to the credential profile table.
+   *
+   * @param context The transaction context to use.
+   * @param id The profile reference to write to.
+   * @param profile The profile to write.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public void write(StructuredTableContext context, CredentialProfileId id,
       CredentialProfile profile) throws IOException {
-    StructuredTable table = context.getTable(CredentialProvisionerStore.CREDENTIAL_PROFILES);
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_PROFILES);
     Collection<Field<?>> row = Arrays.asList(
-        Fields.stringField(CredentialProvisionerStore.NAMESPACE_FIELD,
+        Fields.stringField(CredentialProviderStore.NAMESPACE_FIELD,
             id.getNamespace()),
-        Fields.stringField(CredentialProvisionerStore.PROFILE_NAME_FIELD,
+        Fields.stringField(CredentialProviderStore.PROFILE_NAME_FIELD,
             id.getName()),
-        Fields.stringField(CredentialProvisionerStore.PROFILE_DATA_FIELD,
+        Fields.stringField(CredentialProviderStore.PROFILE_DATA_FIELD,
             GSON.toJson(profile)));
     table.upsert(row);
   }
 
+  /**
+   * Deletes an entry from the credential profile table.
+   *
+   * @param context The transaction context to use.
+   * @param id The profile reference to delete.
+   * @throws IOException If any failure reading from storage occurs.
+   */
   public void delete(StructuredTableContext context, CredentialProfileId id)
       throws IOException, NotFoundException {
-    StructuredTable table = context.getTable(CredentialProvisionerStore.CREDENTIAL_PROFILES);
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_PROFILES);
     Collection<Field<?>> key = Arrays.asList(
-        Fields.stringField(CredentialProvisionerStore.NAMESPACE_FIELD,
+        Fields.stringField(CredentialProviderStore.NAMESPACE_FIELD,
             id.getNamespace()),
-        Fields.stringField(CredentialProvisionerStore.PROFILE_NAME_FIELD,
+        Fields.stringField(CredentialProviderStore.PROFILE_NAME_FIELD,
             id.getName()));
     table.delete(key);
   }
 
-  static Collection<CredentialProfileId> profilesFromRowIterator(Iterator<StructuredRow> iterator) {
+  private static Collection<CredentialProfileId> profilesFromRowIterator(Iterator<StructuredRow> iterator) {
     return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator,
-        Spliterator.ORDERED),false)
+        Spliterator.ORDERED), false)
         .map(row -> new CredentialProfileId(
-            row.getString(CredentialProvisionerStore.NAMESPACE_FIELD),
-            row.getString(CredentialProvisionerStore.PROFILE_NAME_FIELD)))
+            row.getString(CredentialProviderStore.NAMESPACE_FIELD),
+            row.getString(CredentialProviderStore.PROFILE_NAME_FIELD)))
         .collect(Collectors.toList());
   }
 }
