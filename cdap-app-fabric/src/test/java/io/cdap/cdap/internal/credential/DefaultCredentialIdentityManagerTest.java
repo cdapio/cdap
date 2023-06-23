@@ -14,9 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.credential.store;
+package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
@@ -30,9 +31,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link CredentialIdentityStore}.
+ * Tests for {@link io.cdap.cdap.internal.credential.DefaultCredentialIdentityManager}.
  */
-public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
+public class DefaultCredentialIdentityManagerTest extends CredentialManagerTestBase {
 
   private void assertCredentialIdentitiesEqual(CredentialIdentity expected,
       CredentialIdentity actual) {
@@ -45,7 +46,7 @@ public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
     CredentialProfile profile = new CredentialProfile("test", "some description",
         Collections.singletonMap("some-key", "some-value"));
     CredentialProfileId profileId = new CredentialProfileId(namespace, name);
-    credentialProfileStore.create(profileId, profile);
+    credentialProfileManager.create(profileId, profile);
     return profileId;
   }
 
@@ -61,21 +62,21 @@ public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
     CredentialIdentityId id2 = new CredentialIdentityId(namespace, "list2");
     CredentialIdentity identity2 = new CredentialIdentity(profileId, "some-other-identity",
         "some-other-secure-value");
-    credentialIdentityStore.create(id1, identity1);
-    credentialIdentityStore.create(id2, identity2);
-    Collection<CredentialIdentityId> returnedIdentities = credentialIdentityStore
+    credentialIdentityManager.create(id1, identity1);
+    credentialIdentityManager.create(id2, identity2);
+    Collection<CredentialIdentityId> returnedIdentities = credentialIdentityManager
         .list(namespace);
     Assert.assertEquals(Arrays.asList(id1, id2), returnedIdentities);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = BadRequestException.class)
   public void testCreateInvalidName() throws Exception {
     String namespace = "testCreateInvalidName";
     CredentialProfileId profileId = createDummyProfile(namespace, "test-profile");
     CredentialIdentityId id = new CredentialIdentityId(namespace, "_invalid");
     CredentialIdentity identity = new CredentialIdentity(profileId, "some-identity",
         "some-secure-value");
-    credentialIdentityStore.create(id, identity);
+    credentialIdentityManager.create(id, identity);
   }
 
   @Test
@@ -88,22 +89,22 @@ public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
     CredentialIdentityId id = new CredentialIdentityId(namespace, "test");
     CredentialIdentity identity = new CredentialIdentity(profileId, "some-identity",
         "some-secure-value");
-    credentialIdentityStore.create(id, identity);
-    Optional<CredentialIdentity> returnedIdentity = credentialIdentityStore.get(id);
+    credentialIdentityManager.create(id, identity);
+    Optional<CredentialIdentity> returnedIdentity = credentialIdentityManager.get(id);
     Assert.assertTrue(returnedIdentity.isPresent());
     assertCredentialIdentitiesEqual(identity, returnedIdentity.get());
 
     // Update the identity.
     CredentialIdentity identity2 = new CredentialIdentity(profileId, "some-other-identity",
         "some-other-secure-value");
-    credentialIdentityStore.update(id, identity2);
-    returnedIdentity = credentialIdentityStore.get(id);
+    credentialIdentityManager.update(id, identity2);
+    returnedIdentity = credentialIdentityManager.get(id);
     Assert.assertTrue(returnedIdentity.isPresent());
     assertCredentialIdentitiesEqual(identity2, returnedIdentity.get());
 
     // Delete the identity.
-    credentialIdentityStore.delete(id);
-    Optional<CredentialIdentity> emptyIdentity = credentialIdentityStore.get(id);
+    credentialIdentityManager.delete(id);
+    Optional<CredentialIdentity> emptyIdentity = credentialIdentityManager.get(id);
     Assert.assertFalse(emptyIdentity.isPresent());
   }
 
@@ -116,11 +117,11 @@ public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
         "some-secure-value");
     CredentialIdentity identity2 = new CredentialIdentity(profileId, "some-other-identity",
         "some-other-secure-value");
-    credentialIdentityStore.create(id, identity1);
-    credentialIdentityStore.create(id, identity2);
+    credentialIdentityManager.create(id, identity1);
+    credentialIdentityManager.create(id, identity2);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = BadRequestException.class)
   public void testCreateThrowsExceptionWhenProfileDoesNotExist() throws Exception {
     String namespace = "testCreateThrowsExceptionWhenProfileDoesNotExist";
     CredentialProfileId nonexistentProfile = new CredentialProfileId(namespace,
@@ -128,7 +129,7 @@ public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
     CredentialIdentityId id = new CredentialIdentityId(namespace, "test");
     CredentialIdentity identity = new CredentialIdentity(nonexistentProfile, "some-identity",
         "some-secure-value");
-    credentialIdentityStore.create(id, identity);
+    credentialIdentityManager.create(id, identity);
   }
 
   @Test(expected = NotFoundException.class)
@@ -139,13 +140,13 @@ public class CredentialIdentityStoreTest extends CredentialStoreTestBase {
     CredentialIdentityId id = new CredentialIdentityId(namespace, "does-not-exist");
     CredentialIdentity identity = new CredentialIdentity(profileId, "some-identity",
         "some-secure-value");
-    credentialIdentityStore.update(id, identity);
+    credentialIdentityManager.update(id, identity);
   }
 
   @Test(expected = NotFoundException.class)
   public void testDeleteThrowsExceptionWhenNotFound() throws Exception {
     String namespace = "testDeleteThrowsExceptionWhenNotFound";
     CredentialIdentityId id = new CredentialIdentityId(namespace, "does-not-exist");
-    credentialIdentityStore.delete(id);
+    credentialIdentityManager.delete(id);
   }
 }

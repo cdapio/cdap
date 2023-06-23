@@ -14,29 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.credential.store;
+package io.cdap.cdap.internal.credential;
 
-import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.common.BadRequestException;
 import java.util.regex.Pattern;
 
 /**
- * Utility methods for credential provisioning stores.
+ * Utility methods for credential managers.
  */
-public class Utils {
+public class CredentialManagerUtils {
 
-  private static final Pattern RESOURCE_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]*");
+  private static final Pattern RESOURCE_NAME_REGEX = Pattern.compile("[a-z][a-z0-9-]*");
 
-  /**
-   * @return A credential profile ID in its indexed string form for table indexing.
-   */
-  static String toProfileIndex(CredentialProfileId credentialProfileId) {
-    return String.format("%s:%s", credentialProfileId.getNamespace(),
-        credentialProfileId.getName());
-  }
-
-  static void validateResourceName(String name) {
+  static void validateResourceName(String name) throws BadRequestException {
     if (!RESOURCE_NAME_REGEX.matcher(name).matches()) {
-      throw new IllegalArgumentException(String.format("Invalid resource name. Resource must match "
+      throw new BadRequestException(String.format("Invalid resource name. Resource name must match "
           + "the regex '%s'", RESOURCE_NAME_REGEX.pattern()));
     }
   }

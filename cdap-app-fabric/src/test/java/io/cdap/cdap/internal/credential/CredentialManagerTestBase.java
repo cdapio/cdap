@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.credential.store;
+package io.cdap.cdap.internal.credential;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -26,6 +26,8 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
+import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
@@ -35,11 +37,11 @@ import org.apache.tephra.runtime.TransactionModules;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-public class CredentialStoreTestBase {
+public class CredentialManagerTestBase {
 
   private static TransactionManager txManager;
-  static CredentialProfileStore credentialProfileStore;
-  static CredentialIdentityStore credentialIdentityStore;
+  static CredentialProfileManager credentialProfileManager;
+  static CredentialIdentityManager credentialIdentityManager;
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -60,8 +62,12 @@ public class CredentialStoreTestBase {
     TransactionRunner runner = injector.getInstance(TransactionRunner.class);
     StoreDefinition.CredentialProvisionerStore.create(injector
         .getInstance(StructuredTableAdmin.class));
-    credentialProfileStore = new CredentialProfileStore(runner);
-    credentialIdentityStore = new CredentialIdentityStore(runner);
+    CredentialProfileStore profileStore = new CredentialProfileStore();
+    CredentialIdentityStore identityStore = new CredentialIdentityStore();
+    credentialProfileManager = new DefaultCredentialProfileManager(identityStore, profileStore,
+        runner);
+    credentialIdentityManager = new DefaultCredentialIdentityManager(identityStore, profileStore,
+        runner);
   }
 
   @AfterClass

@@ -23,19 +23,19 @@ import java.util.Map;
  */
 public class CredentialProfile {
 
-  private final String provisionerType;
+  private final String credentialProviderType;
   private final String description;
   private final Map<String, String> properties;
 
-  public CredentialProfile(String provisionerType, String description,
+  public CredentialProfile(String credentialProviderType, String description,
       Map<String, String> properties) {
-    this.provisionerType = provisionerType;
+    this.credentialProviderType = credentialProviderType;
     this.description = description;
     this.properties = properties;
   }
 
-  public String getProvisionerType() {
-    return provisionerType;
+  public String getCredentialProviderType() {
+    return credentialProviderType;
   }
 
   public String getDescription() {
