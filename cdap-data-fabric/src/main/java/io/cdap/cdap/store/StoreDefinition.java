@@ -88,7 +88,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Namespace store schema
+   * Namespace store schema.
    */
   public static final class NamespaceStore {
 
@@ -124,7 +124,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Schema for ConfigStore
+   * Schema for ConfigStore.
    */
   public static final class ConfigStore {
 
@@ -150,7 +150,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Schema for ConfigStore
+   * Schema for PreferencesStore.
    */
   public static final class PreferencesStore {
 
@@ -178,7 +178,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Schema for workflow table
+   * Schema for workflow table.
    */
   public static final class WorkflowStore {
 
@@ -214,7 +214,7 @@ public final class StoreDefinition {
   }
 
   /**
-   *
+   * Schema for ArtifactStore.
    */
   public static final class ArtifactStore {
 
@@ -295,6 +295,12 @@ public final class StoreDefinition {
                 ARTIFACT_NAMESPACE_FIELD, ARTIFACT_NAME_FIELD, ARTIFACT_VER_FIELD)
             .build();
 
+    /**
+     * Creates artifact store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, ARTIFACT_DATA_SPEC);
       createIfNotExists(tableAdmin, APP_DATA_SPEC);
@@ -319,6 +325,12 @@ public final class StoreDefinition {
                 Fields.bytesType(KEYTAB_FIELD))
             .withPrimaryKeys(PRINCIPAL_FIELD).build();
 
+    /**
+     * Creates owner store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, OWNER_TABLE_SPEC);
     }
@@ -343,6 +355,12 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD, SECRET_NAME_FIELD)
         .build();
 
+    /**
+     * Creates secret store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, SECRET_STORE_SPEC);
     }
@@ -378,13 +396,19 @@ public final class StoreDefinition {
             PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD, KEY_TYPE)
         .build();
 
+    /**
+     * Creates provisioner store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PROVISIONER_STORE_SPEC);
     }
   }
 
   /**
-   * Defines schema for AppMetadata tables
+   * Defines schema for AppMetadata tables.
    */
   public static final class AppMetadataStore {
 
@@ -527,6 +551,12 @@ public final class StoreDefinition {
             .withPrimaryKeys(SUBSCRIBER_TOPIC, SUBSCRIBER)
             .build();
 
+    /**
+     * Creates app metadata store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, APPLICATION_SPECIFICATIONS_TABLE_SPEC);
       createIfNotExists(tableAdmin, APPLICATION_EDIT_TABLE_SPEC);
@@ -539,7 +569,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Dataset instance store schema
+   * Dataset instance store schema.
    */
   public static final class DatasetInstanceStore {
 
@@ -559,6 +589,12 @@ public final class StoreDefinition {
             .withPrimaryKeys(NAMESPACE_FIELD, DATASET_FIELD)
             .build();
 
+    /**
+     * Creates dataset instance store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, DATASET_INSTANCES_SPEC);
     }
@@ -599,6 +635,12 @@ public final class StoreDefinition {
             .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_ID_FIELD, ENTITY_ID_FIELD)
             .build();
 
+    /**
+     * Creates profile store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PROFILE_STORE_SPEC);
       createIfNotExists(tableAdmin, PROFILE_ENTITY_STORE_SPEC);
@@ -660,7 +702,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Dataset type store schema
+   * Dataset type store schema.
    */
   public static final class DatasetTypeStore {
 
@@ -689,6 +731,12 @@ public final class StoreDefinition {
             .withPrimaryKeys(NAMESPACE_FIELD, MODULE_NAME_FIELD)
             .build();
 
+    /**
+     * Creates dataset type store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, DATASET_TYPES_SPEC);
       createIfNotExists(tableAdmin, MODULE_TYPES_SPEC);
@@ -749,6 +797,12 @@ public final class StoreDefinition {
             START_TIME_FIELD, NAMESPACE_FIELD, DATASET_FIELD, RUN_FIELD, ACCESS_TYPE_FIELD)
         .build();
 
+    /**
+     * Creates lineage tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, DATASET_LINEAGE_SPEC);
       createIfNotExists(tableAdmin, PROGRAM_LINEAGE_SPEC);
@@ -793,6 +847,12 @@ public final class StoreDefinition {
             .withPrimaryKeys(PARTITION_ID, SCHEDULE_ID, GENERATION_ID, ROW_TYPE)
             .build();
 
+    /**
+     * Creates job queue store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, JOB_QUEUE_STORE_SPEC);
     }
@@ -818,13 +878,19 @@ public final class StoreDefinition {
             .withPrimaryKeys(TYPE_FIELD, NAME_FIELD)
             .build();
 
+    /**
+     * Creates time schedule store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, SCHEDULES_SPEC);
     }
   }
 
   /**
-   * Schema for remote runtime
+   * Schema for remote runtime.
    */
   public static final class RemoteRuntimeStore {
 
@@ -851,6 +917,12 @@ public final class StoreDefinition {
             PROGRAM_FIELD, RUN_FIELD)
         .build();
 
+    /**
+     * Creates remote runtime store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, RUNTIMES_SPEC);
     }
@@ -887,6 +959,12 @@ public final class StoreDefinition {
                 PROGRAM_FIELD, RUN_FIELD)
             .build();
 
+    /**
+     * Creates program heartbeat store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PROGRAM_HEARTBEATS_SPEC);
     }
@@ -912,13 +990,19 @@ public final class StoreDefinition {
             .withPrimaryKeys(ROW_PREFIX_FIELD, PARTITION_FIELD)
             .build();
 
+    /**
+     * Creates log checkpoint store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, LOG_CHECKPOINT_TABLE_SPEC);
     }
   }
 
   /**
-   * Schema for usage table
+   * Schema for usage table.
    */
   public static final class UsageStore {
 
@@ -944,6 +1028,12 @@ public final class StoreDefinition {
         .withIndexes(INDEX_FIELD)
         .build();
 
+    /**
+     * Creates usage store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, USAGES_SPEC);
     }
@@ -951,12 +1041,12 @@ public final class StoreDefinition {
 
   /**
    * Schema for field lineage.
-   * <p>
-   * Endpoint checksum table is used to store endpoints/properties of endpoints to a checksum.
+   *
+   * <p>Endpoint checksum table is used to store endpoints/properties of endpoints to a checksum.
    * Checksum can then be used the query the other tables. Also contains the program run info for
    * that checksum.
-   * <p>
-   * The remaining tables store various endpoint data keyed by checksum.
+   *
+   * <p>The remaining tables store various endpoint data keyed by checksum.
    */
   public static final class FieldLineageStore {
 
@@ -1023,6 +1113,12 @@ public final class StoreDefinition {
                 ENDPOINT_FIELD)
             .build();
 
+    /**
+     * Creates field lineage store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, ENDPOINT_CHECKSUM_SPEC);
       createIfNotExists(tableAdmin, OPERATIONS_SPEC);
@@ -1052,13 +1148,19 @@ public final class StoreDefinition {
                 Fields.stringType(FILE_FIELD))
             .withPrimaryKeys(LOGGING_CONTEXT_FIELD, EVENT_TIME_FIELD, CREATION_TIME_FIELD).build();
 
+    /**
+     * Creates logfile meta store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, LOG_FILE_META_SPEC);
     }
   }
 
   /**
-   * Schema for Capabilities
+   * Schema for Capabilities.
    */
   public static final class CapabilitiesStore {
 
@@ -1091,6 +1193,12 @@ public final class StoreDefinition {
             .withPrimaryKeys(NAME_FIELD)
             .build();
 
+    /**
+     * Creates capabilities store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, CAPABILITIES_TABLE_SPEC);
       createIfNotExists(tableAdmin, CAPABILITY_OPERATIONS_TABLE_SPEC);
@@ -1098,7 +1206,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Schema for tethering
+   * Schema for tethering.
    */
   public static final class TetheringStore {
 
@@ -1123,13 +1231,19 @@ public final class StoreDefinition {
             .withPrimaryKeys(PEER_NAME_FIELD)
             .build();
 
+    /**
+     * Creates tethering store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, TETHERING_TABLE_SPEC);
     }
   }
 
   /**
-   * Schema for app state
+   * Schema for app state.
    */
   public static final class AppStateStore {
 
@@ -1150,8 +1264,62 @@ public final class StoreDefinition {
             .withPrimaryKeys(NAMESPACE_FIELD, APP_NAME_FIELD, STATE_KEY_FIELD)
             .build();
 
+    /**
+     * Creates app state store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, STATE_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schemas for credential providers.
+   */
+  public static final class CredentialProviderStore {
+    public static final StructuredTableId CREDENTIAL_PROFILES =
+        new StructuredTableId("credential_profiles");
+    public static final StructuredTableId CREDENTIAL_IDENTITIES =
+        new StructuredTableId("credential_identities");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String PROFILE_NAME_FIELD = "profile_name";
+    public static final String PROFILE_DATA_FIELD = "profile_data";
+    public static final String IDENTITY_NAME_FIELD = "identity_name";
+    public static final String IDENTITY_PROFILE_INDEX_FIELD = "profile_index";
+    public static final String IDENTITY_DATA_FIELD = "identity_data";
+
+    public static final StructuredTableSpecification PROFILE_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(CREDENTIAL_PROFILES)
+            .withFields(Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(PROFILE_NAME_FIELD),
+                Fields.stringType(PROFILE_DATA_FIELD))
+            .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_NAME_FIELD)
+            .build();
+
+    public static final StructuredTableSpecification IDENTITY_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(CREDENTIAL_IDENTITIES)
+            .withFields(Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(IDENTITY_NAME_FIELD),
+                Fields.stringType(IDENTITY_PROFILE_INDEX_FIELD),
+                Fields.stringType(IDENTITY_DATA_FIELD))
+            .withPrimaryKeys(NAMESPACE_FIELD, IDENTITY_NAME_FIELD)
+            .withIndexes(IDENTITY_PROFILE_INDEX_FIELD)
+            .build();
+
+    /**
+     * Creates credential provider store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, PROFILE_TABLE_SPEC);
+      createIfNotExists(tableAdmin, IDENTITY_TABLE_SPEC);
     }
   }
 }
