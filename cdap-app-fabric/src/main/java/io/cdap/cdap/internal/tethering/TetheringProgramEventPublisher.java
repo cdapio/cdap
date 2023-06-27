@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -91,12 +92,22 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
   private String lastProgramUpdateMessageId;
 
   @Inject
-  TetheringProgramEventPublisher(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
+  TetheringProgramEventPublisher(CConfiguration cConf, TetheringStore store,
+      MessagingService messagingService,
+      ProgramRunRecordFetcher programRunRecordFetcher, TransactionRunner transactionRunner) {
+    this(cConf, store, messagingService, new MultiThreadMessagingContext(messagingService).getMessageFetcher(),
+         programRunRecordFetcher, transactionRunner);
+  }
+
+  @VisibleForTesting
+  TetheringProgramEventPublisher(CConfiguration cConf, TetheringStore store,
+                                 MessagingService messagingService,
+                                 MessageFetcher messageFetcher,
                                  ProgramRunRecordFetcher programRunRecordFetcher, TransactionRunner transactionRunner) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.store = store;
     this.messagingService = messagingService;
-    this.messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
+    this.messageFetcher = messageFetcher;
     this.messagePublisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
     this.runRecordFetcher = programRunRecordFetcher;
     this.transactionRunner = transactionRunner;
@@ -105,7 +116,8 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
     this.programStateTopicPrefix = cConf.get(Constants.Tethering.PROGRAM_STATE_TOPIC_PREFIX);
     // TetheringAgentService reads messages published by TetheringProgramEventPublisher, so use the same
     // poll interval here
-    this.pollInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
+    this.pollInterval = TimeUnit.SECONDS.toMillis(
+      cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
   }
 
   @Override
@@ -147,7 +159,8 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
   /**
    * Returns program status updates for tethered peers.
    */
-  private PeerProgramUpdates getPeerProgramUpdates() {
+  @VisibleForTesting
+  PeerProgramUpdates getPeerProgramUpdates() {
     Map<String, List<Notification>> peerToNotifications = new HashMap<>();
     String lastMessageId = lastProgramUpdateMessageId;
     try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
@@ -156,7 +169,9 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
                                                                     lastProgramUpdateMessageId)) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
-        Notification notification = message.decodePayload(r -> GSON.fromJson(r, Notification.class));
+        lastMessageId = message.getId();
+        Notification notification = message.decodePayload(
+            r -> GSON.fromJson(r, Notification.class));
         if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
           continue;
         }
@@ -174,8 +189,6 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
         } catch (NotFoundException | IOException e) {
           LOG.error("Unable to fetch runRecord for programRunId {}", programRunId, e);
         }
-
-        lastMessageId = message.getId();
       }
     } catch (Exception e) {
       LOG.error("Exception when fetching program updates. Will retry again during next poll", e);
@@ -221,11 +234,12 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
   /**
    * Program status notifications for tethered peers.
    */
-  private static class PeerProgramUpdates {
+  static class PeerProgramUpdates {
+
     // List of notifications for each tethered peer
-    private final Map<String, List<Notification>> peerToNotifications;
+    final Map<String, List<Notification>> peerToNotifications;
     // Last message id read from TMS
-    private final String lastMessageId;
+    final String lastMessageId;
 
     private PeerProgramUpdates(Map<String, List<Notification>> peerToNotifications, String lastMessageId) {
       this.peerToNotifications = peerToNotifications;
