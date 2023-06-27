@@ -31,7 +31,10 @@ import javax.annotation.Nullable;
 
 /**
  * An ordered, optionally explorable, named table.
+ *
+ * @deprecated table based datasets will be removed in a future version
  */
+@Deprecated
 public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>,
     Dataset, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 

@@ -26,8 +26,10 @@ import java.util.List;
  * Cube data set.
  * <p/>
  * Basic operations include adding {@link CubeFact}s and querying data.
+ *
+ * @deprecated table based datasets will be removed in a future version
  */
-@Beta
+@Deprecated
 public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
 
   /**

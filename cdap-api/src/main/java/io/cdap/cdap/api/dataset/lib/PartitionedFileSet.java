@@ -33,8 +33,10 @@ import javax.annotation.Nullable;
  * attached as meta data. Note that the partitioning of the dataset is fixed, that is, all
  * operations that accept a partition key as a parameter require that that key has exactly the same
  * schema as the partitioning.
+ *
+ * @deprecated table based datasets will be removed in a future version
  */
-@Beta
+@Deprecated
 public interface PartitionedFileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**
