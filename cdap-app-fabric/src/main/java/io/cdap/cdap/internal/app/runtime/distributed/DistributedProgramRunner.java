@@ -68,7 +68,6 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -92,7 +91,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipOutputStream;
@@ -221,10 +219,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
               ApplicationSpecification.class,
               File.createTempFile("appSpec", ".json", tempDir))));
 
-      URI logbackURI = getLogBackURI(program, oldOptions.getArguments(), tempDir);
-      if (logbackURI != null) {
+      URI logbackUri = getLogBackURI(program, oldOptions.getArguments(), tempDir);
+      if (logbackUri != null) {
         // Localize the logback xml
-        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackUri, false));
       }
 
       // For runs from a tethered instance, copy over peer runtime token if it exists.
@@ -232,40 +230,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         copyRuntimeToken(locationFactory, oldOptions.getArguments(), tempDir, localizeResources);
       }
 
-      Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
-
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
-      String programJarName = programJarLocation.getName();
-      if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
-        // if hash value for program.jar has been provided, we append it to filename.
-        String programJarHash = oldOptions.getArguments()
-            .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
-        programJarName = programJarName.replace(".jar",
-            String.format("_%s%s", programJarHash, ".jar"));
-
-        Set<String> cacheableFiles = new HashSet<>();
-        if (oldOptions.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
-          cacheableFiles =
-              new HashSet<>(GSON.fromJson(
-                  oldOptions.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES),
-                  new TypeToken<Set<String>>() {
-                  }.getType()));
-        }
-        cacheableFiles.add(programJarName);
-        extraSystemArgs.put(ProgramOptionConstants.CACHEABLE_FILES, GSON.toJson(cacheableFiles));
-      }
-
-      localizeResources.put(programJarName,
+      localizeResources.put(programJarLocation.getName(),
           new LocalizeResource(programJarLocation.toURI(), false));
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
       // and runs it in the remote container
-      extraSystemArgs.put(ProgramOptionConstants.PROGRAM_JAR, programJarName);
-      extraSystemArgs.put(ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME);
-      extraSystemArgs.put(ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME);
-      extraSystemArgs.put(ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME);
-
+      Map<String, String> extraSystemArgs = getExtraSystemArgs(launchConfig, program, oldOptions);
       ProgramOptions options = updateProgramOptions(oldOptions, localizeResources,
           DirUtils.createTempDir(tempDir), extraSystemArgs);
       ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
@@ -291,62 +263,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         twillPreparer.withResources(localizeResources.get(CDAP_CONF_FILE_NAME).getURI(),
             localizeResources.get(HADOOP_CONF_FILE_NAME).getURI(),
             localizeResources.get(PROGRAM_OPTIONS_FILE_NAME).getURI());
-        if (logbackURI != null) {
-          twillPreparer.withResources(logbackURI);
+        if (logbackUri != null) {
+          twillPreparer.withResources(logbackUri);
         }
 
-        Map<String, String> userArgs = options.getUserArguments().asMap();
 
         // Setup log level
+        Map<String, String> userArgs = options.getUserArguments().asMap();
         twillPreparer.setLogLevels(transformLogLevels(SystemArguments.getLogLevels(userArgs)));
 
         // Set the configuration for the twill application
-        Map<String, String> twillConfigs = new HashMap<>();
-        if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
-          twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
-              cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
-        } else {
-          // For non long running program type, set the max attempts to 1 to avoid YARN retry.
-          // If the AM container dies, the program execution will be marked as failure.
-          // Note that this setting is only applicable to the Twill YARN application
-          // (e.g. workflow, Spark client, MR client, etc), but not to the actual Spark / MR job.
-          twillConfigs.put(Configs.Keys.YARN_MAX_APP_ATTEMPTS, Integer.toString(1));
-        }
-
-        // Add twill configurations coming from the runtime arguments
-        twillConfigs.putAll(SystemArguments.getNamespaceConfigs(options.getArguments().asMap()));
-        twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(userArgs));
-        twillConfigs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, program.getNamespaceId());
-        twillPreparer.withConfiguration(twillConfigs);
-
-        // Setup per runnable configurations
-        Set<String> runnables = new HashSet<>();
-        for (Map.Entry<String, RunnableDefinition> entry : twillRunnables.entrySet()) {
-          String runnable = entry.getKey();
-          runnables.add(runnable);
-          RunnableDefinition runnableDefinition = entry.getValue();
-          if (runnableDefinition.getMaxRetries() != null) {
-            twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
-          }
-          twillPreparer.setLogLevels(runnable,
-              transformLogLevels(runnableDefinition.getLogLevels()));
-          twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
-
-          // Add cdap-security.xml if using secrets, and set the runnable identity.
-          if (twillPreparer instanceof SecureTwillPreparer) {
-            String twillSystemIdentity = cConf.get(Constants.Twill.Security.IDENTITY_SYSTEM);
-            if (twillSystemIdentity != null) {
-              SecurityContext securityContext = new SecurityContext.Builder()
-                  .withIdentity(twillSystemIdentity).build();
-              twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(runnable,
-                  securityContext);
-            }
-            String securityName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
-            String securityPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(runnable, new SecretDisk(securityName, securityPath));
-          }
-        }
+        setTwillConfigs(twillPreparer, program, options, twillRunnables);
 
         if (options.isDebug()) {
           twillPreparer.enableDebugging();
@@ -355,71 +282,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         logProgramStart(program, options);
 
         // Add scheduler queue name if defined
-        String schedulerQueueName = options.getArguments()
-            .getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-        if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
-          LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
-          twillPreparer.setSchedulerQueue(schedulerQueueName);
-        }
+        setSchedulerQueue(twillPreparer, program, options);
 
         // Set JVM options based on configuration
-        String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
-        String runtimeJvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
-        if (!Strings.isNullOrEmpty(runtimeJvmOpts)) {
-          if (!Strings.isNullOrEmpty(jvmOpts)) {
-            jvmOpts = jvmOpts + " " + runtimeJvmOpts;
-          } else {
-            jvmOpts = runtimeJvmOpts;
-          }
-        }
-        if (!Strings.isNullOrEmpty(jvmOpts)) {
-          twillPreparer.addJVMOptions(jvmOpts);
-        }
-
-        // Overwrite JVM options if specified
-        LauncherUtils.overrideJVMOpts(cConf, twillPreparer, runnables);
-
-        if (logbackURI != null) {
-          // AM has the logback.xml file under resources.jar/resources/logback.xml
-          twillPreparer.addJVMOptions("-D" + ContextInitializer.CONFIG_FILE_PROPERTY
-              + "=resources.jar/resources/" + LOGBACK_FILE_NAME);
-          // Set the system property to be used by the logback xml
-          twillPreparer.addJVMOptions(
-              "-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-
-          // Runnable has the logback.xml just in the home directory
-          for (String runnableName : twillRunnables.keySet()) {
-            twillPreparer.setJVMOptions(runnableName,
-                "-D" + ContextInitializer.CONFIG_FILE_PROPERTY + "=" + LOGBACK_FILE_NAME);
-          }
-        }
+        setJvmOpts(twillPreparer, options, logbackUri, twillRunnables);
 
         addLogHandler(twillPreparer, cConf);
 
-        // Setup the environment for the container logback.xml
-        twillPreparer.withEnv(
-            Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
+        setEnv(twillPreparer, launchConfig);
 
         // Add dependencies
         Set<Class<?>> extraDependencies = addExtraDependencies(cConf,
             new HashSet<>(launchConfig.getExtraDependencies()));
         twillPreparer.withDependencies(extraDependencies);
-
-        // Add the additional classes to the classpath that comes from the container jar setting
-        twillPreparer.withClassPaths(additionalClassPaths);
-
-        twillPreparer.withClassPaths(launchConfig.getExtraClasspath());
-        twillPreparer.withEnv(launchConfig.getExtraEnv());
-
-        // Add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the twill container.
-        // The Yarn app classpath goes last
-        List<String> yarnAppClassPath = Arrays.asList(
-            hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-        twillPreparer
-            .withApplicationClassPaths(yarnAppClassPath)
-            .withClassPaths(yarnAppClassPath);
-
+        setClassPaths(twillPreparer, launchConfig, additionalClassPaths);
         twillPreparer
             .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
             .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
@@ -463,6 +339,158 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     } catch (Exception e) {
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
+    }
+  }
+
+  @VisibleForTesting
+  void setSchedulerQueue(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
+    String schedulerQueueName = options.getArguments()
+        .getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
+      LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+      twillPreparer.setSchedulerQueue(schedulerQueueName);
+    }
+  }
+
+  @VisibleForTesting
+  Map<String, String> getExtraSystemArgs(ProgramLaunchConfig launchConfig,
+      Program program, ProgramOptions options) {
+    Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
+    String programJarName = program.getJarLocation().getName();
+    if (options.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
+      // if hash value for program.jar has been provided, we append it to filename.
+      String programJarHash = options.getArguments()
+          .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
+      programJarName = programJarName.replace(".jar",
+          String.format("_%s%s", programJarHash, ".jar"));
+
+      Set<String> cacheableFiles = new HashSet<>();
+      if (options.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
+        cacheableFiles =
+            new HashSet<>(GSON.fromJson(
+                options.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES),
+                new TypeToken<Set<String>>() {
+                }.getType()));
+      }
+      cacheableFiles.add(programJarName);
+      extraSystemArgs.put(ProgramOptionConstants.CACHEABLE_FILES, GSON.toJson(cacheableFiles));
+    }
+    extraSystemArgs.put(ProgramOptionConstants.PROGRAM_JAR, programJarName);
+    extraSystemArgs.put(ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME);
+    extraSystemArgs.put(ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME);
+    extraSystemArgs.put(ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME);
+    return extraSystemArgs;
+  }
+
+  @VisibleForTesting
+  void setClassPaths(TwillPreparer twillPreparer, ProgramLaunchConfig launchConfig,
+      List<String> additionalClassPaths) {
+    // Add the additional classes to the classpath that comes from the container jar setting
+    twillPreparer.withClassPaths(additionalClassPaths);
+
+    twillPreparer.withClassPaths(launchConfig.getExtraClasspath());
+
+    // Add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the twill container.
+    // The Yarn app classpath goes last
+    List<String> yarnAppClassPath = Arrays.asList(
+        hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+            YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+    twillPreparer
+        .withApplicationClassPaths(yarnAppClassPath)
+        .withClassPaths(yarnAppClassPath);
+  }
+
+  @VisibleForTesting
+  void setEnv(TwillPreparer twillPreparer, ProgramLaunchConfig launchConfig) {
+    // Setup the environment for the container logback.xml
+    twillPreparer.withEnv(
+        Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
+    twillPreparer.withEnv(launchConfig.getExtraEnv());
+  }
+
+  @VisibleForTesting
+  void setTwillConfigs(TwillPreparer twillPreparer, Program program, ProgramOptions options,
+      Map<String, RunnableDefinition> twillRunnables) {
+    Map<String, String> twillConfigs = new HashMap<>();
+    if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
+      twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
+          cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
+    } else {
+      // For non long running program type, set the max attempts to 1 to avoid YARN retry.
+      // If the AM container dies, the program execution will be marked as failure.
+      // Note that this setting is only applicable to the Twill YARN application
+      // (e.g. workflow, Spark client, MR client, etc), but not to the actual Spark / MR job.
+      twillConfigs.put(Configs.Keys.YARN_MAX_APP_ATTEMPTS, Integer.toString(1));
+    }
+
+    // Add twill configurations coming from the runtime arguments
+    twillConfigs.putAll(SystemArguments.getNamespaceConfigs(options.getArguments().asMap()));
+    twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(options.getUserArguments().asMap()));
+    twillConfigs.put(ProgramOptionConstants.RUNTIME_NAMESPACE, program.getNamespaceId());
+    twillPreparer.withConfiguration(twillConfigs);
+
+    // Setup per runnable configurations
+    for (Map.Entry<String, RunnableDefinition> entry : twillRunnables.entrySet()) {
+      String runnable = entry.getKey();
+      RunnableDefinition runnableDefinition = entry.getValue();
+      if (runnableDefinition.getMaxRetries() != null) {
+        twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
+      }
+      twillPreparer.setLogLevels(runnable,
+          transformLogLevels(runnableDefinition.getLogLevels()));
+      twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
+
+      // Add cdap-security.xml if using secrets, and set the runnable identity.
+      if (twillPreparer instanceof SecureTwillPreparer) {
+        String twillSystemIdentity = cConf.get(Constants.Twill.Security.IDENTITY_SYSTEM);
+        if (twillSystemIdentity != null) {
+          SecurityContext securityContext = new SecurityContext.Builder()
+              .withIdentity(twillSystemIdentity).build();
+          twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(runnable,
+              securityContext);
+        }
+        String securityName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
+        String securityPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
+        twillPreparer = ((SecureTwillPreparer) twillPreparer)
+            .withSecretDisk(runnable, new SecretDisk(securityName, securityPath));
+      }
+    }
+  }
+
+  @VisibleForTesting
+  void setJvmOpts(TwillPreparer twillPreparer, ProgramOptions options,
+      @Nullable URI logbackUri, Map<String, RunnableDefinition> twillRunnables) {
+    String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
+    String runtimeJvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
+    if (!Strings.isNullOrEmpty(runtimeJvmOpts)) {
+      if (!Strings.isNullOrEmpty(jvmOpts)) {
+        jvmOpts = jvmOpts + " " + runtimeJvmOpts;
+      } else {
+        jvmOpts = runtimeJvmOpts;
+      }
+    }
+
+    if (!Strings.isNullOrEmpty(jvmOpts)) {
+      twillPreparer.addJVMOptions(jvmOpts);
+    }
+
+    // Overwrite JVM options if specified
+    Set<String> runnables = new HashSet<>(twillRunnables.keySet());
+    LauncherUtils.overrideJVMOpts(cConf, twillPreparer, runnables);
+
+    if (logbackUri != null) {
+      // AM has the logback.xml file under resources.jar/resources/logback.xml
+      twillPreparer.addJVMOptions("-D" + ContextInitializer.CONFIG_FILE_PROPERTY
+          + "=resources.jar/resources/" + LOGBACK_FILE_NAME);
+      // Set the system property to be used by the logback xml
+      twillPreparer.addJVMOptions(
+          "-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+
+      // Runnable has the logback.xml just in the home directory
+      for (String runnableName : runnables) {
+        twillPreparer.setJVMOptions(runnableName,
+            "-D" + ContextInitializer.CONFIG_FILE_PROPERTY + "=" + LOGBACK_FILE_NAME);
+      }
     }
   }
 
