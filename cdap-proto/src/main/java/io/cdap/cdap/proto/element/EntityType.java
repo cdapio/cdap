@@ -77,7 +77,7 @@ public enum EntityType {
   SYSTEM_SERVICE(SystemServiceId.class),
   SYSTEM_APP_ENTITY(SystemAppEntityId.class),
 
-  CREDENTIAL_PROVISIONER_PROFILE(CredentialProfileId.class),
+  CREDENTIAL_PROFILE(CredentialProfileId.class),
   CREDENTIAL_IDENTITY(CredentialIdentityId.class);
 
   private final Class<? extends EntityId> idClass;

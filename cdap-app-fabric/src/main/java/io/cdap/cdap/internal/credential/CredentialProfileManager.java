@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
@@ -82,11 +83,13 @@ public class CredentialProfileManager {
    *
    * @param id The profile reference to create.
    * @param profile The profile to create.
+   * @throws BadRequestException If the profile is invalid.
    * @throws AlreadyExistsException If the profile already exists.
    * @throws IOException If any failure writing to storage occurs.
    */
   public void create(CredentialProfileId id, CredentialProfile profile)
-      throws AlreadyExistsException, IOException {
+      throws AlreadyExistsException, BadRequestException, IOException {
+    validateProfile(profile);
     TransactionRunners.run(transactionRunner, context -> {
       if (profileStore.get(context, id).isPresent()) {
         throw new AlreadyExistsException(String.format("Credential profile '%s:%s' already exists",
@@ -101,11 +104,13 @@ public class CredentialProfileManager {
    *
    * @param id The profile reference to update.
    * @param profile The updated profile.
+   * @throws BadRequestException If the profile is invalid.
    * @throws IOException If any failure writing to storage occurs.
    * @throws NotFoundException If the profile does not exist.
    */
   public void update(CredentialProfileId id, CredentialProfile profile)
-      throws IOException, NotFoundException {
+      throws BadRequestException, IOException, NotFoundException {
+    validateProfile(profile);
     TransactionRunners.run(transactionRunner, context -> {
       if (!profileStore.get(context, id).isPresent()) {
         throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
@@ -139,5 +144,13 @@ public class CredentialProfileManager {
       }
       profileStore.delete(context, id);
     }, ConflictException.class, IOException.class, NotFoundException.class);
+  }
+
+  private void validateProfile(CredentialProfile profile) throws BadRequestException {
+    // Validate all fields are not null.
+    if (profile.getCredentialProviderType() == null
+        || profile.getCredentialProviderType().isEmpty()) {
+      throw new BadRequestException("Credential provider type cannot be null or empty.");
+    }
   }
 }

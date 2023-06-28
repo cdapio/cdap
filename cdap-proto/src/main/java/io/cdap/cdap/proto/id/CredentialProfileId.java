@@ -38,7 +38,7 @@ public class CredentialProfileId extends NamespacedEntityId
    * @param name The name of the profile.
    */
   public CredentialProfileId(String namespace, String name) {
-    super(namespace, EntityType.CREDENTIAL_PROVISIONER_PROFILE);
+    super(namespace, EntityType.CREDENTIAL_PROFILE);
     if (name == null) {
       throw new NullPointerException("Credential profile name cannot be null.");
     }
