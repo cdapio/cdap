@@ -116,6 +116,8 @@ import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
+import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandler;
+import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandlerInternal;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.events.EventPublisher;
 import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
@@ -193,7 +195,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                 .in(Scopes.SINGLETON);
             bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-            bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+            bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
 
             Multibinder<String> servicesNamesBinder =
                 Multibinder.newSetBinder(binder(), String.class,
@@ -234,7 +236,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                 .in(Scopes.SINGLETON);
             bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-            bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+            bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
 
             Multibinder<String> servicesNamesBinder =
                 Multibinder.newSetBinder(binder(), String.class,
@@ -288,7 +290,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class)
                 .to(DistributedStorageProviderNamespaceAdmin.class);
-            bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+            bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
 
             bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
                 .in(Scopes.SINGLETON);
@@ -435,6 +437,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TetheringServerHandler.class);
       handlerBinder.addBinding().to(TetheringClientHandler.class);
       handlerBinder.addBinding().to(AppStateHandler.class);
+      handlerBinder.addBinding().to(CredentialProviderHttpHandler.class);
+      handlerBinder.addBinding().to(CredentialProviderHttpHandlerInternal.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
@@ -520,17 +524,17 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   /**
    * A Guice provider for the {@link UGIProvider} class based on the CDAP configuration.
-   * <p>
-   * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an {@link
+   *
+   * <p>When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an {@link
    * UnsupportedUGIProvider} will be used.
    */
-  private static final class UGIProviderProvider implements Provider<UGIProvider> {
+  private static final class UgiProviderProvider implements Provider<UGIProvider> {
 
     private final Injector injector;
     private final CConfiguration cConf;
 
     @Inject
-    UGIProviderProvider(Injector injector, CConfiguration cConf) {
+    UgiProviderProvider(Injector injector, CConfiguration cConf) {
       this.injector = injector;
       this.cConf = cConf;
     }

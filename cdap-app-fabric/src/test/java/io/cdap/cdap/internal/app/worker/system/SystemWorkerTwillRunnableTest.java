@@ -46,22 +46,22 @@ public class SystemWorkerTwillRunnableTest {
   @Test
   public void testDoInitialize() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    File temporaryCConfFile = temporaryFolder.newFile("cConf.xml");
-    File temporaryHConfFile = temporaryFolder.newFile("hConf.xml");
-    File temporarySConfFile = temporaryFolder.newFile("sConf.xml");
-    try (FileOutputStream fileOutputStream = new FileOutputStream(temporaryCConfFile.getAbsolutePath())) {
+    File cConfFileTemp = temporaryFolder.newFile("cConf.xml");
+    File hConfFileTemp = temporaryFolder.newFile("hConf.xml");
+    File sConfFileTemp = temporaryFolder.newFile("sConf.xml");
+    try (FileOutputStream fileOutputStream = new FileOutputStream(cConfFileTemp.getAbsolutePath())) {
       cConf.writeXml(fileOutputStream);
     }
-    try (FileOutputStream fileOutputStream = new FileOutputStream(temporaryHConfFile.getAbsolutePath())) {
+    try (FileOutputStream fileOutputStream = new FileOutputStream(hConfFileTemp.getAbsolutePath())) {
       new io.cdap.cdap.common.conf.Configuration().writeXml(fileOutputStream);
     }
-    try (FileOutputStream fileOutputStream = new FileOutputStream(temporarySConfFile.getAbsolutePath())) {
+    try (FileOutputStream fileOutputStream = new FileOutputStream(sConfFileTemp.getAbsolutePath())) {
       new io.cdap.cdap.common.conf.Configuration().writeXml(fileOutputStream);
     }
 
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     SystemWorkerTwillRunnable systemWorkerTwillRunnable = new SystemWorkerTwillRunnable(
-      temporaryCConfFile.getAbsolutePath(), temporaryHConfFile.getAbsolutePath(), temporarySConfFile.getAbsolutePath());
+      cConfFileTemp.getAbsolutePath(), hConfFileTemp.getAbsolutePath(), sConfFileTemp.getAbsolutePath());
     systemWorkerTwillRunnable.doInitialize();
   }
 }

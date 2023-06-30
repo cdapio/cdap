@@ -70,6 +70,7 @@ public final class StoreDefinition {
     CapabilitiesStore.create(tableAdmin);
     TetheringStore.create(tableAdmin);
     AppStateStore.create(tableAdmin);
+    CredentialProviderStore.create(tableAdmin);
   }
 
   /**

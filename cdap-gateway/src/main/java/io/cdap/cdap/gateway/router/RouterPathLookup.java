@@ -63,7 +63,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
-   * Returns the CDAP service which will handle the HttpRequest
+   * Returns the CDAP service which will handle the HttpRequest.
    *
    * @param requestPath Normalized (and query string removed) URI path
    * @param httpRequest HttpRequest used to get the Http method and account id
@@ -157,6 +157,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "previews")) {
       return PREVIEW_HTTP;
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
+      return APP_FABRIC_HTTP;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "credentials")
+        || beginsWith(uriParts, "v3", "credentials")) {
       return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs"))
         || (uriParts.length >= 10 && uriParts[9].equals("logs"))

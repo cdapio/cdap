@@ -48,7 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Launches an HTTP server for receiving and handling {@link RunnableTask}
+ * Launches an HTTP server for receiving and handling {@link RunnableTask}.
  */
 public class SystemWorkerService extends AbstractIdleService {
 
