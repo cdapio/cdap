@@ -311,8 +311,12 @@ abstract class DataprocClient implements AutoCloseable {
             .setGcePdKmsKeyName(conf.getEncryptionKeyName()).build());
       }
 
-      if (conf.getGcsBucket() != null) {
+      if (!Strings.isNullOrEmpty(conf.getGcsBucket())) {
         builder.setConfigBucket(conf.getGcsBucket());
+      }
+
+      if (!Strings.isNullOrEmpty(conf.getTempBucket())) {
+        builder.setTempBucket(conf.getTempBucket());
       }
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
