@@ -468,9 +468,18 @@
         },
         {
           "widget-type": "textbox",
-          "label": "GCS Bucket",
+          "label": "Staging Bucket",
           "name": "gcsBucket",
           "description": "Google Cloud Storage bucket used to stage job dependencies and config files for running pipelines in Google Cloud Dataproc",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Temp Bucket",
+          "name": "tempBucket",
+          "description": "Google Cloud Storage bucket used to store ephemeral cluster and jobs data, such as Spark and MapReduce history files in Google Cloud Dataproc",
           "widget-attributes": {
             "size": "medium"
           }
