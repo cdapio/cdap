@@ -107,8 +107,8 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
       .collect(Collectors.toMap(
         k -> getNormalizedDatasetName(k.getKey()),
         e -> (SparkSQLDataset) e.getValue()));
-
-    return executeSQL(sparkSQLRelation.getSqlStatement(), sparkDatasets, context);
+    List<String> sqlStatements = sparkSQLRelation.getSqlStatements();
+    return executeSQL(sqlStatements, sparkDatasets, context);
   }
 
   @Override
@@ -174,7 +174,7 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
     return Collections.singletonList(new SparkSQLExpressionFactory());
   }
 
-  private SparkSQLDataset executeSQL(String sqlStatement, Map<String, SparkSQLDataset>  sparkDatasets,
+  private SparkSQLDataset executeSQL(List<String> sqlStatements, Map<String, SparkSQLDataset>  sparkDatasets,
                                      SQLTransformRequest context) {
     // Register all datasets as temp view in spark sql
     for (Map.Entry<String, SparkSQLDataset> dsEntry : sparkDatasets.entrySet()) {
@@ -186,12 +186,13 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
     SparkSQLDataset sparkSQLDataset = sparkDatasets.values().stream().findFirst().get();
     Dataset<Row> ds = sparkSQLDataset.getDs();
     SparkSession sparkSession = ds.sparkSession();
-
-    LOG.info("Executing SQL in spark : {}", sqlStatement);
-    Dataset<Row> result = sparkSession.sql(sqlStatement);
-
-    //TODO Doubt : df.count will trigger the action. ? Expected ?
-    return new SparkSQLDataset(result, result.count(), context.getOutputDatasetName(), context.getOutputSchema());
+    for(String sqlStatement: sqlStatements) {
+      LOG.info("Executing SQL in spark : {}", sqlStatement);
+      ds = sparkSession.sql(sqlStatement);
+      ds.createOrReplaceTempView(sparkDatasets.keySet().stream().findFirst().get());
+    }
+    //TODO Doubt : df.count will trigger the action. ? Expected ?;
+    return new SparkSQLDataset(ds, ds.count(), context.getOutputDatasetName(), context.getOutputSchema());
   }
 
   // Spark SQL View Naming syntax

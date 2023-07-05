@@ -23,6 +23,7 @@ import io.cdap.cdap.etl.api.relational.InvalidRelation;
 import io.cdap.cdap.etl.api.relational.Relation;
 import io.cdap.cdap.etl.api.sql.engine.relation.SparkSQLExpression;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ public class SparkSQLRelation implements Relation {
   private static final SparkSQLExpressionFactory factory = new SparkSQLExpressionFactory();
 
   private String sqlStatement;
+  private List<String> sqlStatements;
   private String datasetName;
   private List<String> columns;
   private final Schema schema;
@@ -50,17 +52,20 @@ public class SparkSQLRelation implements Relation {
   private static final String COMMA = " , ";
 
   public SparkSQLRelation(String datasetName, List<String> columns) {
-    this(datasetName, columns, null, null);
+
+    this(datasetName, columns, null, null, null);
   }
 
   public SparkSQLRelation(String datasetName, List<String> columns, Schema schema) {
-    this(datasetName, columns, null, schema);
+    this(datasetName, columns, null, schema, null);
   }
 
-  SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement, @Nullable Schema schema) {
+  SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement,
+                   @Nullable Schema schema, List<String> sqlStatements) {
     this.datasetName = datasetName;
     this.columns = columns;
     this.sqlStatement = sqlStatement;
+    this.sqlStatements = sqlStatements;
     this.schema = schema;
   }
 
@@ -84,7 +89,12 @@ public class SparkSQLRelation implements Relation {
     Map<String, Expression> columnExpMap = generateColumnExpMap(this.columns);
     columnExpMap.put(column, value);
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
+    if (sqlStatements == null){
+      sqlStatements = new ArrayList<>();
+    }
+    sqlStatements.add(generateSelectQuery(null, columnExpMap));
+    return new SparkSQLRelation(this.datasetName, columnList,
+            generateSelectQuery(null, columnExpMap), schema, sqlStatements);
   }
 
   @Override
@@ -94,8 +104,13 @@ public class SparkSQLRelation implements Relation {
       return new InvalidRelation("Trying to remove non existing column in Relation: " + column);
     }
     this.columns.remove(column);
-
-    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(null), schema);
+    if (sqlStatements == null){
+      sqlStatements = new ArrayList<>();
+    }
+    sqlStatements.add(generateSelectQuery(null));
+    return new SparkSQLRelation(this.datasetName, columns,
+            generateSelectQuery(null), schema, sqlStatements);
+    //return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(null), schema);
   }
 
   @Override
@@ -106,18 +121,32 @@ public class SparkSQLRelation implements Relation {
     }
 
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
+    if (sqlStatements == null){
+      sqlStatements = new ArrayList<>();
+    }
+    sqlStatements.add(generateSelectQuery(null, columnExpMap));
+    return new SparkSQLRelation(this.datasetName, columnList,
+            generateSelectQuery(null, columnExpMap), schema, sqlStatements);
   }
 
   @Override
   public Relation filter(Expression filter) {
     // Get filter conditions
     String filterCondition = filter != null ? ((SparkSQLExpression) filter).extract() : null;
-    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(filterCondition), schema);
+    if (sqlStatements == null){
+      sqlStatements = new ArrayList<>();
+    }
+    sqlStatements.add(generateSelectQuery(filterCondition));
+    return new SparkSQLRelation(this.datasetName, columns,
+            generateSelectQuery(filterCondition), schema, sqlStatements);
   }
 
   public String getSqlStatement() {
     return sqlStatement;
+  }
+
+  public List<String> getSqlStatements() {
+    return sqlStatements;
   }
 
   /**
@@ -179,11 +208,14 @@ public class SparkSQLRelation implements Relation {
     SparkSQLRelation that = (SparkSQLRelation) o;
     return Objects.equals(sqlStatement, that.sqlStatement)
       && Objects.equals(datasetName, that.datasetName)
-      && Objects.equals(columns, that.columns);
+      && Objects.equals(columns, that.columns)
+            && Objects.equals(sqlStatements, that.sqlStatements);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(sqlStatement, datasetName, columns);
   }
+
 }
+
