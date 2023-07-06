@@ -232,7 +232,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
-      localizeResources.put(programJarLocation.getName(),
+      String programJarName = programJarLocation.getName();
+      if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
+        // if hash value for program.jar has been provided, we append it to filename.
+        String programJarHash = oldOptions.getArguments()
+            .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
+        programJarName = programJarName.replace(".jar",
+            String.format("_%s%s", programJarHash, ".jar"));
+      }
+      localizeResources.put(programJarName,
           new LocalizeResource(programJarLocation.toURI(), false));
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program

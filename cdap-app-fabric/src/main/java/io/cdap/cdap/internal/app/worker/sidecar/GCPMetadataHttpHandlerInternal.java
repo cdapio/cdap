@@ -25,10 +25,14 @@ import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,19 +47,46 @@ public class GCPMetadataHttpHandlerInternal extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
   private final CConfiguration cConf;
+  private String namespace;
 
   public GCPMetadataHttpHandlerInternal(CConfiguration cConf) {
     this.cConf = cConf;
   }
 
   @GET
+  @Path("/")
+  public void status(HttpRequest request, HttpResponder responder) throws Exception {
+    LOG.info("Status requested");
+    responder.sendStatus(HttpResponseStatus.OK,
+        new DefaultHttpHeaders().add("Metadata-Flavor", "Google"));
+  }
+
+  @GET
   @Path("/computeMetadata/v1/instance/service-accounts/default/token")
   public void token(HttpRequest request, HttpResponder responder) throws Exception {
-    LOG.info("Token requested");
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new GCPTokenResponse(
-        cConf.get("metadata.server.token.value"),
-        3599,
-        "Bearer")));
+    String token = cConf.get("metadata.server.token.value", "");
+    LOG.info("Token requested {}", token);
+    responder.sendString(
+        HttpResponseStatus.OK,
+        GSON.toJson(new GCPTokenResponse(token, 3599, "Bearer")),
+        new DefaultHttpHeaders().add("Metadata-Flavor", "Google"));
+  }
+
+  @PUT
+  @Path("/set-namespace/{namespace-id}")
+  public void setNamespace(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId) {
+    LOG.info("Set namespace {}", namespaceId);
+    this.namespace = namespaceId;
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @DELETE
+  @Path("/clear-namespace")
+  public void clearNamespace(HttpRequest request, HttpResponder responder) {
+    LOG.info("Clear namespace");
+    this.namespace = null;
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**

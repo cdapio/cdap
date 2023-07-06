@@ -89,6 +89,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
 
   private final String metadataServiceEndpoint;
+
+  private final String fakeMetadataServiceEndpoint = "http://127.0.0.1:11021";
   private final MetricsCollectionService metricsCollectionService;
 
   /**
@@ -192,6 +194,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
           runnableTaskRequest);
       try {
+        String setNamespaceEndpoint = String.format("%s/set-namespace/%s",
+            fakeMetadataServiceEndpoint,
+            runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace());
+        HttpResponse tokenResponse = HttpRequests.execute(
+            HttpRequest.put(new URL(setNamespaceEndpoint)).build());
+        LOG.info("Set namespace response {}", tokenResponse.getResponseCode());
         runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
         TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
             startTime,

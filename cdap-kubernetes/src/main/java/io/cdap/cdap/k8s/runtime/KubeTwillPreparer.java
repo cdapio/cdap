@@ -1166,7 +1166,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
     // Add all environments of the the main runnable for the init container.
     if (environments.get(runnableName) != null) {
-      initContainerEnvirons.putAll(environments.get(runnableName));
+      Map<String, String> envs = environments.get(runnableName).entrySet().stream()
+          .filter(entry -> !entry.getKey().equals("GCE_METADATA_HOST"))
+          .collect(Collectors.toMap(Map.Entry::getKey,
+              Map.Entry::getValue));
+      initContainerEnvirons.putAll(envs);
     }
     // Add JVM options to environment.
     initContainerEnvirons.put(JAVA_OPTS_KEY, masterEnvContext.getConfigurations()
@@ -1291,11 +1295,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       environs.putAll(environments.get(name));
       // Add JVM options to environment.
       environs.put(JAVA_OPTS_KEY, jvmOpts);
+      Map<String, String> envs = environs.entrySet().stream()
+          .filter(entry -> !entry.getKey().equals("GCE_METADATA_HOST"))
+          .collect(Collectors.toMap(Map.Entry::getKey,
+              Map.Entry::getValue));
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(
           createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
               createResourceRequirements(spec.getResourceSpecification()),
-              mounts, environs, KubeTwillLauncher.class,
+              mounts, envs, KubeTwillLauncher.class,
               Stream.concat(Stream.of(name), args.stream()).toArray(String[]::new)));
     }
 

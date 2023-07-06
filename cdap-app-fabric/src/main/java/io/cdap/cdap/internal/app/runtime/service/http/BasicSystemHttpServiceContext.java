@@ -65,6 +65,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link SystemHttpServiceContext} for system app services to use.
@@ -72,6 +74,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class BasicSystemHttpServiceContext extends BasicHttpServiceContext implements
     SystemHttpServiceContext {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BasicSystemHttpServiceContext.class);
   private final NamespaceId namespaceId;
   private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
@@ -191,6 +194,13 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
         .withArtifact(getArtifactId().toApiArtifactId())
         .withEmbeddedTaskRequest(runnableTaskRequest)
         .build();
+    LOG.info("Namespace: {}", getNamespace());
+    if (taskRequest.getParam() != null) {
+      RunnableTaskRequest request = taskRequest.getParam().getEmbeddedTaskRequest();
+      if (request != null) {
+        LOG.info("Namespace: {}", request.getNamespace());
+      }
+    }
     return remoteTaskExecutor.runTask(taskRequest);
   }
 

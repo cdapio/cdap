@@ -107,9 +107,9 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     String validationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
     RemoteValidationRequest remoteValidationRequest = new RemoteValidationRequest(namespace, validationRequestString);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getName()).
-      withParam(GSON.toJson(remoteValidationRequest)).
-      build();
+        withParam(GSON.toJson(remoteValidationRequest)).withNamespace(namespace).build();
     try {
+      LOG.info("namespace: {}", namespace);
       byte[] bytes = getContext().runTask(runnableTaskRequest);
       responder.sendString(Bytes.toString(bytes));
     } catch (RemoteExecutionException e) {
