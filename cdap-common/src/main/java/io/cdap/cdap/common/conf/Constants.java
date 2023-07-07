@@ -2219,6 +2219,8 @@ public final class Constants {
     public static final String EVENTS_WRITER_EXTENSIONS_DIR = "events.writer.extensions.dir";
 
     public static final String EVENTS_WRITER_EXTENSIONS_ENABLED_LIST = "events.writer.extensions.enabled.list";
+    public static final String EVENT_READER_ACK_DEADLINE = "events.reader.ackdeadline";
+
   }
 
   /**

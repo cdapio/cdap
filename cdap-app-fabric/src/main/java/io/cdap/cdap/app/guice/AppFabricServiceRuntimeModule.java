@@ -120,6 +120,8 @@ import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandler;
 import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandlerInternal;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.events.EventPublisher;
+import io.cdap.cdap.internal.events.EventSubscriber;
+import io.cdap.cdap.internal.events.EventSubscriberManager;
 import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
 import io.cdap.cdap.internal.events.EventWriterProvider;
 import io.cdap.cdap.internal.events.MetricsProvider;
@@ -398,6 +400,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           Multibinder.newSetBinder(binder(), EventPublisher.class);
       eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
       bind(EventPublishManager.class).in(Scopes.SINGLETON);
+      Multibinder<EventSubscriber> eventSubscribersBinder =
+              Multibinder.newSetBinder(binder(), EventSubscriber.class);
+      bind(EventSubscriberManager.class).in(Scopes.SINGLETON);
       bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class);
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
@@ -488,7 +493,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * @return an instance of {@link org.quartz.Scheduler}
      */
     private org.quartz.Scheduler getScheduler(JobStore store,
-        CConfiguration cConf) throws SchedulerException {
+                                              CConfiguration cConf) throws SchedulerException {
 
       int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
       ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
