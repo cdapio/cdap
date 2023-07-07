@@ -5077,6 +5077,16 @@
     </description>
   </property>
 
+  <!-- event subscriber -->
+  <property>
+    <name>feature.event.reader.enabled</name>
+    <value>false</value>
+    <final>false</final>
+    <description>
+      Enable event subscribing in CDAP
+    </description>
+  </property>
+
   <!-- Spark on k8s  -->
   <property>
     <name>artifact.fetcher.bind.port</name>
