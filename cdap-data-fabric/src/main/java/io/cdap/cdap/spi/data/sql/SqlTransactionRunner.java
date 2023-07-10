@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spi.data.sql;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import javax.sql.DataSource;
 
 /**
@@ -71,9 +73,12 @@ public class SqlTransactionRunner implements TransactionRunner {
           this.scanFetchSize));
       connection.commit();
     } catch (Exception e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof SQLException) {
-        rollback(connection, new SqlTransactionException((SQLException) cause, e));
+      List<Throwable> causes = Throwables.getCausalChain(e);
+      for (Throwable cause : causes) {
+        if (cause instanceof SQLException) {
+          rollback(connection, new SqlTransactionException((SQLException) cause, e));
+          break;
+        }
       }
       rollback(connection, new TransactionException("Failed to execute the sql queries.", e));
     } finally {

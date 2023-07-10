@@ -1022,6 +1022,32 @@
   </property>
 
   <property>
+    <name>data.storage.sql.jdbc.connection.pool.idle.size</name>
+    <value>5</value>
+    <description>
+      The max number of idle connections for the sql connection pool.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.connection.pool.idle.millis</name>
+    <value>300000</value>
+    <description>
+      The minimum amount of time a connection may sit idle in the pool
+      before it is eligible for eviction.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.connection.pool.idle.eviction.millis</name>
+    <value>180000</value>
+    <description>
+      The minimum amount of time to sleep between runs of the
+      idle connection eviction thread..
+    </description>
+  </property>
+
+  <property>
     <name>data.storage.sql.tx.runner.max.retries</name>
     <value>20</value>
     <description>
