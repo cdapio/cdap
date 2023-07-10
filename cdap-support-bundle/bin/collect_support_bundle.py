@@ -29,6 +29,7 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime
+import re
 
 parser = argparse.ArgumentParser(description='Log collector program for CDAP.')
 parser.add_argument(
@@ -627,6 +628,17 @@ def main(kube_namespace, username, password, cdap_ns, pipeline_name, run_id, run
     print(f'Logs collection completed. Please find {directoryName}.tar.gz in current directory')
     exit()
 
+def remove_security_authorization_from_cconf_log(cconf_file_output):
+    flag = True
+    while flag:
+        start = cconf_file_output.find("""<property>
+    <name>security.authorization.extension.config.""")
+        if start != -1:
+            end = cconf_file_output.find("""</property>""", start)
+            cconf_file_output = cconf_file_output[0:start] + cconf_file_output[end + 11:].strip()
+        else:
+            flag = False
+    return cconf_file_output
 
 def log_file_write(pathName, filename, fileWriteMode, contentToWrite, fileExt="log"):
     with open(f"{pathName}/{filename}.{fileExt}", fileWriteMode) as f:
@@ -673,6 +685,8 @@ def log_commands_processor(commandLists, directoryName, cdap_ns, pipeline_name, 
                     placeholderCommand = x["forEachCommand"]
                     command = placeholderCommand.replace(x["placeholderString"], a)
                     for_command_output = subprocess.getoutput(command)
+                    if x["parentFolder"] == "config_map_info" and re.search("-cconf$", a):
+                        for_command_output = remove_security_authorization_from_cconf_log(for_command_output)
                     directory_name = os.path.join(directoryName , x["parentFolder"])
                     log_file_write(directory_name , f'{x["childFileName"]}-{a}', "a", for_command_output, x["fileExt"])
 
