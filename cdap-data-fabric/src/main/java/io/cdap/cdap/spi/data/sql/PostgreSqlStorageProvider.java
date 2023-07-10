@@ -135,6 +135,12 @@ public class PostgreSqlStorageProvider implements StorageProvider {
         poolableConnectionFactory);
     poolableConnectionFactory.setPool(connectionPool);
     connectionPool.setMaxTotal(cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_SIZE));
+    connectionPool.setMaxIdle(
+        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_IDLE_SIZE));
+    connectionPool.setMinEvictableIdleTimeMillis(
+        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_IDLE_MILLIS));
+    connectionPool.setTimeBetweenEvictionRunsMillis(
+        cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_IDLE_EVICTION_MILLIS));
     PoolingDataSource<PoolableConnection> dataSource = new PoolingDataSource<>(connectionPool);
     return new MetricsDataSource(dataSource, metricsCollectionService, connectionPool);
   }
