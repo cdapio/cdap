@@ -187,6 +187,22 @@ public class DistributedProgramRunnerTest {
     Assert.assertEquals("que", preparer.getSchedulerQueue());
   }
 
+  @Test
+  public void testGetProgramJarNameWithoutJarHash() {
+    ProgramOptions options =
+        new SimpleProgramOptions(program.getId(), new BasicArguments(), new BasicArguments());
+    Assert.assertEquals("program.jar", runner.getProgramJarName(program, options));
+  }
+
+  @Test
+  public void testGetProgramJarNameWithJarHash() {
+    BasicArguments systemArgs =
+        new BasicArguments(ImmutableMap.of(ProgramOptionConstants.PROGRAM_JAR_HASH, "1234abc"));
+    ProgramOptions options =
+        new SimpleProgramOptions(program.getId(), systemArgs, new BasicArguments());
+    Assert.assertEquals("program_1234abc.jar", runner.getProgramJarName(program, options));
+  }
+
   private Program createProgram(File baseDir) {
     Application app = new AppWithSparkProgram();
     DefaultAppConfigurer configurer =
