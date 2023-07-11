@@ -232,7 +232,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
-      localizeResources.put(programJarLocation.getName(),
+      String programJarName = getProgramJarName(program, oldOptions);
+      localizeResources.put(programJarName,
           new LocalizeResource(programJarLocation.toURI(), false));
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
@@ -343,6 +344,19 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   }
 
   @VisibleForTesting
+  String getProgramJarName(Program program, ProgramOptions options) {
+    String programJarName = program.getJarLocation().getName();
+    if (options.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
+      // if hash value for program.jar has been provided, we append it to filename.
+      String programJarHash = options.getArguments()
+          .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
+      programJarName = programJarName.replace(".jar",
+          String.format("_%s%s", programJarHash, ".jar"));
+    }
+    return programJarName;
+  }
+
+  @VisibleForTesting
   void setSchedulerQueue(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
     String schedulerQueueName = options.getArguments()
         .getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
@@ -356,14 +370,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   Map<String, String> getExtraSystemArgs(ProgramLaunchConfig launchConfig,
       Program program, ProgramOptions options) {
     Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
-    String programJarName = program.getJarLocation().getName();
+    String programJarName = getProgramJarName(program, options);
     if (options.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
-      // if hash value for program.jar has been provided, we append it to filename.
-      String programJarHash = options.getArguments()
-          .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
-      programJarName = programJarName.replace(".jar",
-          String.format("_%s%s", programJarHash, ".jar"));
-
       Set<String> cacheableFiles = new HashSet<>();
       if (options.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
         cacheableFiles =
