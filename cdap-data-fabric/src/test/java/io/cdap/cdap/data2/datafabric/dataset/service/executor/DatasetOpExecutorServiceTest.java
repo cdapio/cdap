@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2022 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,7 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.utils.Networks;
@@ -108,7 +108,6 @@ public class DatasetOpExecutorServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    Configuration hConf = new Configuration();
     CConfiguration cConf = CConfiguration.create();
 
     File datasetDir = new File(TMP_FOLDER.newFolder(), "datasetUser");
@@ -120,30 +119,32 @@ public class DatasetOpExecutorServiceTest {
     cConf.set(Constants.Dataset.Executor.ADDRESS, "localhost");
     cConf.setInt(Constants.Dataset.Executor.PORT, Networks.getRandomPort());
 
+    Configuration hConf = new Configuration();
+
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getNoOpModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new KafkaClientModule(),
-      new InMemoryDiscoveryModule(),
-      new NonCustomLocationUnitTestModule(),
-      new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new DataSetServiceModules().getInMemoryModules(),
-      new TransactionMetricsModule(),
-      new NamespaceAdminTestModule(),
-      new AuthenticationContextModules().getMasterModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
-        }
-      });
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getNoOpModule(),
+        new IOModule(),
+        new ZkClientModule(),
+        new KafkaClientModule(),
+        new InMemoryDiscoveryModule(),
+        new NonCustomLocationUnitTestModule(),
+        new DataFabricModules().getInMemoryModules(),
+        new DataSetsModules().getStandaloneModules(),
+        new DataSetServiceModules().getInMemoryModules(),
+        new TransactionMetricsModule(),
+        new NamespaceAdminTestModule(),
+        new AuthenticationContextModules().getMasterModule(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
+          }
+        });
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -160,7 +161,8 @@ public class DatasetOpExecutorServiceTest {
 
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(Constants.Service.DATASET_MANAGER));
+    endpointStrategy = new RandomEndpointStrategy(
+        () -> discoveryClient.discover(Constants.Service.DATASET_MANAGER));
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -196,14 +198,15 @@ public class DatasetOpExecutorServiceTest {
     final Table table = dsFramework.getDataset(bob, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
     TransactionExecutor txExecutor =
-      new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
-                                     ImmutableList.of((TransactionAware) table));
+        new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
+            ImmutableList.of((TransactionAware) table));
 
     // writing smth to table
     txExecutor.execute(() -> table.put(new Put("key1", "col1", "val1")));
 
     // verify that we can read the data
-    txExecutor.execute(() -> Assert.assertEquals("val1", table.get(new Get("key1", "col1")).getString("col1")));
+    txExecutor.execute(
+        () -> Assert.assertEquals("val1", table.get(new Get("key1", "col1")).getString("col1")));
 
     testAdminOp(bob, "truncate", 200, null);
 
@@ -227,7 +230,8 @@ public class DatasetOpExecutorServiceTest {
     dsFramework.addInstance("table", bob, DatasetProperties.EMPTY);
     testAdminOp(bob, "exists", 200, true);
 
-    dsFramework.updateInstance(bob, DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
+    dsFramework
+        .updateInstance(bob, DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
     // check upgrade
     testAdminOp(bob, "upgrade", 200, null);
 
@@ -237,21 +241,22 @@ public class DatasetOpExecutorServiceTest {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
-    throws IOException {
+  private void testAdminOp(String instanceName, String opName, int expectedStatus,
+      Object expectedResult)
+      throws IOException {
     testAdminOp(NamespaceId.DEFAULT.dataset(instanceName), opName, expectedStatus,
-                expectedResult);
+        expectedResult);
   }
 
   private void testAdminOp(DatasetId datasetInstanceId, String opName, int expectedStatus,
-                           Object expectedResult)
-    throws IOException {
+      Object expectedResult)
+      throws IOException {
     String path = String.format("/namespaces/%s/data/datasets/%s/admin/%s",
-                                datasetInstanceId.getNamespace(), datasetInstanceId.getEntityName(), opName);
+        datasetInstanceId.getNamespace(), datasetInstanceId.getEntityName(), opName);
 
     URL targetUrl = resolve(path);
     HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build(),
-                                                 new DefaultHttpRequestConfig(false));
+        new DefaultHttpRequestConfig(false));
     DatasetAdminOpResponse body = getResponse(response.getResponseBody());
     Assert.assertEquals(expectedStatus, response.getResponseCode());
     Assert.assertEquals(expectedResult, body.getResult());
@@ -259,11 +264,12 @@ public class DatasetOpExecutorServiceTest {
 
   private URL resolve(String path) throws MalformedURLException {
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
-    return URIScheme.createURI(discoverable, "%s%s", Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
+    return URIScheme.createURI(discoverable, "%s%s", Constants.Gateway.API_VERSION_3_TOKEN, path)
+        .toURL();
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {
     return Objects.firstNonNull(GSON.fromJson(Bytes.toString(body), DatasetAdminOpResponse.class),
-                                new DatasetAdminOpResponse(null, null));
+        new DatasetAdminOpResponse(null, null));
   }
 }

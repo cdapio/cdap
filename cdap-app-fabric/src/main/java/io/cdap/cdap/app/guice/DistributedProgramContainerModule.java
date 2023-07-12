@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2022 Cask Data, Inc.
+ * Copyright © 2018-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,8 +33,8 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
@@ -111,6 +111,15 @@ public class DistributedProgramContainerModule extends AbstractModule {
     this(cConf, hConf, programRunId, programOpts, null);
   }
 
+  /**
+   * Creates a program container module for a program.
+   *
+   * @param cConf            The CConf to use.
+   * @param hConf            The HConf to use.
+   * @param programRunId     The program run ID.
+   * @param programOpts      The program options.
+   * @param serviceAnnouncer The service announcer to use.
+   */
   public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf,
       ProgramRunId programRunId,
       ProgramOptions programOpts, @Nullable ServiceAnnouncer serviceAnnouncer) {
@@ -235,15 +244,15 @@ public class DistributedProgramContainerModule extends AbstractModule {
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
     if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
       return;
     }
 
     if (coreSecurityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
+      modules.add(new ZkClientModule());
     }
 
     modules.add(new AbstractModule() {

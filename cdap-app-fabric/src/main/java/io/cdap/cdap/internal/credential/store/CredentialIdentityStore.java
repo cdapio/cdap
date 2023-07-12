@@ -49,7 +49,7 @@ public class CredentialIdentityStore {
   /**
    * Lists entries in the credential identity table for a given namespace.
    *
-   * @param context The transaction context to use.
+   * @param context   The transaction context to use.
    * @param namespace The namespace to list identities from.
    * @return A collection of identities in the namespace.
    * @throws IOException If any failure reading from storage occurs.
@@ -68,7 +68,7 @@ public class CredentialIdentityStore {
   /**
    * Lists entries in the credential identity table for a given profile.
    *
-   * @param context The transaction context to use.
+   * @param context   The transaction context to use.
    * @param profileId The profile to list identities for.
    * @return A Collection of identities attached to the provided profile.
    * @throws IOException If any failure reading from storage occurs.
@@ -76,7 +76,8 @@ public class CredentialIdentityStore {
   public Collection<CredentialIdentityId> listForProfile(StructuredTableContext context,
       CredentialProfileId profileId) throws IOException {
     Field<?> indexKey = Fields.stringField(
-        CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD, toProfileIndex(profileId));
+        CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD,
+        toProfileIndex(profileId.getNamespace(), profileId.getName()));
     try (CloseableIterator<StructuredRow> identityIterator = context.getTable(
         CredentialProviderStore.CREDENTIAL_IDENTITIES).scan(indexKey)) {
       return identitiesFromRowIterator(identityIterator);
@@ -87,7 +88,7 @@ public class CredentialIdentityStore {
    * Fetch an entry from the identity table.
    *
    * @param context The transaction context to use.
-   * @param id The identity reference to fetch.
+   * @param id      The identity reference to fetch.
    * @return The fetched credential identity.
    * @throws IOException If any failure reading from storage occurs.
    */
@@ -106,8 +107,8 @@ public class CredentialIdentityStore {
   /**
    * Write an entry to the credential identity table.
    *
-   * @param context The transaction context to use.
-   * @param id The identity reference to write to.
+   * @param context  The transaction context to use.
+   * @param id       The identity reference to write to.
    * @param identity The identity to write.
    * @throws IOException If any failure reading from storage occurs.
    */
@@ -123,7 +124,7 @@ public class CredentialIdentityStore {
         Fields.stringField(CredentialProviderStore.IDENTITY_DATA_FIELD,
             GSON.toJson(identity)),
         Fields.stringField(CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD,
-            toProfileIndex(identity.getCredentialProfile())));
+            toProfileIndex(identity.getProfileNamespace(), identity.getProfileName())));
     identityTable.upsert(row);
   }
 
@@ -131,7 +132,7 @@ public class CredentialIdentityStore {
    * Deletes an entry from the credential identity table.
    *
    * @param context The transaction context to use.
-   * @param id The identity reference to delete.
+   * @param id      The identity reference to delete.
    * @throws IOException If any failure reading from storage occurs.
    */
   public void delete(StructuredTableContext context, CredentialIdentityId id)
@@ -155,7 +156,7 @@ public class CredentialIdentityStore {
         .collect(Collectors.toList());
   }
 
-  private static String toProfileIndex(CredentialProfileId profileId) {
-    return String.format("%s:%s", profileId.getNamespace(), profileId.getName());
+  private static String toProfileIndex(String profileNamespace, String profileName) {
+    return String.format("%s:%s", profileNamespace, profileName);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.common.guice;
 
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -50,7 +51,7 @@ import org.apache.twill.zookeeper.ZKClients;
 
 /**
  * Guice module for {@link KafkaClient} and {@link KafkaClientService}. Requires bindings from
- * {@link ConfigModule} and {@link ZKClientModule}.
+ * {@link ConfigModule} and {@link ZkClientModule}.
  */
 public class KafkaClientModule extends PrivateModule {
 
@@ -60,7 +61,7 @@ public class KafkaClientModule extends PrivateModule {
   protected void configure() {
     bind(ZKClientService.class)
         .annotatedWith(Names.named(KAFKA_ZK))
-        .toProvider(ZKClientServiceProvider.class).in(Scopes.SINGLETON);
+        .toProvider(ZkClientServiceProvider.class).in(Scopes.SINGLETON);
     bind(KafkaClientService.class).to(DefaultKafkaClientService.class).in(Scopes.SINGLETON);
     bind(BrokerService.class).to(DefaultBrokerService.class).in(Scopes.SINGLETON);
 
@@ -75,24 +76,24 @@ public class KafkaClientModule extends PrivateModule {
    * A {@link Provider} to provide {@link ZKClientService} used by {@link ZKKafkaClientService} and
    * {@link ZKBrokerService}.
    */
-  private static final class ZKClientServiceProvider implements Provider<ZKClientService> {
+  private static final class ZkClientServiceProvider implements Provider<ZKClientService> {
 
     private final CConfiguration cConf;
     private final Injector injector;
 
     @Inject
-    ZKClientServiceProvider(CConfiguration cConf, Injector injector) {
+    ZkClientServiceProvider(CConfiguration cConf, Injector injector) {
       this.cConf = cConf;
       this.injector = injector;
     }
 
     @Override
     public ZKClientService get() {
-      String kafkaZKQuorum = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_QUORUM);
+      String kafkaZkQuorum = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_QUORUM);
       ZKClientService zkClientService;
       final AtomicInteger startedCount = new AtomicInteger();
 
-      if (kafkaZKQuorum == null) {
+      if (kafkaZkQuorum == null) {
         // If there is no separate zookeeper quorum, use the shared ZKClientService.
         zkClientService = injector.getInstance(ZKClientService.class);
 
@@ -113,7 +114,7 @@ public class KafkaClientModule extends PrivateModule {
         zkClientService = ZKClientServices.delegate(
             ZKClients.reWatchOnExpire(
                 ZKClients.retryOnFailure(
-                    ZKClientService.Builder.of(kafkaZKQuorum)
+                    ZKClientService.Builder.of(kafkaZkQuorum)
                         .setSessionTimeout(
                             cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
                                 Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
@@ -152,13 +153,13 @@ public class KafkaClientModule extends PrivateModule {
    * A {@link Service} wrapper that wraps a {@link Service} with a {@link ZKClientService} that will
    * get start/stop together.
    */
-  private abstract static class AbstractServiceWithZKClient<T extends Service> extends
+  private abstract static class AbstractServiceWithZkClient<T extends Service> extends
       AbstractIdleService {
 
     private final ZKClientService zkClientService;
     private final T delegate;
 
-    AbstractServiceWithZKClient(ZKClientService zkClientService, T delegate) {
+    AbstractServiceWithZkClient(ZKClientService zkClientService, T delegate) {
       this.zkClientService = zkClientService;
       this.delegate = delegate;
     }
@@ -202,7 +203,7 @@ public class KafkaClientModule extends PrivateModule {
    * A {@link KafkaClientService} that bundles with a given {@link ZKClientService} for start/stop.
    */
   private static final class DefaultKafkaClientService extends
-      AbstractServiceWithZKClient<KafkaClientService>
+      AbstractServiceWithZkClient<KafkaClientService>
       implements KafkaClientService {
 
     @Inject
@@ -222,9 +223,9 @@ public class KafkaClientModule extends PrivateModule {
   }
 
   /**
-   * A {@link BrokerService} that bundles with a given {@link ZKClientService} for start/stop
+   * A {@link BrokerService} that bundles with a given {@link ZKClientService} for start/stop.
    */
-  private static final class DefaultBrokerService extends AbstractServiceWithZKClient<BrokerService>
+  private static final class DefaultBrokerService extends AbstractServiceWithZkClient<BrokerService>
       implements BrokerService {
 
     @Inject

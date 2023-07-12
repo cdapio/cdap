@@ -49,7 +49,7 @@ public class CredentialProfileStore {
   /**
    * Lists entries in the credential profile table for a given namespace.
    *
-   * @param context The transaction context to use.
+   * @param context   The transaction context to use.
    * @param namespace The namespace to list profiles from.
    * @return A collection of profiles in the namespace.
    * @throws IOException If any failure reading from storage occurs.
@@ -69,7 +69,7 @@ public class CredentialProfileStore {
    * Fetch an entry from the profile table.
    *
    * @param context The transaction context to use.
-   * @param id The profile reference to fetch.
+   * @param id      The profile reference to fetch.
    * @return The fetched credential profile.
    * @throws IOException If any failure reading from storage occurs.
    */
@@ -89,7 +89,7 @@ public class CredentialProfileStore {
    * Write an entry to the credential profile table.
    *
    * @param context The transaction context to use.
-   * @param id The profile reference to write to.
+   * @param id      The profile reference to write to.
    * @param profile The profile to write.
    * @throws IOException If any failure reading from storage occurs.
    */
@@ -110,7 +110,7 @@ public class CredentialProfileStore {
    * Deletes an entry from the credential profile table.
    *
    * @param context The transaction context to use.
-   * @param id The profile reference to delete.
+   * @param id      The profile reference to delete.
    * @throws IOException If any failure reading from storage occurs.
    */
   public void delete(StructuredTableContext context, CredentialProfileId id)
@@ -124,7 +124,8 @@ public class CredentialProfileStore {
     table.delete(key);
   }
 
-  private static Collection<CredentialProfileId> profilesFromRowIterator(Iterator<StructuredRow> iterator) {
+  private static Collection<CredentialProfileId> profilesFromRowIterator(
+      Iterator<StructuredRow> iterator) {
     return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator,
         Spliterator.ORDERED), false)
         .map(row -> new CredentialProfileId(

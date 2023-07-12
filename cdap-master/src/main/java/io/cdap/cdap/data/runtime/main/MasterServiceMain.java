@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2022 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,8 +46,8 @@ import io.cdap.cdap.common.guice.FileContextProvider;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.runtime.DaemonMain;
@@ -191,6 +191,12 @@ public class MasterServiceMain extends DaemonMain {
     }
   }
 
+  /**
+   * Entry point for master.
+   *
+   * @param args The master arguments.
+   * @throws Exception If an error occurs.
+   */
   public static void main(final String[] args) throws Exception {
     ClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
@@ -207,6 +213,9 @@ public class MasterServiceMain extends DaemonMain {
     }
   }
 
+  /**
+   * Creates a master service main.
+   */
   @SuppressWarnings("WeakerAccess")
   public MasterServiceMain() {
     CConfiguration cConf = CConfiguration.create();
@@ -261,7 +270,7 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
     resetShutdownTime();
     createDirectory("twill");
-    createSystemHBaseNamespace();
+    createSystemHbaseNamespace();
     updateConfigurationTable();
     Services.startAndWait(zkClient,
         cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
@@ -468,7 +477,7 @@ public class MasterServiceMain extends DaemonMain {
   /**
    * Creates HBase namespace for the cdap system namespace.
    */
-  private void createSystemHBaseNamespace() {
+  private void createSystemHbaseNamespace() {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     try (HBaseDDLExecutor ddlExecutor = new HBaseDDLExecutorFactory(cConf, hConf).get()) {
       ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
@@ -527,7 +536,7 @@ public class MasterServiceMain extends DaemonMain {
   static Injector createProcessInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
         new ConfigModule(cConf, hConf),
-        new ZKClientModule(),
+        new ZkClientModule(),
         new KafkaLogAppenderModule()
     );
   }
@@ -545,7 +554,7 @@ public class MasterServiceMain extends DaemonMain {
         new AbstractModule() {
           @Override
           protected void configure() {
-            // Instead of using ZKClientModule that will create new instance of ZKClient, we create instance
+            // Instead of using ZkClientModule that will create new instance of ZKClient, we create instance
             // binding to reuse the same ZKClient used for leader election
             bind(ZKClient.class).toInstance(zkClientService);
             bind(ZKClientService.class).toInstance(zkClientService);
@@ -555,7 +564,7 @@ public class MasterServiceMain extends DaemonMain {
         new KafkaLogAppenderModule(),
         new DFSLocationModule(),
         new IOModule(),
-        new ZKDiscoveryModule(),
+        new ZkDiscoveryModule(),
         new KafkaClientModule(),
         new DataSetServiceModules().getDistributedModules(),
         new DataFabricModules("cdap.master").getDistributedModules(),
@@ -752,7 +761,8 @@ public class MasterServiceMain extends DaemonMain {
           return;
         }
 
-        SortedMap<Integer, LeaderElectionInfoService.Participant> participants = ImmutableSortedMap.of();
+        SortedMap<Integer, LeaderElectionInfoService.Participant> participants = ImmutableSortedMap
+            .of();
         try {
           participants = electionInfoService.fetchCurrentParticipants();
 
@@ -790,10 +800,9 @@ public class MasterServiceMain extends DaemonMain {
     /**
      * Monitors the twill application for master services running through Twill.
      *
-     * @param executor executor for re-running the application if it gets terminated
-     * @param failures number of failures in starting the application
-     * @param serviceController the reference to be updated with the active {@link
-     *     TwillController}
+     * @param executor          executor for re-running the application if it gets terminated
+     * @param failures          number of failures in starting the application
+     * @param serviceController the reference to be updated with the active {@link TwillController}
      */
     private void monitorTwillApplication(final ScheduledExecutorService executor,
         final int failures,
@@ -925,10 +934,8 @@ public class MasterServiceMain extends DaemonMain {
             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
         final Path runDir = Files.createTempDirectory(tempPath, "master");
         try {
-          Path logbackFile = saveLogbackConf(runDir.resolve("logback.xml"));
           MasterTwillApplication masterTwillApp = new MasterTwillApplication(cConf,
               getServiceInstances(serviceStore, cConf));
-          List<String> extraClassPath = masterTwillApp.prepareLocalizeResource(runDir, hConf);
           TwillPreparer preparer = twillRunner.prepare(masterTwillApp);
 
           Map<String, String> twillConfigs = new HashMap<>();
@@ -938,6 +945,8 @@ public class MasterServiceMain extends DaemonMain {
           twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
               cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
           preparer.withConfiguration(twillConfigs);
+
+          Path logbackFile = saveLogbackConf(runDir.resolve("logback.xml"));
 
           // Add logback xml
           if (Files.exists(logbackFile)) {
@@ -973,6 +982,7 @@ public class MasterServiceMain extends DaemonMain {
           // Setup extra classpath. Currently twill doesn't support different classpath per runnable,
           // hence we just set it for all containers. The actual jars are localized via the MasterTwillApplication,
           // and having missing jars as specified in the classpath is ok.
+          List<String> extraClassPath = masterTwillApp.prepareLocalizeResource(runDir, hConf);
           preparer = preparer.withClassPaths(extraClassPath);
 
           // Set the container to use MasterServiceMainClassLoader for class rewriting
@@ -1022,8 +1032,9 @@ public class MasterServiceMain extends DaemonMain {
     private Map<String, Integer> getServiceInstances(ServiceStore serviceStore,
         CConfiguration cConf) {
       Map<String, Integer> instanceCountMap = new HashMap<>();
-      Set<ServiceResourceKeys> serviceResourceKeysSet = MasterUtils.createSystemServicesResourceKeysSet(
-          cConf);
+      Set<ServiceResourceKeys> serviceResourceKeysSet = MasterUtils
+          .createSystemServicesResourceKeysSet(
+              cConf);
       for (ServiceResourceKeys serviceResourceKeys : serviceResourceKeysSet) {
         String service = serviceResourceKeys.getServiceName();
         try {

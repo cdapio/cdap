@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.Tasks;
@@ -75,6 +75,7 @@ import org.slf4j.LoggerFactory;
  * {@link ExternalResource} to be used in tests that require in-memory Kafka.
  */
 public class KafkaTester extends ExternalResource {
+
   private static final Logger LOG = LoggerFactory.getLogger(KafkaTester.class);
   private static final Gson GSON = new Gson();
 
@@ -88,31 +89,33 @@ public class KafkaTester extends ExternalResource {
   private final Map<String, String> extraConfigs;
   private final Iterable<Module> extraModules;
   private final CConfiguration cConf;
-  private final String [] kafkaBrokerListParams;
+  private final String[] kafkaBrokerListParams;
   private final TemporaryFolder tmpFolder;
   private final int numPartitions;
 
   /**
-   * Create a {@link KafkaTester} with default configurations and {@link Module Guice modules} and a single
-   * Kafka partition.
+   * Create a {@link KafkaTester} with default configurations and {@link Module Guice modules} and a
+   * single Kafka partition.
    */
   public KafkaTester() {
     this(Collections.emptyMap(), Collections.emptyList(), 1);
   }
 
   /**
-   * Create a {@link KafkaTester} with the specified set of extra configurations, {@link Module Guice modules} and
-   * Kafka partitions.
+   * Create a {@link KafkaTester} with the specified set of extra configurations, {@link Module
+   * Guice modules} and Kafka partitions.
    *
-   * @param extraConfigs the specified extra configurations to provide while creating the
-   * {@link Injector Guice injector}
-   * @param extraModules the specified extra {@link Module Guice modules} to include in the
-   * {@link Injector Guice injector}
-   * @param numPartitions the specified number of Kafka partitions
-   * @param kafkaBrokerListParams a list of configuration parameters to which the kafka broker list should be set
+   * @param extraConfigs          the specified extra configurations to provide while creating the
+   *                              {@link Injector Guice injector}
+   * @param extraModules          the specified extra {@link Module Guice modules} to include in the
+   *                              {@link Injector Guice injector}
+   * @param numPartitions         the specified number of Kafka partitions
+   * @param kafkaBrokerListParams a list of configuration parameters to which the kafka broker list
+   *                              should be set
    */
-  public KafkaTester(Map<String, String> extraConfigs, Iterable<Module> extraModules, int numPartitions,
-                     String ... kafkaBrokerListParams) {
+  public KafkaTester(Map<String, String> extraConfigs, Iterable<Module> extraModules,
+      int numPartitions,
+      String... kafkaBrokerListParams) {
     this.extraConfigs = extraConfigs;
     this.extraModules = extraModules;
     this.cConf = CConfiguration.create();
@@ -130,7 +133,7 @@ public class KafkaTester extends ExternalResource {
 
     kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig());
     kafkaServer.startAndWait();
-    initializeCConf();
+    initializeCconf();
     injector = createInjector();
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
@@ -139,7 +142,8 @@ public class KafkaTester extends ExternalResource {
     brokerService = injector.getInstance(BrokerService.class);
     brokerService.startAndWait();
 
-    String brokerList = updateKafkaBrokerList(injector.getInstance(CConfiguration.class), brokerService);
+    String brokerList = updateKafkaBrokerList(injector.getInstance(CConfiguration.class),
+        brokerService);
     LOG.info("Waiting for Kafka server to startup...");
     waitForKafkaStartup();
     LOG.info("Kafka server started with broker list {}", brokerList);
@@ -154,7 +158,7 @@ public class KafkaTester extends ExternalResource {
     zkServer.stopAndWait();
   }
 
-  private void initializeCConf() throws IOException {
+  private void initializeCconf() throws IOException {
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -165,9 +169,9 @@ public class KafkaTester extends ExternalResource {
 
   private String updateKafkaBrokerList(CConfiguration cConf, BrokerService brokerService) {
     String brokerList = Retries.callWithRetries(
-      brokerService::getBrokerList,
-      RetryStrategies.timeLimit(10, TimeUnit.SECONDS,
-                                RetryStrategies.exponentialDelay(100, 2000, TimeUnit.MILLISECONDS))
+        brokerService::getBrokerList,
+        RetryStrategies.timeLimit(10, TimeUnit.SECONDS,
+            RetryStrategies.exponentialDelay(100, 2000, TimeUnit.MILLISECONDS))
     );
 
     for (String param : kafkaBrokerListParams) {
@@ -179,11 +183,11 @@ public class KafkaTester extends ExternalResource {
 
   private Injector createInjector() {
     List<Module> modules = ImmutableList.<Module>builder()
-      .add(new ConfigModule(cConf))
-      .add(new ZKClientModule())
-      .add(new KafkaClientModule())
-      .addAll(extraModules)
-      .build();
+        .add(new ConfigModule(cConf))
+        .add(new ZkClientModule())
+        .add(new KafkaClientModule())
+        .addAll(extraModules)
+        .build();
 
     return Guice.createInjector(modules);
   }
@@ -214,20 +218,21 @@ public class KafkaTester extends ExternalResource {
       final AtomicBoolean isKafkaStarted = new AtomicBoolean(false);
       try {
         KafkaPublisher kafkaPublisher = kafkaClient.getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED,
-                                                                 Compression.NONE);
+            Compression.NONE);
         final String testTopic = "kafkatester.test.topic";
         final String testMessage = "Test Message";
         kafkaPublisher.prepare(testTopic).add(Charsets.UTF_8.encode(testMessage), 0).send().get();
-        getPublishedMessages(testTopic, ImmutableSet.of(0), 1, 0, new Function<FetchedMessage, String>() {
-          @Override
-          public String apply(FetchedMessage input) {
-            String fetchedMessage = Charsets.UTF_8.decode(input.getPayload()).toString();
-            if (fetchedMessage.equalsIgnoreCase(testMessage)) {
-              isKafkaStarted.set(true);
-            }
-            return "";
-          }
-        });
+        getPublishedMessages(testTopic, ImmutableSet.of(0), 1, 0,
+            new Function<FetchedMessage, String>() {
+              @Override
+              public String apply(FetchedMessage input) {
+                String fetchedMessage = Charsets.UTF_8.decode(input.getPayload()).toString();
+                if (fetchedMessage.equalsIgnoreCase(testMessage)) {
+                  isKafkaStarted.set(true);
+                }
+                return "";
+              }
+            });
       } catch (Exception e) {
         // nothing to do as waiting for kafka startup
       }
@@ -239,72 +244,75 @@ public class KafkaTester extends ExternalResource {
     return injector;
   }
 
-  public CConfiguration getCConf() {
+  public CConfiguration getCconf() {
     return cConf;
   }
 
   /**
    * Return a list of messages from the specified Kafka topic.
    *
-   * @param topic the specified Kafka topic
+   * @param topic           the specified Kafka topic
    * @param expectedNumMsgs the expected number of messages
-   * @param typeOfT the {@link Type} of each message
-   * @param <T> the type of each message
+   * @param typeOfT         the {@link Type} of each message
+   * @param <T>             the type of each message
    * @return a list of messages from the specified Kafka topic
    */
   @SuppressWarnings("unused")
-  public <T> List<T> getPublishedMessages(String topic, int expectedNumMsgs, Type typeOfT) throws InterruptedException {
+  public <T> List<T> getPublishedMessages(String topic, int expectedNumMsgs, Type typeOfT)
+      throws InterruptedException {
     return getPublishedMessages(topic, expectedNumMsgs, typeOfT, GSON);
   }
 
   /**
    * Return a list of messages from the specified Kafka topic.
    *
-   * @param topic the specified Kafka topic
+   * @param topic           the specified Kafka topic
    * @param expectedNumMsgs the expected number of messages
-   * @param typeOfT the {@link Type} of each message
-   * @param gson the {@link Gson} object to use for deserializing messages
-   * @param <T> the type of each message
+   * @param typeOfT         the {@link Type} of each message
+   * @param gson            the {@link Gson} object to use for deserializing messages
+   * @param <T>             the type of each message
    * @return a list of messages from the specified Kafka topic
    */
   public <T> List<T> getPublishedMessages(String topic, int expectedNumMsgs, Type typeOfT,
-                                          Gson gson) throws InterruptedException {
+      Gson gson) throws InterruptedException {
     return getPublishedMessages(topic, expectedNumMsgs, typeOfT, gson, 0);
   }
 
   /**
    * Return a list of messages from the specified Kafka topic.
    *
-   * @param topic the specified Kafka topic
+   * @param topic           the specified Kafka topic
    * @param expectedNumMsgs the expected number of messages
-   * @param typeOfT the {@link Type} of each message
-   * @param gson the {@link Gson} object to use for deserializing messages
-   * @param offset the Kafka offset
-   * @param <T> the type of each message
+   * @param typeOfT         the {@link Type} of each message
+   * @param gson            the {@link Gson} object to use for deserializing messages
+   * @param offset          the Kafka offset
+   * @param <T>             the type of each message
    * @return a list of messages from the specified Kafka topic
    */
   public <T> List<T> getPublishedMessages(String topic, int expectedNumMsgs, final Type typeOfT,
-                                          final Gson gson, int offset) throws InterruptedException {
-    return getPublishedMessages(topic, ImmutableSet.of(0), expectedNumMsgs, offset, new Function<FetchedMessage, T>() {
-      @Override
-      public T apply(FetchedMessage input) {
-        return gson.fromJson(Bytes.toString(input.getPayload()), typeOfT);
-      }
-    });
+      final Gson gson, int offset) throws InterruptedException {
+    return getPublishedMessages(topic, ImmutableSet.of(0), expectedNumMsgs, offset,
+        new Function<FetchedMessage, T>() {
+          @Override
+          public T apply(FetchedMessage input) {
+            return gson.fromJson(Bytes.toString(input.getPayload()), typeOfT);
+          }
+        });
   }
 
   /**
    * Return a list of messages from the specified Kafka topic.
    *
-   * @param topic the specified Kafka topic
+   * @param topic           the specified Kafka topic
    * @param expectedNumMsgs the expected number of messages
-   * @param offset the Kafka offset
-   * @param converter converter function to convert payload bytebuffer into type T
-   * @param <T> the type of each message
+   * @param offset          the Kafka offset
+   * @param converter       converter function to convert payload bytebuffer into type T
+   * @param <T>             the type of each message
    * @return a list of messages from the specified Kafka topic
    */
-  public <T> List<T> getPublishedMessages(String topic, Set<Integer> partitions, int expectedNumMsgs, int offset,
-                                          final Function<FetchedMessage, T> converter) throws InterruptedException {
+  public <T> List<T> getPublishedMessages(String topic, Set<Integer> partitions,
+      int expectedNumMsgs, int offset,
+      final Function<FetchedMessage, T> converter) throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(expectedNumMsgs);
     final CountDownLatch stopLatch = new CountDownLatch(1);
     final List<T> actual = new ArrayList<>(expectedNumMsgs);
@@ -313,35 +321,37 @@ public class KafkaTester extends ExternalResource {
       preparer.add(topic, partition, offset);
     }
     Cancellable cancellable = preparer.consume(
-      new KafkaConsumer.MessageCallback() {
-        @Override
-        public long onReceived(Iterator<FetchedMessage> messages) {
-          long offset = 0L;
-          while (messages.hasNext()) {
-            FetchedMessage message = messages.next();
-            actual.add(converter.apply(message));
-            latch.countDown();
-            offset = message.getNextOffset();
+        new KafkaConsumer.MessageCallback() {
+          @Override
+          public long onReceived(Iterator<FetchedMessage> messages) {
+            long offset = 0L;
+            while (messages.hasNext()) {
+              FetchedMessage message = messages.next();
+              actual.add(converter.apply(message));
+              latch.countDown();
+              offset = message.getNextOffset();
+            }
+            return offset;
           }
-          return offset;
-        }
 
-        @Override
-        public void finished() {
-          stopLatch.countDown();
+          @Override
+          public void finished() {
+            stopLatch.countDown();
+          }
         }
-      }
     );
-    Assert.assertTrue(String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
-                      latch.await(15, TimeUnit.SECONDS));
+    Assert.assertTrue(
+        String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
+        latch.await(15, TimeUnit.SECONDS));
     cancellable.cancel();
     Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
     return actual;
   }
 
-  public <T> Map<Integer, T> getPublishedMessages(String topic, Set<Integer> partitions, int expectedNumMsgs,
-                                                    final Function<FetchedMessage, T> converter)
-    throws InterruptedException {
+  public <T> Map<Integer, T> getPublishedMessages(String topic, Set<Integer> partitions,
+      int expectedNumMsgs,
+      final Function<FetchedMessage, T> converter)
+      throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(expectedNumMsgs);
     final CountDownLatch stopLatch = new CountDownLatch(1);
     final Map<Integer, T> actual = new HashMap<>();
@@ -350,42 +360,45 @@ public class KafkaTester extends ExternalResource {
       preparer.addFromBeginning(topic, partition);
     }
     Cancellable cancellable = preparer.consume(
-      new KafkaConsumer.MessageCallback() {
-        @Override
-        public long onReceived(Iterator<FetchedMessage> messages) {
-          long offset = 0L;
-          while (messages.hasNext()) {
-            FetchedMessage message = messages.next();
-            actual.put(message.getTopicPartition().getPartition(), converter.apply(message));
-            latch.countDown();
-            offset = message.getNextOffset();
+        new KafkaConsumer.MessageCallback() {
+          @Override
+          public long onReceived(Iterator<FetchedMessage> messages) {
+            long offset = 0L;
+            while (messages.hasNext()) {
+              FetchedMessage message = messages.next();
+              actual.put(message.getTopicPartition().getPartition(), converter.apply(message));
+              latch.countDown();
+              offset = message.getNextOffset();
+            }
+            return offset;
           }
-          return offset;
-        }
 
-        @Override
-        public void finished() {
-          stopLatch.countDown();
+          @Override
+          public void finished() {
+            stopLatch.countDown();
+          }
         }
-      }
     );
 
-    Assert.assertTrue(String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
-                      latch.await(15, TimeUnit.SECONDS));
+    Assert.assertTrue(
+        String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
+        latch.await(15, TimeUnit.SECONDS));
     cancellable.cancel();
     Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
     return actual;
   }
 
   /**
-   * Returns the {@link KafkaClient} that can be used to talk to the Kafka server started in this class.
+   * Returns the {@link KafkaClient} that can be used to talk to the Kafka server started in this
+   * class.
    */
   public KafkaClient getKafkaClient() {
     return kafkaClient;
   }
 
   /**
-   * Returns the {@link BrokerService} that provides information about the Kafka server started in this class.
+   * Returns the {@link BrokerService} that provides information about the Kafka server started in
+   * this class.
    */
   public BrokerService getBrokerService() {
     return brokerService;
@@ -395,8 +408,10 @@ public class KafkaTester extends ExternalResource {
    * Creates a topic with the given number of partitions.
    */
   public void createTopic(String topic, int partitions) {
-    ZkClient zkClient = new ZkClient(zkServer.getConnectionStr(), 20000, 2000, ZKStringSerializer$.MODULE$);
+    ZkClient zkClient = new ZkClient(zkServer.getConnectionStr(), 20000, 2000,
+        ZKStringSerializer$.MODULE$);
     ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zkServer.getConnectionStr()), false);
-    AdminUtils.createTopic(zkUtils, topic, partitions, 1, new Properties(), RackAwareMode.Disabled$.MODULE$);
+    AdminUtils.createTopic(zkUtils, topic, partitions, 1, new Properties(),
+        RackAwareMode.Disabled$.MODULE$);
   }
 }

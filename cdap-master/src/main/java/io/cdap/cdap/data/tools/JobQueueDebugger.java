@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 Cask Data, Inc.
+ * Copyright © 2017-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,8 +44,8 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -87,11 +87,11 @@ import org.apache.twill.zookeeper.ZKClientService;
 /**
  * Debugging tool for {@link JobQueue}.
  *
- * Because the JobQueue is scanned over multiple transactions, it will be an inconsistent view. The
- * same Job will not be counted multiple times, but some Jobs may be missed if they were deleted or
- * added during the scan. The count of the Job State may also be inconsistent.
+ * <p>Because the JobQueue is scanned over multiple transactions, it will be an inconsistent view.
+ * The same Job will not be counted multiple times, but some Jobs may be missed if they were deleted
+ * or added during the scan. The count of the Job State may also be inconsistent.
  *
- * The publish timestamp of the last message processed from the topics will also be inconsistent
+ * <p>The publish timestamp of the last message processed from the topics will also be inconsistent
  * from the Jobs in the JobQueue.
  */
 public class JobQueueDebugger extends AbstractIdleService {
@@ -108,6 +108,13 @@ public class JobQueueDebugger extends AbstractIdleService {
 
   private JobQueueScanner jobQueueScanner;
 
+  /**
+   * Debugger for the job queue.
+   *
+   * @param cConf             The CConf to use.
+   * @param zkClientService   The ZK client service.
+   * @param transactionRunner The transaction runner.
+   */
   @Inject
   public JobQueueDebugger(CConfiguration cConf, ZKClientService zkClientService,
       TransactionRunner transactionRunner) {
@@ -267,6 +274,10 @@ public class JobQueueDebugger extends AbstractIdleService {
         case PENDING_LAUNCH:
           pendingLaunch++;
           break;
+        default:
+          throw new IllegalStateException(String.format("Job '%s' in unexpected state %s",
+              job.getJobKey(),
+              job.getState().toString()));
       }
 
       updateOldestNewest(job);
@@ -329,8 +340,8 @@ public class JobQueueDebugger extends AbstractIdleService {
         new ConfigModule(cConf, HBaseConfiguration.create()),
         RemoteAuthenticatorModules.getDefaultModule(),
         new IOModule(),
-        new ZKClientModule(),
-        new ZKDiscoveryModule(),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
         new DFSLocationModule(),
         new TwillModule(),
         new DataFabricModules().getDistributedModules(),
@@ -370,6 +381,12 @@ public class JobQueueDebugger extends AbstractIdleService {
     return createInjector().getInstance(JobQueueDebugger.class);
   }
 
+  /**
+   * Entry point for the job queue debugger.
+   *
+   * @param args The arguments to the debugger.
+   * @throws Exception If something fails.
+   */
   public static void main(String[] args) throws Exception {
     Options options = new Options()
         .addOption(new Option("h", "help", false, "Print this usage message."))

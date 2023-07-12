@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,8 +63,9 @@ public class RouterServiceMainWithSecurityEnabledTest extends MasterServiceMainT
 
   @Test
   public void testRouterServiceWithAuthenticationEnabled() throws Exception {
-    URL url = getRouterBaseURI().resolve("/").toURL();
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
+    URL url = getRouterBaseUri().resolve("/").toURL();
+    HttpResponse response = HttpRequests
+        .execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
 
     Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, response.getResponseCode());
   }

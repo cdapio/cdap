@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -96,17 +96,17 @@ public class DistributedLogFrameworkTest {
 
   @ClassRule
   public static final KafkaTester KAFKA_TESTER = new KafkaTester(
-    Collections.singletonMap(Constants.Logging.NUM_PARTITIONS, "1"),
-    Collections.emptyList(), 1
+      Collections.singletonMap(Constants.Logging.NUM_PARTITIONS, "1"),
+      Collections.emptyList(), 1
   );
 
   private Injector injector;
 
   @BeforeClass
   public static void init() {
-    CConfiguration cConf = KAFKA_TESTER.getCConf();
+    CConfiguration cConf = KAFKA_TESTER.getCconf();
     KAFKA_TESTER.createTopic(cConf.get(Constants.Logging.KAFKA_TOPIC),
-                             cConf.getInt(Constants.Logging.NUM_PARTITIONS));
+        cConf.getInt(Constants.Logging.NUM_PARTITIONS));
   }
 
   @Before
@@ -137,35 +137,38 @@ public class DistributedLogFrameworkTest {
 
     // Send some logs to Kafka.
     LoggingContext context = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                       Constants.Logging.COMPONENT_NAME,
-                                                       "test");
+        Constants.Logging.COMPONENT_NAME,
+        "test");
 
     // Make sure all events get flushed in the same batch
-    long eventTimeBase = System.currentTimeMillis() + cConf.getInt(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
+    long eventTimeBase =
+        System.currentTimeMillis() + cConf.getInt(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
     final int msgCount = 50;
     for (int i = 0; i < msgCount; i++) {
       // Publish logs in descending timestamp order
       publishLog(
-        cConf.get(Constants.Logging.KAFKA_TOPIC), context,
-        ImmutableList.of(
-          createLoggingEvent("io.cdap.test." + i, Level.INFO, "Testing " + i, eventTimeBase - i)
-        )
+          cConf.get(Constants.Logging.KAFKA_TOPIC), context,
+          ImmutableList.of(
+              createLoggingEvent("io.cdap.test." + i, Level.INFO, "Testing " + i, eventTimeBase - i)
+          )
       );
     }
 
     // Read the logs back. They should be sorted by timestamp order.
     final FileMetaDataReader metaDataReader = injector.getInstance(FileMetaDataReader.class);
     Tasks.waitFor(true, () -> {
-      List<LogLocation> locations = metaDataReader.listFiles(new LogPathIdentifier(NamespaceId.SYSTEM.getNamespace(),
-                                                                                    Constants.Logging.COMPONENT_NAME,
-                                                                                   "test"), 0, Long.MAX_VALUE);
+      List<LogLocation> locations = metaDataReader
+          .listFiles(new LogPathIdentifier(NamespaceId.SYSTEM.getNamespace(),
+              Constants.Logging.COMPONENT_NAME,
+              "test"), 0, Long.MAX_VALUE);
       if (locations.size() != 1) {
         return false;
       }
       LogLocation location = locations.get(0);
       int i = 0;
       try {
-        try (CloseableIterator<LogEvent> iter = location.readLog(Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, msgCount)) {
+        try (CloseableIterator<LogEvent> iter = location
+            .readLog(Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, msgCount)) {
           while (iter.hasNext()) {
             String expectedMsg = "Testing " + (msgCount - i - 1);
             LogEvent event = iter.next();
@@ -196,11 +199,11 @@ public class DistributedLogFrameworkTest {
   private CheckpointManager<KafkaOffset> getCheckpointManager(String kafkaTopic) {
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     return new KafkaCheckpointManager(transactionRunner,
-                                      Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + kafkaTopic);
+        Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + kafkaTopic);
   }
 
   private Injector createInjector() throws IOException {
-    CConfiguration cConf = CConfiguration.copy(KAFKA_TESTER.getCConf());
+    CConfiguration cConf = CConfiguration.copy(KAFKA_TESTER.getCconf());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
     // The event delay cannot be too small, otherwise the events will be out of order, especially on slow machine
@@ -209,36 +212,38 @@ public class DistributedLogFrameworkTest {
 
     MockTwillContext mockTwillContext = new MockTwillContext();
     return Guice.createInjector(
-      new ConfigModule(cConf),
-      new ZKClientModule(),
-      new InMemoryDiscoveryModule(),
-      new KafkaClientModule(),
-      new LocalLocationModule(),
-      new DistributedLogFrameworkModule(mockTwillContext.getInstanceId(), mockTwillContext.getInstanceCount()),
-      new DataSetsModules().getInMemoryModules(),
-      new TransactionModules().getInMemoryModules(),
-      new TransactionExecutorModule(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new NamespaceAdminTestModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getNoOpModule(),
-      new StorageModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(UGIProvider.class).to(CurrentUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        new ConfigModule(cConf),
+        new ZkClientModule(),
+        new InMemoryDiscoveryModule(),
+        new KafkaClientModule(),
+        new LocalLocationModule(),
+        new DistributedLogFrameworkModule(mockTwillContext.getInstanceId(),
+            mockTwillContext.getInstanceCount()),
+        new DataSetsModules().getInMemoryModules(),
+        new TransactionModules().getInMemoryModules(),
+        new TransactionExecutorModule(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new NamespaceAdminTestModule(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new StorageModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+            bind(UGIProvider.class).to(CurrentUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          }
         }
-      }
     );
   }
 
   /**
    * Creates an {@link ILoggingEvent}.
    */
-  private ILoggingEvent createLoggingEvent(String loggerName, Level level, String message, long timestamp) {
+  private ILoggingEvent createLoggingEvent(String loggerName, Level level, String message,
+      long timestamp) {
     LoggingEvent event = new LoggingEvent();
     event.setLevel(level);
     event.setLoggerName(loggerName);
@@ -252,12 +257,13 @@ public class DistributedLogFrameworkTest {
    */
   private void publishLog(String topic, LoggingContext context, Iterable<ILoggingEvent> events) {
     KafkaPublisher.Preparer preparer = KAFKA_TESTER.getKafkaClient()
-      .getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED, Compression.NONE)
-      .prepare(topic);
+        .getPublisher(KafkaPublisher.Ack.LEADER_RECEIVED, Compression.NONE)
+        .prepare(topic);
 
     LoggingEventSerializer serializer = new LoggingEventSerializer();
     for (ILoggingEvent event : events) {
-      preparer.add(ByteBuffer.wrap(serializer.toBytes(new LogMessage(event, context))), context.getLogPartition());
+      preparer.add(ByteBuffer.wrap(serializer.toBytes(new LogMessage(event, context))),
+          context.getLogPartition());
     }
     preparer.send();
   }

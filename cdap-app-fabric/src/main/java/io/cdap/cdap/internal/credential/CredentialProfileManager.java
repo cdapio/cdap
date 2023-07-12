@@ -26,10 +26,13 @@ import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.security.spi.credential.CredentialProvider;
+import io.cdap.cdap.security.spi.credential.ProfileValidationException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -43,13 +46,16 @@ public class CredentialProfileManager {
   private final CredentialIdentityStore identityStore;
   private final CredentialProfileStore profileStore;
   private final TransactionRunner transactionRunner;
+  private final Map<String, CredentialProvider> credentialProviders;
 
   @Inject
   CredentialProfileManager(CredentialIdentityStore identityStore,
-      CredentialProfileStore profileStore, TransactionRunner transactionRunner) {
+      CredentialProfileStore profileStore, TransactionRunner transactionRunner,
+      CredentialProviderLoader credentialProviderLoader) {
     this.identityStore = identityStore;
     this.profileStore = profileStore;
     this.transactionRunner = transactionRunner;
+    this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
   }
 
   /**
@@ -81,11 +87,11 @@ public class CredentialProfileManager {
   /**
    * Creates a credential profile.
    *
-   * @param id The profile reference to create.
+   * @param id      The profile reference to create.
    * @param profile The profile to create.
-   * @throws BadRequestException If the profile is invalid.
+   * @throws BadRequestException    If the profile is invalid.
    * @throws AlreadyExistsException If the profile already exists.
-   * @throws IOException If any failure writing to storage occurs.
+   * @throws IOException            If any failure writing to storage occurs.
    */
   public void create(CredentialProfileId id, CredentialProfile profile)
       throws AlreadyExistsException, BadRequestException, IOException {
@@ -102,11 +108,11 @@ public class CredentialProfileManager {
   /**
    * Updates a credential profile.
    *
-   * @param id The profile reference to update.
+   * @param id      The profile reference to update.
    * @param profile The updated profile.
    * @throws BadRequestException If the profile is invalid.
-   * @throws IOException If any failure writing to storage occurs.
-   * @throws NotFoundException If the profile does not exist.
+   * @throws IOException         If any failure writing to storage occurs.
+   * @throws NotFoundException   If the profile does not exist.
    */
   public void update(CredentialProfileId id, CredentialProfile profile)
       throws BadRequestException, IOException, NotFoundException {
@@ -125,7 +131,7 @@ public class CredentialProfileManager {
    *
    * @param id The profile reference to delete.
    * @throws ConflictException If the profile still has attached identities.
-   * @throws IOException If any failure writing to storage occurs.
+   * @throws IOException       If any failure writing to storage occurs.
    * @throws NotFoundException If the profile does not exist.
    */
   public void delete(CredentialProfileId id)
@@ -147,10 +153,20 @@ public class CredentialProfileManager {
   }
 
   private void validateProfile(CredentialProfile profile) throws BadRequestException {
-    // Validate all fields are not null.
-    if (profile.getCredentialProviderType() == null
-        || profile.getCredentialProviderType().isEmpty()) {
+    // Ensure provider type is valid.
+    String providerType = profile.getCredentialProviderType();
+    if (providerType == null || profile.getCredentialProviderType().isEmpty()) {
       throw new BadRequestException("Credential provider type cannot be null or empty.");
+    }
+    if (!credentialProviders.containsKey(providerType)) {
+      throw new BadRequestException(String.format("Credential provider type '%s' is unsupported.",
+          providerType));
+    }
+    try {
+      credentialProviders.get(providerType).validateProfile(profile);
+    } catch (ProfileValidationException e) {
+      throw new BadRequestException(String.format("Failed to validate profile with error: %s",
+          e.getMessage()), e);
     }
   }
 }

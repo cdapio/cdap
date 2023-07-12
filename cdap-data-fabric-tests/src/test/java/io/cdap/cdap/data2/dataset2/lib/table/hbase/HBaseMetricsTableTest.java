@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,8 +31,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.data.hbase.HBaseTestBase;
 import io.cdap.cdap.data.hbase.HBaseTestFactory;
 import io.cdap.cdap.data.runtime.DataFabricModules;
@@ -68,6 +68,7 @@ import org.junit.experimental.categories.Category;
 /**
  * metrics table test for HBase.
  */
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 @Category(SlowTests.class)
 public class HBaseMetricsTableTest extends MetricsTableTest {
 
@@ -83,35 +84,36 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(new DataFabricModules().getDistributedModules(),
-                                             new ConfigModule(cConf, TEST_HBASE.getConfiguration()),
-                                             new ZKClientModule(),
-                                             new ZKDiscoveryModule(),
-                                             new TransactionMetricsModule(),
-                                             new DFSLocationModule(),
-                                             new NamespaceAdminTestModule(),
-                                             new SystemDatasetRuntimeModule().getDistributedModules(),
-                                             new DataSetsModules().getInMemoryModules(),
-                                             new AuthorizationTestModule(),
-                                             new AuthorizationEnforcementModule().getInMemoryModules(),
-                                             new AuthenticationContextModules().getNoOpModule(),
-                                             new AbstractModule() {
-                                               @Override
-                                               protected void configure() {
-                                                 bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-                                                 bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-                                               }
-                                             });
+        new ConfigModule(cConf, TEST_HBASE.getConfiguration()),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
+        new TransactionMetricsModule(),
+        new DFSLocationModule(),
+        new NamespaceAdminTestModule(),
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new DataSetsModules().getInMemoryModules(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          }
+        });
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getHBaseAdmin().getConfiguration())
+        .get();
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
     tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM),
-                                   TEST_HBASE.getHBaseAdmin().getConfiguration());
+        TEST_HBASE.getHBaseAdmin().getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
@@ -127,10 +129,10 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     // HBaseMetricsTable does not support mixed increment and incrementAndGet so the
     // updates and assertions here are different from MetricsTableTest.testConcurrentIncrement()
     Collection<? extends Thread> threads =
-      ImmutableList.of(new IncThread(getTable(testConcurrentIncrement), A, inc1, rounds),
-                       new IncThread(getTable(testConcurrentIncrement), A, inc2, rounds),
-                       new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 5, rounds),
-                       new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 2, rounds));
+        ImmutableList.of(new IncThread(getTable(testConcurrentIncrement), A, inc1, rounds),
+            new IncThread(getTable(testConcurrentIncrement), A, inc2, rounds),
+            new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 5, rounds),
+            new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 2, rounds));
     for (Thread t : threads) {
       t.start();
     }
@@ -149,12 +151,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   private DatasetId getDatasetId(String tableNamePrefix) {
     return NamespaceId.SYSTEM.dataset(tableNamePrefix + "v3");
   }
+
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     // add v3 so that all the tests are performed for v3 table
     DatasetId metricsDatasetInstanceId = getDatasetId(name);
     DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(true).build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
-                                           MetricsTable.class.getName(), props, null);
+        MetricsTable.class.getName(), props, null);
   }
 }

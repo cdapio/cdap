@@ -77,11 +77,11 @@ public class CredentialIdentityManager {
   /**
    * Creates a credential identity.
    *
-   * @param id The identity reference to create.
+   * @param id       The identity reference to create.
    * @param identity The identity to create.
    * @throws AlreadyExistsException If the identity already exists.
-   * @throws IOException If any failure writing to storage occurs.
-   * @throws NotFoundException If the profile the identity is attached to does not exist.
+   * @throws IOException            If any failure writing to storage occurs.
+   * @throws NotFoundException      If the profile the identity is attached to does not exist.
    */
   public void create(CredentialIdentityId id, CredentialIdentity identity)
       throws AlreadyExistsException, IOException, NotFoundException {
@@ -97,9 +97,9 @@ public class CredentialIdentityManager {
   /**
    * Updates a credential identity.
    *
-   * @param id The identity reference to update.
+   * @param id       The identity reference to update.
    * @param identity The identity to update.
-   * @throws IOException If any failure writing to storage occurs.
+   * @throws IOException       If any failure writing to storage occurs.
    * @throws NotFoundException If the identity does not exist or if the profile the identity is
    *                           attached to does not exist.
    */
@@ -118,7 +118,7 @@ public class CredentialIdentityManager {
    * Deletes a credential identity.
    *
    * @param id The identity reference to update.
-   * @throws IOException If any failure writing to storage occurs.
+   * @throws IOException       If any failure writing to storage occurs.
    * @throws NotFoundException If the identity does not exist.
    */
   public void delete(CredentialIdentityId id) throws IOException, NotFoundException {
@@ -134,7 +134,8 @@ public class CredentialIdentityManager {
   private void validateAndWriteIdentity(StructuredTableContext context, CredentialIdentityId id,
       CredentialIdentity identity) throws IOException, NotFoundException {
     // Validate the referenced profile exists.
-    CredentialProfileId profileId = identity.getCredentialProfile();
+    CredentialProfileId profileId = new CredentialProfileId(identity.getProfileNamespace(),
+        identity.getProfileName());
     if (!profileStore.get(context, profileId).isPresent()) {
       throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
           profileId.getNamespace(), profileId.getName()));

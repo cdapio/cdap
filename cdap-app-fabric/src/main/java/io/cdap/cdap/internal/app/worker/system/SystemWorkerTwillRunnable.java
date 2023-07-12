@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,8 +45,8 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -197,8 +197,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
     if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
     } else {
@@ -217,14 +217,14 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(TwillRunnerService.class).toProvider(
-                  new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+              new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
               .in(Scopes.SINGLETON);
           bind(TwillRunner.class).to(TwillRunnerService.class);
         }
       });
 
       if (coreSecurityModule.requiresZKClient()) {
-        modules.add(new ZKClientModule());
+        modules.add(new ZkClientModule());
       }
     }
 
@@ -238,12 +238,12 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         protected void configure() {
           bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
           bind(ArtifactRepositoryReader.class).to(
-                  RemoteArtifactRepositoryReaderWithLocalization.class)
+              RemoteArtifactRepositoryReaderWithLocalization.class)
               .in(Scopes.SINGLETON);
           bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
           OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
           install(new FactoryModuleBuilder().implement(ArtifactManager.class,
-                  RemoteArtifactManager.class)
+              RemoteArtifactManager.class)
               .build(ArtifactManagerFactory.class));
         }
       };

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
@@ -34,7 +35,7 @@ import org.junit.Test;
 /**
  * Tests for {@link CredentialProfileStore}.
  */
-public class CredentialProfileManagerTest extends CredentialManagerTestBase {
+public class CredentialProfileManagerTest extends CredentialProviderTestBase {
 
   private void assertCredentialProfilesEqual(CredentialProfile expected, CredentialProfile actual) {
     Assert.assertEquals(expected.getCredentialProviderType(), actual.getCredentialProviderType());
@@ -47,12 +48,12 @@ public class CredentialProfileManagerTest extends CredentialManagerTestBase {
     String namespace = "testListProfiles";
     // Create 2 profiles.
     CredentialProfileId id1 = new CredentialProfileId(namespace, "list1");
-    CredentialProfile profile1 = new CredentialProfile("test", "some description",
-        Collections.singletonMap("some-key", "some-value"));
+    CredentialProfile profile1 = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some description", Collections.singletonMap("some-key", "some-value"));
     CredentialProfileId id2 = new CredentialProfileId(namespace, "list2");
-    CredentialProfile profile2 = new CredentialProfile("other-test",
-        "some other description",
-        Collections.singletonMap("some-other-key", "some-other-value"));
+    CredentialProfile profile2 = new CredentialProfile(
+        CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some other description", Collections.singletonMap("some-other-key", "some-other-value"));
     credentialProfileManager.create(id1, profile1);
     credentialProfileManager.create(id2, profile2);
     Collection<CredentialProfileId> returnedProfiles = credentialProfileManager
@@ -66,17 +67,16 @@ public class CredentialProfileManagerTest extends CredentialManagerTestBase {
 
     // Create a new profile.
     CredentialProfileId id = new CredentialProfileId(namespace, "test1");
-    CredentialProfile profile = new CredentialProfile("test", "some description",
-        Collections.singletonMap("some-key", "some-value"));
+    CredentialProfile profile = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some description", Collections.singletonMap("some-key", "some-value"));
     credentialProfileManager.create(id, profile);
     Optional<CredentialProfile> returnedProfile = credentialProfileManager.get(id);
     Assert.assertTrue(returnedProfile.isPresent());
     assertCredentialProfilesEqual(profile, returnedProfile.get());
 
     // Update the profile.
-    CredentialProfile profile2 = new CredentialProfile("other-test",
-        "some other description",
-        Collections.singletonMap("some-other-key", "some-other-value"));
+    CredentialProfile profile2 = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some other description", Collections.singletonMap("some-other-key", "some-other-value"));
     credentialProfileManager.update(id, profile2);
     returnedProfile = credentialProfileManager.get(id);
     Assert.assertTrue(returnedProfile.isPresent());
@@ -92,9 +92,11 @@ public class CredentialProfileManagerTest extends CredentialManagerTestBase {
   public void testCreateThrowsExceptionWhenAlreadyExists() throws Exception {
     String namespace = "testCreateThrowsExceptionWhenAlreadyExists";
     CredentialProfileId id = new CredentialProfileId(namespace, "test2");
-    CredentialProfile profile = new CredentialProfile("test", "some description",
+    CredentialProfile profile = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some description",
         Collections.singletonMap("some-key", "some-value"));
-    CredentialProfile profile2 = new CredentialProfile("test-other",
+    CredentialProfile profile2 = new CredentialProfile(
+        CREDENTIAL_PROVIDER_TYPE_SUCCESS,
         "some other description",
         Collections.singletonMap("some-other-key", "some-other-value"));
     credentialProfileManager.create(id, profile);
@@ -105,7 +107,8 @@ public class CredentialProfileManagerTest extends CredentialManagerTestBase {
   public void testUpdateThrowsExceptionWhenNotFound() throws Exception {
     String namespace = "testUpdateThrowsExceptionWhenNotFound";
     CredentialProfileId id = new CredentialProfileId(namespace, "does-not-exist");
-    CredentialProfile profile = new CredentialProfile("test", "some description",
+    CredentialProfile profile = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some description",
         Collections.singletonMap("some-key", "some-value"));
     credentialProfileManager.update(id, profile);
   }
@@ -121,13 +124,45 @@ public class CredentialProfileManagerTest extends CredentialManagerTestBase {
   public void testDeleteThrowsExceptionWhenIdentitiesStillExist() throws Exception {
     String namespace = "testDeleteThrowsExceptionWhenIdentitiesStillExist";
     CredentialProfileId profileId = new CredentialProfileId(namespace, "has-identities");
-    CredentialProfile profile = new CredentialProfile("test", "some description",
+    CredentialProfile profile = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some description",
         Collections.singletonMap("some-key", "some-value"));
     CredentialIdentityId identityId = new CredentialIdentityId(namespace, "test-identity");
-    CredentialIdentity identity = new CredentialIdentity(profileId, "some-identity",
-        "some-secure-value");
+    CredentialIdentity identity = new CredentialIdentity(profileId.getNamespace(),
+        profileId.getName(), "some-identity", "some-secure-value");
     credentialProfileManager.create(profileId, profile);
     credentialIdentityManager.create(identityId, identity);
     credentialProfileManager.delete(profileId);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testCreateThrowsExceptionWhenUnsupportedProviderType() throws Exception {
+    String namespace = "testCreateThrowsExceptionWhenUnsupportedProviderType";
+    CredentialProfileId id = new CredentialProfileId(namespace, "test");
+    CredentialProfile profile = new CredentialProfile("invalid",
+        "some description", Collections.singletonMap("some-key", "some-value"));
+    credentialProfileManager.create(id, profile);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateThrowsExceptionWhenUnsupportedProviderType() throws Exception {
+    String namespace = "testUpdateThrowsExceptionWhenUnsupportedProviderType";
+    CredentialProfileId id = new CredentialProfileId(namespace, "test");
+    CredentialProfile profile = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
+        "some description", Collections.singletonMap("some-key", "some-value"));
+    credentialProfileManager.create(id, profile);
+    CredentialProfile profile2 = new CredentialProfile("invalid",
+        "some description", Collections.singletonMap("some-key", "some-value"));
+    credentialProfileManager.update(id, profile2);
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testCreateValidationFailureThrowsException() throws Exception {
+    String namespace = "testCreateValidationFailureThrowsException";
+    CredentialProfileId id = new CredentialProfileId(namespace, "test2");
+    CredentialProfile profile = new CredentialProfile(CREDENTIAL_PROVIDER_TYPE_VALIDATION_FAILURE,
+        "some description",
+        Collections.singletonMap("some-key", "some-value"));
+    credentialProfileManager.create(id, profile);
   }
 }
