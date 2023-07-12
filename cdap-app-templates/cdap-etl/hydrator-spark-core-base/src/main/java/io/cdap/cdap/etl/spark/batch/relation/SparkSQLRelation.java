@@ -189,9 +189,9 @@ public class SparkSQLRelation implements Relation {
 
   private String getColumnAliasCSV(Map<String, Expression> columnExpMap) {
     return columnExpMap.entrySet()
-            .stream()
-            .map(e -> ((SparkSQLExpression) e.getValue()).extract() + AS + e.getKey())
-            .collect(Collectors.joining(COMMA));
+      .stream()
+      .map(e -> ((SparkSQLExpression) e.getValue()).extract() + AS + e.getKey())
+      .collect(Collectors.joining(COMMA));
   }
 
   @Override
