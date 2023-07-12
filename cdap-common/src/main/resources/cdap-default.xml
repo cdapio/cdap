@@ -5892,6 +5892,15 @@
   </property>
 
   <property>
+    <name>feature.wrangler.execution.sql.enabled</name>
+    <value>false</value>
+    <description>
+      Enables the directive execution selector in Wrangler, allowing to select
+      between JEXL and SQL execution.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
