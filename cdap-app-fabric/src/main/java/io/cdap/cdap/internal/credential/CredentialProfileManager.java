@@ -17,19 +17,22 @@
 package io.cdap.cdap.internal.credential;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.security.spi.credential.ProfileValidationException;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
-import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -43,13 +46,16 @@ public class CredentialProfileManager {
   private final CredentialIdentityStore identityStore;
   private final CredentialProfileStore profileStore;
   private final TransactionRunner transactionRunner;
+  private final Map<String, CredentialProvider> credentialProviders;
 
   @Inject
   CredentialProfileManager(CredentialIdentityStore identityStore,
-      CredentialProfileStore profileStore, TransactionRunner transactionRunner) {
+      CredentialProfileStore profileStore, TransactionRunner transactionRunner,
+      CredentialProviderProvider credentialProviderProvider) {
     this.identityStore = identityStore;
     this.profileStore = profileStore;
     this.transactionRunner = transactionRunner;
+    this.credentialProviders = credentialProviderProvider.loadCredentialProviders();
   }
 
   /**
@@ -147,10 +153,20 @@ public class CredentialProfileManager {
   }
 
   private void validateProfile(CredentialProfile profile) throws BadRequestException {
-    // Validate all fields are not null.
-    if (profile.getCredentialProviderType() == null
-        || profile.getCredentialProviderType().isEmpty()) {
+    // Ensure provider type is valid.
+    String providerType = profile.getCredentialProviderType();
+    if (providerType == null || profile.getCredentialProviderType().isEmpty()) {
       throw new BadRequestException("Credential provider type cannot be null or empty.");
+    }
+    if (!credentialProviders.containsKey(providerType)) {
+      throw new BadRequestException(String.format("Credential provider type '%s' is unsupported.",
+          providerType));
+    }
+    try {
+      credentialProviders.get(providerType).validateProfile(profile);
+    } catch (ProfileValidationException e) {
+      throw new BadRequestException(String.format("Failed to validate profile with error: %s",
+          e.getMessage()), e);
     }
   }
 }

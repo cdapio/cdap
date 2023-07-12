@@ -20,6 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.security.credential.CredentialProvider;
+import io.cdap.cdap.api.security.credential.IdentityValidationException;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
@@ -31,7 +33,7 @@ import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
 import io.cdap.cdap.proto.credential.CreateCredentialIdentityRequest;
 import io.cdap.cdap.proto.credential.CreateCredentialProfileRequest;
-import io.cdap.cdap.proto.credential.CredentialIdentity;
+import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
@@ -74,16 +76,19 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CredentialIdentityManager credentialIdentityManager;
   private final CredentialProfileManager credentialProfileManager;
+  private final CredentialProvider credentialProvider;
 
   @Inject
   CredentialProviderHttpHandler(ContextAccessEnforcer accessEnforcer,
       NamespaceQueryAdmin namespaceQueryAdmin,
       CredentialIdentityManager credentialIdentityManager,
-      CredentialProfileManager credentialProfileManager) {
+      CredentialProfileManager credentialProfileManager,
+      CredentialProvider credentialProvider) {
     this.accessEnforcer = accessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProfileManager = credentialProfileManager;
+    this.credentialProvider = credentialProvider;
   }
 
   /**
@@ -97,6 +102,21 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void listProviders(HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED,
         "Listing providers is unsupported.");
+  }
+
+  @POST
+  @Path("/credentials/identities/validate")
+  public void validateIdentity(FullHttpRequest request, HttpResponder responder)
+      throws BadRequestException, NotFoundException, IOException {
+    CredentialIdentity identity = deserializeRequestContent(request, CredentialIdentity.class);
+    try {
+      credentialProvider.validateIdentity(identity);
+    } catch (IdentityValidationException e) {
+      throw new BadRequestException(String.format("Identity failed validation with error: %s",
+          e.getMessage()), e);
+    } catch (io.cdap.cdap.api.security.credential.NotFoundException e) {
+      throw new NotFoundException(e.getMessage());
+    }
   }
 
   /**
@@ -299,8 +319,9 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
     }
     accessEnforcer.enforce(identityId, StandardPermission.CREATE);
     ensureNamespaceExists(namespace);
-    validateIdentity(identity);
-    accessEnforcer.enforce(identity.getCredentialProfile(), StandardPermission.GET);
+    validateCredentialIdentity(identity);
+    accessEnforcer.enforce(new CredentialProfileId(identity.getProfileNamespace(),
+        identity.getProfileName()), StandardPermission.GET);
     credentialIdentityManager.create(identityId, identity);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -328,8 +349,9 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
     ensureNamespaceExists(namespace);
     final CredentialIdentity identity = deserializeRequestContent(request,
         CredentialIdentity.class);
-    validateIdentity(identity);
-    accessEnforcer.enforce(identity.getCredentialProfile(), StandardPermission.GET);
+    validateCredentialIdentity(identity);
+    accessEnforcer.enforce(new CredentialProfileId(identity.getProfileNamespace(),
+        identity.getProfileName()), StandardPermission.GET);
     credentialIdentityManager.update(identityId, identity);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -361,14 +383,17 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
 
   private void ensureNamespaceExists(String namespace)
       throws IOException, NamespaceNotFoundException {
+    NamespaceId namespaceId;
+    Boolean namespaceFound;
     try {
-      NamespaceId namespaceId = new NamespaceId(namespace);
-      if (!namespaceQueryAdmin.exists(namespaceId)) {
-        throw new NamespaceNotFoundException(namespaceId);
-      }
+      namespaceId = new NamespaceId(namespace);
+      namespaceFound = namespaceQueryAdmin.exists(namespaceId);
     } catch (Exception e) {
       throw new IOException(String.format("Failed to check if namespace '%s' exists",
           namespace), e);
+    }
+    if (!namespaceFound) {
+      throw new NamespaceNotFoundException(namespaceId);
     }
   }
 
@@ -390,8 +415,8 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private void validateIdentity(CredentialIdentity identity) throws BadRequestException {
-    if (identity.getCredentialProfile() == null) {
+  private void validateCredentialIdentity(CredentialIdentity identity) throws BadRequestException {
+    if (identity.getProfileNamespace() == null || identity.getProfileName() == null) {
       throw new BadRequestException("Identity provided with no associated profile");
     }
   }

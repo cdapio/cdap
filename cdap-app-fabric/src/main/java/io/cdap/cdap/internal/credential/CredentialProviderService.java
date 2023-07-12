@@ -14,28 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.credential;
+package io.cdap.cdap.internal.credential;
 
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
+import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.security.credential.CredentialProvider;
 
 /**
- * Represents a creation request for a {@link CredentialIdentity}.
+ * A service which provides credentials based on identity and profile.
  */
-public class CreateCredentialIdentityRequest {
+public interface CredentialProviderService extends CredentialProvider, Service {
 
-  private final String name;
-  private final CredentialIdentity identity;
-
-  public CreateCredentialIdentityRequest(String name, CredentialIdentity identity) {
-    this.name = name;
-    this.identity = identity;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public CredentialIdentity getIdentity() {
-    return identity;
-  }
 }

@@ -20,7 +20,7 @@ import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
-import io.cdap.cdap.proto.credential.CredentialIdentity;
+import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -134,7 +134,8 @@ public class CredentialIdentityManager {
   private void validateAndWriteIdentity(StructuredTableContext context, CredentialIdentityId id,
       CredentialIdentity identity) throws IOException, NotFoundException {
     // Validate the referenced profile exists.
-    CredentialProfileId profileId = identity.getCredentialProfile();
+    CredentialProfileId profileId = new CredentialProfileId(identity.getProfileNamespace(),
+        identity.getProfileName());
     if (!profileStore.get(context, profileId).isPresent()) {
       throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
           profileId.getNamespace(), profileId.getName()));

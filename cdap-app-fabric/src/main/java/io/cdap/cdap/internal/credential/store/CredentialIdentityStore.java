@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.credential.store;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.proto.credential.CredentialIdentity;
+import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -76,7 +76,8 @@ public class CredentialIdentityStore {
   public Collection<CredentialIdentityId> listForProfile(StructuredTableContext context,
       CredentialProfileId profileId) throws IOException {
     Field<?> indexKey = Fields.stringField(
-        CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD, toProfileIndex(profileId));
+        CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD,
+        toProfileIndex(profileId.getNamespace(), profileId.getName()));
     try (CloseableIterator<StructuredRow> identityIterator = context.getTable(
         CredentialProviderStore.CREDENTIAL_IDENTITIES).scan(indexKey)) {
       return identitiesFromRowIterator(identityIterator);
@@ -123,7 +124,7 @@ public class CredentialIdentityStore {
         Fields.stringField(CredentialProviderStore.IDENTITY_DATA_FIELD,
             GSON.toJson(identity)),
         Fields.stringField(CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD,
-            toProfileIndex(identity.getCredentialProfile())));
+            toProfileIndex(identity.getProfileNamespace(), identity.getProfileName())));
     identityTable.upsert(row);
   }
 
@@ -155,7 +156,7 @@ public class CredentialIdentityStore {
         .collect(Collectors.toList());
   }
 
-  private static String toProfileIndex(CredentialProfileId profileId) {
-    return String.format("%s:%s", profileId.getNamespace(), profileId.getName());
+  private static String toProfileIndex(String profileNamespace, String profileName) {
+    return String.format("%s:%s", profileNamespace, profileName);
   }
 }

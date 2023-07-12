@@ -14,28 +14,19 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.credential;
-
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
+package io.cdap.cdap.security.spi.credential;
 
 /**
- * Represents a creation request for a {@link CredentialIdentity}.
+ * Exception thrown during profile validation.
  */
-public class CreateCredentialIdentityRequest {
+public class ProfileValidationException extends Exception {
 
-  private final String name;
-  private final CredentialIdentity identity;
-
-  public CreateCredentialIdentityRequest(String name, CredentialIdentity identity) {
-    this.name = name;
-    this.identity = identity;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public CredentialIdentity getIdentity() {
-    return identity;
+  /**
+   * Creates a new profile validation exception.
+   *
+   * @param message The message for the validation failure.
+   */
+  public ProfileValidationException(String message) {
+    super(message);
   }
 }

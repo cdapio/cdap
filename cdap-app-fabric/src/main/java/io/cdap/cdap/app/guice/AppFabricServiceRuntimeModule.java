@@ -116,6 +116,7 @@ import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
+import io.cdap.cdap.internal.credential.guice.MasterCredentialProviderModule;
 import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandler;
 import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandlerInternal;
 import io.cdap.cdap.internal.events.EventPublishManager;
@@ -185,6 +186,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new ConfigStoreModule(),
         new SourceControlModule(),
         new EntityVerifierModule(),
+        new MasterCredentialProviderModule(),
         BootstrapModules.getInMemoryModule(),
         new AbstractModule() {
           @Override
@@ -226,6 +228,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new SourceControlModule(),
         new EntityVerifierModule(),
         new ProvisionerModule(),
+        new MasterCredentialProviderModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override
@@ -279,6 +282,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new SourceControlModule(),
         new EntityVerifierModule(),
         new ProvisionerModule(),
+        new MasterCredentialProviderModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override

@@ -2410,4 +2410,12 @@ public final class Constants {
         "source.control.repository.cleanup.interval.seconds";
     public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
   }
+
+  /**
+   * Constants for credential provisioning.
+   */
+  public static final class CredentialProvider {
+    public static final String EXTENSIONS_DIR = "credential.provider.extensions.dir";
+    public static final String SYSTEM_PROPERTY_PREFIX = "credential.provider.system.properties.";
+  }
 }

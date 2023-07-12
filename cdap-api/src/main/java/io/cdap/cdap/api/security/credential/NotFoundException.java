@@ -14,28 +14,19 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.credential;
-
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
+package io.cdap.cdap.api.security.credential;
 
 /**
- * Represents a creation request for a {@link CredentialIdentity}.
+ * An exception which is thrown when a resource is not found.
  */
-public class CreateCredentialIdentityRequest {
+public class NotFoundException extends Exception {
 
-  private final String name;
-  private final CredentialIdentity identity;
-
-  public CreateCredentialIdentityRequest(String name, CredentialIdentity identity) {
-    this.name = name;
-    this.identity = identity;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public CredentialIdentity getIdentity() {
-    return identity;
+  /**
+   * Exception denoting a resource was not found.
+   *
+   * @param message The message for the exception.
+   */
+  public NotFoundException(String message) {
+    super(message);
   }
 }

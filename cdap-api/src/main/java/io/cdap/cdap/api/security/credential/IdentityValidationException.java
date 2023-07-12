@@ -14,28 +14,19 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.credential;
-
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
+package io.cdap.cdap.api.security.credential;
 
 /**
- * Represents a creation request for a {@link CredentialIdentity}.
+ * Exception thrown during identity validation.
  */
-public class CreateCredentialIdentityRequest {
+public class IdentityValidationException extends Exception {
 
-  private final String name;
-  private final CredentialIdentity identity;
-
-  public CreateCredentialIdentityRequest(String name, CredentialIdentity identity) {
-    this.name = name;
-    this.identity = identity;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public CredentialIdentity getIdentity() {
-    return identity;
+  /**
+   * Creates a new identity validation exception.
+   *
+   * @param cause The cause of identity validation failure.
+   */
+  public IdentityValidationException(Throwable cause) {
+    super("Failed to validate identity", cause);
   }
 }
