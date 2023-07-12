@@ -105,7 +105,7 @@ public class SparkSQLRelation implements Relation {
   public Relation select(Map<String, Expression> columnExpMap) {
     if (!SparkSQLExpression.supportsExpressions(columnExpMap.values())) {
       return new InvalidRelation("One or more Unsupported or invalid expression type  in the list : "
-              + columnExpMap.values());
+                                   + columnExpMap.values());
     }
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
     this.sqlStatement = generateNestedSelect(null, columnExpMap);
@@ -145,7 +145,7 @@ public class SparkSQLRelation implements Relation {
 
   private String generateSelectQuery(String filterCondition, Map<String, Expression> columnExpMap) {
     StringBuilder queryBuilder = new StringBuilder(
-            String.format("%s %s %s %s%s%s",
+      String.format("%s %s %s %s%s%s",
                     SELECT,
                     getColumnAliasCSV(columnExpMap),
                     FROM,
@@ -204,9 +204,9 @@ public class SparkSQLRelation implements Relation {
     }
     SparkSQLRelation that = (SparkSQLRelation) o;
     return Objects.equals(sqlStatement, that.sqlStatement)
-            && Objects.equals(datasetName, that.datasetName)
-            && Objects.equals(columns, that.columns)
-            && Objects.equals(parent, that.parent);
+      && Objects.equals(datasetName, that.datasetName)
+      && Objects.equals(columns, that.columns)
+      && Objects.equals(parent, that.parent);
   }
 
   @Override
