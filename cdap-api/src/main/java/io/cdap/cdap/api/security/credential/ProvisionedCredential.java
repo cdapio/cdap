@@ -27,7 +27,7 @@ public class ProvisionedCredential {
   /**
    * Creates a provisioned credential.
    *
-   * @param value The credential value.
+   * @param value          The credential value.
    * @param expirationSecs The expiration timestamp of the credential in seconds.
    */
   public ProvisionedCredential(String value, long expirationSecs) {

@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.internal.credential;
 
-import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
+import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import java.util.Arrays;

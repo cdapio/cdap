@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.api.security.credential.CredentialProvider;
 import io.cdap.cdap.api.security.credential.IdentityValidationException;
 import io.cdap.cdap.common.AlreadyExistsException;
@@ -33,7 +34,6 @@ import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
 import io.cdap.cdap.proto.credential.CreateCredentialIdentityRequest;
 import io.cdap.cdap.proto.credential.CreateCredentialProfileRequest;
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
@@ -104,6 +104,15 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
         "Listing providers is unsupported.");
   }
 
+  /**
+   * Validates a credential identity.
+   *
+   * @param request   The HTTP request.
+   * @param responder The HTTP responder.
+   * @throws BadRequestException If identity validation fails.
+   * @throws NotFoundException   If the associated profile is not found.
+   * @throws IOException         If transport errors occur.
+   */
   @POST
   @Path("/credentials/identities/validate")
   public void validateIdentity(FullHttpRequest request, HttpResponder responder)

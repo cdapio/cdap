@@ -49,14 +49,25 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
     this.credentialProvider = credentialProvider;
   }
 
+  /**
+   * Provisions a credential for a given identity.
+   *
+   * @param request      The HTTP request.
+   * @param responder    The HTTP responder.
+   * @param namespace    The namespace of the identity for which to provision a credential.
+   * @param identityName The name of the identity for which to provision a credential.
+   * @throws CredentialProvisioningException If provisioning fails.
+   * @throws IOException                     If transport errors occur.
+   * @throws NotFoundException               If the identity or associated profile are not found.
+   */
   @POST
   @Path("/namespaces/{namespace-id}/credentials/identities/{identity-name}/provision")
   public void provisionCredential(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identity)
+      @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identityName)
       throws CredentialProvisioningException, IOException, NotFoundException {
     try {
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(credentialProvider.provision(namespace, identity)));
+          GSON.toJson(credentialProvider.provision(namespace, identityName)));
     } catch (io.cdap.cdap.api.security.credential.NotFoundException e) {
       throw new NotFoundException(e.getMessage());
     }

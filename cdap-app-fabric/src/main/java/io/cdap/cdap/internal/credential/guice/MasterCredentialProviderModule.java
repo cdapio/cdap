@@ -24,6 +24,9 @@ import io.cdap.cdap.internal.credential.CredentialProviderProvider;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.credential.DefaultCredentialProviderService;
 
+/**
+ * Credential provider module for AppFabric.
+ */
 public class MasterCredentialProviderModule extends AbstractModule {
 
   @Override

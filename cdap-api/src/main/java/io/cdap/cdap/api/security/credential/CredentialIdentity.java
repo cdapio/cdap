@@ -30,9 +30,9 @@ public class CredentialIdentity {
    * Constructs an identity.
    *
    * @param profileNamespace The namespace of the associated profile.
-   * @param profileName The name of the associated profile.
-   * @param identity The identity.
-   * @param secureValue The secure value to store for the identity.
+   * @param profileName      The name of the associated profile.
+   * @param identity         The identity.
+   * @param secureValue      The secure value to store for the identity.
    */
   public CredentialIdentity(String profileNamespace, String profileName, String identity,
       String secureValue) {

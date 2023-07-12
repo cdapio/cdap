@@ -45,7 +45,8 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
   public void testProvisionSuccess() throws Exception {
     // Create a new profile.
     String namespace = "testProvisionSuccess";
-    CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS, namespace, "test-profile");
+    CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS, namespace,
+        "test-profile");
 
     // Create a new identity.
     CredentialIdentityId id = new CredentialIdentityId(namespace, "test");

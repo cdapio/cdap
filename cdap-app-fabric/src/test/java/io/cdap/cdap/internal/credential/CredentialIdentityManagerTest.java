@@ -119,7 +119,7 @@ public class CredentialIdentityManagerTest extends CredentialProviderTestBase {
   public void testUpdateThrowsExceptionWhenNotFound() throws Exception {
     String namespace = "testUpdateThrowsExceptionWhenNotFound";
     CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
-         namespace, "test-profile");
+        namespace, "test-profile");
     // Create a new identity.
     CredentialIdentityId id = new CredentialIdentityId(namespace, "does-not-exist");
     CredentialIdentity identity = new CredentialIdentity(profileId.getNamespace(),

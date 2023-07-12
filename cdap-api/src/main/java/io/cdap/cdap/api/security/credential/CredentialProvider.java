@@ -26,12 +26,12 @@ public interface CredentialProvider {
   /**
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
-   * @param namespace The identity namespace.
+   * @param namespace    The identity namespace.
    * @param identityName The identity name.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
-   * @throws IOException If any transport errors occur.
-   * @throws NotFoundException If the profile or identity are not found.
+   * @throws IOException                     If any transport errors occur.
+   * @throws NotFoundException               If the profile or identity are not found.
    */
   ProvisionedCredential provision(String namespace, String identityName)
       throws CredentialProvisioningException, IOException, NotFoundException;
@@ -41,8 +41,8 @@ public interface CredentialProvider {
    *
    * @param identity The identity to validate.
    * @throws IdentityValidationException If validation fails.
-   * @throws IOException If any transport errors occur.
-   * @throws NotFoundException If the profile is not found.
+   * @throws IOException                 If any transport errors occur.
+   * @throws NotFoundException           If the profile is not found.
    */
   void validateIdentity(CredentialIdentity identity) throws IdentityValidationException,
       IOException, NotFoundException;

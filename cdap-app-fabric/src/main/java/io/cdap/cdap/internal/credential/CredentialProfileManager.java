@@ -17,17 +17,17 @@
 package io.cdap.cdap.internal.credential;
 
 import com.google.gson.Gson;
-import io.cdap.cdap.proto.credential.CredentialProfile;
-import io.cdap.cdap.security.spi.credential.ProfileValidationException;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
 import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
+import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
+import io.cdap.cdap.security.spi.credential.ProfileValidationException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
@@ -87,11 +87,11 @@ public class CredentialProfileManager {
   /**
    * Creates a credential profile.
    *
-   * @param id The profile reference to create.
+   * @param id      The profile reference to create.
    * @param profile The profile to create.
-   * @throws BadRequestException If the profile is invalid.
+   * @throws BadRequestException    If the profile is invalid.
    * @throws AlreadyExistsException If the profile already exists.
-   * @throws IOException If any failure writing to storage occurs.
+   * @throws IOException            If any failure writing to storage occurs.
    */
   public void create(CredentialProfileId id, CredentialProfile profile)
       throws AlreadyExistsException, BadRequestException, IOException {
@@ -108,11 +108,11 @@ public class CredentialProfileManager {
   /**
    * Updates a credential profile.
    *
-   * @param id The profile reference to update.
+   * @param id      The profile reference to update.
    * @param profile The updated profile.
    * @throws BadRequestException If the profile is invalid.
-   * @throws IOException If any failure writing to storage occurs.
-   * @throws NotFoundException If the profile does not exist.
+   * @throws IOException         If any failure writing to storage occurs.
+   * @throws NotFoundException   If the profile does not exist.
    */
   public void update(CredentialProfileId id, CredentialProfile profile)
       throws BadRequestException, IOException, NotFoundException {
@@ -131,7 +131,7 @@ public class CredentialProfileManager {
    *
    * @param id The profile reference to delete.
    * @throws ConflictException If the profile still has attached identities.
-   * @throws IOException If any failure writing to storage occurs.
+   * @throws IOException       If any failure writing to storage occurs.
    * @throws NotFoundException If the profile does not exist.
    */
   public void delete(CredentialProfileId id)

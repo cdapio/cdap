@@ -529,7 +529,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   /**
    * A Guice provider for the {@link UGIProvider} class based on the CDAP configuration.
    *
-   * <p>When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an {@link
+   * <p>When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an
+   * {@link
    * UnsupportedUGIProvider} will be used.
    */
   private static final class UgiProviderProvider implements Provider<UGIProvider> {

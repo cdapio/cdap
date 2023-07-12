@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.spi.credential;
 
+import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.api.security.credential.CredentialProvisioningException;
 import io.cdap.cdap.api.security.credential.ProvisionedCredential;
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 
 /**
@@ -27,7 +27,9 @@ import io.cdap.cdap.proto.credential.CredentialProfile;
 public interface CredentialProvider {
 
   /**
-   * @return the name of the credential provider implementation.
+   * Returns the name of the credential provider.
+   *
+   * @return the name of the credential provider.
    */
   String getName();
 
@@ -39,10 +41,10 @@ public interface CredentialProvider {
   void initialize(CredentialProviderContext context);
 
   /**
-   * Provisions a short-lived credential for the provided identity using the
-   * provided credential profile.
+   * Provisions a short-lived credential for the provided identity using the provided credential
+   * profile.
    *
-   * @param profile The credential profile to use.
+   * @param profile  The credential profile to use.
    * @param identity The credential identity to use.
    * @return A credential provisioned using the specified profile and identity.
    * @throws CredentialProvisioningException If the credential provisioning fails.
@@ -51,9 +53,9 @@ public interface CredentialProvider {
       throws CredentialProvisioningException;
 
   /**
-   * Validates a credential profile for this specific extension.
-   * Implementations of this function should only validate fields specific to the profile type
-   * statically and should not be used to provision a credential.
+   * Validates a credential profile for this specific extension. Implementations of this function
+   * should only validate fields specific to the profile type statically and should not be used to
+   * provision a credential.
    *
    * @param profile The profile to validate.
    * @throws ProfileValidationException If validation fails.

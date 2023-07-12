@@ -33,6 +33,9 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
+/**
+ * Default implementation for {@link CredentialProviderService} used in AppFabric.
+ */
 public class DefaultCredentialProviderService extends AbstractIdleService
     implements CredentialProviderService {
 

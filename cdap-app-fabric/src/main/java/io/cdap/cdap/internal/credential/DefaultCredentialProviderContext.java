@@ -32,7 +32,7 @@ public class DefaultCredentialProviderContext implements CredentialProviderConte
   /**
    * Creates a new context.
    *
-   * @param cConf The CConfiguration backing the context properties.
+   * @param cConf        The CConfiguration backing the context properties.
    * @param providerName The credential provider name.
    */
   protected DefaultCredentialProviderContext(CConfiguration cConf, String providerName) {

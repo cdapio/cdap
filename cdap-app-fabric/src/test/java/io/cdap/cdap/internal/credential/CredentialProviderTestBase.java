@@ -59,7 +59,7 @@ public class CredentialProviderTestBase {
   static ContextAccessEnforcer contextAccessEnforcer;
   static CredentialProfileManager credentialProfileManager;
   static CredentialIdentityManager credentialIdentityManager;
-  static Map<String, CredentialProvider> credentialProviders = new HashMap<>();;
+  static Map<String, CredentialProvider> credentialProviders = new HashMap<>();
 
   // Some pre-created mock credential providers which succeed, fail provisioning, or fail validation.
   static String CREDENTIAL_PROVIDER_TYPE_SUCCESS = "success";
@@ -69,6 +69,7 @@ public class CredentialProviderTestBase {
   static ProvisionedCredential RETURNED_TOKEN = new ProvisionedCredential("returned_token", 9999);
 
   static class MockCredentialProviderProvider implements CredentialProviderProvider {
+
     @Override
     public Map<String, CredentialProvider> loadCredentialProviders() {
       return credentialProviders;
@@ -93,12 +94,9 @@ public class CredentialProviderTestBase {
         });
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    TransactionRunner runner = injector.getInstance(TransactionRunner.class);
     contextAccessEnforcer = injector.getInstance(ContextAccessEnforcer.class);
     CredentialProviderStore.create(injector
         .getInstance(StructuredTableAdmin.class));
-    CredentialProfileStore profileStore = new CredentialProfileStore();
-    CredentialIdentityStore identityStore = new CredentialIdentityStore();
     // Setup mock credential providers.
     CredentialProvider mockCredentialProvider = mock(CredentialProvider.class);
     when(mockCredentialProvider.provision(any(), any())).thenReturn(RETURNED_TOKEN);
@@ -118,6 +116,11 @@ public class CredentialProviderTestBase {
         provisionFailureMockCredentialProvider);
     CredentialProviderProvider mockCredentialProviderProvider
         = new MockCredentialProviderProvider();
+
+    // Setup credential managers.
+    TransactionRunner runner = injector.getInstance(TransactionRunner.class);
+    CredentialProfileStore profileStore = new CredentialProfileStore();
+    CredentialIdentityStore identityStore = new CredentialIdentityStore();
     credentialProfileManager = new CredentialProfileManager(identityStore, profileStore,
         runner, mockCredentialProviderProvider);
     credentialIdentityManager = new CredentialIdentityManager(identityStore, profileStore,

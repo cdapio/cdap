@@ -117,7 +117,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
           @Override
           protected void configure() {
             bind(TwillRunnerService.class).toProvider(
-                    new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+                new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
                 .in(Scopes.SINGLETON);
             bind(TwillRunner.class).to(TwillRunnerService.class);
 
