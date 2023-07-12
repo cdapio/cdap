@@ -28,4 +28,9 @@ public abstract class EventSubscriber extends AbstractScheduledService {
    * Initialize this handler.
    */
   public abstract void initialize();
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
 }

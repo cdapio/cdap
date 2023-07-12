@@ -52,10 +52,10 @@ public class EventSubscriberManager extends AbstractIdleService {
         eventSubscriber.initialize();
         eventSubscriber.startAndWait();
         LOG.info("Successfully initialized eventSubscriber: {}",
-            eventSubscriber.getClass().getSimpleName());
+            eventSubscriber);
       } catch (Exception e) {
         LOG.error("Failed to initialize eventSubscriber: {}",
-            eventSubscriber.getClass().getSimpleName(), e);
+            eventSubscriber, e);
       }
     });
   }
