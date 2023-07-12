@@ -54,13 +54,11 @@ public class SparkSQLRelation implements Relation {
   }
 
   public SparkSQLRelation(String datasetName, List<String> columns, Schema schema) {
-    this.datasetName = datasetName;
-    this.columns = columns;
-    this.schema = schema;
+    this(datasetName, columns, null, schema, null);
   }
 
   SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement,
-                   @Nullable Schema schema, SparkSQLRelation parent) {
+                   @Nullable Schema schema, @Nullable SparkSQLRelation parent) {
     this.datasetName = datasetName;
     this.columns = columns;
     this.sqlStatement = sqlStatement;
