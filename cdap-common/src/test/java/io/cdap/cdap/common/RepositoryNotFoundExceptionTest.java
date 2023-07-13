@@ -17,25 +17,16 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.proto.id.NamespaceId;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Thrown when a namespace repository configuration is not found in CDAP.
- */
-public class RepositoryNotFoundException extends NotFoundException {
+/** Tests fpr RepositoryNotFoundException */
+public class RepositoryNotFoundExceptionTest {
+  @Test
+  public void testRepositoryNotFoundExceptionMessage() {
+    RepositoryNotFoundException exception = new RepositoryNotFoundException(NamespaceId.DEFAULT);
 
-  private final NamespaceId namespace;
-
-  /**
-   * Constructor for {@code RepositoryNotFoundException}
-   * @param id the namespace ID
-   */
-  public RepositoryNotFoundException(NamespaceId id) {
-    super(String.format("There is no repository configuration for namespace %s. "
-        + "Please configure it in Namespace Admin page.", id.getNamespace()));
-    this.namespace = id;
-  }
-
-  public NamespaceId getNamespace() {
-    return namespace;
+    Assert.assertEquals("There is no repository configuration for namespace default. "
+        + "Please configure it in Namespace Admin page.", exception.getMessage());
   }
 }
