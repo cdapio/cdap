@@ -72,7 +72,7 @@ public class StartProgramEventDetails {
 
   @Override
   public String toString() {
-    return "ProgramStatusEventDetails{"
+    return "StartProgramEventDetails{"
         + "appId='" + appId + '\''
         + ", namespaceId='" + namespaceId + '\''
         + ", programType='" + programType + '\''
