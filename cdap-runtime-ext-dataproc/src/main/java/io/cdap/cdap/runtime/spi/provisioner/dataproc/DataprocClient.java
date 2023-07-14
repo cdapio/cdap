@@ -183,7 +183,7 @@ abstract class DataprocClient implements AutoCloseable {
       metadata.putAll(conf.getClusterMetaData());
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-          .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
+          .addAllServiceAccountScopes(conf.getScopes())
           .setShieldedInstanceConfig(
               ShieldedInstanceConfig.newBuilder()
                   .setEnableSecureBoot(conf.isSecureBootEnabled())
