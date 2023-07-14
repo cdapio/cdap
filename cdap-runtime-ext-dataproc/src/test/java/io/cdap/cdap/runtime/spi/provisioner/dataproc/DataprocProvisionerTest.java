@@ -121,6 +121,9 @@ public class DataprocProvisionerTest {
   @Test
   public void testDataprocConf() {
     Map<String, String> props = new HashMap<>();
+    String scopes = String.format("%s,https://www.googleapis.com/auth/drive",
+        DataprocConf.CLOUD_PLATFORM_SCOPE);
+
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
     props.put("accountKey", "key");
     props.put("region", "region1");
@@ -138,6 +141,7 @@ public class DataprocProvisionerTest {
     props.put("idleTTL", "20");
     props.put("clusterReuseRetryDelayMs", "20");
     props.put("clusterReuseRetryMaxMs", "200");
+    props.put(DataprocConf.SCOPES, scopes);
 
     DataprocConf conf = DataprocConf.create(props);
 
@@ -167,6 +171,7 @@ public class DataprocProvisionerTest {
 
     Assert.assertEquals(20, conf.getClusterReuseRetryDelayMs());
     Assert.assertEquals(200, conf.getClusterReuseRetryMaxMs());
+    Assert.assertEquals(scopes, String.join(",", conf.getScopes()));
   }
 
   @Test
