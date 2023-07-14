@@ -494,6 +494,15 @@
           }
         },
         {
+          "name": "scopes",
+          "label": "OAuth Scopes",
+          "widget-type": "csv",
+          "description": "The OAuth 2.0 scopes that you might need to request to access Google APIs, depending on the level of access you need. Google Cloud Platform Scope (https://www.googleapis.com/auth/cloud-platform) is always included.",
+          "widget-attributes" : {
+            "value-placeholder": ""
+          }
+        },
+        {
           "name": "initActions",
           "label": "Initialization Actions",
           "widget-type": "csv",
