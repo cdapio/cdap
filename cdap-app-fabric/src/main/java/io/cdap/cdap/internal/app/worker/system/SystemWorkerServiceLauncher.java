@@ -62,6 +62,9 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
   private TwillController twillController;
 
   private ScheduledExecutorService executor;
+  private final AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+          "SystemWorkerAutoscalerMetrics", 1,8,
+          "0.75",60,10,1);
 
   @Inject
   public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
@@ -171,14 +174,6 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           }
 
           if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
-            AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
-                    cConf.get(Constants.SystemWorker.AUTOSCALER_METRIC_NAME),
-                    cConf.getInt(Constants.SystemWorker.MIN_REPLICA_COUNT),
-                    cConf.getInt(Constants.SystemWorker.MAX_REPLICA_COUNT),
-                    cConf.get(Constants.SystemWorker.DESIRED_AVERAGE_METRIC_VALUE),
-                    cConf.getInt(Constants.SystemWorker.STABILIZATION_WINDOW_TIME),
-                    cConf.getInt(Constants.SystemWorker.PERIOD_TIME),
-                    cConf.getInt(Constants.SystemWorker.POD_UPDATE_COUNT));
             ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 

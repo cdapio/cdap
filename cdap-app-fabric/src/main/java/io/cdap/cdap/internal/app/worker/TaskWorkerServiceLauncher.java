@@ -70,6 +70,9 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private TwillController twillController;
 
   private ScheduledExecutorService executor;
+  private final AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+          "TaskWorkerAutoscalerMetrics", 1,8,
+          "0.75",60,10,1);
 
   /**
    * Default Constructor with injected configuration and {@link TwillRunner}.
@@ -216,14 +219,6 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           }
 
           if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
-            AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
-                    cConf.get(Constants.TaskWorker.AUTOSCALER_METRIC_NAME),
-                    cConf.getInt(Constants.TaskWorker.MIN_REPLICA_COUNT),
-                    cConf.getInt(Constants.TaskWorker.MAX_REPLICA_COUNT),
-                    cConf.get(Constants.TaskWorker.DESIRED_AVERAGE_METRIC_VALUE),
-                    cConf.getInt(Constants.TaskWorker.STABILIZATION_WINDOW_TIME),
-                    cConf.getInt(Constants.TaskWorker.PERIOD_TIME),
-                    cConf.getInt(Constants.TaskWorker.POD_UPDATE_COUNT));
             ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 

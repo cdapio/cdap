@@ -122,6 +122,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable implements 
   private ArtifactLocalizerService artifactLocalizerService;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
+  private String metricName;
+  private String clusterName;
+  private String projectName;
   private MetricsEmitter metricsEmitter;
 
   public SystemWorkerTwillRunnable(String cConfFileName, String hConfFileName,
@@ -348,12 +351,10 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable implements 
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
     SConfiguration sConf = SConfiguration.create(new File(getArgument("sConf")));
-    String metricName = cConf.get(Constants.SystemWorker.AUTOSCALER_METRIC_NAME);
-    String clusterName = cConf.get(Constants.CLUSTER_NAME);
-    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
-    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
-            "datafusion.instance.region");
-    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
+    metricName = "SystemWorkerAutoscalerMetrics";
+    clusterName = cConf.get(Constants.CLUSTER_NAME);
+    projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName);
     metricsEmitter.emitMetrics(0);
 
     Injector injector = createInjector(cConf, hConf, sConf, metricsEmitter);

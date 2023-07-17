@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RunnableTaskLauncher;
 import io.cdap.cdap.common.internal.remote.TaskDetails;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -46,7 +47,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -78,18 +78,24 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final MetricsCollectionService metricsCollectionService;
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer internalAccessEnforcer;
-  private Consumer<Double> autoscalerMetricsCollector;
+  private double metricValue;
+  private MetricsEmitter metricsEmitter;
 
   public SystemWorkerHttpHandlerInternal(CConfiguration cConf,
       MetricsCollectionService metricsCollectionService,
       Injector injector, AuthenticationContext authenticationContext,
-      AccessEnforcer internalAccessEnforcer, Consumer<Double> autoscalerMetricsCollector) {
+      AccessEnforcer internalAccessEnforcer, MetricsEmitter metricsEmitter) {
     this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
     this.authenticationContext = authenticationContext;
     this.internalAccessEnforcer = internalAccessEnforcer;
-    this.autoscalerMetricsCollector = autoscalerMetricsCollector;
+    this.metricsEmitter = metricsEmitter;
+    try {
+      metricsEmitter.emitMetrics(0);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @POST
@@ -106,8 +112,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
-    double metricValue = requestProcessedCount.get() / requestLimit;
-    autoscalerMetricsCollector.accept(metricValue);
+    metricValue = requestProcessedCount.get()/requestLimit;
+    metricsEmitter.emitMetrics(metricValue);
     long startTime = System.currentTimeMillis();
     RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
@@ -130,8 +136,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       runnableTaskContext.executeCleanupTask();
       requestProcessedCount.decrementAndGet();
       metricValue = requestProcessedCount.get()/requestLimit;
-      autoscalerMetricsCollector.accept(metricValue);
-      LOG.debug("Metrics sent");
+      metricsEmitter.emitMetrics(metricValue);
       return;
     }
 

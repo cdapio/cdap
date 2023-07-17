@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * {@link MetricsEmitter} that aggregates  values for a metric during collection and emit the
- * aggregated value when emit.
+ * aggregated value when emitted.
  */
 public final class AggregatedMetricsEmitter implements MetricsEmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);

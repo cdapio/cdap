@@ -79,6 +79,7 @@ import io.cdap.cdap.spi.data.StorageProvider;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
@@ -104,6 +105,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements
   private PreviewRunnerManager previewRunnerManager;
   private LogAppenderInitializer logAppenderInitializer;
   private StorageProvider storageProvider;
+  private String metricName;
+  private String clusterName;
+  private String projectName;
   private MetricsEmitter metricsEmitter;
 
   public PreviewRunnerTwillRunnable(String cConfFileName, String hConfFileName) {
@@ -165,6 +169,12 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements
   @Override
   public void stop() {
     LOG.info("Stopping preview runner manager");
+    if(previewRunnerManager == null){
+      LOG.debug("Preview Manager is also null");
+    }
+    else{
+      LOG.debug("Preview not null");
+    }
     previewRunnerManager.stop();
   }
 
@@ -176,6 +186,12 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements
       } catch (Exception e) {
         LOG.warn("Exception raised when closing storage provider", e);
       }
+    }
+    if(logAppenderInitializer == null){
+      LOG.debug("Log Appender is null");
+    }
+    else{
+      LOG.debug("Log Appender is not null");
     }
     logAppenderInitializer.close();
   }
@@ -198,12 +214,10 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements
     LOG.debug("Initializing preview runner with poller info {} in total {} runners",
         pollerInfo, context.getInstanceCount());
 
-    String metricName = cConf.get(Constants.Preview.AUTOSCALER_METRIC_NAME);
-    String clusterName = cConf.get(Constants.CLUSTER_NAME);
-    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
-    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
-            "datafusion.instance.region");
-    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
+    metricName = "PreviewRunnerAutoscalerMetrics";
+    clusterName = cConf.get(Constants.CLUSTER_NAME);
+    projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName);
     try {
       metricsEmitter.emitMetrics(0);
     } catch (Exception e) {
@@ -216,6 +230,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    LOG.debug("log appender created");
     logAppenderInitializer.initialize();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),

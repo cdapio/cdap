@@ -120,7 +120,7 @@ public class RemoteConfiguratorTest {
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> { },
-                                          new NoOpMetricsCollectionService(), className -> { }),
+                                          new NoOpMetricsCollectionService(), null),
         new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
         new ArtifactLocalizerHttpHandlerInternal(
           new ArtifactLocalizer(cConf, remoteClientFactory, ((namespaceId, retryStrategy) -> new NoOpArtifactManager()))

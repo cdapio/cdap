@@ -79,6 +79,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
   private TaskWorkerService taskWorker;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
+  private String metricName = "TASK_WORKER_AUTOSCALER_METRICS";
+  private String clusterName;
+  private String projectName;
   private MetricsEmitter metricsEmitter;
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
@@ -216,12 +219,10 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    String metricName = cConf.get(Constants.TaskWorker.AUTOSCALER_METRIC_NAME);
-    String clusterName = cConf.get(Constants.CLUSTER_NAME);
-    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
-    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
-            "datafusion.instance.region");
-    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
+    metricName = "TaskWorkerAutoscalerMetrics";
+    clusterName = cConf.get(Constants.CLUSTER_NAME);
+    projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName);
     metricsEmitter.emitMetrics(0);
 
     Injector injector = createInjector(cConf, hConf, metricsEmitter);

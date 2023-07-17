@@ -40,7 +40,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import org.apache.twill.api.TwillRunnerService;
@@ -64,7 +64,6 @@ public class SystemWorkerService extends AbstractIdleService {
   private final ProvisioningService provisioningService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
-  private final MetricsEmitter metricsEmitter;
 
   @Inject
   SystemWorkerService(CConfiguration cConf,
@@ -83,7 +82,6 @@ public class SystemWorkerService extends AbstractIdleService {
     this.twillRunnerService = twillRunnerService;
     this.remoteTwillRunnerService = remoteTwillRunnerService;
     this.provisioningService = provisioningService;
-    this.metricsEmitter = metricsEmitter;
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.SYSTEM_WORKER)
@@ -100,7 +98,7 @@ public class SystemWorkerService extends AbstractIdleService {
         })
         .setHttpHandlers(
             new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector,
-                authenticationContext, internalAccessEnforcer, this::sendAutoscalerMetricsData));
+                authenticationContext, internalAccessEnforcer, metricsEmitter));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -133,15 +131,6 @@ public class SystemWorkerService extends AbstractIdleService {
     cancelDiscovery.cancel();
     LOG.debug("Shutting down SystemWorkerService has completed");
   }
-
-  public void sendAutoscalerMetricsData(double metricValue){
-    try {
-      metricsEmitter.emitMetrics(metricValue);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
 
   @VisibleForTesting
   public InetSocketAddress getBindAddress() {
