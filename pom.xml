@@ -1879,6 +1879,20 @@
   </build>
 
   <profiles>
+    <!-- sets the compiler release flag when not using java8
+         this property is required to properly compile into java8 byte code when
+         using newer java compilers, but causes a failure when used with a
+         java8 compiler -->
+    <profile>
+      <id>jdk11</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
+    </profile>
+
     <!-- Special profile for running tests in MacOS. It needs a higher embedded postgreSQL version -->
     <profile>
       <id>postgres11</id>
