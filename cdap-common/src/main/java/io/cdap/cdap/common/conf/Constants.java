@@ -184,6 +184,7 @@ public final class Constants {
   /**
    * HBase configurations.
    */
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static final class HBase {
 
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
@@ -1590,6 +1591,7 @@ public final class Constants {
     /**
      * App Fabric.
      */
+    @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
     public static final class SSL {
 
       /**
@@ -2127,6 +2129,8 @@ public final class Constants {
   /**
    * Constants for HBase DDL executor.
    */
+
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static final class HBaseDDLExecutor {
 
     public static final String EXTENSIONS_DIR = "hbase.ddlexecutor.extension.dir";
