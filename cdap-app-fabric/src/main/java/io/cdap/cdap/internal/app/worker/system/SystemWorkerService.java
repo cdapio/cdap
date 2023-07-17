@@ -30,6 +30,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.DefaultAccessEnforcer;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -39,6 +40,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import org.apache.twill.api.TwillRunnerService;
@@ -71,7 +73,8 @@ public class SystemWorkerService extends AbstractIdleService {
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
       TokenManager tokenManager, TwillRunnerService twillRunnerService,
       @Constants.AppFabric.RemoteExecution TwillRunnerService remoteTwillRunnerService,
-      ProvisioningService provisioningService, Injector injector,
+      ProvisioningService provisioningService,
+      Injector injector, MetricsEmitter metricsEmitter,
       AuthenticationContext authenticationContext,
       @Named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer) {
     this.discoveryService = discoveryService;
@@ -95,7 +98,7 @@ public class SystemWorkerService extends AbstractIdleService {
         })
         .setHttpHandlers(
             new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector,
-                authenticationContext, internalAccessEnforcer));
+                authenticationContext, internalAccessEnforcer, metricsEmitter));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

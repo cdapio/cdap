@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.Constants.Twill.Security;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -60,6 +62,9 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
   private TwillController twillController;
 
   private ScheduledExecutorService executor;
+  private final AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+          "SystemWorkerAutoscalerMetrics", 1,8,
+          "0.75",60,10,1);
 
   @Inject
   public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
@@ -166,6 +171,10 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
+          }
+
+          if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

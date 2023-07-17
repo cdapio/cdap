@@ -90,7 +90,7 @@ public class TaskWorkerServiceTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
       cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
-      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService), null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -115,7 +115,7 @@ public class TaskWorkerServiceTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
       cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
-      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService), null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -134,7 +134,7 @@ public class TaskWorkerServiceTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
       cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
-      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService), null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
@@ -168,7 +168,7 @@ public class TaskWorkerServiceTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
       cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
-      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService), null);
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();

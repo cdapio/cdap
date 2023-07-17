@@ -19,12 +19,14 @@ package io.cdap.cdap.k8s.runtime;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
+import io.cdap.cdap.master.spi.twill.AutoscalableTwillRunnable;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
@@ -62,6 +64,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private volatile boolean stopped;
   private TwillRunnable twillRunnable;
+  private MetricsEmitter metricsEmitter;
 
   public KubeTwillLauncher(MasterEnvironmentRunnableContext context, MasterEnvironment masterEnv) {
     this.context = context;
@@ -112,7 +115,14 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
           RunIds.fromString(runId.getId() + "-0"),
           appArgs.toArray(new String[0]),
           runnableArgs.toArray(new String[0]), masterEnv)) {
-        twillRunnable.initialize(twillContext);
+        if(twillRunnable instanceof AutoscalableTwillRunnable){
+          metricsEmitter = new StackdriverMetricsEmitter(podInfo.getName(), podInfo.getNamespace());
+          LOG.debug("Metrics object created");
+          ((AutoscalableTwillRunnable) twillRunnable).initialize(twillContext, metricsEmitter);
+        }
+        else{
+          twillRunnable.initialize(twillContext);
+        }
         if (!stopped) {
           twillRunnable.run();
         }

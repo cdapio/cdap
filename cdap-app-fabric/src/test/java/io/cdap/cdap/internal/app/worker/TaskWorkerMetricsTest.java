@@ -86,7 +86,7 @@ public class TaskWorkerMetricsTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
                                               mockMetricsCollector,
-                                              new CommonNettyHttpServiceFactory(cConf, mockMetricsCollector));
+                                              new CommonNettyHttpServiceFactory(cConf, mockMetricsCollector), null);
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
