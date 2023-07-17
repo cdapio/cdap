@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,9 +32,9 @@ public class SupportBundleServiceMainTest extends MasterServiceMainTestBase {
 
   @Test
   public void testSupportBundleService() throws Exception {
-    URL url = getRouterBaseURI().resolve("/v3/support/bundles").toURL();
+    URL url = getRouterBaseUri().resolve("/v3/support/bundles").toURL();
     HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(),
-                                                 new DefaultHttpRequestConfig(false));
+        new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
     String uuid = response.getResponseBodyAsString();

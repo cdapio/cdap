@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.io.Codec;
 import java.io.IOException;
 import java.util.List;
@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  * Tests covering the {@link SharedResourceCache} implementation.
  */
 public class SharedResourceCacheTest {
+
   private static final String ZK_NAMESPACE = "/SharedResourceCacheTest";
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCacheTest.class);
   private static MiniZooKeeperCluster zkCluster;
@@ -62,14 +63,14 @@ public class SharedResourceCacheTest {
     HBaseTestingUtility testUtil = new HBaseTestingUtility();
     zkCluster = testUtil.startMiniZKCluster();
     zkConnectString = testUtil.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM) + ":"
-      + zkCluster.getClientPort();
+        + zkCluster.getClientPort();
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectString);
     injector1 = Guice.createInjector(new ConfigModule(cConf, testUtil.getConfiguration()),
-                                    new ZKClientModule());
+        new ZkClientModule());
     injector2 = Guice.createInjector(new ConfigModule(cConf, testUtil.getConfiguration()),
-                                     new ZKClientModule());
+        new ZkClientModule());
   }
 
   @AfterClass
@@ -79,7 +80,7 @@ public class SharedResourceCacheTest {
 
   @Test
   public void testCache() throws Exception {
-    String parentZNode = ZK_NAMESPACE + "/testCache";
+    String parentNode = ZK_NAMESPACE + "/testCache";
 
     List<ACL> acls = Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE);
 
@@ -87,7 +88,7 @@ public class SharedResourceCacheTest {
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
     zkClient1.startAndWait();
     SharedResourceCache<String> cache1 =
-      new SharedResourceCache<>(zkClient1, new StringCodec(), parentZNode, acls);
+        new SharedResourceCache<>(zkClient1, new StringCodec(), parentNode, acls);
     cache1.init();
 
     // add items to one and wait for them to show up in the second
@@ -98,7 +99,7 @@ public class SharedResourceCacheTest {
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
     zkClient2.startAndWait();
     SharedResourceCache<String> cache2 =
-      new SharedResourceCache<>(zkClient2, new StringCodec(), parentZNode, acls);
+        new SharedResourceCache<>(zkClient2, new StringCodec(), parentNode, acls);
     cache2.init();
 
     waitForEntry(cache2, key1, value1, 10000);
@@ -178,6 +179,7 @@ public class SharedResourceCacheTest {
 
 
   private static final class StringCodec implements Codec<String> {
+
     @Override
     public byte[] encode(String object) throws IOException {
       return Bytes.toBytes(object);
@@ -190,7 +192,7 @@ public class SharedResourceCacheTest {
   }
 
   private void waitForEntry(SharedResourceCache<String> cache, String key, String expectedValue,
-                            long timeToWaitMillis) throws InterruptedException {
+      long timeToWaitMillis) throws InterruptedException {
     String value = cache.get(key);
     boolean isPresent = expectedValue.equals(value);
 
@@ -202,7 +204,8 @@ public class SharedResourceCacheTest {
     }
 
     if (!isPresent) {
-      throw new RuntimeException("Timed out waiting for expected value '" + expectedValue + "' in cache");
+      throw new RuntimeException(
+          "Timed out waiting for expected value '" + expectedValue + "' in cache");
     }
   }
 }

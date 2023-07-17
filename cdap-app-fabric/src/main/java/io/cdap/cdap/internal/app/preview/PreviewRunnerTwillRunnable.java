@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2022 Cask Data, Inc.
+ * Copyright © 2020-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,8 +45,8 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -163,8 +163,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   }
 
   private void doInitialize(TwillContext context) throws Exception {
-    CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
-
     Configuration hConf = new Configuration();
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
@@ -176,6 +174,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     } else {
       pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), null);
     }
+
+    CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
+
     LOG.debug("Initializing preview runner with poller info {} in total {} runners",
         pollerInfo, context.getInstanceCount());
 
@@ -205,7 +206,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
       PreviewRequestPollerInfo pollerInfo) {
     List<Module> modules = new ArrayList<>();
 
-    byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
     SConfiguration sConf = SConfiguration.create();
 
     modules.add(new ConfigModule(cConf, hConf, sConf));
@@ -217,8 +217,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
     if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
     } else {
@@ -247,6 +247,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
+
+    byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {

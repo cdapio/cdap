@@ -170,7 +170,7 @@ public final class Constants {
     /**
      * Convenient method to get ZK quorum string from the configuration with proper default value.
      */
-    public static String getZKQuorum(CConfiguration cConf) {
+    public static String getZkQuorum(CConfiguration cConf) {
       String quorum = cConf.get(QUORUM);
       if (!Strings.isNullOrEmpty(quorum)) {
         return quorum;

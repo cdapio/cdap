@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2022 Cask Data, Inc.
+ * Copyright © 2015-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.data.tools;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,8 +28,8 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -72,6 +73,7 @@ import org.slf4j.LoggerFactory;
  * Tool to export the HBase table to HFiles. Tool accepts the HBase table name as input parameter
  * and outputs the HDFS path where the corresponding HFiles are exported.
  */
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public class HBaseTableExporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableExporter.class);
@@ -82,6 +84,11 @@ public class HBaseTableExporter {
   private final TransactionSystemClient txClient;
   private Path bulkloadDir;
 
+  /**
+   * Creates an HBase table exporter.
+   *
+   * @throws Exception If creation fails.
+   */
   public HBaseTableExporter() throws Exception {
     this.hConf = HBaseConfiguration.create();
     Injector injector = createInjector(CConfiguration.create(), hConf);
@@ -102,14 +109,21 @@ public class HBaseTableExporter {
 
   }
 
+  /**
+   * Creates an injector for the exporter.
+   *
+   * @param cConf The CConf to use.
+   * @param hConf The HConf to use.
+   * @return The injector.
+   */
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
         new ConfigModule(cConf, hConf),
         RemoteAuthenticatorModules.getDefaultModule(),
         new IOModule(),
-        new ZKClientModule(),
-        new ZKDiscoveryModule(),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
         new KafkaClientModule(),
         new DFSLocationModule(),
         new DataFabricModules(HBaseTableExporter.class.getName()).getDistributedModules(),
@@ -136,9 +150,9 @@ public class HBaseTableExporter {
   /**
    * Sets up the actual MapReduce job.
    *
-   * @param tx The transaction which needs to be passed to the Scan instance. This transaction
-   *     is be used by coprocessors to filter out the data corresonding to the invalid transactions
-   *     .
+   * @param tx        The transaction which needs to be passed to the Scan instance. This
+   *                  transaction is be used by coprocessors to filter out the data corresonding to
+   *                  the invalid transactions .
    * @param tableName Name of the table which need to be exported as HFiles.
    * @return the configured job
    */
@@ -207,6 +221,12 @@ public class HBaseTableExporter {
     System.out.println(" tablename    Name of the table to copy");
   }
 
+  /**
+   * The entrypoint for the exporter.
+   *
+   * @param args Arguments for the exporter.
+   * @throws Exception If something fails.
+   */
   public void doMain(String[] args) throws Exception {
     if (args.length < 1) {
       printHelp();
@@ -234,6 +254,12 @@ public class HBaseTableExporter {
     }
   }
 
+  /**
+   * The entrypoint for the exporter.
+   *
+   * @param args Arguments for the exporter.
+   * @throws Exception If something fails.
+   */
   public static void main(String[] args) throws Exception {
     try {
       HBaseTableExporter hBaseTableExporter = new HBaseTableExporter();

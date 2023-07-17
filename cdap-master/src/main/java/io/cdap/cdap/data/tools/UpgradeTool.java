@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2022 Cask Data, Inc.
+ * Copyright © 2015-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,8 +43,8 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.common.service.Services;
@@ -95,7 +95,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Command line tool for the Upgrade tool
+ * Command line tool for the Upgrade tool.
  */
 public class UpgradeTool {
 
@@ -173,8 +173,8 @@ public class UpgradeTool {
         new ConfigModule(cConf, hConf),
         RemoteAuthenticatorModules.getDefaultModule(),
         new DFSLocationModule(),
-        new ZKClientModule(),
-        new ZKDiscoveryModule(),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
         new MessagingClientModule(),
         Modules.override(new DataSetsModules().getDistributedModules()).with(
             new AbstractModule() {
@@ -257,8 +257,8 @@ public class UpgradeTool {
    * these new tables to be added so that the co processor of these tables can be upgraded when the
    * user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    *
-   * @param includeNewDatasets boolean which specifies whether to add new datasets in ds
-   *     framework or not
+   * @param includeNewDatasets boolean which specifies whether to add new datasets in ds framework
+   *                           or not
    */
   private void startUp(boolean includeNewDatasets) throws Exception {
     // Start all the services.
@@ -272,13 +272,13 @@ public class UpgradeTool {
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
-    initializeDSFramework(dsFramework, includeNewDatasets);
+    initializeDsFramework(dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
     coprocessorManager.ensureCoprocessorExists();
   }
 
   /**
-   * Stop services and
+   * Stops services.
    */
   private void stop() {
     try {
@@ -324,7 +324,7 @@ public class UpgradeTool {
             System.out.println("Starting upgrade ...");
             try {
               startUp(false);
-              ensureCDAPMasterStopped();
+              ensureCdapMasterStopped();
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -343,7 +343,7 @@ public class UpgradeTool {
             System.out.println("Starting upgrade ...");
             try {
               startUp(true);
-              performHBaseUpgrade();
+              performHbaseUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
               stop();
@@ -356,6 +356,9 @@ public class UpgradeTool {
         case HELP:
           printHelp();
           break;
+        default:
+          throw new IllegalArgumentException(String.format("Invalid action '%s'",
+              action.toString()));
       }
     } catch (Exception e) {
       System.out.println(
@@ -370,7 +373,7 @@ public class UpgradeTool {
    *
    * @throws Exception if at least one master is running
    */
-  private void ensureCDAPMasterStopped() throws Exception {
+  private void ensureCdapMasterStopped() throws Exception {
     String appFabricPath = String.format("/discoverable/%s", Constants.Service.APP_FABRIC_HTTP);
     NodeChildren nodeChildren = zkClientService.getChildren(appFabricPath).get();
     List<String> runningNodes = new ArrayList<>();
@@ -432,7 +435,7 @@ public class UpgradeTool {
     performCoprocessorUpgrade();
   }
 
-  private void performHBaseUpgrade() throws Exception {
+  private void performHbaseUpgrade() throws Exception {
     System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE,
         Boolean.TRUE.toString());
     performCoprocessorUpgrade();
@@ -447,6 +450,11 @@ public class UpgradeTool {
     dsUpgrade.upgrade();
   }
 
+  /**
+   * Entry point for the upgrade tool.
+   *
+   * @param args Arguments for the tool.
+   */
   public static void main(String[] args) {
     try {
       UpgradeTool upgradeTool = new UpgradeTool();
@@ -468,7 +476,7 @@ public class UpgradeTool {
    * these new tables to be added so that the co processor of these tables can be upgraded when the
    * user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
-  private void initializeDSFramework(DatasetFramework datasetFramework, boolean includeNewDatasets)
+  private void initializeDsFramework(DatasetFramework datasetFramework, boolean includeNewDatasets)
       throws IOException, DatasetManagementException, UnauthorizedException {
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     //noinspection StatementWithEmptyBody

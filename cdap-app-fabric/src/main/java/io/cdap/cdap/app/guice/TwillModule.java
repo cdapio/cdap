@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.app.guice;
 
 import com.google.inject.Inject;
@@ -72,7 +73,7 @@ public class TwillModule extends PrivateModule {
     @Override
     public TwillRunnerService get() {
       String zkConnectStr =
-          Constants.Zookeeper.getZKQuorum(cConf) + cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
+          Constants.Zookeeper.getZkQuorum(cConf) + cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE);
 
       // Copy the yarn config and setup twill configs
       YarnConfiguration yarnConfig = new YarnConfiguration(yarnConf);

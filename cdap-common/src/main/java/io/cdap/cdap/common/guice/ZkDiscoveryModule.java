@@ -45,11 +45,11 @@ import org.slf4j.LoggerFactory;
  * The Guice module for providing bindings for {@link DiscoveryService} and {@link
  * DiscoveryServiceClient} that uses ZooKeeper as the service discovery mechanism.
  */
-public final class ZKDiscoveryModule extends PrivateModule {
+public final class ZkDiscoveryModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(ZKDiscoveryService.class).toProvider(ZKDiscoveryServiceProvider.class)
+    bind(ZKDiscoveryService.class).toProvider(ZkDiscoveryServiceProvider.class)
         .in(Scopes.SINGLETON);
 
     bind(DiscoveryService.class).to(ZKDiscoveryService.class);
@@ -62,12 +62,12 @@ public final class ZKDiscoveryModule extends PrivateModule {
   /**
    * A Guice Provider to provide instance of {@link ZKDiscoveryService}.
    */
-  private static final class ZKDiscoveryServiceProvider implements Provider<ZKDiscoveryService> {
+  private static final class ZkDiscoveryServiceProvider implements Provider<ZKDiscoveryService> {
 
     private final ZKClient zkClient;
 
     @Inject
-    ZKDiscoveryServiceProvider(ZKClient zkClient) {
+    ZkDiscoveryServiceProvider(ZKClient zkClient) {
       this.zkClient = zkClient;
     }
 
@@ -120,9 +120,9 @@ public final class ZKDiscoveryModule extends PrivateModule {
       return new CacheLoader<String, ZKDiscoveryService>() {
         @Override
         public ZKDiscoveryService load(String key) {
-          ProgramId programID = ServiceDiscoverable.getId(key);
+          ProgramId programId = ServiceDiscoverable.getId(key);
           String ns = String.format("%s/%s", twillNamespace,
-              TwillAppNames.toTwillAppName(programID));
+              TwillAppNames.toTwillAppName(programId));
           LOG.info("Create ZKDiscoveryClient for {}", ns);
           return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
         }
