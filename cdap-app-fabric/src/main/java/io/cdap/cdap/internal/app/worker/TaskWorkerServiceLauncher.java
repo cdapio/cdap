@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
@@ -68,6 +70,9 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private TwillController twillController;
 
   private ScheduledExecutorService executor;
+  private final AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+          "TaskWorkerAutoscalerMetrics", 1,8,
+          "0.75",60,10,1);
 
   /**
    * Default Constructor with injected configuration and {@link TwillRunner}.
@@ -211,6 +216,10 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             int workDirSize = cConf.getInt(TaskWorker.CONTAINER_WORKDIR_SIZE_MB);
             twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
                 .setWorkdirSizeLimit(workDirSize);
+          }
+
+          if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

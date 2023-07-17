@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RunnableTaskLauncher;
 import io.cdap.cdap.common.internal.remote.TaskDetails;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -77,21 +78,29 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final MetricsCollectionService metricsCollectionService;
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer internalAccessEnforcer;
+  private double metricValue;
+  private MetricsEmitter metricsEmitter;
 
   public SystemWorkerHttpHandlerInternal(CConfiguration cConf,
       MetricsCollectionService metricsCollectionService,
       Injector injector, AuthenticationContext authenticationContext,
-      AccessEnforcer internalAccessEnforcer) {
+      AccessEnforcer internalAccessEnforcer, MetricsEmitter metricsEmitter) {
     this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
     this.authenticationContext = authenticationContext;
     this.internalAccessEnforcer = internalAccessEnforcer;
+    this.metricsEmitter = metricsEmitter;
+    try {
+      metricsEmitter.emitMetrics(0);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @POST
   @Path("/run")
-  public void run(FullHttpRequest request, HttpResponder responder) {
+  public void run(FullHttpRequest request, HttpResponder responder) throws Exception {
     // Perform a permission check to ensure the caller is part of the system, then unset the SecurityRequestContext to
     // force the system worker to use its system context.
     internalAccessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
@@ -103,6 +112,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
+    metricValue = requestProcessedCount.get()/requestLimit;
+    metricsEmitter.emitMetrics(metricValue);
     long startTime = System.currentTimeMillis();
     RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
@@ -124,6 +135,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
       runnableTaskContext.executeCleanupTask();
       requestProcessedCount.decrementAndGet();
+      metricValue = requestProcessedCount.get()/requestLimit;
+      metricsEmitter.emitMetrics(metricValue);
       return;
     }
 

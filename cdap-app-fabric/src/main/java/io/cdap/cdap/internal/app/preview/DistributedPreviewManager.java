@@ -32,6 +32,8 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
@@ -81,6 +83,9 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
   private final TwillRunner twillRunner;
   private ScheduledExecutorService scheduler;
   private TwillController controller;
+  private final AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+          "PreviewRunnerAutoscalerMetrics", 1,20,
+          "0.75",60,10,1);
 
   @Inject
   DistributedPreviewManager(CConfiguration cConf, Configuration hConf,
@@ -222,6 +227,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                 .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
                     new StatefulDisk("preview-runner-data", diskSize,
                         cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+          }
+
+          if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

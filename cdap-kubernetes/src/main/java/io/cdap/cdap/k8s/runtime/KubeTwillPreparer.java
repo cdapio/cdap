@@ -26,6 +26,8 @@ import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.twill.Completable;
@@ -41,6 +43,7 @@ import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
+import io.kubernetes.client.openapi.apis.AutoscalingV2Api;
 import io.kubernetes.client.openapi.apis.BatchV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
@@ -74,6 +77,18 @@ import io.kubernetes.client.openapi.models.V1StatefulSetBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
 import io.kubernetes.client.openapi.models.V1VolumeMountBuilder;
+import io.kubernetes.client.openapi.models.V2CrossVersionObjectReference;
+import io.kubernetes.client.openapi.models.V2CrossVersionObjectReferenceBuilder;
+import io.kubernetes.client.openapi.models.V2HorizontalPodAutoscaler;
+import io.kubernetes.client.openapi.models.V2HorizontalPodAutoscalerBehavior;
+import io.kubernetes.client.openapi.models.V2HorizontalPodAutoscalerSpec;
+import io.kubernetes.client.openapi.models.V2HorizontalPodAutoscalerSpecBuilder;
+import io.kubernetes.client.openapi.models.V2HPAScalingPolicy;
+import io.kubernetes.client.openapi.models.V2HPAScalingRules;
+import io.kubernetes.client.openapi.models.V2MetricIdentifier;
+import io.kubernetes.client.openapi.models.V2MetricSpec;
+import io.kubernetes.client.openapi.models.V2MetricTarget;
+import io.kubernetes.client.openapi.models.V2PodsMetricSource;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -145,7 +160,7 @@ import org.slf4j.LoggerFactory;
  * TODO (CDAP-18058): This assumption needs to be changed by using {@link TwillSpecification.PlacementPolicy}.
  */
 class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer,
-    SecureTwillPreparer, ExtendedTwillPreparer {
+    SecureTwillPreparer, ExtendedTwillPreparer, AutoscalingConfigTwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
@@ -196,7 +211,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final boolean workloadIdentityEnabled;
   private final long workloadIdentityKSATTL;
   private final String workloadIdentityPool;
-
+  private Optional<String> enableAutoscaler = Optional.empty();
   private String schedulerQueue;
   private String mainRunnableName;
   private Set<String> dependentRunnableNames;
@@ -207,6 +222,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String cdapRuntimeNamespace;
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
+  private AutoscalingConfig autoscalingConfig;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -357,6 +373,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   public SecureTwillPreparer withSecretDisk(String runnableName, SecretDisk... secretDisks) {
     secretDiskRunnables.put(runnableName, new SecretDiskRunnable(Arrays.asList(secretDisks)));
     return this;
+  }
+
+  @Override
+  public void getAutoscalingConfig(AutoscalingConfig autoscalingConfig){
+    this.autoscalingConfig = autoscalingConfig;
+    this.enableAutoscaler = Optional.of("1");
   }
 
   @Override
@@ -641,9 +663,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         obj = createJob(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
       } else if (V1Deployment.class.equals(resourceType)) {
         obj = createDeployment(metadata, twillSpec.getRunnables(), runtimeConfigLocation);
+        if(enableAutoscaler.isPresent()){
+          createHorizontalPodAutoscaler(metadata, resourceType);
+        }
       } else {
         obj = createStatefulSet(metadata, twillSpec.getRunnables(), runtimeConfigLocation,
             statefulRunnable);
+        if(enableAutoscaler.isPresent()){
+          createHorizontalPodAutoscaler(metadata, resourceType);
+        }
       }
 
       if (!isSystemNamespace(cdapRuntimeNamespace) && obj != null) {
@@ -666,6 +694,82 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
       throw new RuntimeException(errorMsg, e);
     }
+  }
+
+  private void createHorizontalPodAutoscaler(V1ObjectMeta metadata, Type resourceType) throws KubeAPIException{
+    AutoscalingV2Api autoscalerAPI = new AutoscalingV2Api(apiClient);
+
+    V2HorizontalPodAutoscaler autoscaler = buildHorizontalPodAutoscaler(metadata, resourceType);
+
+    try {
+      KubernetesObject autoscalerObject = autoscalerAPI.createNamespacedHorizontalPodAutoscaler(kubeNamespace,
+              autoscaler, "true", null, null, null);
+      LOG.info("Created Horizontal Pod Autoscaler {} in Kubernetes", metadata.getName() + "HPA");
+    } catch (ApiException e) {
+        throw new KubeAPIException("Failed to create Horizontal Pod Autoscaler", e);
+    }
+  }
+
+  private V2HorizontalPodAutoscaler buildHorizontalPodAutoscaler(V1ObjectMeta metadata, Type resourceType){
+    String ResourceType;
+    if(V1Deployment.class.equals(resourceType)){
+      ResourceType = "Deployment";
+    }
+    else{
+      ResourceType = "StatefulSet";
+    }
+
+    V1ObjectMeta metadataHPA = new V1ObjectMeta();
+    metadataHPA.setName(metadata.getName() + "-hpa");
+
+    metadataHPA.setNamespace(kubeNamespace);
+
+    V2CrossVersionObjectReference reference = new V2CrossVersionObjectReferenceBuilder()
+            .withName(metadata.getName())
+            .withKind(ResourceType)
+            .withApiVersion("apps/v1")
+            .build();
+
+    V2MetricSpec metrics = new V2MetricSpec();
+    metrics.setType("Pods");
+    metrics.setPods(new V2PodsMetricSource()
+            .metric(new V2MetricIdentifier()
+                    .name(autoscalingConfig.getMetricName()))
+            .target(new V2MetricTarget()
+                    .type("AverageValue")
+                    .averageValue(new Quantity(autoscalingConfig.getDesiredAverageMetricValue()))
+            )
+    );
+
+    V2HorizontalPodAutoscalerBehavior behavior = new V2HorizontalPodAutoscalerBehavior()
+            .scaleDown(new V2HPAScalingRules()
+                    .addPoliciesItem(new V2HPAScalingPolicy()
+                            .periodSeconds(autoscalingConfig.getPeriodTime())
+                            .type("Pods")
+                            .value(autoscalingConfig.getPodUpdateCount()))
+                    .stabilizationWindowSeconds(autoscalingConfig.getStabilizationWindowTime()))
+            .scaleUp(new V2HPAScalingRules()
+                    .addPoliciesItem(new V2HPAScalingPolicy()
+                            .periodSeconds(autoscalingConfig.getPeriodTime())
+                            .type("Pods")
+                            .value(autoscalingConfig.getPodUpdateCount()))
+                    .stabilizationWindowSeconds(autoscalingConfig.getStabilizationWindowTime())
+            );
+
+    V2HorizontalPodAutoscalerSpec spec = new V2HorizontalPodAutoscalerSpecBuilder()
+            .withScaleTargetRef(reference)
+            .withMaxReplicas(autoscalingConfig.getMaxReplicaCount())
+            .withMinReplicas(autoscalingConfig.getMinReplicaCount())
+            .withMetrics(metrics)
+            .withBehavior(behavior)
+            .build();
+
+    V2HorizontalPodAutoscaler KubeHPA = new V2HorizontalPodAutoscaler();
+    KubeHPA.setApiVersion("autoscaling/v2");
+    KubeHPA.setKind("HorizontalPodAutoscaler");
+    KubeHPA.setMetadata(metadataHPA);
+    KubeHPA.setSpec(spec);
+    return KubeHPA;
   }
 
   private void setIdentity(String runnableName, String identity) {

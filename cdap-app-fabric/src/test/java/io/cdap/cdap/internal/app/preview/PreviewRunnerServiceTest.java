@@ -55,7 +55,7 @@ public class PreviewRunnerServiceTest {
   public void testStartAndStop() throws InterruptedException, ExecutionException, TimeoutException {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
-    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
+    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, null, mockRunner);
     runnerService.startAndWait();
 
     Tasks.waitFor(true, () -> fetcher.fetchCount.get() > 0, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -67,7 +67,7 @@ public class PreviewRunnerServiceTest {
   public void testStopPreview() throws InterruptedException, ExecutionException, TimeoutException {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
-    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
+    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, null, mockRunner);
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
@@ -88,7 +88,7 @@ public class PreviewRunnerServiceTest {
 
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
-    PreviewRunnerService runnerService = new PreviewRunnerService(cConf, fetcher, mockRunner);
+    PreviewRunnerService runnerService = new PreviewRunnerService(cConf, fetcher, null, mockRunner);
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");

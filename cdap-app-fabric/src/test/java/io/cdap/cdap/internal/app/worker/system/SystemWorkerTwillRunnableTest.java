@@ -26,6 +26,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Optional;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class SystemWorkerTwillRunnableTest {
   public void testInjector() {
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     Injector injector = SystemWorkerTwillRunnable
-      .createInjector(CConfiguration.create(), new Configuration(), SConfiguration.create());
+      .createInjector(CConfiguration.create(), new Configuration(), SConfiguration.create(), null);
     injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
   }
 

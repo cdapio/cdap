@@ -26,6 +26,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
+import java.util.Optional;
+
 /**
  * Unit test for {@link TaskWorkerTwillRunnableTest}.
  */
@@ -34,7 +36,8 @@ public class TaskWorkerTwillRunnableTest {
   @Test
   public void testInjector() {
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
-    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+    Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(),
+            new Configuration(), null);
     injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
   }
 }
