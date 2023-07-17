@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2022-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,9 @@ package io.cdap.cdap.metrics.jmx;
 import java.util.Map;
 
 /**
- * Factory for creating {@link JMXMetricsCollector}.
+ * Factory for creating {@link JmxMetricsCollector}.
  */
-public interface JMXMetricsCollectorFactory {
+public interface JmxMetricsCollectorFactory {
 
-  JMXMetricsCollector create(Map<String, String> metricTags);
+  JmxMetricsCollector create(Map<String, String> metricTags);
 }

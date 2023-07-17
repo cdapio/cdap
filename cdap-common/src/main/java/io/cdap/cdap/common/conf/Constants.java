@@ -1157,7 +1157,7 @@ public final class Constants {
     /**
      * JVM resource metrics.
      */
-    public static final class JVMResource {
+    public static final class JvmResource {
 
       public static final String HEAP_USED_MB = "jvm.resource.heap.used.mb";
       public static final String HEAP_MAX_MB = "jvm.resource.heap.max.mb";
@@ -2293,7 +2293,7 @@ public final class Constants {
   /**
    * JMX metrics collector config.
    */
-  public static final class JMXMetricsCollector {
+  public static final class JmxMetricsCollector {
 
     public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
     public static final String SERVER_PORT = "jmx.metrics.collector.server.port";

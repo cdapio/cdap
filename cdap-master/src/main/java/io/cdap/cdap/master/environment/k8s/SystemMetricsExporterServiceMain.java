@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
-import io.cdap.cdap.metrics.jmx.JMXMetricsCollectorFactory;
+import io.cdap.cdap.metrics.jmx.JmxMetricsCollectorFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ import java.util.Map;
 public class SystemMetricsExporterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
-   * Main entry point
+   * Main entry point.
    */
   public static void main(String[] args) throws Exception {
     main(SystemMetricsExporterServiceMain.class, args);
@@ -80,7 +80,7 @@ public class SystemMetricsExporterServiceMain extends AbstractServiceMain<Enviro
     Map<String, String> conf = masterEnvContext.getConfigurations();
     Map<String, String> metricTags = filterByKeyPrefix(
         conf, MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX);
-    services.add(injector.getInstance(JMXMetricsCollectorFactory.class).create(metricTags));
+    services.add(injector.getInstance(JmxMetricsCollectorFactory.class).create(metricTags));
   }
 
   @Override
