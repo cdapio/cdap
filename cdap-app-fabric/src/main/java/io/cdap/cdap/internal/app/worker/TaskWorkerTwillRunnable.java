@@ -79,9 +79,6 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
   private TaskWorkerService taskWorker;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
-  private String metricName = "TASK_WORKER_AUTOSCALER_METRICS";
-  private String clusterName;
-  private String projectName;
   private MetricsEmitter metricsEmitter;
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
@@ -146,7 +143,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     super.initialize(context);
 
     try {
-      doInitialize(context);
+      doInitialize();
     } catch (Exception e) {
       LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -159,7 +156,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     super.initialize(context);
     this.metricsEmitter = metricsEmitter;
     try {
-      doInitialize(context);
+      doInitialize();
     } catch (Exception e) {
       LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -209,7 +206,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     }
   }
 
-  private void doInitialize(TwillContext context) throws Exception {
+  private void doInitialize() throws Exception {
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
     // Overwrite the app fabric temp directory with the task worker temp directory
@@ -219,9 +216,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    metricName = "TaskWorkerAutoscalerMetrics";
-    clusterName = cConf.get(Constants.CLUSTER_NAME);
-    projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    String metricName = cConf.get(Constants.TaskWorker.AUTOSCALER_METRIC_NAME);
+    String clusterName = cConf.get(Constants.CLUSTER_NAME);
+    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
     metricsEmitter.setMetricLabels(metricName, clusterName, projectName);
     metricsEmitter.emitMetrics(0);
 

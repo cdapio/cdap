@@ -35,7 +35,7 @@ public class MetricValue {
 
   /**
    * Total buckets = NUM_FINITE_BUCKETS +2 which will be 64. A long number maybe used as a mask to
-   * indicate which buckets have non-zero bucket counts
+   * indicate which buckets have non zero bucket counts
    */
   public static final int NUM_FINITE_BUCKETS = Long.SIZE - 2;
 
@@ -105,7 +105,7 @@ public class MetricValue {
   }
 
   /**
-   * bucketCounts stores counts of buckets with non-zero values.
+   * bucketCounts stores counts of buckets with non zero values.
    */
   public long[] getBucketCounts() {
     if (type != MetricType.DISTRIBUTION) {

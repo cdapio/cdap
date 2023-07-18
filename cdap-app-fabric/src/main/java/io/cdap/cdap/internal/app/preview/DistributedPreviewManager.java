@@ -83,9 +83,6 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
   private final TwillRunner twillRunner;
   private ScheduledExecutorService scheduler;
   private TwillController controller;
-  private final AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
-          "PreviewRunnerAutoscalerMetrics", 1,20,
-          "0.75",60,10,1);
 
   @Inject
   DistributedPreviewManager(CConfiguration cConf, Configuration hConf,
@@ -230,6 +227,14 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           }
 
           if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+                    cConf.get(Constants.Preview.AUTOSCALER_METRIC_NAME),
+                    cConf.getInt(Constants.Preview.MIN_REPLICA_COUNT),
+                    cConf.getInt(Constants.Preview.MAX_REPLICA_COUNT),
+                    cConf.get(Constants.Preview.DESIRED_AVERAGE_METRIC_VALUE),
+                    cConf.getInt(Constants.Preview.STABILIZATION_WINDOW_TIME),
+                    cConf.getInt(Constants.Preview.PERIOD_TIME),
+                    cConf.getInt(Constants.Preview.POD_UPDATE_COUNT));
             ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
