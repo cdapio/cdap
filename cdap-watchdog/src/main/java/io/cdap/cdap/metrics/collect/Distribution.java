@@ -25,7 +25,7 @@ import java.util.Arrays;
 public class Distribution {
   /**
    * Trying to minimize memory usage for the buckets. Using a long[64 (i.e. ROWS*COLS)] will always store 64 numbers,
-   * most of them being 0. A HashMap is an alternative, but boxing overhead is high (roughly 10X) for
+   * most of them being 0. A HashMap is an alternative, but boxing overhed is high (roughly 10X) for
    * each long.
    *
    * A third alternative used is to increase array size till the highest bucket. But this involves
@@ -37,7 +37,7 @@ public class Distribution {
    * to long[8 (i.e. COLS)] and the 5th column is increased to 1. If bucket 53 needs to be incremented, the row
    * already exists. So the 6th column is incremented.
    *
-   * In the worst case, this can take storage for 64 longs + 8(ROWS) rows references. But in the normal case,
+   * In the worst case, this can take storage for 64 longs + 8(ROWS) row sreferences. But in the normal case,
    * the range of values for a metric will probably within a 256X range i.e. max value <= min * 256. So at most
    * two rows will have to be initialized, resulting in 8(COLS)*2 long number storage + 8(ROWS) object references.
    */

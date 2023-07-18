@@ -64,7 +64,6 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private volatile boolean stopped;
   private TwillRunnable twillRunnable;
-  private MetricsEmitter metricsEmitter;
 
   public KubeTwillLauncher(MasterEnvironmentRunnableContext context, MasterEnvironment masterEnv) {
     this.context = context;
@@ -116,7 +115,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
           appArgs.toArray(new String[0]),
           runnableArgs.toArray(new String[0]), masterEnv)) {
         if(twillRunnable instanceof AutoscalableTwillRunnable){
-          metricsEmitter = new StackdriverMetricsEmitter(podInfo.getName(), podInfo.getNamespace());
+          MetricsEmitter metricsEmitter = new StackdriverMetricsEmitter(podInfo.getName(), podInfo.getNamespace());
           LOG.debug("Metrics object created");
           ((AutoscalableTwillRunnable) twillRunnable).initialize(twillContext, metricsEmitter);
         }

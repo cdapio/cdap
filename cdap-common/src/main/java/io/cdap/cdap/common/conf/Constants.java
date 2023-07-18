@@ -465,6 +465,17 @@ public final class Constants {
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
     public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
+
+    /**
+     * Preview runner horizontal pod autoscaler configuration.
+     */
+    public static final String AUTOSCALER_METRIC_NAME = "preview.runner.autoscaler.metric.name";
+    public static final String MIN_REPLICA_COUNT = "preview.runner.min.replica.count";
+    public static final String MAX_REPLICA_COUNT = "preview.runner.max.replica.count";
+    public static final String DESIRED_AVERAGE_METRIC_VALUE = "preview.runner.desired.average.metric.value";
+    public static final String STABILIZATION_WINDOW_TIME = "preview.runner.stabilization.window.time";
+    public static final String PERIOD_TIME = "preview.runner.period.time";
+    public static final String POD_UPDATE_COUNT = "preview.runner.pod.update.count";
   }
 
   /**
@@ -538,6 +549,17 @@ public final class Constants {
     public static final String WORKER_THREADS = "task.worker.worker.threads";
     public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
     public static final String METRIC_PREFIX = "task.worker.";
+
+    /**
+     * Task worker horizontal pod autoscaler configuration.
+     */
+    public static final String AUTOSCALER_METRIC_NAME = "task.worker.autoscaler.metric.name";
+    public static final String MIN_REPLICA_COUNT = "task.worker.min.replica.count";
+    public static final String MAX_REPLICA_COUNT = "task.worker.max.replica.count";
+    public static final String DESIRED_AVERAGE_METRIC_VALUE = "task.worker.desired.average.metric.value";
+    public static final String STABILIZATION_WINDOW_TIME = "task.worker.stabilization.window.time";
+    public static final String PERIOD_TIME = "task.worker.period.time";
+    public static final String POD_UPDATE_COUNT = "task.worker.pod.update.count";
   }
 
 
@@ -568,6 +590,17 @@ public final class Constants {
     public static final String WORKER_THREADS = "system.worker.worker.threads";
     public static final String REQUEST_LIMIT = "system.worker.request.limit";
     public static final String METRIC_PREFIX = "task.worker.";
+
+    /**
+     * System worker horizontal pod autoscaler configuration.
+     */
+    public static final String AUTOSCALER_METRIC_NAME = "system.worker.autoscaler.metric.name";
+    public static final String MIN_REPLICA_COUNT = "system.worker.min.replica.count";
+    public static final String MAX_REPLICA_COUNT = "system.worker.max.replica.count";
+    public static final String DESIRED_AVERAGE_METRIC_VALUE = "system.worker.desired.average.metric.value";
+    public static final String STABILIZATION_WINDOW_TIME = "system.worker.stabilization.window.time";
+    public static final String PERIOD_TIME = "system.worker.period.time";
+    public static final String POD_UPDATE_COUNT = "system.worker.pod.update.count";
   }
 
   /**
