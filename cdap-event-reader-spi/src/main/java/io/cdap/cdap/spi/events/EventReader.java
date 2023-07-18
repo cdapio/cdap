@@ -21,6 +21,14 @@ package io.cdap.cdap.spi.events;
  * {@link EventReader} Interface for listening for events.
  */
 public interface EventReader<T extends Event> extends AutoCloseable {
+
+  /**
+   * Returns the identifier for this reader.
+   *
+   * @return String id for the reader
+   */
+  String getId();
+
   /**
    * Method to initialize EventReader.
    *
