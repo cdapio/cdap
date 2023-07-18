@@ -39,7 +39,7 @@ public class DummyEventReaderExtensionProvider<T extends Event> implements Event
   @Override
   public Map<String, EventReader> loadEventReaders() {
     Map<String, EventReader> map = new HashMap<>();
-    map.put(this.eventReader.getClass().getName(), this.eventReader);
+    map.put("moduledir", this.eventReader);
     return Collections.unmodifiableMap(map);
   }
 }

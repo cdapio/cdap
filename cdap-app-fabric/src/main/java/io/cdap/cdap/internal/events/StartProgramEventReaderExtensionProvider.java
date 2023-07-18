@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,15 +77,16 @@ public class StartProgramEventReaderExtensionProvider
   }
 
   @Override
-  protected Set<String> getSupportedTypesForProvider(EventReader eventReader) {
-    if (enabledEventReaders == null ||
-            !enabledEventReaders.contains(eventReader.getClass().getName())) {
-      LOG.debug("{} is not present in the allowed list of event readers.",
+  protected Set<String> getSupportedTypesForProvider(EventReader eventReader, String moduleDir) {
+    if (enabledEventReaders == null
+            || !enabledEventReaders.contains(moduleDir)) {
+      LOG.debug("{}/{} is not present in the allowed list of event readers.",
+              moduleDir,
               eventReader.getClass().getName());
       return Collections.emptySet();
     }
 
-    return Collections.singleton(eventReader.getClass().getName());
+    return Collections.singleton(moduleDir);
   }
 
   @Override

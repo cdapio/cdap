@@ -29,8 +29,9 @@ import io.cdap.cdap.spi.events.EventResult;
 import io.cdap.cdap.spi.events.StartProgramEvent;
 import io.cdap.cdap.spi.events.StartProgramEventDetails;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -74,20 +75,26 @@ public class StartProgramEventSubscriber extends EventSubscriber {
 
   @Override
   public boolean initialize() {
-    readers = new HashSet<>(extensionProvider.loadEventReaders().values());
-    Iterator<EventReader<StartProgramEvent>> eventReaderIterator
-            = readers.iterator();
+    Map<String, EventReader<StartProgramEvent>> eventReaderMap =
+            new HashMap<>(extensionProvider.loadEventReaders());
+    Iterator<Map.Entry<String, EventReader<StartProgramEvent>>> eventReaderIterator
+            = eventReaderMap.entrySet().iterator();
+
     while (eventReaderIterator.hasNext()) {
-      EventReader<StartProgramEvent> reader = eventReaderIterator.next();
+      Map.Entry<String, EventReader<StartProgramEvent>> directoryEventReaderEntry
+              = eventReaderIterator.next();
+      String moduleDir = directoryEventReaderEntry.getKey();
+      EventReader<StartProgramEvent> reader = directoryEventReaderEntry.getValue();
       try {
         reader.initialize(
                 new DefaultEventReaderContext(String.format("%s.%s.",
-                        Constants.Event.START_EVENT_PREFIX, reader.getClass().getName()), cConf));
+                        Constants.Event.START_EVENT_PREFIX, moduleDir), cConf));
       } catch (Exception e) {
         LOG.error("Failed to initialize reader: {}", reader.getClass().getSimpleName(), e);
         eventReaderIterator.remove();
       }
     }
+    readers = eventReaderMap.values();
     if (readers.isEmpty()) {
       return false;
     }

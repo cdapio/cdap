@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -151,7 +152,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
         }
         // Try to find a provider that can support the given program type.
         try {
-          putEntriesIfAbsent(result, getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)));
+          putEntriesIfAbsent(result, getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir),
+                  moduleDir.getName()));
         } catch (Exception e) {
           LOG.warn("Exception raised when loading an extension from {}. Extension ignored.",
               moduleDir, e);
@@ -160,7 +162,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     }
 
     // Also put everything from system classloader
-    putEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader));
+    putEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader, null));
 
     allExtensions = Collections.unmodifiableMap(result);
     return allExtensions;
@@ -174,7 +176,22 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    * @param extension the extension for which supported types are requested
    * @return the set of objects that the specified extension supports.
    */
-  protected abstract Set<EXTENSION_TYPE> getSupportedTypesForProvider(EXTENSION extension);
+  protected Set<EXTENSION_TYPE> getSupportedTypesForProvider(EXTENSION extension) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Returns the set of objects that the extension supports. Implementations should return the set
+   * of objects of type #EXTENSION_TYPE that the specified extension applies to. A given extension
+   * can then be loaded for the specified type by using the #getExtension method.
+   *
+   * @param extension the extension for which supported types are requested
+   * @param moduleDir the directory where the extension resides
+   * @return the set of objects that the specified extension supports.
+   */
+  protected Set<EXTENSION_TYPE> getSupportedTypesForProvider(EXTENSION extension, String moduleDir) {
+    return getSupportedTypesForProvider(extension);
+  }
 
   /**
    * Creates a {@link FilterClassLoader.Filter} to decide what classes and resources from the parent
@@ -253,7 +270,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
           continue;
         }
         // Try to find a provider that can support the given program type.
-        EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).get(
+        EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir),
+                moduleDir.getName()).get(
             type);
         if (extension != null) {
           return extension;
@@ -262,14 +280,15 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     }
     // For unit tests, try to load the extensions from the system classloader. This is because in unit tests,
     // extensions are part of the test dependency, hence in the unit-test ClassLoader.
-    return getAllExtensions(systemExtensionLoader).get(type);
+    return getAllExtensions(systemExtensionLoader, UUID.randomUUID().toString()).get(type);
   }
 
   /**
    * Returns all the extensions in the extensions directory using the specified {@link
    * ServiceLoader}.
    */
-  private Map<EXTENSION_TYPE, EXTENSION> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader) {
+  private Map<EXTENSION_TYPE, EXTENSION> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader,
+                                                          String moduleDir) {
     Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
     Iterator<EXTENSION> iterator = serviceLoader.iterator();
     // Cannot use for each loop here, because we want to catch exceptions during iterator.next().
@@ -280,7 +299,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
           extension = prepareSystemExtension(extension);
         }
 
-        for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
+        for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension, moduleDir)) {
           if (extensions.containsKey(type)) {
             LOG.info("Ignoring extension {} for type {}", extension, type);
           } else {

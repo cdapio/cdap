@@ -33,19 +33,21 @@ public class StartProgramEventReaderExtensionProviderTest {
   @Test
   public void testEnabledEventReaderFilter() {
     EventReader mockReader = new DummyEventReader();
-    String mockReaderName = mockReader.getClass().getName();
+    String mockModuleDir = "dir";
     CConfiguration cConf = CConfiguration.create();
 
     StartProgramEventReaderExtensionProvider readerExtensionProvider1
             = new StartProgramEventReaderExtensionProvider(cConf);
-    Set<String> test1 = readerExtensionProvider1.getSupportedTypesForProvider(mockReader);
+    Set<String> test1 = readerExtensionProvider1.getSupportedTypesForProvider(mockReader,
+            mockModuleDir);
     Assert.assertTrue(test1.isEmpty());
 
-    //Test with reader class name enabled
-    cConf.setStrings(Constants.Event.START_EVENTS_READER_EXTENSIONS_ENABLED_LIST, mockReaderName);
+    //Test with reader dir enabled
+    cConf.setStrings(Constants.Event.START_EVENTS_READER_EXTENSIONS_ENABLED_LIST, mockModuleDir);
     StartProgramEventReaderExtensionProvider readerExtensionProvider2
             = new StartProgramEventReaderExtensionProvider(cConf);
-    Set<String> test2 = readerExtensionProvider2.getSupportedTypesForProvider(mockReader);
-    Assert.assertTrue(test2.contains(mockReaderName));
+    Set<String> test2 = readerExtensionProvider2.getSupportedTypesForProvider(mockReader,
+            mockModuleDir);
+    Assert.assertTrue(test2.contains(mockModuleDir));
   }
 }
