@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.7.3</version>
+    <version>6.7.3.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-master</artifactId>
@@ -367,25 +367,25 @@
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-pipeline2_2.11</artifactId>
-          <version>${project.version}</version>
+          <version>${spark2.artifacts.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-pipeline3_2.12</artifactId>
-          <version>${project.version}</version>
+          <version>${spark3.artifacts.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-streams2_2.11</artifactId>
-          <version>${project.version}</version>
+          <version>${spark2.artifacts.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-data-streams3_2.12</artifactId>
-          <version>${project.version}</version>
+          <version>${spark3.artifacts.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
@@ -427,7 +427,7 @@
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline2_2.11/target
                       </directory>
                       <includes>
-                        <include>cdap-data-pipeline2_2.11-${project.version}.jar</include>
+                        <include>cdap-data-pipeline2_2.11-${spark2.artifacts.version}.jar</include>
                       </includes>
                     </resource>
                     <resource>
@@ -435,7 +435,7 @@
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams2_2.11/target
                       </directory>
                       <includes>
-                        <include>cdap-data-streams2_2.11-${project.version}.jar</include>
+                        <include>cdap-data-streams2_2.11-${spark2.artifacts.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -455,7 +455,7 @@
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-pipeline3_2.12/target
                       </directory>
                       <includes>
-                        <include>cdap-data-pipeline3_2.12-${project.version}.jar</include>
+                        <include>cdap-data-pipeline3_2.12-${spark3.artifacts.version}.jar</include>
                       </includes>
                     </resource>
                     <resource>
@@ -463,7 +463,7 @@
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-data-streams3_2.12/target
                       </directory>
                       <includes>
-                        <include>cdap-data-streams3_2.12-${project.version}.jar</include>
+                        <include>cdap-data-streams3_2.12-${spark3.artifacts.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -920,8 +920,8 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams2_2.11-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline2_2.11-${spark2.artifacts.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-pipeline-${spark2.artifacts.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams2_2.11-${spark2.artifacts.version}.jar" tofile="${stage.artifacts.dir}/${spark2.artifacts.dir}/cdap-data-streams-${spark2.artifacts.version}.jar" />
                   </target>
                 </configuration>
               </execution>
@@ -933,8 +933,8 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${spark3.artifacts.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${spark3.artifacts.version}.jar" />
+                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${spark3.artifacts.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${spark3.artifacts.version}.jar" />
                   </target>
                 </configuration>
               </execution>

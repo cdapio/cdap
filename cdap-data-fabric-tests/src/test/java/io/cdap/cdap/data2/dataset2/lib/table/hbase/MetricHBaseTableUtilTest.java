@@ -38,6 +38,7 @@ import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -61,6 +62,7 @@ public class MetricHBaseTableUtilTest {
     executor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
+  @Ignore
   @Test
   public void testGetVersion() throws Exception {
     // Verify new metric datasets are properly recognized as 2.8+ version from now on

@@ -23,11 +23,12 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>6.7.3</version>
+    <version>6.7.3.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-data-streams3_2.12</artifactId>
   <name>CDAP Data Streams Application Spark2 Scala 2.12</name>
+  <version>${spark3.artifacts.version}</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -48,53 +49,59 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark3_2.12</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-features</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-api-spark</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-proto</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-etl-core</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>hydrator-spark-core3_2.12</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>hydrator-test</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common-unit-test</artifactId>
+      <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -110,7 +117,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-spark-core3_2.12</artifactId>
-      <version>${project.version}</version>
+      <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
