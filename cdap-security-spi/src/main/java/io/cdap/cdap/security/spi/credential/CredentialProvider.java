@@ -34,7 +34,8 @@ public interface CredentialProvider {
   String getName();
 
   /**
-   * Initializes the credential provider.
+   * Initializes the credential provider. This is guaranteed to be called once before any other
+   * methods (except for {@link CredentialProvider#getName()} are called.
    *
    * @param context The credential provider context to initialize with.
    */

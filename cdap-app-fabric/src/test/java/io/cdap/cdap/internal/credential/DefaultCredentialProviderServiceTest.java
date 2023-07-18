@@ -37,7 +37,7 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
   @BeforeClass
   public static void startup() {
     credentialProviderService = new DefaultCredentialProviderService(CConfiguration.create(),
-        contextAccessEnforcer, new MockCredentialProviderProvider(), credentialIdentityManager,
+        contextAccessEnforcer, new MockCredentialProviderLoader(), credentialIdentityManager,
         credentialProfileManager);
   }
 

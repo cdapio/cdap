@@ -32,7 +32,7 @@ import java.util.Set;
  * Extension loader for {@link CredentialProvider}.
  */
 public class CredentialProviderExtensionLoader extends AbstractExtensionLoader<String,
-    CredentialProvider> implements CredentialProviderProvider {
+    CredentialProvider> implements CredentialProviderLoader {
 
   private volatile Set<String> allowedResources;
   private volatile Set<String> allowedPackages;

@@ -16,23 +16,25 @@
 
 package io.cdap.cdap.api.security.credential;
 
+import java.time.Instant;
+
 /**
  * A credential provisioned by the {@link CredentialProvider}.
  */
 public class ProvisionedCredential {
 
   private final String value;
-  private final long expirationSecs;
+  private final Instant expiration;
 
   /**
    * Creates a provisioned credential.
    *
-   * @param value          The credential value.
-   * @param expirationSecs The expiration timestamp of the credential in seconds.
+   * @param value      The credential value.
+   * @param expiration The expiration of the credential as an {@link Instant}.
    */
-  public ProvisionedCredential(String value, long expirationSecs) {
+  public ProvisionedCredential(String value, Instant expiration) {
     this.value = value;
-    this.expirationSecs = expirationSecs;
+    this.expiration = expiration;
   }
 
   /**
@@ -45,11 +47,11 @@ public class ProvisionedCredential {
   }
 
   /**
-   * Returns the credential expiration timestamp in seconds.
+   * Returns the instant the credential expires.
    *
-   * @return The credential expiration timestamp in seconds.
+   * @return The credential expiration instant.
    */
-  public long getExpirationSecs() {
-    return expirationSecs;
+  public Instant getExpiration() {
+    return expiration;
   }
 }

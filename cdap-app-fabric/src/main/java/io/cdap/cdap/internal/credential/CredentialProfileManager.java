@@ -51,11 +51,11 @@ public class CredentialProfileManager {
   @Inject
   CredentialProfileManager(CredentialIdentityStore identityStore,
       CredentialProfileStore profileStore, TransactionRunner transactionRunner,
-      CredentialProviderProvider credentialProviderProvider) {
+      CredentialProviderLoader credentialProviderLoader) {
     this.identityStore = identityStore;
     this.profileStore = profileStore;
     this.transactionRunner = transactionRunner;
-    this.credentialProviders = credentialProviderProvider.loadCredentialProviders();
+    this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
   }
 
   /**

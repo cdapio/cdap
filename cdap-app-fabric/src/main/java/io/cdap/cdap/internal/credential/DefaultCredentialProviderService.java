@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -41,27 +42,26 @@ public class DefaultCredentialProviderService extends AbstractIdleService
 
   private final CConfiguration cConf;
   private final ContextAccessEnforcer contextAccessEnforcer;
-  private final Map<String, io.cdap.cdap.security.spi.credential.CredentialProvider> credentialProviders;
+  private final Map<String, CredentialProvider> credentialProviders;
   private final CredentialIdentityManager credentialIdentityManager;
   private final CredentialProfileManager credentialProfileManager;
 
   @Inject
   DefaultCredentialProviderService(CConfiguration cConf,
       ContextAccessEnforcer contextAccessEnforcer,
-      CredentialProviderProvider credentialProviderProvider,
+      CredentialProviderLoader credentialProviderLoader,
       CredentialIdentityManager credentialIdentityManager,
       CredentialProfileManager credentialProfileManager) {
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
-    this.credentialProviders = credentialProviderProvider.loadCredentialProviders();
+    this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProfileManager = credentialProfileManager;
   }
 
   @Override
   protected void startUp() throws Exception {
-    for (io.cdap.cdap.security.spi.credential.CredentialProvider provider : credentialProviders
-        .values()) {
+    for (CredentialProvider provider : credentialProviders.values()) {
       provider.initialize(new DefaultCredentialProviderContext(cConf, provider.getName()));
     }
   }

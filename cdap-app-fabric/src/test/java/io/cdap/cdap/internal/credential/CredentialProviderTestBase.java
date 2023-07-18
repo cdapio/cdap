@@ -45,6 +45,7 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition.CredentialProviderStore;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,9 +67,10 @@ public class CredentialProviderTestBase {
   static String CREDENTIAL_PROVIDER_TYPE_VALIDATION_FAILURE = "validationFailure";
   static String CREDENTIAL_PROVIDER_TYPE_PROVISION_FAILURE = "provisionFailure";
 
-  static ProvisionedCredential RETURNED_TOKEN = new ProvisionedCredential("returned_token", 9999);
+  static ProvisionedCredential RETURNED_TOKEN = new ProvisionedCredential("returned_token",
+      Instant.ofEpochSecond(9999));
 
-  static class MockCredentialProviderProvider implements CredentialProviderProvider {
+  static class MockCredentialProviderLoader implements CredentialProviderLoader {
 
     @Override
     public Map<String, CredentialProvider> loadCredentialProviders() {
@@ -114,15 +116,15 @@ public class CredentialProviderTestBase {
         validationFailureMockCredentialProvider);
     credentialProviders.put(CREDENTIAL_PROVIDER_TYPE_PROVISION_FAILURE,
         provisionFailureMockCredentialProvider);
-    CredentialProviderProvider mockCredentialProviderProvider
-        = new MockCredentialProviderProvider();
+    CredentialProviderLoader mockCredentialProviderLoader
+        = new MockCredentialProviderLoader();
 
     // Setup credential managers.
     TransactionRunner runner = injector.getInstance(TransactionRunner.class);
     CredentialProfileStore profileStore = new CredentialProfileStore();
     CredentialIdentityStore identityStore = new CredentialIdentityStore();
     credentialProfileManager = new CredentialProfileManager(identityStore, profileStore,
-        runner, mockCredentialProviderProvider);
+        runner, mockCredentialProviderLoader);
     credentialIdentityManager = new CredentialIdentityManager(identityStore, profileStore,
         runner);
   }

@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * Provides {@link io.cdap.cdap.security.spi.credential.CredentialProvider}.
  */
-public interface CredentialProviderProvider {
+public interface CredentialProviderLoader {
 
   /**
    * Returns a map of credential providers type to credential providers.

@@ -25,13 +25,13 @@ public interface CredentialProviderContext {
 
   /**
    * System properties are derived from the CDAP configuration. Anything in the CDAP configuration
-   * that is prefixed by 'credential.provider.system.properties.[provisioner-name].' will be adding
-   * as an entry in the system properties. For example, if the provider is named 'abc', and there is
-   * a configuration property 'credential.provider.system.properties.abc.retry.timeout' with value
+   * that is prefixed by 'credential.provider.system.properties.[provider-name].' will be adding as
+   * an entry in the system properties. For example, if the provider is named 'abc', and there is a
+   * configuration property 'credential.provider.system.properties.abc.retry.timeout' with value
    * '60', the system properties map will contain a key 'retry.timeout' with value '60'. System
    * properties are not visible to end users and cannot be overwritten by end users.
    *
-   * @return unmodifiable system properties for the provisioner
+   * @return Unmodifiable system properties for the provider.
    */
   Map<String, String> getProperties();
 }

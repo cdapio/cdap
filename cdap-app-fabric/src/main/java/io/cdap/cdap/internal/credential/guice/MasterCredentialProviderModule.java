@@ -19,8 +19,8 @@ package io.cdap.cdap.internal.credential.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.security.credential.CredentialProvider;
+import io.cdap.cdap.internal.credential.CredentialProviderLoader;
 import io.cdap.cdap.internal.credential.CredentialProviderExtensionLoader;
-import io.cdap.cdap.internal.credential.CredentialProviderProvider;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.credential.DefaultCredentialProviderService;
 
@@ -34,6 +34,6 @@ public class MasterCredentialProviderModule extends AbstractModule {
     bind(CredentialProvider.class).to(CredentialProviderService.class).in(Scopes.SINGLETON);
     bind(CredentialProviderService.class).to(DefaultCredentialProviderService.class)
         .in(Scopes.SINGLETON);
-    bind(CredentialProviderProvider.class).to(CredentialProviderExtensionLoader.class);
+    bind(CredentialProviderLoader.class).to(CredentialProviderExtensionLoader.class);
   }
 }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.credential.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.security.credential.CredentialProvider;
 import io.cdap.cdap.api.security.credential.CredentialProvisioningException;
@@ -28,6 +29,7 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.time.Instant;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -40,7 +42,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Instant.class,
+      new InstantEpochSecondsTypeAdapter()).create();
 
   private final CredentialProvider credentialProvider;
 
