@@ -24,7 +24,6 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.common.http.HttpRequest;
@@ -91,17 +90,17 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   private final String metadataServiceEndpoint;
   private final MetricsCollectionService metricsCollectionService;
+  private Consumer<Double> autoscalerMetricsCollector;
 
   /**
    * If true, pod will restart once an operation finish its execution.
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
-  private MetricsEmitter metricsEmitter;
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
-      MetricsCollectionService metricsCollectionService, MetricsEmitter metricsEmitter) {
+      MetricsCollectionService metricsCollectionService, Consumer<Double> autoscalerMetricsCollector) {
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
@@ -110,7 +109,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
-    this.metricsEmitter = metricsEmitter;
+    this.autoscalerMetricsCollector = autoscalerMetricsCollector;
     this.taskCompletionConsumer = (succeeded, taskDetails) -> {
       taskDetails.emitMetrics(succeeded);
 
@@ -188,11 +187,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     requestProcessedCount.incrementAndGet();
 
     double metricValue = requestProcessedCount.get();
-    try {
-      metricsEmitter.emitMetrics(metricValue);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    autoscalerMetricsCollector.accept(metricValue);
     long startTime = System.currentTimeMillis();
     try {
       RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
@@ -232,11 +227,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           new TaskDetails(metricsCollectionService, startTime, true, null));
     }
     metricValue = requestProcessedCount.get();
-    try {
-      metricsEmitter.emitMetrics(metricValue);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    autoscalerMetricsCollector.accept(metricValue);
+    LOG.debug("Metrics sent");
   }
 
   @GET

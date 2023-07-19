@@ -137,7 +137,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
-        }, new NoOpMetricsCollectionService(), null),
+        }, new NoOpMetricsCollectionService(), className -> {}),
         new SecureStoreHandler(fileSecureStoreService, fileSecureStoreService)
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {

@@ -143,7 +143,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     super.initialize(context);
 
     try {
-      doInitialize();
+      doInitialize(context);
     } catch (Exception e) {
       LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -156,7 +156,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     super.initialize(context);
     this.metricsEmitter = metricsEmitter;
     try {
-      doInitialize();
+      doInitialize(context);
     } catch (Exception e) {
       LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
@@ -206,7 +206,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     }
   }
 
-  private void doInitialize() throws Exception {
+  private void doInitialize(TwillContext context) throws Exception {
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
 
     // Overwrite the app fabric temp directory with the task worker temp directory
@@ -219,7 +219,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     String metricName = cConf.get(Constants.TaskWorker.AUTOSCALER_METRIC_NAME);
     String clusterName = cConf.get(Constants.CLUSTER_NAME);
     String projectName = cConf.get(Constants.Event.PROJECT_NAME);
-    metricsEmitter.setMetricLabels(metricName, clusterName, projectName);
+    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
+            "datafusion.instance.region");
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
     metricsEmitter.emitMetrics(0);
 
     Injector injector = createInjector(cConf, hConf, metricsEmitter);

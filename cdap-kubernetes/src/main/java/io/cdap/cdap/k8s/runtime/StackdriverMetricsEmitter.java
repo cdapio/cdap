@@ -45,6 +45,7 @@ public class StackdriverMetricsEmitter implements MetricsEmitter {
     private String metricName;
     private String projectName;
     private String clusterName;
+    private String location;
 
     StackdriverMetricsEmitter(String podName, String podNamespace){
         this.podName = podName;
@@ -52,10 +53,11 @@ public class StackdriverMetricsEmitter implements MetricsEmitter {
     }
 
     @Override
-    public void setMetricLabels(String metricName, String clusterName, String projectName){
+    public void setMetricLabels(String metricName, String clusterName, String projectName, String location){
         this.metricName = metricName;
         this.clusterName = clusterName;
         this.projectName = projectName;
+        this.location = location;
     }
 
     @Override
@@ -88,9 +90,8 @@ public class StackdriverMetricsEmitter implements MetricsEmitter {
                 .build();
 
         // create MonitoredResource
-        String Zone = "us-east1";
         Map<String, String> resourceLabels = new HashMap<>();
-        resourceLabels.put("location", Zone);
+        resourceLabels.put("location", location);
         resourceLabels.put("cluster_name", clusterName);
         resourceLabels.put("project_id", projectName);
         resourceLabels.put("namespace_name", podNamespace);
