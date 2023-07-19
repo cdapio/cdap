@@ -105,7 +105,7 @@ public class DataprocJobMain {
     URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
         Constants.Files.TWILL_JAR));
-    Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
+    Arrays.stream(urls).forEach(url -> LOG.info("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
     // Don't close the classloader since this is the main classloader,
@@ -236,7 +236,7 @@ public class DataprocJobMain {
 
   private static void unJar(Path archiveFile) throws IOException {
     Path targetDir = archiveFile.resolveSibling(archiveFile.getFileName() + ".tmp");
-    LOG.debug("Expanding archive {} to {}", archiveFile, targetDir);
+    LOG.info("Expanding archive {} to {}", archiveFile, targetDir);
 
     try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(archiveFile))) {
       Files.createDirectories(targetDir);
@@ -256,7 +256,7 @@ public class DataprocJobMain {
 
     Files.deleteIfExists(archiveFile);
     Files.move(targetDir, archiveFile);
-    LOG.debug("Archive expanded to {}", targetDir);
+    LOG.info("Archive expanded to {}", targetDir);
   }
 
   /**
@@ -291,6 +291,14 @@ public class DataprocJobMain {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
     URLClassLoader classLoader = new URLClassLoader(classpath,
         DataprocJobMain.class.getClassLoader().getParent());
+    ClassLoader parent = DataprocJobMain.class.getClassLoader().getParent();
+    LOG.info("parent classloader = {}, class = {}", parent, parent.getClass().getName());
+    if (parent instanceof URLClassLoader) {
+      URLClassLoader p = (URLClassLoader) parent;
+      for (URL u : p.getURLs()) {
+        LOG.info("parent classloader url = {}", u);
+      }
+    }
     if (containerClassLoaderName == null) {
       return classLoader;
     }
