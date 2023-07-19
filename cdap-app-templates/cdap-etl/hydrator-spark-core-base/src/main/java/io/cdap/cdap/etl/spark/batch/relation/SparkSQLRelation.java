@@ -38,7 +38,6 @@ public class SparkSQLRelation implements Relation {
   private static final SparkSQLExpressionFactory factory = new SparkSQLExpressionFactory();
   private String datasetName;
   private List<String> columns;
-  private SparkSQLRelation parent;
   private String sqlStatement;
   private final Schema schema;
 
@@ -50,19 +49,18 @@ public class SparkSQLRelation implements Relation {
   private static final String COMMA = " , ";
 
   public SparkSQLRelation(String datasetName, List<String> columns) {
-    this(datasetName, columns, null, null, null);
+    this(datasetName, columns, null, null);
   }
 
   public SparkSQLRelation(String datasetName, List<String> columns, Schema schema) {
-    this(datasetName, columns, null, schema, null);
+    this(datasetName, columns, null, schema);
   }
 
   SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement,
-                   @Nullable Schema schema, @Nullable SparkSQLRelation parent) {
+                   @Nullable Schema schema) {
     this.datasetName = datasetName;
     this.columns = columns;
     this.sqlStatement = sqlStatement;
-    this.parent = parent;
     this.schema = schema;
   }
 
@@ -86,8 +84,7 @@ public class SparkSQLRelation implements Relation {
     Map<String, Expression> columnExpMap = generateColumnExpMap(this.columns);
     columnExpMap.put(column, value);
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    this.sqlStatement = generateNestedSelect(null, columnExpMap);
-    return new SparkSQLRelation(this.datasetName, columnList, this.getSqlStatement(), schema, this);
+    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
   }
 
   @Override
@@ -97,8 +94,7 @@ public class SparkSQLRelation implements Relation {
       return new InvalidRelation("Trying to remove non existing column in Relation: " + column);
     }
     this.columns.remove(column);
-    this.sqlStatement = generateSelectQuery(null);
-    return new SparkSQLRelation(this.datasetName, columns, this.getSqlStatement(), schema, this);
+    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(null), schema);
   }
 
   @Override
@@ -108,16 +104,14 @@ public class SparkSQLRelation implements Relation {
                                    + columnExpMap.values());
     }
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    this.sqlStatement = generateNestedSelect(null, columnExpMap);
-    return new SparkSQLRelation(this.datasetName, columnList, this.getSqlStatement(), schema, this);
+    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
   }
 
   @Override
   public Relation filter(Expression filter) {
     // Get filter conditions
     String filterCondition = filter != null ? ((SparkSQLExpression) filter).extract() : null;
-    this.sqlStatement = generateSelectQuery(filterCondition);
-    return new SparkSQLRelation(this.datasetName, columns, this.getSqlStatement(), schema, this);
+    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(filterCondition), schema);
   }
 
   public String getSqlStatement() {
@@ -139,17 +133,19 @@ public class SparkSQLRelation implements Relation {
     return columns;
   }
 
+  public String getDatasetName() { return datasetName; }
+
   private String generateSelectQuery(String filterCondition) {
-    return generateNestedSelect(filterCondition, generateColumnExpMap(this.columns));
+    return generateSelectQuery(filterCondition, generateColumnExpMap(this.columns));
   }
 
   private String generateSelectQuery(String filterCondition, Map<String, Expression> columnExpMap) {
     StringBuilder queryBuilder = new StringBuilder(
-      String.format("%s %s %s %s%s%s",
+      String.format("%s %s %s (%s)%s%s",
                     SELECT,
                     getColumnAliasCSV(columnExpMap),
                     FROM,
-                    this.datasetName,
+                    getDataSetAlias(),
                     AS,
                     this.datasetName)
     );
@@ -161,24 +157,8 @@ public class SparkSQLRelation implements Relation {
     return queryBuilder.toString();
   }
 
-  private String generateNestedSelect(String filterCondition, Map<String, Expression> columnExpMap) {
-    if (this.parent == null) {
-      return generateSelectQuery(filterCondition, columnExpMap);
-    }
-    StringBuilder queryBuilder = new StringBuilder(
-            String.format("%s %s %s (%s)%s%s",
-                    SELECT,
-                    getColumnAliasCSV(columnExpMap),
-                    FROM,
-                    this.parent.getSqlStatement(),
-                    AS,
-                    this.datasetName)
-    );
-
-    if (filterCondition != null && !filterCondition.isEmpty()) {
-      queryBuilder.append(String.format(" %s %s", WHERE, filterCondition));
-    }
-    return queryBuilder.toString();
+  private String getDataSetAlias() {
+    return this.getSqlStatement() != null ? this.getSqlStatement() : this.getDatasetName();
   }
 
   private Map<String, Expression> generateColumnExpMap(List<String> columns) {
@@ -205,8 +185,7 @@ public class SparkSQLRelation implements Relation {
     SparkSQLRelation that = (SparkSQLRelation) o;
     return Objects.equals(sqlStatement, that.sqlStatement)
       && Objects.equals(datasetName, that.datasetName)
-      && Objects.equals(columns, that.columns)
-      && Objects.equals(parent, that.parent);
+      && Objects.equals(columns, that.columns);
   }
 
   @Override
