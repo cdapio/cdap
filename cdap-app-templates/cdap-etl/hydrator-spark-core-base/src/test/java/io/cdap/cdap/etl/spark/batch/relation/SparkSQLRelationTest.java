@@ -47,9 +47,8 @@ public class SparkSQLRelationTest {
 
     SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
                                                      Arrays.asList("a", "b", "c"),
-                                                     "SELECT a AS a , b AS b , a+b AS c FROM testDataset " +
-                                                     "AS testDataset",
-                                                     null, baseSQLRelation);
+                                                     "SELECT a AS a , b AS b , a+b AS c FROM (testDataset) " +
+                                                     "AS testDataset", null);
 
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
@@ -59,8 +58,7 @@ public class SparkSQLRelationTest {
     SparkSQLRelation actualRelation = (SparkSQLRelation) baseSQLRelation.dropColumn("b");
     SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
                                                              Arrays.asList("a"),
-                                                             "SELECT a AS a FROM testDataset AS testDataset",
-                                                             null, baseSQLRelation);
+                                                             "SELECT a AS a FROM (testDataset) AS testDataset", null);
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
 
@@ -74,8 +72,7 @@ public class SparkSQLRelationTest {
     SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
                                                              Arrays.asList("new_a", "new_b"),
                                                              "SELECT a AS new_a , b AS new_b FROM " +
-                                                               "testDataset AS testDataset",
-                                                             null, baseSQLRelation);
+                                                               "(testDataset) AS testDataset", null);
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
 
@@ -84,9 +81,8 @@ public class SparkSQLRelationTest {
     SparkSQLRelation actualRelation = (SparkSQLRelation) baseSQLRelation.filter(factory.compile("a > 2"));
     SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
                                                              Arrays.asList("a", "b"),
-                                                             "SELECT a AS a , b AS b FROM testDataset AS testDataset " +
-                                                               "WHERE a > 2",
-                                                             null, baseSQLRelation);
+                                                             "SELECT a AS a , b AS b FROM (testDataset) " +
+                                                             "AS testDataset WHERE a > 2", null);
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
 
@@ -97,9 +93,8 @@ public class SparkSQLRelationTest {
     SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
                                                              Arrays.asList("a","b", "c"),
                                                              "SELECT a AS a , b AS b , a+b AS c FROM (SELECT a AS a " +
-                                                             ", b AS b FROM testDataset AS testDataset WHERE true) " +
-                                                             "AS testDataset",
-                                                             null, nestedRelation);
+                                                             ", b AS b FROM (testDataset) AS testDataset WHERE true) " +
+                                                             "AS testDataset", null);
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
 
@@ -113,8 +108,8 @@ public class SparkSQLRelationTest {
 
     SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset", Arrays.asList("new_a", "new_b"),
                                                              "SELECT a AS new_a , b AS new_b FROM (SELECT a AS new_a " +
-                                                             "FROM testDataset AS testDataset) AS testDataset",
-                                                             null, baseSQLRelation);
+                                                             "FROM (testDataset) AS testDataset) AS testDataset",
+                                                             null);
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
 }
