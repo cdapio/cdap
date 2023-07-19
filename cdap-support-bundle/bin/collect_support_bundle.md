@@ -16,19 +16,19 @@ This script can be used to troubleshoot issues with CDAP system services or to g
 
 The CDAP Support Bundle Script takes the following command-line arguments:
 
-1. kube-namespace(n): The Kubernetes namespace where CDAP is installed.
+1. --kube-namespace, -n : The Kubernetes namespace where CDAP is installed. Default is set to "default".
 
-2. username(u): The CDAP username, if authentication is enabled.
+2. --username, -u : The CDAP username, if authentication is enabled.
 
-3. password(p): The CDAP password, if authentication is enabled.
+3. --password, -p : The CDAP password, if authentication is enabled.
 
-4. cdap-ns(c): The CDAP namespace, which is the default namespace where CDAP services are deployed.
+4. --cdap-ns, -c : The CDAP namespace, which is the default namespace where CDAP services are deployed. Default is set to "default".
 
-5. pipeline-name(l): The name of the pipeline, if you want to collect logs for a failed pipeline run.
+5. --pipeline-name, -l : The name of the pipeline, if you want to collect logs for a failed pipeline run.
 
-6. run-id(r): The run ID of the pipeline, if you want to collect logs for a failed pipeline run.
+6. --run-id, -r : The run ID of the pipeline, if you want to collect logs for a failed pipeline run.
 
-7. runtime-namespace(t): The runtime namespace, which is the namespace where the pipeline is running.
+7. --runtime-namespace, -t : The runtime namespace, which is the namespace where the pipeline is running. Default is set to "default".
 
 **Support Bundle Script Execution**
 -----------------------------------
@@ -52,7 +52,7 @@ At the end, a tarball file will be created. This file will contain the logs for 
 
 If you want to get the logs for pipeline runs that failed, use the parameters **pipeline-name (-l)**, **run-id (-r)**, and **runtime-namespace (-t)**. 
 
-Below is the command for adding the logs for the pipeline runs:
+Below is the command for collecting the logs for the pipeline runs:
 
 `python3 collect_support_bundle.py -n <kube-namespace> -u <username> -p <password> -l <pipeline-name> -r <run-id> -t <runtime-namespace>`
 
