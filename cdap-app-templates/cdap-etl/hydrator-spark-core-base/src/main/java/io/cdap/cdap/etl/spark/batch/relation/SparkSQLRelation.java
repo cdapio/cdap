@@ -56,8 +56,7 @@ public class SparkSQLRelation implements Relation {
     this(datasetName, columns, null, schema);
   }
 
-  SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement,
-                   @Nullable Schema schema) {
+  SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement, @Nullable Schema schema) {
     this.datasetName = datasetName;
     this.columns = columns;
     this.sqlStatement = sqlStatement;
@@ -169,9 +168,9 @@ public class SparkSQLRelation implements Relation {
 
   private String getColumnAliasCSV(Map<String, Expression> columnExpMap) {
     return columnExpMap.entrySet()
-            .stream()
-            .map(e -> String.format("%s %s %s", ((SparkSQLExpression) e.getValue()).extract(), AS, e.getKey()))
-            .collect(Collectors.joining(COMMA));
+      .stream()
+      .map(e -> String.format("%s %s %s", ((SparkSQLExpression) e.getValue()).extract(), AS, e.getKey()))
+      .collect(Collectors.joining(COMMA));
   }
 
   @Override
