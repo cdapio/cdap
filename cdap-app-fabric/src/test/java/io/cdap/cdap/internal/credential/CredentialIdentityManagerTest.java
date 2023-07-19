@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.credential;
 
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import java.util.Arrays;

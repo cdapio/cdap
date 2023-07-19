@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.credential.store;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.spi.data.StructuredRow;

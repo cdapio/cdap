@@ -18,11 +18,11 @@ package io.cdap.cdap.internal.credential.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import io.cdap.cdap.api.security.credential.CredentialProvider;
-import io.cdap.cdap.internal.credential.CredentialProviderLoader;
 import io.cdap.cdap.internal.credential.CredentialProviderExtensionLoader;
+import io.cdap.cdap.internal.credential.CredentialProviderLoader;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.credential.DefaultCredentialProviderService;
+import io.cdap.cdap.proto.credential.CredentialProvider;
 
 /**
  * Credential provider module for AppFabric.

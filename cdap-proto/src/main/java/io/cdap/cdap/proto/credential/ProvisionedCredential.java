@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.api.security.credential;
+package io.cdap.cdap.proto.credential;
 
 import java.time.Instant;
 

@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.proto.credential;
 
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
-
 /**
  * Represents a creation request for a {@link CredentialIdentity}.
  */

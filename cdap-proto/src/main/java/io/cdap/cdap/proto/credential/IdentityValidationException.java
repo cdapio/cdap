@@ -14,19 +14,19 @@
  * the License.
  */
 
-package io.cdap.cdap.api.security.credential;
+package io.cdap.cdap.proto.credential;
 
 /**
- * An exception which is thrown when a resource is not found.
+ * Exception thrown during identity validation.
  */
-public class NotFoundException extends Exception {
+public class IdentityValidationException extends Exception {
 
   /**
-   * Exception denoting a resource was not found.
+   * Creates a new identity validation exception.
    *
-   * @param message The message for the exception.
+   * @param cause The cause of identity validation failure.
    */
-  public NotFoundException(String message) {
-    super(message);
+  public IdentityValidationException(Throwable cause) {
+    super("Failed to validate identity", cause);
   }
 }

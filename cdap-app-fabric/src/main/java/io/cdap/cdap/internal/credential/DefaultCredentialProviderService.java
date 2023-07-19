@@ -17,13 +17,13 @@
 package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
-import io.cdap.cdap.api.security.credential.CredentialProvisioningException;
-import io.cdap.cdap.api.security.credential.IdentityValidationException;
-import io.cdap.cdap.api.security.credential.NotFoundException;
-import io.cdap.cdap.api.security.credential.ProvisionedCredential;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.IdentityValidationException;
+import io.cdap.cdap.proto.credential.NotFoundException;
+import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.proto.security.StandardPermission;

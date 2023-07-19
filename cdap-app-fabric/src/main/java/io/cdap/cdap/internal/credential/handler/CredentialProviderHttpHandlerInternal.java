@@ -19,10 +19,10 @@ package io.cdap.cdap.internal.credential.handler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.security.credential.CredentialProvider;
-import io.cdap.cdap.api.security.credential.CredentialProvisioningException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -71,7 +71,7 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
     try {
       responder.sendJson(HttpResponseStatus.OK,
           GSON.toJson(credentialProvider.provision(namespace, identityName)));
-    } catch (io.cdap.cdap.api.security.credential.NotFoundException e) {
+    } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
       throw new NotFoundException(e.getMessage());
     }
   }

@@ -20,9 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
-import io.cdap.cdap.api.security.credential.CredentialProvider;
-import io.cdap.cdap.api.security.credential.IdentityValidationException;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
@@ -34,7 +31,10 @@ import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
 import io.cdap.cdap.proto.credential.CreateCredentialIdentityRequest;
 import io.cdap.cdap.proto.credential.CreateCredentialProfileRequest;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
@@ -123,7 +123,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
     } catch (IdentityValidationException e) {
       throw new BadRequestException(String.format("Identity failed validation with error: %s",
           e.getMessage()), e);
-    } catch (io.cdap.cdap.api.security.credential.NotFoundException e) {
+    } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
       throw new NotFoundException(e.getMessage());
     }
   }

@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.Service;
-import io.cdap.cdap.api.security.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.CredentialProvider;
 
 /**
  * A service which provides credentials based on identity and profile.

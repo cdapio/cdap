@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.spi.credential;
 
-import io.cdap.cdap.api.security.credential.CredentialIdentity;
-import io.cdap.cdap.api.security.credential.CredentialProvisioningException;
-import io.cdap.cdap.api.security.credential.ProvisionedCredential;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
+import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 
 /**
