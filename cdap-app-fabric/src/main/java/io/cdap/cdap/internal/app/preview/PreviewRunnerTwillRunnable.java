@@ -201,7 +201,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements
     String metricName = cConf.get(Constants.Preview.AUTOSCALER_METRIC_NAME);
     String clusterName = cConf.get(Constants.CLUSTER_NAME);
     String projectName = cConf.get(Constants.Event.PROJECT_NAME);
-    metricsEmitter.setMetricLabels(metricName, clusterName, projectName);
+    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
+            "datafusion.instance.region");
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
     try {
       metricsEmitter.emitMetrics(0);
     } catch (Exception e) {

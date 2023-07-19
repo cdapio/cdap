@@ -29,5 +29,5 @@ public interface MetricsEmitter {
      */
 
     void emitMetrics(double metricValue) throws Exception;
-    void setMetricLabels(String metricName, String clusterName, String projectName);
+    void setMetricLabels(String metricName, String clusterName, String projectName, String location);
 }

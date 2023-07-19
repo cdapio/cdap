@@ -36,6 +36,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -54,6 +55,7 @@ public class TaskWorkerService extends AbstractIdleService {
   private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+  private MetricsEmitter metricsEmitter;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
@@ -68,6 +70,7 @@ public class TaskWorkerService extends AbstractIdleService {
     // set workdir location in cConf
     // workdir location is unique per task worker and accessible via env var
     String workDir = System.getenv("CDAP_LOCAL_DIR");
+    this.metricsEmitter = metricsEmitter;
     if (workDir != null) {
       cConf.set(TaskWorker.WORK_DIR, workDir);
     }
@@ -87,7 +90,7 @@ public class TaskWorkerService extends AbstractIdleService {
         })
         .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
             discoveryServiceClient, this::stopService,
-            metricsCollectionService, metricsEmitter));
+            metricsCollectionService, this::sendAutoscalerMetricsData));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -112,6 +115,14 @@ public class TaskWorkerService extends AbstractIdleService {
     httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
     LOG.debug("Shutting down TaskWorkerService has completed");
+  }
+
+  public void sendAutoscalerMetricsData(double metricValue){
+    try {
+      metricsEmitter.emitMetrics(metricValue);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void stopService(String className) {
