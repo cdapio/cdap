@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ public class TwillRunnableTest {
   @Test
   public void testDatasetOpExecutorTwillRunnableInjector() {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
-                                                                            HBaseConfiguration.create(), "");
+        HBaseConfiguration.create(), "");
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
@@ -43,7 +43,7 @@ public class TwillRunnableTest {
   }
 
   @Test
-  public void testHBaseTableExporterInjector() {
+  public void testHbaseTableExporterInjector() {
     HBaseTableExporter.createInjector(CConfiguration.create(), new Configuration());
   }
 
@@ -54,17 +54,20 @@ public class TwillRunnableTest {
 
   @Test
   public void testMetricsTwillRunnableInjector() {
-    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
+    MetricsTwillRunnable
+        .createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
   }
 
   @Test
   public void testMetricsProcessorTwillRunnableInjector() {
-    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), "",
-                                                      new MockTwillContext());
+    MetricsProcessorTwillRunnable
+        .createGuiceInjector(CConfiguration.create(), new Configuration(), "",
+            new MockTwillContext());
   }
 
   @Test
   public void testLogSaverTwillRunnableInjector() {
-    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), new MockTwillContext());
+    LogSaverTwillRunnable
+        .createGuiceInjector(CConfiguration.create(), new Configuration(), new MockTwillContext());
   }
 }

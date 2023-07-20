@@ -5995,4 +5995,14 @@
     </description>
   </property>
 
+  <!-- Configurations for Credential Providers -->
+  <property>
+    <name>credential.provider.extensions.dir</name>
+    <value>/opt/cdap/master/ext/credentialproviders</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for CDAP
+      remote authenticator extensions.
+    </description>
+  </property>
+
 </configuration>

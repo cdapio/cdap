@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2022 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -96,7 +96,7 @@ public class StorageMain {
     ));
 
     if (coreSecurityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
+      modules.add(new ZkClientModule());
     }
 
     Injector injector = Guice.createInjector(modules);

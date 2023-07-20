@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2021 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
  * Tests covering the {@link DistributedKeyManager} implementation.
  */
 public class DistributedKeyManagerTest extends TestTokenManager {
+
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
   private static MiniZooKeeperCluster zkCluster;
   private static Injector injector1;
@@ -66,7 +67,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     HBaseTestingUtility testUtil = new HBaseTestingUtility();
     zkCluster = testUtil.startMiniZKCluster();
     String zkConnectString = testUtil.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM) + ":"
-      + zkCluster.getClientPort();
+        + zkCluster.getClientPort();
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf1 = CConfiguration.create();
     cConf1.setBoolean(Constants.Security.ENABLED, true);
@@ -83,8 +84,8 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf1);
     modules.add(coreSecurityModule);
     if (coreSecurityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
     }
     injector1 = Guice.createInjector(modules);
 
@@ -95,8 +96,8 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf2);
     modules.add(coreSecurityModule);
     if (coreSecurityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
     }
 
     injector2 = Guice.createInjector(modules);
@@ -114,16 +115,16 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     TimeUnit.MILLISECONDS.sleep(1000);
 
     TestingTokenManager tokenManager1 =
-      new TestingTokenManager(manager1, injector1.getInstance(UserIdentityCodec.class));
+        new TestingTokenManager(manager1, injector1.getInstance(UserIdentityCodec.class));
     TestingTokenManager tokenManager2 =
-      new TestingTokenManager(manager2, injector2.getInstance(UserIdentityCodec.class));
+        new TestingTokenManager(manager2, injector2.getInstance(UserIdentityCodec.class));
     tokenManager1.startAndWait();
     tokenManager2.startAndWait();
 
     long now = System.currentTimeMillis();
     UserIdentity ident1 = new UserIdentity("testuser", UserIdentity.IdentifierType.EXTERNAL,
-                                           Lists.newArrayList("users", "admins"), now,
-                                           now + 60 * 60 * 1000);
+        Lists.newArrayList("users", "admins"), now,
+        now + 60 * 60 * 1000);
     AccessToken token1 = tokenManager1.signIdentifier(ident1);
     // make sure the second token manager has the secret key required to validate the signature
     tokenManager2.waitForKey(tokenManager1.getCurrentKey().getKeyId(), 2000, TimeUnit.MILLISECONDS);
@@ -141,7 +142,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   }
 
   @Test
-  public void testGetACLs() throws Exception {
+  public void testGetAcls() throws Exception {
     CConfiguration kerbConf = CConfiguration.create();
     kerbConf.set(Constants.Security.KERBEROS_ENABLED, "true");
     kerbConf.set(Constants.Security.Authentication.MODE, "MANAGED");
@@ -155,20 +156,24 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   }
 
   @Override
-  protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() throws Exception {
+  protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec()
+      throws Exception {
     DistributedKeyManager keyManager = getKeyManager(injector1, true);
-    TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(UserIdentityCodec.class));
+    TokenManager tokenManager = new TokenManager(keyManager,
+        injector1.getInstance(UserIdentityCodec.class));
     tokenManager.startAndWait();
     return new ImmutablePair<>(tokenManager, injector1.getInstance(AccessTokenCodec.class));
   }
 
-  private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader) throws Exception {
+  private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader)
+      throws Exception {
     ZKClientService zk = injector.getInstance(ZKClientService.class);
     zk.startAndWait();
     WaitableDistributedKeyManager keyManager =
-      new WaitableDistributedKeyManager(injector.getInstance(CConfiguration.class),
-          injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() { })),
-          zk);
+        new WaitableDistributedKeyManager(injector.getInstance(CConfiguration.class),
+            injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
+            })),
+            zk);
 
     keyManager.startAndWait();
     if (expectLeader) {
@@ -178,7 +183,9 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   }
 
   private static class WaitableDistributedKeyManager extends DistributedKeyManager {
-    WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zk) {
+
+    WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec,
+        ZKClientService zk) {
       super(conf, codec, zk, Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE));
     }
 
@@ -192,6 +199,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   }
 
   private static class TestingTokenManager extends TokenManager {
+
     private TestingTokenManager(KeyManager keyManager, Codec<UserIdentity> identifierCodec) {
       super(keyManager, identifierCodec);
     }
@@ -204,7 +212,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     }
 
     void waitForKey(int keyId, long duration,
-                    TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
+        TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
       if (keyManager instanceof WaitableDistributedKeyManager) {
         WaitableDistributedKeyManager waitKeyManager = (WaitableDistributedKeyManager) keyManager;
         Tasks.waitFor(true, () -> waitKeyManager.hasKey(keyId), duration, unit);
@@ -212,7 +220,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     }
 
     void waitForCurrentKey(long duration,
-                           TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
+        TimeUnit unit) throws InterruptedException, TimeoutException, ExecutionException {
       if (keyManager instanceof WaitableDistributedKeyManager) {
         WaitableDistributedKeyManager waitKeyManager = (WaitableDistributedKeyManager) keyManager;
         Tasks.waitFor(true, () -> waitKeyManager.getCurrentKey() != null, duration, unit);

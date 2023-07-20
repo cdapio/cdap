@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,9 +47,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
- * Unit tests for {@link JMXMetricsCollector}.
+ * Unit tests for {@link JmxMetricsCollector}.
  */
-public class JMXMetricsCollectorTest {
+public class JmxMetricsCollectorTest {
+
   private static final int SERVER_PORT = 11023;
   private static JMXConnectorServer svr;
   @Mock
@@ -57,16 +58,16 @@ public class JMXMetricsCollectorTest {
 
   @BeforeClass
   public static void setupClass() throws IOException {
-    svr = createJMXConnectorServer(SERVER_PORT);
+    svr = createJmxConnectorServer(SERVER_PORT);
     svr.start();
     Assert.assertTrue(svr.isActive());
   }
 
-  private static JMXConnectorServer createJMXConnectorServer(int port) throws IOException {
+  private static JMXConnectorServer createJmxConnectorServer(int port) throws IOException {
     LocateRegistry.createRegistry(port);
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
     JMXServiceURL url = new JMXServiceURL(
-      String.format("service:jmx:rmi://localhost/jndi/rmi://localhost:%d/jmxrmi", port));
+        String.format("service:jmx:rmi://localhost/jndi/rmi://localhost:%d/jmxrmi", port));
     return JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbs);
   }
 
@@ -83,20 +84,20 @@ public class JMXMetricsCollectorTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPortInConfig() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, -1);
-    cConf.setInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS, 1);
+    cConf.setInt(Constants.JmxMetricsCollector.SERVER_PORT, -1);
+    cConf.setInt(Constants.JmxMetricsCollector.POLL_INTERVAL_SECS, 1);
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
-    new JMXMetricsCollector(cConf, publisher, metricTags);
+    new JmxMetricsCollector(cConf, publisher, metricTags);
   }
 
   @Test
   public void testNumberOfMetricsEmitted() throws InterruptedException, MalformedURLException,
-    ExecutionException, TimeoutException {
+      ExecutionException, TimeoutException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.setInt(Constants.JMXMetricsCollector.SERVER_PORT, SERVER_PORT);
-    cConf.setInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS, 1);
+    cConf.setInt(Constants.JmxMetricsCollector.SERVER_PORT, SERVER_PORT);
+    cConf.setInt(Constants.JmxMetricsCollector.POLL_INTERVAL_SECS, 1);
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
-    JMXMetricsCollector jmxMetrics = new JMXMetricsCollector(cConf, publisher, metricTags);
+    JmxMetricsCollector jmxMetrics = new JmxMetricsCollector(cConf, publisher, metricTags);
     jmxMetrics.startAndWait();
     verify(publisher, times(1)).initialize();
     // Poll should run at 0, 1. 2 secs buffer.

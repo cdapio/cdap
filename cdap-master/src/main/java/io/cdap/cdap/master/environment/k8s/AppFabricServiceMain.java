@@ -52,6 +52,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
+import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -116,7 +117,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
           @Override
           protected void configure() {
             bind(TwillRunnerService.class).toProvider(
-                    new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+                new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
                 .in(Scopes.SINGLETON);
             bind(TwillRunner.class).to(TwillRunnerService.class);
 
@@ -168,6 +169,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
 
     // Event publisher could rely on task workers for token generated for security enabled deployments
     services.add(injector.getInstance(EventPublishManager.class));
+
+    services.add(injector.getInstance(CredentialProviderService.class));
 
     // Adds the master environment tasks
     masterEnv.getTasks()

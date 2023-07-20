@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ public class KafkaServerMain extends DaemonMain {
   public void init(String[] args) {
     CConfiguration cConf = CConfiguration.create();
 
-    String zkConnectStr = Constants.Zookeeper.getZKQuorum(cConf);
+    String zkConnectStr = Constants.Zookeeper.getZkQuorum(cConf);
     String zkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
 
     if (zkNamespace != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.common.zookeeper.coordination;
 
 import com.google.inject.Guice;
@@ -21,8 +22,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -67,16 +68,16 @@ public class ResourceCoordinatorTest {
     String serviceName = "test-assignment";
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf),
-                                             new ZKClientModule(),
-                                             new ZKDiscoveryModule());
+        new ZkClientModule(),
+        new ZkDiscoveryModule());
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     try {
       ResourceCoordinator coordinator = new ResourceCoordinator(zkClient,
-                                                                injector.getInstance(DiscoveryServiceClient.class),
-                                                                new BalancedAssignmentStrategy());
+          injector.getInstance(DiscoveryServiceClient.class),
+          new BalancedAssignmentStrategy());
       coordinator.startAndWait();
 
       try {
@@ -85,7 +86,8 @@ public class ResourceCoordinatorTest {
 
         try {
           // Create a requirement
-          ResourceRequirement requirement = ResourceRequirement.builder(serviceName).addPartitions("p", 5, 1).build();
+          ResourceRequirement requirement = ResourceRequirement.builder(serviceName)
+              .addPartitions("p", 5, 1).build();
           client.submitRequirement(requirement).get();
 
           // Fetch the requirement, just to verify it's the same as the one get submitted.
@@ -93,13 +95,15 @@ public class ResourceCoordinatorTest {
 
           // Register a discovery endpoint
           final Discoverable discoverable1 = createDiscoverable(serviceName, 10000);
-          Cancellable cancelDiscoverable1 = discoveryService.register(ResolvingDiscoverable.of(discoverable1));
+          Cancellable cancelDiscoverable1 = discoveryService
+              .register(ResolvingDiscoverable.of(discoverable1));
 
           // Add a change handler for this discoverable.
           final BlockingQueue<Collection<PartitionReplica>> assignmentQueue =
-            new SynchronousQueue<>();
+              new SynchronousQueue<>();
           final Semaphore finishSemaphore = new Semaphore(0);
-          Cancellable cancelSubscribe1 = subscribe(client, discoverable1, assignmentQueue, finishSemaphore);
+          final Cancellable cancelSubscribe1 = subscribe(client, discoverable1, assignmentQueue,
+              finishSemaphore);
 
           // Assert that it received the changes.
           Collection<PartitionReplica> assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
@@ -118,7 +122,8 @@ public class ResourceCoordinatorTest {
 
           // Register another discoverable
           final Discoverable discoverable2 = createDiscoverable(serviceName, 10001);
-          Cancellable cancelDiscoverable2 = discoveryService.register(ResolvingDiscoverable.of(discoverable2));
+          final Cancellable cancelDiscoverable2 = discoveryService
+              .register(ResolvingDiscoverable.of(discoverable2));
 
           // Changes should be received by the handler, with only 3 resources,
           // as 2 out of 5 should get moved to the new discoverable.
@@ -138,7 +143,8 @@ public class ResourceCoordinatorTest {
 
           // Subscribe to changes for the second discoverable,
           // it should see the latest assignment, even though no new fetch from ZK is triggered.
-          Cancellable cancelSubscribe2 = subscribe(client, discoverable2, assignmentQueue, finishSemaphore);
+          final Cancellable cancelSubscribe2 = subscribe(client, discoverable2, assignmentQueue,
+              finishSemaphore);
           assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
@@ -148,7 +154,8 @@ public class ResourceCoordinatorTest {
           Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
           // Update the requirement to have one partition, the handler should receive one resource
-          client.submitRequirement(ResourceRequirement.builder(serviceName).addPartitions("p", 1, 1).build());
+          client.submitRequirement(
+              ResourceRequirement.builder(serviceName).addPartitions("p", 1, 1).build());
           assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(1, assigned.size());
@@ -187,15 +194,15 @@ public class ResourceCoordinatorTest {
   }
 
   private Cancellable subscribe(ResourceCoordinatorClient client,
-                                final Discoverable discoverable,
-                                final BlockingQueue<Collection<PartitionReplica>> assignmentQueue,
-                                final Semaphore finishSemaphore) {
+      final Discoverable discoverable,
+      final BlockingQueue<Collection<PartitionReplica>> assignmentQueue,
+      final Semaphore finishSemaphore) {
     return client.subscribe(discoverable.getName(), new ResourceHandler(discoverable) {
       @Override
       public void onChange(Collection<PartitionReplica> partitionReplicas) {
         try {
           LOG.debug("Discoverable {} Received: {}",
-                    discoverable.getSocketAddress().getPort(), partitionReplicas);
+              discoverable.getSocketAddress().getPort(), partitionReplicas);
           assignmentQueue.put(partitionReplicas);
         } catch (InterruptedException e) {
           LOG.error("Interrupted.", e);
@@ -208,7 +215,8 @@ public class ResourceCoordinatorTest {
         if (failureCause == null) {
           finishSemaphore.release();
         } else {
-          LOG.error("Finished with failure for {}", discoverable.getSocketAddress().getPort(), failureCause);
+          LOG.error("Finished with failure for {}", discoverable.getSocketAddress().getPort(),
+              failureCause);
         }
       }
     });

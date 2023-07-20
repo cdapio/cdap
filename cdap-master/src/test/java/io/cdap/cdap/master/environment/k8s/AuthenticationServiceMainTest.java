@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,17 +70,20 @@ public class AuthenticationServiceMainTest extends MasterServiceMainTestBase {
 
   @Test
   public void testBasicAuthenticationEnabled() throws IOException {
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(getAuthenticationBaseURI().toURL()).build()
-        , new HttpRequestConfig(0, 0, false));
+    HttpResponse response = HttpRequests
+        .execute(HttpRequest.get(getAuthenticationBaseUri().toURL()).build(),
+            new HttpRequestConfig(0, 0, false));
 
     Assert.assertEquals("basic realm=\"null\"",
-                        response.getHeaders().get("WWW-Authenticate").stream().findFirst().orElse(null));
+        response.getHeaders().get("WWW-Authenticate").stream().findFirst().orElse(null));
     Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, response.getResponseCode());
 
     Injector injector = getServiceMainInstance(AuthenticationServiceMain.class).getInjector();
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = injector
+        .getInstance(DiscoveryServiceClient.class);
     Discoverable authenticationEndpoint = new RandomEndpointStrategy(
-        () -> discoveryServiceClient.discover(Service.EXTERNAL_AUTHENTICATION)).pick(5, TimeUnit.SECONDS);
+        () -> discoveryServiceClient.discover(Service.EXTERNAL_AUTHENTICATION))
+        .pick(5, TimeUnit.SECONDS);
 
     Assert.assertNotNull(authenticationEndpoint);
   }

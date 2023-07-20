@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2022 Cask Data, Inc.
+ * Copyright © 2016-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,8 +29,8 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.startup.CheckRunner;
 import io.cdap.cdap.common.startup.ConfigurationLogger;
 import io.cdap.cdap.data.runtime.main.ClientVersions;
@@ -52,6 +52,11 @@ public class MasterStartupTool {
   private static final Logger LOG = LoggerFactory.getLogger(MasterStartupTool.class);
   private final CheckRunner checkRunner;
 
+  /**
+   * Entry point for the master startup tool.
+   *
+   * @param args Arguments for the tool.
+   */
   public static void main(String[] args) {
 
     CConfiguration cConf = CConfiguration.create();
@@ -86,10 +91,20 @@ public class MasterStartupTool {
     }
   }
 
+  /**
+   * Constructs an instance of a {@link MasterStartupTool}.
+   *
+   * @param injector The injector to use.
+   */
   public MasterStartupTool(Injector injector) {
     this.checkRunner = createCheckRunner(injector);
   }
 
+  /**
+   * Returns whether the master will startup successfully.
+   *
+   * @return Whether the master will startup successfully.
+   */
   public boolean canStartMaster() {
     List<CheckRunner.Failure> failures = checkRunner.runChecks();
     if (!failures.isEmpty()) {
@@ -153,8 +168,8 @@ public class MasterStartupTool {
     return Guice.createInjector(
         new ConfigModule(cConf, hConf),
         RemoteAuthenticatorModules.getDefaultModule(),
-        new ZKClientModule(),
-        new ZKDiscoveryModule(),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
         new IOModule(),
         new KafkaClientModule(),
         new DFSLocationModule()

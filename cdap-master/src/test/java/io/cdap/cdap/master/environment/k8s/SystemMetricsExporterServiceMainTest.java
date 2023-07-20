@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2022-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
-import io.cdap.cdap.metrics.jmx.JMXMetricsCollector;
-import io.cdap.cdap.metrics.jmx.JMXMetricsCollectorFactory;
+import io.cdap.cdap.metrics.jmx.JmxMetricsCollector;
+import io.cdap.cdap.metrics.jmx.JmxMetricsCollectorFactory;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -32,10 +32,11 @@ public class SystemMetricsExporterServiceMainTest extends MasterServiceMainTestB
 
   @Test
   public void testSystemMetricsExporterService() {
-    Injector injector = getServiceMainInstance(SystemMetricsExporterServiceMain.class).getInjector();
-    JMXMetricsCollectorFactory factory = injector.getInstance(JMXMetricsCollectorFactory.class);
+    Injector injector = getServiceMainInstance(SystemMetricsExporterServiceMain.class)
+        .getInjector();
+    JmxMetricsCollectorFactory factory = injector.getInstance(JmxMetricsCollectorFactory.class);
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
-    JMXMetricsCollector metricsCollector = factory.create(metricTags);
+    JmxMetricsCollector metricsCollector = factory.create(metricTags);
     // JMX server isn't running, but that shouldn't raise exceptions, errors will be logged.
     metricsCollector.startAndWait();
     Assert.assertTrue(metricsCollector.isRunning());
