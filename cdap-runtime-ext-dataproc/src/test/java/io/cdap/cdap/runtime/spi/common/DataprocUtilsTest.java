@@ -30,7 +30,7 @@ public class DataprocUtilsTest {
   public void testParseSingleLabel() {
     Map<String, String> expected = new HashMap<>();
     expected.put("key", "val");
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("key=val"));
+    Assert.assertEquals(expected, DataprocUtils.parseKeyValueConfig("key=val", ",", "="));
   }
 
   @Test
@@ -38,7 +38,7 @@ public class DataprocUtilsTest {
     Map<String, String> expected = new HashMap<>();
     expected.put("k1", "v1");
     expected.put("k2", "v2");
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("k1=v1,k2=v2"));
+    Assert.assertEquals(expected, DataprocUtils.parseKeyValueConfig("k1=v1,k2=v2", ",", "="));
   }
 
   @Test
@@ -46,7 +46,7 @@ public class DataprocUtilsTest {
     Map<String, String> expected = new HashMap<>();
     expected.put("k1", "v1");
     expected.put("k2", "v2");
-    Assert.assertEquals(expected, DataprocUtils.parseLabels(" k1  =\tv1  ,\nk2 = v2  "));
+    Assert.assertEquals(expected, DataprocUtils.parseKeyValueConfig(" k1  =\tv1  ,\nk2 = v2  ", ",", "="));
   }
 
   @Test
@@ -54,32 +54,6 @@ public class DataprocUtilsTest {
     Map<String, String> expected = new HashMap<>();
     expected.put("k1", "");
     expected.put("k2", "");
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("k1,k2="));
-  }
-
-  @Test
-  public void testParseLabelsIgnoresInvalidKey() {
-    Map<String, String> expected = new HashMap<>();
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("A"));
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("0"));
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("a.b"));
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("a^b"));
-    StringBuilder longStr = new StringBuilder();
-    for (int i = 0; i < 64; i++) {
-      longStr.append('a');
-    }
-    Assert.assertEquals(expected, DataprocUtils.parseLabels(longStr.toString()));
-  }
-
-  @Test
-  public void testParseLabelsIgnoresInvalidVal() {
-    Map<String, String> expected = new HashMap<>();
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("a=A"));
-    Assert.assertEquals(expected, DataprocUtils.parseLabels("a=ab.c"));
-    StringBuilder longStr = new StringBuilder();
-    for (int i = 0; i < 64; i++) {
-      longStr.append('a');
-    }
-    Assert.assertEquals(expected, DataprocUtils.parseLabels(String.format("a=%s", longStr.toString())));
+    Assert.assertEquals(expected, DataprocUtils.parseKeyValueConfig("k1,k2=", ",", "="));
   }
 }
