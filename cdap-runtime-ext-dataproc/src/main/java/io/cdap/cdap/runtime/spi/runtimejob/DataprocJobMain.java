@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.twill.internal.Constants;
@@ -105,7 +106,7 @@ public class DataprocJobMain {
     URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
         Constants.Files.TWILL_JAR));
-    Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
+    Arrays.stream(urls).forEach(url -> LOG.info("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
     // Don't close the classloader since this is the main classloader,

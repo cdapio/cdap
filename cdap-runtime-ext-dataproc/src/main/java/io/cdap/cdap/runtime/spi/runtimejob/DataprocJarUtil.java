@@ -35,11 +35,14 @@ import org.apache.twill.internal.DefaultLocalFile;
 import org.apache.twill.internal.appmaster.ApplicationMasterMain;
 import org.apache.twill.internal.container.TwillContainerMain;
 import org.apache.twill.internal.utils.Dependencies;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Util class to build jar files needed by {@code DataprocRuntimeJobManager}.
  */
 public final class DataprocJarUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocJarUtil.class);
 
   /**
    * Returns twill bundle jar.
@@ -52,14 +55,20 @@ public final class DataprocJarUtil {
       throws IOException {
     Location location = locationFactory.create(Constants.Files.TWILL_JAR);
     if (location.exists()) {
+      LOG.warn("ashau - local file already exists at {}", location);
       return getLocalFile(location, true);
     }
 
+    LOG.warn("ashau - building twill jar...");
+    // scala gets bundled in the twill jar because it's a Kafka dependency,
+    // but Kafka is not used in Dataproc jobs at all. Exclude it to make sure it doesn't
+    // clash with the scala on the cluster.
+    // For example, Dataproc 1.5 uses scala-libary 2.12.10, which is incompatible with 2.12.15
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString()
-            .contains("spark-assembly");
+            .contains("spark-assembly") && !classPathUrl.toString().contains("scala-library");
       }
     });
     bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,
