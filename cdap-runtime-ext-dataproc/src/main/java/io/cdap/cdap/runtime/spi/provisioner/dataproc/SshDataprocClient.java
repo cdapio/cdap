@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 class SshDataprocClient extends DataprocClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(SshDataprocClient.class);
-  private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIPRanges(
+  private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIpRanges(
       Arrays.asList("10.0.0.0/8",
           "172.16.0.0/12",
           "192.168.0.0/16"));
@@ -168,7 +168,7 @@ class SshDataprocClient extends DataprocClient {
         // private IP blocks in order to be able to communicate with Dataproc.
         try {
           List<IPRange> sourceRanges = Optional.ofNullable(firewall.getSourceRanges())
-              .map(DataprocUtils::parseIPRanges)
+              .map(DataprocUtils::parseIpRanges)
               .orElse(Collections.emptyList());
 
           if (!sourceRanges.isEmpty()) {
