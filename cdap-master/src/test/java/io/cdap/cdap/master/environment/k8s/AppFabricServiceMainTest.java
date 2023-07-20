@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,39 +46,42 @@ public class AppFabricServiceMainTest extends MasterServiceMainTestBase {
   public void testAppFabricService() throws Exception {
 
     // Query the system services endpoint
-    URL url = getRouterBaseURI().resolve("/v3/system/services").toURL();
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
+    URL url = getRouterBaseUri().resolve("/v3/system/services").toURL();
+    HttpResponse response = HttpRequests
+        .execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
 
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
     // Deploy an app
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
-    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
+    Location deploymentJar = AppJarHelper
+        .createDeploymentJar(locationFactory, AllProgramsApp.class);
 
-    URI baseURI = getRouterBaseURI().resolve("/v3/namespaces/default/");
-    url = baseURI.resolve("apps").toURL();
+    URI baseUri = getRouterBaseUri().resolve("/v3/namespaces/default/");
+    url = baseUri.resolve("apps").toURL();
     HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0, false);
     response = HttpRequests.execute(
-      HttpRequest
-        .post(url)
-        .withBody((ContentProvider<? extends InputStream>) deploymentJar::getInputStream)
-        .addHeader("X-Archive-Name", AllProgramsApp.class.getSimpleName() + "-1.0-SNAPSHOT.jar")
-        .build(), requestConfig);
+        HttpRequest
+            .post(url)
+            .withBody((ContentProvider<? extends InputStream>) deploymentJar::getInputStream)
+            .addHeader("X-Archive-Name", AllProgramsApp.class.getSimpleName() + "-1.0-SNAPSHOT.jar")
+            .build(), requestConfig);
 
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
     // Get the application
-    url = baseURI.resolve("apps/" + AllProgramsApp.NAME).toURL();
+    url = baseUri.resolve("apps/" + AllProgramsApp.NAME).toURL();
     response = HttpRequests.execute(HttpRequest.get(url).build(), requestConfig);
 
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    ApplicationDetail appDetail = new Gson().fromJson(response.getResponseBodyAsString(), ApplicationDetail.class);
+    ApplicationDetail appDetail = new Gson()
+        .fromJson(response.getResponseBodyAsString(), ApplicationDetail.class);
 
     // Do some basic validation only.
     Assert.assertEquals(AllProgramsApp.NAME, appDetail.getName());
     Assert.assertTrue(appDetail.getPrograms()
-      .stream()
-      .filter(r -> r.getType() == ProgramType.WORKFLOW)
-      .anyMatch(r -> AllProgramsApp.NoOpWorkflow.NAME.equals(r.getName())));
+        .stream()
+        .filter(r -> r.getType() == ProgramType.WORKFLOW)
+        .anyMatch(r -> AllProgramsApp.NoOpWorkflow.NAME.equals(r.getName())));
   }
 }

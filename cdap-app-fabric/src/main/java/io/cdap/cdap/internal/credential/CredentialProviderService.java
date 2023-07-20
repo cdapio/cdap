@@ -1,5 +1,5 @@
 /*
- * Copyright © 2022 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.metrics.jmx;
+package io.cdap.cdap.internal.credential;
 
-import java.util.Map;
+import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.proto.credential.CredentialProvider;
 
 /**
- * Factory for creating {@link JMXMetricsCollector}.
+ * A service which provides credentials based on identity and profile.
  */
-public interface JMXMetricsCollectorFactory {
+public interface CredentialProviderService extends CredentialProvider, Service {
 
-  JMXMetricsCollector create(Map<String, String> metricTags);
 }

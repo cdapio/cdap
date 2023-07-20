@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021-2022 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,8 +35,8 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -71,7 +71,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The {@link TwillRunnable} for running {@link ArtifactLocalizerService}.
  *
- * This runnable will run as a sidecar container for {@link io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable}
+ * <p>This runnable will run as a sidecar container for {@link io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable}
  */
 public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
@@ -85,6 +85,13 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
   }
 
+  /**
+   * Creates an injector for use in the task worker runnable.
+   *
+   * @param cConf The CConf to use.
+   * @param hConf The HConf to use.
+   * @return The injector for the task worker runnable.
+   */
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     List<Module> modules = new ArrayList<>();
@@ -103,8 +110,8 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
     if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
       modules.add(new DFSLocationModule());
@@ -123,7 +130,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
       modules.add(new LocalLocationModule());
 
       if (coreSecurityModule.requiresZKClient()) {
-        modules.add(new ZKClientModule());
+        modules.add(new ZkClientModule());
       }
     }
     modules.add(new DistributedArtifactManagerModule());

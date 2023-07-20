@@ -16,33 +16,38 @@
 
 package io.cdap.cdap.proto.credential;
 
-import io.cdap.cdap.proto.id.CredentialProfileId;
-
 /**
  * Defines an identity for credential provisioning.
  */
 public class CredentialIdentity {
 
-  private final CredentialProfileId credentialProfile;
+  private final String profileNamespace;
+  private final String profileName;
   private final String identity;
   private final String secureValue;
 
   /**
    * Constructs an identity.
    *
-   * @param credentialProfile The associated profile.
-   * @param identity The identity.
-   * @param secureValue The secure value to store for the identity.
+   * @param profileNamespace The namespace of the associated profile.
+   * @param profileName      The name of the associated profile.
+   * @param identity         The identity.
+   * @param secureValue      The secure value to store for the identity.
    */
-  public CredentialIdentity(CredentialProfileId credentialProfile, String identity,
+  public CredentialIdentity(String profileNamespace, String profileName, String identity,
       String secureValue) {
-    this.credentialProfile = credentialProfile;
+    this.profileNamespace = profileNamespace;
+    this.profileName = profileName;
     this.identity = identity;
     this.secureValue = secureValue;
   }
 
-  public CredentialProfileId getCredentialProfile() {
-    return credentialProfile;
+  public String getProfileNamespace() {
+    return profileNamespace;
+  }
+
+  public String getProfileName() {
+    return profileName;
   }
 
   public String getIdentity() {

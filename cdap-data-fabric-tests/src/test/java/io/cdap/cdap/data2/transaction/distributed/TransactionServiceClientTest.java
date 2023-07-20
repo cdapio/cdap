@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2022 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.Networks;
@@ -68,6 +68,7 @@ import org.junit.rules.TemporaryFolder;
  * HBase queue tests.
  */
 public class TransactionServiceClientTest extends TransactionSystemTest {
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -109,41 +110,42 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     // getCommonConfiguration() sets up an hConf with tx service configuration.
     // however, createTxService() will override these with defaults from the CConf.
     // hence, we must pass in these settings when creating the tx service.
-    Configuration extraCConf = new Configuration();
-    extraCConf.clear();
-    extraCConf = getCommonConfiguration(extraCConf);
-    for (Map.Entry<String, String> entry : extraCConf) {
+    Configuration extraCconf = new Configuration();
+    extraCconf.clear();
+    extraCconf = getCommonConfiguration(extraCconf);
+    for (Map.Entry<String, String> entry : extraCconf) {
       cConf.set(entry.getKey(), entry.getValue());
     }
-    server = TransactionServiceTest.createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
-                                                    hConf, tmpFolder.newFolder(), cConf);
+    server = TransactionServiceTest
+        .createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
+            hConf, tmpFolder.newFolder(), cConf);
     server.startAndWait();
 
     injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getNoOpModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new NonCustomLocationUnitTestModule(),
-      new TransactionMetricsModule(),
-      new DataFabricModules().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-        }
-      },
-      Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-        }
-      }),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getNoOpModule());
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getNoOpModule(),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
+        new NonCustomLocationUnitTestModule(),
+        new TransactionMetricsModule(),
+        new DataFabricModules().getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          }
+        },
+        Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetadataStorage.class).to(NoopMetadataStorage.class);
+          }
+        }),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule());
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
@@ -176,7 +178,8 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @Test
   public void testGetSnapshot() throws Exception {
     TransactionSystemClient client = getClient();
-    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(injector.getInstance(Configuration.class));
+    SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(
+        injector.getInstance(Configuration.class));
 
     Transaction tx1 = client.startShort();
     long currentTime = System.currentTimeMillis();

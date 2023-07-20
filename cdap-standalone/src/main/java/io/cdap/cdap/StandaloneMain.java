@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2022 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,7 +50,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.startup.ConfigurationLogger;
@@ -279,7 +279,7 @@ public class StandaloneMain {
     cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
     // Set the artifact localizer port for the preview conf as well
     injector.getInstance(
-            Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
+        Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
         .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
     previewHttpServer.startAndWait();
     previewRunnerManager.startAndWait();
@@ -521,7 +521,7 @@ public class StandaloneMain {
         new ConfigModule(cConf, hConf),
         RemoteAuthenticatorModules.getDefaultModule(),
         new IOModule(),
-        new ZKClientModule(),
+        new ZkClientModule(),
         new KafkaClientModule(),
         new MetricsHandlerModule(),
         new LogQueryRuntimeModule().getStandaloneModules(),

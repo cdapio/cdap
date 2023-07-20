@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,9 +46,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Unit test for the {@link ZKDiscoveryModule}.
+ * Unit test for the {@link ZkDiscoveryModule}.
  */
-public class ZKDiscoveryModuleTest {
+public class ZkDiscoveryModuleTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -74,26 +74,29 @@ public class ZKDiscoveryModuleTest {
   @Test
   public void testMasterDiscovery() {
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new ZKClientModule(),
-      new ZKDiscoveryModule()
+        new ConfigModule(cConf),
+        new ZkClientModule(),
+        new ZkDiscoveryModule()
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
     try {
       DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
-      DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+      DiscoveryServiceClient discoveryServiceClient = injector
+          .getInstance(DiscoveryServiceClient.class);
 
       // Register a master service
       InetSocketAddress socketAddr = new InetSocketAddress(InetAddress.getLoopbackAddress(), 43210);
-      Cancellable cancellable = discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP,
-                                                                           socketAddr));
+      Cancellable cancellable = discoveryService
+          .register(new Discoverable(Constants.Service.APP_FABRIC_HTTP,
+              socketAddr));
 
       try {
         // Discover the master service
         Discoverable discoverable = new RandomEndpointStrategy(
-          () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP)).pick(10, TimeUnit.SECONDS);
+            () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP))
+            .pick(10, TimeUnit.SECONDS);
 
         Assert.assertNotNull(discoverable);
         Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, discoverable.getName());
@@ -110,9 +113,9 @@ public class ZKDiscoveryModuleTest {
   @Test
   public void testProgramDiscovery() {
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new ZKClientModule(),
-      new ZKDiscoveryModule()
+        new ConfigModule(cConf),
+        new ZkClientModule(),
+        new ZkDiscoveryModule()
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
@@ -120,20 +123,24 @@ public class ZKDiscoveryModuleTest {
     try {
       // Register a service using the twill ZKClient. This is to simulate how a user Service program register
       ProgramId programId = NamespaceId.DEFAULT.app("app").service("service");
-      String twillNamespace = injector.getInstance(CConfiguration.class).get(Constants.CFG_TWILL_ZK_NAMESPACE);
+      String twillNamespace = injector.getInstance(CConfiguration.class)
+          .get(Constants.CFG_TWILL_ZK_NAMESPACE);
 
       String discoverableName = ServiceDiscoverable.getName(programId);
-      ZKClient twillZKClient = ZKClients.namespace(zkClient,
-                                                   twillNamespace + "/" + TwillAppNames.toTwillAppName(programId));
+      ZKClient twillZkClient = ZKClients.namespace(zkClient,
+          twillNamespace + "/" + TwillAppNames.toTwillAppName(programId));
 
-      try (ZKDiscoveryService twillDiscoveryService = new ZKDiscoveryService(twillZKClient)) {
-        InetSocketAddress socketAddr = new InetSocketAddress(InetAddress.getLoopbackAddress(), 43210);
-        Cancellable cancellable = twillDiscoveryService.register(new Discoverable(discoverableName, socketAddr));
+      try (ZKDiscoveryService twillDiscoveryService = new ZKDiscoveryService(twillZkClient)) {
+        InetSocketAddress socketAddr = new InetSocketAddress(InetAddress.getLoopbackAddress(),
+            43210);
+        Cancellable cancellable = twillDiscoveryService
+            .register(new Discoverable(discoverableName, socketAddr));
         try {
           // Discover the user service
-          DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+          DiscoveryServiceClient discoveryServiceClient = injector
+              .getInstance(DiscoveryServiceClient.class);
           Discoverable discoverable = new RandomEndpointStrategy(
-            () -> discoveryServiceClient.discover(discoverableName)).pick(10, TimeUnit.SECONDS);
+              () -> discoveryServiceClient.discover(discoverableName)).pick(10, TimeUnit.SECONDS);
 
           Assert.assertNotNull(discoverable);
 

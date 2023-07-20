@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2022 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.Networks;
@@ -74,6 +74,7 @@ import org.junit.rules.TemporaryFolder;
  * Testing HA for {@link TransactionService}.
  */
 public class TransactionServiceTest {
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -107,7 +108,7 @@ public class TransactionServiceTest {
   }
 
   @Test(timeout = 30000)
-  public void testHA() throws Exception {
+  public void testHighAvailability() throws Exception {
 
     // NOTE: we play with blocking/nonblocking a lot below
     //       as until we integrate with "leader election" stuff, service blocks on start if it is not a leader
@@ -120,30 +121,30 @@ public class TransactionServiceTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      RemoteAuthenticatorModules.getNoOpModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new NonCustomLocationUnitTestModule(),
-      new TransactionMetricsModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-        }
-      },
-      new DataFabricModules().getDistributedModules(),
-      Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-        }
-      }),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getNoOpModule()
+        new ConfigModule(cConf),
+        RemoteAuthenticatorModules.getNoOpModule(),
+        new ZkClientModule(),
+        new ZkDiscoveryModule(),
+        new NonCustomLocationUnitTestModule(),
+        new TransactionMetricsModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          }
+        },
+        new DataFabricModules().getDistributedModules(),
+        Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetadataStorage.class).to(NoopMetadataStorage.class);
+          }
+        }),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule()
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
@@ -156,18 +157,20 @@ public class TransactionServiceTest {
       TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
       TransactionExecutor txExecutor = new DefaultTransactionExecutor(txClient,
-                                                                      ImmutableList.of((TransactionAware) table));
+          ImmutableList.of((TransactionAware) table));
 
       // starting tx service, tx client can pick it up
-      TransactionService first = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
-                                                 hConf, tmpFolder.newFolder());
+      TransactionService first = createTxService(zkServer.getConnectionStr(),
+          Networks.getRandomPort(),
+          hConf, tmpFolder.newFolder());
       first.startAndWait();
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, null, "val1");
 
       // starting another tx service should not hurt
-      TransactionService second = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
-                                                  hConf, tmpFolder.newFolder());
+      TransactionService second = createTxService(zkServer.getConnectionStr(),
+          Networks.getRandomPort(),
+          hConf, tmpFolder.newFolder());
       // NOTE: we don't have to wait for start as client should pick it up anyways, but we do wait to ensure
       //       the case with two active is handled well
       second.startAndWait();
@@ -184,8 +187,9 @@ public class TransactionServiceTest {
       verifyGetAndPut(table, txExecutor, "val2", "val3");
 
       // doing same trick again to failover to the third one
-      TransactionService third = createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
-                                                 hConf, tmpFolder.newFolder());
+      TransactionService third = createTxService(zkServer.getConnectionStr(),
+          Networks.getRandomPort(),
+          hConf, tmpFolder.newFolder());
       // NOTE: we don't have to wait for start as client should pick it up anyways
       third.start();
       // stopping second one
@@ -207,8 +211,8 @@ public class TransactionServiceTest {
   }
 
   private void verifyGetAndPut(final Table table, TransactionExecutor txExecutor,
-                               final String verifyGet, final String toPut)
-    throws TransactionFailureException, InterruptedException {
+      final String verifyGet, final String toPut)
+      throws TransactionFailureException, InterruptedException {
 
     txExecutor.execute(() -> {
       byte[] existing = table.get(Bytes.toBytes("row"), Bytes.toBytes("col"));
@@ -228,44 +232,44 @@ public class TransactionServiceTest {
   }
 
   private static TransactionService createTxService(String zkConnectionString, int txServicePort,
-                                                    Configuration hConf, final File outPath) {
+      Configuration hConf, final File outPath) {
     return createTxService(zkConnectionString, txServicePort, hConf, outPath, null);
   }
 
   static TransactionService createTxService(String zkConnectionString, int txServicePort,
-                                            Configuration hConf, final File outPath,
-                                            @Nullable CConfiguration cConfig) {
+      Configuration hConf, final File outPath,
+      @Nullable CConfiguration cConfig) {
     final CConfiguration cConf = cConfig == null ? CConfiguration.create() : cConfig;
     // tests should use the current user for HDFS
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectionString);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, outPath.getAbsolutePath());
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
-              Integer.toString(txServicePort));
+        Integer.toString(txServicePort));
     // we want persisting for this test
     cConf.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
     cConf.setBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE, false);
 
     final Injector injector =
-      Guice.createInjector(new ConfigModule(cConf, hConf),
-                           new NonCustomLocationUnitTestModule(),
-                           new ZKClientModule(),
-                           new ZKDiscoveryModule(),
-                           new TransactionMetricsModule(),
-                           new AbstractModule() {
-                             @Override
-                             protected void configure() {
-                               bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
-                               bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-                               bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-                             }
-                           },
-                           new DataFabricModules().getDistributedModules(),
-                           new SystemDatasetRuntimeModule().getInMemoryModules(),
-                           new DataSetsModules().getInMemoryModules(),
-                           new AuthorizationTestModule(),
-                           new AuthorizationEnforcementModule().getInMemoryModules(),
-                           new AuthenticationContextModules().getNoOpModule());
+        Guice.createInjector(new ConfigModule(cConf, hConf),
+            new NonCustomLocationUnitTestModule(),
+            new ZkClientModule(),
+            new ZkDiscoveryModule(),
+            new TransactionMetricsModule(),
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+              }
+            },
+            new DataFabricModules().getDistributedModules(),
+            new SystemDatasetRuntimeModule().getInMemoryModules(),
+            new DataSetsModules().getInMemoryModules(),
+            new AuthorizationTestModule(),
+            new AuthorizationEnforcementModule().getInMemoryModules(),
+            new AuthenticationContextModules().getNoOpModule());
     injector.getInstance(ZKClientService.class).startAndWait();
 
     return injector.getInstance(TransactionService.class);

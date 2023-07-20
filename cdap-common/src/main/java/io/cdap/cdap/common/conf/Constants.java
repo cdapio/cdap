@@ -168,10 +168,9 @@ public final class Constants {
     public static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
 
     /**
-     * Convenient method to get ZK quorum string from the configuration with
-     * proper default value.
+     * Convenient method to get ZK quorum string from the configuration with proper default value.
      */
-    public static String getZKQuorum(CConfiguration cConf) {
+    public static String getZkQuorum(CConfiguration cConf) {
       String quorum = cConf.get(QUORUM);
       if (!Strings.isNullOrEmpty(quorum)) {
         return quorum;
@@ -185,6 +184,7 @@ public final class Constants {
   /**
    * HBase configurations.
    */
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static final class HBase {
 
     public static final String AUTH_KEY_UPDATE_INTERVAL = "hbase.auth.key.update.interval";
@@ -192,21 +192,19 @@ public final class Constants {
     public static final String CLIENT_RETRIES = "hbase.client.retries.number";
     public static final String RPC_TIMEOUT = "hbase.rpc.timeout";
     /**
-     * Determines how to behave when the HBase version is unsupported.
-     * cdap_set_hbase() method in cdap-common/bin/functions.sh must also be
-     * updated if this String is changed
+     * Determines how to behave when the HBase version is unsupported. cdap_set_hbase() method in
+     * cdap-common/bin/functions.sh must also be updated if this String is changed
      */
     public static final String HBASE_VERSION_RESOLUTION_STRATEGY = "hbase.version.resolution.strategy";
     /**
-     * Keep HBase version as it is when HBase version is unsupported.
-     * cdap_set_hbase() method in cdap-common/bin/functions.sh must also be
-     * updated if this String is changed
+     * Keep HBase version as it is when HBase version is unsupported. cdap_set_hbase() method in
+     * cdap-common/bin/functions.sh must also be updated if this String is changed
      */
     public static final String HBASE_AUTO_STRICT_VERSION = "auto.strict";
     /**
-     * Use latest HBase version available on the cluster when HBase version is
-     * unsupported. cdap_set_hbase() method in cdap-common/bin/functions.sh must
-     * also be updated if this String is changed
+     * Use latest HBase version available on the cluster when HBase version is unsupported.
+     * cdap_set_hbase() method in cdap-common/bin/functions.sh must also be updated if this String
+     * is changed
      */
     public static final String HBASE_AUTO_LATEST_VERSION = "auto.latest";
   }
@@ -316,8 +314,7 @@ public final class Constants {
     public static final String QUERY_PARAM_START_TIME = "start";
 
     /**
-     * Query parameter to indicate status of a program {active, completed,
-     * failed}.
+     * Query parameter to indicate status of a program {active, completed, failed}.
      */
     public static final String QUERY_PARAM_STATUS = "status";
 
@@ -339,8 +336,7 @@ public final class Constants {
     public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
 
     /**
-     * Name of the property used to identify whether the dataset is local or
-     * not.
+     * Name of the property used to identify whether the dataset is local or not.
      */
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
 
@@ -357,16 +353,16 @@ public final class Constants {
     public static final String WORKFLOW_KEEP_LOCAL = "workflow.keep.local";
 
     /**
-     * Configuration setting to localize extra jars to every program container
-     * and to be added to classpaths of CDAP programs.
+     * Configuration setting to localize extra jars to every program container and to be added to
+     * classpaths of CDAP programs.
      */
     public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
 
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
 
     /**
-     * Topic prefix for publishing status transitioning events of program runs
-     * to the messaging system.
+     * Topic prefix for publishing status transitioning events of program runs to the messaging
+     * system.
      */
     public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
 
@@ -376,18 +372,16 @@ public final class Constants {
     public static final String PROGRAM_STATUS_RETRY_STRATEGY_PREFIX = "system.program.state.";
 
     /**
-     * Number of topics to use for program status events. All events related to
-     * same run should always go to same topic. If this value is 1,
-     * {@link #PROGRAM_STATUS_EVENT_TOPIC} is a topic name. If it's more than 1,
-     * {@link #PROGRAM_STATUS_EVENT_TOPIC} is a prefix, but bare name should
-     * still be subscribed to ensure any pending messages / active run events
-     * are processed properly.
+     * Number of topics to use for program status events. All events related to same run should
+     * always go to same topic. If this value is 1, {@link #PROGRAM_STATUS_EVENT_TOPIC} is a topic
+     * name. If it's more than 1, {@link #PROGRAM_STATUS_EVENT_TOPIC} is a prefix, but bare name
+     * should still be subscribed to ensure any pending messages / active run events are processed
+     * properly.
      */
     public static final String PROGRAM_STATUS_EVENT_NUM_PARTITIONS = "program.status.event.topic.num.partitions";
 
     /**
-     * Topic name for publishing program status recording events to the
-     * messaging system.
+     * Topic name for publishing program status recording events to the messaging system.
      */
     public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
 
@@ -415,10 +409,9 @@ public final class Constants {
     }
 
     /**
-     * A special annotation used in Guice bindings for ProgramRunner
-     * implementations. It is needed so that we can have different bindings in
-     * different private modules, without affecting/affected by unannotated
-     * bindings in the public space.
+     * A special annotation used in Guice bindings for ProgramRunner implementations. It is needed
+     * so that we can have different bindings in different private modules, without
+     * affecting/affected by unannotated bindings in the public space.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
@@ -484,8 +477,7 @@ public final class Constants {
   public static final class Environment {
 
     /**
-     * Configuration to decide if the master environment should be used for
-     * programs or not.
+     * Configuration to decide if the master environment should be used for programs or not.
      */
     public static final String PROGRAM_SUBMISSION_MASTER_ENV_ENABLED = "program.submission.master.environment.enabled";
   }
@@ -636,8 +628,7 @@ public final class Constants {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final String CFG_SCHEDULER_MISFIRE_THRESHOLD_MS = "scheduler.misfire.threshold.ms";
     /**
-     * Topic name for publishing time events from time scheduler to the
-     * messaging system.
+     * Topic name for publishing time events from time scheduler to the messaging system.
      */
     public static final String TIME_EVENT_TOPIC = "time.event.topic";
 
@@ -713,8 +704,8 @@ public final class Constants {
     public static final class DataJanitor {
 
       /**
-       * Whether or not the TransactionDataJanitor coprocessor should be enabled
-       * on tables. Disable for testing.
+       * Whether or not the TransactionDataJanitor coprocessor should be enabled on tables. Disable
+       * for testing.
        */
       public static final String CFG_TX_JANITOR_ENABLE = "data.tx.janitor.enable";
       public static final boolean DEFAULT_TX_JANITOR_ENABLE = true;
@@ -805,8 +796,7 @@ public final class Constants {
       public static final String OUTPUT_DIR = "dataset.service.output.dir";
 
       /**
-       * Annotation for binding default dataset modules for the dataset
-       * service.
+       * Annotation for binding default dataset modules for the dataset service.
        */
       @Retention(RetentionPolicy.RUNTIME)
       @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
@@ -913,8 +903,7 @@ public final class Constants {
     // To block inbound requests through configuration,
     // Router will start responding to every inbound request with the response (status and message) declared in config
     /**
-     * Property to start/stop blocking requests to the router. Will be blocked
-     * if enabled
+     * Property to start/stop blocking requests to the router. Will be blocked if enabled
      */
     public static final String BLOCK_REQUEST_ENABLED = "router.block.request.enabled";
     /**
@@ -1202,7 +1191,7 @@ public final class Constants {
     /**
      * JVM resource metrics.
      */
-    public static final class JVMResource {
+    public static final class JvmResource {
 
       public static final String HEAP_USED_MB = "jvm.resource.heap.used.mb";
       public static final String HEAP_MAX_MB = "jvm.resource.heap.max.mb";
@@ -1554,8 +1543,7 @@ public final class Constants {
      */
     public static final String TOKEN_DIGEST_KEY_LENGTH = "security.token.digest.keylength";
     /**
-     * Time duration in milliseconds after which an active secret key should be
-     * retired.
+     * Time duration in milliseconds after which an active secret key should be retired.
      */
     public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
     /**
@@ -1563,10 +1551,9 @@ public final class Constants {
      */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
     /**
-     * Comma separated URL's that clients should use to communicate with the
-     * Authentication Server. Each URL should follow the format
-     * protocol://host:port. Leave empty to use the default URL generated by the
-     * Authentication Server.
+     * Comma separated URL's that clients should use to communicate with the Authentication Server.
+     * Each URL should follow the format protocol://host:port. Leave empty to use the default URL
+     * generated by the Authentication Server.
      */
     public static final String AUTH_SERVER_ANNOUNCE_URLS = "security.auth.server.announce.urls";
 
@@ -1579,8 +1566,7 @@ public final class Constants {
      */
     public static final String AUTH_SERVER_BIND_PORT = "security.auth.server.bind.port";
     /**
-     * Maximum number of handler threads for the Authentication Server embedded
-     * Jetty instance.
+     * Maximum number of handler threads for the Authentication Server embedded Jetty instance.
      */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /**
@@ -1613,8 +1599,8 @@ public final class Constants {
      */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /**
-     * Configuration for specifying keytab location. The location will contain
-     * ${name} which will be replaced by the user/owner of the entities name.
+     * Configuration for specifying keytab location. The location will contain ${name} which will be
+     * replaced by the user/owner of the entities name.
      */
     public static final String KEYTAB_PATH = "security.keytab.path";
 
@@ -1638,6 +1624,7 @@ public final class Constants {
     /**
      * App Fabric.
      */
+    @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
     public static final class SSL {
 
       /**
@@ -1665,24 +1652,22 @@ public final class Constants {
     public static final class Authentication {
 
       /**
-       * Determines which authentication mode to use. Should be chosen from the
-       * {@link io.cdap.cdap.security.auth.AuthenticationMode} enum.
+       * Determines which authentication mode to use. Should be chosen from the {@link
+       * io.cdap.cdap.security.auth.AuthenticationMode} enum.
        */
       public static final String MODE = "security.authentication.mode";
       /**
-       * The header from which CDAP should expect to receive the end user
-       * identity when using proxy auth mode.
+       * The header from which CDAP should expect to receive the end user identity when using proxy
+       * auth mode.
        */
       public static final String PROXY_USER_ID_HEADER = "security.authentication.proxy.user.identity.header";
       /**
-       * Determines whether to propagate the end user credential as part of the
-       * Principal.
+       * Determines whether to propagate the end user credential as part of the Principal.
        */
       public static final String PROPAGATE_USER_CREDENTIAL = "security.authentication.propagate.user.credentials";
 
       /**
-       * Enable encryption for user credential in http auth header. Set in
-       * cdap-security.xml.
+       * Enable encryption for user credential in http auth header. Set in cdap-security.xml.
        */
       public static final String USER_CREDENTIAL_ENCRYPTION_ENABLED =
           "security.authentication.user.credential.encryption.enabled";
@@ -1692,14 +1677,13 @@ public final class Constants {
       public static final String USER_CREDENTIAL_ENCRYPTION_KEYSET =
           "security.authentication.user.credentials.encryption.keyset";
       /**
-       * {@link CConfiguration} property to pass runtime token from driver to
-       * distributed jobs.
+       * {@link CConfiguration} property to pass runtime token from driver to distributed jobs.
        */
       public static final String RUNTIME_TOKEN =
           "security.authentication.runtime.token";
       /**
-       * File name to use to pass
-       * {@link Constants.Security.Headers#RUNTIME_TOKEN} to execution job.
+       * File name to use to pass {@link Constants.Security.Headers#RUNTIME_TOKEN} to execution
+       * job.
        */
       public static final String RUNTIME_TOKEN_FILE = "cdap.runtime.token";
       /**
@@ -1743,8 +1727,8 @@ public final class Constants {
        */
       public static final int VISIBLE_BATCH_SIZE = 500;
       /**
-       * Upper limit on extension operation time after which the time is logged
-       * as WARN rather than TRACE.
+       * Upper limit on extension operation time after which the time is logged as WARN rather than
+       * TRACE.
        */
       public static final String EXTENSION_OPERATION_TIME_WARN_THRESHOLD =
           "security.authorization.extension.operation.time.warn.threshold.ms";
@@ -1795,8 +1779,7 @@ public final class Constants {
        */
       public static final String USER_IP = "CDAP-UserIP";
       /**
-       * User principal passed from program container to cdap service
-       * containers.
+       * User principal passed from program container to cdap service containers.
        */
       public static final String USER_PRINCIPAL = "CDAP-User-Principal";
       /**
@@ -1827,8 +1810,7 @@ public final class Constants {
        */
       public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
       /**
-       * Paths to exclude from authentication, given by a single regular
-       * expression.
+       * Paths to exclude from authentication, given by a single regular expression.
        */
       public static final String BYPASS_AUTHENTICATION_REGEX = "router.bypass.auth.regex";
 
@@ -1946,8 +1928,8 @@ public final class Constants {
   public static final int DEFAULT_DATA_LEVELDB_COMPACTION_LEVEL_MAX = 4;
 
   /**
-   * LevelDB substracts 10 from maxOpenFiles configuration to calculate table
-   * cache size. This constant allows us to convert it back
+   * LevelDB substracts 10 from maxOpenFiles configuration to calculate table cache size. This
+   * constant allows us to convert it back
    *
    * @see org.iq80.leveldb.impl.DbImpl#DbImpl
    */
@@ -2180,6 +2162,8 @@ public final class Constants {
   /**
    * Constants for HBase DDL executor.
    */
+
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static final class HBaseDDLExecutor {
 
     public static final String EXTENSIONS_DIR = "hbase.ddlexecutor.extension.dir";
@@ -2234,8 +2218,7 @@ public final class Constants {
      */
     public static final String CONFIG_DIR = "capability.config.dir";
     /**
-     * Number of executor threads used to auto install resources when a
-     * capability is enabled.
+     * Number of executor threads used to auto install resources when a capability is enabled.
      */
     public static final String AUTO_INSTALL_THREADS = "capability.autoinstall.threads";
   }
@@ -2291,14 +2274,12 @@ public final class Constants {
       public static final String IDENTITY_SYSTEM = "twill.security.identity.system";
 
       /**
-       * The secret name for the cdap-security.xml disk mount for master
-       * services.
+       * The secret name for the cdap-security.xml disk mount for master services.
        */
       public static final String MASTER_SECRET_DISK_NAME = "twill.security.master.secret.disk.name";
 
       /**
-       * The secret path for the cdap-security.xml disk mount for master
-       * services.
+       * The secret path for the cdap-security.xml disk mount for master services.
        */
       public static final String MASTER_SECRET_DISK_PATH = "twill.security.master.secret.disk.path";
 
@@ -2308,14 +2289,14 @@ public final class Constants {
       public static final String WORKER_MOUNT_SECRET = "twill.security.worker.mount.secret";
 
       /**
-       * The secret name for the cdap-security.xml disk mount for worker
-       * services including preview and task workers.
+       * The secret name for the cdap-security.xml disk mount for worker services including preview
+       * and task workers.
        */
       public static final String WORKER_SECRET_DISK_NAME = "twill.security.worker.secret.disk.name";
 
       /**
-       * The secret path for the cdap-security.xml disk mount for worker
-       * services including preview and task workers.
+       * The secret path for the cdap-security.xml disk mount for worker services including preview
+       * and task workers.
        */
       public static final String WORKER_SECRET_DISK_PATH = "twill.security.worker.secret.disk.path";
     }
@@ -2349,7 +2330,7 @@ public final class Constants {
   /**
    * JMX metrics collector config.
    */
-  public static final class JMXMetricsCollector {
+  public static final class JmxMetricsCollector {
 
     public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
     public static final String SERVER_PORT = "jmx.metrics.collector.server.port";
@@ -2376,20 +2357,18 @@ public final class Constants {
     public static final String CONNECTION_INTERVAL = "tethering.agent.connection.interval.secs";
 
     /**
-     * Tethering connection is deemed down if we haven't heard from the peer
-     * within this timeout.
+     * Tethering connection is deemed down if we haven't heard from the peer within this timeout.
      */
     public static final String CONNECTION_TIMEOUT_SECONDS = "tethering.connection.timeout.seconds";
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 60;
 
     /**
-     * Specifies the timeout for establishing a connection with the tethering
-     * server.
+     * Specifies the timeout for establishing a connection with the tethering server.
      */
     public static final String CLIENT_CONNECTION_TIMEOUT_MS = "tethering.client.connection.timeout.ms";
     /**
-     * Specifies the timeout for reading data from the tethering server after
-     * the connection is established.
+     * Specifies the timeout for reading data from the tethering server after the connection is
+     * established.
      */
     public static final String CLIENT_READ_TIMEOUT_MS = "tethering.client.read.timeout.ms";
 
@@ -2442,5 +2421,14 @@ public final class Constants {
     public static final String REPOSITORY_CLEANUP_INTERVAL_SECONDS =
         "source.control.repository.cleanup.interval.seconds";
     public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
+  }
+
+  /**
+   * Constants for credential provisioning.
+   */
+  public static final class CredentialProvider {
+
+    public static final String EXTENSIONS_DIR = "credential.provider.extensions.dir";
+    public static final String SYSTEM_PROPERTY_PREFIX = "credential.provider.system.properties.";
   }
 }

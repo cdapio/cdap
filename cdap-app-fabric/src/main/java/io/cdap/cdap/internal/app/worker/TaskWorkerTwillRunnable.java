@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021-2022 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,8 +34,8 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
+import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -113,8 +113,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
 
     if (masterEnv == null) {
-      modules.add(new ZKClientModule());
-      modules.add(new ZKDiscoveryModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
       modules.add(new KafkaClientModule());
       modules.add(new KafkaLogAppenderModule());
     } else {
@@ -131,7 +131,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements Au
       modules.add(new RemoteLogAppenderModule());
 
       if (coreSecurityModule.requiresZKClient()) {
-        modules.add(new ZKClientModule());
+        modules.add(new ZkClientModule());
       }
     }
 

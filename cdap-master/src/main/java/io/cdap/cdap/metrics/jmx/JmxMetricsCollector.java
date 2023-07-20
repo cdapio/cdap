@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2021-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricsPublisher;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Metrics.JvmResource;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -53,9 +54,9 @@ import org.slf4j.LoggerFactory;
  * -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false} The
  * property for setting the JMX server port number should be present in {@code cdap-site.xml}.
  */
-public class JMXMetricsCollector extends AbstractScheduledService {
+public class JmxMetricsCollector extends AbstractScheduledService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JMXMetricsCollector.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JmxMetricsCollector.class);
   private static final long MEGA_BYTE = 1024 * 1024;
   private static final long MAX_PORT = (1 << 16) - 1;
   private static final long SYSTEM_LOAD_SCALING_FACTOR = 100;
@@ -66,16 +67,24 @@ public class JMXMetricsCollector extends AbstractScheduledService {
   private final JMXServiceURL serviceUrl;
   private ScheduledExecutorService executor;
 
+  /**
+   * Constructs a new {@link JmxMetricsCollector}.
+   *
+   * @param cConf            The CConf to use.
+   * @param metricsPublisher The metrics publisher to use.
+   * @param metricTags       The tags to use.
+   * @throws MalformedURLException If the server URL is invalid.
+   */
   @Inject
-  public JMXMetricsCollector(CConfiguration cConf,
+  public JmxMetricsCollector(CConfiguration cConf,
       MetricsPublisher metricsPublisher,
       @Assisted Map<String, String> metricTags) throws MalformedURLException {
     this.cConf = cConf;
-    int serverPort = cConf.getInt(Constants.JMXMetricsCollector.SERVER_PORT);
+    int serverPort = cConf.getInt(Constants.JmxMetricsCollector.SERVER_PORT);
     if (serverPort < 0 || serverPort > MAX_PORT) {
       throw new IllegalArgumentException(String.format(
           "%s variable (%d) is not a valid port number.",
-          Constants.JMXMetricsCollector.SERVER_PORT, serverPort));
+          Constants.JmxMetricsCollector.SERVER_PORT, serverPort));
     }
     String serverUrl = String.format(SERVICE_URL_FORMAT, "localhost", serverPort);
     this.metricTags = metricTags;
@@ -85,9 +94,9 @@ public class JMXMetricsCollector extends AbstractScheduledService {
 
   @Override
   protected void startUp() {
-    LOG.info("Starting JMXMetricsCollector with polling frequency: {}, JMX server port: {}",
-        this.cConf.getInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS),
-        this.cConf.getInt(Constants.JMXMetricsCollector.SERVER_PORT));
+    LOG.info("Starting JmxMetricsCollector with polling frequency: {}, JMX server port: {}",
+        this.cConf.getInt(Constants.JmxMetricsCollector.POLL_INTERVAL_SECS),
+        this.cConf.getInt(Constants.JmxMetricsCollector.SERVER_PORT));
     this.metricsPublisher.initialize();
   }
 
@@ -97,7 +106,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
       executor.shutdownNow();
     }
     this.metricsPublisher.close();
-    LOG.info("Shutting down JMXMetricsCollector has completed.");
+    LOG.info("Shutting down JmxMetricsCollector has completed.");
   }
 
   @Override
@@ -107,7 +116,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
     try (JMXConnector jmxConnector = JMXConnectorFactory.connect(serviceUrl, null)) {
       MBeanServerConnection mBeanConn = jmxConnector.getMBeanServerConnection();
       metrics.addAll(getMemoryMetrics(mBeanConn));
-      metrics.addAll(getCPUMetrics(mBeanConn));
+      metrics.addAll(getCpuMetrics(mBeanConn));
       metrics.addAll(getThreadMetrics(mBeanConn));
     } catch (IOException e) {
       LOG.error("Error occurred while connecting to JMX server.", e);
@@ -126,16 +135,16 @@ public class JMXMetricsCollector extends AbstractScheduledService {
             MemoryMXBean.class);
     MemoryUsage heapMemoryUsage = mxBean.getHeapMemoryUsage();
     Collection<MetricValue> metrics = new ArrayList<>();
-    metrics.add(new MetricValue(Constants.Metrics.JVMResource.HEAP_USED_MB,
+    metrics.add(new MetricValue(JvmResource.HEAP_USED_MB,
         MetricType.GAUGE, heapMemoryUsage.getUsed() / MEGA_BYTE));
     if (heapMemoryUsage.getMax() >= 0) {
-      metrics.add(new MetricValue(Constants.Metrics.JVMResource.HEAP_MAX_MB,
+      metrics.add(new MetricValue(JvmResource.HEAP_MAX_MB,
           MetricType.GAUGE, heapMemoryUsage.getMax() / MEGA_BYTE));
     }
     return metrics;
   }
 
-  Collection<MetricValue> getCPUMetrics(MBeanServerConnection conn) throws IOException {
+  Collection<MetricValue> getCpuMetrics(MBeanServerConnection conn) throws IOException {
     OperatingSystemMXBean mxBean = ManagementFactory
         .newPlatformMXBeanProxy(conn, ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME,
             OperatingSystemMXBean.class);
@@ -147,7 +156,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
       double processorCount = mxBean.getAvailableProcessors();
       double systemLoadPerProcessorScaled =
           (systemLoad * SYSTEM_LOAD_SCALING_FACTOR) / processorCount;
-      metrics.add(new MetricValue(Constants.Metrics.JVMResource.SYSTEM_LOAD_PER_PROCESSOR_SCALED,
+      metrics.add(new MetricValue(JvmResource.SYSTEM_LOAD_PER_PROCESSOR_SCALED,
           MetricType.GAUGE, (long) systemLoadPerProcessorScaled));
     }
     return metrics;
@@ -157,7 +166,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
     ThreadMXBean mxBean = ManagementFactory
         .newPlatformMXBeanProxy(conn, ManagementFactory.THREAD_MXBEAN_NAME, ThreadMXBean.class);
     Collection<MetricValue> metrics = new ArrayList<>();
-    metrics.add(new MetricValue(Constants.Metrics.JVMResource.THREAD_COUNT,
+    metrics.add(new MetricValue(JvmResource.THREAD_COUNT,
         MetricType.GAUGE, mxBean.getThreadCount()));
     return metrics;
   }
@@ -165,7 +174,7 @@ public class JMXMetricsCollector extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(
-        0, cConf.getInt(Constants.JMXMetricsCollector.POLL_INTERVAL_SECS), TimeUnit.SECONDS);
+        0, cConf.getInt(Constants.JmxMetricsCollector.POLL_INTERVAL_SECS), TimeUnit.SECONDS);
   }
 
   @Override

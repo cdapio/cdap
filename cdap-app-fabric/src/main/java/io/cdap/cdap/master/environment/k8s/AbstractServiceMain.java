@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2022 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
-import io.cdap.cdap.common.guice.ZKClientModule;
+import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -92,8 +92,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    * Helper method for sub-class to call from static void main.
    *
    * @param mainClass the class of the master main class implementation
-   * @param args arguments to main
-   * @param <T> type of the master main class
+   * @param args      arguments to main
+   * @param <T>       type of the master main class
    * @throws Exception if execution failed
    */
   protected static <E extends EnvironmentOptions, T extends AbstractServiceMain<E>>
@@ -183,7 +183,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     modules.add(coreSecurityModule);
     if (coreSecurityModule.requiresZKClient()) {
-      modules.add(new ZKClientModule());
+      modules.add(new ZkClientModule());
     }
     modules.add(new AuthenticationContextModules().getMasterModule());
 
@@ -305,6 +305,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    * @param cConf the {@link CConfiguration} to be updated
    * @return the updated configuration
    */
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   protected CConfiguration updateCConf(CConfiguration cConf) {
     return cConf;
   }
@@ -318,12 +319,12 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   /**
    * Adds {@link Service} to run.
    *
-   * @param injector the Guice {@link Injector} for all the necessary bindings
-   * @param services the {@link List} to populate services to run
+   * @param injector           the Guice {@link Injector} for all the necessary bindings
+   * @param services           the {@link List} to populate services to run
    * @param closeableResources the {@link List} to populate {@link AutoCloseable} that will be
-   *     closed on stopping
-   * @param masterEnv the {@link MasterEnvironment} created for this main service
-   * @param masterEnvContext the {@link MasterEnvironmentContext} created for this main service
+   *                           closed on stopping
+   * @param masterEnv          the {@link MasterEnvironment} created for this main service
+   * @param masterEnvContext   the {@link MasterEnvironmentContext} created for this main service
    */
   protected abstract void addServices(Injector injector, List<? super Service> services,
       List<? super AutoCloseable> closeableResources,
