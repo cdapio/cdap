@@ -339,6 +339,16 @@ def main(kube_namespace, username, password, cdap_ns, pipeline_name, run_id, run
             "parentFolder": cdap_services_logs
         },
         {
+            "command": f'kubectl logs -l cdap.container.Router -n {kube_namespace} --tail -1',
+            "fileName": 'kubectl-log-l-cdap-container-Router',
+            "fileExt": 'log',
+            "fileWrite": True,
+            "forEachNode": False,
+            "forEachCommand": '',
+            "placeholderString": "",
+            "parentFolder": cdap_services_logs
+        },
+        {
             "command": f'kubectl logs -l cdap.container.ArtifactCache -n {kube_namespace} --tail -1',
             "fileName": 'kubectl-log-l-cdap-container-ArtifactCache',
             "fileExt": 'log',
