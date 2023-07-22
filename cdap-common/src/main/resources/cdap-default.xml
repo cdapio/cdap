@@ -5203,15 +5203,6 @@
   </property>
 
   <property>
-    <name>task.worker.preload.artifacts</name>
-    <value></value>
-    <description>
-      A command separated list of system artifacts to be preloaded into each
-      task worker
-    </description>
-  </property>
-
-  <property>
     <name>task.worker.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -5454,55 +5445,6 @@
     <value>false</value>
     <description>
       If true, artifact localization will be enabled in system pods
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.container.num.cores</name>
-    <value>1</value>
-    <description>
-      Number of virtual cores for the task worker.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.container.memory.mb</name>
-    <value>100</value>
-    <description>
-      Memory in megabytes for each task worker.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.bind.port</name>
-    <value>11021</value>
-    <description>
-      The port to bind the artifact localizer service to.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.worker.threads</name>
-    <value>10</value>
-    <description>
-      The number of artifact localizer threads in the file localizer sidecar
-      container.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.boss.threads</name>
-    <value>1</value>
-    <description>
-      The number of boss threads for the artifact localizer.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.container.jvm.opts</name>
-    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
-    <description>
-      JVM opts for artifact localizer containers.
     </description>
   </property>
 
@@ -6004,5 +5946,73 @@
       remote authenticator extensions.
     </description>
   </property>
+
+<!--  Artifact localizer settings -->
+  <property>
+    <name>artifact.localizer.preload.list</name>
+    <value></value>
+    <description>
+      A command separated list of system artifacts to be preloaded in
+      artifact-localizer
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.preload.version.limit</name>
+    <value>2</value>
+    <description>
+      Count of latest versions to be preloaded in artifact-localizer
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.memory.mb</name>
+    <value>100</value>
+    <description>
+      Memory in megabytes for each task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.bind.port</name>
+    <value>11021</value>
+    <description>
+      The port to bind the artifact localizer service to.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of artifact localizer threads in the file localizer sidecar
+      container.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the artifact localizer.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for artifact localizer containers.
+    </description>
+  </property>
+
 
 </configuration>
