@@ -140,7 +140,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
           .setCredentials(conf.getDataprocCredentials()).build().getService();
       String runId = context.getProgramRunInfo().getRun();
       String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
-      DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
+      DataprocUtils.deleteGcsPath(storageClient, bucket, runRootPath);
     }
 
     doDeleteCluster(context, cluster, conf);
@@ -152,7 +152,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   /**
-   * Gets the default cluster name for the given context. See {@link #getAllocatedClusterName} to
+   * Gets the default cluster name for the given context. See {@link DataprocProvisioner#getClusterName} to
    * get the name of actually allocated cluster (if any).
    *
    * @param context the context
@@ -204,13 +204,11 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       String region = conf.getRegion();
       String bucket =
           conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
-
-      Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
           new DataprocRuntimeJobManager(
               new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                   getRootUrl(conf), projectId,
-                  region, bucket, systemLabels),
+                  region, bucket, getCommonDataprocLabels(context)),
               Collections.unmodifiableMap(properties), context.getCDAPVersionInfo()));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
@@ -277,20 +275,27 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   /**
    * Returns a set of system labels that should be applied to all Dataproc entities.
    */
-  protected final Map<String, String> getSystemLabels() {
+  protected final Map<String, String> getCommonDataprocLabels(ProvisionerContext provisionerContext) {
     Map<String, String> labels = new HashMap<>();
+    // Add labels from provisioner properties.
+    // labels are expected to be in format:
+    // name1|val1;name2|val2
+    // Note that the delimiters for provisioner are different from the labels
+    // specified in cdap-site. This is to ensure consistent delimiters for
+    // provisioner properties.
+    String provisionerLabelsStr = provisionerContext.getProperties().get(LABELS_PROPERTY);
+    labels.putAll(DataprocUtils.parseKeyValueConfig(provisionerLabelsStr, ";", "\\|"));
+
+    // Add system labels.
     ProvisionerSystemContext systemContext = getSystemContext();
 
     // dataproc only allows label values to be lowercase letters, numbers, or dashes
     labels.put(LABEL_VERSON, getVersionLabel());
-
     String extraLabelsStr = systemContext.getProperties().get(LABELS_PROPERTY);
+
     // labels are expected to be in format:
     // name1=val1,name2=val2
-    if (extraLabelsStr != null) {
-      labels.putAll(DataprocUtils.parseLabels(extraLabelsStr));
-    }
-
+    labels.putAll(DataprocUtils.parseKeyValueConfig(extraLabelsStr, ",", "="));
     return Collections.unmodifiableMap(labels);
   }
 

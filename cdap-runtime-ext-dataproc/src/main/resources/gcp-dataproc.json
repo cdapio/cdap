@@ -527,7 +527,20 @@
         },
         {
           "widget-type": "keyvalue",
-          "label": "Labels",
+          "label": "Common Labels",
+          "name": "labels",
+          "description": "Specifies labels for Dataproc clusters and jobs.",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "delimiter": ";",
+            "kv-delimiter": "|",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value"
+          }
+        },
+        {
+          "widget-type": "keyvalue",
+          "label": "Cluster Labels",
           "name": "clusterLabels",
           "description": "Specifies labels for the Dataproc cluster being created.",
           "widget-attributes": {

@@ -132,7 +132,7 @@ public class ArtifactCacheManager {
         .forEach(artifact -> {
           String cachedArtifactFilePath = getPath(cachedArtifactsPath, artifact);
           try {
-            DataprocUtils.removeTemporaryHoldOnGCSObject(client, bucket,
+            DataprocUtils.removeTemporaryHoldOnGcsObject(client, bucket,
                 BlobId.of(bucket, cachedArtifactFilePath),
                 cachedArtifactFilePath);
           } catch (InterruptedException e) {
