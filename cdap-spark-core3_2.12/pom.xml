@@ -413,6 +413,7 @@
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
                   <excludeGroupIds>
+                    org.apache.commons,
                     org.apache.spark,
                     org.spark-project.spark,
                     org.apache.hadoop,
