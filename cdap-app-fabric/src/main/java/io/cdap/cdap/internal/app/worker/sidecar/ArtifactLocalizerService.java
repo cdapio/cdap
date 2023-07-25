@@ -84,7 +84,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
         cacheCleanupInterval, TimeUnit.MINUTES);
 
     artifactLocalizer.preloadArtifacts(
-        new HashSet<>(cConf.getTrimmedStringCollection(Constants.TaskWorker.PRELOAD_ARTIFACTS)));
+        new HashSet<>(cConf.getTrimmedStringCollection(Constants.ArtifactLocalizer.PRELOAD_LIST)),
+        cConf.getInt(Constants.ArtifactLocalizer.PRELOAD_VERSION_LIMIT));
 
     LOG.debug("Starting ArtifactLocalizerService has completed");
   }
