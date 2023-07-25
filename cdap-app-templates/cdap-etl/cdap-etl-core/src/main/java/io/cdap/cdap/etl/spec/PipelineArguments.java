@@ -46,7 +46,6 @@ public final class PipelineArguments {
       TRANSFORMATION_PUSHDOWN_PREFIX + "artifact.";
   public static final String TRANSFORMATION_PUSHDOWN_PROPERTIES_PREFIX =
       TRANSFORMATION_PUSHDOWN_PREFIX + "properties.";
-  public static final String PIPELINE_CONFIG_OVERWRITE = "app.pipeline.overwriteConfig";
 
   /**
    * @param args the arguments to lookup spark engine custom config settings
@@ -55,9 +54,6 @@ public final class PipelineArguments {
    */
   public static Map<String, String> getEngineProperties(Map<String, String> args,
       Map<String, String> originalProperties) {
-    if (!args.containsKey(PIPELINE_CONFIG_OVERWRITE)) {
-      return originalProperties;
-    }
     Map<String, String> properties = new HashMap<String, String>();
     for (String name : args.keySet()) {
       if (!name.startsWith(SPARK_CUSTOM_CONFIG_PREFIX)) {
@@ -81,9 +77,6 @@ public final class PipelineArguments {
   public static ETLTransformationPushdown getTransformationPushdown(
       Map<String, String> args, @Nullable ETLTransformationPushdown originalTransformationPushdown
   ) {
-    if (!args.containsKey(PIPELINE_CONFIG_OVERWRITE)) {
-      return originalTransformationPushdown;
-    }
     String name = "";
     // type should not be overwritable
     String type = BatchSQLEngine.PLUGIN_TYPE;
@@ -129,7 +122,7 @@ public final class PipelineArguments {
    */
   public static boolean isPushdownEnabled(Map<String, String> args,
       boolean originalPushdownEnabled) {
-    return !args.containsKey(PUSHDOWN_ENABLED_KEY) || !args.containsKey(PIPELINE_CONFIG_OVERWRITE)
+    return !args.containsKey(PUSHDOWN_ENABLED_KEY)
         ? originalPushdownEnabled
         : Boolean.parseBoolean(args.get(PUSHDOWN_ENABLED_KEY));
   }
@@ -141,7 +134,7 @@ public final class PipelineArguments {
    */
   public static boolean isProcessTimingEnabled(Map<String, String> args,
       boolean originalProcessTimingEnabled) {
-    return !args.containsKey(INSTRUMENTATION_KEY) || !args.containsKey(PIPELINE_CONFIG_OVERWRITE)
+    return !args.containsKey(INSTRUMENTATION_KEY)
         ? originalProcessTimingEnabled
         : Boolean.parseBoolean(args.get(INSTRUMENTATION_KEY));
   }

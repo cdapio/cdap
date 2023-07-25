@@ -36,17 +36,16 @@ import javax.annotation.Nullable;
 public class SparkSQLRelation implements Relation {
 
   private static final SparkSQLExpressionFactory factory = new SparkSQLExpressionFactory();
-
-  private String sqlStatement;
   private String datasetName;
   private List<String> columns;
+  private String sqlStatement;
   private final Schema schema;
 
   // SQL KEY WORDS
   private static final String SELECT = "SELECT";
   private static final String FROM = "FROM";
   private static final String WHERE = "WHERE";
-  private static final String AS = " AS ";
+  private static final String AS = "AS";
   private static final String COMMA = " , ";
 
   public SparkSQLRelation(String datasetName, List<String> columns) {
@@ -84,7 +83,7 @@ public class SparkSQLRelation implements Relation {
     Map<String, Expression> columnExpMap = generateColumnExpMap(this.columns);
     columnExpMap.put(column, value);
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
+    return new SparkSQLRelation(this.datasetName, columnList, generateNestedSelectQuery(null, columnExpMap), schema);
   }
 
   @Override
@@ -94,8 +93,7 @@ public class SparkSQLRelation implements Relation {
       return new InvalidRelation("Trying to remove non existing column in Relation: " + column);
     }
     this.columns.remove(column);
-
-    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(null), schema);
+    return new SparkSQLRelation(this.datasetName, columns, generateNestedSelectQuery(null), schema);
   }
 
   @Override
@@ -104,16 +102,15 @@ public class SparkSQLRelation implements Relation {
       return new InvalidRelation("One or more Unsupported or invalid expression type  in the list : "
                                    + columnExpMap.values());
     }
-
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
+    return new SparkSQLRelation(this.datasetName, columnList, generateNestedSelectQuery(null, columnExpMap), schema);
   }
 
   @Override
   public Relation filter(Expression filter) {
     // Get filter conditions
     String filterCondition = filter != null ? ((SparkSQLExpression) filter).extract() : null;
-    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(filterCondition), schema);
+    return new SparkSQLRelation(this.datasetName, columns, generateNestedSelectQuery(filterCondition), schema);
   }
 
   public String getSqlStatement() {
@@ -135,16 +132,20 @@ public class SparkSQLRelation implements Relation {
     return columns;
   }
 
-  private String generateSelectQuery(String filterCondition) {
-    return generateSelectQuery(filterCondition, generateColumnExpMap(this.columns));
+  public String getDatasetName() { return datasetName; }
+
+  private String generateNestedSelectQuery(String filterCondition) {
+    return generateNestedSelectQuery(filterCondition, generateColumnExpMap(this.columns));
   }
 
-  private String generateSelectQuery(String filterCondition, Map<String, Expression> columnExpMap) {
+  private String generateNestedSelectQuery(String filterCondition, Map<String, Expression> columnExpMap) {
     StringBuilder queryBuilder = new StringBuilder(
-      String.format("%s %s %s %s",
+      String.format("%s %s %s (%s) %s %s",
                     SELECT,
                     getColumnAliasCSV(columnExpMap),
                     FROM,
+                    getDataSetAlias(),
+                    AS,
                     this.datasetName)
     );
 
@@ -153,6 +154,10 @@ public class SparkSQLRelation implements Relation {
     }
 
     return queryBuilder.toString();
+  }
+
+  private String getDataSetAlias() {
+    return this.getSqlStatement() != null ? this.getSqlStatement() : this.getDatasetName();
   }
 
   private Map<String, Expression> generateColumnExpMap(List<String> columns) {
@@ -164,7 +169,7 @@ public class SparkSQLRelation implements Relation {
   private String getColumnAliasCSV(Map<String, Expression> columnExpMap) {
     return columnExpMap.entrySet()
       .stream()
-      .map(e -> ((SparkSQLExpression) e.getValue()).extract() + AS + e.getKey())
+      .map(e -> String.format("%s %s %s", ((SparkSQLExpression) e.getValue()).extract(), AS, e.getKey()))
       .collect(Collectors.joining(COMMA));
   }
 

@@ -64,7 +64,8 @@ public class TaskWorkerMetricsTest {
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, 0);
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, false);
-    cConf.set(Constants.TaskWorker.PRELOAD_ARTIFACTS, "");
+    cConf.set(Constants.ArtifactLocalizer.PRELOAD_LIST, "");
+    cConf.setInt(Constants.ArtifactLocalizer.PRELOAD_VERSION_LIMIT, 1);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
     return cConf;
   }

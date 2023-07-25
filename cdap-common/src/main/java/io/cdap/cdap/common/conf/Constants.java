@@ -494,7 +494,6 @@ public final class Constants {
     public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
     public static final String POOL_ENABLE = "task.worker.pool.enable";
     public static final String COMPRESSION_ENABLED = "task.worker.compression.enabled";
-    public static final String PRELOAD_ARTIFACTS = "task.worker.preload.artifacts";
 
     /**
      * Task worker container configurations.
@@ -618,6 +617,8 @@ public final class Constants {
     public static final String PORT = "artifact.localizer.bind.port";
     public static final String BOSS_THREADS = "artifact.localizer.boss.threads";
     public static final String WORKER_THREADS = "artifact.localizer.worker.threads";
+    public static final String PRELOAD_LIST = "artifact.localizer.preload.list";
+    public static final String PRELOAD_VERSION_LIMIT = "artifact.localizer.preload.version.limit";
   }
 
   /**

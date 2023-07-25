@@ -95,7 +95,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
     String clusterName = contextProperties.get(CLUSTER_NAME);
     try (DataprocClient client = CLIENT_FACTORY.create(conf)) {
       try {
-        client.updateClusterLabels(clusterName, getSystemLabels());
+        client.updateClusterLabels(clusterName, getCommonDataprocLabels(context));
       } catch (DataprocRuntimeException e) {
         // It's ok not able to update the labels
         // Only log the stacktrace if trace log level is enabled
