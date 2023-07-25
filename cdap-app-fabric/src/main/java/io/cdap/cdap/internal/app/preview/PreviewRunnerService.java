@@ -35,7 +35,9 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -51,6 +53,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerService.class);
   private static final Cancellable DUMMY_CANCELLABLE = () -> {
   };
+  private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor =
+          (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
 
   private final PreviewRunner previewRunner;
   private final PreviewRequestFetcher requestFetcher;
@@ -61,6 +65,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private final AtomicReference<Cancellable> cancelPreview;
   private ApplicationId previewApp;
   private MetricsEmitter metricsEmitter;
+  private double metricValue;
 
   @Inject
   PreviewRunnerService(CConfiguration cConf, PreviewRequestFetcher previewRequestFetcher,
@@ -74,6 +79,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     this.stopLatch = new CountDownLatch(1);
     this.cancelPreview = new AtomicReference<>();
     this.metricsEmitter = metricsEmitter;
+    this.metricValue = 0;
   }
 
   @Override
@@ -88,6 +94,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting preview runner service");
+    emitMetricsRepeatedly();
   }
 
   @Override
@@ -107,7 +114,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
         previewApp = request.getProgram().getParent();
 
         runs++;
-        metricsEmitter.emitMetrics(1);
+        metricValue = runs/maxRuns;
+        metricsEmitter.emitMetrics(metricValue);
         Future<PreviewRequest> future = previewRunner.startPreview(request);
 
         // If the cancelPreview was not null, this means the triggerShutdown was called while the
@@ -124,7 +132,9 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
           cancelPreview.cancel();
           terminated = true;
         }
-        metricsEmitter.emitMetrics(0);
+        runs--;
+        metricValue = runs/maxRuns;
+        metricsEmitter.emitMetrics(metricValue);
       } catch (Exception e) {
         // This is a system error not caused by the app, hence log an error
         LOG.error("Failed to execute preview", e);
@@ -135,6 +145,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
+    scheduledThreadPoolExecutor.shutdown();
     LOG.debug("Preview runner service completed");
   }
 
@@ -155,6 +166,16 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     } catch (Exception e) {
       LOG.error("Failed to stop preview for {}", request.getProgram(), e);
     }
+  }
+
+  private void emitMetricsRepeatedly(){
+    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
+      try {
+        metricsEmitter.emitMetrics(metricValue);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }, 30, 300, TimeUnit.SECONDS);
   }
 
   private void waitForCompletion(PreviewRequest request, Future<?> future,

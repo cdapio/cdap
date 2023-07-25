@@ -40,7 +40,8 @@ import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
-import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import org.apache.twill.api.TwillRunnerService;
@@ -55,6 +56,8 @@ import org.slf4j.LoggerFactory;
 public class SystemWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerService.class);
+  private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor =
+          (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
@@ -64,6 +67,8 @@ public class SystemWorkerService extends AbstractIdleService {
   private final ProvisioningService provisioningService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+  private final MetricsEmitter metricsEmitter;
+  private double metricValue;
 
   @Inject
   SystemWorkerService(CConfiguration cConf,
@@ -82,6 +87,8 @@ public class SystemWorkerService extends AbstractIdleService {
     this.twillRunnerService = twillRunnerService;
     this.remoteTwillRunnerService = remoteTwillRunnerService;
     this.provisioningService = provisioningService;
+    this.metricsEmitter = metricsEmitter;
+    this.metricValue = 0;
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.SYSTEM_WORKER)
@@ -98,7 +105,7 @@ public class SystemWorkerService extends AbstractIdleService {
         })
         .setHttpHandlers(
             new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector,
-                authenticationContext, internalAccessEnforcer, metricsEmitter));
+                authenticationContext, internalAccessEnforcer, this::sendAutoscalerMetricsData));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -114,6 +121,7 @@ public class SystemWorkerService extends AbstractIdleService {
     twillRunnerService.start();
     remoteTwillRunnerService.start();
     httpService.start();
+    emitMetricsRepeatedly();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
         ResolvingDiscoverable.of(
@@ -124,6 +132,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down SystemWorkerService");
+    scheduledThreadPoolExecutor.shutdown();
     tokenManager.stop();
     twillRunnerService.stop();
     remoteTwillRunnerService.stop();
@@ -131,6 +140,26 @@ public class SystemWorkerService extends AbstractIdleService {
     cancelDiscovery.cancel();
     LOG.debug("Shutting down SystemWorkerService has completed");
   }
+
+  private void emitMetricsRepeatedly(){
+    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
+      try {
+        metricsEmitter.emitMetrics(metricValue);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }, 30,30, TimeUnit.SECONDS);
+  }
+
+  public void sendAutoscalerMetricsData(double metricValue){
+    this.metricValue = metricValue;
+    try {
+      metricsEmitter.emitMetrics(metricValue);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 
   @VisibleForTesting
   public InetSocketAddress getBindAddress() {
