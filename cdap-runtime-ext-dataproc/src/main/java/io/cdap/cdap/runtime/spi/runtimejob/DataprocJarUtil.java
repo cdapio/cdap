@@ -106,10 +106,10 @@ public final class DataprocJarUtil {
       }, DataprocJobMain.class.getName());
 
       // Add the logback-console.xml from resources
-      URL logbackURL = classLoader.getResource("logback-console.xml");
-      if (logbackURL != null) {
+      URL logbackUrl = classLoader.getResource("logback-console.xml");
+      if (logbackUrl != null) {
         jarOut.putNextEntry(new JarEntry("logback-console.xml"));
-        Resources.copy(logbackURL, jarOut);
+        Resources.copy(logbackUrl, jarOut);
       }
     }
     return getLocalFile(location, false);
