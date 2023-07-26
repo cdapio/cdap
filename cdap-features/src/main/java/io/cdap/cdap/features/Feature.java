@@ -39,7 +39,8 @@ public enum Feature {
   PUSHDOWN_TRANSFORMATION_WINDOWAGGREGATION("6.9.1"),
   SOURCE_CONTROL_MANAGEMENT_GIT("6.9.0"),
   WRANGLER_PRECONDITION_SQL("6.9.1"),
-  WRANGLER_EXECUTION_SQL("6.10.0");
+  WRANGLER_EXECUTION_SQL("6.10.0"),
+  WRANGLER_SCHEMA_MANAGEMENT("6.10.0");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
