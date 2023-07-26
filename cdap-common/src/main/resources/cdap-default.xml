@@ -5853,6 +5853,15 @@
   </property>
 
   <property>
+    <name>feature.wrangler.schema.management.enabled</name>
+    <value>true</value>
+    <description>
+      Enables directive output schema management in Wrangler. If disabled, existing
+      inference logic is used for generating schema at design-time.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
