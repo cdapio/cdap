@@ -77,7 +77,9 @@ import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.twill.AutoscalableTwillRunnable;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -112,7 +114,7 @@ import org.slf4j.LoggerFactory;
  * The {@link TwillRunnable} for running {@link SystemWorkerService}.
  */
 
-public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
+public class SystemWorkerTwillRunnable extends AbstractTwillRunnable implements AutoscalableTwillRunnable{
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerTwillRunnable.class);
 
@@ -120,6 +122,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   private ArtifactLocalizerService artifactLocalizerService;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
+  private MetricsEmitter metricsEmitter;
 
   public SystemWorkerTwillRunnable(String cConfFileName, String hConfFileName,
       String sConfFileName) {
@@ -127,7 +130,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf,
+                                 SConfiguration sConf, MetricsEmitter metricsEmitter) {
     List<Module> modules = new ArrayList<>();
 
     CoreSecurityModule coreSecurityModule = new FileBasedCoreSecurityModule() {
@@ -181,6 +185,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
             bind(TransactionSystemClientService.class).to(
                 DelegatingTransactionSystemClientService.class);
             bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+            bind(MetricsEmitter.class).toInstance(metricsEmitter);
           }
         },
         new DFSLocationModule(),
@@ -266,6 +271,20 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   }
 
   @Override
+  public void initialize(TwillContext context, MetricsEmitter metricsEmitter) {
+    super.initialize(context);
+    this.metricsEmitter = metricsEmitter;
+
+    try {
+      doInitialize();
+    } catch (Exception e) {
+      LOG.error("Encountered error while initializing SystemWorkerTwillRunnable", e);
+      Throwables.propagateIfPossible(e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
     systemWorker.addListener(new ServiceListenerAdapter() {
@@ -329,8 +348,15 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
     SConfiguration sConf = SConfiguration.create(new File(getArgument("sConf")));
+    String metricName = cConf.get(Constants.SystemWorker.AUTOSCALER_METRIC_NAME);
+    String clusterName = cConf.get(Constants.CLUSTER_NAME);
+    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
+            "datafusion.instance.region");
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
+    metricsEmitter.emitMetrics(0);
 
-    Injector injector = createInjector(cConf, hConf, sConf);
+    Injector injector = createInjector(cConf, hConf, sConf, metricsEmitter);
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);

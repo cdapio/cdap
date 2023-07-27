@@ -43,7 +43,9 @@ import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.twill.AutoscalableTwillRunnable;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -70,20 +72,21 @@ import org.slf4j.LoggerFactory;
 /**
  * The {@link TwillRunnable} for running {@link TaskWorkerService}.
  */
-public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
+public class TaskWorkerTwillRunnable extends AbstractTwillRunnable implements AutoscalableTwillRunnable{
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerTwillRunnable.class);
 
   private TaskWorkerService taskWorker;
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
+  private MetricsEmitter metricsEmitter;
 
   public TaskWorkerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf, MetricsEmitter metricsEmitter) {
     List<Module> modules = new ArrayList<>();
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
@@ -97,6 +100,14 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new MessagingClientModule());
     modules.add(new SystemAppModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    modules.add(
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(MetricsEmitter.class).toInstance(metricsEmitter);
+              }
+            }
+    );
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
@@ -131,6 +142,19 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   public void initialize(TwillContext context) {
     super.initialize(context);
 
+    try {
+      doInitialize(context);
+    } catch (Exception e) {
+      LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
+      Throwables.propagateIfPossible(e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void initialize(TwillContext context, MetricsEmitter metricsEmitter) {
+    super.initialize(context);
+    this.metricsEmitter = metricsEmitter;
     try {
       doInitialize(context);
     } catch (Exception e) {
@@ -192,7 +216,15 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
-    Injector injector = createInjector(cConf, hConf);
+    String metricName = cConf.get(Constants.TaskWorker.AUTOSCALER_METRIC_NAME);
+    String clusterName = cConf.get(Constants.CLUSTER_NAME);
+    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
+            "datafusion.instance.region");
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
+    metricsEmitter.emitMetrics(0);
+
+    Injector injector = createInjector(cConf, hConf, metricsEmitter);
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);

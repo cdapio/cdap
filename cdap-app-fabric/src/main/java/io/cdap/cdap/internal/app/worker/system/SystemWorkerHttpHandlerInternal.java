@@ -46,6 +46,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -77,21 +78,25 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final MetricsCollectionService metricsCollectionService;
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer internalAccessEnforcer;
+  private Consumer<Double> autoscalerMetricsCollector;
+  private double metricValue;
 
   public SystemWorkerHttpHandlerInternal(CConfiguration cConf,
       MetricsCollectionService metricsCollectionService,
       Injector injector, AuthenticationContext authenticationContext,
-      AccessEnforcer internalAccessEnforcer) {
+      AccessEnforcer internalAccessEnforcer, Consumer<Double> autoscalerMetricsCollector) {
     this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
     this.authenticationContext = authenticationContext;
     this.internalAccessEnforcer = internalAccessEnforcer;
+    this.autoscalerMetricsCollector = autoscalerMetricsCollector;
+    this.metricValue = 0;
   }
 
   @POST
   @Path("/run")
-  public void run(FullHttpRequest request, HttpResponder responder) {
+  public void run(FullHttpRequest request, HttpResponder responder) throws Exception {
     // Perform a permission check to ensure the caller is part of the system, then unset the SecurityRequestContext to
     // force the system worker to use its system context.
     internalAccessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
@@ -103,6 +108,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
+    metricValue = requestProcessedCount.get() / requestLimit;
+    autoscalerMetricsCollector.accept(metricValue);
     long startTime = System.currentTimeMillis();
     RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
@@ -124,6 +131,9 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
       runnableTaskContext.executeCleanupTask();
       requestProcessedCount.decrementAndGet();
+      metricValue = requestProcessedCount.get()/requestLimit;
+      autoscalerMetricsCollector.accept(metricValue);
+      LOG.debug("Metrics sent");
       return;
     }
 
@@ -170,6 +180,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       context.executeCleanupTask();
       taskDetails.emitMetrics(true);
       requestProcessedCount.decrementAndGet();
+      metricValue = requestProcessedCount.get()/requestLimit;
+      autoscalerMetricsCollector.accept(metricValue);
     }
 
     @Override
@@ -178,6 +190,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       context.executeCleanupTask();
       taskDetails.emitMetrics(false);
       requestProcessedCount.decrementAndGet();
+      metricValue = requestProcessedCount.get()/requestLimit;
+      autoscalerMetricsCollector.accept(metricValue);
     }
   }
 }

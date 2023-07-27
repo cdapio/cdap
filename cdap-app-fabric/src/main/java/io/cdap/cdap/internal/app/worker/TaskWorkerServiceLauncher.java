@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
@@ -211,6 +213,18 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             int workDirSize = cConf.getInt(TaskWorker.CONTAINER_WORKDIR_SIZE_MB);
             twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
                 .setWorkdirSizeLimit(workDirSize);
+          }
+
+          if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+                    cConf.get(Constants.TaskWorker.AUTOSCALER_METRIC_NAME),
+                    cConf.getInt(Constants.TaskWorker.MIN_REPLICA_COUNT),
+                    cConf.getInt(Constants.TaskWorker.MAX_REPLICA_COUNT),
+                    cConf.get(Constants.TaskWorker.DESIRED_AVERAGE_METRIC_VALUE),
+                    cConf.getInt(Constants.TaskWorker.STABILIZATION_WINDOW_TIME),
+                    cConf.getInt(Constants.TaskWorker.PERIOD_TIME),
+                    cConf.getInt(Constants.TaskWorker.POD_UPDATE_COUNT));
+            ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

@@ -30,11 +30,14 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -48,24 +51,31 @@ import org.slf4j.LoggerFactory;
 public class TaskWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerService.class);
+  private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor =
+          (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+  private MetricsEmitter metricsEmitter;
+  private double metricValue;
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
-      SConfiguration sConf,
-      DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient,
-      MetricsCollectionService metricsCollectionService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+                    SConfiguration sConf,
+                    DiscoveryService discoveryService,
+                    DiscoveryServiceClient discoveryServiceClient,
+                    MetricsCollectionService metricsCollectionService,
+                    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                    MetricsEmitter metricsEmitter) {
     this.discoveryService = discoveryService;
+    this.metricValue = 0;
 
     // set workdir location in cConf
     // workdir location is unique per task worker and accessible via env var
     String workDir = System.getenv("CDAP_LOCAL_DIR");
+    this.metricsEmitter = metricsEmitter;
     if (workDir != null) {
       cConf.set(TaskWorker.WORK_DIR, workDir);
     }
@@ -85,7 +95,7 @@ public class TaskWorkerService extends AbstractIdleService {
         })
         .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
             discoveryServiceClient, this::stopService,
-            metricsCollectionService));
+            metricsCollectionService, this::sendAutoscalerMetricsData));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -98,6 +108,7 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.debug("Starting TaskWorkerService");
     httpService.start();
     bindAddress = httpService.getBindAddress();
+    emitMetricsRepeatedly();
     cancelDiscovery = discoveryService.register(
         ResolvingDiscoverable.of(
             URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
@@ -108,8 +119,28 @@ public class TaskWorkerService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down TaskWorkerService");
     httpService.stop(1, 2, TimeUnit.SECONDS);
+    scheduledThreadPoolExecutor.shutdown();
     cancelDiscovery.cancel();
     LOG.debug("Shutting down TaskWorkerService has completed");
+  }
+
+  public void sendAutoscalerMetricsData(double metricValue){
+    this.metricValue = metricValue;
+    try {
+      metricsEmitter.emitMetrics(metricValue);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void emitMetricsRepeatedly(){
+    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
+      try {
+        metricsEmitter.emitMetrics(metricValue);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }, 30, 30, TimeUnit.SECONDS);
   }
 
   private void stopService(String className) {

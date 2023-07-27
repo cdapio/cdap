@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.Constants.Twill.Security;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -166,6 +168,18 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
+          }
+
+          if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+                    cConf.get(Constants.SystemWorker.AUTOSCALER_METRIC_NAME),
+                    cConf.getInt(Constants.SystemWorker.MIN_REPLICA_COUNT),
+                    cConf.getInt(Constants.SystemWorker.MAX_REPLICA_COUNT),
+                    cConf.get(Constants.SystemWorker.DESIRED_AVERAGE_METRIC_VALUE),
+                    cConf.getInt(Constants.SystemWorker.STABILIZATION_WINDOW_TIME),
+                    cConf.getInt(Constants.SystemWorker.PERIOD_TIME),
+                    cConf.getInt(Constants.SystemWorker.POD_UPDATE_COUNT));
+            ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

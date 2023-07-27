@@ -90,6 +90,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   private final String metadataServiceEndpoint;
   private final MetricsCollectionService metricsCollectionService;
+  private Consumer<Double> autoscalerMetricsCollector;
 
   /**
    * If true, pod will restart once an operation finish its execution.
@@ -99,7 +100,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService, Consumer<Double> autoscalerMetricsCollector) {
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
@@ -108,6 +109,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
+    this.autoscalerMetricsCollector = autoscalerMetricsCollector;
     this.taskCompletionConsumer = (succeeded, taskDetails) -> {
       taskDetails.emitMetrics(succeeded);
 
@@ -184,6 +186,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
     requestProcessedCount.incrementAndGet();
 
+    double metricValue = requestProcessedCount.get();
+    autoscalerMetricsCollector.accept(metricValue);
     long startTime = System.currentTimeMillis();
     try {
       RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
@@ -222,6 +226,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       taskCompletionConsumer.accept(false,
           new TaskDetails(metricsCollectionService, startTime, true, null));
     }
+    metricValue = requestProcessedCount.get();
+    autoscalerMetricsCollector.accept(metricValue);
+    LOG.debug("Metrics sent");
   }
 
   @GET

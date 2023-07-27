@@ -28,13 +28,16 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -50,6 +53,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerService.class);
   private static final Cancellable DUMMY_CANCELLABLE = () -> {
   };
+  private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor =
+          (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
 
   private final PreviewRunner previewRunner;
   private final PreviewRequestFetcher requestFetcher;
@@ -59,9 +64,12 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private final CountDownLatch stopLatch;
   private final AtomicReference<Cancellable> cancelPreview;
   private ApplicationId previewApp;
+  private MetricsEmitter metricsEmitter;
+  private double metricValue;
 
   @Inject
   PreviewRunnerService(CConfiguration cConf, PreviewRequestFetcher previewRequestFetcher,
+      MetricsEmitter metricsEmitter,
       @Assisted PreviewRunner previewRunner) {
     this.previewRunner = previewRunner;
     this.requestFetcher = previewRequestFetcher;
@@ -70,6 +78,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.preview.");
     this.stopLatch = new CountDownLatch(1);
     this.cancelPreview = new AtomicReference<>();
+    this.metricsEmitter = metricsEmitter;
+    this.metricValue = 0;
   }
 
   @Override
@@ -84,6 +94,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting preview runner service");
+    emitMetricsRepeatedly();
   }
 
   @Override
@@ -103,6 +114,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
         previewApp = request.getProgram().getParent();
 
         runs++;
+        metricValue = runs/maxRuns;
+        metricsEmitter.emitMetrics(metricValue);
         Future<PreviewRequest> future = previewRunner.startPreview(request);
 
         // If the cancelPreview was not null, this means the triggerShutdown was called while the
@@ -119,6 +132,9 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
           cancelPreview.cancel();
           terminated = true;
         }
+        runs--;
+        metricValue = runs/maxRuns;
+        metricsEmitter.emitMetrics(metricValue);
       } catch (Exception e) {
         // This is a system error not caused by the app, hence log an error
         LOG.error("Failed to execute preview", e);
@@ -130,6 +146,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Preview runner service completed");
+    scheduledThreadPoolExecutor.shutdown();
   }
 
   @Nullable
@@ -141,6 +158,16 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private void emitMetricsRepeatedly(){
+    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
+      try {
+        metricsEmitter.emitMetrics(metricValue);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }, 30, 30, TimeUnit.SECONDS);
   }
 
   private void stopPreview(PreviewRequest request) {

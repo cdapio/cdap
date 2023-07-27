@@ -68,7 +68,7 @@ public class RemoteTaskExecutorTest {
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
-        }, new NoOpMetricsCollectionService())
+        }, new NoOpMetricsCollectionService(), className -> {})
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override

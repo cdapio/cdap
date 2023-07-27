@@ -64,7 +64,9 @@ import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.autoscaler.MetricsEmitter;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.twill.AutoscalableTwillRunnable;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -88,19 +90,21 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * The {@link TwillRunnable} for running {@link PreviewRunner}.
  */
-public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
+public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable implements AutoscalableTwillRunnable{
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerTwillRunnable.class);
 
   private PreviewRunnerManager previewRunnerManager;
   private LogAppenderInitializer logAppenderInitializer;
   private StorageProvider storageProvider;
+  private MetricsEmitter metricsEmitter;
 
   public PreviewRunnerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
@@ -113,6 +117,20 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     try {
       doInitialize(context);
     } catch (Exception e) {
+      Throwables.propagateIfPossible(e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void initialize(TwillContext context, MetricsEmitter metricsEmitter) {
+    super.initialize(context);
+    this.metricsEmitter = metricsEmitter;
+
+    try {
+      doInitialize(context);
+    } catch (Exception e) {
+      LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
       Throwables.propagateIfPossible(e);
       throw new RuntimeException(e);
     }
@@ -180,7 +198,21 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     LOG.debug("Initializing preview runner with poller info {} in total {} runners",
         pollerInfo, context.getInstanceCount());
 
-    Injector injector = createInjector(cConf, hConf, pollerInfo);
+    String metricName = cConf.get(Constants.Preview.AUTOSCALER_METRIC_NAME);
+    String clusterName = cConf.get(Constants.CLUSTER_NAME);
+    String projectName = cConf.get(Constants.Event.PROJECT_NAME);
+    String location = cConf.get(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX +
+            "datafusion.instance.region");
+    metricsEmitter.setMetricLabels(metricName, clusterName, projectName, location);
+    try {
+      metricsEmitter.emitMetrics(0);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    Log.debug("metrics emitted");
+
+    Injector injector = createInjector(cConf, hConf, pollerInfo, metricsEmitter);
+    LOG.debug("injector created");
 
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -199,11 +231,12 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }
 
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
+    LOG.debug("preview runner created");
   }
 
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf,
-      PreviewRequestPollerInfo pollerInfo) {
+      PreviewRequestPollerInfo pollerInfo, MetricsEmitter metricsEmitter) {
     List<Module> modules = new ArrayList<>();
 
     SConfiguration sConf = SConfiguration.create();
@@ -267,6 +300,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        bind(MetricsEmitter.class).toInstance(metricsEmitter);
       }
     });
 

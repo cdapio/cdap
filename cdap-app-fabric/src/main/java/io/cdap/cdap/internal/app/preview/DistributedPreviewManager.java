@@ -32,6 +32,8 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
+import io.cdap.cdap.master.spi.autoscaler.AutoscalingConfig;
+import io.cdap.cdap.master.spi.twill.AutoscalingConfigTwillPreparer;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
@@ -222,6 +224,18 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                 .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
                     new StatefulDisk("preview-runner-data", diskSize,
                         cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+          }
+
+          if(twillPreparer instanceof AutoscalingConfigTwillPreparer){
+            AutoscalingConfig autoscalingConfig = new AutoscalingConfig(
+                    cConf.get(Constants.Preview.AUTOSCALER_METRIC_NAME),
+                    cConf.getInt(Constants.Preview.MIN_REPLICA_COUNT),
+                    cConf.getInt(Constants.Preview.MAX_REPLICA_COUNT),
+                    cConf.get(Constants.Preview.DESIRED_AVERAGE_METRIC_VALUE),
+                    cConf.getInt(Constants.Preview.STABILIZATION_WINDOW_TIME),
+                    cConf.getInt(Constants.Preview.PERIOD_TIME),
+                    cConf.getInt(Constants.Preview.POD_UPDATE_COUNT));
+            ((AutoscalingConfigTwillPreparer) twillPreparer).getAutoscalingConfig(autoscalingConfig);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
