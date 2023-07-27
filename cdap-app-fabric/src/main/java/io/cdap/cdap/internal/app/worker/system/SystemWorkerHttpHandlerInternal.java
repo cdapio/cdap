@@ -79,6 +79,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer internalAccessEnforcer;
   private Consumer<Double> autoscalerMetricsCollector;
+  private double metricValue;
 
   public SystemWorkerHttpHandlerInternal(CConfiguration cConf,
       MetricsCollectionService metricsCollectionService,
@@ -90,6 +91,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.authenticationContext = authenticationContext;
     this.internalAccessEnforcer = internalAccessEnforcer;
     this.autoscalerMetricsCollector = autoscalerMetricsCollector;
+    this.metricValue = 0;
   }
 
   @POST
@@ -106,7 +108,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
 
-    double metricValue = requestProcessedCount.get() / requestLimit;
+    metricValue = requestProcessedCount.get() / requestLimit;
     autoscalerMetricsCollector.accept(metricValue);
     long startTime = System.currentTimeMillis();
     RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
@@ -178,6 +180,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       context.executeCleanupTask();
       taskDetails.emitMetrics(true);
       requestProcessedCount.decrementAndGet();
+      metricValue = requestProcessedCount.get()/requestLimit;
+      autoscalerMetricsCollector.accept(metricValue);
     }
 
     @Override
@@ -186,6 +190,8 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       context.executeCleanupTask();
       taskDetails.emitMetrics(false);
       requestProcessedCount.decrementAndGet();
+      metricValue = requestProcessedCount.get()/requestLimit;
+      autoscalerMetricsCollector.accept(metricValue);
     }
   }
 }
