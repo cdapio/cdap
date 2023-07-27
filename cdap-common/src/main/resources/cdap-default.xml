@@ -5077,6 +5077,32 @@
     </description>
   </property>
 
+  <!-- event subscriber -->
+  <property>
+    <name>feature.event.reader.enabled</name>
+    <value>false</value>
+    <final>false</final>
+    <description>
+      Enable event subscribing in CDAP
+    </description>
+  </property>
+
+  <property>
+    <name>event.reader.start.poll.delay.seconds</name>
+    <value>10</value>
+    <description>
+      Delay between each poll of start program event subscriber
+    </description>
+  </property>
+
+  <property>
+    <name>event.reader.start.fetch.size</name>
+    <value>1</value>
+    <description>
+      Number of start program events to pull each iteration
+    </description>
+  </property>
+
   <!-- Spark on k8s  -->
   <property>
     <name>artifact.fetcher.bind.port</name>
@@ -5839,6 +5865,15 @@
     <description>
       Enables the directive execution selector in Wrangler, allowing to select
       between JEXL and SQL execution.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.wrangler.schema.management.enabled</name>
+    <value>true</value>
+    <description>
+      Enables directive output schema management in Wrangler. If disabled, existing
+      inference logic is used for generating schema at design-time.
     </description>
   </property>
 

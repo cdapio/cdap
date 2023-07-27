@@ -2238,10 +2238,15 @@ public final class Constants {
     public static final String PROJECT_NAME = "event.project.name";
 
     public static final String EVENTS_WRITER_PREFIX = "event.writer";
-
     public static final String EVENTS_WRITER_EXTENSIONS_DIR = "events.writer.extensions.dir";
-
     public static final String EVENTS_WRITER_EXTENSIONS_ENABLED_LIST = "events.writer.extensions.enabled.list";
+
+    public static final String START_PROGRAM_EVENT_READER_POLL_DELAY = "event.reader.start.poll.delay.seconds";
+    public static final String START_PROGRAM_EVENT_FETCH_SIZE = "event.reader.start.fetch.size";
+    public static final String START_EVENTS_READER_EXTENSIONS_DIR = "events.reader.extensions.start.dir";
+    public static final String START_EVENTS_READER_EXTENSIONS_ENABLED_LIST =
+            "events.reader.extensions.start.enabled.list";
+    public static final String START_EVENT_PREFIX = "event.reader.start";
   }
 
   /**

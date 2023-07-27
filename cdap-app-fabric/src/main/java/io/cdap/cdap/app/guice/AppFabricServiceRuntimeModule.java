@@ -121,11 +121,16 @@ import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandler;
 import io.cdap.cdap.internal.credential.handler.CredentialProviderHttpHandlerInternal;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.events.EventPublisher;
+import io.cdap.cdap.internal.events.EventReaderProvider;
+import io.cdap.cdap.internal.events.EventSubscriber;
+import io.cdap.cdap.internal.events.EventSubscriberManager;
 import io.cdap.cdap.internal.events.EventWriterExtensionProvider;
 import io.cdap.cdap.internal.events.EventWriterProvider;
 import io.cdap.cdap.internal.events.MetricsProvider;
 import io.cdap.cdap.internal.events.ProgramStatusEventPublisher;
 import io.cdap.cdap.internal.events.SparkProgramStatusMetricsProvider;
+import io.cdap.cdap.internal.events.StartProgramEventReaderExtensionProvider;
+import io.cdap.cdap.internal.events.StartProgramEventSubscriber;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -148,6 +153,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.cdap.sourcecontrol.guice.SourceControlModule;
+import io.cdap.cdap.spi.events.StartProgramEvent;
 import io.cdap.http.HttpHandler;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -402,6 +408,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           Multibinder.newSetBinder(binder(), EventPublisher.class);
       eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
       bind(EventPublishManager.class).in(Scopes.SINGLETON);
+      bind(new TypeLiteral<EventReaderProvider<StartProgramEvent>>() {})
+              .to(StartProgramEventReaderExtensionProvider.class);
+      Multibinder<EventSubscriber> eventSubscribersBinder =
+              Multibinder.newSetBinder(binder(), EventSubscriber.class);
+      eventSubscribersBinder.addBinding().to(StartProgramEventSubscriber.class);
+      bind(EventSubscriberManager.class).in(Scopes.SINGLETON);
       bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class);
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
@@ -492,7 +504,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * @return an instance of {@link org.quartz.Scheduler}
      */
     private org.quartz.Scheduler getScheduler(JobStore store,
-        CConfiguration cConf) throws SchedulerException {
+                                              CConfiguration cConf) throws SchedulerException {
 
       int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
       ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);

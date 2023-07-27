@@ -28,6 +28,7 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 public enum Feature {
   REPLICATION_TRANSFORMATIONS("6.6.0"),
   EVENT_PUBLISH("6.7.0", false),
+  EVENT_READER("6.10.0", false),
   PIPELINE_COMPOSITE_TRIGGERS("6.8.0"),
   PUSHDOWN_TRANSFORMATION_GROUPBY("6.7.0"),
   PUSHDOWN_TRANSFORMATION_DEDUPLICATE("6.7.0"),
@@ -38,7 +39,8 @@ public enum Feature {
   PUSHDOWN_TRANSFORMATION_WINDOWAGGREGATION("6.9.1"),
   SOURCE_CONTROL_MANAGEMENT_GIT("6.9.0"),
   WRANGLER_PRECONDITION_SQL("6.9.1"),
-  WRANGLER_EXECUTION_SQL("6.10.0");
+  WRANGLER_EXECUTION_SQL("6.10.0"),
+  WRANGLER_SCHEMA_MANAGEMENT("6.10.0");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
@@ -72,7 +74,9 @@ public enum Feature {
   }
 
   /**
-   * @return string that identifies the feature flag.
+   * Retrieve the string that identifies the feature flag.
+   *
+   * @return feature flag string
    */
   public String getFeatureFlagString() {
     return featureFlagString;
