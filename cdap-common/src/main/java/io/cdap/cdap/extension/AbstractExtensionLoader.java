@@ -211,6 +211,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result,
       Map<EXTENSION_TYPE, EXTENSION> entries) {
     for (Map.Entry<EXTENSION_TYPE, EXTENSION> entry : entries.entrySet()) {
+      // TODO: Handle duplicate keys (currently silently ignores duplicates)
       if (!result.containsKey(entry.getKey())) {
         result.put(entry.getKey(), entry.getValue());
       }
