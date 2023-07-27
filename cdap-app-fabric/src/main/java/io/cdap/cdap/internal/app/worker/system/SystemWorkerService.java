@@ -40,6 +40,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
@@ -55,6 +56,8 @@ import org.slf4j.LoggerFactory;
 public class SystemWorkerService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerService.class);
+  private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor =
+          (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(2);
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
@@ -65,6 +68,7 @@ public class SystemWorkerService extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
   private final MetricsEmitter metricsEmitter;
+  private double metricValue;
 
   @Inject
   SystemWorkerService(CConfiguration cConf,
@@ -84,6 +88,7 @@ public class SystemWorkerService extends AbstractIdleService {
     this.remoteTwillRunnerService = remoteTwillRunnerService;
     this.provisioningService = provisioningService;
     this.metricsEmitter = metricsEmitter;
+    this.metricValue = 0;
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.SYSTEM_WORKER)
@@ -117,6 +122,7 @@ public class SystemWorkerService extends AbstractIdleService {
     remoteTwillRunnerService.start();
     httpService.start();
     bindAddress = httpService.getBindAddress();
+    emitMetricsRepeatedly();
     cancelDiscovery = discoveryService.register(
         ResolvingDiscoverable.of(
             URIScheme.createDiscoverable(Constants.Service.SYSTEM_WORKER, httpService)));
@@ -130,11 +136,13 @@ public class SystemWorkerService extends AbstractIdleService {
     twillRunnerService.stop();
     remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);
+    scheduledThreadPoolExecutor.shutdown();
     cancelDiscovery.cancel();
     LOG.debug("Shutting down SystemWorkerService has completed");
   }
 
   public void sendAutoscalerMetricsData(double metricValue){
+    this.metricValue = metricValue;
     try {
       metricsEmitter.emitMetrics(metricValue);
     } catch (Exception e) {
@@ -142,6 +150,15 @@ public class SystemWorkerService extends AbstractIdleService {
     }
   }
 
+  private void emitMetricsRepeatedly(){
+    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
+      try {
+        metricsEmitter.emitMetrics(metricValue);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }, 30, 30, TimeUnit.SECONDS);
+  }
 
   @VisibleForTesting
   public InetSocketAddress getBindAddress() {
