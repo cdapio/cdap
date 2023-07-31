@@ -242,6 +242,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private String cdapInstallNamespace;
   private int connectTimeoutSec;
   private int readTimeoutSec;
+  private boolean shouldInternalRouter = false;
 
   public KubeMasterEnvironment() {
     this.tasks = new ArrayList<>();
@@ -309,7 +310,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
     if (podInfo.getAnnotations().containsKey(ENABLE_INTERNAL_ROUTER_ANNOTATION)) {
-        System.setProperty("cdap.enable.internal.router", "true");
+        shouldInternalRouter = true;
         LOG.info("Setup the property cdap.enable.internal.router: true");
     }
     Map<String, String> podLabels = podInfo.getLabels();
@@ -519,6 +520,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       throws Exception {
     NamespaceDetail namespaceDetail = new NamespaceDetail(cdapNamespace, properties);
     twillRunner.onNamespaceDeletion(namespaceDetail);
+  }
+
+  public boolean shouldUseInternalRouter() {
+    return shouldInternalRouter;
   }
 
   public ApiClientFactory getApiClientFactory() {

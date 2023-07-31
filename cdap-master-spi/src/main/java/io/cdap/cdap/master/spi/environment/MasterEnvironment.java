@@ -105,6 +105,15 @@ public interface MasterEnvironment {
   }
 
   /**
+   * Returns whether routing through the internal router is enabled.
+   * @return a boolean which is true if RemoteClient requests should be routed
+   *         through the InternalRouter.
+   */
+  default boolean isInternalRouterEnabled() {
+    return false;
+  }
+
+  /**
    * Called during namespace creation. Namespace creation is rolled back if this method throws an
    * exception.
    *

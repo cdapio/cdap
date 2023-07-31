@@ -35,8 +35,7 @@ public class RemoteClientFactory {
   private final InternalAuthenticator internalAuthenticator;
   private final RemoteAuthenticator remoteAuthenticator;
   private final String pathPrefix;
-  public static final String ENABLE_INTERNAL_ROUTER = "cdap.enable.internal.router";
-
+  private final boolean shouldUseInternalRouter;
 
   @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
@@ -58,6 +57,7 @@ public class RemoteClientFactory {
     this.internalAuthenticator = internalAuthenticator;
     this.remoteAuthenticator = remoteAuthenticator;
     this.pathPrefix = pathPrefix;
+    this.shouldUseInternalRouter = MasterEnvironments.isInternalRouterEnabled(); // Adds Dependency on cdap-appfabric!
   }
 
   public RemoteClient createRemoteClient(String discoverableServiceName,
