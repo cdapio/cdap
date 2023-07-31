@@ -137,6 +137,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     Map<EXTENSION_TYPE, EXTENSION> result = new HashMap<>();
 
     for (String dir : extDirs) {
+      LOG.error(">>>>> dir is {}", dir);
       File extDir = new File(dir);
       if (!extDir.isDirectory()) {
         continue;

@@ -74,7 +74,9 @@ public class StartProgramEventSubscriber extends EventSubscriber {
 
   @Override
   public void initialize() {
+    LOG.error(">>> readers initializing");
     readers = new HashSet<>(extensionProvider.loadEventReaders().values());
+    LOG.error(">>> readers size is {}", readers.size());
     Iterator<EventReader<StartProgramEvent>> eventReaderIterator
         = readers.iterator();
     while (eventReaderIterator.hasNext()) {

@@ -43,13 +43,17 @@ public class EventSubscriberManager extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.error(">>>>> Starting EventSubscriberManager");
     if (!enabled) {
+      LOG.error(">>>>> EventSubscriberManager is not enabled");
       return; // If not enabled, don't start
     }
     eventSubscribers.forEach(eventSubscriber -> {
       // Initialize the event subscribers with all the event readers provided by provider
       try {
+        LOG.error(">>>>> Initializing {}", eventSubscriber.toString());
         eventSubscriber.initialize();
+        LOG.error(">>>>> Initialized {}", eventSubscriber.toString());
         eventSubscriber.startAndWait();
         LOG.info("Successfully initialized eventSubscriber: {}",
             eventSubscriber);
