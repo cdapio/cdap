@@ -18,11 +18,17 @@ package io.cdap.cdap.gateway.router;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Gateway;
+import io.cdap.cdap.common.conf.Constants.Security.Headers;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.security.Credential.CredentialType;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
+import java.util.Arrays;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
@@ -78,13 +84,44 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
-      if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
-        return getV3RoutingService(uriParts, requestMethod);
+        switch (uriParts[0]) {
+          case "v1":
+            return getV1RoutingService(uriParts, requestMethod);
+          case Gateway.API_VERSION_3_TOKEN:
+            return getV3RoutingService(uriParts, requestMethod);
+        }
+
+      if (hasInternalIdentity(httpRequest)) {
+        System.out.println(
+            "Using extended services for request due to presence of internal identity: "
+                + Arrays.toString(uriParts));
+        if (uriParts[0].equals(Gateway.INTERNAL_API_VERSION_3_TOKEN)) {
+          return getV3InternalRoutingService(uriParts, requestMethod);
+        }
       }
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
     }
     return APP_FABRIC_HTTP;
+  }
+
+  private boolean hasInternalIdentity(HttpRequest request) {
+    if (Strings.isNullOrEmpty(request.headers().get(Headers.USER_ID)) ||
+      Strings.isNullOrEmpty(request.headers().get(Headers.RUNTIME_TOKEN))) {
+     return false;
+    }
+    String auth = request.headers().get(Headers.RUNTIME_TOKEN);
+    // Check if credentials are internal.
+    int idx = auth.trim().indexOf(' ');
+    if (idx < 0) {
+      return false;
+    }
+    try {
+      return CredentialType.INTERNAL.equals(CredentialType.fromQualifiedName(auth.substring(0, idx)));
+    } catch (IllegalArgumentException e) {
+      System.out.println("Suppressed parsing of invalid credential type: " + auth.substring(0, idx));
+      return false;
+    }
   }
 
   private boolean isUserServiceType(String uriPart) {
@@ -96,6 +133,23 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     return false;
   }
 
+  private RouteDestination getV3InternalRoutingService(String[] uriParts, AllowedMethod requestMethod) {
+    if (beginsWith(uriParts, "v3Internal", "previews")) {
+      return PREVIEW_HTTP;
+    } else if (beginsWith(uriParts, "v3Internal", "location")) {
+      return APP_FABRIC_HTTP;
+    }
+    return APP_FABRIC_HTTP;
+  }
+
+  private RouteDestination getV1RoutingService(String[] uriParts, AllowedMethod requestMethod) {
+    if (beginsWith(uriParts, "v1", "logs")) {
+      return LOG_SAVER;
+    } else if (beginsWith(uriParts, "v1", "namespaces", null, "topics", null)) {
+      return MESSAGING;
+    }
+    return APP_FABRIC_HTTP;
+  }
   @Nullable
   private RouteDestination getV3RoutingService(String[] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {

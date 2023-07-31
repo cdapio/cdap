@@ -33,6 +33,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -222,6 +223,12 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                 .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
                     new StatefulDisk("preview-runner-data", diskSize,
                         cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+          }
+
+          if (twillPreparer instanceof ExtendedTwillPreparer) {
+            ((ExtendedTwillPreparer) twillPreparer)
+                .setAnnotations(Collections.singletonMap(
+                    "master.environment.k8s.enable.internal.router", "true"));
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

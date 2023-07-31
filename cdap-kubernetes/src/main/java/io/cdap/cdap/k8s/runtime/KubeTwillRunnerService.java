@@ -118,7 +118,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillRunnerService.class);
 
-  static final String APP_LABEL = "cdap.twill.app";
+  public static final String APP_LABEL = "cdap.twill.app";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";

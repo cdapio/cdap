@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequestConfig;
 import javax.inject.Inject;
@@ -34,6 +35,8 @@ public class RemoteClientFactory {
   private final InternalAuthenticator internalAuthenticator;
   private final RemoteAuthenticator remoteAuthenticator;
   private final String pathPrefix;
+  public static final String ENABLE_INTERNAL_ROUTER = "cdap.enable.internal.router";
+
 
   @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
@@ -61,7 +64,18 @@ public class RemoteClientFactory {
       HttpRequestConfig httpRequestConfig,
       String basePath) {
     basePath = basePath.startsWith("/") ? pathPrefix + basePath : pathPrefix + "/" + basePath;
-    return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
-        httpRequestConfig, basePath, remoteAuthenticator);
+    String serviceToDiscover;
+    String finalBasePath;
+    if (System.getProperty(ENABLE_INTERNAL_ROUTER) != null) {
+      System.out.println("Routing service through the internal router: " + discoverableServiceName);
+      serviceToDiscover = Service.INTERNAL_ROUTER;
+      finalBasePath = String.format("/v3Internal/router/services/%s%s",
+          discoverableServiceName, basePath);
+    } else {
+      finalBasePath = basePath;
+      serviceToDiscover = discoverableServiceName;
+    }
+    return new RemoteClient(internalAuthenticator, discoveryClient, serviceToDiscover,
+        httpRequestConfig, finalBasePath, remoteAuthenticator);
   }
 }

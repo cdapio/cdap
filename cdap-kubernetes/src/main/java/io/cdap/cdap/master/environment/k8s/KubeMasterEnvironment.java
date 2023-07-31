@@ -162,6 +162,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   public static final String WORKLOAD_IDENTITY_PROVIDER = "master.environment.k8s.workload.identity.provider";
   public static final String WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS
       = "master.environment.k8s.workload.identity.service.account.token.ttl.seconds";
+  public static final String ENABLE_INTERNAL_ROUTER_ANNOTATION = "master.environment.k8s.enable.internal.router";
 
   // Workload Launcher Constants
   /**
@@ -307,6 +308,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     coreV1Api = new CoreV1Api(apiClient);
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     podInfo = createPodInfo(conf);
+    if (podInfo.getAnnotations().containsKey(ENABLE_INTERNAL_ROUTER_ANNOTATION)) {
+        System.setProperty("cdap.enable.internal.router", "true");
+        LOG.info("Setup the property cdap.enable.internal.router: true");
+    }
     Map<String, String> podLabels = podInfo.getLabels();
 
     String namespace = podInfo.getNamespace();
@@ -333,7 +338,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String resourcePrefix = "cdap-" + instanceName + "-";
     discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
         podLabels,
-        podInfo.getOwnerReferences(), apiClientFactory);
+        podInfo.getOwnerReferences(), apiClientFactory, conf);
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
@@ -627,6 +632,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     List<V1EnvVar> envs = container.getEnv();
 
+    // Get the annotations from the pod.
+    Map<String, String> annotations = podMeta != null && podMeta.getAnnotations() != null ?
+    podMeta.getAnnotations() : new HashMap<>();
+
     // Use the same service account and the runtime class as the current process for now.
     // Ideally we should use a more restricted role.
     String serviceAccountName = pod.getSpec().getServiceAccountName();
@@ -638,7 +647,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         serviceAccountName, runtimeClassName,
         volumes, containerLabelName, container.getImage(), mounts,
         envs == null ? Collections.emptyList() : envs, pod.getSpec().getSecurityContext(),
-        container.getImagePullPolicy());
+        container.getImagePullPolicy(),
+        annotations);
   }
 
   /**

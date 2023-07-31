@@ -52,6 +52,8 @@ public final class PodInfo {
   private final V1PodSecurityContext securityContext;
   private final String imagePullPolicy;
 
+  private final Map<String, String> annotations;
+
   public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid,
       String uidFile, String namespaceFile,
       String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
@@ -59,7 +61,7 @@ public final class PodInfo {
       String containerLabelName,
       String containerImage, List<V1VolumeMount> containerVolumeMounts,
       List<V1EnvVar> containerEnvironments, V1PodSecurityContext securityContext,
-      String imagePullPolicy) {
+      String imagePullPolicy, Map<String, String> annotations) {
     this.name = name;
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
@@ -81,6 +83,7 @@ public final class PodInfo {
         new ArrayList<>(containerEnvironments));
     this.securityContext = securityContext;
     this.imagePullPolicy = imagePullPolicy;
+    this.annotations = annotations;
   }
 
   public String getName() {
@@ -160,5 +163,9 @@ public final class PodInfo {
 
   public String getImagePullPolicy() {
     return imagePullPolicy;
+  }
+
+  public Map<String, String> getAnnotations() {
+    return annotations;
   }
 }

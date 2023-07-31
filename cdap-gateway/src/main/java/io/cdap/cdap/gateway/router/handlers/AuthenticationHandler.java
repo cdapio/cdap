@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Headers;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
@@ -65,6 +66,7 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,7 +183,15 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    * Checks if the given request bypass access token validation.
    */
   private boolean isBypassed(HttpRequest request) {
-    return bypassPattern != null && bypassPattern.matcher(request.uri()).matches();
+    if (bypassPattern != null && bypassPattern.matcher(request.uri()).matches()) {
+      return true;
+    }
+    return hasInternalIdentity(request);
+  }
+
+  private boolean hasInternalIdentity(HttpRequest request) {
+   return !Strings.isNullOrEmpty(request.headers().get(Headers.USER_ID)) &&
+    !Strings.isNullOrEmpty(request.headers().get(Headers.RUNTIME_TOKEN));
   }
 
   /**

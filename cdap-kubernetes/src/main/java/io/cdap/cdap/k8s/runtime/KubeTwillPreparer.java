@@ -207,6 +207,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String cdapRuntimeNamespace;
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
+  private Map<String, String> annotations;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -273,6 +274,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   public ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB) {
     workDirVolumeSource.setSizeLimit(new Quantity(String.format("%dMi", sizeLimitInMB)));
     return this;
+  }
+
+  @Override
+  public ExtendedTwillPreparer setAnnotations(Map<String, String> annotations) {
+      this.annotations = annotations;
+      return this;
   }
 
   @Override
@@ -702,7 +709,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .addToLabels(KubeMasterEnvironment.NAMESPACE_PROPERTY, programRuntimeNamespace)
         .addToAnnotations(KubeTwillRunnerService.APP_LABEL, twillSpec.getName())
         .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
-            Long.toString(startTimeoutMillis));
+            Long.toString(startTimeoutMillis))
+        .addToAnnotations(annotations);
     if (runtimeCleanupDisabled) {
       objectMetaBuilder.addToAnnotations(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED,
           Boolean.TRUE.toString());

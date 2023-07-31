@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +71,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
   private static final String SERVICE_LABEL = "cdap.service";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
+  static final String USE_LOAD_BALANCER_IP_APPS = "master.environment.k8s.use.load-balancer.apps";
 
   private static final byte[] EMPTY_PAYLOAD = new byte[0];
 
@@ -82,6 +84,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   private volatile CoreV1Api coreApi;
   private volatile WatcherThread watcherThread;
   private boolean closed;
+  private final List<String> loadBalancerServiceList;
 
   /**
    * Constructor to create an instance for service discovery on the given Kubernetes namespace.
@@ -91,13 +94,19 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param podLabels the set of labels for the current pod
    */
   public KubeDiscoveryService(String namespace, String namePrefix, Map<String, String> podLabels,
-      List<V1OwnerReference> ownerReferences, ApiClientFactory apiClientFactory) {
+      List<V1OwnerReference> ownerReferences, ApiClientFactory apiClientFactory,
+      Map<String, String> cConf) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
     this.podLabels = Collections.unmodifiableMap(new HashMap<>(podLabels));
     this.ownerReferences = Collections.unmodifiableList(new ArrayList<>(ownerReferences));
     this.apiClientFactory = apiClientFactory;
+    String[] loadBalancerAppList = cConf
+        .getOrDefault(USE_LOAD_BALANCER_IP_APPS, "").split(",");
+    System.out.println("LoadBalancer IP list: " + cConf
+        .getOrDefault(USE_LOAD_BALANCER_IP_APPS, ""));
+    this.loadBalancerServiceList = Arrays.asList(loadBalancerAppList);
   }
 
   @Override
@@ -138,6 +147,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
   @Override
   public ServiceDiscovered discover(String name) {
+    System.out.println("Discovering service: " + name);
     // Get/Create the ServiceDiscovered to return.
     ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(name,
         DefaultServiceDiscovered::new);
@@ -265,6 +275,10 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     V1ServiceSpec spec = new V1ServiceSpec();
     spec.setPorts(Collections.singletonList(port));
     spec.setSelector(podLabels);
+    if ("internal.router".equals(discoverable.getName())) {
+      meta.putAnnotationsItem("networking.gke.io/load-balancer-type", "Internal");
+      spec.setType("LoadBalancer");
+    }
 
     service.setSpec(spec);
 
@@ -333,6 +347,10 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     }
     service.getSpec().setPorts(Collections.singletonList(port));
     service.getSpec().setSelector(podLabels);
+    if ("internal.router".equals(discoverable.getName())) {
+      meta.putAnnotationsItem("networking.gke.io/load-balancer-type", "Internal");
+      service.getSpec().setType("LoadBalancer");
+    }
 
     try {
       api.replaceNamespacedService(meta.getName(), namespace, service, null, null, null, null);
@@ -429,6 +447,19 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     private Set<Discoverable> toDiscoverables(String name, V1Service service) {
       V1ObjectMeta meta = service.getMetadata();
       String hostname = meta.getName();
+      boolean isIpResolved = false;
+      if (loadBalancerServiceList.contains(name)) {
+        if (service.getStatus() != null &&
+            service.getStatus().getLoadBalancer() != null &&
+            service.getStatus().getLoadBalancer().getIngress() != null &&
+            !service.getStatus().getLoadBalancer().getIngress().isEmpty()) {
+          hostname = service.getStatus().getLoadBalancer().getIngress().get(0).getIp();
+          LOG.info("Using loadbalancer IP for service {} due to config.", name);
+          isIpResolved = true;
+        } else {
+          throw new RuntimeException("Requested to use load balancer IP but the service status doesn't have that.");
+        }
+      }
       List<V1ServicePort> servicePorts = service.getSpec().getPorts();
 
       // Decode the payload from annotation. If absent, default to empty payload
@@ -438,8 +469,11 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
           .orElse(EMPTY_PAYLOAD);
 
       // We don't expect there is more than one service port, hence only pick the first one
+      String finalHostname = hostname;
+      boolean finalIsIpResolved = isIpResolved;
       return servicePorts.stream()
-          .map(port -> createDiscoverable(name, hostname, port, payload))
+          .map(port -> createDiscoverable(name, finalHostname, port, payload,
+              finalIsIpResolved))
           .filter(Objects::nonNull)
           .findFirst()
           .map(Collections::singleton)
@@ -456,12 +490,13 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
      */
     @Nullable
     private Discoverable createDiscoverable(String name, String hostname, V1ServicePort servicePort,
-        byte[] payload) {
+        byte[] payload, boolean isIpResolved) {
       Integer port = servicePort.getPort();
       if (port == null) {
         return null;
       }
-      String namespacedHostName = String.format("%s.%s", hostname, namespace);
+      String namespacedHostName = isIpResolved ? hostname : String.format("%s.%s", hostname, namespace);
+      LOG.info("Creating discoverable: {}-{}-{}", hostname, port, isIpResolved);
       return new Discoverable(name, InetSocketAddress.createUnresolved(namespacedHostName, port),
           payload);
     }

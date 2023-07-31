@@ -31,6 +31,7 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
+import io.cdap.cdap.internal.app.runtime.monitor.InternalRouterService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -93,6 +94,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     });
     services.add(injector.getInstance(RuntimeProgramStatusSubscriberService.class));
     services.add(injector.getInstance(RuntimeServer.class));
+    services.add(injector.getInstance(InternalRouterService.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
         Key.get(ZKClientService.class));
     if (zkBinding != null) {

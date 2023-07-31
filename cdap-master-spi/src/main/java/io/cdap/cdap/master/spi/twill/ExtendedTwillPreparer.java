@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.spi.twill;
 
 
+import java.util.Map;
 import org.apache.twill.api.TwillPreparer;
 
 /**
@@ -30,4 +31,6 @@ public interface ExtendedTwillPreparer extends TwillPreparer {
    * @param sizeLimitInMB volume size limit in MB
    */
   ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB);
+
+  ExtendedTwillPreparer setAnnotations(Map<String, String> annotations);
 }
