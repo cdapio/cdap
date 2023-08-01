@@ -16,4 +16,4 @@
 [submodule "cdap-ui"]
   path = cdap-ui
   url = ../cdap-ui
-  branch = release/6.9
+  branch = vf-no-hsts-69
