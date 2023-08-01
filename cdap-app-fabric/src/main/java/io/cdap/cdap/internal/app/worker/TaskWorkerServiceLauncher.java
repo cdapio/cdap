@@ -16,12 +16,17 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
 import io.cdap.cdap.common.conf.Constants.TaskWorker;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
@@ -35,6 +40,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,6 +70,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   private final CConfiguration cConf;
   private final Configuration hConf;
 
+  private final FeatureFlagsProvider featureFlagsProvider;
+
   private final TwillRunner twillRunner;
   private TwillController twillController;
 
@@ -78,6 +86,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
     this.cConf = cConf;
     this.hConf = hConf;
     this.twillRunner = twillRunner;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   @Override
@@ -181,6 +190,16 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
               NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
+
+          if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+            String localhost = InetAddress.getLoopbackAddress().getHostName();
+            twillPreparer = twillPreparer.withEnv(TaskWorkerTwillRunnable.class.getSimpleName(),
+                ImmutableMap.of(
+                    ArtifactLocalizer.GCE_METADATA_HOST_ENV_VAR,
+                    String.format("%s:%s", localhost,
+                        cConf.getInt(Constants.ArtifactLocalizer.PORT))
+                ));
+          }
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
