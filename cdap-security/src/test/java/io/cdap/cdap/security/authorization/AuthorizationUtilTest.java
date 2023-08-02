@@ -60,7 +60,7 @@ public class AuthorizationUtilTest {
     // test with complete principal (alice/somehost.net@somerealm.net)
     String principal = username + "/" + InetAddress.getLocalHost().getHostName() + "@REALM.net";
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId).setPrincipal(principal)
-      .setKeytabURI("doesnotmatter").build();
+      .setKeytabUri("doesnotmatter").build();
     namespaceClient.create(nsMeta);
     Assert.assertEquals(username, AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext,
                                                                           applicationId, null));
@@ -69,7 +69,7 @@ public class AuthorizationUtilTest {
     namespaceClient.delete(namespaceId);
     principal = username;
     nsMeta = new NamespaceMeta.Builder().setName(namespaceId).setPrincipal(principal)
-      .setKeytabURI("doesnotmatter").build();
+      .setKeytabUri("doesnotmatter").build();
     namespaceClient.create(nsMeta);
     Assert.assertEquals(username, AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext,
                                                                           applicationId, null));
@@ -78,7 +78,7 @@ public class AuthorizationUtilTest {
     namespaceClient.delete(namespaceId);
     principal = username + "@REALM.net";
     nsMeta = new NamespaceMeta.Builder().setName(namespaceId).setPrincipal(principal)
-      .setKeytabURI("doesnotmatter").build();
+      .setKeytabUri("doesnotmatter").build();
     namespaceClient.create(nsMeta);
     Assert.assertEquals(username, AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext,
                                                                           applicationId, null));

@@ -61,7 +61,7 @@ public class CreateNamespaceCommand extends AbstractCommand {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
     builder.setName(name).setDescription(description).setPrincipal(principal)
         .setGroupName(groupName)
-        .setKeytabURI(keytabPath).setRootDirectory(rootDir).setHBaseNamespace(hbaseNamespace)
+        .setKeytabUri(keytabPath).setRootDirectory(rootDir).setHBaseNamespace(hbaseNamespace)
         .setHiveDatabase(hiveDatabase).setSchedulerQueueName(schedulerQueueName);
     namespaceClient.create(builder.build());
     output.printf(SUCCESS_MSG, name);

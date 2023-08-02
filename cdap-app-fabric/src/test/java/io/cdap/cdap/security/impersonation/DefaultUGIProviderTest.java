@@ -146,7 +146,7 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
     // create a namespace with a principal and keytab so that later we can verify that if a required entity owner does
     // not exists then the provider gives the UGI for namespace owner
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).setPrincipal(
-      eveKerberosPrincipalId.getPrincipal()).setKeytabURI(eveKeytabFile.getAbsolutePath()).build());
+      eveKerberosPrincipalId.getPrincipal()).setKeytabUri(eveKeytabFile.getAbsolutePath()).build());
 
     // add an owner for some entity
     ownerAdmin.add(aliceEntity, aliceKerberosPrincipalId);

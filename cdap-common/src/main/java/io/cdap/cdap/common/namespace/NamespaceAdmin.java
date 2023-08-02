@@ -16,15 +16,17 @@
 
 package io.cdap.cdap.common.namespace;
 
+import com.google.common.hash.Hashing;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.nio.charset.StandardCharsets;
 
 /**
- * Admin class for managing a namespace's lifecycle
+ * Admin class for managing a namespace's lifecycle.
  */
 public interface NamespaceAdmin extends NamespaceQueryAdmin {
 
@@ -63,4 +65,22 @@ public interface NamespaceAdmin extends NamespaceQueryAdmin {
    * @throws NamespaceNotFoundException if the specified namespace is not found
    */
   void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception;
+
+  /**
+   * Computes unique namespace identity name by lowercase namespace id truncated to 15 characters
+   * appended with the first 15 hex characters of the namespace's SHA256.
+   *
+   * @param namespaceId the {@link NamespaceId} of the namespace.
+   * @return namespace unique identity name.
+   */
+  default String getIdentity(NamespaceId namespaceId) {
+    if (NamespaceId.DEFAULT.equals(namespaceId)) {
+      return namespaceId.getNamespace();
+    }
+    String namespace = namespaceId.getNamespace();
+    String sha256Hex = Hashing.sha256().hashString(namespace, StandardCharsets.UTF_8).toString();
+    sha256Hex = sha256Hex.length() > 15 ? sha256Hex.substring(0, 15) : sha256Hex;
+    namespace = namespace.length() > 15 ? namespace.substring(0, 15) : namespace;
+    return String.format("%s-%s", namespace, sha256Hex).toLowerCase().replace('_', '-');
+  }
 }

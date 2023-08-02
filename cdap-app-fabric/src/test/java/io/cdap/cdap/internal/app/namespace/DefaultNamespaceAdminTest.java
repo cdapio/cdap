@@ -204,7 +204,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     }
 
     // now check with just key tab uri
-    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabURI("/some/path").build();
+    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabUri("/some/path").build();
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail();
@@ -212,7 +212,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       // expected
     }
 
-    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabURI("/some/path")
+    namespaceMeta = new NamespaceMeta.Builder().setName("test_ns").setKeytabUri("/some/path")
       .build();
     try {
       namespaceAdmin.create(namespaceMeta);
@@ -293,7 +293,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // updating the keytabURI for an existing namespace with no existing principal should fail
     try {
       namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
-                                      new NamespaceMeta.Builder(nsMeta).setKeytabURI("/new/keytab/uri").build());
+                                      new NamespaceMeta.Builder(nsMeta).setKeytabUri("/new/keytab/uri").build());
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -318,21 +318,21 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     String namespace = "updateNamespace";
     NamespaceId namespaceId = new NamespaceId(namespace);
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
-      .setPrincipal("alice").setKeytabURI("/alice/keytab").build();
+      .setPrincipal("alice").setKeytabUri("/alice/keytab").build();
     namespaceAdmin.create(nsMeta);
     Assert.assertTrue(namespaceAdmin.exists(namespaceId));
     // update the keytab URI
     String newKeytab = "/alice/new_keytab";
-    NamespaceMeta newKeytabMeta = new NamespaceMeta.Builder(nsMeta).setKeytabURI(newKeytab).build();
+    NamespaceMeta newKeytabMeta = new NamespaceMeta.Builder(nsMeta).setKeytabUri(newKeytab).build();
     namespaceAdmin.updateProperties(nsMeta.getNamespaceId(), newKeytabMeta);
     // assert the keytab URI is updated and the version remains 0
-    Assert.assertEquals(newKeytab, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIWithoutVersion());
-    Assert.assertEquals(0, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIVersion());
+    Assert.assertEquals(newKeytab, namespaceAdmin.get(namespaceId).getConfig().getKeytabUriWithoutVersion());
+    Assert.assertEquals(0, namespaceAdmin.get(namespaceId).getConfig().getKeytabUriVersion());
     // update the namespace with the same keytab URI
     namespaceAdmin.updateProperties(nsMeta.getNamespaceId(), newKeytabMeta);
     // assert the keytab URI without version remains the same and the version is incremented to 1
-    Assert.assertEquals(newKeytab, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIWithoutVersion());
-    Assert.assertEquals(1, namespaceAdmin.get(namespaceId).getConfig().getKeytabURIVersion());
+    Assert.assertEquals(newKeytab, namespaceAdmin.get(namespaceId).getConfig().getKeytabUriWithoutVersion());
+    Assert.assertEquals(1, namespaceAdmin.get(namespaceId).getConfig().getKeytabUriVersion());
     //clean up
     namespaceAdmin.delete(namespaceId);
   }

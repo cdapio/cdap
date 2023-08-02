@@ -274,7 +274,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     String nsPrincipal = "nsCreator/somehost.net@somekdc.net";
     String nsKeytabURI = "some/path";
     NamespaceMeta impNsMeta =
-      new NamespaceMeta.Builder().setName("impNs").setPrincipal(nsPrincipal).setKeytabURI(nsKeytabURI).build();
+      new NamespaceMeta.Builder().setName("impNs").setPrincipal(nsPrincipal).setKeytabUri(nsKeytabURI).build();
     createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
 
     // deploy an app without owner

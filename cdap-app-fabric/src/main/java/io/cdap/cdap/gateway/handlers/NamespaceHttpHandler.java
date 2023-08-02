@@ -58,16 +58,31 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     this.namespaceAdmin = namespaceAdmin;
   }
 
+  /**
+   * Returns the list of namespaces.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @throws Exception Any {@link Exception} encountered.
+   */
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
     // return keytab URI without version
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(namespaceAdmin.list().stream()
-            .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
+            .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabUriVersion())
             .collect(Collectors.toList())));
   }
 
+  /**
+   * Returns the metadata of requested namespace.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespaceId Namespace id string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
   @GET
   @Path("/namespaces/{namespace-id}")
   public void getNamespace(HttpRequest request, HttpResponder responder,
@@ -75,10 +90,18 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     // return keytab URI without version
     NamespaceMeta ns =
         new NamespaceMeta.Builder(
-            namespaceAdmin.get(new NamespaceId(namespaceId))).buildWithoutKeytabURIVersion();
+            namespaceAdmin.get(new NamespaceId(namespaceId))).buildWithoutKeytabUriVersion();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ns));
   }
 
+  /**
+   * Updates the properties of requested namespace.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespaceId Namespace id string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -90,6 +113,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         String.format("Updated properties for namespace '%s'.", namespaceId));
   }
 
+  /**
+   * Creates the requested namespace.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespaceId Namespace id string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
   @PUT
   @Path("/namespaces/{namespace-id}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -115,6 +146,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         new NamespaceMeta.Builder(metadata);
     builder.setName(namespace);
     builder.setGeneration(System.currentTimeMillis());
+    builder.setIdentity(namespaceAdmin.getIdentity(namespace));
 
     NamespaceMeta finalMetadata = builder.build();
 
@@ -128,6 +160,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * Deletes the requested namespace.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespace Namespace id string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}")
   public void delete(HttpRequest request, HttpResponder responder,
@@ -146,6 +186,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * Deletes all datasets from the requested namespace.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespace Namespace id string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}/datasets")
   public void deleteDatasets(HttpRequest request, HttpResponder responder,
