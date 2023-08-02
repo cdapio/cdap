@@ -63,7 +63,7 @@ public final class DataprocJarUtil {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString()
-            .contains("spark-assembly") && !classPathUrl.toString().contains("scala-library");
+            .contains("spark-assembly");
       }
     });
     bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,

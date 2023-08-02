@@ -105,7 +105,7 @@ public class DataprocJobMain {
     URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
         Constants.Files.TWILL_JAR));
-    Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
+    Arrays.stream(urls).forEach(url -> LOG.info("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
     // Don't close the classloader since this is the main classloader,
