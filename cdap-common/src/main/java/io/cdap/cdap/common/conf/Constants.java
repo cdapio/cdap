@@ -2214,6 +2214,8 @@ public final class Constants {
     public static final String START_EVENTS_READER_EXTENSIONS_ENABLED_LIST =
             "events.reader.extensions.start.enabled.list";
     public static final String START_EVENT_PREFIX = "event.reader.start";
+    public static final String MINIMUM_FREE_CAPACITY_BEFORE_PULL =
+            "event.readers.capacity.before.pull";
   }
 
   /**

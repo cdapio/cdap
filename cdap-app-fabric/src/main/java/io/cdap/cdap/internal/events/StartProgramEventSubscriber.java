@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -53,23 +54,30 @@ public class StartProgramEventSubscriber extends EventSubscriber {
   private final CConfiguration cConf;
   private final EventReaderProvider<StartProgramEvent> extensionProvider;
   private final ProgramLifecycleService lifecycleService;
+  private final RunRecordMonitorService runRecordMonitorService;
   private ScheduledExecutorService executor;
   private Collection<EventReader<StartProgramEvent>> readers;
   private ExecutorService threadPoolExecutor;
+  private int maxConcurrentRuns;
 
   /**
    * Create instance that handles StartProgramEvents.
    *
-   * @param cConf             CDAP configuration
-   * @param extensionProvider eventReaderProvider for StartProgramEvent Readers
-   * @param lifecycleService  to publish start programs to TMS
+   * @param cConf                   CDAP configuration
+   * @param extensionProvider       eventReaderProvider for StartProgramEvent Readers
+   * @param lifecycleService        to publish start programs to TMS
+   * @param runRecordMonitorService basic flow-control
    */
   @Inject
-  StartProgramEventSubscriber(CConfiguration cConf, EventReaderProvider<StartProgramEvent> extensionProvider,
-                              ProgramLifecycleService lifecycleService) {
+  StartProgramEventSubscriber(CConfiguration cConf,
+                              EventReaderProvider<StartProgramEvent> extensionProvider,
+                              ProgramLifecycleService lifecycleService,
+                              RunRecordMonitorService runRecordMonitorService) {
     this.cConf = cConf;
     this.extensionProvider = extensionProvider;
     this.lifecycleService = lifecycleService;
+    this.runRecordMonitorService = runRecordMonitorService;
+    maxConcurrentRuns = -1;
   }
 
   @Override
@@ -93,6 +101,7 @@ public class StartProgramEventSubscriber extends EventSubscriber {
       threadPoolExecutor = new ThreadPoolExecutor(readers.size(), readers.size(), 60,
           TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
+    maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
   }
 
   @Override
@@ -123,10 +132,42 @@ public class StartProgramEventSubscriber extends EventSubscriber {
     if (threadPoolExecutor != null) {
       for (EventReader<StartProgramEvent> reader : readers) {
         threadPoolExecutor.execute(() -> {
-          processEvents(reader);
+          if (runRecordMonitorService.isRunning()) {
+            // Only attempt to process event if there is no max or the current count is less than max
+            if (hasNominalCapacity()) {
+              processEvents(reader);
+            }
+          } else {
+            LOG.warn("RunRecordMonitorService not yet running, currently in state: {}."
+                + " Status will be checked again in next attempt.", runRecordMonitorService.state());
+          }
         });
       }
     }
+  }
+
+  /**
+   * Check if service has capacity (imprecise due to data races).
+   *
+   * @return true if there is capacity to pull new events
+   */
+  @VisibleForTesting
+  boolean hasNominalCapacity() {
+    RunRecordMonitorService.Counter counter = runRecordMonitorService.getCount();
+    // no limit
+    if (maxConcurrentRuns <= 0) {
+      return true;
+    }
+    // allowed configurable range
+    double minimumFreeCapacity = cConf.getDouble(Constants.Event.MINIMUM_FREE_CAPACITY_BEFORE_PULL);
+    double usedCapacity = (double) (counter.getLaunchingCount() + counter.getRunningCount()
+        + cConf.getInt(Constants.Event.START_PROGRAM_EVENT_FETCH_SIZE)) / maxConcurrentRuns;
+    boolean allowPull = (1 - usedCapacity) >= minimumFreeCapacity;
+    if (allowPull) {
+      return true;
+    }
+    LOG.trace("Not enough free capacity. {} < {} (minimum)", 1 - usedCapacity, minimumFreeCapacity);
+    return false;
   }
 
   @VisibleForTesting

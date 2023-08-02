@@ -27,6 +27,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.events.dummy.DummyEventReader;
 import io.cdap.cdap.internal.events.dummy.DummyEventReaderExtensionProvider;
@@ -48,6 +49,8 @@ import org.slf4j.LoggerFactory;
 public class StartProgramEventSubscriberTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(StartProgramEventSubscriberTest.class);
   private ProgramLifecycleService lifecycleService;
+  private RunRecordMonitorService runRecordMonitorService;
+  private RunRecordMonitorService.Counter mockCounter;
   private CConfiguration cConf;
   private DummyEventReader<StartProgramEvent> eventReader;
   private Injector injector;
@@ -56,12 +59,16 @@ public class StartProgramEventSubscriberTest extends AppFabricTestBase {
   @Before
   public void setup() {
     lifecycleService = Mockito.mock(ProgramLifecycleService.class);
-    cConf = Mockito.mock(CConfiguration.class);
+    runRecordMonitorService = Mockito.mock(RunRecordMonitorService.class);
+    mockCounter = Mockito.mock(RunRecordMonitorService.Counter.class);
+    Mockito.doReturn(mockCounter).when(runRecordMonitorService).getCount();
+    cConf = CConfiguration.create();
     eventReader = new DummyEventReader<>(mockedEvents());
     injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
         bind(ProgramLifecycleService.class).toInstance(lifecycleService);
+        bind(RunRecordMonitorService.class).toInstance(runRecordMonitorService);
         bind(CConfiguration.class).toInstance(cConf);
         bind(new TypeLiteral<EventReaderProvider<StartProgramEvent>>() {
         })
@@ -70,7 +77,7 @@ public class StartProgramEventSubscriberTest extends AppFabricTestBase {
       }
     });
     eventHandler = injector.getInstance(StartProgramEventSubscriber.class);
-    Mockito.doReturn(1).when(cConf).getInt(Constants.Event.START_PROGRAM_EVENT_FETCH_SIZE);
+    cConf.setInt(Constants.Event.START_PROGRAM_EVENT_FETCH_SIZE, 1);
   }
 
   @Test
@@ -87,6 +94,38 @@ public class StartProgramEventSubscriberTest extends AppFabricTestBase {
     eventHandler.initialize();
     eventHandler.processEvents(eventReader);
     Mockito.verify(lifecycleService).run((ProgramReference) any(), any(), Mockito.anyBoolean());
+  }
+
+  @Test
+  public void testHasNominalCapacity_lackOfCapacity() {
+    Mockito.doReturn(0).when(mockCounter).getRunningCount();
+    Mockito.doReturn(0).when(mockCounter).getLaunchingCount();
+
+    // cConf.setDouble(Constants.Event.MINIMUM_FREE_CAPACITY_BEFORE_PULL, 0.1);
+    cConf.setInt(Constants.Event.START_PROGRAM_EVENT_FETCH_SIZE, 1);
+    cConf.setInt(Constants.AppFabric.MAX_CONCURRENT_RUNS, 1);
+
+    eventHandler.initialize();
+    // 0.0 free capacity < 0.1 default minimum.
+    assert !eventHandler.hasNominalCapacity();
+    Mockito.verify(mockCounter).getLaunchingCount();
+    Mockito.verify(mockCounter).getRunningCount();
+  }
+
+  @Test
+  public void testHasNominalCapacity_sufficientCapacity() {
+    Mockito.doReturn(0).when(mockCounter).getRunningCount();
+    Mockito.doReturn(0).when(mockCounter).getLaunchingCount();
+
+    //cConf.setDouble(Constants.Event.MINIMUM_FREE_CAPACITY_BEFORE_PULL, 0.1);
+    cConf.setInt(Constants.Event.START_PROGRAM_EVENT_FETCH_SIZE, 1);
+    cConf.setInt(Constants.AppFabric.MAX_CONCURRENT_RUNS, 2);
+
+    eventHandler.initialize();
+    // 0.5 free capacity > 0.1 default minimum.
+    assert eventHandler.hasNominalCapacity();
+    Mockito.verify(mockCounter).getLaunchingCount();
+    Mockito.verify(mockCounter).getRunningCount();
   }
 
   private Collection<StartProgramEvent> mockedEvents() {

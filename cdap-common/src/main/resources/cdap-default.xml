@@ -5088,6 +5088,15 @@
   </property>
 
   <property>
+    <name>event.readers.capacity.before.pull</name>
+    <value>0.1</value>
+    <description>
+      Fraction of capacity that must be free before event readers pull and launch more program runs.
+      This fraction includes the fetch size of each pull.
+    </description>
+  </property>
+
+  <property>
     <name>event.reader.start.poll.delay.seconds</name>
     <value>10</value>
     <description>

@@ -61,6 +61,13 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   private final int maxConcurrentRuns;
   private ScheduledExecutorService executor;
 
+  /**
+   * Tracks the program runs.
+   *
+   * @param cConf configuration
+   * @param runtimeService service to get info on programs
+   * @param metricsCollectionService collect metrics
+   */
   @Inject
   public RunRecordMonitorService(
       CConfiguration cConf,
@@ -120,15 +127,25 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       throw new Exception("None time-based UUIDs are not supported");
     }
 
-    int launchingCount;
-
-    launchingCount = addRequest(programRunId);
+    int launchingCount = addRequest(programRunId);
     int runningCount = getProgramsRunningCount();
 
     LOG.info(
         "Counter has {} concurrent launching and {} running programs.",
         launchingCount,
         runningCount);
+    return new Counter(launchingCount, runningCount);
+  }
+
+  /**
+   * Get imprecise (due to data races) total number of launching and running programs.
+   *
+   * @return total number of launching and running program runs.
+   */
+  public Counter getCount() {
+    int launchingCount = launchingQueue.size();
+    int runningCount = getProgramsRunningCount();
+
     return new Counter(launchingCount, runningCount);
   }
 
@@ -240,19 +257,22 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     return false;
   }
 
-  class Counter {
+  /**
+   * Counts the concurrent program runs.
+   */
+  public class Counter {
 
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
      * * total number of run records with {@link ProgramRunStatus#PENDING} status + total number of
-     * run records with {@link ProgramRunStatus#STARTING} status
+     * run records with {@link ProgramRunStatus#STARTING} status.
      */
     private final int launchingCount;
 
     /**
-     * Total number of run records with {@link ProgramRunStatus#RUNNING status + Total number of run
+     * Total number of run records with {@link ProgramRunStatus#RUNNING} status + Total number of run
      * records with {@link ProgramRunStatus#SUSPENDED} status + Total number of run records with
-     * {@link ProgramRunStatus#RESUMING} status
+     * {@link ProgramRunStatus#RESUMING} status.
      */
     private final int runningCount;
 
