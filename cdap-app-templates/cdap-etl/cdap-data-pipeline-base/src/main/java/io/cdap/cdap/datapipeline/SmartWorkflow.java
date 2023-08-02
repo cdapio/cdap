@@ -776,12 +776,14 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   private ETLBatchConfig getConfigFromRuntimeArgs(ApplicationConfigurer applicationConfigurer,
                                                   ETLBatchConfig originalConfig) {
-    if (applicationConfigurer == null || applicationConfigurer.getRuntimeConfigurer() == null
-      || !Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(applicationConfigurer)) {
+    if (applicationConfigurer == null || applicationConfigurer.getRuntimeConfigurer() == null) {
       return originalConfig;
     }
     RuntimeConfigurer runtimeConfigurer = applicationConfigurer.getRuntimeConfigurer();
     Map<String, String> runtimeArguments = runtimeConfigurer.getRuntimeArguments();
+    if (!runtimeArguments.containsKey(PipelineArguments.PIPELINE_CONFIG_OVERWRITE)) {
+      return originalConfig;
+    }
     boolean processTimingEnabled = PipelineArguments.isProcessTimingEnabled(runtimeArguments,
                                                   originalConfig.isProcessTimingEnabled());
     Map<String, String> properties = PipelineArguments.getEngineProperties(runtimeArguments,
