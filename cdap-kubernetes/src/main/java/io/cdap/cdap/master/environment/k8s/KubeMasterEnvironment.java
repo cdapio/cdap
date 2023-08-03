@@ -88,6 +88,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
+import javax.annotation.Nullable;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -535,6 +536,28 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       LOG.error(
           String.format("Unable to create the service account %s with status %s and body: %s",
               serviceAccount.getMetadata().getName(), e.getCode(), e.getResponseBody()), e);
+      throw e;
+    }
+  }
+
+  @Override
+  public void deleteIdentity(String k8sNamespace, @Nullable String identity) throws ApiException {
+    if (identity == null || identity.equals("default")) {
+      // skip deleting default service account.
+      return;
+    }
+    LOG.info("Creating credential identity: {}", identity);
+    try {
+      coreV1Api.deleteNamespacedServiceAccount(identity, k8sNamespace,
+          null, null, null, null, null, null);
+    } catch (ApiException e) {
+      if (e.getCode() == 404) {
+        // return if not found as it means that service account does not exist.
+        return;
+      }
+      LOG.error(
+          String.format("Unable to delete the service account %s with status %s and body: %s",
+              identity, e.getCode(), e.getResponseBody()), e);
       throw e;
     }
   }
