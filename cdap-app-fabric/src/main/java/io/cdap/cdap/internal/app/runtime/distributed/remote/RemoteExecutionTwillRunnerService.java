@@ -362,6 +362,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId,
         programOpts).orElse(null);
+    LOG.warn(" SANKET : jobManager :  {}", jobManager);
     // Use RuntimeJobManager to launch the remote process if it is supported
     if (jobManager != null) {
       return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
@@ -723,6 +724,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
         ProgramOptions programOpts,
         RemoteProcessController processController)
         throws IOException {
+      LOG.warn("SANKET : RemoteExecutionTwillRunnerService : 1" );
       // If monitor via URL directly, no need to run service socks proxy
       RuntimeMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
       if (monitorType == RuntimeMonitorType.URL) {

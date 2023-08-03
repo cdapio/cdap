@@ -95,7 +95,6 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
       this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     }
   }
-
   @Override
   public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
     return new SparkTwillProgramController(programRunId, twillController).startListen();

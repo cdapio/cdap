@@ -155,7 +155,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    LOG.trace("Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
+    LOG.info("Starting Spark program {} with SparkProgramRunner of ClassLoader {}",
               program.getId(), getClass().getClassLoader());
 
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.

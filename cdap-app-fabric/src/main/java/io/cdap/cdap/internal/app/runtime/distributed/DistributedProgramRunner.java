@@ -128,10 +128,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
-          new GsonBuilder())
-      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-      .create();
+    new GsonBuilder())
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .create();
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
@@ -143,9 +143,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   private final LocationFactory locationFactory;
 
   protected DistributedProgramRunner(CConfiguration cConf, Configuration hConf,
-      Impersonator impersonator,
-      ClusterMode clusterMode, TwillRunner twillRunner,
-      LocationFactory locationFactory) {
+                                     Impersonator impersonator,
+                                     ClusterMode clusterMode, TwillRunner twillRunner,
+                                     LocationFactory locationFactory) {
     this.twillRunner = twillRunner;
     this.hConf = hConf;
     this.cConf = cConf;
@@ -175,8 +175,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    *     automatically once the program is launch.
    */
   protected abstract void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program,
-      ProgramOptions options,
-      CConfiguration cConf, Configuration hConf, File tempDir) throws IOException;
+                                            ProgramOptions options,
+                                            CConfiguration cConf, Configuration hConf, File tempDir) throws IOException;
 
   @Override
   public final ProgramController run(final Program program, ProgramOptions oldOptions) {
@@ -187,7 +187,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     cConf.reloadConfiguration();
 
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
       // For runs from a tethered instance, load additional resources
       if (oldOptions.getArguments().hasOption(ProgramOptionConstants.PEER_NAME)) {
@@ -202,22 +202,22 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       // Add extra localize resources needed by the program runner
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(
-          launchConfig.getExtraResources());
+        launchConfig.getExtraResources());
       final List<String> additionalClassPaths = new ArrayList<>();
       addContainerJars(cConf, localizeResources, additionalClassPaths);
       addAdditionalLogAppenderJars(cConf, tempDir, localizeResources,
-          SystemArguments.getProfileProvisioner(oldOptions.getArguments().asMap()));
+                                   SystemArguments.getProfileProvisioner(oldOptions.getArguments().asMap()));
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       localizeConfigs(createContainerCConf(cConf), createContainerHConf(this.hConf), tempDir,
-          localizeResources);
+                      localizeResources);
 
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
-          new LocalizeResource(saveJsonFile(program.getApplicationSpecification(),
-              ApplicationSpecification.class,
-              File.createTempFile("appSpec", ".json", tempDir))));
+                            new LocalizeResource(saveJsonFile(program.getApplicationSpecification(),
+                                                              ApplicationSpecification.class,
+                                                              File.createTempFile("appSpec", ".json", tempDir))));
 
       URI logbackUri = getLogBackURI(program, oldOptions.getArguments(), tempDir);
       if (logbackUri != null) {
@@ -234,26 +234,26 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       Location programJarLocation = program.getJarLocation();
       String programJarName = getProgramJarName(program, oldOptions);
       localizeResources.put(programJarName,
-          new LocalizeResource(programJarLocation.toURI(), false));
+                            new LocalizeResource(programJarLocation.toURI(), false));
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
       // and runs it in the remote container
       Map<String, String> extraSystemArgs = getExtraSystemArgs(launchConfig, program, oldOptions);
       ProgramOptions options = updateProgramOptions(oldOptions, localizeResources,
-          DirUtils.createTempDir(tempDir), extraSystemArgs);
+                                                    DirUtils.createTempDir(tempDir), extraSystemArgs);
       ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
 
       // Localize the serialized program options
       localizeResources.put(PROGRAM_OPTIONS_FILE_NAME,
-          new LocalizeResource(saveJsonFile(
-              options, ProgramOptions.class, new File(tempDir, PROGRAM_OPTIONS_FILE_NAME))));
+                            new LocalizeResource(saveJsonFile(
+                              options, ProgramOptions.class, new File(tempDir, PROGRAM_OPTIONS_FILE_NAME))));
 
       Callable<ProgramController> callable = () -> {
         Map<String, RunnableDefinition> twillRunnables = launchConfig.getRunnables();
 
         ProgramTwillApplication twillApplication = new ProgramTwillApplication(
-            programRunId, options, twillRunnables, launchConfig.getLaunchOrder(),
-            localizeResources, createEventHandler(cConf));
+          programRunId, options, twillRunnables, launchConfig.getLaunchOrder(),
+          localizeResources, createEventHandler(cConf));
 
         TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
@@ -262,8 +262,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         // This can be removed when TWILL-246 is fixed.
         // Only program running in Hadoop will be using EventHandler
         twillPreparer.withResources(localizeResources.get(CDAP_CONF_FILE_NAME).getURI(),
-            localizeResources.get(HADOOP_CONF_FILE_NAME).getURI(),
-            localizeResources.get(PROGRAM_OPTIONS_FILE_NAME).getURI());
+                                    localizeResources.get(HADOOP_CONF_FILE_NAME).getURI(),
+                                    localizeResources.get(PROGRAM_OPTIONS_FILE_NAME).getURI());
         if (logbackUri != null) {
           twillPreparer.withResources(logbackUri);
         }
@@ -294,25 +294,25 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
         // Add dependencies
         Set<Class<?>> extraDependencies = addExtraDependencies(cConf,
-            new HashSet<>(launchConfig.getExtraDependencies()));
+                                                               new HashSet<>(launchConfig.getExtraDependencies()));
         twillPreparer.withDependencies(extraDependencies);
         setClassPaths(twillPreparer, launchConfig, additionalClassPaths);
         twillPreparer
-            .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
-            .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
-            // Use the MainClassLoader for class rewriting
-            .setClassLoader(MainClassLoader.class.getName());
+          .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
+          .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
+          // Use the MainClassLoader for class rewriting
+          .setClassLoader(MainClassLoader.class.getName());
 
         TwillController twillController;
         // Change the context classloader to the combine classloader of this ProgramRunner and
         // all the classloaders of the dependencies classes so that Twill can trace classes.
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-            DistributedProgramRunner.this.getClass().getClassLoader(),
-            extraDependencies.stream().map(Class::getClassLoader)::iterator));
+          DistributedProgramRunner.this.getClass().getClassLoader(),
+          extraDependencies.stream().map(Class::getClassLoader)::iterator));
         try {
           twillController = twillPreparer.start(
-              cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
-              TimeUnit.SECONDS);
+            cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+            TimeUnit.SECONDS);
 
           /**
            * Block on the twill controller until it is in running state or terminated (due to failure).
@@ -325,14 +325,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
             twillController.onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
             twillController.onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
             latch.await(cConf.getLong(Constants.AppFabric.TWILL_CONTROLLER_START_SECONDS),
-                TimeUnit.SECONDS);
+                        TimeUnit.SECONDS);
           }
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
 
         return createProgramController(programRunId,
-            addCleanupListener(twillController, program, tempDir));
+                                       addCleanupListener(twillController, program, tempDir));
       };
 
       return impersonator.doAs(programRunId, callable);
@@ -349,9 +349,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     if (options.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
       // if hash value for program.jar has been provided, we append it to filename.
       String programJarHash = options.getArguments()
-          .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
+        .getOption(ProgramOptionConstants.PROGRAM_JAR_HASH);
       programJarName = programJarName.replace(".jar",
-          String.format("_%s%s", programJarHash, ".jar"));
+                                              String.format("_%s%s", programJarHash, ".jar"));
     }
     return programJarName;
   }
@@ -359,7 +359,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   @VisibleForTesting
   void setSchedulerQueue(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
     String schedulerQueueName = options.getArguments()
-        .getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+      .getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
       LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
       twillPreparer.setSchedulerQueue(schedulerQueueName);
@@ -368,17 +368,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   @VisibleForTesting
   Map<String, String> getExtraSystemArgs(ProgramLaunchConfig launchConfig,
-      Program program, ProgramOptions options) {
+                                         Program program, ProgramOptions options) {
     Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
     String programJarName = getProgramJarName(program, options);
     if (options.getArguments().hasOption(ProgramOptionConstants.PROGRAM_JAR_HASH)) {
       Set<String> cacheableFiles = new HashSet<>();
       if (options.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
         cacheableFiles =
-            new HashSet<>(GSON.fromJson(
-                options.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES),
-                new TypeToken<Set<String>>() {
-                }.getType()));
+          new HashSet<>(GSON.fromJson(
+            options.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES),
+            new TypeToken<Set<String>>() {
+            }.getType()));
       }
       cacheableFiles.add(programJarName);
       extraSystemArgs.put(ProgramOptionConstants.CACHEABLE_FILES, GSON.toJson(cacheableFiles));
@@ -392,7 +392,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   @VisibleForTesting
   void setClassPaths(TwillPreparer twillPreparer, ProgramLaunchConfig launchConfig,
-      List<String> additionalClassPaths) {
+                     List<String> additionalClassPaths) {
     // Add the additional classes to the classpath that comes from the container jar setting
     twillPreparer.withClassPaths(additionalClassPaths);
 
@@ -401,28 +401,28 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     // Add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the twill container.
     // The Yarn app classpath goes last
     List<String> yarnAppClassPath = Arrays.asList(
-        hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-            YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+      hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                              YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
     twillPreparer
-        .withApplicationClassPaths(yarnAppClassPath)
-        .withClassPaths(yarnAppClassPath);
+      .withApplicationClassPaths(yarnAppClassPath)
+      .withClassPaths(yarnAppClassPath);
   }
 
   @VisibleForTesting
   void setEnv(TwillPreparer twillPreparer, ProgramLaunchConfig launchConfig) {
     // Setup the environment for the container logback.xml
     twillPreparer.withEnv(
-        Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
+      Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
     twillPreparer.withEnv(launchConfig.getExtraEnv());
   }
 
   @VisibleForTesting
   void setTwillConfigs(TwillPreparer twillPreparer, Program program, ProgramOptions options,
-      Map<String, RunnableDefinition> twillRunnables) {
+                       Map<String, RunnableDefinition> twillRunnables) {
     Map<String, String> twillConfigs = new HashMap<>();
     if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
       twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
-          cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
+                       cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
     } else {
       // For non long running program type, set the max attempts to 1 to avoid YARN retry.
       // If the AM container dies, the program execution will be marked as failure.
@@ -445,7 +445,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
       }
       twillPreparer.setLogLevels(runnable,
-          transformLogLevels(runnableDefinition.getLogLevels()));
+                                 transformLogLevels(runnableDefinition.getLogLevels()));
       twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
 
       // Add cdap-security.xml if using secrets, and set the runnable identity.
@@ -453,21 +453,21 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         String twillSystemIdentity = cConf.get(Constants.Twill.Security.IDENTITY_SYSTEM);
         if (twillSystemIdentity != null) {
           SecurityContext securityContext = new SecurityContext.Builder()
-              .withIdentity(twillSystemIdentity).build();
+            .withIdentity(twillSystemIdentity).build();
           twillPreparer = ((SecureTwillPreparer) twillPreparer).withSecurityContext(runnable,
-              securityContext);
+                                                                                    securityContext);
         }
         String securityName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
         String securityPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
         twillPreparer = ((SecureTwillPreparer) twillPreparer)
-            .withSecretDisk(runnable, new SecretDisk(securityName, securityPath));
+          .withSecretDisk(runnable, new SecretDisk(securityName, securityPath));
       }
     }
   }
 
   @VisibleForTesting
   void setJvmOpts(TwillPreparer twillPreparer, ProgramOptions options,
-      @Nullable URI logbackUri, Map<String, RunnableDefinition> twillRunnables) {
+                  @Nullable URI logbackUri, Map<String, RunnableDefinition> twillRunnables) {
     String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
     String runtimeJvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
     if (!Strings.isNullOrEmpty(runtimeJvmOpts)) {
@@ -489,15 +489,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     if (logbackUri != null) {
       // AM has the logback.xml file under resources.jar/resources/logback.xml
       twillPreparer.addJVMOptions("-D" + ContextInitializer.CONFIG_FILE_PROPERTY
-          + "=resources.jar/resources/" + LOGBACK_FILE_NAME);
+                                    + "=resources.jar/resources/" + LOGBACK_FILE_NAME);
       // Set the system property to be used by the logback xml
       twillPreparer.addJVMOptions(
-          "-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+        "-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
 
       // Runnable has the logback.xml just in the home directory
       for (String runnableName : runnables) {
         twillPreparer.setJVMOptions(runnableName,
-            "-D" + ContextInitializer.CONFIG_FILE_PROPERTY + "=" + LOGBACK_FILE_NAME);
+                                    "-D" + ContextInitializer.CONFIG_FILE_PROPERTY + "=" + LOGBACK_FILE_NAME);
       }
     }
   }
@@ -507,9 +507,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * runId
    */
   private void loadAdditionalResources(Arguments args, CConfiguration cConf, File tempDir)
-      throws IOException {
+    throws IOException {
     Location location = locationFactory.create(
-        args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI));
+      args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI));
     // add additional cConf entries
     File tetherCConfFile = File.createTempFile("cdap-tether", ".xml", tempDir);
     try (InputStream is = location.append(TETHER_CONF_FILE_NAME).getInputStream()) {
@@ -523,15 +523,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Adds a {@link LocalizeResource} if extra log appender is being configured.
    */
   private void addAdditionalLogAppenderJars(CConfiguration cConf, File tempDir,
-      Map<String, LocalizeResource> localizeResources,
-      String provisioner) throws IOException {
+                                            Map<String, LocalizeResource> localizeResources,
+                                            String provisioner) throws IOException {
     String provider = cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER);
     if (Strings.isNullOrEmpty(provider)) {
       return;
     }
     // If the log appender provider doesn't support the provisioner for the program execution, unset the config.
     Collection<String> provisioners = cConf.getTrimmedStringCollection(
-        Constants.Logging.LOG_APPENDER_PROVISIONERS);
+      Constants.Logging.LOG_APPENDER_PROVISIONERS);
     if (!provisioners.contains(provisioner)) {
       cConf.unset(Constants.Logging.LOG_APPENDER_PROVIDER);
       return;
@@ -542,9 +542,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     String localizedDir = "log-appender-ext";
     File logAppenderArchive = new File(tempDir, localizedDir + ".zip");
     try (ZipOutputStream zipOut = new ZipOutputStream(
-        Files.newOutputStream(logAppenderArchive.toPath()))) {
+      Files.newOutputStream(logAppenderArchive.toPath()))) {
       BundleJarUtil.addToArchive(
-          new File(cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR), provider), true, zipOut);
+        new File(cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR), provider), true, zipOut);
     }
     // set extensions dir to point to localized appender directory - appender/<log-appender-provider>
     localizeResources.put(localizedDir, new LocalizeResource(logAppenderArchive, true));
@@ -580,14 +580,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       // Disable implicit transaction
       result.set(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL,
-          TransactionControl.EXPLICIT.name());
+                 TransactionControl.EXPLICIT.name());
 
       // Disable transaction support
       result.setBoolean(Constants.Transaction.TX_ENABLED, false);
 
       // Always use NoSQL as storage
       result.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION,
-          Constants.Dataset.DATA_STORAGE_NOSQL);
+                 Constants.Dataset.DATA_STORAGE_NOSQL);
 
       // The following services will be running in the edge node host.
       // Set the bind addresses for all of them to "${master.services.bind.address}"
@@ -620,7 +620,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Adds extra jars as defined in {@link CConfiguration} to the container and container classpath.
    */
   private void addContainerJars(CConfiguration cConf,
-      Map<String, LocalizeResource> localizeResources, Collection<String> classpath) {
+                                Map<String, LocalizeResource> localizeResources, Collection<String> classpath) {
     // Create localize resources and update classpath for the container based on the "program.container.dist.jars"
     // configuration.
     List<String> containerExtraJars = new ArrayList<>();
@@ -636,7 +636,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     // Set the "program.container.dist.jars" since files are already localized to the container.
     cConf.setStrings(Constants.AppFabric.PROGRAM_CONTAINER_DIST_JARS,
-        containerExtraJars.toArray(new String[0]));
+                     containerExtraJars.toArray(new String[0]));
   }
 
   /**
@@ -645,17 +645,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   private void logProgramStart(Program program, ProgramOptions options) {
     LoggingContext loggingContext =
-        LoggingContextHelper.getLoggingContext(program.getNamespaceId(), program.getApplicationId(),
-            program.getName(), program.getType(),
-            ProgramRunners.getRunId(options).getId(),
-            options.getArguments().asMap());
+      LoggingContextHelper.getLoggingContext(program.getNamespaceId(), program.getApplicationId(),
+                                             program.getName(), program.getType(),
+                                             ProgramRunners.getRunId(options).getId(),
+                                             options.getArguments().asMap());
     Cancellable saveContextCancellable =
-        LoggingContextAccessor.setLoggingContext(loggingContext);
+      LoggingContextAccessor.setLoggingContext(loggingContext);
     String userArguments = Joiner.on(", ").withKeyValueSeparator("=")
-        .join(options.getUserArguments());
+      .join(options.getUserArguments());
 
     LOG.info("Starting {} Program '{}' with Arguments [{}], with debugging {}",
-        program.getType(), program.getName(), userArguments, options.isDebug());
+             program.getType(), program.getName(), userArguments, options.isDebug());
     saveContextCancellable.cancel();
   }
 
@@ -673,8 +673,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * @throws IOException if failed to create local copy of artifact files
    */
   private ProgramOptions updateProgramOptions(ProgramOptions options,
-      Map<String, LocalizeResource> localizeResources,
-      File tempDir, Map<String, String> extraSystemArgs) throws IOException {
+                                              Map<String, LocalizeResource> localizeResources,
+                                              File tempDir, Map<String, String> extraSystemArgs) throws IOException {
     Arguments systemArgs = options.getArguments();
 
     Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
@@ -699,14 +699,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         newSystemArgs.remove(ProgramOptionConstants.PLUGIN_DIR_HASH);
         pluginDirFileName = String.format("%s_%s", ProgramRunners.PLUGIN_DIR, pluginDirHash);
         pluginArchiveFileName = ProgramRunners.PLUGIN_ARCHIVE.replace(".jar",
-            String.format("_%s%s", pluginDirHash, ".jar"));
+                                                                      String.format("_%s%s", pluginDirHash, ".jar"));
 
         Set<String> cacheableFiles = new HashSet<>();
         if (newSystemArgs.containsKey(ProgramOptionConstants.CACHEABLE_FILES)) {
           cacheableFiles = new HashSet<>(
-              GSON.fromJson(newSystemArgs.get(ProgramOptionConstants.CACHEABLE_FILES),
-                  new TypeToken<Set<String>>() {
-                  }.getType()));
+            GSON.fromJson(newSystemArgs.get(ProgramOptionConstants.CACHEABLE_FILES),
+                          new TypeToken<Set<String>>() {
+                          }.getType()));
         }
         cacheableFiles.add(pluginDirFileName);
         cacheableFiles.add(pluginArchiveFileName);
@@ -729,11 +729,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, pluginArchiveFileName);
     }
     newSystemArgs.put(SystemArguments.PROFILE_PROPERTIES_PREFIX
-            + Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS,
-        String.valueOf(cConf.getInt(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)));
+                        + Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS,
+                      String.valueOf(cConf.getInt(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)));
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
-        options.getUserArguments(), options.isDebug());
+                                    options.getUserArguments(), options.isDebug());
   }
 
   /**
@@ -747,8 +747,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     // For runs from a tethered instance, use given logback file
     if (args.hasOption(ProgramOptionConstants.PEER_NAME)) {
       Location location = locationFactory
-          .create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI))
-          .append(LOGBACK_FILE_NAME);
+        .create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI))
+        .append(LOGBACK_FILE_NAME);
 
       try (InputStream is = location.getInputStream()) {
         Files.copy(is, logbackFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -762,17 +762,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     String configurationFile = System.getProperty("logback.configurationFile");
     if (configurationFile != null) {
       Files.copy(new File(configurationFile).toPath(), logbackFile.toPath(),
-          StandardCopyOption.REPLACE_EXISTING);
+                 StandardCopyOption.REPLACE_EXISTING);
       return logbackFile.toURI();
     }
 
     // List of possible locations of where the logback xml is.
     URL logbackURL = Stream.of(program.getClassLoader().getResource("logback.xml"),
-            getClass().getClassLoader().getResource("logback-container.xml"),
-            getClass().getClassLoader().getResource("logback.xml"))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+                               getClass().getClassLoader().getResource("logback-container.xml"),
+                               getClass().getClassLoader().getResource("logback.xml"))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
 
     if (logbackURL == null) {
       return null;
@@ -786,7 +786,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   private Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {
     return logLevels.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, e -> convertLogLevel(e.getValue())));
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> convertLogLevel(e.getValue())));
   }
 
   /**
@@ -844,7 +844,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * @return The same TwillController instance.
    */
   private TwillController addCleanupListener(TwillController controller,
-      final Program program, final File tempDir) {
+                                             final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
     Runnable cleanup = () -> {
@@ -863,7 +863,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Prepares the {@link HBaseDDLExecutor} implementation for localization.
    */
   private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
-      Map<String, LocalizeResource> localizeResources) throws IOException {
+                                                Map<String, LocalizeResource> localizeResources) throws IOException {
     String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
 
     // Only support HBase when running on premise
@@ -883,8 +883,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   private EventHandler createEventHandler(CConfiguration cConf) {
     return new TwillAppLifecycleEventHandler(
-        cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
-        this instanceof LongRunningDistributedProgramRunner);
+      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
+      this instanceof LongRunningDistributedProgramRunner);
   }
 
   /**
@@ -896,7 +896,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * @param localizeResources the {@link LocalizeResource} map to update
    */
   private void localizeConfigs(CConfiguration cConf, Configuration hConf, File tempDir,
-      Map<String, LocalizeResource> localizeResources) throws IOException {
+                               Map<String, LocalizeResource> localizeResources) throws IOException {
     File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
     localizeResources.put(CDAP_CONF_FILE_NAME, new LocalizeResource(cConfFile));
 
@@ -912,14 +912,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     String confLevel = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
     if ("OFF".equals(confLevel)) {
       twillPreparer.withConfiguration(
-          Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
+        Collections.singletonMap(Configs.Keys.LOG_COLLECTION_ENABLED, "false"));
       return;
     }
 
     LogEntry.Level logLevel = LogEntry.Level.ERROR;
     try {
       logLevel = "ALL".equals(confLevel) ? LogEntry.Level.TRACE
-          : LogEntry.Level.valueOf(confLevel.toUpperCase());
+        : LogEntry.Level.valueOf(confLevel.toUpperCase());
     } catch (Exception e) {
       LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", confLevel);
     }
@@ -944,7 +944,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     // When it is running in Hadoop, we need to add YarnClient to dependency since we will be submitting job to YARN.
     if (clusterMode == ClusterMode.ON_PREMISE || cConf.getBoolean(
-        Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       dependencies.add(YarnClient.class);
     }
 
@@ -953,20 +953,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
   @VisibleForTesting
   static void copyRuntimeToken(LocationFactory locationFactory, Arguments args, File tempDir,
-      Map<String, LocalizeResource> localizeResources) throws IOException {
+                               Map<String, LocalizeResource> localizeResources) throws IOException {
     File runtimeTokenFile = File.createTempFile("runtime-tether", ".token", tempDir);
     Location location = locationFactory.create(
-            URI.create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI)))
-        .append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
+      URI.create(args.getOption(ProgramOptionConstants.PROGRAM_RESOURCE_URI)))
+      .append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
     if (!location.exists()) {
       return;
     }
     try (InputStream is = location.getInputStream()) {
       Files.copy(is, runtimeTokenFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
       LOG.debug("Copied {} to {}", Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
-          runtimeTokenFile);
+                runtimeTokenFile);
     }
     localizeResources.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
-        new LocalizeResource(runtimeTokenFile.toURI(), false));
+                          new LocalizeResource(runtimeTokenFile.toURI(), false));
   }
 }

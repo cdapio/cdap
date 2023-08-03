@@ -211,6 +211,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.warn("SANKET : startUp 1");
     // additional spark job initialization at run-time
     // This context is for calling initialize and destroy on the Spark program
 
@@ -371,6 +372,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, classpath,
                                                               context.getLocalizeResources(), isLocal, pyFiles);
+      LOG.warn("SANKET : startUp 10");
       submitSpark = () -> {
         // If stop already requested on this service, don't submit the spark.
         // This happen when stop() was called whiling starting
@@ -427,6 +429,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
+    LOG.warn("SANKET : run 1");
     SparkJobFuture<RunId> jobCompletion = completion.getAndSet(submitSpark.call());
     // If the jobCompletion is not null, meaning the stop() was called before the atomic reference "completion" has been
     // updated. This mean the job is cancelled. We also need to cancel the future returned by submitSpark.call().
@@ -750,7 +753,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           File libDir = new File(ClassLoaders.getClassPathURL(className, classURL).toURI()).getParentFile();
 
           for (File file : DirUtils.listFiles(libDir, "jar")) {
-            if (classpath.add(file.getName())) {
+            LOG.warn("SANKET file : {}", file.getAbsolutePath());
+            if (!file.isDirectory() && classpath.add(file.getName())) {
               jarOut.putNextEntry(new JarEntry(file.getName()));
               Files.copy(file, jarOut);
               jarOut.closeEntry();

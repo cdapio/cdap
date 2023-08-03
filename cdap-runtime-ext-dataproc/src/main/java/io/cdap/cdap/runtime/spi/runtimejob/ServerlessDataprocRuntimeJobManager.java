@@ -18,25 +18,23 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
-import com.google.cloud.dataproc.v1.ClusterControllerClient;
-import com.google.cloud.dataproc.v1.ClusterControllerSettings;
-import com.google.cloud.dataproc.v1.DriverSchedulingConfig;
-import com.google.cloud.dataproc.v1.GetClusterRequest;
-import com.google.cloud.dataproc.v1.GetJobRequest;
-import com.google.cloud.dataproc.v1.HadoopJob;
-import com.google.cloud.dataproc.v1.Job;
+import com.google.cloud.dataproc.v1.Batch;
+import com.google.cloud.dataproc.v1.BatchControllerClient;
+import com.google.cloud.dataproc.v1.BatchControllerSettings;
+import com.google.cloud.dataproc.v1.BatchOperationMetadata;
+import com.google.cloud.dataproc.v1.EnvironmentConfig;
+import com.google.cloud.dataproc.v1.ExecutionConfig;
 import com.google.cloud.dataproc.v1.JobControllerClient;
-import com.google.cloud.dataproc.v1.JobControllerSettings;
-import com.google.cloud.dataproc.v1.JobPlacement;
-import com.google.cloud.dataproc.v1.JobReference;
-import com.google.cloud.dataproc.v1.JobStatus;
-import com.google.cloud.dataproc.v1.SubmitJobRequest;
+import com.google.cloud.dataproc.v1.LocationName;
+import com.google.cloud.dataproc.v1.RuntimeConfig;
+import com.google.cloud.dataproc.v1.SparkBatch;
 import com.google.cloud.http.HttpTransportOptions;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -60,6 +58,16 @@ import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
+import org.apache.twill.api.LocalFile;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.Constants;
+import org.apache.twill.internal.DefaultLocalFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.threeten.bp.Duration;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,29 +83,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import org.apache.twill.api.LocalFile;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.Constants;
-import org.apache.twill.internal.DefaultLocalFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.threeten.bp.Duration;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc
  * cluster and managing it. An instance of this class is created by {@code DataprocProvisioner}.
  */
-public class DataprocRuntimeJobManager implements RuntimeJobManager {
+public class ServerlessDataprocRuntimeJobManager implements RuntimeJobManager {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataprocRuntimeJobManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ServerlessDataprocRuntimeJobManager.class);
 
   // dataproc job properties
   public static final String CDAP_RUNTIME_NAMESPACE = "cdap.runtime.namespace";
@@ -106,7 +106,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   public static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap.runtime.program.type";
   public static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
   public static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
-  private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
+  private static final Pattern DATAPROC_BATCH_ID_PATTERN = Pattern.compile("[a-z0-9][a-z0-9\\-]{2,61}[a-z0-9]");
 
   //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
   private static final String LABEL_CDAP_PROGRAM = "cdap-program";
@@ -127,8 +127,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final VersionInfo cdapVersionInfo;
 
   private volatile Storage storageClient;
-  private volatile JobControllerClient jobControllerClient;
-  private volatile ClusterControllerClient clusterControllerClient;
+  private volatile BatchControllerClient batchControllerClient;
   // CDAP specific artifacts which will be cached in GCS.
   private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
       Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR)
@@ -142,8 +141,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    *
    * @param clusterInfo dataproc cluster information
    */
-  public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
-      Map<String, String> provisionerProperties, VersionInfo cdapVersionInfo) {
+  public ServerlessDataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
+                                             Map<String, String> provisionerProperties, VersionInfo cdapVersionInfo) {
     this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
@@ -210,52 +209,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns a {@link JobControllerClient} to interact with Dataproc Job API.
    */
-  private JobControllerClient getJobControllerClient() throws IOException {
-    JobControllerClient client = jobControllerClient;
+  private BatchControllerClient getBatchControllerClient() throws IOException {
+    BatchControllerClient client = batchControllerClient;
     if (client != null) {
       return client;
     }
 
     synchronized (this) {
-      client = jobControllerClient;
+      client = batchControllerClient;
       if (client != null) {
         return client;
       }
 
       // instantiate a dataproc job controller client
       CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
-      this.jobControllerClient = client = JobControllerClient.create(
-          JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
+      this.batchControllerClient = client = BatchControllerClient.create(
+        BatchControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
               .setEndpoint(String.format("%s-%s", region, endpoint)).build());
-    }
-    return client;
-  }
-
-  private ClusterControllerClient getClusterControllerClient() throws IOException {
-    ClusterControllerClient client = clusterControllerClient;
-    if (client != null) {
-      return client;
-    }
-
-    synchronized (this) {
-      client = clusterControllerClient;
-      if (client != null) {
-        return client;
-      }
-
-      // instantiate a dataproc cluster controller client
-      CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
-      ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
-          .setCredentialsProvider(credentialsProvider)
-          .setEndpoint(String.format("%s-%s", region, endpoint))
-          .build();
-      this.clusterControllerClient = client = ClusterControllerClient.create(controllerSettings);
     }
     return client;
   }
 
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
+    LOG.warn(" SANKET : in  : SDRtimemanage 1: " );
     String bucket = DataprocUtils.getBucketName(this.bucket);
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
 
@@ -293,6 +270,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           cdapVersionInfo.getFix());
     }
 
+    LOG.warn(" SANKET : in  : SDRtimemanage 2: " );
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
@@ -338,26 +316,40 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         uploadedFiles.add(uploadFuture.get());
       }
 
-      // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
-
+      // step 3: build the Spark BATCH request to be submitted to dataproc serverless (batches)
+      Batch batch = getSubmitBatchRequest(runtimeJobInfo, uploadedFiles);
+      LOG.warn(" SANKET : in  : SDRtimemanage 3: " );
       // step 4: submit hadoop job to dataproc
       try {
-        Job job = getJobControllerClient().submitJob(request);
-        LOG.debug("Successfully submitted hadoop job {} to cluster {}.",
-            job.getReference().getJobId(), clusterName);
+        LocationName locationName = LocationName.newBuilder()
+          .setProject(projectId).setLocation(region).build();
+        OperationFuture<Batch, BatchOperationMetadata> submitJobAsOperationAsyncRequest =
+          getBatchControllerClient().createBatchAsync(locationName, batch, getJobId(runInfo));
+        LOG.warn("SANKET : afterjobsumbit");
+        LOG.warn("Successfully submitted BATCH job {} to cluster {}.",
+                  submitJobAsOperationAsyncRequest.get().getName(), clusterName);
       } catch (AlreadyExistsException ex) {
         //the job id already exists, ignore the job.
         LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
-            request.getJob().getReference().getJobId());
+                 getJobId(runInfo));
+      } catch (ExecutionException e) {
+        // If the job does not complete successfully, print the error message.
+        LOG.warn(String.format("SANKET : ExecutionException : %s ", e.getMessage()));
       }
+      LOG.warn("SANKET : afterjobsumbit2");
       DataprocUtils.emitMetric(provisionerContext, region,
           "provisioner.submitJob.response.count");
     } catch (Exception e) {
+
+      LOG.warn(" SANKET : EXCEPTION : " );
+      LOG.warn("EXCEPTION : " + e );
+      LOG.error("EXCEPTION : Stack ", e);
+      LOG.warn("EXCEPTION suppressed : " + e.getSuppressed() );
+
       String errorMessage = String.format("Error while launching job %s on cluster %s.",
           getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
-      DataprocUtils.deleteGcsPath(getStorageClient(), bucket, runRootPath);
+      DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
           "provisioner.submitJob.response.count", e);
       // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
@@ -388,24 +380,27 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   @Override
   public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception {
     String jobId = getJobId(programRunInfo);
-
     try {
-      Job job = getJobControllerClient().getJob(GetJobRequest.newBuilder()
-          .setProjectId(projectId)
-          .setRegion(region)
-          .setJobId(jobId)
-          .build());
-      return Optional.of(new DataprocRuntimeJobDetail(getProgramRunInfo(job),
-          getRuntimeJobStatus(job),
-          getJobStatusDetails(job)));
+      LOG.warn(" SANKET : in  : jobId : {} : projectId : {} , region : {}", jobId, projectId, region);
+
+      //TODO ::  Just after "batchControllerClient.createBatchAsync" the below line may give NOT_FOUND . Need to figure
+      // how to handle this
+
+      Batch batch = getBatchControllerClient().getBatch(getFullBatchName(projectId, region, jobId));
+      return Optional.of(new DataprocRuntimeJobDetail(getProgramRunInfo(batch),
+                                                      getRuntimeJobStatus(batch),
+                                                      getJobStatusDetails(batch)));
     } catch (ApiException e) {
-      if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
+      /*
+      LOG.warn(" SANKET : e.getStatusCode().getCode() : " + e.getStatusCode().getCode());
+      if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND
+      || e.getStatusCode().getCode() != StatusCode.Code.CANCELLED) {
         throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
             jobId, clusterName), e);
       }
       // Status is not found if job is finished or manually deleted by the user
       LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId,
-          region);
+          region);*/
     }
     return Optional.empty();
   }
@@ -432,13 +427,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void close() {
-    JobControllerClient client = this.jobControllerClient;
+    BatchControllerClient client = this.batchControllerClient;
     if (client != null) {
       client.close();
-    }
-    ClusterControllerClient clusterControllerClient = this.clusterControllerClient;
-    if (clusterControllerClient != null) {
-      clusterControllerClient.close();
     }
   }
 
@@ -645,8 +636,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads the file to GCS bucket.
    */
-  private void uploadToGCS(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
-      Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
+  private void uploadToGCS(URI localFileUri, Storage storage, BlobInfo blobInfo,
+                           Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     try (InputStream inputStream = openStream(localFileUri);
         WriteChannel writer = storage.writer(blobInfo, blobWriteOptions)) {
       ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
@@ -677,37 +668,86 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Creates and returns dataproc job submit request.
    */
-  private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
-      List<LocalFile> localFiles) throws IOException {
+  private Batch getSubmitBatchRequest(RuntimeJobInfo runtimeJobInfo,
+                                                 List<LocalFile> localFiles) {
     String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
 
     LaunchMode launchMode = LaunchMode.valueOf(
-        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
-    HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
-        // set main class
-        .setMainClass(DataprocJobMain.class.getName())
-        // set main class arguments
-        .addAllArgs(getArguments(runtimeJobInfo, localFiles, provisionerContext.getSparkCompat().getCompat(),
-                                 applicationJarLocalizedName, launchMode))
+        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLIENT.name()).toUpperCase());
 
-        .putAllProperties(getProperties(runtimeJobInfo));
+    SparkBatch.Builder sparkBatchBuilder =
+      SparkBatch.newBuilder()
+        .setMainClass(DataprocJobMain.class.getName())
+        .addAllArgs(getArguments(runtimeJobInfo, localFiles, provisionerContext.getSparkCompat().getCompat(),
+                                 applicationJarLocalizedName, launchMode));
 
     for (LocalFile localFile : localFiles) {
       // add jar file
       URI uri = localFile.getURI();
       if (localFile.getName().endsWith("jar")) {
-        hadoopJobBuilder.addJarFileUris(uri.toString());
+        sparkBatchBuilder.addJarFileUris(uri.toString());
       } else {
-        hadoopJobBuilder.addFileUris(uri.toString());
+        sparkBatchBuilder.addFileUris(uri.toString());
       }
     }
 
+    // MANUAL ADDING JARS FOR TEST
+    String[] fileUris = {
+      "gs://serverlessdataproc/sanket_lib/ch.qos.logback.logback-classic-1.2.11.jar",
+      "gs://serverlessdataproc/sanket_lib/ch.qos.logback.logback-core-1.2.11.jar",
+      "gs://serverlessdataproc/sanket_lib/com.101tec.zkclient-0.10.jar",
+      "gs://serverlessdataproc/sanket_lib/com.google.code.findbugs.jsr305-2.0.1.jar",
+      "gs://serverlessdataproc/sanket_lib/com.google.code.gson.gson-2.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/com.google.errorprone.error_prone_annotations-2.18.0.jar",
+      "gs://serverlessdataproc/sanket_lib/com.google.guava.guava-20.0.jar",
+      "gs://serverlessdataproc/sanket_lib/com.yammer.metrics.metrics-core-2.2.0.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-api-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-common-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-core-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-discovery-api-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-discovery-core-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-yarn-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.cdap.twill.twill-zookeeper-1.3.1.jar",
+      "gs://serverlessdataproc/sanket_lib/io.netty.netty-buffer-4.1.75.Final.jar",
+      "gs://serverlessdataproc/sanket_lib/io.netty.netty-codec-4.1.75.Final.jar",
+      "gs://serverlessdataproc/sanket_lib/io.netty.netty-codec-http-4.1.75.Final.jar",
+      "gs://serverlessdataproc/sanket_lib/io.netty.netty-common-4.1.75.Final.jar",
+      "gs://serverlessdataproc/sanket_lib/io.netty.netty-transport-4.1.75.Final.jar",
+      "gs://serverlessdataproc/sanket_lib/lib-ch.qos.logback.logback-classic-1.2.11.jar",
+      "gs://serverlessdataproc/sanket_lib/net.sf.jopt-simple.jopt-simple-3.2.jar",
+      "gs://serverlessdataproc/sanket_lib/org.apache.kafka.kafka-clients-0.10.2.2.jar",
+      "gs://serverlessdataproc/sanket_lib/org.apache.kafka.kafka_2.12-0.10.2.2.jar",
+      "gs://serverlessdataproc/sanket_lib/org.scala-lang.modules.scala-parser-combinators_2.12-1.0.4.jar",
+      "gs://serverlessdataproc/sanket_lib/org.scala-lang.scala-library-2.12.15.jar",
+      "gs://serverlessdataproc/sanket_lib/org.slf4j.slf4j-api-1.7.15.jar"
+    };
+
+    for(String uri : fileUris) {
+      LOG.info(" SANKET ADDING FILE : {}", uri);
+      sparkBatchBuilder.addJarFileUris(uri);
+    }
+
+    // TODO : HARDCODED PROPS : Need to define flow for this
+
+
+    ExecutionConfig executionConfig = ExecutionConfig.newBuilder()
+      .setNetworkUri("default")
+      .setSubnetworkUri("pga-subnet")
+      .build();
+
+    EnvironmentConfig environmentConfig = EnvironmentConfig.newBuilder()
+      .setExecutionConfig(executionConfig)
+      .build();
+
+    RuntimeConfig runtimeConfig = RuntimeConfig.newBuilder()
+      .setVersion("1.1")
+      .putAllProperties(getProperties(runtimeJobInfo)).build();
+
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    Job.Builder dataprocJobBuilder = Job.newBuilder()
+    Batch.Builder dataprocBatchBuilder = Batch.newBuilder()
         // use program run uuid as hadoop job id on dataproc
-        .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
         // place the job on provisioned cluster
-        .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
+//        .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build()) //TODO figure out the use
         // add same labels as provisioned cluster
         .putAllLabels(labels)
         // Job label values must match the pattern '[\p{Ll}\p{Lo}\p{N}_-]{0,63}'
@@ -715,40 +755,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         // capitals
         .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
         .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
-        .setHadoopJob(hadoopJobBuilder.build());
+      .setRuntimeConfig(runtimeConfig)
+      .setEnvironmentConfig(environmentConfig)
+        .setSparkBatch(sparkBatchBuilder.build());
 
-    GetClusterRequest getClusterRequest = GetClusterRequest.newBuilder()
-        .setClusterName(clusterName).setProjectId(projectId).setRegion(region).build();
+    return dataprocBatchBuilder.build();
 
-    int driverCores = Integer.parseInt(provisionerProperties.getOrDefault(
-        DataprocUtils.DRIVER_VCORES, DataprocUtils.DRIVER_VCORES_DEFAULT));
-    int driverMemoryMb = Integer.parseInt(provisionerProperties.getOrDefault(
-        DataprocUtils.DRIVER_MEMORY_MB, DataprocUtils.DRIVER_MEMORY_MB_DEFAULT));
-    // client mode means the Workflow driver/Spark client will run within the RuntimeJob,
-    // so it needs at least the memory/vcpu specified for the program.
-    if (launchMode == LaunchMode.CLIENT) {
-      driverCores = Math.max(runtimeJobInfo.getVirtualCores(), driverCores);
-      driverMemoryMb = Math.max(runtimeJobInfo.getMemoryMb(), driverMemoryMb);
-    }
-
-    // if the dataproc cluster has driver pools enabled add the driver scheduling config i.e.
-    // the resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob).
-    // Other quotas like GetJobRequestsPerMinutePerProjectPerRegion is counted independently of
-    // RequestsPerMinutePerProjectPerRegion so this check should not exceed the quota under high load.
-    if (getClusterControllerClient().getCluster(getClusterRequest).getConfig()
-        .getAuxiliaryNodeGroupsCount() > 0) {
-      dataprocJobBuilder.setDriverSchedulingConfig(
-          DriverSchedulingConfig.newBuilder()
-              .setMemoryMb(driverMemoryMb)
-              .setVcores(driverCores)
-              .build());
-    }
-
-    return SubmitJobRequest.newBuilder()
-        .setRegion(region)
-        .setProjectId(projectId)
-        .setJob(dataprocJobBuilder.build())
-        .build();
   }
 
   @VisibleForTesting
@@ -784,8 +796,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return properties;
   }
 
-  private ProgramRunInfo getProgramRunInfo(Job job) {
-    Map<String, String> jobProperties = job.getHadoopJob().getPropertiesMap();
+  private ProgramRunInfo getProgramRunInfo(Batch batch) {
+    Map<String, String> jobProperties = batch.getRuntimeConfig().getPropertiesMap();
 
     ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder()
         .setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE))
@@ -800,38 +812,35 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns {@link RuntimeJobStatus}.
    */
-  private RuntimeJobStatus getRuntimeJobStatus(Job job) {
-    JobStatus.State state = job.getStatus().getState();
+  private RuntimeJobStatus getRuntimeJobStatus(Batch batch) {
+    Batch.State state = batch.getState();
     RuntimeJobStatus runtimeJobStatus;
     switch (state) {
       case STATE_UNSPECIFIED:
-      case SETUP_DONE:
       case PENDING:
         runtimeJobStatus = RuntimeJobStatus.STARTING;
         break;
       case RUNNING:
         runtimeJobStatus = RuntimeJobStatus.RUNNING;
         break;
-      case DONE:
+      case SUCCEEDED:
         runtimeJobStatus = RuntimeJobStatus.COMPLETED;
         break;
-      case CANCEL_PENDING:
-      case CANCEL_STARTED:
+      case CANCELLING:
         runtimeJobStatus = RuntimeJobStatus.STOPPING;
         break;
       case CANCELLED:
         runtimeJobStatus = RuntimeJobStatus.STOPPED;
         break;
-      case ERROR:
+      case FAILED:
         runtimeJobStatus = RuntimeJobStatus.FAILED;
         break;
       default:
         // this needed for ATTEMPT_FAILURE state which is a state for restartable job. Currently we do not launch
         // restartable jobs
         throw new IllegalStateException(
-            String.format("Unsupported job state %s of the dataproc job %s on cluster %s.",
-                job.getStatus().getState(), job.getReference().getJobId(),
-                job.getPlacement().getClusterName()));
+            String.format("Unsupported job state %s of the dataproc job %s ", batch.getState(),
+                          batch.getName()));
     }
     return runtimeJobStatus;
   }
@@ -841,8 +850,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * states, returns null.
    */
   @Nullable
-  private String getJobStatusDetails(Job job) {
-    return job.getStatus().getDetails();
+  private String getJobStatusDetails(Batch job) {
+    return job.getState().name(); //TODO : Check for better details
   }
 
   /**
@@ -850,7 +859,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private void stopJob(String jobId) throws Exception {
     try {
-      getJobControllerClient().cancelJob(projectId, region, jobId);
+      Batch currentBatch = getBatchControllerClient().getBatch(getFullBatchName(projectId, region, jobId));
+      getBatchControllerClient().getOperationsClient().cancelOperation(currentBatch.getOperation());
       LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {
@@ -875,17 +885,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * @throws IllegalArgumentException if provided id does not comply with naming restrictions
    */
   @VisibleForTesting
-  public static String getJobId(ProgramRunInfo runInfo) {
-    List<String> parts = ImmutableList.of(runInfo.getNamespace(), runInfo.getApplication(),
-        runInfo.getProgram());
-    String joined = Joiner.on("_").join(parts);
-    joined = joined.substring(0, Math.min(joined.length(), 63));
-    joined = joined + "_" + runInfo.getRun();
-    if (!DATAPROC_JOB_ID_PATTERN.matcher(joined).matches()) {
+  private static String getJobId(ProgramRunInfo runInfo) {
+    List<String> parts = ImmutableList.of(
+      runInfo.getNamespace().substring(0,Math.min(runInfo.getNamespace().length(),5)).toLowerCase(),
+      runInfo.getApplication().substring(0,Math.min(runInfo.getApplication().length(),15)).toLowerCase(),
+      runInfo.getProgram().toLowerCase());
+    String joined = Joiner.on("-").join(parts);
+    joined = joined.substring(0, Math.min(joined.length(), 26));
+    joined = joined + "-" + runInfo.getRun();
+    if (!DATAPROC_BATCH_ID_PATTERN.matcher(joined).matches()) {
       throw new IllegalArgumentException(
           String.format("Job ID %s is not a valid dataproc job id. ", joined));
     }
 
+    //A batch ID must start and end in a letter or a number, be between 4 and 63 characters long, and contain only
+    //lowercase letters, numbers, and hyphens
+
+
     return joined;
   }
+
+  private String getFullBatchName(String project, String region, String jobId){
+    return String.format("projects/%s/locations/%s/batches/%s", project, region, jobId);
+  }
 }
+
+
+//default_DataFusionQuickstart_DataPipelineWorkflow_

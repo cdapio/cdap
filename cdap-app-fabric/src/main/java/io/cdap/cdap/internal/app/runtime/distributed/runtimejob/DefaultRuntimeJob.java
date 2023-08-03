@@ -290,6 +290,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class)
           .create(programId.getType());
 
+      LOG.warn(" SANKET : programId.getType() : {}", programId.getType());
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);

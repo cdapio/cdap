@@ -46,6 +46,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -232,12 +233,15 @@ public final class SparkPackageUtils {
     List<File> configDirs = new ArrayList<>();
 
     if (System.getenv().containsKey(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())) {
+      LOG.warn("SANKET : system env contains HADOOP_CONF_DIR");
       configDirs.add(new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())));
     } else {
+      LOG.warn("SANKET : system env DOES NOT contains HADOOP_CONF_DIR");
       URL yarnSiteLocation = SparkPackageUtils.class.getClassLoader().getResource("yarn-site.xml");
       if (yarnSiteLocation == null || !"file".equals(yarnSiteLocation.getProtocol())) {
         LOG.warn("Failed to derive HADOOP_CONF_DIR from yarn-site.xml location: {}", yarnSiteLocation);
       } else {
+        LOG.warn("SANKET : system env DOES NOT contains HADOOP_CONF_DIR and setting");
         configDirs.add(new File(yarnSiteLocation.getPath()).getParentFile());
       }
     }
@@ -456,7 +460,15 @@ public final class SparkPackageUtils {
     sparkVersion = sparkVersion == null ? sparkCompat.getCompat() : sparkVersion;
 
     String archiveName = "spark.archive-" + sparkVersion + "-" + VersionInfo.getVersion() + ".zip";
-    Location frameworkDir = locationFactory.create("/framework/spark");
+
+    URI sparkDirUri ;
+    try {
+      sparkDirUri = new URI("file:///tmp/cdap/ramework/spark");
+    } catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+
+    Location frameworkDir = locationFactory.create(sparkDirUri);
     Location frameworkLocation = frameworkDir.append(archiveName);
     File archive = new File(tempDir, archiveName);
     try {
@@ -470,6 +482,8 @@ public final class SparkPackageUtils {
         }
       } 
       Location writeLockLocation = frameworkDir.append("write_in_progress");
+      LOG.info(" SANKET : prepareSparkFramework 1 : {}", frameworkDir.toURI());
+
       frameworkDir.mkdirs("755");
 
       while (!frameworkLocation.exists()) {

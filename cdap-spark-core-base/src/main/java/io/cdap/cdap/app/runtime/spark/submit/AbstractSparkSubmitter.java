@@ -45,6 +45,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -191,18 +193,34 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private void submit(SparkRuntimeContext runtimeContext, String[] args) {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(runtimeContext.getProgramInvocationClassLoader());
     try {
-      LOG.debug("Calling SparkSubmit for {} {}: {}",
+      LOG.warn("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
       // Explicitly set the SPARK_SUBMIT property as it is no longer set on the System properties by the SparkSubmit
       // after the class rewrite. This property only control logging of a warning when submitting the Spark job,
       // hence it's harmless to just leave it there.
       System.setProperty("SPARK_SUBMIT", "true");
       SparkSubmit.main(args);
-      LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
+      LOG.warn("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
+  private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
+  protected void addMasterPOC(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
+    // Use at least two threads for Spark Streaming
+    String masterArg = "local[2]";
+
+    String master = configs.get("spark.master");
+    if (master != null) {
+      Matcher matcher = LOCAL_MASTER_PATTERN.matcher(master);
+      if (matcher.matches()) {
+        masterArg = "local[" + matcher.group(1) + "]";
+      }
+    }
+
+    argBuilder.add("--master").add(masterArg);
+  }
+
 
   /**
    * Creates the list of arguments that will be used for calling {@link SparkSubmit#main(String[])}.
@@ -222,7 +240,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     Iterable<LocalizeResource> archivesIterable = getArchives(resources);
     Iterable<LocalizeResource> filesIterable = getFiles(resources);
 
-    addMaster(configs, builder);
+    addMasterPOC(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     configs.putAll(generateSubmitConf());

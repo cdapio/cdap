@@ -67,13 +67,21 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
    * @throws Exception any exception while initializing the environment.
    */
   public void initialize(String sparkCompat, String launchMode) throws Exception {
+    LOG.info("SANKET : in DataprocRuntimeEnvironment : 1");
     addConsoleAppender();
-    System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
-    zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    try {
+      System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
+
+      zkServer = InMemoryZKServer.builder().build();
+      zkServer.startAndWait();
+
+    } catch (Throwable e) {
+      LOG.info("SANKET : zkServer Throwable  : " + e);
+    }
 
     InetSocketAddress resolved = resolve(zkServer.getLocalAddress());
     String connectionStr = resolved.getHostString() + ":" + resolved.getPort();
+//    String connectionStr = "0.0.0.0:7123";
 
     YarnConfiguration conf = new YarnConfiguration();
     locationFactory = new FileContextLocationFactory(conf);
@@ -113,6 +121,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     if (zkServer != null) {
       zkServer.stopAndWait();
     }
+    /*
     if (locationFactory != null) {
       Location location = locationFactory.create("/");
       try {
@@ -120,7 +129,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
       } catch (IOException e) {
         LOG.warn("Failed to delete location {}", location, e);
       }
-    }
+    }*/
   }
 
   private static InetSocketAddress resolve(InetSocketAddress bindAddress) throws Exception {
