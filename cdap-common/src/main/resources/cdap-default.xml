@@ -6058,5 +6058,29 @@
     </description>
   </property>
 
+  <!-- Configuration settings for KubeJobCleaner -->
+  <property>
+    <name>master.environment.k8s.job.cleaner.enabled</name>
+    <value>true</value>
+    <description>
+      If true, the KubeJobCleaner thread in appfabric will be enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.job.cleaner.interval.mins</name>
+    <value>60</value>
+    <description>
+      Interval in minutes after which the KubeJobCleaner thread runs.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.job.cleaner.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of jobs that will be cleaned by KubeJobCleaner per batch.
+    </description>
+  </property>
 
 </configuration>

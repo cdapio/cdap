@@ -114,10 +114,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
   private static final String DATA_TX_ENABLED = "data.tx.enabled";
-  private static final String JOB_CLEANUP_INTERVAL = "program.container.cleaner.interval.mins";
-  private static final String JOB_CLEANUP_BATCH_SIZE = "program.container.cleaner.batch.size";
-  private static final String DEFAULT_JOB_CLEANUP_INTERVAL_MIN = "60";
-  private static final String DEFAULT_JOB_CLEANUP_BATCH_SIZE = "1000";
+  private static final String JOB_CLEANUP_INTERVAL = "master.environment.k8s.job.cleaner.interval.mins";
+  private static final String JOB_CLEANUP_BATCH_SIZE = "master.environment.k8s.job.cleaner.batch.size";
+  public static final String JOB_CLEANER_ENABLED = "master.environment.k8s.job.cleaner.enabled";
 
   public static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
@@ -381,11 +380,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         workloadIdentityPool,
         workloadIdentityProvider);
 
-    int batchSize = Integer.parseInt(
-        conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, DEFAULT_JOB_CLEANUP_BATCH_SIZE));
-    int interval = Integer.parseInt(
-        conf.getOrDefault(JOB_CLEANUP_INTERVAL, DEFAULT_JOB_CLEANUP_INTERVAL_MIN));
-    tasks.add(new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory));
+    int batchSize = Integer.parseInt(conf.get(JOB_CLEANUP_BATCH_SIZE));
+    int interval = Integer.parseInt(conf.get(JOB_CLEANUP_INTERVAL));
+    boolean jobCleanerEnabled = Boolean.parseBoolean(conf.get(JOB_CLEANER_ENABLED));
+
+    if (jobCleanerEnabled) {
+      tasks.add(new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory));
+    } else {
+      LOG.info("KubeJobCleaner is disabled.");
+    }
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
