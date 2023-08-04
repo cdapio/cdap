@@ -117,9 +117,16 @@ public interface MasterEnvironment {
   }
 
   /**
-   * Used to create a credential identity associated with a namespace.
+   * Used to create the credential identity associated with the namespace.
    */
   default void createIdentity(String namespace, String identity) throws Exception {
+    // no-op by default
+  }
+
+  /**
+   * Used to delete the credential identity associated with the namespace.
+   */
+  default void deleteIdentity(String namespace, String identity) throws Exception {
     // no-op by default
   }
 

@@ -343,10 +343,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     try {
       // if needed, run master environment specific logic if it is a non-default namespace (see below for more info)
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
-          && masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
-        masterEnv.onNamespaceDeletion(namespaceId.getNamespace(),
-            namespaceMeta.getConfig().getConfigs());
+      if (masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
+        if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)) {
+          masterEnv.onNamespaceDeletion(namespaceId.getNamespace(),
+              namespaceMeta.getConfig().getConfigs());
+        } else {
+          masterEnv.deleteIdentity(NamespaceId.DEFAULT.getNamespace(), namespaceMeta.getIdentity());
+        }
       }
 
       resourceDeleter.get().deleteResources(namespaceMeta);

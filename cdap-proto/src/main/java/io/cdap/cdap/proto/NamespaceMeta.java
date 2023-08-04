@@ -276,6 +276,7 @@ public final class NamespaceMeta {
     return "NamespaceMeta{"
         + "name='" + name + '\''
         + ", description='" + description + '\''
+        + ", identity=" + identity
         + ", generation=" + generation
         + ", config=" + config
         + '}';
