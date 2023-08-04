@@ -655,6 +655,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     prependConfig(configs, "spark.driver.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
     prependConfig(configs, "spark.executor.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
 
+    // In Spark v3.2.0 and later, max netty direct memory must be >= spark.network.maxRemoteBlockSizeFetchToMem
+    // See https://github.com/apache/spark/commit/00b63c8dc2170cfbc3f3ea7882dfd417d7fde744#.
+    // So we set max netty direct memory = spark.network.maxRemoteBlockSizeFetchToMem
+    // maxRemoteBlockSizeFetchToMem config is set in ETLSpark.java, DataStreamsSparkLauncher.java
+    String nettyMaxDirectMemory =
+        String.format("-D%s=%s", SparkRuntimeUtils.NETTY_MAX_DIRECT_MEMORY,
+            String.valueOf(Integer.MAX_VALUE - 512));
+    prependConfig(configs, "spark.executor.extraJavaOptions", nettyMaxDirectMemory, " ");
+
+
     // CDAP-5854: On Windows * is a reserved character which cannot be used in paths. So adding the below to
     // classpaths will fail. Please see CDAP-5854.
     // In local mode spark program runs under the same jvm as cdap master and these jars will already be in the

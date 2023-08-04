@@ -86,6 +86,9 @@ public final class SparkRuntimeUtils {
   public static final String SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED =
       "spark." + STREAMING_CHECKPOINT_REWRITE_ENABLED;
 
+  // Configuration option used to control Netty's maximum directory memory usage
+  public static final String NETTY_MAX_DIRECT_MEMORY = "io.netty.maxDirectMemory";
+
   private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
   private static final int CHUNK_SIZE = 1 << 15;  // 32K
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeUtils.class);
