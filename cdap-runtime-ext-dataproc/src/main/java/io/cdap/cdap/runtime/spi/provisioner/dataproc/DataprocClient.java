@@ -73,7 +73,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -585,12 +587,14 @@ abstract class DataprocClient implements AutoCloseable {
    * @param clusterName name of the cluster
    * @param labelsToSet Key/Value pairs to set on the Dataproc cluster.
    * @param labelsToRemove collection of labels to remove from the Dataproc cluster.
+   *
+   * @return future that would complete after label update is finished
    */
-  void updateClusterLabels(String clusterName,
+  Future<?> updateClusterLabels(String clusterName,
       Map<String, String> labelsToSet,
       Collection<String> labelsToRemove) throws RetryableProvisionException, InterruptedException {
     if (labelsToSet.isEmpty() && labelsToRemove.isEmpty()) {
-      return;
+      return CompletableFuture.completedFuture(null);
     }
     try {
       Cluster cluster = getDataprocCluster(clusterName)
@@ -605,7 +609,7 @@ abstract class DataprocClient implements AutoCloseable {
           .allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey())))
           && labelsToRemove.stream().noneMatch(existingLabels::containsKey)
       ) {
-        return;
+        return CompletableFuture.completedFuture(null);
       }
       Map<String, String> newLabels = new HashMap<>(existingLabels);
       newLabels.keySet().removeAll(labelsToRemove);
@@ -628,6 +632,7 @@ abstract class DataprocClient implements AutoCloseable {
         LOG.warn("Encountered {} warning {} while setting labels on cluster:\n{}",
             numWarnings, numWarnings > 1 ? "s" : "", String.join("\n", metadata.getWarningsList()));
       }
+      return operationFuture;
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
