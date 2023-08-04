@@ -508,7 +508,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
           .map(e -> e.getKey() + "=" + e.getValue())
           .collect(Collectors.joining(","));
 
-      V1PodList podList = coreApi.listNamespacedPod(podInfo.getNamespace(), null, null, null, null,
+      V1PodList podList = coreApi.listNamespacedPod(podInfo.getNamespace(), null, null, null,
+          "status.phase!=Failed",
           labelSelector, null, null, null, null, null);
       Set<String> activePods = podList.getItems().stream()
           .map(V1Pod::getMetadata)

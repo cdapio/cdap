@@ -185,7 +185,7 @@ abstract class DataprocClient implements AutoCloseable {
       metadata.putAll(conf.getClusterMetaData());
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-          .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
+          .addAllServiceAccountScopes(conf.getScopes())
           .setShieldedInstanceConfig(
               ShieldedInstanceConfig.newBuilder()
                   .setEnableSecureBoot(conf.isSecureBootEnabled())
@@ -313,8 +313,12 @@ abstract class DataprocClient implements AutoCloseable {
             .setGcePdKmsKeyName(conf.getEncryptionKeyName()).build());
       }
 
-      if (conf.getGcsBucket() != null) {
+      if (!Strings.isNullOrEmpty(conf.getGcsBucket())) {
         builder.setConfigBucket(conf.getGcsBucket());
+      }
+
+      if (!Strings.isNullOrEmpty(conf.getTempBucket())) {
+        builder.setTempBucket(conf.getTempBucket());
       }
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()

@@ -1218,6 +1218,32 @@
   </property>
 
   <property>
+    <name>data.storage.sql.jdbc.connection.pool.idle.size</name>
+    <value>5</value>
+    <description>
+      The max number of idle connections for the sql connection pool.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.connection.pool.idle.millis</name>
+    <value>300000</value>
+    <description>
+      The minimum amount of time a connection may sit idle in the pool
+      before it is eligible for eviction.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.connection.pool.idle.eviction.millis</name>
+    <value>180000</value>
+    <description>
+      The minimum amount of time to sleep between runs of the
+      idle connection eviction thread..
+    </description>
+  </property>
+
+  <property>
     <name>data.storage.sql.tx.runner.max.retries</name>
     <value>20</value>
     <description>
@@ -5177,15 +5203,6 @@
   </property>
 
   <property>
-    <name>task.worker.preload.artifacts</name>
-    <value></value>
-    <description>
-      A command separated list of system artifacts to be preloaded into each
-      task worker
-    </description>
-  </property>
-
-  <property>
     <name>task.worker.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -5428,55 +5445,6 @@
     <value>false</value>
     <description>
       If true, artifact localization will be enabled in system pods
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.container.num.cores</name>
-    <value>1</value>
-    <description>
-      Number of virtual cores for the task worker.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.container.memory.mb</name>
-    <value>100</value>
-    <description>
-      Memory in megabytes for each task worker.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.bind.port</name>
-    <value>11021</value>
-    <description>
-      The port to bind the artifact localizer service to.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.worker.threads</name>
-    <value>10</value>
-    <description>
-      The number of artifact localizer threads in the file localizer sidecar
-      container.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.boss.threads</name>
-    <value>1</value>
-    <description>
-      The number of boss threads for the artifact localizer.
-    </description>
-  </property>
-
-  <property>
-    <name>artifact.localizer.container.jvm.opts</name>
-    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
-    <description>
-      JVM opts for artifact localizer containers.
     </description>
   </property>
 
@@ -5957,6 +5925,98 @@
     <value>3600</value>
     <description>
       Scheduler interval for repository cleanup service, by default 1 hour
+    </description>
+  </property>
+
+<!--  Artifact localizer settings -->
+  <property>
+    <name>artifact.localizer.preload.list</name>
+    <value></value>
+    <description>
+      A command separated list of system artifacts to be preloaded in
+      artifact-localizer
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.preload.version.limit</name>
+    <value>2</value>
+    <description>
+      Count of latest versions to be preloaded in artifact-localizer
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.memory.mb</name>
+    <value>100</value>
+    <description>
+      Memory in megabytes for each task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.bind.port</name>
+    <value>11021</value>
+    <description>
+      The port to bind the artifact localizer service to.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of artifact localizer threads in the file localizer sidecar
+      container.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the artifact localizer.
+    </description>
+  </property>
+
+  <property>
+    <name>artifact.localizer.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for artifact localizer containers.
+    </description>
+  </property>
+
+  <!-- Configuration settings for KubeJobCleaner -->
+  <property>
+    <name>master.environment.k8s.job.cleaner.enabled</name>
+    <value>true</value>
+    <description>
+      If true, the KubeJobCleaner thread in appfabric will be enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.job.cleaner.interval.mins</name>
+    <value>60</value>
+    <description>
+      Interval in minutes after which the KubeJobCleaner thread runs.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.job.cleaner.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of jobs that will be cleaned by KubeJobCleaner per batch.
     </description>
   </property>
 

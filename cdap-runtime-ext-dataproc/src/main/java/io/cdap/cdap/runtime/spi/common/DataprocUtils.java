@@ -25,7 +25,6 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
@@ -41,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SplittableRandom;
@@ -125,7 +123,7 @@ public final class DataprocUtils {
    * @param bucket bucket
    * @param path dir path to delete
    */
-  public static void deleteGCSPath(Storage storageClient, String bucket, String path) {
+  public static void deleteGcsPath(Storage storageClient, String bucket, String path) {
     try {
       String bucketName = getBucketName(bucket);
       StorageBatch batch = storageClient.batch();
@@ -148,7 +146,7 @@ public final class DataprocUtils {
   }
 
   /**
-   * Removes prefix gs:// and returns bucket name
+   * Removes prefix gs:// and returns bucket name.
    */
   public static String getBucketName(String bucket) {
     if (bucket.startsWith(GS_PREFIX)) {
@@ -159,7 +157,7 @@ public final class DataprocUtils {
 
   /**
    * Utility class to parse the keyvalue string from UI Widget and return back HashMap. String is of
-   * format  <key><keyValueDelimiter><value><delimiter><key><keyValueDelimiter><value> eg:
+   * format  {@code <key><keyValueDelimiter><value><delimiter><key><keyValueDelimiter><value>} eg:
    * networktag1=out2internet;networktag2=priority The return from the method is a map with key
    * value pairs of (networktag1 out2internet) and (networktag2 priority)
    *
@@ -177,72 +175,17 @@ public final class DataprocUtils {
     }
     for (String property : configValue.split(delimiter)) {
       String[] parts = property.split(keyValueDelimiter, 2);
-      if (parts.length != 2) {
-        throw new IllegalArgumentException("Invalid KeyValue " + property);
-      }
-      String key = parts[0];
-      String value = parts[1];
+      String key = parts[0].trim();
+      String value = parts.length > 1 ? parts[1].trim() : "";
       map.put(key, value);
     }
     return map;
   }
 
   /**
-   * Parses labels that are expected to be of the form key1=val1,key2=val2 into a map of key
-   * values.
-   * <p>
-   * If a label key or value is invalid, a message will be logged but the key-value will not be
-   * returned in the map. Keys and values cannot be longer than 63 characters. Keys and values can
-   * only contain lowercase letters, numeric characters, underscores, and dashes. Keys must start
-   * with a lowercase letter and must not be empty.
-   * <p>
-   * If a label is given without a '=', the label value will be empty. If a label is given as
-   * 'key=', the label value will be empty. If a label has multiple '=', it will be ignored. For
-   * example, 'key=val1=val2' will be ignored.
-   *
-   * @param labelsStr the labels string to parse
-   * @return valid labels from the parsed string
-   */
-  public static Map<String, String> parseLabels(String labelsStr) {
-    Splitter labelSplitter = Splitter.on(',').trimResults().omitEmptyStrings();
-    Splitter kvSplitter = Splitter.on('=').trimResults().omitEmptyStrings();
-
-    Map<String, String> validLabels = new HashMap<>();
-    for (String keyvalue : labelSplitter.split(labelsStr)) {
-      Iterator<String> iter = kvSplitter.split(keyvalue).iterator();
-      if (!iter.hasNext()) {
-        continue;
-      }
-      String key = iter.next();
-      String val = iter.hasNext() ? iter.next() : "";
-      if (iter.hasNext()) {
-        LOG.warn("Ignoring invalid label {}. Labels should be of the form 'key=val' or just 'key'",
-            keyvalue);
-        continue;
-      }
-      if (!LABEL_KEY_PATTERN.matcher(key).matches()) {
-        LOG.warn(
-            "Ignoring invalid label key {}. Label keys cannot be longer than 63 characters, must start with "
-                + "a lowercase letter, and can only contain lowercase letters, numeric characters, underscores,"
-                + " and dashes.", key);
-        continue;
-      }
-      if (!LABEL_VAL_PATTERN.matcher(val).matches()) {
-        LOG.warn(
-            "Ignoring invalid label value {}. Label values cannot be longer than 63 characters, "
-                + "and can only contain lowercase letters, numeric characters, underscores, and dashes.",
-            val);
-        continue;
-      }
-      validLabels.put(key, val);
-    }
-    return validLabels;
-  }
-
-  /**
    * Parses the given list of IP CIDR blocks into list of {@link IPRange}.
    */
-  public static List<IPRange> parseIPRanges(List<String> ranges) {
+  public static List<IPRange> parseIpRanges(List<String> ranges) {
     return ranges.stream().map(IPRange::new).collect(Collectors.toList());
   }
 
@@ -402,17 +345,17 @@ public final class DataprocUtils {
     throw new RuntimeException(String.format(errorMessageOnFailure, file), exception);
   }
 
-  public static void setTemporaryHoldOnGCSObject(Storage storage, String bucket, Blob blob,
+  public static void setTemporaryHoldOnGcsObject(Storage storage, String bucket, Blob blob,
       String targetFilePath) throws InterruptedException {
-    updateTemporaryHoldOnGCSObject(storage, bucket, blob, blob.getBlobId(), targetFilePath, true);
+    updateTemporaryHoldOnGcsObject(storage, bucket, blob, blob.getBlobId(), targetFilePath, true);
   }
 
-  public static void removeTemporaryHoldOnGCSObject(Storage storage, String bucket, BlobId blobId,
+  public static void removeTemporaryHoldOnGcsObject(Storage storage, String bucket, BlobId blobId,
       String targetFilePath) throws InterruptedException {
-    updateTemporaryHoldOnGCSObject(storage, bucket, null, blobId, targetFilePath, false);
+    updateTemporaryHoldOnGcsObject(storage, bucket, null, blobId, targetFilePath, false);
   }
 
-  private static void updateTemporaryHoldOnGCSObject(Storage storage, String bucket,
+  private static void updateTemporaryHoldOnGcsObject(Storage storage, String bucket,
       @Nullable Blob blob, BlobId blobId,
       String targetFilePath,
       boolean temporaryHold) throws InterruptedException {
@@ -450,12 +393,12 @@ public final class DataprocUtils {
     }
   }
 
-  public static String getTroubleshootingHelpMessage(@Nullable String troubleshootingDocsURL) {
-    if (Strings.isNullOrEmpty(troubleshootingDocsURL)) {
+  public static String getTroubleshootingHelpMessage(@Nullable String troubleshootingDocsUrl) {
+    if (Strings.isNullOrEmpty(troubleshootingDocsUrl)) {
       return "";
     }
     return String.format("For troubleshooting Dataproc errors, refer to %s",
-        troubleshootingDocsURL);
+        troubleshootingDocsUrl);
   }
 
   private DataprocUtils() {

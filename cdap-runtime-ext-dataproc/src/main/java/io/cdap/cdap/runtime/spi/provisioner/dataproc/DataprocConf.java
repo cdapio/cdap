@@ -64,7 +64,11 @@ final class DataprocConf {
   // Dataproc will pass it to GCE when creating the GCE cluster.
   // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
   static final String SERVICE_ACCOUNT = "serviceAccount";
+  static final String SCOPES = "scopes";
   static final String ROOT_URL = "root.url";
+
+  static final String GCS_BUCKET = "gcsBucket";
+  static final String TEMP_BUCKET = "tempBucket";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -137,6 +141,7 @@ final class DataprocConf {
 
   private final String encryptionKeyName;
   private final String gcsBucket;
+  private final String tempBucket;
 
   private final String serviceAccount;
   private final boolean preferExternalIp;
@@ -149,6 +154,7 @@ final class DataprocConf {
   private final Map<String, String> clusterMetaData;
   private final Map<String, String> clusterLabels;
   private final List<String> networkTags;
+  private final List<String> scopes;
   private final String initActions;
   private final String autoScalingPolicy;
   private final int idleTtlMinutes;
@@ -188,13 +194,14 @@ final class DataprocConf {
       int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
-      @Nullable String serviceAccount, boolean preferExternalIp, boolean stackdriverLoggingEnabled,
-      boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable, boolean skipDelete,
+      @Nullable String tempBucket, @Nullable String serviceAccount, boolean preferExternalIp,
+      boolean stackdriverLoggingEnabled, boolean stackdriverMonitoringEnabled,
+      boolean componentGatewayEnable, boolean skipDelete,
       @Nullable String imageVersion,
       @Nullable String customImageUri,
       @Nullable Map<String, String> clusterMetaData,
       @Nullable Map<String, String> clusterLabels, List<String> networkTags,
-      @Nullable String initActions, boolean runtimeJobManagerEnabled,
+      List<String> scopes, @Nullable String initActions, boolean runtimeJobManagerEnabled,
       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTtlMinutes,
       @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
       boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
@@ -207,6 +214,8 @@ final class DataprocConf {
     this.region = region;
     this.zone = zone;
     this.projectId = projectId;
+    this.tempBucket = tempBucket;
+    this.scopes = scopes;
     this.clusterReuseEnabled = clusterReuseEnabled;
     this.clusterReuseThresholdMinutes = clusterReuseThresholdMinutes;
     this.clusterReuseRetryDelayMs = clusterReuseRetryDelayMs;
@@ -379,6 +388,11 @@ final class DataprocConf {
   }
 
   @Nullable
+  String getTempBucket() {
+    return tempBucket;
+  }
+
+  @Nullable
   String getServiceAccount() {
     return serviceAccount;
   }
@@ -413,6 +427,10 @@ final class DataprocConf {
 
   List<String> getNetworkTags() {
     return Collections.unmodifiableList(networkTags);
+  }
+
+  List<String> getScopes() {
+    return Collections.unmodifiableList(scopes);
   }
 
   List<String> getInitActions() {
@@ -682,7 +700,8 @@ final class DataprocConf {
     final String imageVersion = getString(properties, IMAGE_VERSION);
     final String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
     final String gcpCmekKeyName = getString(properties, ENCRYPTION_KEY_NAME);
-    final String gcpCmekBucket = getString(properties, "gcsBucket");
+    final String gcpCmekBucket = getString(properties, GCS_BUCKET);
+    final String tempBucket = getString(properties, TEMP_BUCKET);
 
     final Map<String, String> clusterMetaData = Collections.unmodifiableMap(
         DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_META_DATA), ";", "\\|"));
@@ -759,6 +778,15 @@ final class DataprocConf {
         properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
             DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
 
+    final String scopesProperty = String.format("%s,%s",
+        Optional.ofNullable(getString(properties, SCOPES)).orElse(""), CLOUD_PLATFORM_SCOPE);
+    List<String> scopes = Collections.unmodifiableList(
+        Arrays.stream(scopesProperty.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .distinct()
+            .collect(Collectors.toList()));
+
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectId, network,
         subnet,
         masterNumNodes, masterCpus, masterMemoryMb, masterDiskGb,
@@ -766,11 +794,11 @@ final class DataprocConf {
         workerNumNodes, secondaryWorkerNumNodes, workerCpus, workerMemoryMb, workerDiskGb,
         workerDiskType, workerMachineType,
         pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-        gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIp,
+        gcpCmekKeyName, gcpCmekBucket, tempBucket, serviceAccount, preferExternalIp,
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
         componentGatewayEnabled, skipDelete,
         imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
-        initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTtl,
+        scopes, initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTtl,
         tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
         clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseRetryDelayMs,
         clusterReuseRetryMaxMs, clusterReuseUpdateMaxMs, clusterReuseKey,

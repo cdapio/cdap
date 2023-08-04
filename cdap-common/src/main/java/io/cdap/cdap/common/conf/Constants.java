@@ -491,7 +491,6 @@ public final class Constants {
     public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
     public static final String POOL_ENABLE = "task.worker.pool.enable";
     public static final String COMPRESSION_ENABLED = "task.worker.compression.enabled";
-    public static final String PRELOAD_ARTIFACTS = "task.worker.preload.artifacts";
 
     /**
      * Task worker container configurations.
@@ -593,6 +592,8 @@ public final class Constants {
     public static final String PORT = "artifact.localizer.bind.port";
     public static final String BOSS_THREADS = "artifact.localizer.boss.threads";
     public static final String WORKER_THREADS = "artifact.localizer.worker.threads";
+    public static final String PRELOAD_LIST = "artifact.localizer.preload.list";
+    public static final String PRELOAD_VERSION_LIMIT = "artifact.localizer.preload.version.limit";
   }
 
   /**
@@ -723,6 +724,12 @@ public final class Constants {
     public static final String DATA_STORAGE_SQL_JDBC_CONNECTION_URL = "data.storage.sql.jdbc.connection.url";
     public static final String DATA_STORAGE_SQL_PROPERTY_PREFIX = "data.storage.sql.jdbc.property.";
     public static final String DATA_STORAGE_SQL_CONNECTION_SIZE = "data.storage.sql.jdbc.connection.pool.size";
+    public static final String DATA_STORAGE_SQL_CONNECTION_IDLE_SIZE =
+        "data.storage.sql.jdbc.connection.pool.idle.size";
+    public static final String DATA_STORAGE_SQL_CONNECTION_IDLE_MILLIS =
+        "data.storage.sql.jdbc.connection.pool.idle.millis";
+    public static final String DATA_STORAGE_SQL_CONNECTION_IDLE_EVICTION_MILLIS =
+        "data.storage.sql.jdbc.connection.pool.idle.eviction.millis";
     public static final String DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS = "data.storage.sql.scan.size.rows";
     public static final String DATA_STORAGE_SQL_TRANSACTION_RUNNER_MAX_RETRIES =
         "data.storage.sql.tx.runner.max.retries";

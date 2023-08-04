@@ -207,7 +207,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
       // Reload system context properties and get system labels
       Map<String, String> labels = new HashMap<>();
-      labels.putAll(getSystemLabels());
+      labels.putAll(getCommonDataprocLabels(context));
       labels.putAll(getReuseLabels(context, conf));
       labels.putAll(conf.getClusterLabels());
       LOG.info(
