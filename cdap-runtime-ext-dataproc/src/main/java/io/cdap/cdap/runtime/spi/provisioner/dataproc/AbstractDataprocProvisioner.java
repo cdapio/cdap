@@ -284,7 +284,12 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     // specified in cdap-site. This is to ensure consistent delimiters for
     // provisioner properties.
     String provisionerLabelsStr = provisionerContext.getProperties().get(LABELS_PROPERTY);
-    labels.putAll(DataprocUtils.parseKeyValueConfig(provisionerLabelsStr, ";", "\\|"));
+    // the UI never sends nulls, it only sends empty strings. We need to ignore
+    // both null and empty strings.
+    if (!Strings.isNullOrEmpty(provisionerLabelsStr)) {
+      labels.putAll(
+          DataprocUtils.parseLabels(provisionerLabelsStr, ";", "|"));
+    }
 
     // Add system labels.
     ProvisionerSystemContext systemContext = getSystemContext();
@@ -295,7 +300,9 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
 
     // labels are expected to be in format:
     // name1=val1,name2=val2
-    labels.putAll(DataprocUtils.parseKeyValueConfig(extraLabelsStr, ",", "="));
+    if (extraLabelsStr != null) {
+      labels.putAll(DataprocUtils.parseLabels(extraLabelsStr, ",", "="));
+    }
     return Collections.unmodifiableMap(labels);
   }
 
