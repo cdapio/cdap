@@ -24,6 +24,7 @@ import io.cdap.cdap.master.spi.MasterOptionConstants;
  */
 public final class ProgramOptionConstants {
 
+  public static final String USE_CONFIGMAP = "useConfigMap";
   public static final String PROGRAM_JAR = "programJar";
 
   public static final String CDAP_CONF_FILE = "cConfFile";

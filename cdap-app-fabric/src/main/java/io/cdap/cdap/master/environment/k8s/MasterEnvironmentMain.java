@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.app.MainClassLoader;
@@ -26,6 +27,8 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
+import io.cdap.cdap.common.guice.preview.InternalRouterClientModule;
 import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -52,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -114,6 +118,7 @@ public class MasterEnvironmentMain {
       if (cConfFile.exists()) {
         cConf.addResource(cConfFile.toURI().toURL());
       }
+      LOG.error("Arjan property check: {}", cConf.get("arjan-prop"));
       SConfiguration sConf = SConfiguration.create();
       File sConfFile = new File("sConf.xml");
       if (sConfFile.exists()) {
@@ -142,10 +147,11 @@ public class MasterEnvironmentMain {
                   + MasterEnvironmentRunnable.class);
         }
 
-        RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-            masterEnv.getDiscoveryServiceClientSupplier().get(),
-            getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
-
+        RemoteClientFactory remoteClientFactory = getRemoteClientFactory(
+            cConf,
+            getInternalAuthenticator(cConf),
+            getRemoteAuthenticator(cConf),
+            masterEnv);
         MasterEnvironmentRunnableContext runnableContext =
             new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(),
                 remoteClientFactory, cConf);
@@ -215,6 +221,25 @@ public class MasterEnvironmentMain {
         RemoteAuthenticatorModules.getDefaultModule()
     );
     return injector.getInstance(RemoteAuthenticator.class);
+  }
+
+  private static RemoteClientFactory getRemoteClientFactory(CConfiguration cConf,
+      InternalAuthenticator internalAuthenticator,
+      RemoteAuthenticator remoteAuthenticator,
+      MasterEnvironment masterEnv) {
+    Injector injector = Guice.createInjector(
+        new InternalRouterClientModule(cConf),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(InternalAuthenticator.class).toInstance(internalAuthenticator);
+            bind(RemoteAuthenticator.class).toInstance(remoteAuthenticator);
+            bind(DiscoveryServiceClient.class).toProvider(new SupplierProviderBridge<>(
+                masterEnv.getDiscoveryServiceClientSupplier()));
+          }
+        }
+    );
+    return injector.getInstance(RemoteClientFactory.class);
   }
 }
 

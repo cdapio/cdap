@@ -2406,4 +2406,12 @@ public final class Constants {
         "source.control.repository.cleanup.interval.seconds";
     public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
   }
+
+  /**
+   * Constants for Internal Router Service.
+   */
+  public static final class InternalRouter {
+
+    public static final String USE_INTERNAL_ROUTER = "internal.router.use";
+  }
 }

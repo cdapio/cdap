@@ -208,6 +208,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
   private Map<String, String> annotations;
+  private boolean useConfigMap;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -394,6 +395,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   public TwillPreparer withConfiguration(Map<String, String> config) {
     if (config.containsKey(KubeMasterEnvironment.NAMESPACE_PROPERTY)) {
       programRuntimeNamespace = config.get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+    }
+    if ("true".equals(config.get("useConfigMap"))) {
+      useConfigMap = true;
+      LOG.error("Arjan property set.");
     }
     if (config.containsKey(
         KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY)) {
@@ -653,7 +658,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             statefulRunnable);
       }
 
-      if (!isSystemNamespace(cdapRuntimeNamespace) && obj != null) {
+      if ((!isSystemNamespace(cdapRuntimeNamespace) || useConfigMap) && obj != null) {
         // We only create a per-run configmap new user programs didn't already exist
         createConfigMap(obj);
       }
@@ -1067,7 +1072,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           k -> new ArrayList<>());
 
       for (LocalFile localFile : entry.getValue().getLocalFiles()) {
-        if (localFile.getName().endsWith(".xml") && !isSystemNamespace(cdapRuntimeNamespace)) {
+        if (localFile.getName().endsWith(".xml") && (!isSystemNamespace(cdapRuntimeNamespace) || useConfigMap)) {
           // Skip over xml config files as they are stored on the per-run configmap for user programs
           continue;
         }
@@ -1156,10 +1161,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       volumes.addAll(podInfo.getVolumes());
     } else {
       // Add secrets and configmap volume containing localized config files for user program runs
+      volumes.addAll(secretVolumes);
+    }
+    if (!isSystemNamespace(cdapRuntimeNamespace) || useConfigMap){
+      // Add secrets and configmap volume containing localized config files for user program runs
       V1Volume configMapVolume = new V1Volume().name(configMapName)
           .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build());
       volumes.add(configMapVolume);
-      volumes.addAll(secretVolumes);
     }
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
@@ -1186,15 +1194,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       volumeMounts.addAll(podInfo.getContainerVolumeMounts());
     } else {
       // For user programs, mount secrets and localized per-run config files
-      volumeMounts.add(new V1VolumeMountBuilder()
-          .withName(configMapName)
-          .withMountPath(CONFIGMAP_MOUNTPATH)
-          .build());
-
       Set<String> secretVolumeNames = secretVolumes.stream().map(V1Volume::getName)
           .collect(Collectors.toSet());
       podInfo.getContainerVolumeMounts().stream()
           .filter(m -> secretVolumeNames.contains(m.getName())).forEach(volumeMounts::add);
+    }
+    if (!isSystemNamespace(cdapRuntimeNamespace) || useConfigMap) {
+      volumeMounts.add(new V1VolumeMountBuilder()
+          .withName(configMapName)
+          .withMountPath(CONFIGMAP_MOUNTPATH)
+          .build());
     }
     volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
         .mountPath(podInfo.getPodInfoDir()).readOnly(true));
@@ -1235,7 +1244,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
 
     List<String> containerArgs = new ArrayList<>(args);
-    if (!isSystemNamespace(cdapRuntimeNamespace)) {
+    if (!isSystemNamespace(cdapRuntimeNamespace) || useConfigMap) {
       // Pass the per-run configmap mount path to MasterEnvironmentMain as extraConfPath arg
       containerArgs.add(String.format("--conf=%s", CONFIGMAP_MOUNTPATH));
     }

@@ -38,6 +38,7 @@ import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
@@ -47,6 +48,7 @@ import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
+import io.cdap.cdap.common.guice.preview.InternalRouterClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -212,6 +214,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(RemoteAuthenticatorModules.getDefaultModule());
     modules.add(new PreviewConfigModule(cConf, hConf, sConf));
     modules.add(new IOModule());
+    modules.add(new InternalRouterClientModule(cConf));
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();

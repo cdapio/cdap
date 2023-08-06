@@ -17,10 +17,11 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequestConfig;
-import javax.inject.Inject;
+import javax.inject.Named;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
@@ -31,11 +32,12 @@ public class RemoteClientFactory {
   public static final HttpRequestConfig NO_VERIFY_HTTP_REQUEST_CONFIG = new HttpRequestConfig(15000,
       15000,
       false);
+  public static final String USE_INTERNAL_ROUTER = "useInternalRouter";
   private final DiscoveryServiceClient discoveryClient;
   private final InternalAuthenticator internalAuthenticator;
   private final RemoteAuthenticator remoteAuthenticator;
   private final String pathPrefix;
-  private final boolean shouldUseInternalRouter;
+  private boolean useInternalRouter = false;
 
   @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
@@ -50,6 +52,11 @@ public class RemoteClientFactory {
     this(discoveryClient, internalAuthenticator, remoteAuthenticator, "");
   }
 
+  @Inject(optional=true)
+  public void setUseInternalRouter(@Named(USE_INTERNAL_ROUTER) boolean useInternalRouter) {
+    this.useInternalRouter = useInternalRouter;
+  }
+
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
       InternalAuthenticator internalAuthenticator,
       RemoteAuthenticator remoteAuthenticator, String pathPrefix) {
@@ -57,7 +64,6 @@ public class RemoteClientFactory {
     this.internalAuthenticator = internalAuthenticator;
     this.remoteAuthenticator = remoteAuthenticator;
     this.pathPrefix = pathPrefix;
-    this.shouldUseInternalRouter = MasterEnvironments.isInternalRouterEnabled(); // Adds Dependency on cdap-appfabric!
   }
 
   public RemoteClient createRemoteClient(String discoverableServiceName,
@@ -66,7 +72,7 @@ public class RemoteClientFactory {
     basePath = basePath.startsWith("/") ? pathPrefix + basePath : pathPrefix + "/" + basePath;
     String serviceToDiscover;
     String finalBasePath;
-    if (System.getProperty(ENABLE_INTERNAL_ROUTER) != null) {
+    if (useInternalRouter) {
       System.out.println("Routing service through the internal router: " + discoverableServiceName);
       serviceToDiscover = Service.INTERNAL_ROUTER;
       finalBasePath = String.format("/v3Internal/router/services/%s%s",

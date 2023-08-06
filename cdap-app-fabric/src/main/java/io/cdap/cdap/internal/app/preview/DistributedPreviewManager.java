@@ -25,6 +25,7 @@ import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -168,6 +169,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             // TODO: CDAP-18768 this will break preview when certificate checking is enabled.
             cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
           }
+          // TODO: Set this base on a cConf property.
+          cConfCopy.setBoolean(InternalRouter.USE_INTERNAL_ROUTER, true);
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);
           }
@@ -204,6 +207,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           Map<String, String> configMap = new HashMap<>();
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
               NamespaceId.SYSTEM.getNamespace());
+          configMap.put(ProgramOptionConstants.USE_CONFIGMAP, "true");
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
