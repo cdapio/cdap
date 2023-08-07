@@ -793,6 +793,15 @@ public class ServerlessDataprocRuntimeJobManager implements RuntimeJobManager {
     properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
     properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
     properties.put(CDAP_RUNTIME_RUNID, runInfo.getRun());
+
+    // TODO : TESTING for error :
+    //  com.google.cloud.spark.performance.DataprocMetricsListener
+    //  is not a subclass of org.apache.spark.scheduler.SparkListenerInterface.
+    // https://cloud.google.com/dataproc/docs/release-notes#April_11_2022
+    // dataproc.performance.metrics.listener.enabled
+    // spark.extraListeners -> com.google.cloud.spark.performance.DataprocMetricsListener
+    properties.put("spark.extraListeners","");
+
     return properties;
   }
 

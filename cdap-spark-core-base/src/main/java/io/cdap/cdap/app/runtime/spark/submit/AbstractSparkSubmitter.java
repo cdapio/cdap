@@ -57,7 +57,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkSubmitter.class);
 
   // Transforms LocalizeResource to URI string
-  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = input -> input.getURI().toString();
+  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH =
+    input -> input.getURI().toString().split("#")[0];
 
   @Override
   public final <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
@@ -207,6 +208,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   }
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
   protected void addMasterPOC(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
+    LOG.warn("SANKET here in add master");
     // Use at least two threads for Spark Streaming
     String masterArg = "local[2]";
 
@@ -240,7 +242,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     Iterable<LocalizeResource> archivesIterable = getArchives(resources);
     Iterable<LocalizeResource> filesIterable = getFiles(resources);
 
-    addMasterPOC(configs, builder);
+//    addMasterPOC(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     configs.putAll(generateSubmitConf());
@@ -248,7 +250,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     configs.forEach(confAdder);
 
     String archives = Joiner.on(',').join(Iterables.transform(archivesIterable, RESOURCE_TO_PATH));
+    LOG.warn(" SANKET : archives : {}", archives);
     String files = Joiner.on(',').join(Iterables.transform(filesIterable, RESOURCE_TO_PATH));
+
+    LOG.warn(" SANKET : files : {}", files);
 
     if (!Strings.isNullOrEmpty(archives)) {
       builder.add("--archives").add(archives);
