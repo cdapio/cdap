@@ -486,12 +486,19 @@ public class DataprocProvisionerTest {
     context.addProperty("labels", "user|cdap;program|data-pipeline");
     Map<String, String> labels = provisioner.getCommonDataprocLabels(context);
     // Check that the value from system context has overwritten the provisioner context.
-    Assert.assertEquals(labels.get("user"), "system");
+    Assert.assertEquals("system", labels.get("user"));
     // Check that the CDAP version is set by system context.
-    Assert.assertEquals(labels.get("cdap-version"), "6_4");
+    Assert.assertEquals("6_4", labels.get("cdap-version"));
     // Check that the non-overwritten value from user context is present.
-    Assert.assertEquals(labels.get("program"), "data-pipeline");
+    Assert.assertEquals("data-pipeline", labels.get("program"));
     // Check that the unique value from system context is present.
-    Assert.assertEquals(labels.get("system-prop"), "value");
+    Assert.assertEquals("value", labels.get("system-prop"));
+  }
+
+  @Test
+  public void testCommonDataprocLabelsInvalidLabel() {
+    context.addProperty("labels", "email|user@cdapio");
+    Map<String, String> labels = provisioner.getCommonDataprocLabels(context);
+    Assert.assertNull(labels.get("email"));
   }
 }
