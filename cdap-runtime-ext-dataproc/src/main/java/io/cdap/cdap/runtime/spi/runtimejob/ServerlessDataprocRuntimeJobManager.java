@@ -349,7 +349,7 @@ public class ServerlessDataprocRuntimeJobManager implements RuntimeJobManager {
       String errorMessage = String.format("Error while launching job %s on cluster %s.",
           getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
-      DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
+      DataprocUtils.deleteGcsPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
           "provisioner.submitJob.response.count", e);
       // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
@@ -801,6 +801,7 @@ public class ServerlessDataprocRuntimeJobManager implements RuntimeJobManager {
     // dataproc.performance.metrics.listener.enabled
     // spark.extraListeners -> com.google.cloud.spark.performance.DataprocMetricsListener
     properties.put("spark.extraListeners","");
+    properties.put("spark.dynamicAllocation.minExecutors","2");
 
     return properties;
   }

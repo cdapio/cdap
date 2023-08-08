@@ -173,7 +173,7 @@ public class ServerlessDataprocProvisioner extends AbstractDataprocProvisioner {
         conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
       //TODO figure out bucket usage
 
-      Map<String, String> systemLabels = getSystemLabels();
+      Map<String, String> systemLabels = getCommonDataprocLabels(context);
       LOG.warn(" SANKET : in  : getRuntimeJobManager 4: bucket : {} ",bucket );
       bucket = "serverlessdataproc" ; //TODO HARDCODED
       return Optional.of(
