@@ -63,7 +63,6 @@ import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -223,7 +222,8 @@ public class SourceControlManagementService {
     applicationIds.add(new ApplicationId(appRef.getParent().getNamespace(), appRef.getApplication()));
 
     PushAppResponse pushResponse = sourceControlOperationRunner.multipush(
-      new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, , commitMeta)
+      new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta),
+        null
     );
 
     LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
