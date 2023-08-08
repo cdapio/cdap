@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -227,8 +228,8 @@ public class RepositoryManager implements AutoCloseable {
    * @throws SourceControlException   when failed to get the fileHash before
    *                                  push
    */
-  public String commitAndPush(final CommitMeta commitMeta,
-      final Path fileChanged)
+  public Map<Path, String> commitAndPush(final CommitMeta commitMeta,
+      final List<Path> filesChanged)
       throws NoChangesToPushException, GitAPIException {
     validateInitialized();
     final Stopwatch stopwatch = new Stopwatch().start();
@@ -240,24 +241,30 @@ public class RepositoryManager implements AutoCloseable {
           "No changes have been made for the applications to push.");
     }
 
-    git.add().addFilepattern(fileChanged.toString()).call();
+
+    for (Path fileChanged : filesChanged) {
+      git.add().addFilepattern(fileChanged.toString()).call();
+    }
 
     RevCommit commit = getCommitCommand(commitMeta).call();
 
-    String fileHash;
-    try {
-      fileHash = getFileHash(fileChanged, commit);
-    } catch (IOException e) {
-      throw new GitOperationException(
-          String.format("Failed to get fileHash for %s", fileChanged),
-          e);
-    }
+    Map<Path, String> fileHashes = new HashMap<>();
 
-    if (fileHash == null) {
-      throw new SourceControlException(
-          String.format(
-              "Failed to get fileHash for %s, because the path is not "
-                  + "found in Git tree", fileChanged));
+    for (Path fileChanged : filesChanged) {
+      try {
+        String fileHash = getFileHash(fileChanged, commit);
+        if (fileHash == null) {
+          throw new SourceControlException(
+              String.format(
+                  "Failed to get fileHash for %s, because the path is not "
+                      + "found in Git tree", fileChanged));
+        }
+        fileHashes.put(fileChanged, fileHash);
+      } catch (IOException e) {
+        throw new GitOperationException(
+            String.format("Failed to get fileHash for %s", fileChanged),
+            e);
+      }
     }
 
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig,
@@ -269,7 +276,7 @@ public class RepositoryManager implements AutoCloseable {
         if (rru.getStatus() != RemoteRefUpdate.Status.OK
             && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
           throw new GitOperationException(
-              String.format("Push failed for %s: %s", fileChanged,
+              String.format("Push failed for %s: %s", filesChanged,
                   rru.getStatus()));
         }
       }
@@ -278,7 +285,7 @@ public class RepositoryManager implements AutoCloseable {
     metricsContext.event(
         SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS,
         stopwatch.stop().elapsedTime(TimeUnit.MILLISECONDS));
-    return fileHash;
+    return fileHashes;
   }
 
   private CommitCommand getCommitCommand(final CommitMeta commitMeta) {

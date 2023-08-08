@@ -27,6 +27,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -118,6 +119,23 @@ public class RemoteSourceControlOperationRunner extends
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), RepositoryAppsResponse.class);
     } catch (RemoteExecutionException e) {
       throw propagateRemoteException(e, notFoundExceptionProvider, authConfigExceptionProvider);
+    } catch (Exception ex) {
+      throw new SourceControlException(ex.getMessage(), ex);
+    }
+  }
+
+  @Override
+  public PushAppResponse multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
+      RemoteClient remoteClient) throws NoChangesToPushException, AuthenticationConfigException {
+    try {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
+          .withParam(GSON.toJson(multiPushAppOperationRequest)).build();
+
+      // LOG.trace("Pushing application {} to linked repository", mu.getApp());
+      byte[] result = remoteTaskExecutor.runTask(request);
+      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppResponse.class);
+    } catch (RemoteExecutionException e) {
+      throw propagateRemoteException(e, noChangeToPushExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }

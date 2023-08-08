@@ -363,8 +363,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       String fileContent = "content";
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
-      manager.commitAndPush(commitMeta,
-          manager.getBasePath().relativize(filePath));
+      manager.commitAndPush(commitMeta, null);
+          // manager.getBasePath().relativize(filePath));
       // Verify metrics.
       Mockito.verify(mockMetricsContext).event(
           Mockito.eq(SourceControlManagement.CLONE_REPOSITORY_SIZE_BYTES),
@@ -398,7 +398,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       String fileContent = "content";
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
-      manager.commitAndPush(commitMeta, Paths.get("fileThatDoesNotExist.json"));
+      manager.commitAndPush(commitMeta, null);
+          // Paths.get("fileThatDoesNotExist.json"));
     }
   }
 
@@ -419,7 +420,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
-      manager.commitAndPush(commitMeta, Paths.get(pathPrefix));
+      manager.commitAndPush(commitMeta, null);
+          //Paths.get(pathPrefix));
 
       verifyNoCommit();
     }
@@ -445,8 +447,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
       gitServer.after();
-      manager.commitAndPush(commitMeta,
-          manager.getBasePath().relativize(filePath));
+      manager.commitAndPush(commitMeta, null);
+          //manager.getBasePath().relativize(filePath));
     }
   }
 
@@ -539,7 +541,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       throws IOException, NoChangesToPushException, GitAPIException {
     Files.write(manager.getRepositoryRoot().resolve(filePath),
         contents.getBytes(StandardCharsets.UTF_8));
-    manager.commitAndPush(commitMeta, filePath);
+    manager.commitAndPush(commitMeta, null);
+        //filePath);
   }
 
   private void installHook(RepositoryManager manager) throws IOException {

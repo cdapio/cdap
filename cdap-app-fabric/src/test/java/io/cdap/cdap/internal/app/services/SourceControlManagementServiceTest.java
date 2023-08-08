@@ -27,6 +27,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -49,6 +50,7 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
@@ -497,6 +499,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     @Override
     public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository)
         throws AuthenticationConfigException, NotFoundException {
+      return null;
+    }
+
+    @Override
+    public PushAppResponse multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
+        RemoteClient remoteClient) throws NoChangesToPushException, AuthenticationConfigException {
       return null;
     }
 
