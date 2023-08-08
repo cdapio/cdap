@@ -48,10 +48,10 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
@@ -62,6 +62,9 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,8 +219,11 @@ public class SourceControlManagementService {
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.push(
-      new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
+    List<ApplicationId> applicationIds = new ArrayList<>();
+    applicationIds.add(new ApplicationId(appRef.getParent().getNamespace(), appRef.getApplication()));
+
+    PushAppResponse pushResponse = sourceControlOperationRunner.multipush(
+      new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, , commitMeta)
     );
 
     LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
