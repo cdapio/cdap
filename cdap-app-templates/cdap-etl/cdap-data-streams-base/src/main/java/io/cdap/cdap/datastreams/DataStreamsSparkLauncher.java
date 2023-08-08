@@ -79,7 +79,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
   @Override
   public void initialize() throws Exception {
     SparkClientContext context = getContext();
-    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
+    String arguments =
+        Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
     WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
                        context.getApplicationSpecification().getName(),
                        UserGroupInformation.getCurrentUser().getShortUserName(),
@@ -126,16 +127,25 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
       }
     }
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
-    sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
-    sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
+    sparkConf.set(
+        "spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
+    String maxFetchSize = String.valueOf(Integer.MAX_VALUE - 512);
+    sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", maxFetchSize);
 
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
     // so... we have to set this hacky master variable based on the isUnitTest setting in the config
     String extraOpts = spec.getExtraJavaOpts();
+    // In Spark v3.2.0 and later, max netty direct memory must be
+    // >= spark.network.maxRemoteBlockSizeFetchToMem for executors.
+    // So we set max netty direct memory = spark.network.maxRemoteBlockSizeFetchToMem
+    // See CDAP-20758 for details.
+    String nettyMaxDirectMemory = String.format("-Dio.netty.maxDirectMemory=%s", maxFetchSize);
     if (extraOpts != null && !extraOpts.isEmpty()) {
       sparkConf.set("spark.driver.extraJavaOptions", extraOpts);
-      sparkConf.set("spark.executor.extraJavaOptions", extraOpts);
+      sparkConf.set("spark.executor.extraJavaOptions", nettyMaxDirectMemory + " " + extraOpts);
+    } else {
+      sparkConf.set("spark.executor.extraJavaOptions", nettyMaxDirectMemory);
     }
     // without this, stopping will hang on machines with few cores.
     sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
@@ -155,8 +165,11 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
         try {
           int numExecutors = Integer.parseInt(property.getValue());
           if (numExecutors < minExecutors) {
-            LOG.warn("Number of executors {} is less than the minimum number required to run the pipeline. "
-                       + "Automatically increasing it to {}", numExecutors, minExecutors);
+            LOG.warn(
+                "Number of executors {} is less than the minimum number required to run the"
+                    + " pipeline. Automatically increasing it to {}",
+                numExecutors,
+                minExecutors);
             numExecutors = minExecutors;
           }
           sparkConf.set(property.getKey(), String.valueOf(numExecutors));
@@ -186,9 +199,10 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
   public void destroy() {
     super.destroy();
     ProgramStatus status = getContext().getState().getStatus();
-    WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
-                       status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
-
+    WRAPPERLOGGER.info(
+        "Pipeline '{}' {}",
+        getContext().getApplicationSpecification().getName(),
+        status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
   }
 
   private void emitMetrics(DataStreamsPipelineSpec spec) {
