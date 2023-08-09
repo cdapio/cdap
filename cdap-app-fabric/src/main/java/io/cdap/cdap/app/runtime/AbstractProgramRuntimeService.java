@@ -138,7 +138,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);
-        LOG.error("Exception while trying to run program run {}", programRunId, e);
+        LOG.error("Exception while trying to run program with runID {}", programRunId, e);
       }
     });
     return runtimeInfo;
