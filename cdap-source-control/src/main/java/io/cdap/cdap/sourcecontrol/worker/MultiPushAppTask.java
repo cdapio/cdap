@@ -42,24 +42,22 @@ public class MultiPushAppTask extends SourceControlTask {
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(MultiPushAppTask.class);
-  private final RemoteClientFactory remoteClientFactory;
 
   @Inject
   MultiPushAppTask(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
-      MetricsCollectionService metricsCollectionService,
-      RemoteClientFactory remoteClientFactory
+      MetricsCollectionService metricsCollectionService
   ) {
     super(cConf, discoveryService, discoveryServiceClient,
         metricsCollectionService);
-    this.remoteClientFactory = remoteClientFactory;
   }
 
   @Override
   public void doRun(RunnableTaskContext context)
     throws AuthenticationConfigException, NoChangesToPushException, IOException {
-    MultiPushAppOperationRequest operationRequest = GSON.fromJson(context.getParam(), MultiPushAppOperationRequest.class);
+    MultiPushAppOperationRequest operationRequest =
+        GSON.fromJson(context.getParam(), MultiPushAppOperationRequest.class);
     RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
         Constants.Service.APP_FABRIC_HTTP,
         RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,

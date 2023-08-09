@@ -24,6 +24,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RunnableTaskModule;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
@@ -37,6 +38,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 abstract class SourceControlTask implements RunnableTask {
 
   protected final InMemorySourceControlOperationRunner inMemoryOperationRunner;
+  protected final RemoteClientFactory remoteClientFactory;
 
   SourceControlTask(CConfiguration cConf,
       DiscoveryService discoveryService,
@@ -52,6 +54,8 @@ abstract class SourceControlTask implements RunnableTask {
     );
     inMemoryOperationRunner = injector.getInstance(
         InMemorySourceControlOperationRunner.class);
+    remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
+
   }
 
   @Override
