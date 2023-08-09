@@ -34,6 +34,7 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
+import io.cdap.cdap.sourcecontrol.worker.MultiPushAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
@@ -128,7 +129,7 @@ public class RemoteSourceControlOperationRunner extends
   public PushAppResponse multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
       RemoteClient remoteClient) throws NoChangesToPushException, AuthenticationConfigException {
     try {
-      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(MultiPushAppTask.class.getName())
           .withParam(GSON.toJson(multiPushAppOperationRequest)).build();
 
       // LOG.trace("Pushing application {} to linked repository", mu.getApp());
