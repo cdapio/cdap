@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 
 package io.cdap.cdap.common.logging;
 
@@ -34,6 +35,9 @@ public class LoggingContextAccessor {
   private static final InheritableThreadLocal<LoggingContext> loggingContext =
       new InheritableThreadLocal<>();
 
+  public interface LoggingContextRestorer extends Cancellable, AutoCloseable {
+    // The AutoCloseable interface implicitly provides the close() method
+  }
   /**
    * Sets the logging context.
    * <p>
@@ -46,7 +50,7 @@ public class LoggingContextAccessor {
    * @return Cancellable that can be used to revert the logging context and MDC Map to its original
    *     value
    */
-  public static Cancellable setLoggingContext(LoggingContext context) {
+  public static LoggingContextRestorer setLoggingContext(LoggingContext context) {
     final LoggingContext saveLoggingContext = loggingContext.get();
     final Map saveContextMap = MDC.getCopyOfContextMap();
     final Thread saveCurrentThread = Thread.currentThread();
@@ -59,16 +63,28 @@ public class LoggingContextAccessor {
       // MDC will throw this if there is no valid binding. Normally this shouldn't happen, but in case it does,
       // we'll just ignore it as it doesn't affect platform logic at all as we always use loggingContext.
     }
-    return new Cancellable() {
+    return new LoggingContextRestorer() {
       private boolean cancelled;
 
-      @Override
+      /**
+       * Cancels the current logging context change and restores the previous context.
+       */
+      @Override // From Cancellable
       public void cancel() {
         if (Thread.currentThread() == saveCurrentThread && !cancelled) {
           MDC.setContextMap(saveContextMap == null ? Collections.emptyMap() : saveContextMap);
           loggingContext.set(saveLoggingContext);
           cancelled = true;
         }
+      }
+
+      /**
+       * AutoCloseable implementation to ensure restoration of context.
+       * Delegates to the cancel() method.
+       */
+      @Override // From AutoCloseable
+      public void close() throws Exception {
+        cancel(); // Calls the cancel logic
       }
     };
   }

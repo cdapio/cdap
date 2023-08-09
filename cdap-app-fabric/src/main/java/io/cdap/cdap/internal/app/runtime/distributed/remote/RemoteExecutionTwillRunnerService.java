@@ -32,6 +32,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.LoggingContextAccessor.LoggingContextRestorer;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -632,21 +633,29 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
           // If the startup task failed, publish failure state and delete the program running state
           startupTaskCompletion.whenComplete((res, throwable) -> {
-            if (throwable == null) {
-              LOG.debug("Startup task completed for program run {}", programRunId);
-            } else {
-              LOG.error("Fail to start program run {}", programRunId, throwable);
-              // The startup task completion can be failed in multiple scenarios.
-              // It can be caused by the startup task failure.
-              // It can also be due to cancellation from the controller, or a start up timeout.
-              // In either case, always cancel the startup task. If the task is already completed, there is no.
-              startupTaskFuture.cancel(true);
-              try {
-                // Attempt to force kill the remote process. If there is no such process found, it won't throw.
-                processController.kill(RuntimeJobStatus.RUNNING);
-              } catch (Exception e) {
-                LOG.warn("Force termination of remote process for {} failed", programRunId, e);
+            Map<String, String> systemArgs = programOpts.getArguments().asMap();
+            LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(
+              programRunId, systemArgs);
+            try (LoggingContextRestorer restoreContext = LoggingContextAccessor.setLoggingContext(loggingContext)) {
+              if (throwable == null) {
+                LOG.debug("Startup task completed for program run {}", programRunId);
+              } else {
+                LOG.error("Fail to start program run {}", programRunId, throwable);
+                // The startup task completion can be failed in multiple scenarios.
+                // It can be caused by the startup task failure.
+                // It can also be due to cancellation from the controller, or a start up timeout.
+                // In either case, always cancel the startup task. If the task is already completed, there is no.
+                startupTaskFuture.cancel(true);
+                try {
+                  // Attempt to force kill the remote process. If there is no such process found, it won't throw.
+                  processController.kill(RuntimeJobStatus.RUNNING);
+                } catch (Exception e) {
+                  LOG.warn("Force termination of remote process for {} failed", programRunId, e);
+                }
+                programStateWriter.error(programRunId, throwable);
               }
+            } catch (Exception e) {
+              LOG.error("Exception caught while setting logging context for program run {}", programRunId, e);
               programStateWriter.error(programRunId, throwable);
             }
           });
