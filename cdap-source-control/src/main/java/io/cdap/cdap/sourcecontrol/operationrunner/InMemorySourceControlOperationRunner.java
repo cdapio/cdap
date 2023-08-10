@@ -184,7 +184,7 @@ public class InMemorySourceControlOperationRunner extends
       HttpRequest.Builder requestBuilder =
           remoteClient.requestBuilder(
               HttpMethod.GET,
-              String.format("namespaces/%s/apps/%s", appToPush.getParent(), appToPush.getApplication())
+              String.format("namespaces/%s/apps/%s", appToPush.getParent().getEntityName(), appToPush.getApplication())
           );
 
       // Opens the file for writing, creating the file if it doesn't exist,
