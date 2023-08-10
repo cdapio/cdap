@@ -5887,6 +5887,14 @@
   </property>
 
   <property>
+    <name>feature.namespaced.service.accounts.enabled</name>
+    <value>false</value>
+    <description>
+      If true, namespace service accounts feature will be enabled.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

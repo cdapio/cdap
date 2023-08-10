@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.app.preview;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -25,11 +27,14 @@ import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
@@ -46,6 +51,7 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,6 +84,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final FeatureFlagsProvider featureFlagsProvider;
   private final TwillRunner twillRunner;
   private ScheduledExecutorService scheduler;
   private TwillController controller;
@@ -90,10 +97,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
       AccessControllerInstantiator accessControllerInstantiator,
       AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
-      @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-      @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
-      @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
-      @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
+      @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDbTableService,
+      @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCconf,
+      @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHconf,
+      @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSconf,
       PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
       PreviewRunStopper previewRunStopper, MessagingService messagingService,
       MetricsCollectionService metricsCollectionService,
@@ -101,14 +108,15 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
       TwillRunner twillRunner) {
     super(discoveryServiceClient, datasetFramework, transactionSystemClient,
         accessControllerInstantiator, accessEnforcer, authenticationContext,
-        previewLevelDBTableService,
-        previewCConf, previewHConf, previewSConf, previewRequestQueue, previewStore,
+        previewLevelDbTableService,
+        previewCconf, previewHconf, previewSconf, previewRequestQueue, previewStore,
         previewRunStopper,
         messagingService, previewDataCleanupService, metricsCollectionService);
 
     this.cConf = cConf;
     this.hConf = hConf;
     this.twillRunner = twillRunner;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   @Override
@@ -204,6 +212,16 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
               NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
+
+          if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+            String localhost = InetAddress.getLoopbackAddress().getHostName();
+            twillPreparer = twillPreparer.withEnv(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                ImmutableMap.of(
+                    ArtifactLocalizer.GCE_METADATA_HOST_ENV_VAR,
+                    String.format("%s:%s", localhost,
+                        cConf.getInt(Constants.ArtifactLocalizer.PORT))
+                ));
+          }
 
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
