@@ -56,6 +56,7 @@ public class MultiPushAppTask extends SourceControlTask {
   @Override
   public void doRun(RunnableTaskContext context)
     throws AuthenticationConfigException, NoChangesToPushException, IOException {
+    LOG.warn(context.getParam());
     MultiPushAppOperationRequest operationRequest =
         GSON.fromJson(context.getParam(), MultiPushAppOperationRequest.class);
     RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
