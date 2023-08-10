@@ -191,7 +191,7 @@ public class InMemorySourceControlOperationRunner extends
       // or truncating an existing regular-file to a size of 0
       try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
         HttpResponse response = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
-        GSON.toJson(response, writer);
+        writer.write(response.getResponseBodyAsString());
       } catch (IOException e) {
         throw new ConfigFileWriteException(
             String.format("Failed to write application config to path %s", appRelativePath), e
