@@ -54,6 +54,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,9 +168,10 @@ public class InMemorySourceControlOperationRunner extends
     }
 
     List<Path> appRelativePaths = new ArrayList<>();
+    Random random = new Random();
 
-    for (ApplicationId appToPush : appsToPush) {
-      String configFileName = generateConfigFileName(appToPush.getApplication());
+    appsToPush.parallelStream().forEach(appToPush -> {
+      String configFileName = generateConfigFileName(appToPush.getApplication()+ random.nextInt(200));
 
       Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
       Path filePathToWrite;
@@ -202,7 +204,7 @@ public class InMemorySourceControlOperationRunner extends
           appRelativePath);
 
       appRelativePaths.add(appRelativePath);
-    }
+    });
 
     try {
       // TODO: CDAP-20383, handle NoChangesToPushException

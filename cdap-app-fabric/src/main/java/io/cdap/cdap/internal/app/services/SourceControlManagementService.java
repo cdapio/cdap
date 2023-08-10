@@ -219,7 +219,10 @@ public class SourceControlManagementService {
         appLifecycleService.decodeUserId(authenticationContext));
 
     List<ApplicationId> applicationIds = new ArrayList<>();
-    applicationIds.add(new ApplicationId(appRef.getParent().getNamespace(), appRef.getApplication()));
+    for (int i = 0; i < 200; i++) {
+      applicationIds.add(
+          new ApplicationId(appRef.getParent().getNamespace(), appRef.getApplication()));
+    }
 
     PushAppResponse pushResponse = sourceControlOperationRunner.multipush(
       new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta),
