@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -62,7 +63,7 @@ public class MultiPushAppTask extends SourceControlTask {
     RemoteClient remoteClient = remoteClientFactory.createRemoteClient(
         Constants.Service.APP_FABRIC_HTTP,
         RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
-        Constants.Gateway.INTERNAL_API_VERSION_3
+        Gateway.API_VERSION_3
     );
     // LOG.info("Pushing application {} in worker.", operationRequest.getApp().getName());
     PushAppResponse result = inMemoryOperationRunner.multipush(operationRequest, remoteClient);
