@@ -780,6 +780,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
     properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
     properties.put(CDAP_RUNTIME_RUNID, runInfo.getRun());
+    properties.put("cloud.profiler.enable", "true");
+    properties.put("cloud.profiler.name", runInfo.getApplication());
+    properties.put("cloud.profiler.service.version", runInfo.getRun());
     return properties;
   }
 
