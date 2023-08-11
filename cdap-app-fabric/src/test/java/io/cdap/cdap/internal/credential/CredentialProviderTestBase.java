@@ -101,14 +101,14 @@ public class CredentialProviderTestBase {
         .getInstance(StructuredTableAdmin.class));
     // Setup mock credential providers.
     CredentialProvider mockCredentialProvider = mock(CredentialProvider.class);
-    when(mockCredentialProvider.provision(any(), any())).thenReturn(RETURNED_TOKEN);
+    when(mockCredentialProvider.provision(any(), any(), any())).thenReturn(RETURNED_TOKEN);
     CredentialProvider validationFailureMockCredentialProvider = mock(CredentialProvider.class);
-    when(validationFailureMockCredentialProvider.provision(any(), any()))
+    when(validationFailureMockCredentialProvider.provision(any(), any(), any()))
         .thenReturn(RETURNED_TOKEN);
     doThrow(new ProfileValidationException("profile validation always fails with this provider"))
         .when(validationFailureMockCredentialProvider).validateProfile(any());
     CredentialProvider provisionFailureMockCredentialProvider = mock(CredentialProvider.class);
-    when(provisionFailureMockCredentialProvider.provision(any(), any()))
+    when(provisionFailureMockCredentialProvider.provision(any(), any(), any()))
         .thenThrow(new CredentialProvisioningException("provisioning always fails with this "
             + "provider"));
     credentialProviders.put(CREDENTIAL_PROVIDER_TYPE_SUCCESS, mockCredentialProvider);

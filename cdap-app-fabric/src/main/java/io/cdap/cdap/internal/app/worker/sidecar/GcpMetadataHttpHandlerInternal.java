@@ -109,7 +109,11 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   public void token(HttpRequest request, HttpResponder responder,
       @QueryParam("scopes") String scopes) throws Exception {
 
-    LOG.debug("Token requested for namespace: {}", gcpMetadataTaskContext.getNamespace());
+    if (gcpMetadataTaskContext != null && gcpMetadataTaskContext.getNamespace() != null) {
+      LOG.trace("Token requested for namespace: {}", gcpMetadataTaskContext.getNamespace());
+    } else {
+      LOG.trace("Token requested but namespace not set");
+    }
     // check that metadata header is present in the request.
     if (!request.headers().contains(METADATA_FLAVOR_HEADER_KEY,
         METADATA_FLAVOR_HEADER_VALUE, true)) {

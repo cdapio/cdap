@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
@@ -45,6 +46,12 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
   public void testProvisionSuccess() throws Exception {
     // Create a new profile.
     String namespace = "testProvisionSuccess";
+    String identityName = "test";
+    NamespaceMeta namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
     CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS, namespace,
         "test-profile");
 
@@ -54,13 +61,20 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
         profileId.getName(), "some-identity", "some-secure-value");
     credentialIdentityManager.create(id, identity);
 
-    Assert.assertEquals(RETURNED_TOKEN, credentialProviderService.provision(namespace, "test"));
+    Assert.assertEquals(RETURNED_TOKEN,
+        credentialProviderService.provision(namespaceMeta, identityName));
   }
 
   @Test(expected = NotFoundException.class)
   public void testProvisionWithNotFoundIdentityThrowsException() throws Exception {
     String namespace = "testProvisionWithNotFoundIdentityThrowsException";
-    credentialProviderService.provision(namespace, "does-not-exist");
+    String identityName = "does-not-exist";
+    NamespaceMeta namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
+    credentialProviderService.provision(namespaceMeta, identityName);
   }
 
   @Test(expected = CredentialProvisioningException.class)
@@ -71,43 +85,68 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
         namespace, "test-profile");
 
     // Create a new identity.
-    CredentialIdentityId id = new CredentialIdentityId(namespace, "test");
+    String identityName = "test";
+    CredentialIdentityId id = new CredentialIdentityId(namespace, identityName);
     CredentialIdentity identity = new CredentialIdentity(profileId.getNamespace(),
         profileId.getName(), "some-identity", "some-secure-value");
     credentialIdentityManager.create(id, identity);
 
-    Assert.assertEquals(RETURNED_TOKEN, credentialProviderService.provision(namespace, "test"));
+    NamespaceMeta namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
+    Assert.assertEquals(RETURNED_TOKEN, credentialProviderService.provision(namespaceMeta,
+        identityName));
   }
 
   @Test
   public void testIdentityValidationSuccess() throws Exception {
     // Create a new profile.
+    String identityName = "some-identity";
     String namespace = "testIdentityValidationSuccess";
+    NamespaceMeta namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
     CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS,
         namespace, "test-profile");
 
     CredentialIdentity identity = new CredentialIdentity(profileId.getNamespace(),
-        profileId.getName(), "some-identity", "some-secure-value");
-    credentialProviderService.validateIdentity(identity);
+        profileId.getName(), identityName, "some-secure-value");
+    credentialProviderService.validateIdentity(namespaceMeta, identity);
   }
 
   @Test(expected = IdentityValidationException.class)
   public void testIdentityValidationOnProvisionFailureThrowsException() throws Exception {
     // Create a new profile.
     String namespace = "testIdentityValidationFailureThrowsException";
+    String identityName = "some-identity";
+    NamespaceMeta namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
     CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_PROVISION_FAILURE,
         namespace, "test-profile");
 
     CredentialIdentity identity = new CredentialIdentity(profileId.getNamespace(),
-        profileId.getName(), "some-identity", "some-secure-value");
-    credentialProviderService.validateIdentity(identity);
+        profileId.getName(), identityName, "some-secure-value");
+    credentialProviderService.validateIdentity(namespaceMeta, identity);
   }
 
   @Test(expected = NotFoundException.class)
   public void testIdentityValidationWithNotFoundProfileThrowsException() throws Exception {
     String namespace = "testIdentityValidationWithNotFoundProfileThrowsException";
+    String identityName = "some-identity";
+    NamespaceMeta namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
     CredentialIdentity identity = new CredentialIdentity(namespace, "does-not-exist",
-        "some-identity", "some-secure-value");
-    credentialProviderService.validateIdentity(identity);
+        identityName, "some-secure-value");
+    credentialProviderService.validateIdentity(namespaceMeta, identity);
   }
 }

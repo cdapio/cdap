@@ -2750,6 +2750,7 @@
         <module>cdap-master-spi</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>
+        <module>cdap-credential-ext-gcp-wi</module>
         <module>cdap-runtime-ext-dataproc</module>
         <module>cdap-runtime-ext-emr</module>
         <module>cdap-runtime-ext-remote-hadoop</module>

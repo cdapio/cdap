@@ -34,4 +34,11 @@ public interface CredentialProviderContext {
    * @return Unmodifiable system properties for the provider.
    */
   Map<String, String> getProperties();
+
+  /**
+   * Derives namespace creation hook is enabled or not from CDAP configuration.
+   *
+   * @return true if namespace creation hook is enabled, otherwise false.
+   */
+  boolean isNamespaceCreationHookEnabled();
 }

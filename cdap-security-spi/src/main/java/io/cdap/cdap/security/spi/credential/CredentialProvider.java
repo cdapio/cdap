@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.spi.credential;
 
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
@@ -45,12 +46,14 @@ public interface CredentialProvider {
    * Provisions a short-lived credential for the provided identity using the provided credential
    * profile.
    *
+   * @param namespaceMeta The credential identity namespace metadata.
    * @param profile  The credential profile to use.
    * @param identity The credential identity to use.
    * @return A credential provisioned using the specified profile and identity.
    * @throws CredentialProvisioningException If the credential provisioning fails.
    */
-  ProvisionedCredential provision(CredentialProfile profile, CredentialIdentity identity)
+  ProvisionedCredential provision(NamespaceMeta namespaceMeta, CredentialProfile profile,
+      CredentialIdentity identity)
       throws CredentialProvisioningException;
 
   /**
