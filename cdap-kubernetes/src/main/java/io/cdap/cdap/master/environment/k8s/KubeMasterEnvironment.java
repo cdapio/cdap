@@ -214,6 +214,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_DRIVER_LABEL_VALUE = "driver";
   private static final String CDAP_CONTAINER_LABEL = "cdap.container";
   private static final String TWILL_RUNNER_SERVICE_MONITOR_DISABLE = "twill.runner.service.monitor.disable";
+  private static final String SPARK_EXECUTOR_JAVA_OPTS = "spark.executor.extraJavaOptions";
 
   private static final String CONNECT_TIMEOUT = "master.environment.k8s.connect.timeout.sec";
   static final String CONNECT_TIMEOUT_DEFAULT = "120";
@@ -495,6 +496,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     sparkConfMap.put(SPARK_DRIVER_POD_CPU_LIMIT, String.format("%dm", driverCpuLimit));
     sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_REQUEST, String.format("%dm", executorCpuRequested));
     sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_LIMIT, String.format("%dm", executorCpuLimit));
+
+    // In Spark v3.2.0 and later, max netty direct memory must be
+    // >= spark.network.maxRemoteBlockSizeFetchToMem for executors.
+    // So we set max netty direct memory = spark.network.maxRemoteBlockSizeFetchToMem
+    // See CDAP-20758 for details.
+    // NOTE: If spark.network.maxRemoteBlockSizeFetchToMem is changed in ETLSpark.java,
+    // DataStreamsSparkLaunch.java, then io.netty.maxDirectMemory will need also need to changed
+    // here.
+    String nettyMaxDirectMemory = String.format("-Dio.netty.maxDirectMemory=%d", Integer.MAX_VALUE - 512);
+    sparkConfMap.put(SPARK_EXECUTOR_JAVA_OPTS, nettyMaxDirectMemory);
 
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);

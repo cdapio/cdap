@@ -102,14 +102,9 @@ public class ETLSpark extends AbstractSpark {
     // turn off auto-broadcast by default until we better understand the implications and can set this to a
     // value that we are confident is safe.
     sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
-    String maxFetchSize = String.valueOf(Integer.MAX_VALUE - 512);
-    sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", maxFetchSize);
-    // In Spark v3.2.0 and later, max netty direct memory must be
-    // >= spark.network.maxRemoteBlockSizeFetchToMem for executors.
-    // So we set max netty direct memory = spark.network.maxRemoteBlockSizeFetchToMem
-    // See CDAP-20758 for details.
-    String nettyMaxDirectMemory = String.format("-Dio.netty.maxDirectMemory=%s", maxFetchSize);
-    sparkConf.set("spark.executor.extraJavaOptions", nettyMaxDirectMemory);
+    // NOTE: If you change this value, also update io.netty.maxDirectMemory in
+    // KubeMasterEnvironment
+    sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     sparkConf.set("spark.network.timeout", "600s");
     // Disable yarn app retries since spark already performs retries at a task level.
     sparkConf.set("spark.yarn.maxAppAttempts", "1");
