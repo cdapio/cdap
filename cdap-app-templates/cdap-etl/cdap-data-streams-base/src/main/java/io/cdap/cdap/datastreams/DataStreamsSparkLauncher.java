@@ -127,6 +127,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     }
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
+    // NOTE: If you change this value, also update io.netty.maxDirectMemory in
+    // KubeMasterEnvironment
     sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
 
     // spark... makes you set this to at least the number of receivers (streaming sources)
