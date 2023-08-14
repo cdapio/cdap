@@ -22,7 +22,7 @@
 
   <groupId>io.cdap.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>6.7.3</version>
+  <version>6.7.4-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -120,6 +120,7 @@
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.8.2</avro.version>
     <bouncycastle.version>1.60</bouncycastle.version>
+    <cdap.ui.version>6.7.3</cdap.ui.version>
     <cdap.common.version>0.13.0</cdap.common.version>
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
