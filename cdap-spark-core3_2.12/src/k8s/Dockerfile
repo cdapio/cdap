@@ -51,6 +51,7 @@ RUN tar -zcvf /tmp/cdap-build-sources.tar.gz --exclude='.git*' --exclude='node_m
   mkdir /tmp/LICENSES/commons-lang-2.6 && jar xvf /tmp/connectors/commons-lang-2.6.jar META-INF/LICENSE META-INF/LICENSE.txt && cp ./META-INF/LICENSE* /tmp/LICENSES/commons-lang-2.6 && rm -r ./META-INF
 
 FROM ${base_image} AS build
+USER root
 RUN apt-get update && apt-get upgrade -y
 
 # copy cdap-spark-core and its dependencies
