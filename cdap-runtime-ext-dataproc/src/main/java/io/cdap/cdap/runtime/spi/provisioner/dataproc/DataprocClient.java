@@ -88,7 +88,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-abstract class DataprocClient implements AutoCloseable {
+public abstract class DataprocClient implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   private static final int MIN_DEFAULT_CONCURRENCY = 32;

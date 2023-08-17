@@ -42,18 +42,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides ComputeEngineCredentials either locally if no endpoint is provided, or remotely if
+ * Provides GoogleCredentials either locally if no endpoint is provided, or remotely if
  * endpoint is provided.
  */
 public final class ComputeEngineCredentials extends GoogleCredentials {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ComputeEngineCredentials.class);
+  private static final Logger LOG = LoggerFactory.getLogger(GoogleCredentials.class);
   private static final Gson GSON = new Gson();
 
   private static final String ACCESS_TOKEN_KEY = "access_token";
   private static final String EXPIRES_IN_KEY = "expires_in";
   private static final String LOCAL_COMPUTE_ENGINE_CREDENTIALS = "local";
-  private static final ConcurrentHashMap<String, ComputeEngineCredentials> cachedComputeEngineCredentials =
+  private static final ConcurrentHashMap<String, GoogleCredentials> cachedComputeEngineCredentials =
       new ConcurrentHashMap<>();
 
   /**
@@ -70,20 +70,19 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   }
 
   /**
-   * Return a ComputeEngineCredentials with the provided endpoint if it has already been created.
+   * Return a GoogleCredentials with the provided endpoint if it has already been created.
    * Otherwise, it instantiates one, and returns it.
    *
    * @param endpoint endpoint for fetching the token from. A null endpoint results in fetching
    *     the token locally.
-   * @return ComputeEngineCredentials
+   * @return GoogleCredentials
    */
-  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint) throws IOException {
+  public static GoogleCredentials getOrCreate(@Nullable String endpoint) throws IOException {
     String key = endpoint != null ? endpoint : LOCAL_COMPUTE_ENGINE_CREDENTIALS;
     if (!cachedComputeEngineCredentials.containsKey(key)) {
       synchronized (cachedComputeEngineCredentials) {
         if (!cachedComputeEngineCredentials.containsKey(key)) {
-          ComputeEngineCredentials credentials = new ComputeEngineCredentials(endpoint);
-          credentials.refresh();
+          GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
           cachedComputeEngineCredentials.put(key, credentials);
         }
       }

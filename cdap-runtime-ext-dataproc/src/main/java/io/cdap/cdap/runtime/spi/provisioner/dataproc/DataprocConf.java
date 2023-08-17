@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 /**
  * Configuration for Dataproc.
  */
-final class DataprocConf {
+public final class DataprocConf {
 
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
@@ -572,7 +572,7 @@ final class DataprocConf {
    *
    * @throws IllegalArgumentException if it is an invalid config
    */
-  static DataprocConf create(Map<String, String> properties) {
+  public static DataprocConf create(Map<String, String> properties) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);

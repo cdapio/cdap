@@ -48,7 +48,6 @@
       <organizationUrl>http://www.cdap.io</organizationUrl>
     </developer>
   </developers>
-
   <scm>
     <connection>scm:git:https://github.com/cdapio/cdap.git</connection>
     <developerConnection>scm:git:git@github.com:cdapio/cdap.git</developerConnection>
@@ -1786,6 +1785,7 @@
               <arg>-target:jvm-1.8</arg>
               <arg>-nobootcp</arg>
             </args>
+            <scalaVersion>${scala2.12.version}</scalaVersion>
           </configuration>
           <executions>
             <execution>
@@ -2710,6 +2710,7 @@
       </activation>
 
       <modules>
+        <module>cluster-create-test</module>
         <module>cdap-common-unit-test</module>
         <module>cdap-api-common</module>
         <module>cdap-api</module>

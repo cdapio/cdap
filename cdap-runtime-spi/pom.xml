@@ -39,6 +39,10 @@
       <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.twill</groupId>
+      <artifactId>twill-common</artifactId>
+    </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-error-api</artifactId>

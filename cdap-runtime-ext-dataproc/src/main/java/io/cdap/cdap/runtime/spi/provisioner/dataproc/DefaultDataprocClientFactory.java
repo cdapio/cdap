@@ -47,7 +47,7 @@ public class DefaultDataprocClientFactory implements DataprocClientFactory {
         new RuntimeMonitorDataprocClient(conf, clusterControllerClient, computeFactory);
   }
 
-  private static ClusterControllerClient getClusterControllerClient(DataprocConf conf)
+  public static ClusterControllerClient getClusterControllerClient(DataprocConf conf)
       throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
         conf.getDataprocCredentials());
