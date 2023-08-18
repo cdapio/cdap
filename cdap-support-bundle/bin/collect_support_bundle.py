@@ -73,7 +73,7 @@ parser.add_argument(
 parser.add_argument(
     "--runtime-namespace",
     "-t",
-    help="CDAP Runtime namespace. Namespace where pipeline is running",
+    help="Kubernetes namespace where pipeline is running",
     type=str,
     default="default"
 )
