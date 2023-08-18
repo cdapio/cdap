@@ -28,7 +28,7 @@ The CDAP Support Bundle Script takes the following command-line arguments:
 
 6. --run-id, -r : The run ID of the pipeline, if you want to collect logs for a failed pipeline run.
 
-7. --runtime-namespace, -t : The runtime namespace, which is the namespace where the pipeline is running. Default is set to "default".
+7. --runtime-namespace, -t : The runtime namespace, which is the kubernetes namespace where the pipeline is running. Default is set to "default".
 
 **Support Bundle Script Execution**
 -----------------------------------
