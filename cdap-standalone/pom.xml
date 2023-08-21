@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.7.3</version>
+    <version>6.7.4-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-standalone</artifactId>
@@ -351,7 +351,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-ui</artifactId>
-      <version>${project.version}</version>
+      <version>${cdap.ui.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
