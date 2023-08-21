@@ -59,7 +59,7 @@ public class SqlTransactionRunner implements TransactionRunner {
     try {
       connection = dataSource.getConnection();
     } catch (SQLException e) {
-      throw new TransactionException("Unable to get connection to the sql database", e);
+      throw new SqlTransactionException("Unable to get connection to the sql database.", e);
     }
 
     try {

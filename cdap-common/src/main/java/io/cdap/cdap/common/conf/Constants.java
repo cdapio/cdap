@@ -651,6 +651,12 @@ public final class Constants {
     public static final String DATA_STORAGE_SQL_PROPERTY_PREFIX = "data.storage.sql.jdbc.property.";
     public static final String DATA_STORAGE_SQL_CONNECTION_SIZE = "data.storage.sql.jdbc.connection.pool.size";
     public static final String DATA_STORAGE_SQL_SCAN_FETCH_SIZE_ROWS = "data.storage.sql.scan.size.rows";
+    public static final String DATA_STORAGE_SQL_TRANSACTION_RUNNER_MAX_RETRIES =
+      "data.storage.sql.tx.runner.max.retries";
+    public static final String DATA_STORAGE_SQL_TRANSACTION_RUNNER_TRANSACTION_FAILURE_DELAY_MILLIS =
+      "data.storage.sql.tx.runner.tx.failure.delay.ms";
+    public static final String DATA_STORAGE_SQL_TRANSACTION_RUNNER_CONNECTION_FAILURE_DELAY_MILLIS =
+      "data.storage.sql.tx.runner.conn.failure.delay.ms";
 
     // used for Guice named bindings
     public static final String TABLE_TYPE = "table.type";

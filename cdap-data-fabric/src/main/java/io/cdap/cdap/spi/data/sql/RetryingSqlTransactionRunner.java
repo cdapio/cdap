@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.spi.data.sql;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
@@ -40,8 +42,11 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
   private static final Logger LOG = LoggerFactory.getLogger(RetryingSqlTransactionRunner.class);
   // From https://www.postgresql.org/docs/9.6/transaction-iso.html, "40001" is the code for serialization failures
   private static final String TRANSACTION_CONFLICT_SQL_STATE = "40001";
-  private static final int MAX_RETRIES = 20;
-  private static final long DELAY_MILLIS = 100;
+  // From https://www.postgresql.org/docs/current/errcodes-appendix.html, Class 08 — Connection Exception
+  private static final String CONNECTION_EXCEPTION_SQL_STATE_PREFIX = "08";
+  private final int maxRetries;
+  private final long delayMillisTransactionFailure;
+  private final long delayMillisConnectionFailure;
 
   private final SqlTransactionRunner transactionRunner;
   private final MetricsCollectionService metricsCollectionService;
@@ -55,6 +60,11 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
                                cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED),
                                scanFetchSize);
     this.metricsCollectionService = metricsCollectionService;
+    this.maxRetries = cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_MAX_RETRIES);
+    this.delayMillisTransactionFailure =
+      cConf.getLong(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_TRANSACTION_FAILURE_DELAY_MILLIS);
+    this.delayMillisConnectionFailure =
+      cConf.getLong(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_CONNECTION_FAILURE_DELAY_MILLIS);
   }
 
   @Override
@@ -63,34 +73,45 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
     MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
     while (true) {
       try {
-        transactionRunner.run(runnable);
+        getSqlTransactionRunner().run(runnable);
         break;
       } catch (SqlTransactionException e) {
         String sqlState = e.getSqlException().getSQLState();
         LOG.trace("Transaction failed with sql state: {}.", sqlState, e);
-        // Retry only transaction failure exceptions
+        // Retry only transaction and connection failure exceptions
         if (TRANSACTION_CONFLICT_SQL_STATE.equals(sqlState)) {
           metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_CONFLICT, 1L);
           ++retries;
-          long delay = retries > MAX_RETRIES ? -1 : DELAY_MILLIS;
-          if (delay < 0) {
-            throw e;
-          }
-
-          if (delay > 0) {
-            try {
-              TimeUnit.MILLISECONDS.sleep(delay);
-            } catch (InterruptedException e1) {
-              // Reinstate the interrupt thread
-              Thread.currentThread().interrupt();
-              // Fail with the original exception
-              throw e;
-            }
-          }
+          applyDelay(retries, delayMillisTransactionFailure, e);
+        } else if (!Strings.isNullOrEmpty(sqlState) && sqlState.startsWith(CONNECTION_EXCEPTION_SQL_STATE_PREFIX)) {
+          LOG.debug("Connection failed with sql state: {}.", sqlState, e);
+          ++retries;
+          applyDelay(retries, delayMillisConnectionFailure, e);
         } else {
           throw e;
         }
       }
     }
+  }
+
+  private void applyDelay(long retryCount, long delayMillis, TransactionException e) throws TransactionException {
+    long delay = retryCount > maxRetries ? -1 : delayMillis;
+    if (delay < 0) {
+      throw e;
+    }
+
+    try {
+      TimeUnit.MILLISECONDS.sleep(delay);
+    } catch (InterruptedException e1) {
+      // Reinstate the interrupt thread
+      Thread.currentThread().interrupt();
+      // Fail with the original exception
+      throw e;
+    }
+  }
+
+  @VisibleForTesting
+  public SqlTransactionRunner getSqlTransactionRunner() {
+    return transactionRunner;
   }
 }

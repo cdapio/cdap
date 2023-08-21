@@ -1022,6 +1022,30 @@
   </property>
 
   <property>
+    <name>data.storage.sql.tx.runner.max.retries</name>
+    <value>20</value>
+    <description>
+      The max number of retries for the sql transaction runner on retryable failures.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.tx.runner.tx.failure.delay.ms</name>
+    <value>100</value>
+    <description>
+      The delay between retries due to transaction failures in milliseconds.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.tx.runner.conn.failure.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The delay between retries due to connection failures in milliseconds.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.enabled</name>
     <value>true</value>
     <description>

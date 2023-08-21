@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -47,6 +48,7 @@ public class SqlStructuredTableTest extends StructuredTableTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    populateCConf(cConf);
     pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
 
     Injector injector = Guice.createInjector(
@@ -65,6 +67,15 @@ public class SqlStructuredTableTest extends StructuredTableTest {
 
     Assert.assertEquals(PostgreSqlStructuredTableAdmin.class, tableAdmin.getClass());
     Assert.assertEquals(RetryingSqlTransactionRunner.class, transactionRunner.getClass());
+  }
+
+  /**
+   * populate retry settings in cConf used by {@link SqlStructuredTableRetryTest}
+   */
+  private static void populateCConf(CConfiguration cConf) {
+    cConf.setInt(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_MAX_RETRIES, 2);
+    cConf.setLong(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_TRANSACTION_FAILURE_DELAY_MILLIS, 0);
+    cConf.setLong(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_CONNECTION_FAILURE_DELAY_MILLIS, 0);
   }
 
   @AfterClass
