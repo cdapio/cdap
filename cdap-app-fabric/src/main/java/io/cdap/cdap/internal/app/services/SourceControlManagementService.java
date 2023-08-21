@@ -16,29 +16,48 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.base.Predicate;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.id.Id.Artifact;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
+import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -62,7 +81,13 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +104,9 @@ public class SourceControlManagementService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  private final ArtifactRepository artifactRepository;
+  private final Impersonator impersonator;
+
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -93,7 +121,8 @@ public class SourceControlManagementService {
                                         AuthenticationContext authenticationContext,
                                         SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
-                                        Store store) {
+                                        Store store, ArtifactRepository artifactRepository,
+                                        Impersonator impersonator) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -102,6 +131,8 @@ public class SourceControlManagementService {
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
+    this.artifactRepository = artifactRepository;
+    this.impersonator = impersonator;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
@@ -203,7 +234,7 @@ public class SourceControlManagementService {
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
-    
+
     // AppLifecycleService already enforces ApplicationDetail Access
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
@@ -224,7 +255,7 @@ public class SourceControlManagementService {
         appRef.getApplication(),
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
-    
+
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
@@ -251,7 +282,7 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    
+
     PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
     AppRequest<?> appRequest = pullResponse.getAppRequest();
@@ -279,6 +310,26 @@ public class SourceControlManagementService {
       app.getChangeDetail(), app.getSourceControlMeta());
   }
 
+  public List<ApplicationRecord> pullAndDeployMulti(List<ApplicationReference> appRefs) throws Exception {
+    return new ArrayList<>();
+  }
+
+  public PullAppDryrunResponse pullAndDryrun(ApplicationReference appRef) throws Exception {
+    // Dryrun deployment with a generated uuid
+    String versionId = RunIds.generate().getId();
+    ApplicationId appId = appRef.app(versionId);
+    // Enforcing application CREATE permission and Namespace READ_REPOSITORY permission upfront
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+        NamespacePermission.READ_REPOSITORY);
+
+    return pullAndDryrunApplication(appRef, appId);
+  }
+
+  public List<PullAppDryrunResponse> pullAndDryrunMulti(List<ApplicationReference> appRefs) throws Exception {
+    return new ArrayList<>();
+  }
+
   /**
    * Pull the application from repository, look up the fileHash in store and compare it with the cone in repository.
    *
@@ -294,6 +345,29 @@ public class SourceControlManagementService {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
     PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
+
+    if (latestMeta != null
+        && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
+      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
+          + "no new change for the pulled application: %s", appRef));
+    }
+    return pullResponse;
+  }
+
+  private PullAppDryrunResponse pullAndDryrunApplication(ApplicationReference appRef, ApplicationId appId) throws Exception {
+    RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
+    SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
+
+    ReadonlyArtifactRepositoryAccessor readonlyArtifactRepositoryAccessor = new ArtifactRepositoryAccessor(
+        artifactRepository,
+        impersonator
+    );
+
+    PullAppDryrunResponse pullResponse = sourceControlOperationRunner.pullAndDryrun(
+        appId,
+        new PulAppOperationRequest(appRef, repoConfig),
+        readonlyArtifactRepositoryAccessor
+    );
 
     if (latestMeta != null
         && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {

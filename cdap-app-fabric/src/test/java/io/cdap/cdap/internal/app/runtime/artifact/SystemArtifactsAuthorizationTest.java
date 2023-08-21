@@ -30,6 +30,7 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
 import io.cdap.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;

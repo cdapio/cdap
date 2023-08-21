@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.plugin;
+package io.cdap.cdap.common;
 
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;

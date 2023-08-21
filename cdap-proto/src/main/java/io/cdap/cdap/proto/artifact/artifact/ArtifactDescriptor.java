@@ -14,9 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.proto.artifact.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import java.net.URI;
 import java.util.Objects;
 import org.apache.twill.filesystem.Location;

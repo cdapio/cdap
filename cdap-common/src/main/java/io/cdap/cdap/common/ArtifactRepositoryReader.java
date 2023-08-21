@@ -14,13 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -29,6 +32,49 @@ import java.util.List;
  * Interface to fetch artifact metadata
  */
 public interface ArtifactRepositoryReader {
+
+
+  /**
+   * Get all artifacts in the given namespace, optionally including system artifacts as well. Will
+   * never return null. If no artifacts exist, an empty list is returned. Namespace existence is not
+   * checked.
+   *
+   * @param namespace the namespace to get artifacts from
+   * @param includeSystem whether system artifacts should be included in the results
+   * @return an unmodifiable list of artifacts that belong to the given namespace
+   * @throws IOException if there as an exception reading from the meta store
+   */
+  List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, boolean includeSystem)
+      throws Exception;
+
+  /**
+   * Get all artifacts in the given namespace of the given name. Will never return null. If no
+   * artifacts exist, an exception is thrown. Namespace existence is not checked.
+   *
+   * @param namespace the namespace to get artifacts from
+   * @param name the name of artifacts to get
+   * @param limit the limit number of the result
+   * @param order the order of the result
+   * @return an unmodifiable list of artifacts in the given namespace of the given name
+   * @throws IOException if there as an exception reading from the meta store
+   * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace
+   *     exist
+   */
+  List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, String name, int limit,
+      ArtifactSortOrder order) throws Exception;
+
+  /**
+   * Get all artifacts in the given artifact range. Will never return null.
+   *
+   * @param range the range of the artifact
+   * @param limit the limit number of the result
+   * @param order the order of the result
+   * @return an unmodifiable list of artifacts in the given namespace of the given name
+   * @throws IOException if there as an exception reading from the meta store
+   */
+  List<ArtifactSummary> getArtifactSummaries(ArtifactRange range, int limit,
+      ArtifactSortOrder order) throws Exception;
+
 
   /**
    * Get details about the given artifact. Will never return null. If no such artifact exist, an

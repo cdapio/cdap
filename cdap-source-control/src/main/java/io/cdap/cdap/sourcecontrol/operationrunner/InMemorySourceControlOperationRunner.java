@@ -23,11 +23,16 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
+import io.cdap.cdap.common.app.DeploymentDryrun;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.DeploymentDryrunResult;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
@@ -126,6 +131,52 @@ public class InMemorySourceControlOperationRunner extends
       throw new IllegalArgumentException(String.format(
         "Failed to de-serialize application json at path %s. Ensure application json is valid.",
         appRelativePath), e);
+    } catch (NotFoundException | AuthenticationConfigException | IllegalArgumentException e) {
+      // TODO(CDAP-20410): Create exception classes that derive from a common class instead of propagating.
+      throw e;
+    } catch (Exception e) {
+      throw new SourceControlException(String.format("Failed to pull application %s.", applicationName), e);
+    }
+  }
+
+  @Override
+  public PullAppDryrunResponse pullAndDryrun(
+      ApplicationId appId,
+      PulAppOperationRequest pulAppOperationRequest,
+      ReadonlyArtifactRepositoryAccessor artifactRepository) throws Exception {
+
+    String applicationName = pulAppOperationRequest.getApp().getApplication();
+    String configFileName = generateConfigFileName(applicationName);
+    LOG.info("Cloning remote to pull application {}", applicationName);
+    Path appRelativePath = null;
+    try (RepositoryManager repositoryManager =
+        repoManagerFactory.create(pulAppOperationRequest.getApp().getNamespaceId(),
+            pulAppOperationRequest.getRepositoryConfig())) {
+      appRelativePath = repositoryManager.getFileRelativePath(configFileName);
+      String commitId = repositoryManager.cloneRemote();
+      Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
+      if (!Files.exists(filePathToRead)) {
+        throw new NotFoundException(String.format("App with name %s not found at path %s in git repository",
+            applicationName,
+            appRelativePath));
+      }
+      LOG.info("Getting file hash for application {}", applicationName);
+      String fileHash = repositoryManager.getFileHash(appRelativePath, commitId);
+      String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
+      AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
+
+      DeploymentDryrun dryrun = new DeploymentDryrun(appId, appRequest, artifactRepository);
+      DeploymentDryrunResult result = dryrun.deploy();
+
+      return new PullAppDryrunResponse(applicationName, fileHash, result);
+    } catch (GitAPIException e) {
+      throw new GitOperationException(String.format("Failed to pull application %s: %s",
+          applicationName,
+          e.getMessage()), e);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException(String.format(
+          "Failed to de-serialize application json at path %s. Ensure application json is valid.",
+          appRelativePath), e);
     } catch (NotFoundException | AuthenticationConfigException | IllegalArgumentException e) {
       // TODO(CDAP-20410): Create exception classes that derive from a common class instead of propagating.
       throw e;

@@ -75,7 +75,7 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
@@ -1036,7 +1036,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
             : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 
     // if we don't null check, it gets serialized to "null". The instanceof check is also needed otherwise it causes
-    // unnecessary json serialization and invalid json format error. 
+    // unnecessary json serialization and invalid json format error.
     Object config = appRequest.getConfig();
     String configString = config == null ? null :
         config instanceof String ? (String) config : GSON.toJson(config);

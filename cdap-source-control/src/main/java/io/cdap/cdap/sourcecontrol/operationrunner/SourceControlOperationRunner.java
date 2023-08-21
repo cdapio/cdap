@@ -18,6 +18,9 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
@@ -52,6 +55,12 @@ public interface SourceControlOperationRunner extends Service {
    */
   PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
     AuthenticationConfigException;
+
+  PullAppDryrunResponse pullAndDryrun(
+      ApplicationId appId,
+      PulAppOperationRequest pulAppOperationRequest,
+      ReadonlyArtifactRepositoryAccessor artifactRepository
+  ) throws Exception;
 
   /**
    * Lists application configs found in repository.

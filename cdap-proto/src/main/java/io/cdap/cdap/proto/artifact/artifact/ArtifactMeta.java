@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.proto.artifact.artifact;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
