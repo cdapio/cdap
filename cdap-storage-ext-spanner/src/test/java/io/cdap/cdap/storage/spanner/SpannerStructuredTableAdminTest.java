@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.storage.spanner;
 
+import static io.cdap.cdap.storage.spanner.SpannerStructuredTableAdmin.convertSpecToCompatibleSchema;
+
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.spi.data.StorageProviderContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -59,13 +61,12 @@ public class SpannerStructuredTableAdminTest extends StructuredTableAdminTest {
     Assume.assumeNotNull(project, instance, database);
 
     Map<String, String> configs = new HashMap<>();
-    configs.put(SpannerStorageProvider.PROJECT, project);
-    configs.put(SpannerStorageProvider.INSTANCE, instance);
-    configs.put(SpannerStorageProvider.DATABASE, database);
-
     if (credentialsPath != null) {
       configs.put(SpannerStorageProvider.CREDENTIALS_PATH, credentialsPath);
     }
+    configs.put(SpannerStorageProvider.PROJECT, project);
+    configs.put(SpannerStorageProvider.INSTANCE, instance);
+    configs.put(SpannerStorageProvider.DATABASE, database);
 
     StorageProviderContext context = new MockStorageProviderContext(configs);
 
@@ -103,17 +104,38 @@ public class SpannerStructuredTableAdminTest extends StructuredTableAdminTest {
     admin.createOrUpdate(SIMPLE_TABLE_SPEC);
     Assert.assertTrue(admin.exists(SIMPLE_TABLE));
 
-    // Assert SIMPLE_TABLE schema
-    // ONLY checking compatibility because of INT/LONG to INT64 conversion in Spanner
+    // Assert SIMPLE_TABLE schema: checking equality after compatible conversion because of INT/LONG
+    // to INT64 conversion in Spanner
     StructuredTableSchema simpleTableSchema = admin.getSchema(SIMPLE_TABLE);
-    Assert.assertTrue(simpleTableSchema.isCompatible(SIMPLE_TABLE_SPEC));
+    Assert.assertEquals(simpleTableSchema, convertSpecToCompatibleSchema(SIMPLE_TABLE_SPEC));
 
     // Update SIMPLE_TABLE spec to UPDATED_SIMPLE_TABLE_SPEC
     admin.createOrUpdate(UPDATED_SIMPLE_TABLE_SPEC);
 
     // Assert UPDATED_SIMPLE_TABLE_SPEC schema
     StructuredTableSchema updateSimpleTableSchema = admin.getSchema(SIMPLE_TABLE);
-    Assert.assertTrue(updateSimpleTableSchema.isCompatible(UPDATED_SIMPLE_TABLE_SPEC));
+    Assert.assertEquals(
+        updateSimpleTableSchema, convertSpecToCompatibleSchema(UPDATED_SIMPLE_TABLE_SPEC));
+  }
+
+  @Test
+  @Override
+  public void testCreateOrUpdateTwiceShouldSucceed() throws Exception {
+    StructuredTableAdmin admin = getStructuredTableAdmin();
+
+    // Assert SIMPLE_TABLE Empty
+    Assert.assertFalse(admin.exists(SIMPLE_TABLE));
+
+    // Calling to createOrUpdate the same SIMPLE_TABLE spec twice to mimic the scenario of
+    // connecting to an exsting DB and make sure the second time passes the equality check after
+    // schema compatibility conversion
+    admin.createOrUpdate(SIMPLE_TABLE_SPEC);
+    admin.createOrUpdate(SIMPLE_TABLE_SPEC);
+    Assert.assertTrue(admin.exists(SIMPLE_TABLE));
+
+    // Assert SIMPLE_TABLE schema
+    StructuredTableSchema simpleTableSchema = admin.getSchema(SIMPLE_TABLE);
+    Assert.assertEquals(simpleTableSchema, convertSpecToCompatibleSchema(SIMPLE_TABLE_SPEC));
   }
 
   @Test
@@ -130,8 +152,10 @@ public class SpannerStructuredTableAdminTest extends StructuredTableAdminTest {
 
     // Assert INCONSISTENT_PRIMARY_KEY_TABLE schema
     StructuredTableSchema tableSchema = admin.getSchema(INCONSISTENT_PRIMARY_KEY_TABLE);
-    // ONLY checking compatibility because of INT/LONG to INT64 conversion in Spanner
-    Assert.assertTrue(tableSchema.isCompatible(INCONSISTENT_PRIMARY_KEY_TABLE_SPEC));
+    // Checking equality after compatible conversion because of INT/LONG to INT64 conversion in
+    // Spanner
+    Assert.assertEquals(
+        tableSchema, convertSpecToCompatibleSchema(INCONSISTENT_PRIMARY_KEY_TABLE_SPEC));
   }
 
   private static final class MockStorageProviderContext implements StorageProviderContext {

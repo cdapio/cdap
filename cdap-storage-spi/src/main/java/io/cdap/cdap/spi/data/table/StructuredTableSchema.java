@@ -46,11 +46,16 @@ public class StructuredTableSchema {
     this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes());
   }
 
-  public StructuredTableSchema(StructuredTableId tableId, List<FieldType> fields,
-      List<String> primaryKeys, Collection<String> indexes) {
+  /** Constructor of {@code StructuredTableSchema} with table schema details. */
+  public StructuredTableSchema(
+      StructuredTableId tableId,
+      List<FieldType> fields,
+      List<String> primaryKeys,
+      Collection<String> indexes) {
     this.tableId = tableId;
-    this.fields = Collections.unmodifiableMap(fields.stream().collect(
-        Collectors.toMap(FieldType::getName, FieldType::getType)));
+    this.fields =
+        Collections.unmodifiableMap(
+            fields.stream().collect(Collectors.toMap(FieldType::getName, FieldType::getType)));
     this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
@@ -185,7 +190,7 @@ public class StructuredTableSchema {
   public boolean isCompatible(StructuredTableSchema schema) {
     for (String field : getFieldNames()) {
       FieldType.Type type = schema.getType(field);
-      if (type == null || !getType(field).isCompatible(type)) {
+      if (type == null || !type.isCompatible(getType(field))) {
         return false;
       }
     }
