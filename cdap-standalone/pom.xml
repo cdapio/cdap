@@ -351,7 +351,7 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-ui</artifactId>
-      <version>${cdap.ui.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
