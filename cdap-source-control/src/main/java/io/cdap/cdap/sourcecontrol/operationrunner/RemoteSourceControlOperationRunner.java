@@ -25,10 +25,13 @@ import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
@@ -121,6 +124,15 @@ public class RemoteSourceControlOperationRunner extends
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
+  }
+
+  @Override
+  public PullAppDryrunResponse pullAndDryrun(
+      ApplicationId appId,
+      PulAppOperationRequest pulAppOperationRequest,
+      ReadonlyArtifactRepositoryAccessor artifactRepository
+  ) throws Exception {
+    throw new UnsupportedOperationException("unsupported");
   }
 
   /**

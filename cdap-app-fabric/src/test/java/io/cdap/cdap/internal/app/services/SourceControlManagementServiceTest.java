@@ -25,6 +25,7 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -34,12 +35,14 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
@@ -497,6 +500,15 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     @Override
     public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository)
         throws AuthenticationConfigException, NotFoundException {
+      return null;
+    }
+
+    @Override
+    public PullAppDryrunResponse pullAndDryrun(
+        ApplicationId appId,
+        PulAppOperationRequest pulAppOperationRequest,
+        ReadonlyArtifactRepositoryAccessor artifactRepository
+    ) throws Exception {
       return null;
     }
 
