@@ -177,7 +177,7 @@ public final class ETLStage {
       if (currentVersionRange.isExactVersion()) {
         return currentVersionRange.getLower().compareTo(artifactId.getVersion()) == 0;
       } else {
-        return currentVersionRange.versionIsInRange(artifactId.getVersion())
+        return currentVersionRange.versionIsInRange(artifactId.getVersion());
       }
     }).findFirst().orElse(null);
 
