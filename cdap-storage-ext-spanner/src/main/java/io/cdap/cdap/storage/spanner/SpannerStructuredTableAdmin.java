@@ -26,6 +26,7 @@ import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Struct;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -69,6 +70,12 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     return String.format("%s_%s_idx", tableId.getName(), column);
   }
 
+  /**
+   * Constructor for {@code SpannerStructuredTableAdmin}.
+   *
+   * @param spanner the gcp Spanner service.
+   * @param databaseId the ID of the Spanner instance database.
+   */
   public SpannerStructuredTableAdmin(Spanner spanner, DatabaseId databaseId) {
     this.databaseId = databaseId;
     this.adminClient = spanner.getDatabaseAdminClient();
@@ -127,7 +134,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
     StructuredTableId tableId = spec.getTableId();
     StructuredTableSchema cachedTableSchema = getSchema(tableId);
-    StructuredTableSchema newTableSchema = new StructuredTableSchema(spec);
+    StructuredTableSchema newTableSchema = convertSpecToCompatibleSchema(spec);
 
     if (newTableSchema.equals(cachedTableSchema)) {
       LOG.trace("The table schema is already up to date: {}", tableId);
@@ -163,6 +170,21 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
       throw new IOException("Failed to update table schema in Spanner", cause);
     }
+  }
+
+  @VisibleForTesting
+  static StructuredTableSchema convertSpecToCompatibleSchema(StructuredTableSpecification spec) {
+    List<FieldType> convertedFieldTypes =
+        spec.getFieldTypes().stream()
+            .map(
+                fieldType -> {
+                  String spannerType = getSpannerType(fieldType.getType());
+                  FieldType.Type convertedType = fromSpannerType(spannerType);
+                  return new FieldType(fieldType.getName(), convertedType);
+                })
+            .collect(Collectors.toList());
+    return new StructuredTableSchema(
+        spec.getTableId(), convertedFieldTypes, spec.getPrimaryKeys(), spec.getIndexes());
   }
 
   @Override
@@ -286,7 +308,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     return createIndex;
   }
 
-  private String getSpannerType(FieldType.Type fieldType) {
+  private static String getSpannerType(FieldType.Type fieldType) {
     switch (fieldType) {
       case INTEGER:
       case LONG:
@@ -306,7 +328,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     }
   }
 
-  private FieldType.Type fromSpannerType(String spannerType) {
+  private static FieldType.Type fromSpannerType(String spannerType) {
     switch (spannerType.toLowerCase()) {
       case "int64":
         return FieldType.Type.LONG;

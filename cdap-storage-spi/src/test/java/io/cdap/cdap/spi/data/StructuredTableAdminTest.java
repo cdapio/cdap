@@ -127,6 +127,24 @@ public abstract class StructuredTableAdminTest {
   }
 
   @Test
+  public void testCreateOrUpdateTwiceShouldSucceed() throws Exception {
+    StructuredTableAdmin admin = getStructuredTableAdmin();
+
+    // Assert SIMPLE_TABLE Empty
+    Assert.assertFalse(admin.exists(SIMPLE_TABLE));
+
+    // Calling to createOrUpdate the same SIMPLE_TABLE spec twice to mimic the scenario of
+    // connecting to an exsting DB
+    admin.createOrUpdate(SIMPLE_TABLE_SPEC);
+    admin.createOrUpdate(SIMPLE_TABLE_SPEC);
+    Assert.assertTrue(admin.exists(SIMPLE_TABLE));
+
+    // Assert SIMPLE_TABLE schema
+    StructuredTableSchema simpleTableSchema = admin.getSchema(SIMPLE_TABLE);
+    Assert.assertEquals(simpleTableSchema, new StructuredTableSchema(SIMPLE_TABLE_SPEC));
+  }
+
+  @Test
   public void testBackwardCompatible() throws Exception {
     StructuredTableAdmin admin = getStructuredTableAdmin();
 
