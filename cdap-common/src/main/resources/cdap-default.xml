@@ -5826,7 +5826,7 @@
 
   <property>
     <name>feature.wrangler.precondition.sql.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Enables the Precondition Language selector in Wrangler, allowing to select
       between JEXL and SQL preconditions.
