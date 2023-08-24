@@ -69,6 +69,7 @@ import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAndDryrunAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -88,6 +89,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -326,8 +328,35 @@ public class SourceControlManagementService {
     return pullAndDryrunApplication(appRef, appId);
   }
 
-  public List<PullAppDryrunResponse> pullAndDryrunMulti(List<ApplicationReference> appRefs) throws Exception {
-    return new ArrayList<>();
+  public List<PullAppDryrunResponse> pullAndDryrunMulti(NamespaceId namespace, List<ApplicationReference> appRefs) throws Exception {
+    List<PullAndDryrunAppOperationRequest> appOperationRequests = new ArrayList<>();
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+
+    for (ApplicationReference appRef: appRefs) {
+      String versionId = RunIds.generate().getId();
+      ApplicationId appId = appRef.app(versionId);
+      accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+      accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+          NamespacePermission.READ_REPOSITORY);
+
+      appOperationRequests.add(new PullAndDryrunAppOperationRequest(
+          appId,
+          appRef,
+          repoConfig
+      ));
+    }
+
+    ReadonlyArtifactRepositoryAccessor readonlyArtifactRepositoryAccessor = new ArtifactRepositoryAccessor(
+        artifactRepository,
+        impersonator
+    );
+
+    return sourceControlOperationRunner.pullAndDryrunMulti(
+        appOperationRequests,
+        namespace,
+        repoConfig,
+        readonlyArtifactRepositoryAccessor
+    );
   }
 
   /**
@@ -364,8 +393,7 @@ public class SourceControlManagementService {
     );
 
     PullAppDryrunResponse pullResponse = sourceControlOperationRunner.pullAndDryrun(
-        appId,
-        new PulAppOperationRequest(appRef, repoConfig),
+        new PullAndDryrunAppOperationRequest(appId, appRef, repoConfig),
         readonlyArtifactRepositoryAccessor
     );
 

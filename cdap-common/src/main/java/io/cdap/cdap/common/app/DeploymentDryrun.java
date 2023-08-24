@@ -80,6 +80,9 @@ public class DeploymentDryrun {
       throw new InvalidArtifactException(error);
     }
 
+    boolean shouldUpgradeApplicationArtifact =
+        currentArtifact.getVersion().compareTo(candidateArtifactVersion) != 0;
+
     ArtifactId newArtifactId =
         new ArtifactId(candidateArtifact.getName(), candidateArtifactVersion,
             candidateArtifact.getScope());
@@ -114,7 +117,6 @@ public class DeploymentDryrun {
     try (CloseableClassLoader artifactClassLoader =
         artifactRepository.createArtifactClassLoader(newArtifactDetail.getDescriptor(), artifactId)) {
       Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
-      // Run config update logic for the application to generate updated config.
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(
             String.format("Application main class is of invalid type: %s",
@@ -129,7 +131,16 @@ public class DeploymentDryrun {
 
       ApplicationValidationResult validationResult = app.validateConfig(validationContext);
 
-      return new DeploymentDryrunResult(validationResult);
+      return new DeploymentDryrunResult(
+          shouldUpgradeApplicationArtifact,
+          shouldUpgradeApplicationArtifact ? summary : null,
+          shouldUpgradeApplicationArtifact ? new ArtifactSummary(
+              newArtifact.getName(),
+              newArtifact.getVersion().getVersion(),
+              newArtifactScope
+          ) : null,
+          validationResult
+      );
     }
   }
 

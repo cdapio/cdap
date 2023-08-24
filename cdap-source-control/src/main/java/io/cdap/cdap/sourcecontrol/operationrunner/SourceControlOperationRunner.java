@@ -20,10 +20,13 @@ import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import java.util.List;
 
 /**
  * An interface encapsulating all operations needed for source control management.
@@ -57,8 +60,14 @@ public interface SourceControlOperationRunner extends Service {
     AuthenticationConfigException;
 
   PullAppDryrunResponse pullAndDryrun(
-      ApplicationId appId,
-      PulAppOperationRequest pulAppOperationRequest,
+      PullAndDryrunAppOperationRequest pullAndDryrunAppOperationRequest,
+      ReadonlyArtifactRepositoryAccessor artifactRepository
+  ) throws Exception;
+
+  List<PullAppDryrunResponse> pullAndDryrunMulti(
+      List<PullAndDryrunAppOperationRequest> pullAndDryrunAppOperationRequests,
+      NamespaceId namespace,
+      RepositoryConfig repoConfig,
       ReadonlyArtifactRepositoryAccessor artifactRepository
   ) throws Exception;
 

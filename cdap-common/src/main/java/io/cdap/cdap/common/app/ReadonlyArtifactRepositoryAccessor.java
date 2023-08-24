@@ -160,7 +160,7 @@ public interface ReadonlyArtifactRepositoryAccessor extends ArtifactRepositoryRe
    * @param limit the limit number of the result
    * @param order the order of the result
    * @return an unmodifiable list of artifacts in the given namespace of the given name
-   * @throws IOException if there as an exception reading from the meta store
+   * @throws IOException if there is an exception reading from the meta store
    * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace
    *     exist
    */

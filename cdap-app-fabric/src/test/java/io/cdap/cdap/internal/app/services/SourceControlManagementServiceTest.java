@@ -54,6 +54,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAndDryrunAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -505,9 +506,18 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     @Override
     public PullAppDryrunResponse pullAndDryrun(
-        ApplicationId appId,
-        PulAppOperationRequest pulAppOperationRequest,
+        PullAndDryrunAppOperationRequest pulAppOperationRequest,
         ReadonlyArtifactRepositoryAccessor artifactRepository
+    ) throws Exception {
+      return null;
+    }
+
+    @Override
+    public  List<PullAppDryrunResponse> pullAndDryrunMulti(
+        List<PullAndDryrunAppOperationRequest> pullAndDryrunAppOperationRequests,
+        NamespaceId namespace,
+        RepositoryConfig repoConfig,
+        ReadonlyArtifactRepositoryAccessor artifactRepositoryAccessor
     ) throws Exception {
       return null;
     }

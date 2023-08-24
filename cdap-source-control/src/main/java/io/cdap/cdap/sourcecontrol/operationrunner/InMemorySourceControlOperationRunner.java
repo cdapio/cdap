@@ -32,7 +32,9 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.DeploymentDryrunResult;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
@@ -141,17 +143,17 @@ public class InMemorySourceControlOperationRunner extends
 
   @Override
   public PullAppDryrunResponse pullAndDryrun(
-      ApplicationId appId,
-      PulAppOperationRequest pulAppOperationRequest,
+      PullAndDryrunAppOperationRequest pullAndDryrunAppOperationRequest,
       ReadonlyArtifactRepositoryAccessor artifactRepository) throws Exception {
 
-    String applicationName = pulAppOperationRequest.getApp().getApplication();
+    String applicationName = pullAndDryrunAppOperationRequest.getApp().getApplication();
+    ApplicationId appId = pullAndDryrunAppOperationRequest.getAppId();
     String configFileName = generateConfigFileName(applicationName);
     LOG.info("Cloning remote to pull application {}", applicationName);
     Path appRelativePath = null;
     try (RepositoryManager repositoryManager =
-        repoManagerFactory.create(pulAppOperationRequest.getApp().getNamespaceId(),
-            pulAppOperationRequest.getRepositoryConfig())) {
+        repoManagerFactory.create(pullAndDryrunAppOperationRequest.getApp().getNamespaceId(),
+            pullAndDryrunAppOperationRequest.getRepositoryConfig())) {
       appRelativePath = repositoryManager.getFileRelativePath(configFileName);
       String commitId = repositoryManager.cloneRemote();
       Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
@@ -182,6 +184,60 @@ public class InMemorySourceControlOperationRunner extends
       throw e;
     } catch (Exception e) {
       throw new SourceControlException(String.format("Failed to pull application %s.", applicationName), e);
+    }
+  }
+
+  public List<PullAppDryrunResponse> pullAndDryrunMulti(
+      List<PullAndDryrunAppOperationRequest> pullAndDryrunAppOperationRequests,
+      NamespaceId namespace,
+      RepositoryConfig repoConfig,
+      ReadonlyArtifactRepositoryAccessor artifactRepository
+  ) throws Exception {
+    // TODO Better error handling
+    List<PullAppDryrunResponse> responses = new ArrayList<>();
+
+    try (RepositoryManager repositoryManager =
+        repoManagerFactory.create(namespace, repoConfig)) {
+
+      String commitId = repositoryManager.cloneRemote();
+
+      for (PullAndDryrunAppOperationRequest pullRequest: pullAndDryrunAppOperationRequests) {
+        String applicationName = pullRequest.getApp().getApplication();
+        ApplicationId appId = pullRequest.getAppId();
+        String configFileName = generateConfigFileName(applicationName);
+        LOG.info("Cloning remote to pull application {}", applicationName);
+
+        Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
+        Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
+        if (!Files.exists(filePathToRead)) {
+          throw new NotFoundException(String.format("App with name %s not found at path %s in git repository",
+              applicationName,
+              appRelativePath));
+        }
+
+        LOG.info("Getting file hash for application {}", applicationName);
+        String fileHash = repositoryManager.getFileHash(appRelativePath, commitId);
+        String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
+        AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
+
+        DeploymentDryrun dryrun = new DeploymentDryrun(appId, appRequest, artifactRepository);
+        DeploymentDryrunResult result = dryrun.deploy();
+        responses.add(new PullAppDryrunResponse(applicationName, fileHash, result));
+      }
+
+      return responses;
+    } catch (GitAPIException e) {
+      throw new GitOperationException(String.format("Failed to pull applications: %s",
+          e.getMessage()), e);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException(String.format(
+          "Failed to de-serialize application json. Ensure application json is valid: %s",
+          e.getMessage()), e);
+    } catch (NotFoundException | AuthenticationConfigException | IllegalArgumentException e) {
+      // TODO(CDAP-20410): Create exception classes that derive from a common class instead of propagating.
+      throw e;
+    } catch (Exception e) {
+      throw new SourceControlException("Failed to pull applications.", e);
     }
   }
 
