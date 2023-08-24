@@ -101,7 +101,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     Set<EntityId> entityIds = visibilityRequest.getEntityIds();
     LOG.trace("Checking visibility for principal {} on entities {}", principal, entityIds);
     Set<? extends EntityId> visiableEntities = accessEnforcer.isVisible(entityIds, principal);
-    LOG.debug("Returning entities visible for principal {} as {}", principal, visiableEntities);
+    LOG.trace("Returning entities visible for principal {} as {}", principal, visiableEntities);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(visiableEntities));
   }
 

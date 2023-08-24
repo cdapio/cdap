@@ -25,6 +25,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
@@ -40,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SplittableRandom;
@@ -175,11 +177,67 @@ public final class DataprocUtils {
     }
     for (String property : configValue.split(delimiter)) {
       String[] parts = property.split(keyValueDelimiter, 2);
-      String key = parts[0].trim();
-      String value = parts.length > 1 ? parts[1].trim() : "";
+      if (parts.length != 2) {
+        throw new IllegalArgumentException("Invalid KeyValue " + property);
+      }
+      String key = parts[0];
+      String value = parts[1];
       map.put(key, value);
     }
     return map;
+  }
+
+  /**
+   * Parses labels that are expected to be of the form key1=val1,key2=val2 into a map of key
+   * values.
+   *
+   * <p>If a label key or value is invalid, a message will be logged but the key-value will not be
+   * returned in the map. Keys and values cannot be longer than 63 characters. Keys and values can
+   * only contain lowercase letters, numeric characters, underscores, and dashes. Keys must start
+   * with a lowercase letter and must not be empty.
+   *
+   * <p>If a label is given without a '=', the label value will be empty. If a label is given as
+   * 'key=', the label value will be empty. If a label has multiple '=', it will be ignored. For
+   * example, 'key=val1=val2' will be ignored.
+   *
+   * @param labelsStr the labels string to parse
+   * @return valid labels from the parsed string
+   */
+  public static Map<String, String> parseLabels(String labelsStr,
+      String labelDelimiter, String keyValueDelimiter) {
+    Splitter labelSplitter = Splitter.on(labelDelimiter).trimResults().omitEmptyStrings();
+    Splitter kvSplitter = Splitter.on(keyValueDelimiter).trimResults().omitEmptyStrings();
+
+    Map<String, String> validLabels = new HashMap<>();
+    for (String keyvalue : labelSplitter.split(labelsStr)) {
+      Iterator<String> iter = kvSplitter.split(keyvalue).iterator();
+      if (!iter.hasNext()) {
+        continue;
+      }
+      String key = iter.next();
+      String val = iter.hasNext() ? iter.next() : "";
+      if (iter.hasNext()) {
+        LOG.warn("Ignoring invalid label {}. Labels should be of the form 'key{}val' or just 'key'",
+            keyvalue, keyValueDelimiter);
+        continue;
+      }
+      if (!LABEL_KEY_PATTERN.matcher(key).matches()) {
+        LOG.warn(
+            "Ignoring invalid label key {}. Label keys cannot be longer than 63 characters, must start with "
+                + "a lowercase letter, and can only contain lowercase letters, numeric characters, underscores,"
+                + " and dashes.", key);
+        continue;
+      }
+      if (!LABEL_VAL_PATTERN.matcher(val).matches()) {
+        LOG.warn(
+            "Ignoring invalid label value {}. Label values cannot be longer than 63 characters, "
+                + "and can only contain lowercase letters, numeric characters, underscores, and dashes.",
+            val);
+        continue;
+      }
+      validLabels.put(key, val);
+    }
+    return validLabels;
   }
 
   /**

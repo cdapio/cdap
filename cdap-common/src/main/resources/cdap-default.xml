@@ -5995,5 +5995,61 @@
     </description>
   </property>
 
+  <!-- Configuration settings for KubeJobCleaner -->
+  <property>
+    <name>master.environment.k8s.job.cleaner.enabled</name>
+    <value>true</value>
+    <description>
+      If true, the KubeJobCleaner thread in appfabric will be enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.job.cleaner.interval.mins</name>
+    <value>60</value>
+    <description>
+      Interval in minutes after which the KubeJobCleaner thread runs.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.job.cleaner.batch.size</name>
+    <value>1000</value>
+    <description>
+      Number of jobs that will be cleaned by KubeJobCleaner per batch.
+    </description>
+  </property>
+
+  <property>
+    <name>hsts.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable HSTS settings on UI node server.
+    </description>
+  </property>
+
+  <property>
+    <name>hsts.max.age</name>
+    <value>31536000</value>
+    <description>
+      The number of seconds browsers should remember to prefer HTTPS.
+    </description>
+  </property>
+
+  <property>
+    <name>hsts.include.sub.domains</name>
+    <value>true</value>
+    <description>
+      Whether to include the includeSubDomains directive, which makes this policy extend to subdomains.
+    </description>
+  </property>
+
+  <property>
+    <name>hsts.preload</name>
+    <value>true</value>
+    <description>
+      Adds the preload directive, expressing intent to add your HSTS policy to browsers.
+    </description>
+  </property>
 
 </configuration>

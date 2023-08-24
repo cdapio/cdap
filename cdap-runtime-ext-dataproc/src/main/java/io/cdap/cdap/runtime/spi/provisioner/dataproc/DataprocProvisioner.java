@@ -41,7 +41,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
@@ -339,10 +342,13 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
           LOG.info("Found cluster to reuse: {}", clusterName);
           // Add cdap-reuse-for to find cluster later if needed
           // And remove reuseUntil to indicate the cluster is taken
-          client.updateClusterLabels(clusterName,
-              Collections.singletonMap(LABEL_RUN_KEY, clusterKey),
+          Map<String, String> runLabels = Collections.singletonMap(LABEL_RUN_KEY, clusterKey);
+          Future<?> updateLabelsFuture = client.updateClusterLabels(clusterName,
+              runLabels,
               Collections.singleton(LABEL_REUSE_UNTIL)
           );
+          // Ensure that label update happened - it may still be going
+          waitForLabelsUpdateToApply(client, conf, updateLabelsFuture, clusterName, runLabels);
           return cluster.get();
         }
       } catch (Exception e) {
@@ -366,6 +372,42 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         LOG.debug("Could not find any available cluster to reuse.");
         return null;
       }
+    }
+  }
+
+  /**
+   * Waits for the cluster to be found by the run label. The operation may take some time.
+   * Note that we don't want to wait for the whole operation to finish, we jsut need to be sure
+   * that cluster can be found by the labels.
+   *
+   * @param client dataproc client
+   * @param conf provisioner configuration
+   * @param updateLabelsFuture future for the cluster update operation
+   * @param clusterName cluster name
+   * @param runLabels map with labels to look for the cluster
+   * @throws Exception if wait failed, interrupted or cluster can't be found even after operation
+   * finished.
+   */
+  private static void waitForLabelsUpdateToApply(DataprocClient client, DataprocConf conf,
+      Future<?> updateLabelsFuture, String clusterName,
+      Map<String, String> runLabels)
+      throws Exception {
+    boolean wasDone = false;
+    while (client.getClusters(runLabels).count() == 0) {
+      if (wasDone) {
+        // Future was competed before getClusters, but we still can't find the cluster
+        // Something's wrong here, let's try reuse again
+        throw new IllegalStateException("Label update was not reflected on cluster "
+            + clusterName);
+      }
+      try {
+        updateLabelsFuture.get(conf.getClusterReuseRetryDelayMs(), TimeUnit.MILLISECONDS);
+        wasDone = true;
+      } catch (TimeoutException e) {
+        LOG.trace("Label update did not finish in {} ms, retry the check",
+            conf.getClusterReuseRetryDelayMs());
+      }
+
     }
   }
 

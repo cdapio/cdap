@@ -112,10 +112,9 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
   private static final String DATA_TX_ENABLED = "data.tx.enabled";
-  private static final String JOB_CLEANUP_INTERVAL = "program.container.cleaner.interval.mins";
-  private static final String JOB_CLEANUP_BATCH_SIZE = "program.container.cleaner.batch.size";
-  private static final String DEFAULT_JOB_CLEANUP_INTERVAL_MIN = "60";
-  private static final String DEFAULT_JOB_CLEANUP_BATCH_SIZE = "1000";
+  private static final String JOB_CLEANUP_INTERVAL = "master.environment.k8s.job.cleaner.interval.mins";
+  private static final String JOB_CLEANUP_BATCH_SIZE = "master.environment.k8s.job.cleaner.batch.size";
+  public static final String JOB_CLEANER_ENABLED = "master.environment.k8s.job.cleaner.enabled";
 
   public static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
@@ -212,6 +211,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_DRIVER_LABEL_VALUE = "driver";
   private static final String CDAP_CONTAINER_LABEL = "cdap.container";
   private static final String TWILL_RUNNER_SERVICE_MONITOR_DISABLE = "twill.runner.service.monitor.disable";
+  private static final String SPARK_EXECUTOR_JAVA_OPTS = "spark.executor.extraJavaOptions";
 
   private static final String CONNECT_TIMEOUT = "master.environment.k8s.connect.timeout.sec";
   static final String CONNECT_TIMEOUT_DEFAULT = "120";
@@ -379,11 +379,15 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         workloadIdentityPool,
         workloadIdentityProvider);
 
-    int batchSize = Integer.parseInt(
-        conf.getOrDefault(JOB_CLEANUP_BATCH_SIZE, DEFAULT_JOB_CLEANUP_BATCH_SIZE));
-    int interval = Integer.parseInt(
-        conf.getOrDefault(JOB_CLEANUP_INTERVAL, DEFAULT_JOB_CLEANUP_INTERVAL_MIN));
-    tasks.add(new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory));
+    int batchSize = Integer.parseInt(conf.get(JOB_CLEANUP_BATCH_SIZE));
+    int interval = Integer.parseInt(conf.get(JOB_CLEANUP_INTERVAL));
+    boolean jobCleanerEnabled = Boolean.parseBoolean(conf.get(JOB_CLEANER_ENABLED));
+
+    if (jobCleanerEnabled) {
+      tasks.add(new KubeJobCleaner(twillRunner.getSelector(), batchSize, interval, apiClientFactory));
+    } else {
+      LOG.info("KubeJobCleaner is disabled.");
+    }
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -491,6 +495,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     sparkConfMap.put(SPARK_DRIVER_POD_CPU_LIMIT, String.format("%dm", driverCpuLimit));
     sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_REQUEST, String.format("%dm", executorCpuRequested));
     sparkConfMap.put(SPARK_EXECUTOR_POD_CPU_LIMIT, String.format("%dm", executorCpuLimit));
+
+    // In Spark v3.2.0 and later, max netty direct memory must be
+    // >= spark.network.maxRemoteBlockSizeFetchToMem for executors.
+    // So we set max netty direct memory = spark.network.maxRemoteBlockSizeFetchToMem
+    // See CDAP-20758 for details.
+    // NOTE: If spark.network.maxRemoteBlockSizeFetchToMem is changed in ETLSpark.java,
+    // DataStreamsSparkLaunch.java, then io.netty.maxDirectMemory will need also need to changed
+    // here.
+    String nettyMaxDirectMemory = String.format("-Dio.netty.maxDirectMemory=%d", Integer.MAX_VALUE - 512);
+    sparkConfMap.put(SPARK_EXECUTOR_JAVA_OPTS, nettyMaxDirectMemory);
 
     // Add spark pod labels. This will be same as job labels
     populateLabels(sparkConfMap);
