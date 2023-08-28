@@ -5989,6 +5989,32 @@
     </description>
   </property>
 
+  <!--Configuration for the Internal Router service -->
+  <property>
+    <name>app.program.internal.router.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The address for the internal router service to bind to.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.internal.router.service.bind.port</name>
+    <value>0</value>
+    <description>
+      The port for the internal router service to bind to.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.internal.router.service.ssl.enabled</name>
+    <value>${ssl.internal.enabled}</value>
+    <description>
+      Enable usage of SSL for the internal router service. By default it is
+      disabled.
+    </description>
+  </property>
+
   <!-- Configurations for Credential Providers -->
   <property>
     <name>credential.provider.extensions.dir</name>
