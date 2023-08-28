@@ -130,6 +130,7 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String MESSAGING_SERVICE = "messaging.service";
     public static final String RUNTIME = "runtime";
+    public static final String INTERNAL_ROUTER = "internal.router";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
     public static final String SYSTEM_WORKER = "system.worker";
@@ -2403,5 +2404,15 @@ public final class Constants {
 
     public static final String EXTENSIONS_DIR = "credential.provider.extensions.dir";
     public static final String SYSTEM_PROPERTY_PREFIX = "credential.provider.system.properties.";
+  }
+
+  /**
+   * Constants for Internal Router Service.
+   */
+  public static final class InternalRouter {
+
+    public static final String BIND_ADDRESS = "app.program.internal.router.service.bind.address";
+    public static final String BIND_PORT = "app.program.internal.router.service.bind.port";
+    public static final String SSL_ENABLED = "app.program.internal.router.service.ssl.enabled";
   }
 }

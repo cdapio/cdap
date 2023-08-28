@@ -29,6 +29,7 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.internal.app.runtime.monitor.InternalRouterService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -49,7 +50,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
-   * Main entry point
+   * Main entry point.
    */
   public static void main(String[] args) throws Exception {
     main(RuntimeServiceMain.class, args);
@@ -93,6 +94,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     });
     services.add(injector.getInstance(RuntimeProgramStatusSubscriberService.class));
     services.add(injector.getInstance(RuntimeServer.class));
+    services.add(injector.getInstance(InternalRouterService.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
         Key.get(ZKClientService.class));
     if (zkBinding != null) {

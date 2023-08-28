@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2022 Cask Data, Inc.
+ * Copyright © 2020-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,13 +53,8 @@ import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.AbstractHttpHandler;
-import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -67,12 +62,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.EnumSet;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.junit.After;
@@ -255,37 +244,6 @@ public class RuntimeServiceRoutingTest {
 
     HttpResponse response = remoteClient.execute(request);
     Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, response.getResponseCode());
-  }
-
-  /**
-   * A mock handler for testing service routing. It provides service endpoints for testing.
-   */
-  @Path("/mock")
-  public static final class MockServiceHandler extends AbstractHttpHandler {
-
-    @Path("/get/{status}")
-    @GET
-    public void get(HttpRequest request, HttpResponder responder, @PathParam("status") int statusCode) {
-      responder.sendString(HttpResponseStatus.valueOf(statusCode), "Status is " + statusCode);
-    }
-
-    @Path("/delete/{status}")
-    @DELETE
-    public void delete(HttpRequest request, HttpResponder responder, @PathParam("status") int statusCode) {
-      responder.sendString(HttpResponseStatus.valueOf(statusCode), "Status is " + statusCode);
-    }
-
-    @Path("/put/{status}")
-    @PUT
-    public void put(FullHttpRequest request, HttpResponder responder, @PathParam("status") int statusCode) {
-      responder.sendString(HttpResponseStatus.valueOf(statusCode), request.content().toString(StandardCharsets.UTF_8));
-    }
-
-    @Path("/post/{status}")
-    @POST
-    public void post(FullHttpRequest request, HttpResponder responder, @PathParam("status") int statusCode) {
-      responder.sendString(HttpResponseStatus.valueOf(statusCode), request.content().toString(StandardCharsets.UTF_8));
-    }
   }
 
   /**
