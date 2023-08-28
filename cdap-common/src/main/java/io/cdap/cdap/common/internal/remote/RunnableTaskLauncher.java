@@ -83,6 +83,7 @@ public class RunnableTaskLauncher {
           String.format("%s is not a RunnableTask", context.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
+
     runnableTask.run(context);
   }
 }

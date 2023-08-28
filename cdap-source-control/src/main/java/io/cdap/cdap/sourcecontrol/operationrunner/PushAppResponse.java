@@ -26,11 +26,20 @@ public class PushAppResponse {
   private final String name;
   private final String version;
   private final String fileHash;
+  private final String operationId;
 
   public PushAppResponse(String name, String version, String fileHash) {
     this.name = name;
     this.version = version;
     this.fileHash = fileHash;
+    this.operationId = "";
+  }
+
+  public PushAppResponse( String operationId) {
+    this.name = "";
+    this.version = "version";
+    this.fileHash = "fileHash";
+    this.operationId = operationId;
   }
 
   public String getName() {

@@ -21,9 +21,10 @@ import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * A class which contains all the store definition, the table name the store will use, the schema of
@@ -71,6 +72,7 @@ public final class StoreDefinition {
     TetheringStore.create(tableAdmin);
     AppStateStore.create(tableAdmin);
     CredentialProviderStore.create(tableAdmin);
+    OperationRunsStore.create(tableAdmin);
   }
 
   /**
@@ -1321,6 +1323,49 @@ public final class StoreDefinition {
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PROFILE_TABLE_SPEC);
       createIfNotExists(tableAdmin, IDENTITY_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schemas for operation runs.
+   */
+  public static final class OperationRunsStore {
+    public static final StructuredTableId OPERATION_RUNS =
+        new StructuredTableId("operation_runs");
+
+    public static final String OPERATION_ID_FIELD = "operation_id";
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String STATUS_FIELD = "status";
+    public static final String CREATED_AT_FIELD = "created_at";
+    public static final String UPDATED_AT_FIELD = "updated_at";
+    public static final String METADATA_FIELD = "metadata";
+    public static final String ERRORS_FIELD = "errors";
+
+    public static final StructuredTableSpecification OPERATION_RUNS_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(OPERATION_RUNS)
+            .withFields(
+                Fields.stringType(OPERATION_ID_FIELD),
+                Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(TYPE_FIELD),
+                Fields.stringType(STATUS_FIELD),
+                Fields.longType(CREATED_AT_FIELD),
+                Fields.longType(UPDATED_AT_FIELD),
+                Fields.stringType(METADATA_FIELD),
+                Fields.stringType(ERRORS_FIELD)
+                )
+            .withPrimaryKeys(OPERATION_ID_FIELD)
+            .build();
+
+    /**
+     * Creates operation store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, OPERATION_RUNS_TABLE_SPEC);
     }
   }
 }

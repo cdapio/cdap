@@ -64,6 +64,7 @@ import io.cdap.cdap.gateway.handlers.FileFetcherHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ImpersonationHandler;
 import io.cdap.cdap.gateway.handlers.InstanceOperationHttpHandler;
 import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
+import io.cdap.cdap.gateway.handlers.OperationRunHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationsDashboardHttpHandler;
 import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
@@ -155,9 +156,6 @@ import io.cdap.cdap.security.store.SecureStoreHandler;
 import io.cdap.cdap.sourcecontrol.guice.SourceControlModule;
 import io.cdap.cdap.spi.events.StartProgramEvent;
 import io.cdap.http.HttpHandler;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -169,6 +167,10 @@ import org.quartz.impl.StdScheduler;
 import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.JobStore;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * AppFabric Service Runtime Module.
@@ -455,6 +457,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppStateHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandlerInternal.class);
+      handlerBinder.addBinding().to(OperationRunHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

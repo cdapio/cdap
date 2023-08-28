@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.service.operation.OperationRunManager;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
@@ -38,10 +39,11 @@ import io.cdap.cdap.sourcecontrol.worker.MultiPushAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
-import java.nio.charset.StandardCharsets;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import javax.inject.Inject;
 
 /**
  * Remote implementation for {@link SourceControlOperationRunner}.
@@ -126,17 +128,19 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public PushAppResponse multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
-      RemoteClient remoteClient) throws NoChangesToPushException, AuthenticationConfigException {
+  public void multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
+                                   OperationRunManager<MultiPushAppOperationRequest> operationManager,
+                                  RemoteClient remoteClient
+                        ) throws SourceControlException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(MultiPushAppTask.class.getName())
           .withParam(GSON.toJson(multiPushAppOperationRequest)).build();
 
       // LOG.trace("Pushing application {} to linked repository", mu.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
-      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppResponse.class);
-    } catch (RemoteExecutionException e) {
-      throw propagateRemoteException(e, noChangeToPushExceptionProvider, authConfigExceptionProvider);
+//      return;
+//    } catch (RemoteExecutionException e) {
+//      throw propagateRemoteException(e, noChangeToPushExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }

@@ -31,15 +31,18 @@ public class MultiPushAppOperationRequest {
   private final RepositoryConfig repoConfig;
   private final List<ApplicationId> apps;
   private final CommitMeta commitDetails;
+  private final String operationId;
 
   public MultiPushAppOperationRequest(NamespaceId namespace,
                                       RepositoryConfig repoConfig,
                                       List<ApplicationId> apps,
-                                      CommitMeta commitDetails) {
+                                      CommitMeta commitDetails,
+                                      String operationId) {
     this.namespace = namespace;
     this.repoConfig = repoConfig;
     this.apps = apps;
     this.commitDetails = commitDetails;
+    this.operationId = operationId;
   }
 
   public NamespaceId getNamespaceId() {
@@ -56,5 +59,9 @@ public class MultiPushAppOperationRequest {
 
   public CommitMeta getCommitDetails() {
     return commitDetails;
+  }
+
+  public String getOperationId() {
+    return operationId;
   }
 }

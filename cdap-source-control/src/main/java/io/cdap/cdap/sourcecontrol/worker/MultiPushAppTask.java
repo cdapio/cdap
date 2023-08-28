@@ -28,13 +28,12 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * The task that pushes an application to linked repository.
@@ -65,8 +64,8 @@ public class MultiPushAppTask extends SourceControlTask {
         RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
         Gateway.API_VERSION_3
     );
-    // LOG.info("Pushing application {} in worker.", operationRequest.getApp().getName());
-    PushAppResponse result = inMemoryOperationRunner.multipush(operationRequest, remoteClient);
-    context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));
+    inMemoryOperationRunner.multipush(
+      operationRequest, null, remoteClient
+    );
   }
 }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.service.operation.OperationRunManager;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -67,6 +68,9 @@ public interface SourceControlOperationRunner extends Service {
   RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository) throws AuthenticationConfigException,
     NotFoundException;
 
-  PushAppResponse multipush(MultiPushAppOperationRequest multiPushAppOperationRequest, RemoteClient remoteClient)
-      throws NoChangesToPushException, AuthenticationConfigException;
+  void multipush(
+    MultiPushAppOperationRequest multiPushAppOperationRequest,
+                 OperationRunManager<MultiPushAppOperationRequest> operationManager,
+                 RemoteClient remoteClient
+  ) throws SourceControlException;
 }

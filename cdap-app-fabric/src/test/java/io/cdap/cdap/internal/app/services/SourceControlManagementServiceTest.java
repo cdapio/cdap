@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.service.operation.OperationRunManager;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -59,14 +60,15 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Tests for {@link SourceControlManagementService}.
@@ -503,10 +505,13 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     }
 
     @Override
-    public PushAppResponse multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
-        RemoteClient remoteClient) throws NoChangesToPushException, AuthenticationConfigException {
-      return null;
+    public void multipush(MultiPushAppOperationRequest multiPushAppOperationRequest,
+                          OperationRunManager<MultiPushAppOperationRequest> operationManager,
+                          RemoteClient remoteClient
+    ) throws SourceControlException{
+      // no op
     }
+
 
     @Override
     protected void startUp() throws Exception {

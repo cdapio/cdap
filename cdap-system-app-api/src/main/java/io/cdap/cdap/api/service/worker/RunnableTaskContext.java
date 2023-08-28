@@ -18,13 +18,14 @@ package io.cdap.cdap.api.service.worker;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Represents a context for a {@link RunnableTask}. This context is used for writing back the result

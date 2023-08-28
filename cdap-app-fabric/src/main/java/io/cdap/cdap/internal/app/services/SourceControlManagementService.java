@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.services;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.service.operation.OperationError;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -26,6 +27,7 @@ import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.operations.OperationRunsStore;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -61,12 +63,15 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -81,6 +86,7 @@ public class SourceControlManagementService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  private final OperationRunsStore operationRunsStore;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -95,7 +101,7 @@ public class SourceControlManagementService {
                                         AuthenticationContext authenticationContext,
                                         SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
-                                        Store store) {
+                                        Store store, OperationRunsStore operationRunsStore) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -104,6 +110,7 @@ public class SourceControlManagementService {
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
+    this.operationRunsStore = operationRunsStore;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
@@ -224,21 +231,30 @@ public class SourceControlManagementService {
           new ApplicationId(appRef.getParent().getNamespace(), appRef.getApplication()));
     }
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.multipush(
-      new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta),
-        null
-    );
+    String operationId = UUID.randomUUID().toString();
+
+    try {
+      operationRunsStore.createOperation(appRef.getParent(), operationId, "SCM_PUSH");
+    } catch (Exception e){
+      throw new RuntimeException("failed to create operation");
+    }
+
+    try {
+      sourceControlOperationRunner.multipush(
+        new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta, operationId),
+        null, null
+      );
+    } catch (Exception e){
+      operationRunsStore.failOperation(appRef.getParent(), operationId,
+                                        Arrays.asList(new OperationError("", "Failed to launch push task")));
+    }
 
     LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
         appRef.getApplication(),
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
-    
-    SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
-    ApplicationId appId = appRef.app(appDetail.getAppVersion());
-    store.setAppSourceControlMeta(appId, sourceControlMeta);
 
-    return pushResponse;
+    return new PushAppResponse(operationId);
   }
 
   /**
