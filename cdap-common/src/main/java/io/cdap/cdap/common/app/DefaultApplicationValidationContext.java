@@ -1,7 +1,6 @@
 package io.cdap.cdap.common.app;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,6 +24,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.function.Predicate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

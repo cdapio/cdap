@@ -16,25 +16,41 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.CommonProgramClassLoader;
 import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.app.DeploymentDryrun;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.lang.DirectoryClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.DeploymentDryrunResult;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
@@ -44,6 +60,7 @@ import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
@@ -53,7 +70,12 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.apache.twill.filesystem.Location;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,10 +93,17 @@ public class InMemorySourceControlOperationRunner extends
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Logger LOG = LoggerFactory.getLogger(InMemorySourceControlOperationRunner.class);
   private final RepositoryManagerFactory repoManagerFactory;
+  private final Impersonator impersonator;
+  private final CConfiguration cConf;
+  private final File tmpDir;
 
   @Inject
-  InMemorySourceControlOperationRunner(RepositoryManagerFactory repoManagerFactory) {
+  InMemorySourceControlOperationRunner(RepositoryManagerFactory repoManagerFactory, Impersonator impersonator, CConfiguration cConf) {
     this.repoManagerFactory = repoManagerFactory;
+    this.impersonator = impersonator;
+    this.cConf = cConf;
+    this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   @Override
@@ -167,8 +196,14 @@ public class InMemorySourceControlOperationRunner extends
       String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
 
-      DeploymentDryrun dryrun = new DeploymentDryrun(appId, appRequest, artifactRepository);
-      DeploymentDryrunResult result = dryrun.deploy();
+      DeploymentDryrun dryrun = new DeploymentDryrun(applicationName, fileHash, appId, appRequest, artifactRepository) {
+        @Override
+        protected CloseableClassLoader createArtifactClassLoader(
+            ArtifactDescriptor artifactDescriptor, ArtifactId artifactId) throws IOException {
+          return createCloasableClassloader(artifactDescriptor, artifactId);
+        }
+      };
+      DeploymentDryrunResult result = dryrun.dryrun();
 
       return new PullAppDryrunResponse(applicationName, fileHash, result);
     } catch (GitAPIException e) {
@@ -195,6 +230,8 @@ public class InMemorySourceControlOperationRunner extends
   ) throws Exception {
     // TODO Better error handling
     List<PullAppDryrunResponse> responses = new ArrayList<>();
+    List<DeploymentDryrun> dryruns = new ArrayList<>();
+    ExecutorService executor = Executors.newFixedThreadPool(AppFabric.DEFAULT_WORKER_THREADS);
 
     try (RepositoryManager repositoryManager =
         repoManagerFactory.create(namespace, repoConfig)) {
@@ -210,9 +247,10 @@ public class InMemorySourceControlOperationRunner extends
         Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
         Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
         if (!Files.exists(filePathToRead)) {
-          throw new NotFoundException(String.format("App with name %s not found at path %s in git repository",
-              applicationName,
-              appRelativePath));
+          throw new NotFoundException(
+              String.format("App with name %s not found at path %s in git repository",
+                  applicationName,
+                  appRelativePath));
         }
 
         LOG.info("Getting file hash for application {}", applicationName);
@@ -220,9 +258,26 @@ public class InMemorySourceControlOperationRunner extends
         String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
         AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
 
-        DeploymentDryrun dryrun = new DeploymentDryrun(appId, appRequest, artifactRepository);
-        DeploymentDryrunResult result = dryrun.deploy();
-        responses.add(new PullAppDryrunResponse(applicationName, fileHash, result));
+        DeploymentDryrun dryrun = new DeploymentDryrun(applicationName, fileHash, appId, appRequest, artifactRepository) {
+          @Override
+          protected CloseableClassLoader createArtifactClassLoader(
+              ArtifactDescriptor artifactDescriptor, ArtifactId artifactId) throws IOException {
+            return createCloasableClassloader(artifactDescriptor, artifactId);
+          }
+        };
+        dryruns.add(dryrun);
+      }
+
+      for(DeploymentDryrun dryrun: dryruns) {
+        executor.execute(dryrun);
+      }
+      shutdownAndAwaitTermination(executor);
+      for(DeploymentDryrun dryrun: dryruns) {
+        responses.add(new PullAppDryrunResponse(
+            dryrun.getApplicationName(),
+            dryrun.getFileHash(),
+            dryrun.getResult()
+        ));
       }
 
       return responses;
@@ -375,6 +430,88 @@ public class InMemorySourceControlOperationRunner extends
           && FileUtils.getExtension(file.getName()).equalsIgnoreCase("json"); // filter json extension
     };
   }
+
+  private CloseableClassLoader createCloasableClassloader(ArtifactDescriptor artifactDescriptor,
+      io.cdap.cdap.proto.id.ArtifactId artifactId)
+      throws IOException {
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId,
+        impersonator);
+
+    Iterator<Location> artifactLocations = ImmutableList.of(artifactDescriptor.getLocation()).iterator();
+    return createClassLoader(artifactLocations, classLoaderImpersonator);
+  }
+
+  private CloseableClassLoader createClassLoader(Iterator<Location> artifactLocations,
+      EntityImpersonator entityImpersonator) {
+
+    if (!artifactLocations.hasNext()) {
+      throw new IllegalArgumentException("Cannot create a classloader without an artifact.");
+    }
+
+    Location artifactLocation = artifactLocations.next();
+    if (!artifactLocations.hasNext()) {
+      return createClassLoader(artifactLocation, entityImpersonator);
+    }
+
+    try {
+      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
+          () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
+              () -> DirUtils.createTempDir(tmpDir)));
+
+      CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations,
+          entityImpersonator);
+      return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
+          parentClassLoader, "lib"), () -> {
+        Closeables.closeQuietly(parentClassLoader);
+        Closeables.closeQuietly(classLoaderFolder);
+      });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private CloseableClassLoader createClassLoader(Location artifactLocation,
+      EntityImpersonator entityImpersonator) {
+    try {
+      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
+          () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
+              () -> DirUtils.createTempDir(tmpDir)));
+
+      CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
+      return new CloseableClassLoader(classLoader, () -> {
+        Closeables.closeQuietly(classLoader);
+        Closeables.closeQuietly(classLoaderFolder);
+      });
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private CloseableClassLoader createClassLoader(File unpackDir) {
+    CommonProgramClassLoader programClassLoader = new CommonProgramClassLoader(cConf, unpackDir,
+          FilterClassLoader.create(getClass().getClassLoader()));
+    final ClassLoader finalProgramClassLoader = programClassLoader;
+    return new CloseableClassLoader(programClassLoader, () -> {
+      if (finalProgramClassLoader instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) finalProgramClassLoader);
+      }
+    });
+  }
+
+  static void shutdownAndAwaitTermination(ExecutorService pool) {
+    pool.shutdown();
+    try {
+      if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
+        pool.shutdownNow();
+        if (!pool.awaitTermination(60, TimeUnit.SECONDS))
+          LOG.error("Pool did not terminate");
+      }
+    } catch (InterruptedException ex) {
+      pool.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
+  }
+
 
   @Override
   protected void startUp() throws Exception {

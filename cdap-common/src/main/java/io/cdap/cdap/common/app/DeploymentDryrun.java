@@ -23,9 +23,11 @@ import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.proto.DeploymentDryrunResult;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
 import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.io.IOException;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -36,22 +38,56 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DeploymentDryrun {
+public abstract class DeploymentDryrun implements Runnable {
+  private static final Logger LOG = LoggerFactory.getLogger(DeploymentDryrun.class);
   private static final Gson GSON =
       new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
           .create();
-  private AppRequest<?> appRequest;
-  private ApplicationId appId;
-  private ReadonlyArtifactRepositoryAccessor artifactRepository;
+  private String applicationName;
+  private String fileHash;
+  private final AppRequest<?> appRequest;
+  private final ApplicationId appId;
+  private final ReadonlyArtifactRepositoryAccessor artifactRepository;
+  private DeploymentDryrunResult result;
 
-  public DeploymentDryrun(ApplicationId appId, AppRequest<?> appRequest, ReadonlyArtifactRepositoryAccessor artifactRepository) {
+  public DeploymentDryrun(
+      String applicationName,
+      String filehash,
+      ApplicationId appId,
+      AppRequest<?> appRequest,
+      ReadonlyArtifactRepositoryAccessor artifactRepository) {
     this.appRequest = appRequest;
     this.appId = appId;
     this.artifactRepository = artifactRepository;
+    this.result = null;
+    this.applicationName = applicationName;
+    this.fileHash = filehash;
   }
 
-  public DeploymentDryrunResult deploy() throws Exception {
+  public void run() {
+    try {
+      this.result = dryrun();
+    } catch (Exception e) {
+      // handle the exception
+    }
+  }
+
+  public DeploymentDryrunResult getResult() {
+    return result;
+  }
+
+  public String getApplicationName() {
+    return applicationName;
+  }
+
+  public String getFileHash() {
+    return fileHash;
+  }
+
+  public DeploymentDryrunResult dryrun() throws Exception {
     NamespaceId namespace = appId.getParent();
     String appName = appId.getApplication();
     String appVersion = appId.getVersion();
@@ -77,7 +113,7 @@ public class DeploymentDryrun {
       String error = String.format(
           "The current artifact has a version higher %s than any existing artifact.",
           currentArtifact.getVersion());
-      throw new InvalidArtifactException(error);
+      //throw new InvalidArtifactException(error);
     }
 
     boolean shouldUpgradeApplicationArtifact =
@@ -115,7 +151,7 @@ public class DeploymentDryrun {
             new HashSet<>(Arrays.asList(ArtifactScope.SYSTEM, ArtifactScope.USER)), true);
 
     try (CloseableClassLoader artifactClassLoader =
-        artifactRepository.createArtifactClassLoader(newArtifactDetail.getDescriptor(), artifactId)) {
+        createArtifactClassLoader(newArtifactDetail.getDescriptor(), artifactId)) {
       Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
       if (!(appMain instanceof Application)) {
         throw new IllegalStateException(
@@ -155,12 +191,16 @@ public class DeploymentDryrun {
     for (ArtifactScope scope : allowedArtifactScopes) {
       NamespaceId artifactNamespaceToConsider =
           ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : appId.getParent();
+
       List<ArtifactSummary> artifacts;
       try {
         artifacts = artifactRepository.getArtifactSummaries(artifactNamespaceToConsider,
             currentArtifactId.getName(),
             Integer.MAX_VALUE, ArtifactSortOrder.ASC);
       } catch (ArtifactNotFoundException e) {
+        // This can happen if we are looking for candidate artifact in multiple namespace.
+        continue;
+      } catch (Exception e) {
         // This can happen if we are looking for candidate artifact in multiple namespace.
         continue;
       }
@@ -192,4 +232,7 @@ public class DeploymentDryrun {
     return artifactNamespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion());
   }
 
+  abstract protected CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
+      io.cdap.cdap.proto.id.ArtifactId artifactId)
+      throws IOException;
 }

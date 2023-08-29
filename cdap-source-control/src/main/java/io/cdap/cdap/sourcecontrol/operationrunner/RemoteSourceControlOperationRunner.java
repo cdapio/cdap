@@ -38,6 +38,7 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
+import io.cdap.cdap.sourcecontrol.worker.PullAppDryrunTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
@@ -139,7 +140,7 @@ public class RemoteSourceControlOperationRunner extends
       Pair<PullAndDryrunAppOperationRequest, ReadonlyArtifactRepositoryAccessor> params =
           new Pair<>(pullAndDryrunAppOperationRequest, artifactRepository);
 
-      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppTask.class.getName())
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppDryrunTask.class.getName())
           .withParam(GSON.toJson(params)).build();
 
       LOG.trace("Pulling application {} from linked repository", pullAndDryrunAppOperationRequest.getApp());

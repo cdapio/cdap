@@ -61,4 +61,5 @@ abstract class SourceControlTask implements RunnableTask {
   }
 
   protected abstract void doRun(RunnableTaskContext context) throws Exception;
+
 }

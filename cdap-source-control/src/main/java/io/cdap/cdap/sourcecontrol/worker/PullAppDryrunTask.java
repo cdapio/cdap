@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A {@link io.cdap.cdap.api.service.worker.RunnableTask} to pull an application
- * from a remote Git repository.
+ * from a remote Git repository and dryrun the deployment
  */
 public class PullAppDryrunTask extends SourceControlTask {
   private static final Gson GSON = new Gson();

@@ -202,7 +202,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
 
     try {
       if (dryrun) {
-        PullAppDryrunResponse response = sourceControlService.pullAndDryrun(appRef);
+        PullAppDryrunResponse response = sourceControlService.pullAndDryrun(new NamespaceId((namespaceId)) ,appRef);
         responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
       } else {
         ApplicationRecord appRecord = sourceControlService.pullAndDeploy(appRef);

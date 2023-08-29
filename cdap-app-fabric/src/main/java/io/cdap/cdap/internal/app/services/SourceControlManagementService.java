@@ -16,37 +16,28 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.base.Predicate;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.artifact.ArtifactInfo;
-import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
-import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.plugin.PluginClass;
-import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.app.ArtifactRepositoryAccessor;
 import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.id.Id.Artifact;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
-import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
-import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
 import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
-import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.NamespacePermission;
@@ -56,8 +47,6 @@ import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-import io.cdap.cdap.security.impersonation.EntityImpersonator;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -82,14 +71,10 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedMap;
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,8 +92,7 @@ public class SourceControlManagementService {
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
   private final ArtifactRepository artifactRepository;
-  private final Impersonator impersonator;
-
+  private final ArtifactStore artifactStore;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -124,7 +108,7 @@ public class SourceControlManagementService {
                                         SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
                                         Store store, ArtifactRepository artifactRepository,
-                                        Impersonator impersonator) {
+                                        ArtifactStore artifactStore) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -134,7 +118,7 @@ public class SourceControlManagementService {
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
     this.artifactRepository = artifactRepository;
-    this.impersonator = impersonator;
+    this.artifactStore = artifactStore;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
@@ -316,7 +300,7 @@ public class SourceControlManagementService {
     return new ArrayList<>();
   }
 
-  public PullAppDryrunResponse pullAndDryrun(ApplicationReference appRef) throws Exception {
+  public PullAppDryrunResponse pullAndDryrun(NamespaceId namespace ,ApplicationReference appRef) throws Exception {
     // Dryrun deployment with a generated uuid
     String versionId = RunIds.generate().getId();
     ApplicationId appId = appRef.app(versionId);
@@ -325,7 +309,7 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
 
-    return pullAndDryrunApplication(appRef, appId);
+    return pullAndDryrunApplication(namespace, appRef, appId);
   }
 
   public List<PullAppDryrunResponse> pullAndDryrunMulti(NamespaceId namespace, List<ApplicationReference> appRefs) throws Exception {
@@ -346,9 +330,17 @@ public class SourceControlManagementService {
       ));
     }
 
+    List<ArtifactDetail> allSystemArtifacts = artifactStore.getArtifacts(NamespaceId.SYSTEM);
+    List<ArtifactDetail> allUserArtifacts = artifactStore.getArtifacts(namespace);
+
+    SortedMap<ArtifactDescriptor, PluginClass> allSystemPlugins = artifactStore.getPluginClasses(NamespaceId.SYSTEM);
+    SortedMap<ArtifactDescriptor, PluginClass> allUserPlugins = artifactStore.getPluginClasses(namespace);
+
     ReadonlyArtifactRepositoryAccessor readonlyArtifactRepositoryAccessor = new ArtifactRepositoryAccessor(
-        artifactRepository,
-        impersonator
+        allSystemArtifacts,
+        allUserArtifacts,
+        allSystemPlugins,
+        allUserPlugins
     );
 
     return sourceControlOperationRunner.pullAndDryrunMulti(
@@ -383,13 +375,21 @@ public class SourceControlManagementService {
     return pullResponse;
   }
 
-  private PullAppDryrunResponse pullAndDryrunApplication(ApplicationReference appRef, ApplicationId appId) throws Exception {
+  private PullAppDryrunResponse pullAndDryrunApplication(NamespaceId namespace, ApplicationReference appRef, ApplicationId appId) throws Exception {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
 
+    List<ArtifactDetail> allSystemArtifacts = artifactStore.getArtifacts(NamespaceId.SYSTEM);
+    List<ArtifactDetail> allUserArtifacts = artifactStore.getArtifacts(namespace);
+
+    SortedMap<ArtifactDescriptor, PluginClass> allSystemPlugins = artifactStore.getPluginClasses(NamespaceId.SYSTEM);
+    SortedMap<ArtifactDescriptor, PluginClass> allUserPlugins = artifactStore.getPluginClasses(namespace);
+
     ReadonlyArtifactRepositoryAccessor readonlyArtifactRepositoryAccessor = new ArtifactRepositoryAccessor(
-        artifactRepository,
-        impersonator
+        allSystemArtifacts,
+        allUserArtifacts,
+        allSystemPlugins,
+        allUserPlugins
     );
 
     PullAppDryrunResponse pullResponse = sourceControlOperationRunner.pullAndDryrun(
