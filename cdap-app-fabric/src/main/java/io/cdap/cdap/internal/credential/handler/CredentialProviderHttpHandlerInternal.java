@@ -21,8 +21,11 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -46,10 +49,13 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
       new InstantEpochSecondsTypeAdapter()).create();
 
   private final CredentialProvider credentialProvider;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider) {
+  CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.credentialProvider = credentialProvider;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -68,9 +74,16 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
   public void provisionCredential(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identityName)
       throws CredentialProvisioningException, IOException, NotFoundException {
+    NamespaceMeta namespaceMeta;
+    try {
+      namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(namespace));
+    } catch (Exception e) {
+     throw new IOException(String.format("Failed to get namespace '%s' metadata",
+         namespace), e);
+    }
     try {
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(credentialProvider.provision(namespace, identityName)));
+          GSON.toJson(credentialProvider.provision(namespaceMeta, identityName)));
     } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
       throw new NotFoundException(e.getMessage());
     }

@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation for {@link CredentialProviderService} used in AppFabric.
@@ -40,6 +43,7 @@ import javax.inject.Inject;
 public class DefaultCredentialProviderService extends AbstractIdleService
     implements CredentialProviderService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultCredentialProviderService.class);
   private final CConfiguration cConf;
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final Map<String, CredentialProvider> credentialProviders;
@@ -64,6 +68,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
     for (CredentialProvider provider : credentialProviders.values()) {
       provider.initialize(new DefaultCredentialProviderContext(cConf, provider.getName()));
     }
+    LOG.info("Initialized {} credential providers.", credentialProviders.size());
   }
 
   @Override
@@ -74,7 +79,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
   /**
    * Provisions a credential.
    *
-   * @param namespace    The identity namespace.
+   * @param namespaceMeta    The identity namespace metadata.
    * @param identityName The identity name.
    * @return A provisioned credential.
    * @throws CredentialProvisioningException If provisioning fails in the extension.
@@ -82,9 +87,10 @@ public class DefaultCredentialProviderService extends AbstractIdleService
    * @throws NotFoundException               If the identity or profile are not found.
    */
   @Override
-  public ProvisionedCredential provision(String namespace, String identityName)
+  public ProvisionedCredential provision(NamespaceMeta namespaceMeta, String identityName)
       throws CredentialProvisioningException, IOException, NotFoundException {
-    CredentialIdentityId identityId = new CredentialIdentityId(namespace, identityName);
+    CredentialIdentityId identityId =
+        new CredentialIdentityId(namespaceMeta.getName(), identityName);
     contextAccessEnforcer.enforce(identityId, StandardPermission.USE);
     Optional<CredentialIdentity> optIdentity = credentialIdentityManager.get(identityId);
     if (!optIdentity.isPresent()) {
@@ -92,45 +98,47 @@ public class DefaultCredentialProviderService extends AbstractIdleService
           identityId.toString()));
     }
     CredentialIdentity identity = optIdentity.get();
-    return validateAndProvisionIdentity(identity);
+    return validateAndProvisionIdentity(namespaceMeta, identity);
   }
 
   /**
    * Validates an identity.
    *
+   * @param namespaceMeta The identity namespace metadata.
    * @param identity The identity to validate.
    * @throws IdentityValidationException If identity validation fails in the extension.
    * @throws IOException                 If any transport errors occur.
    * @throws NotFoundException           If the identity or profile are not found.
    */
   @Override
-  public void validateIdentity(CredentialIdentity identity) throws IdentityValidationException,
-      IOException, NotFoundException {
+  public void validateIdentity(NamespaceMeta namespaceMeta, CredentialIdentity identity)
+      throws IdentityValidationException, IOException, NotFoundException {
     try {
-      validateAndProvisionIdentity(identity);
+      validateAndProvisionIdentity(namespaceMeta, identity);
     } catch (CredentialProvisioningException e) {
       throw new IdentityValidationException(e);
     }
   }
 
-  private ProvisionedCredential validateAndProvisionIdentity(CredentialIdentity identity)
+  private ProvisionedCredential validateAndProvisionIdentity(NamespaceMeta namespaceMeta,
+      CredentialIdentity identity)
       throws CredentialProvisioningException, IOException, NotFoundException {
     CredentialProfileId profileId = new CredentialProfileId(identity.getProfileNamespace(),
         identity.getProfileName());
     contextAccessEnforcer.enforce(profileId, StandardPermission.USE);
     Optional<CredentialProfile> optProfile = credentialProfileManager.get(profileId);
     if (!optProfile.isPresent()) {
-      throw new NotFoundException(String.format("Credential profile '%s' was not found.",
-          profileId.toString()));
+      throw new NotFoundException(
+          String.format("Credential profile '%s' was not found.", profileId));
     }
     CredentialProfile profile = optProfile.get();
     // This is a sanity check which should be impossible to fail.
     String providerType = profile.getCredentialProviderType();
     if (!credentialProviders.containsKey(providerType)) {
-      throw new IllegalStateException(String.format("Unsupported credential provider type "
-          + "'%'", providerType));
+      throw new IllegalStateException(
+          String.format("Unsupported credential provider type '%s'", providerType));
     }
     // Provision and return the credential.
-    return credentialProviders.get(providerType).provision(profile, identity);
+    return credentialProviders.get(providerType).provision(namespaceMeta, profile, identity);
   }
 }

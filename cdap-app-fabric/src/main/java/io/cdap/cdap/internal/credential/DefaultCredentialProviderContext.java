@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.CredentialProvider;
+import io.cdap.cdap.common.conf.Constants.Namespace;
 import io.cdap.cdap.security.spi.credential.CredentialProviderContext;
 import java.util.Collections;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.Map;
 public class DefaultCredentialProviderContext implements CredentialProviderContext {
 
   private final Map<String, String> properties;
+  private final boolean isNamespaceCreationHookEnabled;
 
   /**
    * Creates a new context.
@@ -39,6 +41,8 @@ public class DefaultCredentialProviderContext implements CredentialProviderConte
     String prefix = String.format("%s%s.", CredentialProvider.SYSTEM_PROPERTY_PREFIX,
         providerName);
     this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
+    this.isNamespaceCreationHookEnabled = cConf.getBoolean(
+        Namespace.NAMESPACE_CREATION_HOOK_ENABLED, false);
   }
 
   /**
@@ -49,5 +53,15 @@ public class DefaultCredentialProviderContext implements CredentialProviderConte
   @Override
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  /**
+   * Returns a boolean if namespace creation hook is enabled.
+   *
+   * @return true if namespace creation hook is enabled, otherwise false.
+   */
+  @Override
+  public boolean isNamespaceCreationHookEnabled() {
+    return isNamespaceCreationHookEnabled;
   }
 }

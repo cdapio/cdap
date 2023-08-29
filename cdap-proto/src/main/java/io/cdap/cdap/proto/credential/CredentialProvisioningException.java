@@ -29,4 +29,23 @@ public class CredentialProvisioningException extends Exception {
   public CredentialProvisioningException(String message) {
     super(message);
   }
+
+  /**
+   * Creates a new credential provisioning exception.
+   *
+   * @param cause cause of the provisioning failure.
+   */
+  public CredentialProvisioningException(Throwable cause) {
+    super(cause);
+  }
+
+  /**
+   * Creates a new credential provisioning exception.
+   *
+   * @param message The message for the provisioning failure.
+   * @param cause cause of the failure.
+   */
+  public CredentialProvisioningException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
