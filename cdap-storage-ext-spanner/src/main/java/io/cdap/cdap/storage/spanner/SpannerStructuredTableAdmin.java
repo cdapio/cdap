@@ -132,9 +132,17 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
   private void updateTable(StructuredTableSpecification spec)
       throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
+    LOG.error(">>>>  spec: {}", spec);
     StructuredTableId tableId = spec.getTableId();
     StructuredTableSchema cachedTableSchema = getSchema(tableId);
     StructuredTableSchema newTableSchema = convertSpecToCompatibleSchema(spec);
+
+    LOG.error("TableId cachedTableSchema {}", cachedTableSchema.getTableId());
+    LOG.error("TableId newTableSchema {}", newTableSchema.getTableId());
+
+    for (String f: cachedTableSchema.getFieldNames()){
+      LOG.error("cachedTableSchema.field: {}", f);
+    }
 
     if (newTableSchema.equals(cachedTableSchema)) {
       LOG.trace("The table schema is already up to date: {}", tableId);
