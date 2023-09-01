@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
@@ -27,6 +28,7 @@ import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
@@ -49,18 +51,21 @@ public class DefaultCredentialProviderService extends AbstractIdleService
   private final Map<String, CredentialProvider> credentialProviders;
   private final CredentialIdentityManager credentialIdentityManager;
   private final CredentialProfileManager credentialProfileManager;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   DefaultCredentialProviderService(CConfiguration cConf,
       ContextAccessEnforcer contextAccessEnforcer,
       CredentialProviderLoader credentialProviderLoader,
       CredentialIdentityManager credentialIdentityManager,
-      CredentialProfileManager credentialProfileManager) {
+      CredentialProfileManager credentialProfileManager,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProfileManager = credentialProfileManager;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -79,7 +84,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
   /**
    * Provisions a credential.
    *
-   * @param namespaceMeta    The identity namespace metadata.
+   * @param namespace    The identity namespace.
    * @param identityName The identity name.
    * @return A provisioned credential.
    * @throws CredentialProvisioningException If provisioning fails in the extension.
@@ -87,18 +92,26 @@ public class DefaultCredentialProviderService extends AbstractIdleService
    * @throws NotFoundException               If the identity or profile are not found.
    */
   @Override
-  public ProvisionedCredential provision(NamespaceMeta namespaceMeta, String identityName)
+  public ProvisionedCredential provision(String namespace, String identityName,
+      String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException {
     CredentialIdentityId identityId =
-        new CredentialIdentityId(namespaceMeta.getName(), identityName);
+        new CredentialIdentityId(namespace, identityName);
     contextAccessEnforcer.enforce(identityId, StandardPermission.USE);
+    NamespaceMeta namespaceMeta;
+    try {
+      namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(namespace));
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to get namespace '%s' metadata",
+          namespace), e);
+    }
     Optional<CredentialIdentity> optIdentity = credentialIdentityManager.get(identityId);
     if (!optIdentity.isPresent()) {
       throw new NotFoundException(String.format("Credential identity '%s' was not found.",
-          identityId.toString()));
+          identityId));
     }
     CredentialIdentity identity = optIdentity.get();
-    return validateAndProvisionIdentity(namespaceMeta, identity);
+    return validateAndProvisionIdentity(namespaceMeta, identity, scopes);
   }
 
   /**
@@ -114,14 +127,14 @@ public class DefaultCredentialProviderService extends AbstractIdleService
   public void validateIdentity(NamespaceMeta namespaceMeta, CredentialIdentity identity)
       throws IdentityValidationException, IOException, NotFoundException {
     try {
-      validateAndProvisionIdentity(namespaceMeta, identity);
+      validateAndProvisionIdentity(namespaceMeta, identity, null);
     } catch (CredentialProvisioningException e) {
       throw new IdentityValidationException(e);
     }
   }
 
   private ProvisionedCredential validateAndProvisionIdentity(NamespaceMeta namespaceMeta,
-      CredentialIdentity identity)
+      CredentialIdentity identity, String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException {
     CredentialProfileId profileId = new CredentialProfileId(identity.getProfileNamespace(),
         identity.getProfileName());
@@ -139,6 +152,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
           String.format("Unsupported credential provider type '%s'", providerType));
     }
     // Provision and return the credential.
-    return credentialProviders.get(providerType).provision(namespaceMeta, profile, identity);
+    return credentialProviders.get(providerType).provision(namespaceMeta, profile,
+        identity, scopes);
   }
 }

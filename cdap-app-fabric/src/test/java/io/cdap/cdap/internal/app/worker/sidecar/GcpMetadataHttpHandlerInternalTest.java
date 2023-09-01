@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -42,6 +43,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * Tests for {@link GcpMetadataHttpHandlerInternal}.
@@ -63,10 +65,11 @@ public class GcpMetadataHttpHandlerInternalTest {
     namespaceAdmin.create(NamespaceMeta.SYSTEM);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
 
+    RemoteClientFactory remoteClientFactory = Mockito.mock(RemoteClientFactory.class);
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test",
         new NoOpMetricsCollectionService())
         .setHttpHandlers(
-            new GcpMetadataHttpHandlerInternal(cConf)
+            new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory)
         )
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
           @Override

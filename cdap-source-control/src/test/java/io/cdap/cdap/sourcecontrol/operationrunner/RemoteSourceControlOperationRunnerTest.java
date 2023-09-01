@@ -125,6 +125,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
     cConf.set(Constants.Security.Store.FILE_PATH, TEST_TEMP_FOLDER.newFolder("secureStore").getAbsolutePath());
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, -1);
     InMemoryNamespaceAdmin namespaceClient = new InMemoryNamespaceAdmin();
 
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(NAMESPACE).build();

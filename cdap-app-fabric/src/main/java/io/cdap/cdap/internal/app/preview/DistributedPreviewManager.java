@@ -27,7 +27,6 @@ import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -217,7 +216,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             String localhost = InetAddress.getLoopbackAddress().getHostName();
             twillPreparer = twillPreparer.withEnv(PreviewRunnerTwillRunnable.class.getSimpleName(),
                 ImmutableMap.of(
-                    ArtifactLocalizer.GCE_METADATA_HOST_ENV_VAR,
+                    Constants.Preview.GCE_METADATA_HOST_ENV_VAR,
                     String.format("%s:%s", localhost,
                         cConf.getInt(Constants.ArtifactLocalizer.PORT))
                 ));

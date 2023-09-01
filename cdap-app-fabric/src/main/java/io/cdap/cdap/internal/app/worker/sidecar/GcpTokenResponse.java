@@ -14,28 +14,28 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.credential;
+package io.cdap.cdap.internal.app.worker.sidecar;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
- * Exception thrown during identity validation.
+ * Serializable GCP Token Response.
  */
-public class IdentityValidationException extends Exception {
+public class GcpTokenResponse {
+  @SerializedName("access_token")
+  public final String accessToken;
+  @SerializedName("expires_in")
+  public final long expiresInSecs;
+  @SerializedName("token_type")
+  public final String tokenType;
 
   /**
-   * Creates a new identity validation exception.
-   *
-   * @param cause The cause of identity validation failure.
+   * Creates a {@link GcpTokenResponse}.
    */
-  public IdentityValidationException(Throwable cause) {
-    super("Failed to validate identity", cause);
+  public GcpTokenResponse(String tokenType, String accessToken, long expiresInSecs) {
+    this.accessToken = accessToken;
+    this.expiresInSecs = expiresInSecs;
+    this.tokenType = tokenType;
   }
 
-  /**
-   * Creates a new identity validation exception.
-   *
-   * @param message The message of identity validation failure.
-   */
-  public IdentityValidationException(String message) {
-    super(message);
-  }
 }

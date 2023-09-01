@@ -105,18 +105,19 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   private void validateRemotely(HttpServiceRequest request, HttpServiceResponder responder,
                                 String namespace) throws IOException {
     String validationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
-    RemoteValidationRequest remoteValidationRequest = new RemoteValidationRequest(namespace, validationRequestString);
-    RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getName()).
-      withParam(GSON.toJson(remoteValidationRequest)).
-      build();
+    RemoteValidationRequest remoteValidationRequest =
+        new RemoteValidationRequest(namespace, validationRequestString);
+    RunnableTaskRequest runnableTaskRequest =
+        RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getName())
+            .withParam(GSON.toJson(remoteValidationRequest)).withNamespace(namespace).build();
     try {
       byte[] bytes = getContext().runTask(runnableTaskRequest);
       responder.sendString(Bytes.toString(bytes));
     } catch (RemoteExecutionException e) {
       RemoteTaskException remoteTaskException = e.getCause();
       responder.sendError(
-        getExceptionCode(remoteTaskException.getRemoteExceptionClassName(), remoteTaskException.getMessage(),
-                         namespace), remoteTaskException.getMessage());
+        getExceptionCode(remoteTaskException.getRemoteExceptionClassName(),
+            remoteTaskException.getMessage(), namespace), remoteTaskException.getMessage());
     } catch (Exception e) {
       responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
     }

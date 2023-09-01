@@ -21,22 +21,21 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
-import java.time.Instant;
 import javax.inject.Inject;
-import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Internal {@link HttpHandler} for credential providers.
@@ -45,17 +44,14 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
 
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Instant.class,
-      new InstantEpochSecondsTypeAdapter()).create();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(
+      BasicThrowable.class, new BasicThrowableCodec()).create();
 
   private final CredentialProvider credentialProvider;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider,
-      NamespaceQueryAdmin namespaceQueryAdmin) {
+  CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider) {
     this.credentialProvider = credentialProvider;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -65,25 +61,20 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
    * @param responder    The HTTP responder.
    * @param namespace    The namespace of the identity for which to provision a credential.
    * @param identityName The name of the identity for which to provision a credential.
+   * @param scopes       A comma separated list of OAuth scopes requested.
    * @throws CredentialProvisioningException If provisioning fails.
    * @throws IOException                     If transport errors occur.
    * @throws NotFoundException               If the identity or associated profile are not found.
    */
-  @POST
+  @GET
   @Path("/namespaces/{namespace-id}/credentials/identities/{identity-name}/provision")
   public void provisionCredential(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identityName)
+      @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identityName,
+      @QueryParam("scopes") String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException {
-    NamespaceMeta namespaceMeta;
-    try {
-      namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(namespace));
-    } catch (Exception e) {
-     throw new IOException(String.format("Failed to get namespace '%s' metadata",
-         namespace), e);
-    }
     try {
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(credentialProvider.provision(namespaceMeta, identityName)));
+          GSON.toJson(credentialProvider.provision(namespace, identityName, scopes)));
     } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
       throw new NotFoundException(e.getMessage());
     }

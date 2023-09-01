@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
@@ -24,6 +25,8 @@ import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -39,12 +42,11 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
   public static void startup() {
     credentialProviderService = new DefaultCredentialProviderService(CConfiguration.create(),
         contextAccessEnforcer, new MockCredentialProviderLoader(), credentialIdentityManager,
-        credentialProfileManager);
+        credentialProfileManager, new SimpleNamespaceQueryAdmin(computeNamespaceMap()));
   }
 
-  @Test
-  public void testProvisionSuccess() throws Exception {
-    // Create a new profile.
+  private static Map<String, NamespaceMeta> computeNamespaceMap() {
+    Map<String, NamespaceMeta> namespaceMetaMap = new HashMap<>();
     String namespace = "testProvisionSuccess";
     String identityName = "test";
     NamespaceMeta namespaceMeta = new
@@ -52,6 +54,31 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
         .setName(namespace)
         .setIdentity(identityName)
         .buildWithoutKeytabUriVersion();
+    namespaceMetaMap.put(namespace, namespaceMeta);
+    namespace = "testProvisionWithNotFoundIdentityThrowsException";
+    identityName = "does-not-exist";
+    namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
+    namespaceMetaMap.put(namespace, namespaceMeta);
+    namespace = "testProvisionFailureThrowsException";
+    identityName = "test";
+    namespaceMeta = new
+        NamespaceMeta.Builder()
+        .setName(namespace)
+        .setIdentity(identityName)
+        .buildWithoutKeytabUriVersion();
+    namespaceMetaMap.put(namespace, namespaceMeta);
+    return namespaceMetaMap;
+  }
+
+  @Test
+  public void testProvisionSuccess() throws Exception {
+    // Create a new profile.
+    String namespace = "testProvisionSuccess";
+    String identityName = "test";
     CredentialProfileId profileId = createDummyProfile(CREDENTIAL_PROVIDER_TYPE_SUCCESS, namespace,
         "test-profile");
 
@@ -62,19 +89,14 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
     credentialIdentityManager.create(id, identity);
 
     Assert.assertEquals(RETURNED_TOKEN,
-        credentialProviderService.provision(namespaceMeta, identityName));
+        credentialProviderService.provision(namespace, identityName, null));
   }
 
   @Test(expected = NotFoundException.class)
   public void testProvisionWithNotFoundIdentityThrowsException() throws Exception {
     String namespace = "testProvisionWithNotFoundIdentityThrowsException";
     String identityName = "does-not-exist";
-    NamespaceMeta namespaceMeta = new
-        NamespaceMeta.Builder()
-        .setName(namespace)
-        .setIdentity(identityName)
-        .buildWithoutKeytabUriVersion();
-    credentialProviderService.provision(namespaceMeta, identityName);
+    credentialProviderService.provision(namespace, identityName, null);
   }
 
   @Test(expected = CredentialProvisioningException.class)
@@ -90,14 +112,8 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
     CredentialIdentity identity = new CredentialIdentity(profileId.getNamespace(),
         profileId.getName(), "some-identity", "some-secure-value");
     credentialIdentityManager.create(id, identity);
-
-    NamespaceMeta namespaceMeta = new
-        NamespaceMeta.Builder()
-        .setName(namespace)
-        .setIdentity(identityName)
-        .buildWithoutKeytabUriVersion();
-    Assert.assertEquals(RETURNED_TOKEN, credentialProviderService.provision(namespaceMeta,
-        identityName));
+    Assert.assertEquals(RETURNED_TOKEN, credentialProviderService.provision(namespace,
+        identityName, null));
   }
 
   @Test

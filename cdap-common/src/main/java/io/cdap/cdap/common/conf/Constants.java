@@ -459,6 +459,7 @@ public final class Constants {
     public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
     public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
+    public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
   }
 
   /**
@@ -530,6 +531,7 @@ public final class Constants {
     public static final String WORKER_THREADS = "task.worker.worker.threads";
     public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
     public static final String METRIC_PREFIX = "task.worker.";
+    public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
   }
 
 
@@ -587,7 +589,6 @@ public final class Constants {
     public static final String WORKER_THREADS = "artifact.localizer.worker.threads";
     public static final String PRELOAD_LIST = "artifact.localizer.preload.list";
     public static final String PRELOAD_VERSION_LIMIT = "artifact.localizer.preload.version.limit";
-    public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
   }
 
   /**

@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
 import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -195,7 +194,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             String localhost = InetAddress.getLoopbackAddress().getHostName();
             twillPreparer = twillPreparer.withEnv(TaskWorkerTwillRunnable.class.getSimpleName(),
                 ImmutableMap.of(
-                    ArtifactLocalizer.GCE_METADATA_HOST_ENV_VAR,
+                    TaskWorker.GCE_METADATA_HOST_ENV_VAR,
                     String.format("%s:%s", localhost,
                         cConf.getInt(Constants.ArtifactLocalizer.PORT))
                 ));

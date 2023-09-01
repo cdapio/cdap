@@ -24,8 +24,11 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.security.GcpMetadataTaskContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -39,6 +42,8 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -90,16 +95,21 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   private final String metadataServiceEndpoint;
   private final MetricsCollectionService metricsCollectionService;
+  private final CConfiguration cConf;
 
   /**
    * If true, pod will restart once an operation finish its execution.
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
+  /**
+   * Constructs the {@link TaskWorkerHttpHandlerInternal}.
+   */
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
+    this.cConf = cConf;
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
@@ -192,6 +202,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
           runnableTaskRequest);
       try {
+        // set the GcpMetadataTaskContext before running the task.
+        setGcpMetadataTaskContext(runnableTaskRequest);
         runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
         TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
             startTime,
@@ -210,6 +222,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         taskCompletionConsumer.accept(false,
             new TaskDetails(metricsCollectionService,
                 startTime, false, runnableTaskRequest));
+      } finally {
+        // clear the GcpMetadataTaskContext after the task is completed.
+        clearGcpMetadataTaskContext();
       }
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
@@ -224,6 +239,54 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
+  private String getSideMetadataServiceEndpoint() {
+    if (cConf.getInt(ArtifactLocalizer.PORT) < 0) {
+      return null;
+    }
+    return String.format("http://%s:%s",
+        InetAddress.getLoopbackAddress().getHostName(), cConf.get(ArtifactLocalizer.PORT));
+  }
+
+  private void setGcpMetadataTaskContext(RunnableTaskRequest runnableTaskRequest)
+      throws IOException {
+    if (getSideMetadataServiceEndpoint() == null ||
+        runnableTaskRequest.getParam().getEmbeddedTaskRequest() == null) {
+      return;
+    }
+    GcpMetadataTaskContext gcpMetadataTaskContext = new GcpMetadataTaskContext(
+        runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace(),
+        SecurityRequestContext.getUserId(), SecurityRequestContext.getUserIP(),
+        SecurityRequestContext.getUserCredential());
+    String setContextEndpoint = String.format("%s/set-context",
+        getSideMetadataServiceEndpoint());
+    HttpRequest httpRequest =
+        HttpRequest.put(new URL(setContextEndpoint))
+            .withBody(GSON.toJson(gcpMetadataTaskContext))
+            .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .build();
+    HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
+    LOG.debug("Set namespace '{}' response: {}",
+        runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace(),
+        tokenResponse.getResponseCode());
+  }
+
+  private void clearGcpMetadataTaskContext() throws IOException {
+    if (getSideMetadataServiceEndpoint() == null) {
+      return;
+    }
+    String clearContextEndpoint = String.format("%s/clear-context",
+        getSideMetadataServiceEndpoint());
+    HttpRequest httpRequest = HttpRequest.delete(new URL(clearContextEndpoint)).build();
+    HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
+    LOG.debug("Clear context response: {}", tokenResponse.getResponseCode());
+  }
+
+  /**
+   * Returns a new token from metadata server.
+   *
+   * @param request The {@link io.netty.handler.codec.http.HttpRequest}.
+   * @param responder a {@link HttpResponder} for sending response.
+   */
   @GET
   @Path("/token")
   public void token(io.netty.handler.codec.http.HttpRequest request,
@@ -246,10 +309,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
       LOG.warn("Failed to fetch token from metadata service", ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-          exceptionToJson(ex),
-          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-              "application/json"));
+      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+          exceptionToJson(ex));
     }
   }
 

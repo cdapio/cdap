@@ -77,6 +77,7 @@ public class RemoteTaskExecutorTest {
         }
       })
       .build();
+    cConf.setInt(Constants.ArtifactLocalizer.PORT, -1);
     httpService.start();
   }
 

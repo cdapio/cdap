@@ -27,14 +27,15 @@ public interface CredentialProvider {
   /**
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
-   * @param namespaceMeta    The identity namespace metadata.
+   * @param namespace The identity namespace.
    * @param identityName The identity name.
+   * @param scopes A comma separated list of OAuth scopes requested.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
    * @throws IOException                     If any transport errors occur.
    * @throws NotFoundException               If the profile or identity are not found.
    */
-  ProvisionedCredential provision(NamespaceMeta namespaceMeta, String identityName)
+  ProvisionedCredential provision(String namespace, String identityName, String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException;
 
   /**

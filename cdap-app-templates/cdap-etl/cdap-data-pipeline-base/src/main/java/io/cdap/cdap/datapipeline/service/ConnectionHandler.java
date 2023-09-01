@@ -558,9 +558,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                HttpServiceResponder responder)  {
     RemoteConnectionRequest remoteRequest = new RemoteConnectionRequest(namespace, request, connection);
     RunnableTaskRequest runnableTaskRequest =
-      RunnableTaskRequest.getBuilder(remoteExecutionTaskClass.getName()).
-        withParam(GSON.toJson(remoteRequest)).
-        build();
+      RunnableTaskRequest.getBuilder(remoteExecutionTaskClass.getName())
+              .withParam(GSON.toJson(remoteRequest)).withNamespace(namespace).build();
     try {
       byte[] bytes = getContext().runTask(runnableTaskRequest);
       responder.sendString(new String(bytes, StandardCharsets.UTF_8));

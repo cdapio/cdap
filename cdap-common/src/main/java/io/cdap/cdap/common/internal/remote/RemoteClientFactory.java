@@ -121,6 +121,25 @@ public class RemoteClientFactory {
         remoteAuthenticator);
   }
 
+  /**
+   * Creates a {@link RemoteClient}.
+   *
+   * @param discoverableServiceName Name of the CDAP service for which a client
+   *                                is requested.
+   * @param httpRequestConfig       The {@link HttpRequestConfig}.
+   * @param basePath                Common path prefix for all the requests that
+   *                                will be sent using the returned client.
+   * @param internalAuthenticator   The {@link InternalAuthenticator}.
+   * @return A {@link RemoteClient} for the requested service.
+   */
+  public RemoteClient createRemoteClient(String discoverableServiceName,
+      HttpRequestConfig httpRequestConfig, String basePath,
+      InternalAuthenticator internalAuthenticator) {
+    basePath = basePath.startsWith("/") ? pathPrefix + basePath : pathPrefix + "/" + basePath;
+    return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
+        httpRequestConfig, basePath, remoteAuthenticator);
+  }
+
   private RemoteClient getClientForInternalRouter(String destinationServiceName,
       HttpRequestConfig httpRequestConfig, String basePath) {
     LOG.trace(
