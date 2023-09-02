@@ -231,7 +231,7 @@
         <plugin>
           <groupId>co.cask</groupId>
           <artifactId>cdap-maven-plugin</artifactId>
-          <version>1.0.2</version>
+          <version>1.0.3-SNAPSHOT</version>
           <configuration>
             <cdapArtifacts>
               <parent>system:cdap-data-pipeline[6.5.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
