@@ -169,8 +169,8 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit)
       throws InvalidFieldException {
-    if (!isRangePrimaryKeys(keyRange)) {
-      // Spanner KeySet is requiring primary keys, instead we use SQL statement
+    if (!isPrefixedPrimaryKeyRange(keyRange)) {
+      // Spanner KeySet is requiring prefixed primary keys, instead we use SQL statement
       return multiScan(Collections.singleton(keyRange), limit);
     }
 
@@ -190,13 +190,13 @@ public class SpannerStructuredTable implements StructuredTable {
         keySet, schema.getFieldNames()));
   }
 
-  private boolean isRangePrimaryKeys(Range range) {
+  private boolean isPrefixedPrimaryKeyRange(Range range) {
     try {
-      fieldValidator.validatePartialPrimaryKeys(range.getBegin());
-      fieldValidator.validatePartialPrimaryKeys(range.getEnd());
+      fieldValidator.validatePrimaryKeys(range.getBegin(), true);
+      fieldValidator.validatePrimaryKeys(range.getEnd(), true);
       return true;
     } catch (InvalidFieldException ex) {
-      LOG.trace("Scanning non-primary key range: {}", range);
+      LOG.trace("Scanning a range that is not primary key prefixed: {}", range);
       return false;
     }
   }
@@ -598,28 +598,24 @@ public class SpannerStructuredTable implements StructuredTable {
   /**
    * Converts a {@link Field} into spanner {@link Value}.
    */
-  @Nullable
   private Value getValue(Field<?> field) {
     Object value = field.getValue();
-    if (value == null) {
-      return null;
-    }
 
     switch (field.getFieldType()) {
       case INTEGER:
-        return Value.int64((int) value);
+        return Value.int64(value == null ? null : Long.valueOf((Integer) value));
       case LONG:
-        return Value.int64((long) value);
+        return Value.int64((Long) value);
       case FLOAT:
-        return Value.float64((float) value);
+        return Value.float64(value == null ? null : Double.valueOf((Float) value));
       case DOUBLE:
-        return Value.float64((double) value);
+        return Value.float64((Double) value);
       case STRING:
         return Value.string((String) value);
       case BYTES:
-        return Value.bytes(ByteArray.copyFrom((byte[]) value));
+        return Value.bytes(value == null ? null : (ByteArray.copyFrom((byte[]) value)));
       case BOOLEAN:
-        return Value.bool((boolean) value);
+        return Value.bool((Boolean) value);
     }
 
     // This shouldn't happen

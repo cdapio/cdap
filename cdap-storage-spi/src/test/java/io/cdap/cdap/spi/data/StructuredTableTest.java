@@ -197,6 +197,42 @@ public abstract class StructuredTableTest {
   }
 
   @Test
+  public void testWritingNullFields() throws Exception {
+    int max = 100;
+
+    // Write rows with null field values
+    for (int i = max - 1; i >= 0; i--) {
+      List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i),
+          Fields.longField(KEY2, (long) i),
+          Fields.stringField(KEY3, "new key3"),
+          Fields.stringField(STRING_COL, VAL + i),
+          Fields.doubleField(DOUBLE_COL, null),
+          Fields.floatField(FLOAT_COL, null),
+          Fields.bytesField(BYTES_COL, null));
+      getTransactionRunner().run(context -> {
+        StructuredTable table = context.getTable(SIMPLE_TABLE);
+        table.upsert(fields);
+      });
+    }
+
+    // Read all of them back using multiRead
+    Collection<Collection<Field<?>>> keys = new ArrayList<>();
+    for (int i = 0; i < max; i++) {
+      keys.add(Arrays.asList(Fields.intField(KEY, i),
+          Fields.longField(KEY2, (long) i),
+          Fields.stringField(KEY3, "new key3")));
+    }
+    // There is no particular ordering of the result, hence use a set to compare
+    Set<Collection<Field<?>>> result = TransactionRunners.run(getTransactionRunner(), context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      return new HashSet<>(convertRowsToFields(table.multiRead(keys).iterator(), Arrays.asList(KEY, KEY2, KEY3)));
+    });
+
+    Assert.assertEquals(100, result.size());
+    Assert.assertEquals(new HashSet<>(keys), result);
+  }
+
+  @Test
   public void testSimpleScan() throws Exception {
     int max = 100;
 
@@ -243,6 +279,17 @@ public abstract class StructuredTableTest {
                                    Fields.longField(KEY2, (long) 15)),
                      Range.Bound.EXCLUSIVE), max);
     Assert.assertEquals(expected.subList(5, 15), actual);
+
+    // Test partial keys actual range scan with mixed type
+    actual =
+        scanSimpleStructuredRows(
+            Range.create(
+                Collections.singleton(Fields.intField(KEY, 5)),
+                Range.Bound.INCLUSIVE,
+                Arrays.asList(Fields.intField(KEY, 15), Fields.stringField(KEY3, "key3")),
+                Range.Bound.INCLUSIVE),
+            max);
+    Assert.assertEquals(expected.subList(5, 16), actual);
 
     // Test begin only range
     actual =
