@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019-2021 Cask Data, Inc.
+ * Copyright © 2019-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
@@ -135,6 +136,18 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String SPARK_KUBERNETES_EXECUTOR_LABEL_PREFIX = "spark.kubernetes.executor.label.";
   private static final String SPARK_KUBERNETES_NAMESPACE = "spark.kubernetes.namespace";
   private static final String SPARK_KUBERNETES_WAIT_IN_SUBMIT = "spark.kubernetes.submission.waitAppCompletion";
+  // A comma separated list of service names for which service of type LoadBalancer are to be created.
+  private static final String LOAD_BALANCER_SERVICES = "master.environment.k8s.loadBalancerServices";
+
+  // A comma separated list of key value pairs to be added as annotations in the k8s load balancer services.
+  // Keys and values are separated by "=" (without quotes). The  implementation of load balancer service type
+  // is dependent on cloud providers such as GCP, AWS etc. To configure cloud provider specific behaviour
+  // we need to add cloud provider specific annotations.
+  // For example "networking.gke.io/load-balancer-type" annotation can be used
+  // in GCP to specify the type of load balancer to use.
+  private static final String LOAD_BALANCER_SERVICE_ANNOTATIONS
+      = "master.environment.k8s.loadBalancerServices.annotations";
+
   @VisibleForTesting
   static final String SPARK_KUBERNETES_DRIVER_POD_TEMPLATE = "spark.kubernetes.driver.podTemplateFile";
   @VisibleForTesting
@@ -295,7 +308,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     // We don't support scaling from inside pod. Scaling should be done via CDAP operator.
-    // Currently we don't support more than one instance per system service, hence set it to "1".
+    // Currently, we don't support more than one instance per system service, hence set it to "1".
     conf.put(MASTER_MAX_INSTANCES, "1");
     // No TX in K8s
     conf.put(DATA_TX_ENABLED, Boolean.toString(false));
@@ -309,7 +322,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     programCpuMultiplier = conf.getOrDefault(PROGRAM_CPU_MULTIPLIER,
         DEFAULT_PROGRAM_CPU_MULTIPLIER);
 
-    // Get the instance label to setup prefix for K8s services
+    // Get the instance label to set up prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
     Map<String, String> podLabels = podInfo.getLabels();
     String instanceName = podLabels.get(instanceLabel);
@@ -324,9 +337,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     conf.put(COMPONENT_ENV_PROPERTY, componentName);
     conf.put(NAMESPACE_ENV_PROPERTY, podInfo.getNamespace());
 
+    // Services are publish to K8s with a prefix
+    List<String> loadBalancerServiceList = new ArrayList<>();
+    if (!Strings.isNullOrEmpty(conf.get(LOAD_BALANCER_SERVICES))) {
+      loadBalancerServiceList = Arrays.asList(
+          conf.get(LOAD_BALANCER_SERVICES).split(","));
+    }
     discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
-        podLabels,
-        podInfo.getOwnerReferences(), apiClientFactory);
+        podLabels, podInfo.getOwnerReferences(), apiClientFactory,
+        loadBalancerServiceList,
+        parseLoadBalancerAnnotations(conf.get(LOAD_BALANCER_SERVICE_ANNOTATIONS)));
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
@@ -600,7 +620,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     componentName = componentName.replaceFirst("^(cdap-)", "");
     // remove instance name
     componentName = componentName.replaceFirst(Pattern.quote(instanceName), "");
-    // Strip "-" from from beginning.
+    // Strip "-"  from the beginning.
     componentName = componentName.replaceAll("^-+", "");
     return componentName;
   }
@@ -1151,5 +1171,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setReadTimeout(int readTimeoutSec) {
     this.readTimeoutSec = readTimeoutSec;
+  }
+
+  @VisibleForTesting
+  Map<String, String> parseLoadBalancerAnnotations(@Nullable String configValue) {
+    if (Strings.isNullOrEmpty(configValue)) {
+      return new HashMap<>();
+    }
+    return Splitter.on(',').withKeyValueSeparator('=').split(configValue);
   }
 }
