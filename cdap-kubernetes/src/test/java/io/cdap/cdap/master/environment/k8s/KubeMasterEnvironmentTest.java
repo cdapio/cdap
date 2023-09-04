@@ -142,9 +142,6 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInNonInstallNamespaceMountsConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider =
-        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
-            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
@@ -174,9 +171,6 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInInstallNamespaceWithNoEmailMountsConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider =
-        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
-            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
@@ -204,9 +198,6 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityDisabledDoesNotMountConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider =
-        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
-            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
     kubeMasterEnvironment.setCdapInstallNamespace(KUBE_INSTALL_NAMESPACE);
@@ -235,9 +226,6 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInDifferentNamespaceWithNoEmailDoesNotMountConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider =
-        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
-            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTtlSeconds(172800L);
@@ -287,6 +275,22 @@ public class KubeMasterEnvironmentTest {
     gotName = KubeMasterEnvironment.getComponentName(
       "dap", "cdap-dap-preview-runner-b5786a15-e8f4-47-0cebad7d67-0");
     Assert.assertEquals("preview-runner-b5786a15-e8f4-47-0cebad7d67-0", gotName);
+  }
+
+  @Test
+  public void testParseLoadBalancerAnnotations() {
+    Map<String, String> expected = new HashMap<>();
+    expected.put("key1", "value1");
+    expected.put("networking.gke.io/load-balancer-type", "Internal");
+
+    Assert.assertEquals(expected, kubeMasterEnvironment
+        .parseLoadBalancerAnnotations("key1=value1,networking.gke.io/load-balancer-type=Internal"));
+  }
+
+  @Test
+  public void testParseLoadBalancerAnnotationsEmpty() {
+    Assert.assertTrue(kubeMasterEnvironment.parseLoadBalancerAnnotations("").isEmpty());
+    Assert.assertTrue(kubeMasterEnvironment.parseLoadBalancerAnnotations(null).isEmpty());
   }
 
   private void assertDoesNotMountWorkloadIdentityVolume(V1Pod driverPod, V1Pod executorPod) {
