@@ -293,7 +293,7 @@ public class SparkContainerDriverLauncher {
                             @Nullable RemoteAuthenticator remoteAuthenticator) {
 
       RemoteClientFactory remoteClientFactory =
-        new RemoteClientFactory(discoveryServiceClient, internalAuthenticator, remoteAuthenticator);
+        new RemoteClientFactory(discoveryServiceClient, internalAuthenticator, remoteAuthenticator, cConf);
       this.artifactLocalizer = new ArtifactLocalizer(cConf, remoteClientFactory, artifactManagerFactory);
     }
 
