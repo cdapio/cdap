@@ -144,7 +144,8 @@ public class MasterEnvironmentMain {
 
         RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
             masterEnv.getDiscoveryServiceClientSupplier().get(),
-            getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
+            getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf),
+            cConf);
 
         MasterEnvironmentRunnableContext runnableContext =
             new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(),

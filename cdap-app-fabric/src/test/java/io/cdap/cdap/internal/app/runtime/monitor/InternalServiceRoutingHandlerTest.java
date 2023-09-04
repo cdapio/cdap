@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -44,6 +45,7 @@ import io.cdap.common.http.HttpResponse;
 import io.cdap.http.NettyHttpService;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -70,10 +72,11 @@ public class InternalServiceRoutingHandlerTest {
   private InternalRouterService internalRouterService;
   private NettyHttpService mockService;
   private Cancellable mockServiceCancellable;
+  private CConfiguration cConf;
 
   @Before
   public void beforeTest() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR,
         TEMP_FOLDER.newFolder().getAbsolutePath());
 
@@ -146,7 +149,7 @@ public class InternalServiceRoutingHandlerTest {
     for (String content : Arrays.asList("", "Small content", largeContent)) {
       for (HttpMethod method : EnumSet.of(HttpMethod.PUT, HttpMethod.POST)) {
         for (int status : Arrays.asList(200, 400, 404, 501)) {
-          io.cdap.common.http.HttpRequest request =
+          HttpRequest request =
               remoteClient.requestBuilder(method,
                       String.format("services/%s/mock/%s/%d",
                           MOCK_SERVICE, method.name().toLowerCase(), status))
@@ -160,5 +163,26 @@ public class InternalServiceRoutingHandlerTest {
         }
       }
     }
+  }
+
+  @Test
+  public void testProxyClientCreation() throws IOException {
+    // Enable routing through the internal router in cConf.
+    cConf.setBoolean(InternalRouter.INTERNAL_ROUTER_ENABLED, true);
+    HttpMethod method = HttpMethod.GET;
+    int status = 200;
+    RemoteClient remoteClient = injector.getInstance(RemoteClientFactory.class)
+        .createRemoteClient(MOCK_SERVICE,
+            DefaultHttpRequestConfig.DEFAULT, "");
+    HttpRequest request = remoteClient.requestBuilder(method,
+            String.format("mock/%s/%d", method.name().toLowerCase(), status))
+        .build();
+
+    // Find the actual URL that will be used to send requests.
+    URL url = remoteClient.resolve("mock");
+    HttpResponse response = remoteClient.execute(request);
+
+    Assert.assertEquals(url.getPath(), "/v3Internal/router/services/mock/mock");
+    Assert.assertEquals(status, response.getResponseCode());
   }
 }
