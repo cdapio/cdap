@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.credential;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.retry.Idempotency;
@@ -28,6 +27,7 @@ import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
+import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
@@ -39,43 +39,26 @@ import java.io.IOException;
 import joptsimple.internal.Strings;
 
 /**
- * Remote implementation for {@link CredentialProviderService} used in
+ * Remote implementation for {@link CredentialProvider} used in
  * {@link io.cdap.cdap.common.conf.Constants.ArtifactLocalizer}.
  */
-public class RemoteCredentialProviderService extends AbstractIdleService
-    implements CredentialProviderService {
+public class RemoteCredentialProvider implements CredentialProvider {
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
   private final RemoteClient remoteClient;
 
   /**
-   * Construct the {@link RemoteCredentialProviderService}.
+   * Construct the {@link RemoteCredentialProvider}.
    *
    * @param remoteClientFactory A factory to create {@link RemoteClient}.
    * @param internalAuthenticator An authenticator to propagate internal identity headers.
    */
-  public RemoteCredentialProviderService(RemoteClientFactory remoteClientFactory,
+  public RemoteCredentialProvider(RemoteClientFactory remoteClientFactory,
       InternalAuthenticator internalAuthenticator) {
 
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
         RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG, Constants.Gateway.INTERNAL_API_VERSION_3,
         internalAuthenticator);
-  }
-
-  /**
-   * Start the service.
-   */
-  @Override
-  protected void startUp() throws Exception {
-
-  }
-
-  /**
-   * Stop the service.
-   */
-  @Override
-  protected void shutDown() throws Exception {
-
   }
 
   /**
@@ -105,6 +88,14 @@ public class RemoteCredentialProviderService extends AbstractIdleService
       throw new NotFoundException(String.format("Credential Identity %s Not Found.",
           identityName));
     }
+
+    if (response.getResponseCode() != HttpResponseStatus.OK.code()) {
+      throw new CredentialProvisioningException(String.format(
+          "Failed to provision credential with response code: %s and error: %s",
+          response.getResponseCode(),
+          response.getResponseBodyAsString()));
+    }
+
     return GSON.fromJson(response.getResponseBodyAsString(), ProvisionedCredential.class);
   }
 

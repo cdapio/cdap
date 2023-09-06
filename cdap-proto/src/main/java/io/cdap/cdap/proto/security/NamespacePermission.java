@@ -32,6 +32,18 @@ public enum NamespacePermission implements Permission {
    * Permission to update metadata of the SCM repository of a namespace.
    */
   UPDATE_REPOSITORY_METADATA,
+  /**
+   * Permission to set the service account associated with the namespace.
+   */
+  SET_SERVICE_ACCOUNT,
+  /**
+   * Permission to unset the service account associated with the namespace.
+   */
+  UNSET_SERVICE_ACCOUNT,
+  /**
+   * Permission to provision the credential using the service account associated with the namespace.
+   */
+  PROVISION_CREDENTIAL
   ;
 
   @Override

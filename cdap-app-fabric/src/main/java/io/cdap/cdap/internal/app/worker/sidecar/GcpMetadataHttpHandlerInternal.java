@@ -29,11 +29,11 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.internal.credential.RemoteCredentialProviderService;
+import io.cdap.cdap.internal.namespace.credential.RemoteNamespaceCredentialProvider;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
-import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.security.GcpMetadataTaskContext;
@@ -64,8 +64,6 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Path("/")
 public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler {
-
-  public static final String GCP_CREDENTIAL_IDENTITY_NAME = "default";
   protected static final String METADATA_FLAVOR_HEADER_KEY = "Metadata-Flavor";
   protected static final String METADATA_FLAVOR_HEADER_VALUE = "Google";
   private static final Logger LOG = LoggerFactory.getLogger(GcpMetadataHttpHandlerInternal.class);
@@ -73,7 +71,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       new BasicThrowableCodec()).create();
   private final CConfiguration cConf;
   private final String metadataServiceTokenEndpoint;
-  private final CredentialProvider credentialProvider;
+  private final NamespaceCredentialProvider credentialProvider;
   private final GcpWorkloadIdentityInternalAuthenticator gcpWorkloadIdentityInternalAuthenticator;
   private GcpMetadataTaskContext gcpMetadataTaskContext;
 
@@ -89,7 +87,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.gcpWorkloadIdentityInternalAuthenticator =
         new GcpWorkloadIdentityInternalAuthenticator(gcpMetadataTaskContext);
-    this.credentialProvider = new RemoteCredentialProviderService(remoteClientFactory,
+    this.credentialProvider = new RemoteNamespaceCredentialProvider(remoteClientFactory,
         this.gcpWorkloadIdentityInternalAuthenticator);
   }
 
@@ -187,8 +185,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   private GcpTokenResponse fetchTokenFromCredentialProvider(String scopes) throws NotFoundException,
       IOException, CredentialProvisioningException {
     ProvisionedCredential provisionedCredential =
-        this.credentialProvider.provision(gcpMetadataTaskContext.getNamespace(),
-            GCP_CREDENTIAL_IDENTITY_NAME, scopes);
+        this.credentialProvider.provision(gcpMetadataTaskContext.getNamespace(), scopes);
     return new GcpTokenResponse("Bearer", provisionedCredential.get(),
         Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
   }

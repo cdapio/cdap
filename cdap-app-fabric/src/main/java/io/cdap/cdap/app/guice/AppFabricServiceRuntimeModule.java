@@ -34,6 +34,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
@@ -45,11 +46,13 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.AppStateHandler;
@@ -131,6 +134,8 @@ import io.cdap.cdap.internal.events.ProgramStatusEventPublisher;
 import io.cdap.cdap.internal.events.SparkProgramStatusMetricsProvider;
 import io.cdap.cdap.internal.events.StartProgramEventReaderExtensionProvider;
 import io.cdap.cdap.internal.events.StartProgramEventSubscriber;
+import io.cdap.cdap.internal.namespace.credential.handler.GcpWorkloadIdentityHttpHandler;
+import io.cdap.cdap.internal.namespace.credential.handler.GcpWorkloadIdentityHttpHandlerInternal;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -186,7 +191,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(cConf),
         new CapabilityModule(),
         new NamespaceAdminModule().getInMemoryModules(),
         new ConfigStoreModule(),
@@ -227,7 +232,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(cConf),
         new CapabilityModule(),
         new NamespaceAdminModule().getStandaloneModules(),
         new ConfigStoreModule(),
@@ -281,7 +286,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
 
-    return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
+    return Modules.combine(new AppFabricServiceModule(cConf, ImpersonationHandler.class),
         new CapabilityModule(),
         new NamespaceAdminModule().getDistributedModules(),
         new ConfigStoreModule(),
@@ -326,9 +331,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   private static final class AppFabricServiceModule extends AbstractModule {
 
     private final List<Class<? extends HttpHandler>> handlerClasses;
+    private final CConfiguration cConf;
 
-    private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
+    private AppFabricServiceModule(CConfiguration cConf,
+        Class<? extends HttpHandler>... handlerClasses) {
       this.handlerClasses = ImmutableList.copyOf(handlerClasses);
+      this.cConf = cConf;
     }
 
     @Override
@@ -455,6 +463,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppStateHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandlerInternal.class);
+
+      FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+      if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+        handlerBinder.addBinding().to(GcpWorkloadIdentityHttpHandler.class);
+        handlerBinder.addBinding().to(GcpWorkloadIdentityHttpHandlerInternal.class);
+      }
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

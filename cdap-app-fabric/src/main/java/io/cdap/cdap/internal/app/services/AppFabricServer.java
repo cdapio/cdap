@@ -19,8 +19,10 @@ package io.cdap.cdap.internal.app.services;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,13 +30,17 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.internal.credential.CredentialProviderService;
+import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -80,6 +86,8 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
+  private final CredentialProviderService credentialProviderService;
+  private final NamespaceCredentialProviderService namespaceCredentialProviderService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
   private final SystemAppManagementService systemAppManagementService;
@@ -113,7 +121,8 @@ public class AppFabricServer extends AbstractIdleService {
       @Named("appfabric.services.names") Set<String> servicesNames,
       @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
       CoreSchedulerService coreSchedulerService,
-      ProvisioningService provisioningService,
+      CredentialProviderService credentialProviderService,
+      NamespaceCredentialProviderService namespaceCredentialProviderService, ProvisioningService provisioningService,
       BootstrapService bootstrapService,
       SystemAppManagementService systemAppManagementService,
       TransactionRunner transactionRunner,
@@ -138,6 +147,8 @@ public class AppFabricServer extends AbstractIdleService {
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
+    this.credentialProviderService = credentialProviderService;
+    this.namespaceCredentialProviderService = namespaceCredentialProviderService;
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
@@ -158,23 +169,28 @@ public class AppFabricServer extends AbstractIdleService {
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.APP_FABRIC_HTTP));
-    Futures.allAsList(
-        ImmutableList.of(
-            provisioningService.start(),
-            applicationLifecycleService.start(),
-            bootstrapService.start(),
-            programRuntimeService.start(),
-            programNotificationSubscriberService.start(),
-            programStopSubscriberService.start(),
-            runRecordCorrectorService.start(),
-            programRunStatusMonitorService.start(),
-            coreSchedulerService.start(),
-            runRecordCounterService.start(),
-            runRecordTimeToLiveService.start(),
-            sourceControlOperationRunner.start(),
-            repositoryCleanupService.start()
-        )
-    ).get();
+    List<ListenableFuture<State>> futuresList = new ArrayList<>();
+    FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+      futuresList.add(namespaceCredentialProviderService.start());
+    }
+    futuresList.addAll(ImmutableList.of(
+        provisioningService.start(),
+        applicationLifecycleService.start(),
+        bootstrapService.start(),
+        programRuntimeService.start(),
+        programNotificationSubscriberService.start(),
+        programStopSubscriberService.start(),
+        runRecordCorrectorService.start(),
+        programRunStatusMonitorService.start(),
+        coreSchedulerService.start(),
+        credentialProviderService.start(),
+        runRecordCounterService.start(),
+        runRecordTimeToLiveService.start(),
+        sourceControlOperationRunner.start(),
+        repositoryCleanupService.start()
+    ));
+    Futures.allAsList(futuresList).get();
 
     // Create handler hooks
     List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
@@ -231,6 +247,8 @@ public class AppFabricServer extends AbstractIdleService {
     runRecordTimeToLiveService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();
     repositoryCleanupService.stopAndWait();
+    credentialProviderService.stopAndWait();
+    namespaceCredentialProviderService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

@@ -564,6 +564,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount,
           null, null, null, null);
     } catch (ApiException e) {
+      if (e.getCode() == 409) {
+        // ignore, the SA already exists.
+        return;
+      }
       LOG.error(
           String.format("Unable to create the service account %s with status %s and body: %s",
               serviceAccount.getMetadata().getName(), e.getCode(), e.getResponseBody()), e);
