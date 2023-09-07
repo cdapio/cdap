@@ -6016,11 +6016,20 @@
   </property>
 
   <property>
-    <name>internal.router.enabled</name>
+    <name>internal.router.client.enabled</name>
     <value>false</value>
     <description>
       Whether to route traffic for CDAP APIs through the internal router service. By default, it is
       disabled.
+    </description>
+  </property>
+
+  <property>
+    <name>internal.router.server.enabled</name>
+    <value>false</value>
+    <description>
+      Whether the internal router service is enabled. It can be disabled to save service IP space
+      when the internal router is not being used.
     </description>
   </property>
 

@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -168,7 +169,9 @@ public class InternalServiceRoutingHandlerTest {
   @Test
   public void testProxyClientCreation() throws IOException {
     // Enable routing through the internal router in cConf.
-    cConf.setBoolean(InternalRouter.INTERNAL_ROUTER_ENABLED, true);
+    cConf.setBoolean(InternalRouter.CLIENT_ENABLED, true);
+    cConf.setBoolean(InternalRouter.SERVER_ENABLED, true);
+
     HttpMethod method = HttpMethod.GET;
     int status = 200;
     RemoteClient remoteClient = injector.getInstance(RemoteClientFactory.class)
@@ -184,5 +187,17 @@ public class InternalServiceRoutingHandlerTest {
 
     Assert.assertEquals(url.getPath(), "/v3Internal/router/services/mock/mock");
     Assert.assertEquals(status, response.getResponseCode());
+  }
+
+  @Test(expected = ProvisionException.class)
+  public void testServerDisabled() throws IOException, UnauthorizedException {
+    // Enable routing through the internal router in cConf.
+    cConf.setBoolean(InternalRouter.CLIENT_ENABLED, true);
+    // Disable the server.
+    cConf.setBoolean(InternalRouter.SERVER_ENABLED, false);
+
+    injector.getInstance(RemoteClientFactory.class)
+        .createRemoteClient(MOCK_SERVICE,
+            DefaultHttpRequestConfig.DEFAULT, "");
   }
 }

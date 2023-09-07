@@ -57,7 +57,14 @@ public class RemoteClientFactory {
       InternalAuthenticator internalAuthenticator,
       RemoteAuthenticator remoteAuthenticator, CConfiguration cConf) {
     this(discoveryClient, internalAuthenticator, remoteAuthenticator, "",
-        cConf.getBoolean(InternalRouter.INTERNAL_ROUTER_ENABLED));
+        cConf.getBoolean(InternalRouter.CLIENT_ENABLED));
+    if (cConf.getBoolean(InternalRouter.CLIENT_ENABLED) && !cConf.getBoolean(
+        InternalRouter.SERVER_ENABLED)) {
+      throw new IllegalStateException(
+          "Using internal router clients is enabled but the internal router server is not."
+          + "Enable internal router server by setting property "
+          + InternalRouter.SERVER_ENABLED);
+    }
   }
 
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
