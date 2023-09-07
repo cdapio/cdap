@@ -2417,6 +2417,7 @@ public final class Constants {
     public static final String BIND_ADDRESS = "internal.router.service.bind.address";
     public static final String BIND_PORT = "internal.router.service.bind.port";
     public static final String SSL_ENABLED = "internal.router.service.ssl.enabled";
-    public static final String INTERNAL_ROUTER_ENABLED = "internal.router.enabled";
+    public static final String CLIENT_ENABLED = "internal.router.client.enabled";
+    public static final String SERVER_ENABLED = "internal.router.server.enabled";
   }
 }

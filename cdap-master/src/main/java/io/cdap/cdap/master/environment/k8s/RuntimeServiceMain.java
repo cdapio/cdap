@@ -25,6 +25,7 @@ import com.google.inject.Module;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -84,7 +85,8 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     services.add(new AbstractIdleService() {
       @Override
       protected void startUp() throws Exception {
-        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+        StoreDefinition.createAllTables(
+            injector.getInstance(StructuredTableAdmin.class));
       }
 
       @Override
@@ -94,7 +96,10 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     });
     services.add(injector.getInstance(RuntimeProgramStatusSubscriberService.class));
     services.add(injector.getInstance(RuntimeServer.class));
-    services.add(injector.getInstance(InternalRouterService.class));
+    if (injector.getInstance(CConfiguration.class)
+        .getBoolean(InternalRouter.SERVER_ENABLED)) {
+      services.add(injector.getInstance(InternalRouterService.class));
+    }
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
         Key.get(ZKClientService.class));
     if (zkBinding != null) {
