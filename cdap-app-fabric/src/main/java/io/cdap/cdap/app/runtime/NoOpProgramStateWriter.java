@@ -27,7 +27,7 @@ public class NoOpProgramStateWriter implements ProgramStateWriter {
 
   @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions,
-      @Nullable String twillRunId, ProgramDescriptor programDescriptor) {
+      @Nullable String twillRunId, @Nullable ProgramDescriptor programDescriptor) {
     // no-op
   }
 

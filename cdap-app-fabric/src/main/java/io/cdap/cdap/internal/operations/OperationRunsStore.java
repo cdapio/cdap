@@ -36,7 +36,6 @@ import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -61,7 +60,7 @@ public class OperationRunsStore {
   }
 
 
-  public void createOperation(NamespaceId namespaceId, String operationId, String operationType)
+  public void createOperation(String namespaceId, String operationId, String operationType)
     throws OperationRunAlreadyExistsException, IOException {
     TransactionRunners.run(transactionRunner, context -> {
       Optional<StructuredRow> row = getOperationRunInternal(context, operationId);
@@ -161,7 +160,7 @@ public class OperationRunsStore {
       row.getString(StoreDefinition.OperationRunsStore.ERRORS_FIELD), LIST_ERROR_TYPE);
     long createdAt = row.getLong(StoreDefinition.OperationRunsStore.CREATED_AT_FIELD);
     long updatedAt = row.getLong(StoreDefinition.OperationRunsStore.UPDATED_AT_FIELD);
-    return new OperationRun(operationId, new NamespaceId(namespace), type, status, createdAt, updatedAt, metadata, error);
+    return new OperationRun(operationId, namespace, type, status, createdAt, updatedAt, metadata, error);
   }
 
   private void writeOperationRun(StructuredTableContext context, OperationRun operationRun)
@@ -170,7 +169,7 @@ public class OperationRunsStore {
     fields.add(
       Fields.stringField(StoreDefinition.OperationRunsStore.OPERATION_ID_FIELD, operationRun.getOperationId()));
     fields.add(
-      Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, operationRun.getNamespace().getNamespace()));
+      Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, operationRun.getNamespace()));
     fields.add(
       Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD, operationRun.getStatus().toString()));
     fields.add(

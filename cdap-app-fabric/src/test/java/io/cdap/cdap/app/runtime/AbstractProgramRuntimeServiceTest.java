@@ -214,7 +214,7 @@ public class AbstractProgramRuntimeServiceTest {
     final Program program = createDummyProgram();
     TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
                                                                              program, null, null);
-    ProgramRunDispatcherFactory factory = new ProgramRunDispatcherFactory(cConf, launchDispatcher);
+    ProgramRunDispatcherFactory factory = new ProgramRunDispatcherFactory(cConf, launchDispatcher, null);
     final ProgramRuntimeService runtimeService =
       new AbstractProgramRuntimeService(cConf, runnerFactory, new NoOpProgramStateWriter(), factory) {
 
@@ -453,7 +453,7 @@ public class AbstractProgramRuntimeServiceTest {
                                       ProgramRunnerFactory programRunnerFactory, @Nullable RuntimeInfo extraInfo,
                                       InMemoryProgramRunDispatcher programRunDispatcher) {
       super(cConf, programRunnerFactory, new NoOpProgramStateWriter(),
-            new ProgramRunDispatcherFactory(cConf, programRunDispatcher));
+            new ProgramRunDispatcherFactory(cConf, programRunDispatcher, null));
       this.extraInfo = extraInfo;
     }
 

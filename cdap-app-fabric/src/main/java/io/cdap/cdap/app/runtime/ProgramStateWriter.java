@@ -36,7 +36,7 @@ public interface ProgramStateWriter {
    * @param programDescriptor the program descriptor
    */
   void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
-      ProgramDescriptor programDescriptor);
+      @Nullable ProgramDescriptor programDescriptor);
 
   /**
    * Updates the program run's status to be {@link ProgramRunStatus#RUNNING} at the given start time

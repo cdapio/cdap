@@ -35,15 +35,14 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
-import io.cdap.cdap.sourcecontrol.worker.MultiPushAppTask;
+import io.cdap.cdap.sourcecontrol.worker.OperationRunnerTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.charset.StandardCharsets;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Remote implementation for {@link SourceControlOperationRunner}.
@@ -133,7 +132,7 @@ public class RemoteSourceControlOperationRunner extends
                                   RemoteClient remoteClient
                         ) throws SourceControlException {
     try {
-      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(MultiPushAppTask.class.getName())
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(OperationRunnerTask.class.getName())
           .withParam(GSON.toJson(multiPushAppOperationRequest)).build();
 
       // LOG.trace("Pushing application {} to linked repository", mu.getApp());

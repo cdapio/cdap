@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import io.cdap.cdap.api.service.operation.OperationRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -26,7 +27,7 @@ import java.util.List;
  * Information required by {@link SourceControlOperationRunner} to execute the task of pushing an application to
  * linked repository.
  */
-public class MultiPushAppOperationRequest {
+public class MultiPushAppOperationRequest extends OperationRequest {
   private final NamespaceId namespace;
   private final RepositoryConfig repoConfig;
   private final List<ApplicationId> apps;
@@ -38,6 +39,7 @@ public class MultiPushAppOperationRequest {
                                       List<ApplicationId> apps,
                                       CommitMeta commitDetails,
                                       String operationId) {
+    super(PushOperation.class.getName());
     this.namespace = namespace;
     this.repoConfig = repoConfig;
     this.apps = apps;

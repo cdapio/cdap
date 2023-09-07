@@ -21,5 +21,8 @@ import java.util.function.Consumer;
 
 public interface LongRunningOperation<T> {
   String getType();
+
+  String getRequestClassName();
+
   List<OperationError> run(T request, Consumer<OperationMeta> updateMetadata) throws Exception;
 }

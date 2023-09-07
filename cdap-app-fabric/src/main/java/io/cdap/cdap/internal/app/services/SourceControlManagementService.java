@@ -63,15 +63,14 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -234,17 +233,20 @@ public class SourceControlManagementService {
     String operationId = UUID.randomUUID().toString();
 
     try {
-      operationRunsStore.createOperation(appRef.getParent(), operationId, "SCM_PUSH");
-    } catch (Exception e){
+      operationRunsStore.createOperation(appRef.getParent().getNamespace(), operationId, "SCM_PUSH");
+    } catch (Exception e) {
       throw new RuntimeException("failed to create operation");
     }
 
     try {
-      sourceControlOperationRunner.multipush(
-        new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta, operationId),
-        null, null
-      );
-    } catch (Exception e){
+      // sourceControlOperationRunner.multipush(
+      //   new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta, operationId),
+      //   null, null
+      // );
+      MultiPushAppOperationRequest request  =
+          new MultiPushAppOperationRequest(appRef.getParent(), repoConfig, applicationIds, commitMeta, operationId);
+
+    } catch (Exception e) {
       operationRunsStore.failOperation(appRef.getParent(), operationId,
                                         Arrays.asList(new OperationError("", "Failed to launch push task")));
     }

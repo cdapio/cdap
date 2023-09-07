@@ -36,10 +36,6 @@ import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -48,6 +44,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * In-Memory implementation for {@link SourceControlOperationRunner}.
@@ -172,13 +171,18 @@ public class InMemorySourceControlOperationRunner extends
 
 
   public void multipush(
-    MultiPushAppOperationRequest multiPushAppOperationRequest, OperationRunManager<MultiPushAppOperationRequest> operationManager, RemoteClient remoteClient
-  ) throws SourceControlException{
+      MultiPushAppOperationRequest multiPushAppOperationRequest,
+      OperationRunManager<MultiPushAppOperationRequest> operationManager,
+      RemoteClient remoteClient
+  ) throws SourceControlException {
     PushOperation operation = new PushOperation(repoManagerFactory, remoteClient);
     // LOG.info("Pushing application {} in worker.", operationRequest.getApp().getName());
     RemoteOperationRunManager<MultiPushAppOperationRequest> operationRunManager =
-      new RemoteOperationRunManager<>(multiPushAppOperationRequest.getOperationId(), multiPushAppOperationRequest.getNamespaceId(),
-                                      remoteClient, operation, multiPushAppOperationRequest);
+      new RemoteOperationRunManager<>(
+          multiPushAppOperationRequest.getOperationId(),
+          multiPushAppOperationRequest.getNamespaceId(),
+          remoteClient, operation, multiPushAppOperationRequest
+      );
     operationRunManager.start();
   }
 

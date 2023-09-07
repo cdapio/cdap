@@ -16,13 +16,11 @@
 
 package io.cdap.cdap.api.service.operation;
 
-import io.cdap.cdap.proto.id.NamespaceId;
-
 import java.util.List;
 
-public class OperationRun{
+public class OperationRun {
   private final String operationId;
-  private final NamespaceId namespace;
+  private final String namespace;
   private final String operationType;
   private OperationStatus status;
   private final Long createdAt;
@@ -30,7 +28,7 @@ public class OperationRun{
   private OperationMeta metadata;
   private List<OperationError> errors;
 
-  public OperationRun(String operationId, NamespaceId namespace, String operationType, Long createdAt) {
+  public OperationRun(String operationId, String namespace, String operationType, Long createdAt) {
     this.operationId = operationId;
     this.operationType = operationType;
     this.namespace = namespace;
@@ -39,7 +37,10 @@ public class OperationRun{
     this.status = OperationStatus.PENDING;
   }
 
-  public OperationRun(String operationId, NamespaceId namespace, String operationType,  OperationStatus status, Long createdAt, Long updatedAt, OperationMeta metadata, List<OperationError> errors) {
+  public OperationRun(
+      String operationId, String namespace, String operationType, OperationStatus status,
+      Long createdAt, Long updatedAt, OperationMeta metadata, List<OperationError> errors
+  ) {
     this.operationId = operationId;
     this.operationType = operationType;
     this.namespace = namespace;
@@ -58,7 +59,7 @@ public class OperationRun{
     return operationType;
   }
 
-  public NamespaceId getNamespace() {
+  public String getNamespace() {
     return namespace;
   }
 

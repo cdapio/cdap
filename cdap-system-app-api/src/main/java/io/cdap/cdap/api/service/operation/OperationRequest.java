@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.api.app;
+package io.cdap.cdap.api.service.operation;
 
-/**
- * Defines types of programs supported by the system.
- */
-public enum ProgramType {
-  MAPREDUCE,
-  WORKFLOW,
-  SERVICE,
-  SPARK,
-  WORKER,
-  OPERATION
+public class OperationRequest {
+  private final String operationClassName;
+
+
+  public OperationRequest(String operationClassName) {
+    this.operationClassName = operationClassName;
+  }
+
+  public String getOperationClassName() {
+    return operationClassName;
+  }
 }

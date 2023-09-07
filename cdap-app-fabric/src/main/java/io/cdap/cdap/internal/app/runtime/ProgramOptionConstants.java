@@ -95,6 +95,7 @@ public final class ProgramOptionConstants {
   public static final String SYSTEM_OVERRIDES = "systemOverrides";
 
   public static final String USER_OVERRIDES = "userOverrides";
+  public static final String OPERATION_REQUEST = "operationRequest";
 
   public static final String TRIGGERING_SCHEDULE_INFO = "triggeringScheduleInfo";
 

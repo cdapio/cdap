@@ -82,6 +82,13 @@ public enum ProgramType {
       .setPrettyName("Custom")
       .setListable(false)
       .setSchedulableType(SchedulableProgramType.CUSTOM_ACTION)
+      .build()),
+
+  Operation(10, Parameters.builder()
+      .setCategoryName("operation")
+      .setPrettyName("Operation")
+      .setListable(true)
+      .setApiProgramType(io.cdap.cdap.api.app.ProgramType.OPERATION)
       .build());
 
   private static final Map<String, ProgramType> CATEGORY_MAP;

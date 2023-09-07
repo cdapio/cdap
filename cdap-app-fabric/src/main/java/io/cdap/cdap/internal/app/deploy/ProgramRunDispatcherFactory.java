@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcher;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.operations.OperationRunDispatcher;
 import io.cdap.cdap.proto.ProgramType;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,10 +36,15 @@ public class ProgramRunDispatcherFactory {
   private final Set<ProgramType> remoteDispatchProgramTypes;
   private ProgramRunDispatcher remoteProgramRunDispatcher;
 
+  //TODO have one remote and one inmemory operation dispatcher
+  private final OperationRunDispatcher operationRunDispatcher;
+
   @Inject
   public ProgramRunDispatcherFactory(CConfiguration cConf,
-      InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher) {
+      InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher,
+      OperationRunDispatcher operationRunDispatcher) {
     this.inMemoryProgramRunDispatcher = inMemoryProgramRunDispatcher;
+    this.operationRunDispatcher = operationRunDispatcher;
     this.workerPoolEnabled = cConf.getBoolean(Constants.SystemWorker.POOL_ENABLE);
     this.remoteDispatchProgramTypes = new HashSet<>();
     String[] programTypes = cConf.getStrings(Constants.SystemWorker.DISPATCH_PROGRAM_TYPES);
@@ -62,6 +68,9 @@ public class ProgramRunDispatcherFactory {
   }
 
   public ProgramRunDispatcher getProgramRunDispatcher(ProgramType type) {
+    if (type == ProgramType.Operation) {
+      return operationRunDispatcher;
+    }
     // Returns InMemoryProgramRunDispatcher if remoteDispatcher is not set.
     return workerPoolEnabled && remoteDispatchProgramTypes.contains(type)
         && remoteProgramRunDispatcher != null

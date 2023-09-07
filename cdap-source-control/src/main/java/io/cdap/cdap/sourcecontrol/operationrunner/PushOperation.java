@@ -33,10 +33,6 @@ import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -47,6 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Consumer;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PushOperation implements LongRunningOperation<MultiPushAppOperationRequest> {
   private final RepositoryManagerFactory repositoryManagerFactory;
@@ -59,13 +58,18 @@ public class PushOperation implements LongRunningOperation<MultiPushAppOperation
   }
 
 
-  @Override
   public String getType() {
     return "PUSH_APPS";
   }
 
+  public String getRequestClassName() {
+    return MultiPushAppOperationRequest.class.getName();
+  }
+
   @Override
-  public List<OperationError> run(MultiPushAppOperationRequest request, Consumer<OperationMeta> updateMetadata) throws Exception {
+  public List<OperationError> run(
+      MultiPushAppOperationRequest request, Consumer<OperationMeta> updateMetadata
+  ) throws Exception {
     try (
       RepositoryManager repositoryManager = repositoryManagerFactory.create(request.getNamespaceId(),
                                                                       request.getRepositoryConfig())

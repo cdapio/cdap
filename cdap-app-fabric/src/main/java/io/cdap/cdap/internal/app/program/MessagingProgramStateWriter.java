@@ -31,7 +31,9 @@ import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -58,6 +60,18 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   @Override
   public void start(ProgramRunId programRunId, ProgramOptions programOptions,
       @Nullable String twillRunId,
+      @Nullable ProgramDescriptor programDescriptor) {
+    Map<String, String> properties;
+    if (programRunId.getType() == ProgramType.Operation) {
+      properties = getOperationStartProperties(programRunId,  programOptions, twillRunId);
+    } else {
+      properties = getProgramStartProperties(programRunId, programOptions, twillRunId, programDescriptor);
+    }
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
+  }
+
+  private Map<String, String> getProgramStartProperties(ProgramRunId programRunId, ProgramOptions programOptions,
+      @Nullable String twillRunId,
       ProgramDescriptor programDescriptor) {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
         .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
@@ -77,7 +91,22 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
-    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
+    return properties.build();
+  }
+
+  private Map<String, String> getOperationStartProperties(ProgramRunId programRunId, ProgramOptions programOptions,
+      @Nullable String twillRunId) {
+    ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
+        .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
+        .put(ProgramOptionConstants.OPERATION_REQUEST,
+            GSON.toJson(programOptions.getUserArguments().asMap()));
+
+    if (twillRunId != null) {
+      properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
+    }
+
+    return properties.build();
   }
 
   @Override

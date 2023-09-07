@@ -28,23 +28,22 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
+import java.io.IOException;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 /**
  * The task that pushes an application to linked repository.
  */
-public class MultiPushAppTask extends SourceControlTask {
+public class OperationRunnerTask extends SourceControlTask {
 
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(MultiPushAppTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OperationRunnerTask.class);
 
   @Inject
-  MultiPushAppTask(CConfiguration cConf,
+  OperationRunnerTask(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
       MetricsCollectionService metricsCollectionService
