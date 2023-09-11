@@ -52,6 +52,9 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Launches a pool of system workers.
+ */
 public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerServiceLauncher.class);
@@ -64,6 +67,9 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   private ScheduledExecutorService executor;
 
+   /**
+   * Default Constructor with injected configuration and {@link TwillRunner}.
+   */
   @Inject
   public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
       SConfiguration sConf,
@@ -113,6 +119,9 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
     return executor;
   }
 
+  /**
+   * Inner run method for the service.
+   */
   public void run() {
     TwillController activeController = null;
     for (TwillController controller : twillRunner.lookup(SystemWorkerTwillApplication.NAME)) {

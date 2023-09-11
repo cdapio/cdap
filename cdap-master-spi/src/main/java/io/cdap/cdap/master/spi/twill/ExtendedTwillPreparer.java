@@ -28,9 +28,9 @@ public interface ExtendedTwillPreparer extends TwillPreparer {
    * Set size limit for workdir volume in kube twill application which is an
    * emptydir.
    *
-   * @param sizeLimitInMB volume size limit in MB
+   * @param sizeLimitInMiB volume size limit in Mega Bytes
    */
-  ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB);
+  ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMiB);
 
   /**
    * Sets whether config files such as cdap-site.xml should be localized using

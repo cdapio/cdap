@@ -192,10 +192,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final Map<String, V1SecurityContext> containerSecurityContexts;
   private final Map<String, Set<String>> readonlyDisks;
   private final Map<String, Map<String, String>> runnableConfigs;
-  private final Map<String, StringBuilder> runnableJVMOptions;
+  private final Map<String, StringBuilder> runnableJvmOptions;
   private final String cdapInstallNamespace;
   private final boolean workloadIdentityEnabled;
-  private final long workloadIdentityKSATTL;
+  private final long workloadIdentityKsaTtl;
   private final String workloadIdentityPool;
 
   private String schedulerQueue;
@@ -248,7 +248,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     List<V1EnvVar> inheritedEnvVars = podInfo.getContainerEnvironments();
     Optional<V1EnvVar> javaOptsEnvVar = inheritedEnvVars == null ? Optional.empty()
         : inheritedEnvVars.stream().filter(i -> JAVA_OPTS_KEY.equals(i.getName())).findFirst();
-    this.runnableJVMOptions = runnables.stream().collect(Collectors.toMap(r -> r, r -> {
+    this.runnableJvmOptions = runnables.stream().collect(Collectors.toMap(r -> r, r -> {
       StringBuilder builder = new StringBuilder();
       if (javaOptsEnvVar.isPresent()) {
         builder.append(javaOptsEnvVar.get().getValue());
@@ -261,10 +261,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         KubeMasterEnvironment.DEFAULT_NAMESPACE);
     this.workloadIdentityEnabled = Boolean.parseBoolean(
         cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_ENABLED));
-    String confTTLStr = cConf.get(
+    String confTtlStr = cConf.get(
         KubeMasterEnvironment.WORKLOAD_IDENTITY_SERVICE_ACCOUNT_TOKEN_TTL_SECONDS);
-    this.workloadIdentityKSATTL = WorkloadIdentityUtil.convertWorkloadIdentityTTLFromString(
-        confTTLStr);
+    this.workloadIdentityKsaTtl = WorkloadIdentityUtil.convertWorkloadIdentityTTLFromString(
+        confTtlStr);
     this.workloadIdentityPool = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_POOL);
     this.cdapRuntimeNamespace = null;
     this.globalJvmOptions = new StringBuilder();
@@ -272,8 +272,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   @Override
-  public ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB) {
-    workDirVolumeSource.setSizeLimit(new Quantity(String.format("%dMi", sizeLimitInMB)));
+  public ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMiB) {
+    workDirVolumeSource.setSizeLimit(new Quantity(String.format("%dMi", sizeLimitInMiB)));
     return this;
   }
 
@@ -454,7 +454,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer setJVMOptions(String runnableName, String options) {
-    runnableJVMOptions.put(runnableName, new StringBuilder(options));
+    runnableJvmOptions.put(runnableName, new StringBuilder(options));
     return this;
   }
 
@@ -950,7 +950,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withReplicas(replicas)
         .withPodManagementPolicy(statefulRunnable.isOrderedStart() ? "OrderedReady" : "Parallel")
         .addAllToVolumeClaimTemplates(
-            disks.stream().map(this::createPVC).collect(Collectors.toList()))
+            disks.stream().map(this::createPvc).collect(Collectors.toList()))
         .withNewTemplate()
         .withMetadata(metadata)
         .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs,
@@ -1082,7 +1082,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           URL url = uri.toURL();
           LOG.debug("Create and copy {} : {}", runnableName, url);
           // Preserves original suffix for expansion.
-          location = copyFromURL(url,
+          location = copyFromUrl(url,
               createTempLocation(Paths.addExtension(url.getFile(), localFile.getName())));
           LOG.debug("Done {} : {}", runnableName, url);
         }
@@ -1097,7 +1097,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
 
-  private Location copyFromURL(URL url, Location target) throws IOException {
+  private Location copyFromUrl(URL url, Location target) throws IOException {
     try (OutputStream os = new BufferedOutputStream(target.getOutputStream())) {
       Resources.copy(url, os);
       return target;
@@ -1141,9 +1141,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       Map<String, RuntimeSpecification> runtimeSpecs,
       String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
-    V1Volume workDirVolume = new V1Volume().name("workdir").emptyDir(workDirVolumeSource);
+    final V1Volume workDirVolume = new V1Volume().name("workdir").emptyDir(workDirVolumeSource);
 
-    String workDir = "/workDir-" + twillRunId.getId();
+    final String workDir = "/workDir-" + twillRunId.getId();
 
     List<V1Volume> volumes = new ArrayList<>();
     volumes.add(podInfoVolume);
@@ -1167,7 +1167,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
-    V1ResourceRequirements initContainerResourceRequirements =
+    final V1ResourceRequirements initContainerResourceRequirements =
         createResourceRequirements(mainRuntimeSpec.getResourceSpecification());
 
     // Setup the container environment. Inherit everything from the current pod except workload identity env vars.
@@ -1218,7 +1218,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         cdapInstallNamespace,
         programRuntimeNamespace,
         workloadIdentityServiceAccount)) {
-      volumes.add(WorkloadIdentityUtil.generateWorkloadIdentityVolume(workloadIdentityKSATTL,
+      volumes.add(WorkloadIdentityUtil.generateWorkloadIdentityVolume(
+          workloadIdentityKsaTtl,
           workloadIdentityPool));
       volumeMounts.add(WorkloadIdentityUtil.generateWorkloadIdentityVolumeMount());
 
@@ -1228,10 +1229,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
 
     // Mount all volumes including cdap-secret for init container as it runs system/trusted code.
-    List<V1VolumeMount> initContainerVolumeMounts = new ArrayList<>(volumeMounts);
+    final List<V1VolumeMount> initContainerVolumeMounts = new ArrayList<>(volumeMounts);
     // Mount all except cdap-secret for main container by default. If requested, cdap-secret will
     // get mounted later.
-    List<V1VolumeMount> containerVolumeMounts =
+    final List<V1VolumeMount> containerVolumeMounts =
         volumeMounts.stream()
             .filter(v -> !v.getName().equals(KubeMasterEnvironment.SECURITY_CONFIG_NAME))
             .collect(Collectors.toList());
@@ -1275,11 +1276,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             envVar -> !envVar.getName().equals(WorkloadIdentityUtil.WORKLOAD_IDENTITY_ENV_VAR_KEY))
         .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
 
-    List<V1Container> containers = new ArrayList<>();
+    final List<V1Container> containers = new ArrayList<>();
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
     environs.putAll(environments.get(runnableName));
-    String jvmOpts = globalJvmOptions.toString() + JAVA_OPTS_DELIM + runnableJVMOptions.get(runnableName).toString();
+    String jvmOpts = globalJvmOptions.toString() + JAVA_OPTS_DELIM + runnableJvmOptions.get(runnableName).toString();
     // Add JVM options to environment.
     environs.put(JAVA_OPTS_KEY, jvmOpts);
     // Add workload identity environment variable if applicable.
@@ -1443,6 +1444,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   /**
    * Returns whether the given namespace is the system namespace.
+   *
    * @param namespace a namespace ID
    */
   private boolean isSystemNamespace(String namespace) {
@@ -1488,7 +1490,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * @param disk the disk information
    * @return a {@link V1PersistentVolumeClaim}
    */
-  private V1PersistentVolumeClaim createPVC(StatefulDisk disk) {
+  private V1PersistentVolumeClaim createPvc(StatefulDisk disk) {
     return new V1PersistentVolumeClaimBuilder()
         .withMetadata(new V1ObjectMeta().name(cleanse(disk.getName(), 254)))
         .withNewSpec()

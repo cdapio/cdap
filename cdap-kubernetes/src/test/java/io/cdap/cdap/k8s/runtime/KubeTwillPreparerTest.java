@@ -267,7 +267,7 @@ public class KubeTwillPreparerTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testCreateUserResourceSpecificationInvalidProgramCPUMultiplier() throws Exception {
+  public void testCreateUserResourceSpecificationInvalidProgramCpuMultiplier() throws Exception {
     MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
     masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_CPU_MULTIPLIER, "2");
     KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
