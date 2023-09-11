@@ -3744,6 +3744,15 @@
   </property>
 
   <property>
+    <name>preview.runner.internal.router.enabled</name>
+    <value>false</value>
+    <description>
+     Whether to route requests from preview runners through the internal router service. This
+      is only applicable for k8s environment presently. By default, it is disabled.
+    </description>
+  </property>
+
+  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
@@ -5278,6 +5287,15 @@
   </property>
 
   <property>
+    <name>task.worker.internal.router.enabled</name>
+    <value>false</value>
+    <description>
+     Whether to route requests from task workers through the internal router service. This
+      is only applicable for k8s environment presently. By default, it is disabled.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.container.jvm.opts</name>
     <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
     <description>
@@ -5456,6 +5474,15 @@
     <value>workflow</value>
     <description>
       comma separated list of ProgramTypes
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.internal.router.enabled</name>
+    <value>false</value>
+    <description>
+     Whether to route requests from system workers through the internal router service. This
+      is only applicable for k8s environment presently. By default, it is disabled.
     </description>
   </property>
 

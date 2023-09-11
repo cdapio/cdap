@@ -208,6 +208,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String cdapRuntimeNamespace;
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
+  private boolean shouldLocalizeConfigurationAsConfigmap;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -273,6 +274,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   @Override
   public ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB) {
     workDirVolumeSource.setSizeLimit(new Quantity(String.format("%dMi", sizeLimitInMB)));
+    return this;
+  }
+
+  @Override
+  public ExtendedTwillPreparer setShouldLocalizeConfigurationAsConfigmap(
+      boolean shouldLocalizeConfigurationAsConfigmap) {
+    this.shouldLocalizeConfigurationAsConfigmap = shouldLocalizeConfigurationAsConfigmap;
     return this;
   }
 
@@ -647,7 +655,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             statefulRunnable);
       }
 
-      if (!isSystemNamespace(cdapRuntimeNamespace) && obj != null) {
+      if (shouldLocalizeConfigAsConfigmap(cdapRuntimeNamespace) && obj != null) {
         // We only create a per-run configmap new user programs didn't already exist
         createConfigMap(obj);
       }
@@ -763,7 +771,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
-   * Kubernetes names must be lower case alphanumeric, or '-'. Some are less restrictive, but those
+   * Kubernetes names must be lowercase alphanumeric, or '-'. Some are less restrictive, but those
    * characters should always be ok.
    */
   private String cleanse(String val, int maxLength) {
@@ -819,7 +827,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withBackoffLimit(0)
         .withNewTemplate()
         .withMetadata(metadata)
-        .withSpec(createPodSpec(V1Job.class, runtimeConfigLocation, runtimeSpecs, "Never",
+        .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs, "Never",
             Collections.singletonList(KubeMasterEnvironment.DISABLE_POD_DELETION)))
         .endTemplate()
         .endSpec()
@@ -918,7 +926,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withReplicas(replicas)
         .withNewTemplate()
         .withMetadata(metadata)
-        .withSpec(createPodSpec(V1Deployment.class, runtimeConfigLocation, runtimeSpecs))
+        .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
         .endTemplate()
         .endSpec()
         .build();
@@ -945,7 +953,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             disks.stream().map(this::createPVC).collect(Collectors.toList()))
         .withNewTemplate()
         .withMetadata(metadata)
-        .withSpec(createPodSpec(V1StatefulSet.class, runtimeConfigLocation, runtimeSpecs,
+        .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs,
             disks.stream().map(this::createDiskMount).toArray(V1VolumeMount[]::new)))
         .endTemplate()
         .endSpec()
@@ -1060,7 +1068,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           k -> new ArrayList<>());
 
       for (LocalFile localFile : entry.getValue().getLocalFiles()) {
-        if (localFile.getName().endsWith(".xml") && !isSystemNamespace(cdapRuntimeNamespace)) {
+        if (localFile.getName().endsWith(".xml") && shouldLocalizeConfigAsConfigmap(cdapRuntimeNamespace)) {
           // Skip over xml config files as they are stored on the per-run configmap for user programs
           continue;
         }
@@ -1105,24 +1113,23 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
    *
-   * @param resourceType resource type for which pod spec needs to be created
    * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
    * @param runtimeSpecs the specification for the {@link TwillRunnable} and its resources
    *     requirements
    * @param extraMounts volumes to be mounted
    * @return a {@link V1PodSpec}
    */
-  private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
+  @VisibleForTesting
+  V1PodSpec createPodSpec(Location runtimeConfigLocation,
       Map<String, RuntimeSpecification> runtimeSpecs,
       V1VolumeMount... extraMounts) {
-    return createPodSpec(resourceType, runtimeConfigLocation, runtimeSpecs, "Always",
+    return createPodSpec(runtimeConfigLocation, runtimeSpecs, "Always",
         new ArrayList<>(), extraMounts);
   }
 
   /**
    * Creates a {@link V1PodSpec} for specifying pod information for running the given runnable.
    *
-   * @param resourceType resource type for which pod spec needs to be created
    * @param runtimeConfigLocation the {@link Location} containing the runtime config archive
    * @param runtimeSpecs the specification for the {@link TwillRunnable} and its resources
    *     requirements
@@ -1130,7 +1137,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * @param extraMounts volumes to be mounted
    * @return a {@link V1PodSpec}
    */
-  private V1PodSpec createPodSpec(Type resourceType, Location runtimeConfigLocation,
+  private V1PodSpec createPodSpec(Location runtimeConfigLocation,
       Map<String, RuntimeSpecification> runtimeSpecs,
       String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
@@ -1148,11 +1155,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       // Add all volumes from the current pod
       volumes.addAll(podInfo.getVolumes());
     } else {
-      // Add secrets and configmap volume containing localized config files for user program runs
+      // Add secrets for user program runs.
+      volumes.addAll(secretVolumes);
+    }
+    if (shouldLocalizeConfigAsConfigmap(cdapRuntimeNamespace)) {
+      // Add configmap volume containing localized per-run config files.
       V1Volume configMapVolume = new V1Volume().name(configMapName)
           .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build());
       volumes.add(configMapVolume);
-      volumes.addAll(secretVolumes);
     }
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
@@ -1183,16 +1193,18 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       // Add volume mounts to the container. Add those from the current pod to mount cdap and hadoop conf.
       volumeMounts.addAll(podInfo.getContainerVolumeMounts());
     } else {
-      // For user programs, mount secrets and localized per-run config files
-      volumeMounts.add(new V1VolumeMountBuilder()
-          .withName(configMapName)
-          .withMountPath(CONFIGMAP_MOUNTPATH)
-          .build());
-
+      // For user programs, mount secrets.
       Set<String> secretVolumeNames = secretVolumes.stream().map(V1Volume::getName)
           .collect(Collectors.toSet());
       podInfo.getContainerVolumeMounts().stream()
           .filter(m -> secretVolumeNames.contains(m.getName())).forEach(volumeMounts::add);
+    }
+    if (shouldLocalizeConfigAsConfigmap(cdapRuntimeNamespace)) {
+      // Mount localized per-run config files.
+      volumeMounts.add(new V1VolumeMountBuilder()
+          .withName(configMapName)
+          .withMountPath(CONFIGMAP_MOUNTPATH)
+          .build());
     }
     volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
         .mountPath(podInfo.getPodInfoDir()).readOnly(true));
@@ -1233,7 +1245,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
 
     List<String> containerArgs = new ArrayList<>(args);
-    if (!isSystemNamespace(cdapRuntimeNamespace)) {
+    if (shouldLocalizeConfigAsConfigmap(cdapRuntimeNamespace)) {
       // Pass the per-run configmap mount path to MasterEnvironmentMain as extraConfPath arg
       containerArgs.add(String.format("--conf=%s", CONFIGMAP_MOUNTPATH));
     }
@@ -1248,15 +1260,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             Stream.concat(Stream.of(runtimeConfigLocation.toURI().toString(),
                     mainRuntimeSpec.getName()), containerArgs.stream())
                 .toArray(String[]::new)))
-        .withContainers(createContainers(resourceType, runtimeSpecs, workDir, containerVolumeMounts,
+        .withContainers(createContainers(runtimeSpecs, workDir, containerVolumeMounts,
             containerArgs))
         .withSecurityContext(podInfo.getSecurityContext())
         .withRestartPolicy(restartPolicy)
         .build();
   }
 
-  private List<V1Container> createContainers(Type resourceType,
-      Map<String, RuntimeSpecification> runtimeSpecs,
+  private List<V1Container> createContainers(Map<String, RuntimeSpecification> runtimeSpecs,
       String workDir, List<V1VolumeMount> volumeMounts, List<String> args) {
     // Setup the container environment. Inherit everything from the current pod except workload identity env vars.
     Map<String, String> environs = podInfo.getContainerEnvironments().stream()
@@ -1436,6 +1447,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    */
   private boolean isSystemNamespace(String namespace) {
     return "system".equals(namespace);
+  }
+
+  /**
+   * Returns whether config files should be localized as k8s configmaps.
+   *
+   * @param namespace a namespace ID
+   */
+  private boolean shouldLocalizeConfigAsConfigmap(String namespace) {
+    return !isSystemNamespace(namespace)
+           || shouldLocalizeConfigurationAsConfigmap;
   }
 
   /**
