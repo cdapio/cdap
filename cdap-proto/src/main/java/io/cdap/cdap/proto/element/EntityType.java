@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -78,7 +79,8 @@ public enum EntityType {
   SYSTEM_APP_ENTITY(SystemAppEntityId.class),
 
   CREDENTIAL_PROFILE(CredentialProfileId.class),
-  CREDENTIAL_IDENTITY(CredentialIdentityId.class);
+  CREDENTIAL_IDENTITY(CredentialIdentityId.class),
+  OPERATION_RUN(OperationRunId.class);
 
   private final Class<? extends EntityId> idClass;
   @Nullable

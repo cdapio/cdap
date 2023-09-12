@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
+import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operationrun.OperationRun;
 import java.util.Arrays;
 import javax.annotation.Nullable;
@@ -31,6 +32,9 @@ import javax.annotation.Nullable;
  * @param <T> The type of the operation request
  */
 public class OperationRunDetail<T> {
+
+  // carries the OperationRunId, but we don't need to serialize it as it is already in the key of the  store
+  private final transient OperationRunId runId;
 
   @SerializedName("run")
   private final OperationRun run;
@@ -47,8 +51,10 @@ public class OperationRunDetail<T> {
   @SerializedName("request")
   private final T request;
 
-  protected OperationRunDetail(OperationRun run, byte[] sourceId, @Nullable String principal,
+  protected OperationRunDetail(OperationRunId runId, OperationRun run, byte[] sourceId,
+      @Nullable String principal,
       T request) {
+    this.runId = runId;
     this.run = run;
     this.sourceId = sourceId;
     this.principal = principal;
@@ -71,6 +77,10 @@ public class OperationRunDetail<T> {
 
   public OperationRun getRun() {
     return run;
+  }
+
+  public OperationRunId getRunId() {
+    return runId;
   }
 
   @Override
@@ -116,6 +126,7 @@ public class OperationRunDetail<T> {
    */
   public static class Builder<T> {
 
+    protected OperationRunId runId;
     protected OperationRun run;
     protected byte[] sourceId;
     protected String principal;
@@ -129,6 +140,7 @@ public class OperationRunDetail<T> {
       principal = detail.getPrincipal();
       request = detail.getRequest();
       run = detail.getRun();
+      runId = detail.getRunId();
     }
 
     public Builder<T> setSourceId(byte[] sourceId) {
@@ -151,10 +163,18 @@ public class OperationRunDetail<T> {
       return this;
     }
 
+    public Builder<T> setRun(OperationRunId runId) {
+      this.runId = runId;
+      return this;
+    }
+
     /**
      * Validates input and returns a OperationRunDetail.
      */
     public OperationRunDetail<T> build() {
+      if (runId == null) {
+        throw new IllegalArgumentException("run id must be specified.");
+      }
       if (request == null) {
         throw new IllegalArgumentException("Operation run request must be specified.");
       }
@@ -165,7 +185,7 @@ public class OperationRunDetail<T> {
         throw new IllegalArgumentException("Operation run must be specified.");
       }
 
-      return new OperationRunDetail<>(run, sourceId, principal, request);
+      return new OperationRunDetail<>(runId, run, sourceId, principal, request);
     }
   }
 }

@@ -13,17 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.cdap.internal.operations;
 
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.proto.operationrun.OperationRunStatus;
+package io.cdap.cdap.internal.app.operation;
+
+import io.cdap.cdap.proto.operationrun.OperationType;
 
 /**
- * Thrown when an operation run already exists.
+ * Thrown when the operation request in
+ * {@link LongRunningOperationRequest} is not valid for requested
+ * operation type.
  */
-public class OperationRunAlreadyExistsException extends BadRequestException {
+public class InvalidRequestTypeException extends Exception {
 
-  public OperationRunAlreadyExistsException(String operationId, OperationRunStatus status) {
-    super(String.format("Operation %s already exists with status %s", operationId, status));
+  public InvalidRequestTypeException(OperationType type, String requestClass) {
+    super(String.format("Request class %s is not applicable operation type %s", requestClass,
+        type.toString()));
   }
 }

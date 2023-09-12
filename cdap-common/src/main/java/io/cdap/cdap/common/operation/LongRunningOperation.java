@@ -14,15 +14,22 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.common.operation;
 
-import io.cdap.cdap.common.NotFoundException;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.cdap.cdap.proto.operationrun.OperationError;
+import io.cdap.cdap.proto.operationrun.OperationMeta;
+import java.lang.reflect.Type;
+import java.util.function.Consumer;
 
 /**
- * Exception thrown when an operation run with the specified id not found in the specified namespace
+ * LongRunningOperation represents a long-running asynchronous operation.
+ *
+ * @param <T> Type of operation request
  */
-public class OperationRunNotFoundException extends NotFoundException {
-  public OperationRunNotFoundException(String namespace, String runId) {
-    super(String.format("Operation run %s does not exist in namespace %s", runId, namespace));
-  }
+public interface LongRunningOperation<T> {
+
+  Type getRequestType();
+
+  ListenableFuture<OperationError> run(T request, Consumer<OperationMeta> updateMetadata) throws Exception;
 }

@@ -29,7 +29,7 @@ public class OperationRun {
   private final String id;
 
   @SerializedName("type")
-  private final String type;
+  private final OperationType type;
 
   // derived from the operation status
   @SerializedName("done")
@@ -49,11 +49,11 @@ public class OperationRun {
   /**
    * Constructor for OperationRun.
    */
-  protected OperationRun(String id, String type, OperationRunStatus status, OperationMeta metadata,
+  protected OperationRun(String id, OperationType type, OperationRunStatus status, OperationMeta metadata,
       @Nullable OperationError error) {
     this.id = id;
     this.type = type;
-    this.done = status.isEndState();
+    this.done = getStatus().isEndState();
     this.status = status;
     this.metadata = metadata;
     this.error = error;
@@ -116,7 +116,7 @@ public class OperationRun {
     return error;
   }
 
-  public String getType() {
+  public OperationType getType() {
     return type;
   }
 
@@ -129,7 +129,7 @@ public class OperationRun {
   public static class Builder<T extends Builder> {
 
     protected String runId;
-    protected String type;
+    protected OperationType type;
     protected OperationRunStatus status;
     protected OperationMeta metadata;
     protected OperationError error;
@@ -165,7 +165,7 @@ public class OperationRun {
       return (T) this;
     }
 
-    public T setType(String type) {
+    public T setType(OperationType type) {
       this.type = type;
       return (T) this;
     }

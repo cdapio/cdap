@@ -195,27 +195,6 @@ public interface StructuredTable extends Closeable {
   }
 
   /**
-   * Read a set of rows from the table matching the index and the key range. The rows returned will
-   * be sorted on given indexed field.
-   *
-   * @param keyRange key range for the scan
-   * @param limit maximum number of rows to return
-   * @param filterIndexes the index to filter upon
-   * @param orderByField the field to sort upon
-   * @param sortOrder defined primary key sort order. Note that the comparator used is specific
-   *     to the underlying store and is not necessarily lexicographic.
-   * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
-   *     indexed column, or the type does not match the schema
-   * @throws IOException if there is an error scanning the table
-   */
-  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
-      Collection<Field<?>> filterIndexes, String orderByField, SortOrder sortOrder)
-      throws InvalidFieldException, IOException {
-    throw new UnsupportedOperationException("No supported implementation.");
-  }
-
-  /**
    * Read a set of rows from the table matching the key range, return by sortOrder of specified
    * index field.
    *
@@ -301,7 +280,7 @@ public interface StructuredTable extends Closeable {
   void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
 
   /**
-   * Updates the specific fields in a range of rows from the table.
+   * Updates the specific fields in a range of rows from the table
    *
    * @param keyRange key range of the rows to update: cab only be a primary key prefix
    * @param fields the fields to write to
