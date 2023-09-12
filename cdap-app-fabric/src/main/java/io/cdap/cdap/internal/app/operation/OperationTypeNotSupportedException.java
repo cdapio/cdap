@@ -14,15 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.internal.app.operation;
 
-import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.operationrun.OperationType;
 
 /**
- * Exception thrown when an operation run with the specified id not found in the specified namespace
+ * Thrown when a macthing operation class is not found for a type
  */
-public class OperationRunNotFoundException extends NotFoundException {
-  public OperationRunNotFoundException(String namespace, String runId) {
-    super(String.format("Operation run %s does not exist in namespace %s", runId, namespace));
+public class OperationTypeNotSupportedException extends Exception {
+
+  public OperationTypeNotSupportedException(OperationType type) {
+    super(String.format("Operation type {} is not supported", type.toString()));
   }
 }

@@ -1077,6 +1077,9 @@ public final class Constants {
       public static final String PROGRAM_ENTITY = "ent";
       public static final String EXISTING_STATUS = "exst";
 
+      // for operation runs
+      public static final String OPERATION_RUN = "oprun";
+
       //For task worker
       public static final String CLASS = "clz";
       public static final String TRIES = "try";
