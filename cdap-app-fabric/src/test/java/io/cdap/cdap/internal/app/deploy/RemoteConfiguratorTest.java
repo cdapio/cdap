@@ -58,6 +58,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerHttpHandlerInternal;
+import io.cdap.cdap.internal.app.worker.sidecar.GcpMetadataHttpHandlerInternal;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -66,6 +67,14 @@ import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -77,15 +86,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 
 /**
@@ -119,12 +119,14 @@ public class RemoteConfiguratorTest {
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> { },
+          new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> { },
                                           new NoOpMetricsCollectionService()),
-        new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
-        new ArtifactLocalizerHttpHandlerInternal(
-          new ArtifactLocalizer(cConf, remoteClientFactory, ((namespaceId, retryStrategy) -> new NoOpArtifactManager()))
-        )
+          new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
+          new ArtifactLocalizerHttpHandlerInternal(
+              new ArtifactLocalizer(cConf, remoteClientFactory,
+                  ((namespaceId, retryStrategy) -> new NoOpArtifactManager()))
+          ),
+          new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory)
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override

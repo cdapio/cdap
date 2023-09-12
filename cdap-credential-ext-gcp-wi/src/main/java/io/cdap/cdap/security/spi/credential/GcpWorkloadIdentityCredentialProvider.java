@@ -18,6 +18,7 @@ package io.cdap.cdap.security.spi.credential;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -47,11 +48,14 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.HttpHeaders;
 import okhttp3.OkHttpClient;
@@ -134,7 +138,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
 
   @Override
   public ProvisionedCredential provision(NamespaceMeta namespaceMeta,
-      CredentialProfile profile, CredentialIdentity identity)
+      CredentialProfile profile, CredentialIdentity identity, @Nullable String scopes)
       throws CredentialProvisioningException {
 
     // Provision the credential with exponential delay on retryable failure.
@@ -153,7 +157,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     try {
       while (stopWatch.elapsed(TimeUnit.SECONDS) < timeout) {
         try {
-          return getProvisionedCredential(namespaceMeta, identity);
+          return getProvisionedCredential(namespaceMeta, identity, scopes);
         } catch (RetryableException e) {
           TimeUnit.MILLISECONDS.sleep(delay);
           delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier
@@ -182,7 +186,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
   }
 
   private ProvisionedCredential getProvisionedCredential(NamespaceMeta namespaceMeta,
-      CredentialIdentity identity) throws IOException, ApiException {
+      CredentialIdentity identity, @Nullable String scopes) throws IOException, ApiException {
 
     // get k8s namespace from namespace metadata if namespace creation hook is enabled.
     String k8sNamespace = NamespaceId.DEFAULT.getNamespace();
@@ -195,7 +199,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
           credentialProviderContext.getProperties().get(WORKLOAD_IDENTITY_POOL);
 
       // generate k8s SA token for pod
-      String k8sSaToken = getK8sServiceAccountToken(k8sNamespace, identity.getIdentity(),
+      final String k8sSaToken = getK8sServiceAccountToken(k8sNamespace, identity.getIdentity(),
           workloadIdentityPool);
       LOG.trace("Successfully generated K8SA token.");
 
@@ -208,8 +212,13 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
 
       LOG.trace("Exchanging JWT token for Federating Token via STS with audience {}",
           tokenExchangeAudience);
+      if (Strings.isNullOrEmpty(scopes)) {
+        scopes = CLOUD_PLATFORM_SCOPE;
+      } else {
+        scopes = String.format("%s,%s", scopes, CLOUD_PLATFORM_SCOPE);
+      }
       SecurityTokenServiceResponse securityTokenServiceResponse = GSON.fromJson(
-          exchangeTokenViaSts(k8sSaToken, CLOUD_PLATFORM_SCOPE, tokenExchangeAudience),
+          exchangeTokenViaSts(k8sSaToken, scopes, tokenExchangeAudience),
           SecurityTokenServiceResponse.class
       );
       LOG.trace("Successfully exchanged JWT token for Federating Token via STS.");
@@ -217,7 +226,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       // get GSA token using Federating Token as credential
       IamCredentialGenerateAccessTokenResponse iamCredentialGenerateAccessTokenResponse =
           GSON.fromJson(fetchIamServiceAccountToken(securityTokenServiceResponse.getAccessToken(),
-          CLOUD_PLATFORM_SCOPE, identity.getSecureValue()),
+          scopes, identity.getSecureValue()),
               IamCredentialGenerateAccessTokenResponse.class);
       LOG.trace("Successfully generated GSA token using Federating Token as credential.");
 
@@ -271,6 +280,11 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
 
   private String exchangeTokenViaSts(String token, String scopes, String audience)
       throws IOException {
+
+    // replace comma with space, see:
+    // https://cloud.google.com/iam/docs/reference/sts/rest/v1/TopLevel/token#request-body
+    scopes = Arrays.stream(scopes.split(",")).map(String::trim)
+        .filter(s -> !s.isEmpty()).distinct().collect(Collectors.joining(" "));
 
     SecurityTokenServiceRequest securityTokenServiceRequest =
         new SecurityTokenServiceRequest(GrantType.TOKEN_EXCHANCE, audience, scopes,

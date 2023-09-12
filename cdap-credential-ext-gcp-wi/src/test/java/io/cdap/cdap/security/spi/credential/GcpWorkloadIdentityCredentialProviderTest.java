@@ -86,7 +86,7 @@ public class GcpWorkloadIdentityCredentialProviderTest {
     // provision credential
     ProvisionedCredential credential =
         mockedCredentialProvider.provision(NamespaceMeta.DEFAULT, credentialProfile,
-            credentialIdentity);
+            credentialIdentity, null);
 
     Assert.assertEquals(credential.get(), IAM_TOKEN);
     Assert.assertEquals(credential.getExpiration().toString(), EXPIRES_IN);
@@ -146,6 +146,7 @@ public class GcpWorkloadIdentityCredentialProviderTest {
       public Map<String, String> getProperties() {
         return properties;
       }
+
       @Override
       public boolean isNamespaceCreationHookEnabled() {
         return false;

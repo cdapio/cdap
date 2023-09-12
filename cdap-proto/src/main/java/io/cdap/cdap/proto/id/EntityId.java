@@ -200,7 +200,7 @@ public abstract class EntityId {
     if (!isValidCredentialId(name)) {
       throw new IllegalArgumentException(
           String.format("Invalid credential ID: %s. Should only contain lowercase alphanumeric "
-              + "characters and _ or -.", name));
+              + "characters or -.", name));
     }
   }
 

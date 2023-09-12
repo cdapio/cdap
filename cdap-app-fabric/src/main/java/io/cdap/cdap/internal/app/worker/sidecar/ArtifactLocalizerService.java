@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
 import java.nio.file.Paths;
@@ -50,7 +51,8 @@ public class ArtifactLocalizerService extends AbstractIdleService {
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
       ArtifactLocalizer artifactLocalizer,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      RemoteClientFactory remoteClientFactory) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
     this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER)
@@ -59,7 +61,7 @@ public class ArtifactLocalizerService extends AbstractIdleService {
         .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
         .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer),
-            new GcpMetadataHttpHandlerInternal(cConf))
+            new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory))
         .build();
 
     this.cacheCleanupInterval = cConf.getInt(

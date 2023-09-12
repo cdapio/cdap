@@ -6086,6 +6086,14 @@
   </property>
 
   <property>
+    <name>artifact.localizer.metadata.service.token.endpoint</name>
+    <value>http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token</value>
+    <description>
+      The GCE metadata server token endpoint.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.localizer.worker.threads</name>
     <value>10</value>
     <description>

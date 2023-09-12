@@ -17,6 +17,10 @@
 package io.cdap.cdap.security.spi.credential;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Represents a IAM Credentials General Access Token request. For more details,
@@ -31,12 +35,17 @@ public class IamCredentialsGenerateAccessTokenRequest {
           + "v1/projects/-/serviceAccounts/%s:generateAccessToken";
 
   @SerializedName("scope")
-  private final String scope;
+  private final List<String> scope;
 
   /**
    * Constructs a {@link IamCredentialsGenerateAccessTokenRequest}.
    */
   public IamCredentialsGenerateAccessTokenRequest(String scope) {
-    this.scope = scope;
+    this.scope = Collections.unmodifiableList(
+        Arrays.stream(scope.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .distinct()
+            .collect(Collectors.toList()));
   }
 }

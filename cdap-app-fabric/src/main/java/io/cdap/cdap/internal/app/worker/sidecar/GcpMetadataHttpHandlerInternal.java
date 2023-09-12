@@ -20,13 +20,22 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.credential.RemoteCredentialProviderService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
+import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.NotFoundException;
+import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.security.GcpMetadataTaskContext;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -36,13 +45,15 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
 import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.HttpHeaders;
 import joptsimple.internal.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,13 +65,16 @@ import org.slf4j.LoggerFactory;
 @Path("/")
 public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler {
 
+  public static final String GCP_CREDENTIAL_IDENTITY_NAME = "default";
   protected static final String METADATA_FLAVOR_HEADER_KEY = "Metadata-Flavor";
   protected static final String METADATA_FLAVOR_HEADER_VALUE = "Google";
   private static final Logger LOG = LoggerFactory.getLogger(GcpMetadataHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
   private final CConfiguration cConf;
-  private final String metadataServiceEndpoint;
+  private final String metadataServiceTokenEndpoint;
+  private final CredentialProvider credentialProvider;
+  private final GcpWorkloadIdentityInternalAuthenticator gcpWorkloadIdentityInternalAuthenticator;
   private GcpMetadataTaskContext gcpMetadataTaskContext;
 
   /**
@@ -68,10 +82,15 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
    *
    * @param cConf CConfiguration
    */
-  public GcpMetadataHttpHandlerInternal(CConfiguration cConf) {
+  public GcpMetadataHttpHandlerInternal(CConfiguration cConf,
+      RemoteClientFactory remoteClientFactory) {
     this.cConf = cConf;
-    this.metadataServiceEndpoint = cConf.get(
+    this.metadataServiceTokenEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
+    this.gcpWorkloadIdentityInternalAuthenticator =
+        new GcpWorkloadIdentityInternalAuthenticator(gcpMetadataTaskContext);
+    this.credentialProvider = new RemoteCredentialProviderService(remoteClientFactory,
+        this.gcpWorkloadIdentityInternalAuthenticator);
   }
 
   /**
@@ -109,11 +128,6 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   public void token(HttpRequest request, HttpResponder responder,
       @QueryParam("scopes") String scopes) throws Exception {
 
-    if (gcpMetadataTaskContext != null && gcpMetadataTaskContext.getNamespace() != null) {
-      LOG.trace("Token requested for namespace: {}", gcpMetadataTaskContext.getNamespace());
-    } else {
-      LOG.trace("Token requested but namespace not set");
-    }
     // check that metadata header is present in the request.
     if (!request.headers().contains(METADATA_FLAVOR_HEADER_KEY,
         METADATA_FLAVOR_HEADER_VALUE, true)) {
@@ -123,8 +137,38 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
               METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE));
     }
 
-    // TODO: CDAP-20750
-    if (metadataServiceEndpoint == null) {
+    if (gcpMetadataTaskContext == null) {
+      // needed when initializing
+      // io.cdap.cdap.common.guice.DFSLocationModule$LocationFactoryProvider#get
+      // in io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable.
+      GcpTokenResponse gcpTokenResponse = new GcpTokenResponse("Bearer", "invalidToken", 3599);
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
+      return;
+    }
+
+    try {
+      // fetch token from credential provider
+      GcpTokenResponse gcpTokenResponse =
+          Retries.callWithRetries(() -> fetchTokenFromCredentialProvider(scopes),
+              RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
+      return;
+    } catch (NotFoundException e) {
+      // if credential identity not found,
+      // fallback to gcp metadata server for backward compatibility.
+    } catch (Exception ex) {
+      if (ex instanceof HttpErrorStatusProvider) {
+        HttpResponseStatus status = HttpResponseStatus.valueOf(
+            ((HttpErrorStatusProvider) ex).getStatusCode());
+        responder.sendJson(status, exceptionToJson(ex));
+      } else {
+        LOG.warn("Failed to fetch token from credential provider", ex);
+        responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
+      }
+      return;
+    }
+
+    if (metadataServiceTokenEndpoint == null) {
       responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED,
           String.format("%s has not been set",
               Constants.TaskWorker.METADATA_SERVICE_END_POINT));
@@ -132,20 +176,32 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     }
 
     try {
-      URL url = new URL(metadataServiceEndpoint);
-      if (!Strings.isNullOrEmpty(scopes)) {
-        url = new URL(String.format("%s?scopes=%s", metadataServiceEndpoint, scopes));
-      }
-      io.cdap.common.http.HttpRequest tokenRequest = io.cdap.common.http.HttpRequest.get(url)
-          .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
-          .build();
-      HttpResponse tokenResponse = HttpRequests.execute(tokenRequest);
-      responder.sendJson(HttpResponseStatus.OK, tokenResponse.getResponseBodyAsString());
+      responder.sendJson(HttpResponseStatus.OK,
+          fetchTokenFromMetadataServer(scopes).getResponseBodyAsString());
     } catch (Exception ex) {
       LOG.warn("Failed to fetch token from metadata service", ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
-          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
+      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
     }
+  }
+
+  private GcpTokenResponse fetchTokenFromCredentialProvider(String scopes) throws NotFoundException,
+      IOException, CredentialProvisioningException {
+    ProvisionedCredential provisionedCredential =
+        this.credentialProvider.provision(gcpMetadataTaskContext.getNamespace(),
+            GCP_CREDENTIAL_IDENTITY_NAME, scopes);
+    return new GcpTokenResponse("Bearer", provisionedCredential.get(),
+        Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
+  }
+
+  private HttpResponse fetchTokenFromMetadataServer(String scopes) throws IOException {
+    URL url = new URL(metadataServiceTokenEndpoint);
+    if (!Strings.isNullOrEmpty(scopes)) {
+      url = new URL(String.format("%s?scopes=%s", metadataServiceTokenEndpoint, scopes));
+    }
+    io.cdap.common.http.HttpRequest tokenRequest = io.cdap.common.http.HttpRequest.get(url)
+        .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
+        .build();
+    return HttpRequests.execute(tokenRequest);
   }
 
   /**
@@ -159,6 +215,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   public void setContext(FullHttpRequest request, HttpResponder responder)
       throws BadRequestException {
     this.gcpMetadataTaskContext = getGcpMetadataTaskContext(request);
+    this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
     responder.sendJson(HttpResponseStatus.OK,
         String.format("Context was set successfully with namespace '%s'.",
             gcpMetadataTaskContext.getNamespace()));
@@ -174,7 +231,8 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/clear-context")
   public void clearContext(HttpRequest request, HttpResponder responder) {
     this.gcpMetadataTaskContext = null;
-    LOG.debug("Context cleared.");
+    this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
+    LOG.trace("Context cleared.");
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
