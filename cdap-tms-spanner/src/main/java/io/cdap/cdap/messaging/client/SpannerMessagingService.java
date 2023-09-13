@@ -53,14 +53,8 @@ public class SpannerMessagingService implements MessagingService {
   public static final String PAYLOAD_SEQUENCE_ID = "payload_sequence_id";
   public static final String SEQUENCE_ID_FIELD = "sequence_id";
 
-  private final DatabaseClient client;
-  private final DatabaseAdminClient adminClient;
-
-  @Inject
-  public SpannerMessagingService() {
-    this.client = SpannerUtil.getSpannerDbClient();
-    this.adminClient = SpannerUtil.getSpannerDbAdminClient();
-  }
+  private final DatabaseClient client = SpannerUtil.getSpannerDbClient();
+  private final DatabaseAdminClient adminClient = SpannerUtil.getSpannerDbAdminClient();
 
   @Override
   public void createTopic(TopicMetadata topicMetadata)

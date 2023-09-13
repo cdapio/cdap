@@ -272,6 +272,7 @@
         <stage.metadata.consumer.providers.ext.dir>${stage.opt.dir}/ext/metadataconsumers</stage.metadata.consumer.providers.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
+        <stage.messaging.ext.dir>${stage.opt.dir}/ext/messagingproviders</stage.messaging.ext.dir>
         <stage.storage.ext.dir>${stage.opt.dir}/ext/storageproviders</stage.storage.ext.dir>
         <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators</stage.authenticators.ext.dir>
         <stage.credential.provider.extensions.dir>${stage.opt.dir}/ext/credentialproviders</stage.credential.provider.extensions.dir>
@@ -719,6 +720,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-storage-ext-spanner/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy messaging extensions -->
+              <execution>
+                <id>copy-messaging-ext-spanner</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.messaging.ext.dir}/gcp-spanner</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-messaging-ext-spanner/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>

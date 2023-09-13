@@ -2014,6 +2014,7 @@ public final class Constants {
    * Constants for the messaging system.
    */
   public static final class MessagingSystem {
+    public static final String EXTENSIONS_DIR = "messaging.extensions.dir";
 
     public static final String SERVICE_DESCRIPTION = "Service for providing messaging system.";
 

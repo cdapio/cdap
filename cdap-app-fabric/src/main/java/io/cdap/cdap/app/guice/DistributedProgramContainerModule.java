@@ -18,6 +18,7 @@ package io.cdap.cdap.app.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
@@ -58,12 +59,12 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
+import io.cdap.cdap.internal.messaging.DefaultMessagingService;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.messaging.client.SpannerMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -346,12 +347,15 @@ public class DistributedProgramContainerModule extends AbstractModule {
     private final MasterEnvironment masterEnv;
     private final InternalAuthenticator internalAuthenticator;
 
+    private final Injector injector;
+
     @Inject
     ProgramStatePublisherProvider(CConfiguration cConf, MasterEnvironment masterEnv,
-        InternalAuthenticator internalAuthenticator) {
+        InternalAuthenticator internalAuthenticator, Injector injector) {
       this.cConf = cConf;
       this.masterEnv = masterEnv;
       this.internalAuthenticator = internalAuthenticator;
+      this.injector = injector;
     }
 
     @Override
@@ -360,8 +364,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
           masterEnv.getDiscoveryServiceClientSupplier().get(),
           internalAuthenticator);
 
-      return new MessagingProgramStatePublisher(
-          cConf, new SpannerMessagingService());
+      return new MessagingProgramStatePublisher(cConf, injector.getInstance(DefaultMessagingService.class));
     }
   }
 }
