@@ -33,11 +33,6 @@
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-storage-ext-spanner</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
