@@ -24,17 +24,25 @@ import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
+import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
+import io.kubernetes.client.openapi.models.V1Volume;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.twill.api.AbstractTwillRunnable;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillSpecification;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.DefaultResourceSpecification;
+import org.apache.twill.internal.DefaultRuntimeSpecification;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,7 +54,7 @@ public class KubeTwillPreparerTest {
 
   private MasterEnvironmentContext createMasterEnvironmentContext() {
     return new MasterEnvironmentContext() {
-      private final Map<String, String> configurations = new HashMap<>();
+      private final Map<String, String> configurations = getTwillConfigs();
 
       @Override
       public LocationFactory getLocationFactory() {
@@ -133,7 +141,7 @@ public class KubeTwillPreparerTest {
       Assert.assertThat(ex.toString(), CoreMatchers.containsString(SidecarRunnable2.class.getSimpleName()));
     }
 
-    // test catching missing runnable in twill specfication
+    // test catching missing runnable in twill specification
     try {
       preparer.dependentRunnableNames(MainRunnable.class.getSimpleName(),
                                       SidecarRunnable.class.getSimpleName(),
@@ -259,7 +267,7 @@ public class KubeTwillPreparerTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testCreateUserResourceSpecificationInvalidProgramCPUMultiplier() throws Exception {
+  public void testCreateUserResourceSpecificationInvalidProgramCpuMultiplier() throws Exception {
     MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
     masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_CPU_MULTIPLIER, "2");
     KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
@@ -276,20 +284,117 @@ public class KubeTwillPreparerTest {
   @Test(expected = IllegalArgumentException.class)
   public void testCreateUserResourceSpecificationInvalidProgramMemoryMultiplier() throws Exception {
     MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
-    masterEnvironmentContext.getConfigurations().put(KubeTwillPreparer.PROGRAM_MEMORY_MULTIPLIER, "2");
-    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext, null, "default",
-                                                       createPodInfo(), createTwillSpecification(), null, null,
-                                                       null, null, null);
+    masterEnvironmentContext.getConfigurations()
+        .put(KubeTwillPreparer.PROGRAM_MEMORY_MULTIPLIER, "2");
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext,
+        null, "default",
+        createPodInfo(), createTwillSpecification(), null, null,
+        null, null, null);
     Map<String, String> config = new HashMap<>();
     config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "non-system-namespace");
     preparer.withConfiguration(config);
 
-    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
+    ResourceSpecification resourceSpecification = new DefaultResourceSpecification(
+        1, 100, 1, 1, 1);
     preparer.createResourceRequirements(resourceSpecification);
   }
 
+  @Test
+  public void testCreatePodSpecUserNameSpace() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext,
+        null, "default",
+        createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null,
+        null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE,
+            "non-system"));
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null, createResourceSpecification(),
+        Collections.emptyList());
+
+    V1PodSpec podSpec = preparer.createPodSpec(new LocalLocationFactory().create("yes"),
+        Collections.singletonMap(MainRunnable.class.getSimpleName(),
+            runtimeSpec));
+    Set<String> configmapsNames = podSpec.getVolumes().stream()
+        .map(V1Volume::getName)
+        .collect(Collectors.toSet());
+
+    Assert.assertTrue(configmapsNames.contains("cdap-config-abc-123"));
+    Assert.assertTrue(podSpec.getContainers().get(0).getVolumeMounts().stream()
+        .anyMatch(v -> v.getName().equals("cdap-config-abc-123") && v.getMountPath().equals("/config")));
+  }
+
+  @Test
+  public void testCreatePodSpecSystemNameSpace() throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext,
+        null, "default",
+        createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null,
+        null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE,
+            "system"));
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null, createResourceSpecification(),
+        Collections.emptyList());
+
+    V1PodSpec podSpec = preparer.createPodSpec(new LocalLocationFactory().create("yes"),
+        Collections.singletonMap(MainRunnable.class.getSimpleName(),
+            runtimeSpec));
+    Set<String> configmapsNames = podSpec.getVolumes().stream()
+        .map(V1Volume::getName)
+        .collect(Collectors.toSet());
+
+    Assert.assertFalse(configmapsNames.contains("cdap-config-abc-123"));
+    Assert.assertFalse(podSpec.getContainers().get(0).getVolumeMounts().stream()
+        .anyMatch(v -> v.getName().equals("cdap-config-abc-123") && v.getMountPath().equals("/config")));
+  }
+
+  @Test
+  public void testCreatePodSpecSystemNamespaceWithConfigmapOption()
+      throws Exception {
+    MasterEnvironmentContext masterEnvironmentContext = createMasterEnvironmentContext();
+    KubeTwillPreparer preparer = new KubeTwillPreparer(masterEnvironmentContext,
+        null, "default",
+        createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null,
+        null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE,
+            "system"));
+    preparer.setShouldLocalizeConfigurationAsConfigmap(true);
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null, createResourceSpecification(),
+        Collections.emptyList());
+
+    V1PodSpec podSpec = preparer.createPodSpec(new LocalLocationFactory().create("yes"),
+        Collections.singletonMap(MainRunnable.class.getSimpleName(),
+            runtimeSpec));
+    Set<String> configmapsNames = podSpec.getVolumes().stream()
+        .map(V1Volume::getName)
+        .collect(Collectors.toSet());
+
+    Assert.assertTrue(configmapsNames.contains("cdap-config-abc-123"));
+    Assert.assertTrue(podSpec.getContainers().get(0).getVolumeMounts().stream()
+        .anyMatch(v -> v.getName().equals("cdap-config-abc-123") && v.getMountPath().equals("/config")));
+  }
+
+  private static Map<String, String> getTwillConfigs() {
+    HashMap<String, String> cConf = new HashMap<>();
+    cConf.put(Configs.Keys.JAVA_RESERVED_MEMORY_MB, "1024");
+    cConf.put(Configs.Keys.HEAP_RESERVED_MIN_RATIO, "0.5");
+    return cConf;
+  }
+
+  private RunId createRunId(String id) {
+    return () -> id;
+  }
 
   public static class MainRunnable extends AbstractTwillRunnable {
+
     @Override
     public void run() {
 
@@ -297,6 +402,7 @@ public class KubeTwillPreparerTest {
   }
 
   public static class SidecarRunnable extends AbstractTwillRunnable {
+
     @Override
     public void run() {
 

@@ -20,10 +20,13 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
+import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.common.conf.Constants.Twill.Security;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -49,6 +52,9 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Launches a pool of system workers.
+ */
 public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerServiceLauncher.class);
@@ -61,6 +67,9 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
 
   private ScheduledExecutorService executor;
 
+   /**
+   * Default Constructor with injected configuration and {@link TwillRunner}.
+   */
   @Inject
   public SystemWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
       SConfiguration sConf,
@@ -110,6 +119,9 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
     return executor;
   }
 
+  /**
+   * Inner run method for the service.
+   */
   public void run() {
     TwillController activeController = null;
     for (TwillController controller : twillRunner.lookup(SystemWorkerTwillApplication.NAME)) {
@@ -130,6 +142,11 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
         Path runDir = Files.createTempDirectory(tmpDir, "system.worker.launcher");
         try {
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
+          // Enable the use of internal router in the system worker pods if
+          // required.
+          cConfCopy.setBoolean(InternalRouter.CLIENT_ENABLED,
+              cConf.getBoolean(SystemWorker.INTERNAL_ROUTER_ENABLED));
+
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);
@@ -157,6 +174,14 @@ public class SystemWorkerServiceLauncher extends AbstractScheduledService {
               new SystemWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(),
                   sConfPath.toUri(),
                   systemResourceSpec));
+          // If internal router is enabled, we need to localize the cdap-site copy
+          // as a configmap so that the init container also uses the internal
+          // router.
+          if (twillPreparer instanceof ExtendedTwillPreparer) {
+            twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
+                .setShouldLocalizeConfigurationAsConfigmap(
+                    cConf.getBoolean(SystemWorker.INTERNAL_ROUTER_ENABLED));
+          }
 
           Map<String, String> configMap = new HashMap<>();
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,

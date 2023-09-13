@@ -27,6 +27,8 @@ import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
+import io.cdap.cdap.common.conf.Constants.Preview;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -37,6 +39,7 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -167,13 +170,18 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
         Path runDir = Files.createTempDirectory(tmpDir, "preview");
         try {
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
-          Path cConfPath = runDir.resolve("cConf.xml");
           if (!cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
             // Unset the internal certificate path since certificate is stored cdap-security which
             // is not going to be exposed to preview runner.
             // TODO: CDAP-18768 this will break preview when certificate checking is enabled.
             cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
           }
+          // Enable the use of internal router in the preview runner pods if
+          // required.
+          cConfCopy.setBoolean(InternalRouter.CLIENT_ENABLED,
+              cConf.getBoolean(Preview.INTERNAL_ROUTER_ENABLED));
+
+          Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);
           }
@@ -189,8 +197,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
               .setInstances(cConf.getInt(Constants.Preview.CONTAINER_COUNT))
               .build();
 
-          Optional<ResourceSpecification> artifactLocalizerResourceSpec = Optional.empty();
-          artifactLocalizerResourceSpec = Optional.of(
+          Optional<ResourceSpecification> artifactLocalizerResourceSpec = Optional.of(
               ResourceSpecification.Builder.with()
                   .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
                   .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
@@ -211,6 +218,14 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
               NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
+          // If internal router is enabled, we need to localize the cdap-site copy
+          // as a configmap so that the init container also uses the internal
+          // router.
+          if (twillPreparer instanceof ExtendedTwillPreparer) {
+            twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
+                .setShouldLocalizeConfigurationAsConfigmap(
+                    cConf.getBoolean(Preview.INTERNAL_ROUTER_ENABLED));
+          }
 
           if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
             String localhost = InetAddress.getLoopbackAddress().getHostName();

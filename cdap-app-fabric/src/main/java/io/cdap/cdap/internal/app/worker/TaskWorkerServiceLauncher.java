@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -154,6 +155,12 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           // is not exposed (i.e. mounted in k8s) to TaskWorkerService.
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
           cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
+
+          // Enable the use of internal router in the task worker pods if
+          // required.
+          cConfCopy.setBoolean(InternalRouter.CLIENT_ENABLED,
+              cConf.getBoolean(TaskWorker.INTERNAL_ROUTER_ENABLED));
+
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
             cConfCopy.writeXml(writer);
@@ -184,6 +191,14 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
               new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(),
                   taskworkerResourceSpec,
                   artifactLocalizerResourceSpec));
+          // If internal router is enabled, we need to localize the cdap-site copy
+          // as a configmap so that the init container also uses the internal
+          // router.
+          if (twillPreparer instanceof ExtendedTwillPreparer) {
+            twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
+                .setShouldLocalizeConfigurationAsConfigmap(
+                    cConf.getBoolean(TaskWorker.INTERNAL_ROUTER_ENABLED));
+          }
 
           Map<String, String> configMap = new HashMap<>();
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,

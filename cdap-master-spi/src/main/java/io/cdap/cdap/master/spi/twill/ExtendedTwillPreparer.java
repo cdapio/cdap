@@ -25,9 +25,23 @@ import org.apache.twill.api.TwillPreparer;
 public interface ExtendedTwillPreparer extends TwillPreparer {
 
   /**
-   * Set size limit for workdir volume in kube twill application which is an emptydir.
+   * Set size limit for workdir volume in kube twill application which is an
+   * emptydir.
    *
-   * @param sizeLimitInMB volume size limit in MB
+   * @param sizeLimitInMiB volume size limit in Mega Bytes
    */
-  ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB);
+  ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMiB);
+
+  /**
+   * Sets whether config files such as cdap-site.xml should be localized using
+   * kubernetes configmaps instead of having the init container fetch them. This
+   * ensures that the init container runs with the same configuration as the
+   * twill runables. Configmaps have a size limit of 1MiB, so they can't be used
+   * to localize larger files.
+   *
+   * @param shouldLocalizeConfigurationAsConfigmap whether to localize config
+   *                                               files using configmaps
+   */
+  ExtendedTwillPreparer setShouldLocalizeConfigurationAsConfigmap(
+      boolean shouldLocalizeConfigurationAsConfigmap);
 }

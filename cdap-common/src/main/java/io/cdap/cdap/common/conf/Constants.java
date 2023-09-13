@@ -460,6 +460,7 @@ public final class Constants {
     public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
     public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
     public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
+    public static final String INTERNAL_ROUTER_ENABLED = "preview.runner.internal.router.enabled";
   }
 
   /**
@@ -520,6 +521,7 @@ public final class Constants {
         "task.worker.systemapp.http.client.read.timeout.ms";
     public static final String SYSTEMAPP_HTTP_CLIENT_CONNECTION_TIMEOUT_MS =
         "task.worker.systemapp.http.client.connection.timeout.ms";
+    public static final String INTERNAL_ROUTER_ENABLED = "task.worker.internal.router.enabled";
 
     /**
      * Task worker http handler configuration.
@@ -551,6 +553,7 @@ public final class Constants {
     public static final String HTTP_CLIENT_CONNECTION_TIMEOUT_MS = "system.worker.http.client.connection.timeout.ms";
     public static final String TWILL_CONTROLLER_START_SECONDS = "system.worker.program.twill.controller.start.seconds";
     public static final String ARTIFACT_LOCALIZER_ENABLED = "system.worker.artifact.localizer.enabled";
+    public static final String INTERNAL_ROUTER_ENABLED = "system.worker.internal.router.enabled";
 
     /**
      * System worker http handler configuration.
