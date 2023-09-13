@@ -65,6 +65,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   private final FieldValidator fieldValidator;
   private final int fetchSize;
 
+  /**
+   * Default constructor for PostgreSqlStructuredTable.
+   */
   public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema,
       int fetchSize) {
     this.connection = connection;
@@ -268,64 +271,6 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     }
   }
 
-  /**
-   * Generates a SELECT query for scanning over all the provided ranges. For each of the range, it
-   * generates a where clause using the {@link #appendRange(StringBuilder, Range)} method. The where
-   * clause of each range are OR together. E.g.
-   * <p>
-   * SELECT * FROM table WHERE (key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?) OR ((key3 >= ?)
-   * AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?)) LIMIT limit
-   *
-   * @param singletonRanges the list of singleton ranges to scan
-   * @param ranges the list of ranges to scan
-   * @param limit number of result
-   * @return a select query
-   */
-  private PreparedStatement prepareMultiScanQuery(Collection<Range> singletonRanges,
-      Collection<Range> ranges, int limit) throws SQLException {
-    // TODO: CDAP-19734, refactor cases like
-    //  (namespace >= 'default' and namespace <= 'default' and app >='a' and app <= 'b')
-    //  to (namespace = 'default' and app >='a' and app <= 'b')
-    StringBuilder query = new StringBuilder("SELECT * FROM ")
-        .append(tableSchema.getTableId().getName()).append(" WHERE ");
-
-    // Generates "(key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?)..." clause
-    String separator = "";
-    Collection<Field<?>> singletonFields = new ArrayList<>();
-    for (Range singleton : singletonRanges) {
-      query
-          .append(separator)
-          .append(singleton.getBegin().stream().map(field -> field.getName() + " = ?")
-              .collect(Collectors.joining(" AND ", "(", ")")));
-      separator = " OR ";
-      singletonFields.addAll(singleton.getBegin());
-    }
-
-    // Generates the ((key3 >= ?) AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?))
-    if (!ranges.isEmpty()) {
-      separator = singletonRanges.isEmpty() ? "(" : " OR (";
-      for (Range range : ranges) {
-        query.append(separator).append("(");
-        appendRange(query, range);
-        query.append(")");
-        separator = " OR ";
-      }
-      query.append(")");
-    }
-    query.append(getOrderByClause(tableSchema.getPrimaryKeys()));
-    query.append(" LIMIT ").append(limit).append(";");
-
-    PreparedStatement statement = connection.prepareStatement(query.toString());
-    statement.setFetchSize(fetchSize);
-
-    // Set the parameters
-    int index = setFields(statement, singletonFields, 1);
-    for (Range range : ranges) {
-      index = setStatementFieldByRange(range, statement, index);
-    }
-    return statement;
-  }
-
   @Override
   public CloseableIterator<StructuredRow> scan(Field<?> index)
       throws InvalidFieldException, IOException {
@@ -362,6 +307,25 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
       Collection<Field<?>> filterIndexes, SortOrder sortOrder)
       throws InvalidFieldException, IOException {
+    return scan(keyRange, limit, filterIndexes, tableSchema.getPrimaryKeys(), sortOrder, false);
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes, String orderByField, SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
+    if (!tableSchema.isIndexColumn(orderByField) && !tableSchema.isPrimaryKeyColumn(orderByField)) {
+      throw new InvalidFieldException(tableSchema.getTableId(), orderByField,
+          "is not an indexed column or primary key");
+    }
+    return scan(keyRange, limit, filterIndexes, Collections.singleton(orderByField), sortOrder,
+        true);
+  }
+
+  private CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes, Collection<String> fieldsToSort, SortOrder sortOrder,
+      boolean isAndFilter)
+      throws InvalidFieldException, IOException {
     fieldValidator.validateScanRange(keyRange);
     filterIndexes.forEach(fieldValidator::validateField);
     if (!tableSchema.isIndexColumns(
@@ -373,7 +337,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan range {} with filterIndexes {} limit {} sortOrder {}",
         tableSchema.getTableId(), keyRange, filterIndexes, limit, sortOrder);
 
-    String scanQuery = getScanIndexesQuery(keyRange, limit, filterIndexes, sortOrder);
+    String scanQuery = getScanIndexesQuery(keyRange, limit, filterIndexes, fieldsToSort, sortOrder,
+        isAndFilter);
     // Since in getScanIndexesQuery we directly set the NULL checks, we need to skip the null fields
     filterIndexes = filterIndexes.stream().filter(f -> f.getValue() != null)
         .collect(Collectors.toList());
@@ -603,6 +568,64 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     }
   }
 
+  /**
+   * Generates a SELECT query for scanning over all the provided ranges. For each of the range, it
+   * generates a where clause using the {@link #appendRange(StringBuilder, Range)} method. The where
+   * clause of each range are OR together. E.g.
+   *
+   * <p>SELECT * FROM table WHERE (key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?) OR ((key3 >= ?)
+   * AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?)) LIMIT limit
+   *
+   * @param singletonRanges the list of singleton ranges to scan
+   * @param ranges the list of ranges to scan
+   * @param limit number of result
+   * @return a select query
+   */
+  private PreparedStatement prepareMultiScanQuery(Collection<Range> singletonRanges,
+      Collection<Range> ranges, int limit) throws SQLException {
+    // TODO: CDAP-19734, refactor cases like
+    //  (namespace >= 'default' and namespace <= 'default' and app >='a' and app <= 'b')
+    //  to (namespace = 'default' and app >='a' and app <= 'b')
+    StringBuilder query = new StringBuilder("SELECT * FROM ")
+        .append(tableSchema.getTableId().getName()).append(" WHERE ");
+
+    // Generates "(key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?)..." clause
+    String separator = "";
+    Collection<Field<?>> singletonFields = new ArrayList<>();
+    for (Range singleton : singletonRanges) {
+      query
+          .append(separator)
+          .append(singleton.getBegin().stream().map(field -> field.getName() + " = ?")
+              .collect(Collectors.joining(" AND ", "(", ")")));
+      separator = " OR ";
+      singletonFields.addAll(singleton.getBegin());
+    }
+
+    // Generates the ((key3 >= ?) AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?))
+    if (!ranges.isEmpty()) {
+      separator = singletonRanges.isEmpty() ? "(" : " OR (";
+      for (Range range : ranges) {
+        query.append(separator).append("(");
+        appendRange(query, range);
+        query.append(")");
+        separator = " OR ";
+      }
+      query.append(")");
+    }
+    query.append(getOrderByClause(tableSchema.getPrimaryKeys()));
+    query.append(" LIMIT ").append(limit).append(";");
+
+    PreparedStatement statement = connection.prepareStatement(query.toString());
+    statement.setFetchSize(fetchSize);
+
+    // Set the parameters
+    int index = setFields(statement, singletonFields, 1);
+    for (Range range : ranges) {
+      index = setStatementFieldByRange(range, statement, index);
+    }
+    return statement;
+  }
+
   private void upsertInternal(Collection<Field<?>> fields) throws IOException {
     String sqlQuery = getWriteSqlQuery(fields, null);
     try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
@@ -788,7 +811,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Sets the {@link PreparedStatement} arguments by the key {@link Collection<Range>}.
+   * Sets the {@link PreparedStatement} arguments by the key {@link Collection}&lt;{@link Range}&gt;}.
    */
   private void setStatementFieldByRange(Collection<Range> keyRanges,
       PreparedStatement statement) throws SQLException, InvalidFieldException {
@@ -928,21 +951,25 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * @param limit limit number of row
    * @param filterIndexes index fields
    * @param sortOrder sort order by primary keys
+   * @param isAndFilter if the filters have AND condition, false would signify OR condition
    * @return the scan query
    */
   private String getScanIndexesQuery(Range range, int limit, Collection<Field<?>> filterIndexes,
-      SortOrder sortOrder) {
+      Collection<String> fieldsToSort, SortOrder sortOrder, boolean isAndFilter) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ")
         .append(tableSchema.getTableId().getName())
         .append(" WHERE ");
 
     if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
       appendRange(queryString, range);
-      queryString.append(" AND ");
     }
-    queryString.append(getIndexesFilterClause(filterIndexes));
 
-    queryString.append(getOrderByClause(tableSchema.getPrimaryKeys(), sortOrder));
+    if (!filterIndexes.isEmpty()) {
+      queryString.append(" AND ");
+      queryString.append(getIndexesFilterClause(filterIndexes, isAndFilter));
+    }
+
+    queryString.append(getOrderByClause(fieldsToSort, sortOrder));
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
   }
@@ -1021,8 +1048,10 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     return joiner.toString();
   }
 
-  private String getIndexesFilterClause(Collection<Field<?>> indexes) {
-    StringJoiner joiner = new StringJoiner(" OR ", "(", ")");
+  private String getIndexesFilterClause(Collection<Field<?>> indexes,
+      boolean isAndFilter) {
+    String delimiter = isAndFilter ? " AND " : " OR ";
+    StringJoiner joiner = new StringJoiner(delimiter, "(", ")");
     for (Field<?> key : indexes) {
       joiner.add(key.getName() + (key.getValue() == null ? " is NULL" : " = ?"));
     }

@@ -53,7 +53,7 @@ public class OperationRun {
       @Nullable OperationError error) {
     this.id = id;
     this.type = type;
-    this.done = getStatus().isEndState();
+    this.done = status.isEndState();
     this.status = status;
     this.metadata = metadata;
     this.error = error;
@@ -86,7 +86,7 @@ public class OperationRun {
   /**
    * Creates a OperationRun Builder.
    */
-  public static Builder runBuilder() {
+  public static Builder builder() {
     return new Builder();
   }
 
@@ -95,7 +95,7 @@ public class OperationRun {
    *
    * @param operationRun existing record to copy fields from
    */
-  public static Builder runBuilder(OperationRun operationRun) {
+  public static Builder builder(OperationRun operationRun) {
     return new Builder(operationRun);
   }
 
