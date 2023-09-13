@@ -16,21 +16,15 @@
 
 package io.cdap.cdap.messaging.client;
 
-import com.google.cloud.Timestamp;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Statement;
-import com.google.cloud.spanner.v1.SpannerClient;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.data.RawMessage;
-import io.cdap.cdap.messaging.store.spanner.SpannerUtil;
 import io.cdap.cdap.proto.id.TopicId;
-import io.grpc.LoadBalancer.CreateSubchannelArgs;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.apache.tephra.Transaction;
 

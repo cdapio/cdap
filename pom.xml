@@ -48,6 +48,9 @@
       <organizationUrl>http://www.cdap.io</organizationUrl>
     </developer>
   </developers>
+  <modules>
+    <module>cdap-tms-spanner</module>
+  </modules>
 
   <scm>
     <connection>scm:git:https://github.com/cdapio/cdap.git</connection>

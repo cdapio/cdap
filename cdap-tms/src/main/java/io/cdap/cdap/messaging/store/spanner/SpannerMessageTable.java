@@ -34,12 +34,10 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.tephra.Transaction;
 
 public class SpannerMessageTable extends AbstractMessageTable {

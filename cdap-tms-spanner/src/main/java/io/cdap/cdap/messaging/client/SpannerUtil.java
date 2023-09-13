@@ -14,20 +14,13 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.store.spanner;
+package io.cdap.cdap.messaging.client;
 
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
-import com.google.cloud.spanner.InstanceId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
-import io.cdap.cdap.storage.spanner.SpannerStructuredTableAdmin;
-import io.cdap.cdap.storage.spanner.SpannerTransactionRunner;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.Map;
 
 public class SpannerUtil {
 
