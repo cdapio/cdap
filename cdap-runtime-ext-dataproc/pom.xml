@@ -59,16 +59,6 @@
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-compute</artifactId>
       <version>v1-rev20230829-2.0.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.api-client</groupId>
-          <artifactId>com.google.api-client</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -89,18 +79,6 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-    </dependency>
-    <!-- cloud storage requires google-api-client > 1.31.0,
-         but set to 1.25.0 by google-api-services-compute-->
-    <dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.twill</groupId>
