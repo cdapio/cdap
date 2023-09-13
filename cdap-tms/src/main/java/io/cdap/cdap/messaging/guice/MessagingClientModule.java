@@ -19,7 +19,7 @@ package io.cdap.cdap.messaging.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.client.ClientMessagingService;
+import io.cdap.cdap.messaging.client.SpannerMessagingService;
 
 /**
  * The Guice module to provide binding for messaging system client. This module should only be used
@@ -29,6 +29,6 @@ public class MessagingClientModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(MessagingService.class).to(ClientMessagingService.class).in(Scopes.SINGLETON);
+    bind(MessagingService.class).to(SpannerMessagingService.class).in(Scopes.SINGLETON);
   }
 }
