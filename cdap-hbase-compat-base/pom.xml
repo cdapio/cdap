@@ -37,6 +37,11 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-messaging-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-hbase-spi</artifactId>
       <version>${project.version}</version>
     </dependency>

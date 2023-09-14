@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package io.cdap.cdap.messaging;
 
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -39,7 +38,6 @@ public interface MessagingService {
    * @param topicMetadata topic to be created
    * @throws TopicAlreadyExistsException if the topic to be created already exist
    * @throws IOException if failed to create the topic
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException;
@@ -50,7 +48,6 @@ public interface MessagingService {
    * @param topicMetadata the topic metadata to be updated
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to update the topic metadata
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   void updateTopic(TopicMetadata topicMetadata)
       throws TopicNotFoundException, IOException, UnauthorizedException;
@@ -61,7 +58,6 @@ public interface MessagingService {
    * @param topicId the topic to be deleted
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to delete the topic
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   void deleteTopic(TopicId topicId)
       throws TopicNotFoundException, IOException, UnauthorizedException;
@@ -73,7 +69,6 @@ public interface MessagingService {
    * @return the {@link TopicMetadata} of the given topic.
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to retrieve topic metadata.
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   TopicMetadata getTopic(TopicId topicId)
       throws TopicNotFoundException, IOException, UnauthorizedException;
@@ -84,7 +79,6 @@ public interface MessagingService {
    * @param namespaceId the namespace to list topics under it
    * @return a {@link List} of {@link TopicId}.
    * @throws IOException if failed to retrieve topics.
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   List<TopicId> listTopics(NamespaceId namespaceId) throws IOException, UnauthorizedException;
 
@@ -96,7 +90,6 @@ public interface MessagingService {
    *     messaging system
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to fetch messages
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   MessageFetcher prepareFetch(TopicId topicId) throws TopicNotFoundException, IOException;
 
@@ -108,7 +101,6 @@ public interface MessagingService {
    *     information for rollback; otherwise {@code null} will be returned.
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to publish messages
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   @Nullable
   RollbackDetail publish(StoreRequest request)
@@ -121,7 +113,6 @@ public interface MessagingService {
    * @param request the {@link StoreRequest} containing messages to be stored
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to store messages
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   void storePayload(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException;
@@ -134,7 +125,6 @@ public interface MessagingService {
    *     #publish(StoreRequest)} call, which contains information needed for the rollback
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to rollback changes
-   * @throws ServiceUnavailableException if the messaging service is not available
    */
   void rollback(TopicId topicId, RollbackDetail rollbackDetail)
       throws TopicNotFoundException, IOException, UnauthorizedException;

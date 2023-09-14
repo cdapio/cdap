@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.bouncycastle.util.Strings;
 
 public class SpannerMessagingService implements MessagingService {
 
@@ -71,7 +70,7 @@ public class SpannerMessagingService implements MessagingService {
   }
 
   public static String getTableName(TopicId topicId) {
-    return Strings.toLowerCase(topicId.getNamespace()) + Strings.toLowerCase(topicId.getTopic());
+    return topicId.getNamespace() + topicId.getTopic();
   }
 
   @Override

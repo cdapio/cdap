@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.messaging;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.messaging.MessagingException;
 
 /**
  * Exception thrown when trying to create a topic when a topic of that name already exists.

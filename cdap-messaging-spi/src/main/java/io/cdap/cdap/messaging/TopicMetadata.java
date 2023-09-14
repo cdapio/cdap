@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.messaging;
 
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.proto.id.TopicId;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +50,8 @@ public class TopicMetadata {
    */
   public TopicMetadata(TopicId topicId, Map<String, String> properties, boolean validate) {
     this.topicId = topicId;
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = new HashMap<>();
+    properties.entrySet().forEach(e -> this.getProperties().put(e.getKey(),e.getValue()));
     if (validate) {
       validateProperties();
     }

@@ -50,6 +50,7 @@
   </developers>
   <modules>
     <module>cdap-tms-spanner</module>
+    <module>cdap-messaging-spi</module>
   </modules>
 
   <scm>

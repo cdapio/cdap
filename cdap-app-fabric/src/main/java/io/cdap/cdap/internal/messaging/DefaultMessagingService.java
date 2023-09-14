@@ -53,7 +53,7 @@ public class DefaultMessagingService implements MessagingService {
     this.extensionLoader = extensionLoader;
 
     // todo change this after tests
-    this.name = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
+    this.name = "SYSTEM";
   }
 
   @Override
@@ -124,7 +124,7 @@ public class DefaultMessagingService implements MessagingService {
             ">>> MessageService type is " + messagingService.getClass().getSimpleName());
         return messagingService;
       }
-      messagingService = extensionLoader.get(name);
+      messagingService = extensionLoader.get(this.name);
 
       if (messagingService == null) {
         throw new IllegalArgumentException("Unsupported storage implementation " + name);
