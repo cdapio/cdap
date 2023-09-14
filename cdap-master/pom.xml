@@ -380,6 +380,12 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-tms-spanner</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-credential-ext-gcp-wi</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
@@ -741,7 +747,7 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-messaging-ext-spanner/target/libexec/
+                        ${project.parent.basedir}/cdap-tms-spanner/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>
