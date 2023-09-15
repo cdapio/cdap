@@ -64,7 +64,7 @@ public class SpannerMessagingService implements MessagingService {
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     String topicSQL =
         String.format(
-            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %"
+            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
                 + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
                 + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
                 + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY));",
@@ -74,7 +74,7 @@ public class SpannerMessagingService implements MessagingService {
             PUBLISH_TS_FIELD,
             PAYLOAD_FIELD);
     adminClient.updateDatabaseDdl(
-        SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(""), null);
+        SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
   }
 
   public static String getTableName(TopicId topicId) {
