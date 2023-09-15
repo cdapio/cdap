@@ -32,11 +32,17 @@ import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SpannerMessagingService implements MessagingService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerMessagingService.class);
   public static final String METADATA_TABLE_ID = "messaging-metadata";
   public static final String MESSAGE_TABLE_ID = "messaging-message";
   public static final String NAMESPACE_FIELD = "namespace";
@@ -50,6 +56,8 @@ public class SpannerMessagingService implements MessagingService {
 
   private final DatabaseClient client = SpannerUtil.getSpannerDbClient();
   private final DatabaseAdminClient adminClient = SpannerUtil.getSpannerDbAdminClient();
+
+  private static final Set<String> topicNameSet = new HashSet<>();
 
   @Override
   public void createTopic(TopicMetadata topicMetadata)
@@ -106,10 +114,18 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
+    if (!topicNameSet.contains(request.getTopicId().getTopic())) {
+      try {
+        createTopic(new TopicMetadata(request.getTopicId(), new HashMap<>()));
+        topicNameSet.add(request.getTopicId().getTopic());
+      } catch (TopicAlreadyExistsException e) {
+        LOG.error("Cannot create topic", e);
+      }
+    }
     while (request.iterator().hasNext()) {
       byte[] payload = request.iterator().next();
       Mutation mutation =
-          Mutation.newInsertBuilder(MESSAGE_TABLE_ID)
+          Mutation.newInsertBuilder(getTableName(request.getTopicId()))
               .set(SEQUENCE_ID_FIELD)
               .to(0)
               .set(PAYLOAD_SEQUENCE_ID)
