@@ -38,7 +38,7 @@ final class MessagingServiceExtensionLoader
     // Only allow messaging service SPI classes.
     try {
       return ClassPathResources.getResourcesWithDependencies(
-          MessagingServiceExtensionLoader.class.getClassLoader(), MessagingService.class);
+          MessagingService.class.getClassLoader(), MessagingService.class);
     } catch (IOException e) {
       throw new RuntimeException(
           "Failed to trace dependencies for messaging service extension. "
