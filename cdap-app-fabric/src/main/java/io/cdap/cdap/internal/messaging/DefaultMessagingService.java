@@ -113,15 +113,11 @@ public class DefaultMessagingService implements MessagingService {
   private MessagingService getDelegate() {
     MessagingService messagingService = this.delegate;
     if (messagingService != null) {
-      System.out.println(
-          ">>> MessageService type is " + messagingService.getClass().getSimpleName());
       return messagingService;
     }
     synchronized (this) {
       messagingService = this.delegate;
       if (messagingService != null) {
-        System.out.println(
-            ">>> MessageService type is " + messagingService.getClass().getSimpleName());
         return messagingService;
       }
       messagingService = extensionLoader.get(this.name);
@@ -131,8 +127,6 @@ public class DefaultMessagingService implements MessagingService {
       }
 
       this.delegate = messagingService;
-      System.out.println(
-          ">>> MessageService type is " + messagingService.getClass().getSimpleName());
       return messagingService;
     }
   }

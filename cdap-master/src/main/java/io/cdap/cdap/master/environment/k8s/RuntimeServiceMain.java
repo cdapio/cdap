@@ -33,9 +33,9 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.app.runtime.monitor.InternalRouterService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
+import io.cdap.cdap.internal.messaging.MessagingClientModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -63,11 +63,11 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     return Arrays.asList(
         new DFSLocationModule(),
         new MessagingClientModule(),
+        // new MessagingClientModule(),
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         getDataFabricModule(),
         new RuntimeServerModule(),
-        new AuthorizationEnforcementModule().getDistributedModules()
-    );
+        new AuthorizationEnforcementModule().getDistributedModules());
   }
 
   @Override

@@ -19,16 +19,19 @@ package io.cdap.cdap.messaging.client;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Statement;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.MessageFetcher;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.TopicId;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import org.apache.tephra.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SpannerMessageFetcher extends MessageFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerMessageFetcher.class);
   private final TopicId topicId;
 
   private boolean includeStart = true;
@@ -38,7 +41,7 @@ public class SpannerMessageFetcher extends MessageFetcher {
   private DatabaseClient client;
 
   // by default there is virtually no limit
-  private int limit = Integer.MAX_VALUE;
+  private int limit = 100;
 
   public SpannerMessageFetcher(TopicId topicId) {
     this.topicId = topicId;
@@ -68,17 +71,41 @@ public class SpannerMessageFetcher extends MessageFetcher {
 
   @Override
   public CloseableIterator<RawMessage> fetch() throws TopicNotFoundException, IOException {
+    if (!SpannerMessagingService.topicNameSet.contains(topicId.getTopic())){
+      return new CloseableIterator<RawMessage>() {
+        @Override
+        public void close() {
+
+        }
+
+        @Override
+        public boolean hasNext() {
+          return false;
+        }
+
+        @Override
+        public RawMessage next() {
+          return null;
+        }
+      };
+    }
     String sqlStatement =
         String.format(
-            "SELECT %s,UNIX_MICROS(%s),%s FROM %s where publish_ts > TIMESTAMP_MICROS(%s)",
+            "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where publish_ts > TIMESTAMP_MICROS(%s) LIMIT %s",
             SpannerMessagingService.SEQUENCE_ID_FIELD,
+            SpannerMessagingService.PAYLOAD_SEQUENCE_ID,
             SpannerMessagingService.PUBLISH_TS_FIELD,
             SpannerMessagingService.PAYLOAD_FIELD,
             SpannerMessagingService.getTableName(topicId),
-            startTime);
-    ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
-
-    return new SpannerResultSetClosableIterator<>(resultSet);
+            startTime == null ? 0 : startTime,
+            limit);
+    try {
+      ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
+      return new SpannerResultSetClosableIterator<>(resultSet);
+    } catch (Exception ex) {
+      LOG.error("Error when fetching %s", sqlStatement, ex);
+      throw ex;
+    }
     // try (ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement))) {
     //   while (resultSet.next()) {
     //     long sequenceId = resultSet.getLong(SpannerMessagingService.SEQUENCE_ID_FIELD);
@@ -89,22 +116,46 @@ public class SpannerMessageFetcher extends MessageFetcher {
     // }
   }
 
-  public static byte[] convert(long sequenceId, long messageSequenceId, long timestamp) {
-    try {
-      return String.format("%s-%s-%s", sequenceId, messageSequenceId, timestamp)
-          .getBytes(StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  public static byte[] getMessageId(long sequenceId, long messageSequenceId, long timestamp) {
+    byte[] result =
+        new byte[Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
+    int offset = 0;
+    // Implementation copied from MessageId
+    offset = Bytes.putLong(result, offset, timestamp);
+    offset = Bytes.putShort(result, offset, (short) sequenceId);
+    offset = Bytes.putLong(result, offset, 0);
+    Bytes.putShort(result, offset, (short) messageSequenceId);
+    return result;
+
+    // try {
+    //   String messageId= String.format("%s-%s-%s", sequenceId, messageSequenceId, timestamp);
+    //   if (messageId.length()%2!=0){
+    //     messageId = "0" + messageId;
+    //   }
+    //
+    //   return Bytes.fromHexString(messageId);
+    // } catch (Exception e) {
+    //   throw new RuntimeException(e);
+    // }
   }
 
   public static long extractTimestamp(byte[] id) {
+    // implementation copied from MessageId
+
     try {
-      String tmp = new String(id, StandardCharsets.UTF_8);
-      return Long.parseLong(tmp.split("-")[2]);
+      return Bytes.toLong(id, 0);
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      LOG.error("extractTimestamp error", e);
+      return 0;
     }
+
+    // try {
+    //   String tmp = Bytes.toHexString(id);
+    //   return Long.parseLong(tmp.split("-")[2]);
+    // } catch (Exception e) {
+    //   LOG.error("extractTimestamp error", e);
+    //   return 0;
+    // }
   }
 
   public static class SpannerResultSetClosableIterator<RawMessage>
@@ -134,7 +185,7 @@ public class SpannerMessageFetcher extends MessageFetcher {
         return null;
       }
 
-      byte[] id = convert(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
+      byte[] id = getMessageId(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
       byte[] payload = resultSet.getBytes(3).toByteArray();
       hasNext = resultSet.next();
 

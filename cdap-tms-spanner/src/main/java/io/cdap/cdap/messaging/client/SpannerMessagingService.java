@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.messaging.client;
 
+import com.google.api.gax.longrunning.OperationFuture;
 import com.google.cloud.ByteArray;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Mutation;
+import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.MessageFetcher;
@@ -36,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +60,7 @@ public class SpannerMessagingService implements MessagingService {
   private final DatabaseClient client = SpannerUtil.getSpannerDbClient();
   private final DatabaseAdminClient adminClient = SpannerUtil.getSpannerDbAdminClient();
 
-  private static final Set<String> topicNameSet = new HashSet<>();
+  public static final Set<String> topicNameSet = new HashSet<>();
 
   @Override
   public void createTopic(TopicMetadata topicMetadata)
@@ -67,14 +70,22 @@ public class SpannerMessagingService implements MessagingService {
             "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
                 + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
                 + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
-                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY));",
+                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
             getTableName(topicMetadata.getTopicId()),
             SEQUENCE_ID_FIELD,
             PAYLOAD_SEQUENCE_ID,
             PUBLISH_TS_FIELD,
             PAYLOAD_FIELD);
-    adminClient.updateDatabaseDdl(
-        SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
+    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
+        adminClient.updateDatabaseDdl(
+            SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      LOG.error("Error when executing %s", topicSQL, e);
+    } catch (ExecutionException e) {
+      LOG.error("Error when executing %s", topicSQL, e);
+    }
   }
 
   public static String getTableName(TopicId topicId) {
@@ -107,6 +118,14 @@ public class SpannerMessagingService implements MessagingService {
 
   @Override
   public MessageFetcher prepareFetch(TopicId topicId) throws TopicNotFoundException, IOException {
+    if (!topicNameSet.contains(topicId.getTopic())) {
+      try {
+        createTopic(new TopicMetadata(topicId, new HashMap<>()));
+        topicNameSet.add(topicId.getTopic());
+      } catch (TopicAlreadyExistsException e) {
+        LOG.error("Cannot create topic", e);
+      }
+    }
     return new SpannerMessageFetcher(topicId);
   }
 

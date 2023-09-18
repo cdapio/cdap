@@ -28,13 +28,23 @@ public class SpannerUtil {
 
   public static String databaseId = "test-692-spanner";
 
+ private static DatabaseClient dbClient;
+
   public static DatabaseClient getSpannerDbClient() {
+    if (dbClient != null) {
+      return dbClient;
+    }
 
-    Spanner spanner =
-        SpannerOptions.newBuilder().setProjectId("ardekani-cdf-sandbox2").build().getService();
-    DatabaseId db = DatabaseId.of("ardekani-cdf-sandbox2", instanceId, databaseId);
+    synchronized (SpannerUtil.class) {
+      if (dbClient != null) {
+        return dbClient;
+      }
+      Spanner spanner =
+          SpannerOptions.newBuilder().setProjectId("ardekani-cdf-sandbox2").build().getService();
+      DatabaseId db = DatabaseId.of("ardekani-cdf-sandbox2", instanceId, databaseId);
 
-    DatabaseClient dbClient = spanner.getDatabaseClient(db);
+      dbClient = spanner.getDatabaseClient(db);
+    }
 
     return dbClient;
   }
