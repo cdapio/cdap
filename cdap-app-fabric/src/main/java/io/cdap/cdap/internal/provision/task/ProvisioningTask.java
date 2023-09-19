@@ -157,7 +157,7 @@ public abstract class ProvisioningTask implements RepeatedTask {
       return 0;
     } catch (InterruptedException e) {
       throw e;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       LOG.error("{} task failed in {} state for program run {} due to {}.",
           currentTaskInfo.getProvisioningOp().getType(), state, programRunId,
           Exceptions.condenseThrowableMessage(e), e);
@@ -231,7 +231,7 @@ public abstract class ProvisioningTask implements RepeatedTask {
    * @param taskInfo task info for the failure
    * @param e the non-retryable exception
    */
-  protected abstract void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Exception e);
+  protected abstract void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Throwable e);
 
   /**
    * Logic to run when task info could not be saved to the ProvisionerStore.
