@@ -1939,22 +1939,37 @@ public class AppMetadataStore {
     return limit * multiplier;
   }
 
+  private CloseableIterator<RunRecordDetail> queryProgramRuns(Range range,
+      @Nullable Predicate<StructuredRow> keyPredicate,
+      @Nullable Predicate<RunRecordDetail> predicate,
+      int limit) throws IOException {
+    return queryProgramRuns(range, false, keyPredicate, predicate, limit);
+  }
+
   /**
    * Iterate over a range of run records, filter by predicates and pass each run record to the
    * consumer.
    *
    * @param range to scan runRecordsTable with
+   * @param orderedByStartTime whether to return the result ordered by "run_start_time"
    * @param keyPredicate to filter the row keys by. If null, then does not filter.
    * @param predicate to filter the runRecordMetas by. If null, then does not filter.
    * @param limit the maximum number of entries to return
    */
   private CloseableIterator<RunRecordDetail> queryProgramRuns(Range range,
+      boolean orderedByStartTime,
       @Nullable Predicate<StructuredRow> keyPredicate,
       @Nullable Predicate<RunRecordDetail> predicate,
       int limit) throws IOException {
-    CloseableIterator<StructuredRow> iterator = getRunRecordsTable()
-        .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE,
-            StoreDefinition.AppMetadataStore.RUN_START_TIME, SortOrder.ASC);
+    // scanLimit is different from passed-in limit(the actual maximum number of entries to return)
+    int scanLimit = predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE;
+    CloseableIterator<StructuredRow> iterator;
+    if (orderedByStartTime) {
+      iterator = getRunRecordsTable().scan(range, scanLimit,
+          StoreDefinition.AppMetadataStore.RUN_START_TIME, SortOrder.ASC);
+    } else {
+      iterator = getRunRecordsTable().scan(range, scanLimit);
+    }
 
     return new AbstractCloseableIterator<RunRecordDetail>() {
 
@@ -2032,7 +2047,11 @@ public class AppMetadataStore {
       String recordType) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramRefPrefix(recordType, programReference);
     Range scanRange = createRunRecordScanRange(prefix, startTime, endTime);
-    return getRuns(scanRange, status, limit, null, filter);
+    // Because the version field is not provided, we need to specify that the result is ordered by
+    // run_start_time to make sure the returned run records are chronological. Note that this could
+    // have DB performance implication since specifying ORDER BY run_start_time will sort the scan
+    // result in database before it's returned.
+    return getRuns(scanRange, true, status, limit, null, filter);
   }
 
   private Map<ProgramRunId, RunRecordDetail> getRuns(Range range, ProgramRunStatus status,
@@ -2040,9 +2059,22 @@ public class AppMetadataStore {
       @Nullable Predicate<StructuredRow> keyFilter,
       @Nullable Predicate<RunRecordDetail> valueFilter)
       throws IOException {
+    // By default, the version field is provided and result is ordered by the full primary keys
+    return getRuns(range, false, status, limit, keyFilter, valueFilter);
+  }
+
+  private Map<ProgramRunId, RunRecordDetail> getRuns(
+      Range range,
+      boolean orderedByStartTime,
+      ProgramRunStatus status,
+      int limit,
+      @Nullable Predicate<StructuredRow> keyFilter,
+      @Nullable Predicate<RunRecordDetail> valueFilter)
+      throws IOException {
 
     Map<ProgramRunId, RunRecordDetail> map = new LinkedHashMap<>();
-    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(range, keyFilter,
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(range, orderedByStartTime,
+        keyFilter,
         valueFilter,
         getLimitByStatus(limit, status))) {
       while (iterator.hasNext() && map.size() < limit) {
