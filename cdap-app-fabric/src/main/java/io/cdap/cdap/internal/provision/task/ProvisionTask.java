@@ -105,7 +105,7 @@ public class ProvisionTask extends ProvisioningTask {
   }
 
   @Override
-  protected void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Exception e) {
+  protected void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Throwable e) {
     notifyFailed(e);
   }
 
