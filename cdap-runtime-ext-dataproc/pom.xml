@@ -63,9 +63,10 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <!-- required by com.google.auth:google-auth-library-oauth2-http,
-           but set to 0.13.0 by google-cloud-dataproc for some reason -->
-      <version>20.0</version>
+      <!-- newer version required by google libs,
+           but set to 0.13.0 by parent pom, so put explicit version
+           needed by google libs -->
+      <version>32.1.2-jre</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
