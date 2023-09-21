@@ -34,6 +34,7 @@ import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.operationrun.OperationRun;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
@@ -42,12 +43,16 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullMultipleAppsRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushMultipleAppsRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -197,6 +202,100 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     try {
       ApplicationRecord appRecord = sourceControlService.pullAndDeploy(appRef);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecord));
+    } catch (NoChangesToPullException e) {
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
+    }
+  }
+
+
+  /**
+   * Push the requested applications to the linked repository.
+   *
+   * The response will be a {@link OperationRun} object, which encapsulates the
+   * long-running operation initiated to push the applications. The client can poll the
+   * operations api to get the status of the push operation.
+   */
+  @POST
+  @Path("/apps/push")
+  public void pushApps(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
+    PushMultipleAppsRequest pushMultiRequest;
+    try {
+      pushMultiRequest = parseBody(request, PushMultipleAppsRequest.class);
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid request body: " + e.getMessage());
+      return;
+    }
+
+    if (null == pushMultiRequest) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid request body.");
+      return;
+    }
+
+    if (pushMultiRequest.getAppIds().isEmpty()) {
+      responder.sendString(HttpResponseStatus.OK, "No apps to push.");
+    }
+
+    List<ApplicationReference> appRefs = new ArrayList<>();
+    for (String appId: pushMultiRequest.getAppIds()) {
+      ApplicationReference appRef = validateAppReference(namespaceId, appId);
+      appRefs.add(appRef);
+    }
+
+    try {
+      OperationRun operationResponse = sourceControlService.pushMulti(
+          new NamespaceId(namespaceId),
+          appRefs,
+          pushMultiRequest.getCommitMessage()
+      );
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(operationResponse));
+    } catch (NoChangesToPullException e) {
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
+    }
+  }
+
+  /**
+   * Pull the requested applications from linked repository and deploy them in the current namespace.
+   *
+   * The response will be a {@link OperationRun} object, which encapsulates the
+   * long-running operation initiated to pull and deploy the applications. The client can poll the
+   * operations api to get the status of the pull operation.
+   */
+  @POST
+  @Path("/apps/pull")
+  public void pullApps(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
+    PullMultipleAppsRequest pullMultiRequest;
+    try {
+      pullMultiRequest = parseBody(request, PullMultipleAppsRequest.class);
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid request body: " + e.getMessage());
+      return;
+    }
+
+    if (null == pullMultiRequest) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid request body.");
+      return;
+    }
+
+    if (pullMultiRequest.getAppIds().isEmpty()) {
+      responder.sendString(HttpResponseStatus.OK, "No apps to pull.");
+    }
+
+    List<ApplicationReference> appRefs = new ArrayList<>();
+    for (String appId: pullMultiRequest.getAppIds()) {
+      ApplicationReference appRef = validateAppReference(namespaceId, appId);
+      appRefs.add(appRef);
+    }
+
+    try {
+      OperationRun operationResponse = sourceControlService.pullAndDeployMulti(
+          new NamespaceId(namespaceId),
+          appRefs
+      );
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(operationResponse));
     } catch (NoChangesToPullException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());
     }

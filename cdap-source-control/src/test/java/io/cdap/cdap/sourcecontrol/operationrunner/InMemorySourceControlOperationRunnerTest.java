@@ -248,7 +248,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
   public void testPullSuccess() throws Exception {
     setupPullTest();
     ApplicationReference appRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
-    PullAppResponse<?> response = operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+    PullAppResponse<?> response = operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     Assert.assertEquals(response.getApplicationFileHash(), FAKE_FILE_HASH);
     AppRequest<?> appRequest = response.getAppRequest();
     validateTestAppRequest(appRequest);
@@ -265,7 +265,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
       .when(mockRepositoryManager)
       .getFileHash(Mockito.any(Path.class), Mockito.any(String.class));
     try {
-      operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+      operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     } finally {
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
@@ -279,7 +279,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     Mockito.doReturn(Paths.get(PATH_PREFIX, "app2.json"))
       .when(mockRepositoryManager).getFileRelativePath(Mockito.any());
     try {
-      operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+      operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     } finally {
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
@@ -292,7 +292,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     ApplicationReference appRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
     Mockito.doThrow(new IOException("secure store failure")).when(mockRepositoryManager).cloneRemote();
     try {
-      operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+      operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     } finally {
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();

@@ -29,6 +29,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
@@ -37,6 +39,7 @@ import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,13 +94,13 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
+  public PullAppResponse<?> pull(PullAppOperationRequest pullAppOperationRequest) throws NotFoundException,
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppTask.class.getName())
-        .withParam(GSON.toJson(pulAppOperationRequest)).build();
+        .withParam(GSON.toJson(pullAppOperationRequest)).build();
 
-      LOG.trace("Pulling application {} from linked repository", pulAppOperationRequest.getApp());
+      LOG.trace("Pulling application {} from linked repository", pullAppOperationRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PullAppResponse.class);
     } catch (RemoteExecutionException e) {
@@ -105,6 +108,17 @@ public class RemoteSourceControlOperationRunner extends
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
+  }
+
+  @Override
+  public OperationRun pullAndDeployMulti(
+      NamespaceId namespaceId,
+      RepositoryConfig repositoryConfig,
+      List<PullAppOperationRequest> appOperationRequests
+  ) throws Exception {
+    // Create and start a long running operation that will pull and deploy the applications from a
+    // task by calling the corresponding API in app-fabric (without marking them as latest).
+    return null;
   }
 
   @Override

@@ -250,7 +250,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     String serverUrl = gitServer.getServerUrl();
     RepositoryConfig repoConfig =
       new RepositoryConfig.Builder(mockRepoConfig).setLink(serverUrl + "ignored").build();
-    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -273,7 +273,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     String serverUrl = gitServer.getServerUrl();
     RepositoryConfig repoConfig =
       new RepositoryConfig.Builder(mockRepoConfig).setLink(serverUrl + "ignored").build();
-    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -285,7 +285,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     String serverUrl = gitServer.getServerUrl();
     RepositoryConfig repoConfig =
       new RepositoryConfig.Builder(mockRepoConfig).setLink(serverUrl + "ignored").build();
-    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -305,8 +305,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         .setLink(serverUrl + "ignored")
         .setAuth(NON_EXISTS_AUTH_CONFIG)
         .build();
-    PulAppOperationRequest mockPullRequest =
-      new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest =
+      new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);

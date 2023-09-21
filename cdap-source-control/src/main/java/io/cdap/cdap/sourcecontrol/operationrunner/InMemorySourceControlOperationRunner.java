@@ -28,6 +28,9 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.operationrun.OperationRun;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
@@ -96,15 +99,15 @@ public class InMemorySourceControlOperationRunner extends
   }
 
   @Override
-  public PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest)
+  public PullAppResponse<?> pull(PullAppOperationRequest pullAppOperationRequest)
     throws NotFoundException, AuthenticationConfigException {
-    String applicationName = pulAppOperationRequest.getApp().getApplication();
+    String applicationName = pullAppOperationRequest.getApp().getApplication();
     String configFileName = generateConfigFileName(applicationName);
     LOG.info("Cloning remote to pull application {}", applicationName);
     Path appRelativePath = null;
     try (RepositoryManager repositoryManager =
-           repoManagerFactory.create(pulAppOperationRequest.getApp().getNamespaceId(),
-                                     pulAppOperationRequest.getRepositoryConfig())) {
+           repoManagerFactory.create(pullAppOperationRequest.getApp().getNamespaceId(),
+                                     pullAppOperationRequest.getRepositoryConfig())) {
       appRelativePath = repositoryManager.getFileRelativePath(configFileName);
       String commitId = repositoryManager.cloneRemote();
       Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
@@ -256,6 +259,16 @@ public class InMemorySourceControlOperationRunner extends
     }
   }
 
+  @Override
+  public OperationRun pullAndDeployMulti(
+      NamespaceId namespaceId,
+      RepositoryConfig repositoryConfig,
+      List<PullAppOperationRequest> appOperationRequests
+  ) throws Exception {
+    // Create and start a long running operation that will pull and deploy the applications in
+    // a separate thread in app-fabric (without marking them as latest).
+    return null;
+  }
 
   /**
    * A helper function to get a {@link java.io.FileFilter} for application config files with following rules

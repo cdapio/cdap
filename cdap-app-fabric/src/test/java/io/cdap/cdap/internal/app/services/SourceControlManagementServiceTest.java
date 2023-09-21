@@ -50,7 +50,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
-import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -489,7 +489,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     @Override
     public PullAppResponse<?> pull(
-        PulAppOperationRequest pulAppOperationRequest)
+        PullAppOperationRequest pullAppOperationRequest)
         throws NotFoundException, AuthenticationConfigException {
       return null;
     }

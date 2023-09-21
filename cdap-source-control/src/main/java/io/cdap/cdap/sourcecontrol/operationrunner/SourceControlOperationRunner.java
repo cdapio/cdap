@@ -18,9 +18,13 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.operationrun.OperationRun;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import java.util.List;
 
 /**
  * An interface encapsulating all operations needed for source control management.
@@ -42,7 +46,7 @@ public interface SourceControlOperationRunner extends Service {
   /**
    * Gets an application spec from a Git repository.
    *
-   * @param pulAppOperationRequest The {@link PulAppOperationRequest} of the application to pull from
+   * @param pullAppOperationRequest The {@link PullAppOperationRequest} of the application to pull from
    * @return the details of the pulled application.
    * @throws NotFoundException             when the requested application is not found in the Git repository.
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
@@ -50,7 +54,7 @@ public interface SourceControlOperationRunner extends Service {
    * @throws IllegalArgumentException      when the fetched application json or file path is invalid.
    * @throws SourceControlException when the operation fails for any other reason.
    */
-  PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
+  PullAppResponse<?> pull(PullAppOperationRequest pullAppOperationRequest) throws NotFoundException,
     AuthenticationConfigException;
 
   /**
@@ -65,4 +69,20 @@ public interface SourceControlOperationRunner extends Service {
    */
   RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository) throws AuthenticationConfigException,
     NotFoundException;
+
+  /**
+   * Pulls and deploys applications from a git repository.
+   *
+   * @param namespaceId namespace to deploy the applications in
+   * @param repositoryConfig config of the git repository to pull the applications from
+   * @param appOperationRequests list of {@link PullAppOperationRequest} objects, containing the list of applications to pull
+   *
+   * @return {@link OperationRun} object encapsulating the long-running operation initiated to pull and deploy the apps
+   * @throws Exception when any of the application deployment fails
+   */
+  OperationRun pullAndDeployMulti (
+      NamespaceId namespaceId,
+      RepositoryConfig repositoryConfig,
+      List<PullAppOperationRequest> appOperationRequests
+  ) throws Exception;
 }

@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.operationrun.OperationRun;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
@@ -49,7 +50,7 @@ import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
-import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -62,6 +63,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,7 +206,7 @@ public class SourceControlManagementService {
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
-    
+
     // AppLifecycleService already enforces ApplicationDetail Access
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
@@ -224,7 +227,7 @@ public class SourceControlManagementService {
         appRef.getApplication(),
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
-    
+
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
@@ -251,7 +254,7 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    
+
     PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
     AppRequest<?> appRequest = pullResponse.getAppRequest();
@@ -280,6 +283,71 @@ public class SourceControlManagementService {
   }
 
   /**
+   * Push the applications to the linked repository.
+   *
+   * @param namespace the current namespace
+   * @param appRefs list of {@link ApplicationReference} objects for the apps to be pushed
+   * @return {@link OperationRun} object encapsulating the long-running operation initiated for pushing the apps
+   *
+   * @throws NotFoundException if the repository config is not found
+   * @throws SourceControlException if unexpected errors happen when pushing the applications.
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
+   */
+  public OperationRun pushMulti(
+      NamespaceId namespace,
+      List<ApplicationReference> appRefs,
+      String commitMessage
+  ) throws Exception {
+
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+    String committer = authenticationContext.getPrincipal().getName();
+    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
+    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
+
+    // Pass the appRefs, commitMeta and repoConfig to the pushMulti method on the scmOpertaionRunner
+    // and return the OperationRun that was initiated to push the apps
+    return null;
+  }
+
+  /**
+   * Pull the applications from linked repository and deploy them in the current namespace.
+   *
+   * @param namespace the current namespace
+   * @param appRefs list of {@link ApplicationReference} objects for the apps to be pulled
+   * @return {@link OperationRun} object encapsulating the long-running operation initiated for pulling and deploying the apps
+   *
+   * @throws NotFoundException if the repository config is not found or the application in repository is not found
+   * @throws SourceControlException if unexpected errors happen when pulling the application.
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
+   */
+  public OperationRun pullAndDeployMulti(
+      NamespaceId namespace,
+      List<ApplicationReference> appRefs
+  ) throws Exception {
+    List<PullAppOperationRequest> appOperationRequests = new ArrayList<>();
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+
+    for (ApplicationReference appRef: appRefs) {
+      String versionId = RunIds.generate().getId();
+      ApplicationId appId = appRef.app(versionId);
+      accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+      accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+          NamespacePermission.READ_REPOSITORY);
+
+      appOperationRequests.add(new PullAppOperationRequest(
+          appRef,
+          repoConfig
+      ));
+    }
+
+    return sourceControlOperationRunner.pullAndDeployMulti(
+        namespace,
+        repoConfig,
+        appOperationRequests
+    );
+  }
+
+  /**
    * Pull the application from repository, look up the fileHash in store and compare it with the cone in repository.
    *
    * @param appRef {@link ApplicationReference} to fetch the application with
@@ -293,7 +361,7 @@ public class SourceControlManagementService {
     throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
-    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
+    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PullAppOperationRequest(appRef, repoConfig));
 
     if (latestMeta != null
         && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {

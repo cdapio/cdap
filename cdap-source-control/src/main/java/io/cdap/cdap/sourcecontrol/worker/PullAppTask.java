@@ -23,7 +23,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -52,10 +52,10 @@ public class PullAppTask extends SourceControlTask {
   @Override
   public void doRun(RunnableTaskContext context)
     throws AuthenticationConfigException, IOException, NotFoundException {
-    PulAppOperationRequest pulAppOperationRequest = GSON.fromJson(context.getParam(), PulAppOperationRequest.class);
+    PullAppOperationRequest pullAppOperationRequest = GSON.fromJson(context.getParam(), PullAppOperationRequest.class);
 
-    LOG.info("Pulling application {} in worker.", pulAppOperationRequest.getApp().getApplication());
-    PullAppResponse<?> result = inMemoryOperationRunner.pull(pulAppOperationRequest);
+    LOG.info("Pulling application {} in worker.", pullAppOperationRequest.getApp().getApplication());
+    PullAppResponse<?> result = inMemoryOperationRunner.pull(pullAppOperationRequest);
     context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));
   }
 }
