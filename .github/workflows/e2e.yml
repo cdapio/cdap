@@ -1,0 +1,102 @@
+# Copyright © 2023 Cask Data, Inc.
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+#  http://www.apache.org/licenses/LICENSE-2.0
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# Note: Any changes to this workflow would be used only after merging into develop
+name: Build e2e tests
+
+on:
+  push:
+    branches: [ develop, release/** ]
+  pull_request:
+    branches: [ develop, release/** ]
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: k8s-runner-e2e
+    # We allow builds:
+    # 1) When triggered manually
+    # 2) When it's a merge into a branch
+    # 3) For PRs that are labeled as build and
+    #  - It's a code change
+    #  - A build label was just added
+    # A bit complex, but prevents builds when other labels are manipulated
+    if: >
+      github.event_name == 'workflow_dispatch'
+      || github.event_name == 'push'
+      || (contains(github.event.pull_request.labels.*.name, 'build')
+          && (github.event.action != 'labeled' || github.event.label.name == 'build')
+          )
+    strategy:
+      matrix:
+        tests: [ cdap-e2e-tests ]
+      fail-fast: false
+    steps:
+      # Pinned 1.0.0 version
+      - uses: actions/checkout@v3
+        with:
+          path: plugin
+
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50
+        # Pinned version 2.11.1
+        if: github.event_name != 'workflow_dispatch' && github.event_name != 'push'
+        id: filter
+        with:
+          working-directory: plugin
+          filters: |
+            e2e-test:
+              - '**/e2e-test/**'
+
+      - name: Checkout e2e test repo
+        uses: actions/checkout@v3
+        with:
+          repository: cdapio/cdap-e2e-tests
+          path: e2e
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-${{ github.workflow }}
+
+      - name: Run required e2e tests
+        if: github.event_name != 'workflow_dispatch' && github.event_name != 'push' && steps.filter.outputs.e2e-test == 'false'
+        run: python3 e2e/src/main/scripts/run_cdap_e2e_test.py --testRunner TestRunnerRequired.java --cdapBranch "${{ github.event.pull_request.base.ref }}"
+
+      - name: Run all e2e tests
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || steps.filter.outputs.e2e-test == 'true'
+        run: python3 e2e/src/main/scripts/run_cdap_e2e_test.py --testRunner TestRunnerRequired.java --cdapBranch "${{ github.event.pull_request.base.ref }}"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Cucumber report - ${{ matrix.tests }}
+          path: ./plugin/${{ matrix.tests }}/target/cucumber-reports
+
+      - name: Upload debug files
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Debug files - ${{ matrix.tests }}
+          path: ./**/target/e2e-debug
+
+      - name: Upload files to GCS
+        uses: google-github-actions/upload-cloud-storage@v0
+        if: always()
+        with:
+          path: ./plugin/cdap-e2e-tests/target/cucumber-reports
+          destination: e2e-tests-cucumber-reports/${{ github.event.repository.name }}/${{ github.ref }}
