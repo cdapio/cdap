@@ -71,6 +71,7 @@ public final class StoreDefinition {
     TetheringStore.create(tableAdmin);
     AppStateStore.create(tableAdmin);
     CredentialProviderStore.create(tableAdmin);
+    OperationRunsStore.create(tableAdmin);
   }
 
   /**
@@ -1321,6 +1322,48 @@ public final class StoreDefinition {
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PROFILE_TABLE_SPEC);
       createIfNotExists(tableAdmin, IDENTITY_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schemas for operation runs.
+   */
+  public static final class OperationRunsStore {
+    public static final StructuredTableId OPERATION_RUNS =
+        new StructuredTableId("operation_runs");
+
+    public static final String ID_FIELD = "id";
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String STATUS_FIELD = "status";
+    public static final String START_TIME_FIELD = "start_time";
+    public static final String UPDATE_TIME_FIELD = "update_time";
+    // contains serialized OperationRunDetail
+    public static final String DETAILS_FIELD = "details";
+    public static final StructuredTableSpecification OPERATION_RUNS_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+            .withId(OPERATION_RUNS)
+            .withFields(
+                Fields.stringType(ID_FIELD),
+                Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(TYPE_FIELD),
+                Fields.stringType(STATUS_FIELD),
+                Fields.longType(START_TIME_FIELD),
+                Fields.longType(UPDATE_TIME_FIELD),
+                Fields.stringType(DETAILS_FIELD)
+                )
+            .withPrimaryKeys(NAMESPACE_FIELD, ID_FIELD)
+            .withIndexes(TYPE_FIELD, STATUS_FIELD, START_TIME_FIELD)
+            .build();
+
+    /**
+     * Creates operation store tables.
+     *
+     * @param tableAdmin The table admin to use.
+     * @throws IOException If table creation fails.
+     */
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, OPERATION_RUNS_TABLE_SPEC);
     }
   }
 }
