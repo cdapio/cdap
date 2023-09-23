@@ -130,7 +130,12 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    * @return map of extension type to the first extension that supports the extension type
    */
   public synchronized Map<EXTENSION_TYPE, EXTENSION> getAll() {
+
+    LOG.debug(" SANKET : allExtensions : "+ (allExtensions == null));
+
+
     if (allExtensions != null) {
+      LOG.debug(" SANKET 2: allExtensions : "+ allExtensions.size());
       return allExtensions;
     }
 
@@ -138,14 +143,16 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
 
     for (String dir : extDirs) {
       File extDir = new File(dir);
+      LOG.debug(" SANKET : extDir.getPath : "+ extDir.getPath());
       if (!extDir.isDirectory()) {
         continue;
       }
 
-      // Each module would be under a directory of the extension directory
+      // Each module would be under a directory of the extension directoryProvisioningService
       List<File> files = new ArrayList<>(DirUtils.listFiles(extDir));
       Collections.sort(files);
       for (File moduleDir : files) {
+        LOG.debug(" SANKET : moduleDir.getPath : "+ moduleDir.getPath());
         if (!moduleDir.isDirectory()) {
           continue;
         }
@@ -161,6 +168,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
 
     // Also put everything from system classloader
     putEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader));
+
+    LOG.info(" SANKET : result.size " + result.size());
 
     allExtensions = Collections.unmodifiableMap(result);
     return allExtensions;
@@ -277,14 +286,17 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     while (iterator.hasNext()) {
       try {
         EXTENSION extension = iterator.next();
+        LOG.info(" SANKET : extension :" + extension);
         if (serviceLoader == systemExtensionLoader) {
           extension = prepareSystemExtension(extension);
         }
 
         for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
+          LOG.info(" SANKET : extension type :" + type);
           if (extensions.containsKey(type)) {
             LOG.info("Ignoring extension {} for type {}", extension, type);
           } else {
+            LOG.info(" SANKET : putting extension type :" + type);
             extensions.put(type, extension);
           }
         }

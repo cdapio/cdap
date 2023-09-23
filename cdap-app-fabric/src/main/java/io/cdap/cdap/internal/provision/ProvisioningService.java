@@ -261,7 +261,7 @@ public class ProvisioningService extends AbstractIdleService {
       ProvisioningTaskKey taskKey = provisioningTaskInfo.getTaskKey();
       Optional<Future<Void>> taskFuture = taskExecutor.getFuture(taskKey);
       if (taskFuture.isPresent()) {
-        // don't resume the task if it's already been submitted.
+        // don't resume the task if it's already been submitted.DistributedProgramRunner
         // this should only happen if a program run is started before we scanned for tasks
         continue;
       }
@@ -569,9 +569,10 @@ public class ProvisioningService extends AbstractIdleService {
     this.contextExecutor = contextExecutor;
 
     Map<String, Provisioner> provisioners = new HashMap<>(provisionerProvider.loadProvisioners());
+    LOG.debug("SANKET  : Provisioners size = {}", provisioners.size());
     Map<String, ProvisionerConfig> provisionerConfigs =
         provisionerConfigProvider.loadProvisionerConfigs(provisioners.values());
-    LOG.debug("Provisioners = {}", provisioners);
+    LOG.debug("SANKET  : Provisioners = {}", provisioners);
     Map<String, ProvisionerDetail> details = new HashMap<>(provisioners.size());
     // Remove the tethering provisioner if tethering is disabled
     if (!cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED)) {

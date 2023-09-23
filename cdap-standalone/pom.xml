@@ -620,7 +620,7 @@
                     </resource>
                     <!-- copy capability configs -->
                     <resource>
-                      <directory>${project.basedir}/src/main/resources/capability</directory>
+                      <direcProgramLifecycleServicetory>${project.basedir}/src/main/resources/capability</direcProgramLifecycleServicetory>
                       <targetPath>capability-config</targetPath>
                       <includes>
                         <include>*.json</include>

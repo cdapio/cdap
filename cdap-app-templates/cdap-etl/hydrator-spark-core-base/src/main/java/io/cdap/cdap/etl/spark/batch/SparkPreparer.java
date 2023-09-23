@@ -83,7 +83,11 @@ public class SparkPreparer extends AbstractSparkPreparer {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
 
-    File configFile = File.createTempFile("HydratorSpark", ".config");
+    // TODO ::  HACK TO avoid -- files : without yarn doesn't take
+    //  file://HydratorSpark1242eg34g.config#HydratorSpark.config
+    // Gives error.
+    File configFile = new File("/tmp/HydratorSpark.config");
+    //File.createTempFile("HydratorSpark", ".config");
     if (!configFile.getParentFile().exists()) {
       configFile.getParentFile().mkdirs();
     }

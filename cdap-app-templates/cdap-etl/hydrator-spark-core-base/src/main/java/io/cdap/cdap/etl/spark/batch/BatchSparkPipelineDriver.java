@@ -62,9 +62,11 @@ import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import org.apache.spark.SparkFiles;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -73,6 +75,7 @@ import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -195,7 +198,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                              BatchPhaseSpec.class);
 
-    Path configFile = sec.getLocalizationContext().getLocalFile("HydratorSpark.config").toPath();
+    Path configFile = Paths.get(SparkFiles.get("HydratorSpark.config"));
+
+//    Path configFile = sec.getLocalizationContext().getLocalFile("HydratorSpark.config").toPath();
     try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
       String object = reader.readLine();
       SparkBatchSourceSinkFactoryInfo sourceSinkInfo = GSON.fromJson(object, SparkBatchSourceSinkFactoryInfo.class);

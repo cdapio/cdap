@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -38,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.twill.internal.Constants;
+import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +64,10 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
+
+
+    System.out.println(" HELLO SANKET v3");
+
     Map<String, Collection<String>> arguments = fromPosixArray(args);
 
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
@@ -99,13 +106,23 @@ public class DataprocJobMain {
     String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
     String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator()
         .next();
-    String launchMode = arguments.get(LAUNCH_MODE).iterator().next();
+    String launchMode = "CLIENT";//arguments.get(LAUNCH_MODE).iterator().next();
+
+    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+    if (!(cl instanceof URLClassLoader)) {
+      throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
+    }
+
+
+    Arrays.stream(((URLClassLoader) cl).getURLs()).forEach(url -> LOG.info("DP JOB MAIN Classpath URL: {}", url));
 
     // create classpath from resources, application and twill jars
-    URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
+    URL[] urls = getClasspath((Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
-        Constants.Files.TWILL_JAR));
-    Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
+        Constants.Files.TWILL_JAR)));
+
+
+    Arrays.stream(urls).forEach(url -> LOG.info("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
     // Don't close the classloader since this is the main classloader,
@@ -122,18 +139,18 @@ public class DataprocJobMain {
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
       try {
-        // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class,
             String.class);
         LOG.info("Invoking initialize() on {} with {}, {}",
             dataprocEnvClassName, sparkCompat, launchMode);
         initializeMethod.invoke(newDataprocEnvInstance, sparkCompat, launchMode);
-
+        LOG.info("SANKET 1");
         // call run() method on runtimeJobClass
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
         Class<?> runnerCls = newCL.loadClass(runtimeJobClassName);
         Method runMethod = runnerCls.getMethod("run", runEnvCls);
         Method stopMethod = runnerCls.getMethod("requestStop");
+        LOG.info("SANKET 2");
 
         Object runner = runnerCls.newInstance();
 
@@ -148,9 +165,10 @@ public class DataprocJobMain {
             LOG.error("Exception raised when calling {}.stop()", runtimeJobClassName, e);
           }
         }));
-
+        LOG.info("SANKET 3");
         LOG.info("Invoking run() on {}", runtimeJobClassName);
         runMethod.invoke(runner, newDataprocEnvInstance);
+        // DefaultRuntimeJob.run(newDataprocEnvInstance)
       } finally {
         // call destroy() method on envProviderClass
         Method closeMethod = dataprocEnvClass.getMethod("destroy");
@@ -168,6 +186,14 @@ public class DataprocJobMain {
     }
   }
 
+  private static InetSocketAddress resolve(InetSocketAddress bindAddress) throws Exception {
+    // If domain of bindAddress is not resolvable, address of bindAddress is null.
+    if (bindAddress.getAddress() != null && bindAddress.getAddress().isAnyLocalAddress()) {
+      return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
+    }
+    return bindAddress;
+  }
+
   /**
    * This method will generate class path by adding following to urls to front of default
    * classpath:
@@ -176,7 +202,7 @@ public class DataprocJobMain {
    * expanded.application.jar/classes expanded.twill.jar expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
    */
-  private static URL[] getClasspath(List<String> jarFiles) throws IOException {
+  private static URL[] getClasspathTODOREFACTOR(URLClassLoader cl, List<String> jarFiles) throws IOException {
     List<URL> urls = new ArrayList<>();
     for (String file : jarFiles) {
       File jarDir = new File(file);
@@ -196,9 +222,43 @@ public class DataprocJobMain {
         // ignore anything that doesn't exist
       }
     }
+    // TODO fix classpath
+    URL urls2 = Arrays.stream(cl.getURLs()).filter(num -> num.toString().contains("launcher.jar")).findAny().get();
+    urls.addAll(Arrays.asList(urls2));
+    //  LOG.info("Removing : {} ", urls.remove(new URL("file:/usr/lib/spark/jars/guava-31.1-jre.jar")));
+    //  LOG.info("Removing : {} ", urls.remove(new URL("file:/usr/lib/spark/jars/hadoop-shaded-guava-1.1.1.jar")));
 
     return urls.toArray(new URL[0]);
   }
+  private static URL[] getClasspath(List<String> jarFiles) throws IOException {
+    List<URL> urls = new ArrayList<>();
+    for (String file : jarFiles) {
+      File jarDir = new File(file);
+      // add url for dir
+      urls.add(jarDir.toURI().toURL());
+      if (file.equals(Constants.Files.RESOURCES_JAR)) {
+        continue;
+      }
+      urls.addAll(createClassPathURLs(jarDir));
+    }
+
+    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+
+    if (cl instanceof URLClassLoader && cl != ClassLoader.getSystemClassLoader()) {
+      urls.addAll(Arrays.asList(((URLClassLoader) cl).getURLs()));
+    }
+
+    // Add the system class path to the URL list
+    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      try {
+        urls.add(Paths.get(path).toRealPath().toUri().toURL());
+      } catch (NoSuchFileException e) {
+        // ignore anything that doesn't exist
+      }
+    }
+    return urls.toArray(new URL[0]);
+  }
+
 
   private static List<URL> createClassPathURLs(File dir) throws MalformedURLException {
     List<URL> urls = new ArrayList<>();
@@ -290,7 +350,8 @@ public class DataprocJobMain {
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
     URLClassLoader classLoader = new URLClassLoader(classpath,
-        DataprocJobMain.class.getClassLoader().getParent());
+//        DataprocJobMain.class.getClassLoader().getParent());
+    ClassLoader.getSystemClassLoader().getParent());
     if (containerClassLoaderName == null) {
       return classLoader;
     }
