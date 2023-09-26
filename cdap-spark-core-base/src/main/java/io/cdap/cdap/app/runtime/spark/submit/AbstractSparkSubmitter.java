@@ -146,9 +146,11 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   /**
    * Returns configs that are specific to the submission context.
+   *
+   * @param appConf Spark configs specified by the application
    * @throws Exception if there is error while generating submit conf.
    */
-  protected Map<String, String> generateSubmitConf() throws Exception {
+  protected Map<String, String> generateSubmitConf(Map<String, String> appConf) throws Exception {
     return Collections.emptyMap();
   }
 
@@ -225,7 +227,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
-    configs.putAll(generateSubmitConf());
+    configs.putAll(generateSubmitConf(configs));
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
 

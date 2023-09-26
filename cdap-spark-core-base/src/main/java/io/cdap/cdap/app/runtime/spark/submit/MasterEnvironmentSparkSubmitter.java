@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.app.runtime.spark.submit;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.spark.Constant.Spark.ArtifactFetcher;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
@@ -99,14 +101,34 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected Map<String, String> generateSubmitConf() throws Exception {
-    Map<String, String> config = new HashMap<>();
+  protected Map<String, String> generateSubmitConf(Map<String, String> appConf) throws Exception {
+    Map<String, String> config = new HashMap<>(appConf);
     config.put(SparkConfig.DRIVER_ENV_PREFIX + "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
     config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-    config.put("spark.executorEnv.ARTIFACT_FECTHER_PORT",
-               cConf.get(io.cdap.cdap.app.runtime.spark.Constant.Spark.ArtifactFetcher.PORT));
-    config.putAll(generateOrGetSparkConfig().getConfigs());
+    config.put("spark.executorEnv.ARTIFACT_FECTHER_PORT", cConf.get(ArtifactFetcher.PORT));
+
+    SparkConfig environmentConfig = generateOrGetSparkConfig();
+    config.putAll(mergeSparkConfs(appConf, environmentConfig));
     return config;
+  }
+
+  @VisibleForTesting
+  static Map<String, String> mergeSparkConfs(Map<String, String> appConf, SparkConfig envConf) {
+    Map<String, String> config = new HashMap<>(appConf);
+    config.putAll(envConf.getConfigs());
+    if (envConf.getExtraJavaOpts() != null) {
+      prependConfig(config, "spark.driver.extraJavaOptions", envConf.getExtraJavaOpts());
+      prependConfig(config, "spark.executor.extraJavaOptions", envConf.getExtraJavaOpts());
+    }
+    return config;
+  }
+
+  private static void prependConfig(Map<String, String> config, String key, String value) {
+    if (config.containsKey(key)) {
+      config.put(key, value + " " + config.get(key));
+      return;
+    }
+    config.put(key, value);
   }
 
   @Override
