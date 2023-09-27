@@ -369,6 +369,16 @@ public interface Store {
   int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
 
   /**
+   * Marks existing applications as latest.
+   *
+   * @param applicationIds List of application ids
+   * @throws IOException if the apps cannot be marked latest because of any IO failure
+   * @throws ApplicationNotFoundException when any of the applications is not found
+   */
+  void markApplicationsLatest(Collection<ApplicationId> applicationIds)
+      throws IOException, ApplicationNotFoundException;
+
+  /**
    * Return a list of program specifications that are deleted comparing the specification in the store with the
    * spec that is passed.
    *

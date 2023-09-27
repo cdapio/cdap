@@ -583,6 +583,17 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void markApplicationsLatest(Collection<ApplicationId> appIds)
+      throws IOException, ApplicationNotFoundException {
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore mds = getAppMetadataStore(context);
+      for (ApplicationId appId : appIds) {
+        mds.markAsLatest(appId);
+      }
+    }, IOException.class, ApplicationNotFoundException.class);
+  }
+
+  @Override
   public int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).createApplicationVersion(id, meta);

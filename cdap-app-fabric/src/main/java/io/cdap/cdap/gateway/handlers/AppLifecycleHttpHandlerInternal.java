@@ -17,25 +17,37 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.common.security.AuditDetail;
+import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.SortOrder;
+import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -44,6 +56,8 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -54,19 +68,20 @@ import javax.ws.rs.QueryParam;
  */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/namespaces/{namespace-id}")
-public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandler {
+public class AppLifecycleHttpHandlerInternal extends AbstractAppLifecycleHttpHandler {
 
   private static final String APP_LIST_PAGINATED_KEY = "applications";
-  private static final Gson GSON = new Gson();
 
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final ApplicationLifecycleService applicationLifecycleService;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   @Inject
-  AppLifecycleHttpHandlerInternal(NamespaceQueryAdmin namespaceQueryAdmin,
+  AppLifecycleHttpHandlerInternal(
+      CConfiguration configuration,
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      ProgramRuntimeService runtimeService,
       ApplicationLifecycleService applicationLifecycleService) {
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.applicationLifecycleService = applicationLifecycleService;
+    super(configuration, namespaceQueryAdmin, runtimeService, applicationLifecycleService);
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
   }
 
   /**
@@ -199,5 +214,76 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
         ? applicationLifecycleService.getLatestAppDetail(appId.getAppReference())
         : applicationLifecycleService.getAppDetail(appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appDetail));
+  }
+
+  /**
+   * Deploy an application. This is similar to the public API to deploy an application.
+   * This differs from the public API by supporting the skipMakingLatest parameter.
+   * This behaviour (skipMakingLatest) should not be exposed in the public API and should
+   * only be used internally when needed.
+   *
+   * @param request {@link HttpRequest}
+   * @param responder {@link HttpResponder}
+   * @param namespaceId of the namespace where the app is to be deployed
+   * @param appId of the app
+   * @param skipMarkingLatest if true, the app will be deployed but not marked latest.
+   *         The version of the application that is marked as latest will be run, when an application run
+   *         is triggered. If the application is not marked as latest during deployment (i.e. when
+   *         the skipMarkingLatest param is true), the version of the application that gets deployed
+   *         with this API will not be used when the application run is triggered.
+   * @return {@link BodyConsumer}
+   * @throws BadRequestException when the request params or body are not valid
+   * @throws NamespaceNotFoundException when the namespace is not found
+   * @throws AccessException in case of any security issues
+   * @throws UnsupportedOperationException when PIPELINE_PROMOTION_TO_PRODUCTION feature is not enabled
+   */
+  @PUT
+  @Path("/apps/{app-id}")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public BodyConsumer create(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appId,
+      @QueryParam("skipMarkingLatest") final boolean skipMarkingLatest) throws Exception {
+
+    String versionId = ApplicationId.DEFAULT_VERSION;
+    if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
+      versionId = RunIds.generate().getId();
+    }
+    ApplicationId applicationId = validateApplicationVersionId(validateNamespace(namespaceId), appId, versionId);
+
+    return deployAppFromArtifact(applicationId, skipMarkingLatest);
+  }
+
+  /**
+   * Mark provided application versions as latest.
+   *
+   * @param request {@link FullHttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace where the applications are deployed
+   * @throws Exception if either namespace or any of the application (versions) doesn't exist
+   */
+  @POST
+  @Path("/apps/markLatest")
+  public void markApplicationsAsLatest(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespace) throws Exception {
+
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceQueryAdmin.exists(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+
+    MarkLatestAppsRequest appsMarkLatestRequest;
+    try {
+      appsMarkLatestRequest = parseBody(request, MarkLatestAppsRequest.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid request body", e);
+    }
+
+    if (appsMarkLatestRequest == null) {
+      throw new BadRequestException("Invalid request body.");
+    }
+
+    applicationLifecycleService.markAppsAsLatest(namespaceId, appsMarkLatestRequest);
+    responder.sendString(HttpResponseStatus.OK, "");
   }
 }

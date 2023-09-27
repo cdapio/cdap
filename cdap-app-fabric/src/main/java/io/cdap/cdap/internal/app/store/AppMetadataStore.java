@@ -34,6 +34,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
@@ -58,6 +59,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -586,6 +588,47 @@ public class AppMetadataStore {
   }
 
   /**
+   * Marks a given application version as latest. This also unmarks the previous latest version.
+   *
+   * @param id {@link ApplicationId}
+   * @throws IOException when the updates fail
+   * @throws ApplicationNotFoundException when the application is not found
+   */
+  public void markAsLatest(ApplicationId id)
+    throws IOException, ApplicationNotFoundException {
+    StructuredTable appSpecTable = getApplicationSpecificationTable();
+
+    // check if the application being marked latest is already present in the table
+    // if not, then an ApplicationNotFoundException should be thrown
+    List<Field<?>> fields = getApplicationPrimaryKeys(id);
+    Optional<StructuredRow> existing = appSpecTable.read(fields);
+    if (!existing.isPresent()) {
+      throw new ApplicationNotFoundException(id);
+    }
+
+    // First find and unmark the current latest version
+    Range latestRange = getLatestApplicationRange(id.getAppReference());
+    try (CloseableIterator<StructuredRow> iterator =
+        appSpecTable.scan(latestRange, 1, Collections.singletonList(
+            Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true)))) {
+      if (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        List<Field<?>> updateFields = getApplicationPrimaryKeys(
+            id.getNamespace(),
+            id.getApplication(),
+            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD)
+        );
+        updateFields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, false));
+        appSpecTable.update(updateFields);
+      }
+    }
+
+    // then mark the new application version as latest
+    fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+    appSpecTable.update(fields);
+  }
+
+  /**
    * Persisting a new application version in the table.
    *
    * @param id the application id
@@ -599,6 +642,8 @@ public class AppMetadataStore {
       throws IOException, ConflictException {
     String parentVersion = Optional.ofNullable(appMeta.getChange())
         .map(ChangeDetail::getParentVersion).orElse(null);
+
+    boolean markAsLatest = appMeta.getIsLatest();
     // Fetch the latest version
     ApplicationMeta latest = getLatest(id.getAppReference());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
@@ -607,10 +652,15 @@ public class AppMetadataStore {
           String.format("Cannot deploy the application because parent version '%s' does not "
               + "match the latest version '%s'.", parentVersion, latestVersion));
     }
-    // When the app does not exist, it is not an edit
+
+    // if we are not going to mark the new version as latest, then we should leave the current
+    // latest version as latest.
+    // also, when latest is null, i.e. the app does not exist, then it's not an edit
     if (latest != null) {
       List<Field<?>> fields = getApplicationPrimaryKeys(id.getNamespace(), id.getApplication(),
           latest.getSpec().getAppVersion());
+      fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, !markAsLatest));
+
       // Assign a creation time if it's null for the previous latest app version
       // It is for the pre-6.8 application, we mark it as past version (like created 1s ago)
       // So it's sortable on creation time, especially when UI displays the version history for a pipeline
@@ -618,14 +668,16 @@ public class AppMetadataStore {
         // appMeta.getChange() should never be null in edit case
         fields.add(Fields.longField(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD,
             appMeta.getChange().getCreationTimeMillis() - 1000));
+        getApplicationSpecificationTable().upsert(fields);
+      } else if (markAsLatest) {
+        getApplicationSpecificationTable().upsert(fields);
       }
-      fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, false));
-      getApplicationSpecificationTable().upsert(fields);
     }
+
     // Add a new version of the app
     writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(),
         appMeta.getChange(),
-        appMeta.getSourceControlMeta());
+        appMeta.getSourceControlMeta(), markAsLatest);
     return getApplicationEditNumber(
         new ApplicationReference(id.getNamespaceId(), id.getApplication()));
   }
@@ -634,8 +686,17 @@ public class AppMetadataStore {
   void writeApplication(String namespaceId, String appId, String versionId,
       ApplicationSpecification spec, @Nullable ChangeDetail change,
       @Nullable SourceControlMeta sourceControlMeta) throws IOException {
+    writeApplication(namespaceId, appId, versionId, spec, change, sourceControlMeta, true);
+  }
+
+  @VisibleForTesting
+  void writeApplication(String namespaceId, String appId, String versionId,
+      ApplicationSpecification spec, @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest) throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId,
-        GSON.toJson(new ApplicationMeta(appId, spec, null)), change, sourceControlMeta);
+        GSON.toJson(
+            new ApplicationMeta(appId, spec, null, null, markAsLatest)),
+        change, sourceControlMeta, markAsLatest);
     updateApplicationEdit(namespaceId, appId);
   }
 
@@ -2444,6 +2505,13 @@ public class AppMetadataStore {
       String serialized, @Nullable ChangeDetail change,
       @Nullable SourceControlMeta sourceControlMeta)
       throws IOException {
+    writeApplicationSerialized(namespaceId, appId, versionId, serialized, change, sourceControlMeta, true);
+  }
+
+  private void writeApplicationSerialized(String namespaceId, String appId, String versionId,
+      String serialized, @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest)
+      throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
         Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
@@ -2455,7 +2523,7 @@ public class AppMetadataStore {
       fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD,
           change.getDescription()));
     }
-    fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+    fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, markAsLatest));
 
     if (sourceControlMeta != null) {
       fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META,
@@ -2550,7 +2618,7 @@ public class AppMetadataStore {
     } else {
       changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
     }
-    return new ApplicationMeta(id, spec, changeDetail, sourceControl);
+    return new ApplicationMeta(id, spec, changeDetail, sourceControl, latest);
   }
 
   private void writeToStructuredTableWithPrimaryKeys(

@@ -120,7 +120,7 @@ public class SystemAppEnableExecutor {
           appId.getVersion(),
           artifactSummary, configString, null, null, x -> {
           },
-          ownerPrincipalId, arguments.canUpdateSchedules(), false,
+          ownerPrincipalId, arguments.canUpdateSchedules(), false, false,
           Collections.emptyMap());
 
     } catch (UnauthorizedException | InvalidArtifactException e) {

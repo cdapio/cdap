@@ -22,6 +22,7 @@ import io.cdap.cdap.app.DefaultAppConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.DefaultId;
+import javax.annotation.Nullable;
 
 /**
  * Util for building app spec for tests.
@@ -30,10 +31,15 @@ public final class Specifications {
   private Specifications() {}
 
   public static ApplicationSpecification from(Application app) {
+    return from(app, null, null);
+  }
+
+  public static ApplicationSpecification from(
+      Application app, @Nullable String applicationName, @Nullable String applicationVersion) {
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.fromEntityId(DefaultId.NAMESPACE),
-                                                                  Id.Artifact.fromEntityId(DefaultId.ARTIFACT),
-                                                                  app);
+        Id.Artifact.fromEntityId(DefaultId.ARTIFACT),
+        app);
     app.configure(appConfigurer, new DefaultApplicationContext());
-    return appConfigurer.createSpecification(null);
+    return appConfigurer.createSpecification(applicationName, applicationVersion);
   }
 }

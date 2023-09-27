@@ -59,6 +59,7 @@ public class AppDeploymentInfo {
   @Nullable
   private final ApplicationSpecification deployedApplicationSpec;
   private final boolean isUpgrade;
+  private final boolean skipMarkingLatest;
 
   /**
    * Creates a new {@link Builder}.
@@ -86,6 +87,7 @@ public class AppDeploymentInfo {
         .setChangeDetail(other.changeDetail)
         .setSourceControlMeta(other.sourceControlMeta)
         .setIsUpgrade(other.isUpgrade)
+        .setSkipMarkingLatest(other.skipMarkingLatest)
         .setDeployedApplicationSpec(other.deployedApplicationSpec);
   }
 
@@ -95,7 +97,7 @@ public class AppDeploymentInfo {
       @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
       boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
       @Nullable ChangeDetail changeDetail, @Nullable SourceControlMeta sourceControlMeta,
-      boolean isUpgrade, @Nullable ApplicationSpecification deployedApplicationSpec) {
+      boolean isUpgrade, @Nullable ApplicationSpecification deployedApplicationSpec, boolean skipMarkingLatest) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -109,6 +111,7 @@ public class AppDeploymentInfo {
     this.changeDetail = changeDetail;
     this.sourceControlMeta = sourceControlMeta;
     this.isUpgrade = isUpgrade;
+    this.skipMarkingLatest = skipMarkingLatest;
     this.deployedApplicationSpec = deployedApplicationSpec;
   }
 
@@ -212,6 +215,10 @@ public class AppDeploymentInfo {
     return isUpgrade;
   }
 
+  public boolean isSkipMarkingLatest() {
+    return skipMarkingLatest;
+  }
+
   /**
    * Returns the previously deployed Application Specification. Will be null for the 1st deployment
    */
@@ -243,6 +250,7 @@ public class AppDeploymentInfo {
     @Nullable
     private ApplicationSpecification deployedApplicationSpec;
     private boolean isUpgrade;
+    private boolean skipMarkingLatest;
 
     private Builder() {
       // Only for the builder() method to use
@@ -320,6 +328,11 @@ public class AppDeploymentInfo {
       return this;
     }
 
+    public Builder setSkipMarkingLatest(boolean skipMarkingLatest) {
+      this.skipMarkingLatest = skipMarkingLatest;
+      return this;
+    }
+
     public Builder setDeployedApplicationSpec(
         @Nullable ApplicationSpecification deployedApplicationSpec) {
       this.deployedApplicationSpec = deployedApplicationSpec;
@@ -341,7 +354,7 @@ public class AppDeploymentInfo {
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
           appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-          changeDetail, sourceControlMeta, isUpgrade, deployedApplicationSpec);
+          changeDetail, sourceControlMeta, isUpgrade, deployedApplicationSpec, skipMarkingLatest);
     }
   }
 }

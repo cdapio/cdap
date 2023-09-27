@@ -330,7 +330,7 @@ class CapabilityApplier {
         .deployApp(applicationReference.getParent(), applicationReference.getApplication(),
             ApplicationId.DEFAULT_VERSION,
             application.getArtifact(), configString, null, null, NOOP_PROGRAM_TERMINATOR,
-            null, null, false, Collections.emptyMap());
+            null, null, false, false, Collections.emptyMap());
   }
 
   @VisibleForTesting

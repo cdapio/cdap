@@ -78,6 +78,7 @@ import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.store.DefaultNamespaceStore;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -239,7 +240,7 @@ public abstract class DefaultStoreTest {
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
     ProgramId sparkProgram = appId.spark(sparkName);
-    
+
     setStartAndRunning(sparkProgram.run(sparkRunId.getId()), ImmutableMap.of(), systemArgs, artifactId);
 
     // stop the Spark program with failure
@@ -517,6 +518,98 @@ public abstract class DefaultStoreTest {
     Assert.assertEquals(FooMapReduceJob.class.getName(), spec.getMapReduce().get("mrJob3").getClassName());
   }
 
+  @Test
+  public void testAddApplicationWithoutMarkingLatest()
+      throws ConflictException {
+    long creationTime = System.currentTimeMillis();
+    ApplicationId appId = new ApplicationId("account1", "app1");
+    ApplicationMeta appMeta = new ApplicationMeta("app1", Specifications.from(new FooApp()),
+        new ChangeDetail(null, null, null, creationTime), null, false);
+    store.addApplication(appId, appMeta);
+
+    ApplicationMeta storedMeta = store.getApplicationMetadata(appId);
+    Assert.assertEquals("app1", storedMeta.getId());
+    Assert.assertEquals(creationTime, storedMeta.getChange().getCreationTimeMillis());
+    Assert.assertFalse(storedMeta.getIsLatest());
+  }
+
+  @Test
+  public void testMarkApplicationsLatestWithNewApps()
+      throws ApplicationNotFoundException, ConflictException, IOException {
+    long creationTime = System.currentTimeMillis();
+    // Add 2 new applications without marking them latest
+    ApplicationId appId1 = new ApplicationId("account1", "newApp1");
+    ApplicationMeta appMeta1 = new ApplicationMeta("newApp1", Specifications.from(new FooApp()),
+        new ChangeDetail(null, null, null, creationTime), null, false);
+    store.addApplication(appId1, appMeta1);
+
+    ApplicationId appId2 = new ApplicationId("account1", "newApp2");
+    ApplicationMeta appMeta2 = new ApplicationMeta("newApp2", Specifications.from(new FooApp()),
+        new ChangeDetail(null, null, null, creationTime), null, false);
+    store.addApplication(appId2, appMeta2);
+
+    // Now mark them as latest in bulk
+    store.markApplicationsLatest(Arrays.asList(appId1, appId2));
+
+    ApplicationMeta storedMeta1 = store.getApplicationMetadata(appId1);
+    Assert.assertEquals("newApp1", storedMeta1.getId());
+    Assert.assertEquals(creationTime, storedMeta1.getChange().getCreationTimeMillis());
+    Assert.assertTrue(storedMeta1.getIsLatest());
+
+    ApplicationMeta storedMeta2 = store.getApplicationMetadata(appId2);
+    Assert.assertEquals("newApp2", storedMeta2.getId());
+    Assert.assertEquals(creationTime, storedMeta2.getChange().getCreationTimeMillis());
+    Assert.assertTrue(storedMeta2.getIsLatest());
+  }
+
+  @Test
+  public void testMarkApplicationsLatestWithExistingLatest()
+      throws ApplicationNotFoundException, ConflictException, IOException {
+    long creationTime = System.currentTimeMillis();
+    long v2CreationTime = creationTime + 1000;
+    String appName = "testAppWithVersion";
+    String oldVersion = "old-version";
+    String newVersion = "new-version";
+
+    // Add an application as latest
+    ApplicationId appIdV1 = new ApplicationId("account1", appName, oldVersion);
+    ApplicationMeta appMetaV1 = new ApplicationMeta(appName, Specifications.from(new FooApp(), appName, oldVersion),
+        new ChangeDetail(null, null, null, creationTime));
+    store.addApplication(appIdV1, appMetaV1);
+
+    // Add a new version of the application without marking latest
+    ApplicationId appIdV2 = new ApplicationId("account1", appName, newVersion);
+    ApplicationMeta appMetaV2 = new ApplicationMeta(appName, Specifications.from(new FooApp(), appName, newVersion),
+        new ChangeDetail(null, null, null, v2CreationTime), null, false);
+    store.addApplication(appIdV2, appMetaV2);
+
+    // Now mark the new version as latest
+    store.markApplicationsLatest(Collections.singletonList(appIdV2));
+
+    ApplicationMeta storedMetaV1 = store.getApplicationMetadata(appIdV1);
+    Assert.assertEquals(appName, storedMetaV1.getId());
+    Assert.assertEquals(oldVersion, storedMetaV1.getSpec().getAppVersion());
+    Assert.assertEquals(creationTime, storedMetaV1.getChange().getCreationTimeMillis());
+    Assert.assertFalse(storedMetaV1.getIsLatest());
+
+    ApplicationMeta storedMetaV2 = store.getApplicationMetadata(appIdV2);
+    Assert.assertEquals(appName, storedMetaV2.getId());
+    Assert.assertEquals(newVersion, storedMetaV2.getSpec().getAppVersion());
+    Assert.assertEquals(v2CreationTime, storedMetaV2.getChange().getCreationTimeMillis());
+    Assert.assertTrue(storedMetaV2.getIsLatest());
+  }
+
+  @Test(expected = ApplicationNotFoundException.class)
+  public void testMarkApplicationsLatestWithNonExistingApp()
+      throws ApplicationNotFoundException, IOException {
+    // Add an application as latest
+    ApplicationId appId = new ApplicationId("account1", "app");
+
+    // Now try marking this non existing app as latest
+    // this should throw ApplicationNotFoundException (expected in this test)
+    store.markApplicationsLatest(Collections.singletonList(appId));
+  }
+
   private static class FooApp extends AbstractApplication {
     @Override
     public void configure() {
@@ -743,7 +836,7 @@ public abstract class DefaultStoreTest {
                        ImmutableMap.of("path", "/data"), new HashMap<>(), artifactId);
     setStartAndRunning(workflowProgramId.run(workflowRunId),
                        ImmutableMap.of("whitelist", "cask"), new HashMap<>(), artifactId);
-    
+
     ProgramRunId mapreduceProgramRunId = mapreduceProgramId.run(mapreduceRunId);
     ProgramRunId workflowProgramRunId = workflowProgramId.run(workflowRunId);
 

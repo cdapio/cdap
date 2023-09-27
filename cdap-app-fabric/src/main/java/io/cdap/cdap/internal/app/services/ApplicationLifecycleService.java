@@ -55,6 +55,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
@@ -90,6 +91,8 @@ import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.app.AppVersion;
+import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
@@ -826,7 +829,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *     updating an app. For example, if an update removes a flow, the terminator defines how to
    *     stop that flow.
    * @return information about the deployed application
-   * @throws InvalidArtifactException the the artifact is invalid. For example, if it does not
+   * @throws InvalidArtifactException the artifact is invalid. For example, if it does not
    *     contain any app classes
    * @throws ArtifactAlreadyExistsException if the specified artifact already exists
    * @throws IOException if there was an IO error writing the artifact
@@ -848,7 +851,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
       return deployApp(namespace, appName, appVersion, configStr, null, null, programTerminator,
           artifactDetail,
-          ownerPrincipal, updateSchedules, false, Collections.emptyMap());
+          ownerPrincipal, updateSchedules, false, false, Collections.emptyMap());
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -938,7 +941,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         programTerminator,
         artifactDetail, ownerPrincipal,
         updateSchedules == null ? appUpdateSchedules : updateSchedules,
-        false, Collections.emptyMap());
+        false, false, Collections.emptyMap());
   }
 
   /**
@@ -965,6 +968,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param updateSchedules specifies if schedules of the workflow have to be updated, if null
    *     value specified by the property "app.deploy.update.schedules" will be used.
    * @param isPreview whether the app deployment is for preview
+   * @param skipMarkingLatest if true, the deployed app is not marked as latest
    * @param userProps the user properties for the app deployment, this is basically used for
    *     preview deployment
    * @return information about the deployed application
@@ -983,6 +987,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ProgramTerminator programTerminator,
       @Nullable KerberosPrincipalId ownerPrincipal,
       @Nullable Boolean updateSchedules, boolean isPreview,
+      boolean skipMarkingLatest,
       Map<String, String> userProps)
       throws Exception {
     // TODO CDAP-19828 - remove appVersion parameter from method signature
@@ -1000,7 +1005,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, sourceControlMeta,
         programTerminator,
         artifactDetail.get(0), ownerPrincipal, updateSchedules == null
-            ? appUpdateSchedules : updateSchedules, isPreview, userProps);
+            ? appUpdateSchedules : updateSchedules, isPreview, skipMarkingLatest, userProps);
   }
 
   /**
@@ -1018,6 +1023,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param programTerminator a program terminator that will stop programs that are removed when
    *     updating an app. For example, if an update removes a flow, the terminator defines how to
    *     stop that flow.
+   * @param  skipMarkingLatest boolean, if true that app is deployed but the deployed verison is
+   *     not marked latest
    * @return {@link ApplicationWithPrograms}
    * @throws InvalidArtifactException if the artifact does not contain any application classes
    * @throws IOException if there was an IO error reading artifact detail from the meta store
@@ -1028,7 +1035,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployApp(ApplicationId appId,
       AppRequest<?> appRequest,
       @Nullable SourceControlMeta sourceControlMeta,
-      ProgramTerminator programTerminator) throws Exception {
+      ProgramTerminator programTerminator, boolean skipMarkingLatest) throws Exception {
     ArtifactSummary artifactSummary = appRequest.getArtifact();
 
     KerberosPrincipalId ownerPrincipalId =
@@ -1036,7 +1043,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
             : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 
     // if we don't null check, it gets serialized to "null". The instanceof check is also needed otherwise it causes
-    // unnecessary json serialization and invalid json format error. 
+    // unnecessary json serialization and invalid json format error.
     Object config = appRequest.getConfig();
     String configString = config == null ? null :
         config instanceof String ? (String) config : GSON.toJson(config);
@@ -1046,7 +1053,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(), artifactSummary,
         configString,
         changeSummary, sourceControlMeta, programTerminator, ownerPrincipalId,
-        appRequest.canUpdateSchedules(), false, Collections.emptyMap());
+        appRequest.canUpdateSchedules(), false, skipMarkingLatest, Collections.emptyMap());
   }
 
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
@@ -1058,6 +1065,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ArtifactDetail artifactDetail,
       @Nullable KerberosPrincipalId ownerPrincipal,
       boolean updateSchedules, boolean isPreview,
+      boolean skipMarkingLatest,
       Map<String, String> userProps) throws Exception {
     // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
     // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
@@ -1109,6 +1117,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                 : null)
         .setChangeDetail(change)
         .setSourceControlMeta(sourceControlMeta)
+        .setSkipMarkingLatest(skipMarkingLatest)
         .build();
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(
@@ -1526,5 +1535,41 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         Constants.Metrics.Tag.APP, appName);
     long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
     metricsCollectionService.getContext(tags).gauge(metricName, timeTaken);
+  }
+
+  /**
+   * Marks a given list of application versions as latest.
+   *
+   * @param namespace {@link NamespaceId} of the namespace where the apps are deployed
+   * @param appsRequest the request object containing list of applications that need to be marked latest
+   * @throws BadRequestException when the list contains multiple versions of the same application
+   * @throws IOException when the update operation fails for any reason.
+   * @throws ApplicationNotFoundException when any of the applications is not found
+   */
+  public void markAppsAsLatest(NamespaceId namespace, MarkLatestAppsRequest appsRequest)
+      throws BadRequestException, IOException, ApplicationNotFoundException {
+
+    List<ApplicationId> appIds = new ArrayList<>();
+    Set<String> seenApps = new HashSet<>();
+
+    for (AppVersion appRequest : appsRequest.getApps()) {
+      // Validate the appIds do not contain duplicates, i.e. we are not trying to mark
+      // multiple versions of the same application as latest
+      if (!seenApps.add(appRequest.getName())) {
+        throw new BadRequestException(String.format(
+            "Marking multiple versions of an application (%s) as latest is not supported.",
+            appRequest.getName()
+        ));
+      }
+
+      try {
+        appIds.add(namespace.app(appRequest.getName(), appRequest.getAppVersion()));
+      } catch (IllegalArgumentException | NullPointerException e) {
+        throw new BadRequestException(String.format("Invalid application name (%s) or version (%s)",
+            appRequest.getName(), appRequest.getAppVersion()), e);
+      }
+    }
+
+    store.markApplicationsLatest(appIds);
   }
 }

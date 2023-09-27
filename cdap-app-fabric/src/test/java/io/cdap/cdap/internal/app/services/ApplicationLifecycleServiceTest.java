@@ -22,26 +22,33 @@ import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
+import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.MetadataEmitApp;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -51,6 +58,9 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.app.AppVersion;
+import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -59,6 +69,7 @@ import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -67,6 +78,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +93,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -88,7 +101,7 @@ import org.junit.Test;
  *
  */
 public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
-
+  private static final String FEATURE_FLAG_PREFIX = "feature.";
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
@@ -107,6 +120,16 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   @AfterClass
   public static void stop() {
     AppFabricTestHelper.shutdown();
+  }
+
+  private void setLcmEditFlag(boolean lcmFlag) {
+    cConf.setBoolean(
+        FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), lcmFlag);
+  }
+
+  @Before
+  public void setDefaultFeatureFlags() {
+    setLcmEditFlag(true);
   }
 
   // test that the call to deploy an artifact and application in a single step will delete the artifact
@@ -450,6 +473,236 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     deleteNamespace("ns1");
     deleteNamespace("ns2");
     deleteNamespace("ns3");
+  }
+
+  /**
+   * Testcase to deploy an application without marking it as latest. (using the
+   * internal API to deploy, with the skipMarkingLatest flag set to true).
+   * The appliaction should be deployed successfully.
+   * There should be only one version of the application deployed, and that should not be marked latest.
+   * Therefore, trying to get the latest version of the application should throw ApplicationNotFoundException.
+   *
+   * @throws Exception it's expected to throw {@link ApplicationNotFoundException}
+   */
+  @Test(expected = ApplicationNotFoundException.class)
+  public void testDeployWithoutMarkingAppAsLatest() throws Exception {
+    String appName = "application_not_marked_latest";
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appName);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+    HttpResponse resp = deployWithoutMarkingLatest(
+        appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+    // the application deployment should succeed
+    Assert.assertEquals(200, resp.getResponseCode());
+    List<String> deployedAppVersions = applicationLifecycleService.getAppVersions(
+        appId.toEntityId().getAppReference()
+    ).stream().collect(Collectors.toList());
+
+    // there should be only one version of this application deployed
+    Assert.assertEquals(1, deployedAppVersions.size());
+    String deployedVersion = deployedAppVersions.get(0);
+    // the deployed version should be accessible in the applicationLifecycleService by ApplicationId
+    ApplicationDetail appDetail = applicationLifecycleService.getAppDetail(new ApplicationId(
+        Namespace.DEFAULT.getId(), appName, deployedVersion
+    ));
+    Assert.assertEquals(appName, appDetail.getName());
+    Assert.assertEquals(deployedVersion, appDetail.getAppVersion());
+
+    // But as the only deployed version is not marked as latest, trying to get the
+    // latest application by ApplicationReference should throw ApplicationNotFoundException (expected).
+    applicationLifecycleService.getLatestAppDetail(appId.toEntityId().getAppReference());
+  }
+
+  /**
+   * Testcase to deploy an application without marking it as latest (using the
+   * internal API to deploy, with the skipMarkingLatest flag set to true).
+   * And then mark the deployed application as latest using the markAppsAsLatest method.
+   *
+   * @throws Exception when the test crashes (not expected)
+   */
+  @Test
+  public void testMarkAppsAsLatest() throws Exception {
+    String appName = "application_to_be_marked_latest";
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appName);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+    HttpResponse resp = deployWithoutMarkingLatest(
+        appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+
+    // the application deployment should succeed
+    Assert.assertEquals(200, resp.getResponseCode());
+    List<String> deployedAppVersions = applicationLifecycleService.getAppVersions(
+        appId.toEntityId().getAppReference()
+    ).stream().collect(Collectors.toList());
+    // there should be only one version of this application deployed
+    Assert.assertEquals(1, deployedAppVersions.size());
+    String deployedVersion = deployedAppVersions.get(0);
+
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Collections.singletonList(new AppVersion(appName, deployedVersion))));
+
+    // now that the deployed application has been marked latest, trying to get the
+    // latest version of the application by ApplicationReference should succeed. And
+    // it should return the version of the application that we marked latest in the previous step.
+    ApplicationDetail appDetail = applicationLifecycleService.getLatestAppDetail(appId.toEntityId().getAppReference());
+    Assert.assertEquals(appName, appDetail.getName());
+    Assert.assertEquals(deployedVersion, appDetail.getAppVersion());
+  }
+
+  /**
+   * Testcase to verify that the markAppsAsLatest method throws BadRequestException when
+   * we try to mark multiple versions of the same application as latest.
+   *
+   * @throws Exception this test is expected to throw {@link BadRequestException}
+   */
+  @Test(expected = BadRequestException.class)
+  public void testMarkAppsAsLatestWithDuplicateAppIds() throws Exception {
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Arrays.asList(new AppVersion("app1", "v1"),
+                new AppVersion("app1", "v2"))
+        ));
+  }
+
+  /**
+   * Testcase to verify that the markAppsAsLatest method throws BadRequestException when
+   * we provide any Invalid application id.
+   *
+   * @throws Exception this test is expected to throw {@link BadRequestException}
+   */
+  @Test(expected = BadRequestException.class)
+  public void testMarkAppsAsLatestWithInvalidAppId() throws Exception {
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Collections.singletonList(new AppVersion("invalid app id", "v1"))
+        ));
+  }
+
+  /**
+   * Testcase to verify that the markAppsAsLatest method throws BadRequestException when
+   * any of the given application id is null.
+   *
+   * @throws Exception this test is expected to throw {@link BadRequestException}
+   */
+  @Test(expected = BadRequestException.class)
+  public void testMarkAppsAsLatestWithNullAppId() throws Exception {
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Collections.singletonList(new AppVersion(null, "v1"))
+        ));
+  }
+
+  /**
+   * Testcase to verify that the markAppsAsLatest method throws BadRequestException when
+   * any of the given application version is null.
+   *
+   * @throws Exception this test is expected to throw {@link BadRequestException}
+   */
+  @Test(expected = BadRequestException.class)
+  public void testMarkAppsAsLatestWithNullAppVersion() throws Exception {
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Collections.singletonList(new AppVersion("app", null))
+        ));
+  }
+
+  /**
+   * Testcase to verify that the markAppsAsLatest method throws ApplicationNotFoundException when
+   * any of the given application does not exist (or not found).
+   * In this test, we deploy an application without marking it as latest.
+   * Then we try to mark 2 applications as latest, one of them being the one that we deployed,
+   * and the other being an application id that does not exist. In this case, as one of the
+   * applications was not found, the markAppsAsLatest method should fail with the proper exception.
+   *
+   * @throws Exception this test is expected to throw {@link ApplicationNotFoundException}
+   */
+  @Test(expected = ApplicationNotFoundException.class)
+  public void testMarkAppsAsLatestWithNonExistingAppVersion() throws Exception {
+    String appName = "existing_app";
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appName);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+    HttpResponse resp = deployWithoutMarkingLatest(
+        appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+    Assert.assertEquals(200, resp.getResponseCode());
+    String deployedVersion = applicationLifecycleService.getAppVersions(
+        appId.toEntityId().getAppReference()
+    ).stream().collect(Collectors.toList()).get(0);
+
+
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Arrays.asList(new AppVersion("non_existing_app", "v1"),
+                new AppVersion(appName, deployedVersion))
+        ));
+  }
+
+  /**
+   * Testcase to verify the intended behaviour of the markAppsAsLatest method.
+   * In this case, we deploy two versions of the same application one after another.
+   * The first version will be deployed using the public deploy API (without the skipMarkingLatest flag).
+   * Therefore the first verison should be marked as latest initially.
+   * Then the second version will be deployed using the internal deploy API (with skipMarkingLatest=true).
+   * At this point,  we should get the first version should be returned when we try to get the latest version.
+   * Then, using the markAppsAsLatest method, we will mark the second version as latest.
+   * At this point, we should get the second version should be returned when we try to get the latest version.
+   *
+   * @throws Exception if the test crashes (not expected)
+   */
+  @Test
+  public void testMarkLatestAppsWithTwoVersionsOfSameApp() throws Exception {
+    String appName = "testApplicationWithTwoVersions";
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appName);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+    // deploy the first version using the public deploy API (without the skipMarkingLatest flag)
+    HttpResponse resp1 = deploy(
+        appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+    Assert.assertEquals(200, resp1.getResponseCode());
+    String firstVersion = applicationLifecycleService.getAppVersions(
+        appId.toEntityId().getAppReference()
+    ).stream().collect(Collectors.toList()).get(0);
+
+    // deploy the second version using the internal deploy API (with skipMarkingLatest set to true)
+    HttpResponse resp2 = deployWithoutMarkingLatest(
+        appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+    Assert.assertEquals(200, resp2.getResponseCode());
+    String secondVersion = applicationLifecycleService.getAppVersions(
+        appId.toEntityId().getAppReference()
+    ).stream().filter(version -> !version.equals(firstVersion)).collect(Collectors.toList()).get(0);
+
+    // verify that the first version was deployed before the second version
+    ApplicationDetail v1Detail = applicationLifecycleService.getAppDetail(
+        new ApplicationId(Id.Namespace.DEFAULT.getId(), appName, firstVersion));
+    ApplicationDetail v2Detail = applicationLifecycleService.getAppDetail(
+        new ApplicationId(Id.Namespace.DEFAULT.getId(), appName, secondVersion));
+    Assert.assertTrue(
+        v1Detail.getChange().getCreationTimeMillis() < v2Detail.getChange().getCreationTimeMillis());
+
+    // get the latest version of the app. It should be the first version at this point.
+    ApplicationDetail latest = applicationLifecycleService.getLatestAppDetail(
+        appId.toEntityId().getAppReference());
+    Assert.assertEquals(appName, latest.getName());
+    Assert.assertEquals(firstVersion, latest.getAppVersion());
+
+    // now mark the second version as latest
+    applicationLifecycleService.markAppsAsLatest(
+        Namespace.DEFAULT.toEntityId(),
+        new MarkLatestAppsRequest(
+            Collections.singletonList(new AppVersion(appName, secondVersion))
+        ));
+
+    // get the latest version of the app. It should be the second version at this point.
+    latest = applicationLifecycleService.getLatestAppDetail(appId.toEntityId().getAppReference());
+    Assert.assertEquals(appName, latest.getName());
+    Assert.assertEquals(secondVersion, latest.getAppVersion());
   }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {

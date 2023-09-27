@@ -69,7 +69,7 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
           ApplicationId.DEFAULT_VERSION,
           artifactSummary, configString, arguments.getChange(), null, x -> {
           },
-          ownerPrincipalId, arguments.canUpdateSchedules(), false,
+          ownerPrincipalId, arguments.canUpdateSchedules(), false, false,
           Collections.emptyMap());
     } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {
       // these exceptions are for sure not retry-able. It's hard to tell if the others are, so we just try retrying
