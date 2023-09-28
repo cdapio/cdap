@@ -45,7 +45,7 @@ import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.internal.messaging.MessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
