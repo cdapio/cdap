@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -141,8 +142,9 @@ public class SpannerMessagingService implements MessagingService {
         LOG.error("Cannot create topic", e);
       }
     }
-    while (request.iterator().hasNext()) {
-      byte[] payload = request.iterator().next();
+    Iterator<byte[]> iterator = request.iterator();
+    while (iterator.hasNext()) {
+      byte[] payload = iterator.next();
       Mutation mutation =
           Mutation.newInsertBuilder(getTableName(request.getTopicId()))
               .set(SEQUENCE_ID_FIELD)
