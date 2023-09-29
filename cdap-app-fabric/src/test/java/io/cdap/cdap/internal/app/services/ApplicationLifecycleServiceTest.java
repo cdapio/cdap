@@ -61,6 +61,8 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
+import io.cdap.cdap.proto.app.UpdateSourceControlMetaRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -703,6 +705,144 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     latest = applicationLifecycleService.getLatestAppDetail(appId.toEntityId().getAppReference());
     Assert.assertEquals(appName, latest.getName());
     Assert.assertEquals(secondVersion, latest.getAppVersion());
+  }
+
+  @Test
+  public void testUpdateSourceControlMeta() throws Exception {
+    // deploy an app, then update its scm meta
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail applicationDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    Assert.assertNull(applicationDetail.getSourceControlMeta());
+
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Collections.singletonList(new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                applicationDetail.getAppVersion(),
+                "updated-file-hash"
+            ))
+        )
+    );
+
+    ApplicationDetail updatedDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    Assert.assertNotNull(updatedDetail.getSourceControlMeta());
+    Assert.assertEquals("updated-file-hash", updatedDetail.getSourceControlMeta().getFileHash());
+  }
+
+  @Test
+  public void testUpdateSourceControlMetaWithNonExistingApp() throws Exception {
+    // deploy an app, then update its scm meta
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail applicationDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    Assert.assertNull(applicationDetail.getSourceControlMeta());
+
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Arrays.asList(new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                applicationDetail.getAppVersion(),
+                "updated-file-hash"
+            ), new UpdateSourceControlMetaRequest(
+                "someValidAppNameThatDoesNotExist",
+                "some-version",
+                "some-file-hash"
+            ))
+        )
+    );
+
+    ApplicationDetail updatedDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    Assert.assertNotNull(updatedDetail.getSourceControlMeta());
+    Assert.assertEquals("updated-file-hash", updatedDetail.getSourceControlMeta().getFileHash());
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateSourceControlMetaWithDuplicateAppIds() throws Exception {
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Arrays.asList(new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                "-SNAPSHOT",
+                "some-file-hash"
+            ), new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                "-SNAPSHOT",
+                "some-other-file-hash"
+            ))
+        )
+    );
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateSourceControlMetaWithInvalidAppId() throws Exception {
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Collections.singletonList(new UpdateSourceControlMetaRequest(
+                "$invalid AppName",
+                "-SNAPSHOT",
+                "some-file-hash"
+            ))
+        )
+    );
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateSourceControlMetaWithNullAppId() throws Exception {
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Collections.singletonList(new UpdateSourceControlMetaRequest(
+                null,
+                "-SNAPSHOT",
+                "some-file-hash"
+            ))
+        )
+    );
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateSourceControlMetaWithNullAppVersion() throws Exception {
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Collections.singletonList(new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                null,
+                "some-file-hash"
+            ))
+        )
+    );
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateSourceControlMetaWithNullGitFileHash() throws Exception {
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Collections.singletonList(new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                "-SNAPSHOT",
+                null
+            ))
+        )
+    );
+  }
+
+  @Test(expected = BadRequestException.class)
+  public void testUpdateSourceControlMetaWithEmptyGitFileHash() throws Exception {
+    applicationLifecycleService.updateSourceControlMeta(
+        new NamespaceId(TEST_NAMESPACE1),
+        new UpdateMultiSourceControlMetaReqeust(
+            Collections.singletonList(new UpdateSourceControlMetaRequest(
+                AllProgramsApp.NAME,
+                "-SNAPSHOT",
+                ""
+            ))
+        )
+    );
   }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {
