@@ -66,27 +66,27 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
-    String topicSQL =
-        String.format(
-            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
-                + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
-                + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
-                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
-            getTableName(topicMetadata.getTopicId()),
-            SEQUENCE_ID_FIELD,
-            PAYLOAD_SEQUENCE_ID,
-            PUBLISH_TS_FIELD,
-            PAYLOAD_FIELD);
-    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
-        adminClient.updateDatabaseDdl(
-            SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
-    try {
-      future.get();
-    } catch (InterruptedException e) {
-      LOG.error("Error when executing %s", topicSQL, e);
-    } catch (ExecutionException e) {
-      LOG.error("Error when executing %s", topicSQL, e);
-    }
+    // String topicSQL =
+    //     String.format(
+    //         "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
+    //             + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
+    //             + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
+    //             + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
+    //         getTableName(topicMetadata.getTopicId()),
+    //         SEQUENCE_ID_FIELD,
+    //         PAYLOAD_SEQUENCE_ID,
+    //         PUBLISH_TS_FIELD,
+    //         PAYLOAD_FIELD);
+    // OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
+    //     adminClient.updateDatabaseDdl(
+    //         SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
+    // try {
+    //   future.get();
+    // } catch (InterruptedException e) {
+    //   LOG.error("Error when executing %s", topicSQL, e);
+    // } catch (ExecutionException e) {
+    //   LOG.error("Error when executing %s", topicSQL, e);
+    // }
   }
 
   public static String getTableName(TopicId topicId) {
