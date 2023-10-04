@@ -415,6 +415,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       builder.setDescription(namespaceMeta.getDescription());
     }
 
+    if (Strings.isNullOrEmpty(existingMeta.getIdentity())) {
+      builder.setIdentity(getIdentity(namespaceId));
+    }
+
     NamespaceConfig config = namespaceMeta.getConfig();
     if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());

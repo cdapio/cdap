@@ -22,7 +22,10 @@ import io.cdap.cdap.internal.credential.CredentialProviderExtensionLoader;
 import io.cdap.cdap.internal.credential.CredentialProviderLoader;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.credential.DefaultCredentialProviderService;
+import io.cdap.cdap.internal.namespace.credential.DefaultNamespaceCredentialProviderService;
+import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
 import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
 
 /**
  * Credential provider module for AppFabric.
@@ -35,5 +38,9 @@ public class MasterCredentialProviderModule extends AbstractModule {
     bind(CredentialProviderService.class).to(DefaultCredentialProviderService.class)
         .in(Scopes.SINGLETON);
     bind(CredentialProviderLoader.class).to(CredentialProviderExtensionLoader.class);
+    bind(NamespaceCredentialProvider.class).to(NamespaceCredentialProviderService.class)
+        .in(Scopes.SINGLETON);
+    bind(NamespaceCredentialProviderService.class)
+        .to(DefaultNamespaceCredentialProviderService.class).in(Scopes.SINGLETON);
   }
 }

@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
@@ -51,7 +51,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
   private final Map<String, CredentialProvider> credentialProviders;
   private final CredentialIdentityManager credentialIdentityManager;
   private final CredentialProfileManager credentialProfileManager;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
   DefaultCredentialProviderService(CConfiguration cConf,
@@ -59,17 +59,18 @@ public class DefaultCredentialProviderService extends AbstractIdleService
       CredentialProviderLoader credentialProviderLoader,
       CredentialIdentityManager credentialIdentityManager,
       CredentialProfileManager credentialProfileManager,
-      NamespaceQueryAdmin namespaceQueryAdmin) {
+      NamespaceAdmin namespaceAdmin) {
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProfileManager = credentialProfileManager;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.namespaceAdmin = namespaceAdmin;
   }
 
   @Override
   protected void startUp() throws Exception {
+
     for (CredentialProvider provider : credentialProviders.values()) {
       provider.initialize(new DefaultCredentialProviderContext(cConf, provider.getName()));
     }
@@ -100,7 +101,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
     contextAccessEnforcer.enforce(identityId, StandardPermission.USE);
     NamespaceMeta namespaceMeta;
     try {
-      namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(namespace));
+      namespaceMeta = namespaceAdmin.get(new NamespaceId(namespace));
     } catch (Exception e) {
       throw new IOException(String.format("Failed to get namespace '%s' metadata",
           namespace), e);
