@@ -20,6 +20,7 @@ import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Statement;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.MessageFetcher;
@@ -35,29 +36,48 @@ public class SpannerMessageFetcher extends MessageFetcher {
   private final TopicId topicId;
 
   private boolean includeStart = true;
-  private Long startTime;
+  private long startTime;
+
+  private short sequenceId;
   private Transaction transaction;
 
   private DatabaseClient client;
 
   // by default there is virtually no limit
-  private int limit = 100;
+  private int limit = 500;
 
   public SpannerMessageFetcher(TopicId topicId) {
     this.topicId = topicId;
     this.client = SpannerUtil.getSpannerDbClient();
+    this.startTime = 0;
+    this.sequenceId = -1;
+  }
+
+  private void setOffset(byte[] id) {
+    // implementation copied from MessageId
+
+    try {
+      int offset = 0;
+      this.startTime = Bytes.toLong(id, offset);
+      offset += Bytes.SIZEOF_LONG;
+      this.sequenceId = Bytes.toShort(id, offset);
+    } catch (Exception e) {
+      LOG.error("extractTimestamp error", e);
+    }
+
+    // try {
+    //   String tmp = Bytes.toHexString(id);
+    //   return Long.parseLong(tmp.split("-")[2]);
+    // } catch (Exception e) {
+    //   LOG.error("extractTimestamp error", e);
+    //   return 0;
+    // }
   }
 
   @Override
   public MessageFetcher setStartMessage(byte[] startOffset, boolean inclusive) {
-    startTime = extractTimestamp(startOffset);
+    setOffset(startOffset);
     this.includeStart = inclusive;
-    return this;
-  }
-
-  @Override
-  public MessageFetcher setStartTime(long startTime) {
-    this.startTime = startTime;
     return this;
   }
 
@@ -71,34 +91,45 @@ public class SpannerMessageFetcher extends MessageFetcher {
 
   @Override
   public CloseableIterator<RawMessage> fetch() throws TopicNotFoundException, IOException {
-    if (!SpannerMessagingService.topicNameSet.contains(topicId.getTopic())){
-      return new CloseableIterator<RawMessage>() {
-        @Override
-        public void close() {
 
-        }
+    // String sqlStatement =
+    //     String.format(
+    //         "select  %s, %s, UNIX_MICROS(%s), %s from %s where %s in (select %s from %s where"
+    //             + " %s=0 and %s=0 and %s >"
+    //             + " TIMESTAMP_MICROS(%s) order by %s limit %s) order by"
+    //             + " %s,%s;",
+    //         SpannerMessagingService.SEQUENCE_ID_FIELD,
+    //         SpannerMessagingService.PAYLOAD_SEQUENCE_ID,
+    //         SpannerMessagingService.PUBLISH_TS_FIELD,
+    //         SpannerMessagingService.PAYLOAD_FIELD,
+    //         SpannerMessagingService.getTableName(topicId),
+    //         SpannerMessagingService.PUBLISH_TS_FIELD,
+    //         SpannerMessagingService.PUBLISH_TS_FIELD,
+    //         SpannerMessagingService.getTableName(topicId),
+    //         SpannerMessagingService.SEQUENCE_ID_FIELD,
+    //         SpannerMessagingService.PAYLOAD_SEQUENCE_ID,
+    //         SpannerMessagingService.PUBLISH_TS_FIELD,
+    //         startTime == null ? 0 : startTime,
+    //         SpannerMessagingService.PUBLISH_TS_FIELD,
+    //         limit,
+    //         SpannerMessagingService.PUBLISH_TS_FIELD,
+    //         SpannerMessagingService.SEQUENCE_ID_FIELD);
 
-        @Override
-        public boolean hasNext() {
-          return false;
-        }
-
-        @Override
-        public RawMessage next() {
-          return null;
-        }
-      };
-    }
     String sqlStatement =
         String.format(
-            "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where publish_ts > TIMESTAMP_MICROS(%s) LIMIT %s",
+            "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where (payload_sequence_id>-1 and publish_ts > TIMESTAMP_MICROS(%s)) or"
+                + " (payload_sequence_id>-1 and publish_ts = TIMESTAMP_MICROS(%s) and sequence_id > %s) order by"
+                + " publish_ts,sequence_id LIMIT %s",
             SpannerMessagingService.SEQUENCE_ID_FIELD,
             SpannerMessagingService.PAYLOAD_SEQUENCE_ID,
             SpannerMessagingService.PUBLISH_TS_FIELD,
             SpannerMessagingService.PAYLOAD_FIELD,
             SpannerMessagingService.getTableName(topicId),
-            startTime == null ? 0 : startTime,
+            startTime,
+            startTime,
+            this.sequenceId,
             limit);
+
     try {
       ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
       return new SpannerResultSetClosableIterator<>(resultSet);
@@ -139,57 +170,37 @@ public class SpannerMessageFetcher extends MessageFetcher {
     // }
   }
 
-  public static long extractTimestamp(byte[] id) {
-    // implementation copied from MessageId
-
-    try {
-      return Bytes.toLong(id, 0);
-    } catch (Exception e) {
-      LOG.error("extractTimestamp error", e);
-      return 0;
-    }
-
-    // try {
-    //   String tmp = Bytes.toHexString(id);
-    //   return Long.parseLong(tmp.split("-")[2]);
-    // } catch (Exception e) {
-    //   LOG.error("extractTimestamp error", e);
-    //   return 0;
-    // }
+  @Override
+  public MessageFetcher setStartTime(long startTime) {
+    this.startTime = startTime;
+    this.sequenceId = -1;
+    return this;
   }
 
   public static class SpannerResultSetClosableIterator<RawMessage>
-      implements CloseableIterator<io.cdap.cdap.messaging.data.RawMessage> {
+      extends AbstractCloseableIterator<io.cdap.cdap.messaging.data.RawMessage> {
 
     private final ResultSet resultSet;
-    private boolean hasNext;
 
     public SpannerResultSetClosableIterator(ResultSet resultSet) {
       this.resultSet = resultSet;
-      hasNext = resultSet.next();
+    }
+
+    @Override
+    protected io.cdap.cdap.messaging.data.RawMessage computeNext() {
+      if (!resultSet.next()){
+        return endOfData();
+      }
+
+      byte[] id = getMessageId(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
+      byte[] payload = resultSet.getBytes(3).toByteArray();
+
+      return new io.cdap.cdap.messaging.data.RawMessage(id, payload);
     }
 
     @Override
     public void close() {
       resultSet.close();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return hasNext;
-    }
-
-    @Override
-    public io.cdap.cdap.messaging.data.RawMessage next() {
-      if (!hasNext) {
-        return null;
-      }
-
-      byte[] id = getMessageId(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
-      byte[] payload = resultSet.getBytes(3).toByteArray();
-      hasNext = resultSet.next();
-
-      return new io.cdap.cdap.messaging.data.RawMessage(id, payload);
     }
   }
 }

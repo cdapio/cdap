@@ -21,6 +21,7 @@ import com.google.cloud.ByteArray;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Mutation;
+import com.google.cloud.spanner.SpannerException;
 import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -33,12 +34,16 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -61,32 +66,45 @@ public class SpannerMessagingService implements MessagingService {
   private final DatabaseClient client = SpannerUtil.getSpannerDbClient();
   private final DatabaseAdminClient adminClient = SpannerUtil.getSpannerDbAdminClient();
 
-  public static final Set<String> topicNameSet = new HashSet<>();
+  public static final Map<String, Boolean> topicNameSet = new ConcurrentHashMap<>();
+
+  private final ConcurrentLinkedQueue<StoreRequest> batch = new ConcurrentLinkedQueue<>();
 
   @Override
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
-    // String topicSQL =
-    //     String.format(
-    //         "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
-    //             + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
-    //             + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
-    //             + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
-    //         getTableName(topicMetadata.getTopicId()),
-    //         SEQUENCE_ID_FIELD,
-    //         PAYLOAD_SEQUENCE_ID,
-    //         PUBLISH_TS_FIELD,
-    //         PAYLOAD_FIELD);
-    // OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
-    //     adminClient.updateDatabaseDdl(
-    //         SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
-    // try {
-    //   future.get();
-    // } catch (InterruptedException e) {
-    //   LOG.error("Error when executing %s", topicSQL, e);
-    // } catch (ExecutionException e) {
-    //   LOG.error("Error when executing %s", topicSQL, e);
+    // if (!topicNameSet.containsKey(topicMetadata.getTopicId().getTopic())) {
+    //   synchronized (topicNameSet) {
+    //     if (!topicNameSet.containsKey(topicMetadata.getTopicId().getTopic())) {
+    //       createTopic(topicMetadata.getTopicId());
+    //       topicNameSet.put(topicMetadata.getTopicId().getTopic(), true);
+    //     }
+    //   }
     // }
+  }
+
+  private void createTopic(TopicId topicId) {
+    String topicSQL =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
+                + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
+                + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
+                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
+            getTableName(topicId),
+            SEQUENCE_ID_FIELD,
+            PAYLOAD_SEQUENCE_ID,
+            PUBLISH_TS_FIELD,
+            PAYLOAD_FIELD);
+    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
+        adminClient.updateDatabaseDdl(
+            SpannerUtil.instanceId, SpannerUtil.databaseId, Arrays.asList(topicSQL), null);
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      LOG.error("Error when executing %s", topicSQL, e);
+    } catch (ExecutionException e) {
+      LOG.error("Error when executing %s", topicSQL, e);
+    }
   }
 
   public static String getTableName(TopicId topicId) {
@@ -119,14 +137,13 @@ public class SpannerMessagingService implements MessagingService {
 
   @Override
   public MessageFetcher prepareFetch(TopicId topicId) throws TopicNotFoundException, IOException {
-    if (!topicNameSet.contains(topicId.getTopic())) {
-      try {
-        createTopic(new TopicMetadata(topicId, new HashMap<>()));
-        topicNameSet.add(topicId.getTopic());
-      } catch (TopicAlreadyExistsException e) {
-        LOG.error("Cannot create topic", e);
-      }
+
+    try {
+      createTopic(new TopicMetadata(topicId, new HashMap<>()));
+    } catch (TopicAlreadyExistsException e) {
+      LOG.error("Error creating topic", e);
     }
+
     return new SpannerMessageFetcher(topicId);
   }
 
@@ -134,29 +151,59 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    if (!topicNameSet.contains(request.getTopicId().getTopic())) {
-      try {
-        createTopic(new TopicMetadata(request.getTopicId(), new HashMap<>()));
-        topicNameSet.add(request.getTopicId().getTopic());
-      } catch (TopicAlreadyExistsException e) {
-        LOG.error("Cannot create topic", e);
-      }
+    long start = System.currentTimeMillis();
+    try {
+      createTopic(new TopicMetadata(request.getTopicId(), new HashMap<>()));
+    } catch (TopicAlreadyExistsException e) {
+      LOG.error("Error creating topic", e);
     }
-    Iterator<byte[]> iterator = request.iterator();
-    while (iterator.hasNext()) {
-      byte[] payload = iterator.next();
-      Mutation mutation =
-          Mutation.newInsertBuilder(getTableName(request.getTopicId()))
-              .set(SEQUENCE_ID_FIELD)
-              .to(0)
-              .set(PAYLOAD_SEQUENCE_ID)
-              .to(0)
-              .set(PUBLISH_TS_FIELD)
-              .to("spanner.commit_timestamp()")
-              .set(PAYLOAD_FIELD)
-              .to(ByteArray.copyFrom(payload))
-              .build();
-      client.write(Arrays.asList(mutation));
+
+    batch.add(request);
+
+    synchronized (client) {
+      if (!batch.isEmpty()) {
+        int i = 0;
+        List<Mutation> batchCopy = new ArrayList<>(batch.size());
+        // We need to batch less than fetch limit since we read for publish_ts >= last_message.publish_ts
+        // see fetch for explanation of why we read for publish_ts >= last_message.publish_ts and
+        // not publish_ts > last_message.publish_ts
+        while (!batch.isEmpty()) {
+          StoreRequest headRequest = batch.poll();
+          Iterator<byte[]> iterator = headRequest.iterator();
+          while (iterator.hasNext()) {
+            byte[] payload = iterator.next();
+
+            Mutation mutation =
+                Mutation.newInsertBuilder(getTableName(headRequest.getTopicId()))
+                    .set(SEQUENCE_ID_FIELD)
+                    .to(i++)
+                    .set(PAYLOAD_SEQUENCE_ID)
+                    .to(0)
+                    .set(PUBLISH_TS_FIELD)
+                    .to("spanner.commit_timestamp()")
+                    .set(PAYLOAD_FIELD)
+                    .to(ByteArray.copyFrom(payload))
+                    .build();
+            batchCopy.add(mutation);
+          }
+
+
+          if (batch.isEmpty() && (i < 50 || System.currentTimeMillis() - start < 50)) {
+            try {
+              Thread.sleep(5);
+            } catch (InterruptedException e) {
+              LOG.error("error during sleep", e);
+            }
+          }
+        }
+        if (!batchCopy.isEmpty()) {
+          try {
+            client.write(batchCopy);
+          } catch (SpannerException e) {
+            LOG.error("Cannot commit mutations ", e);
+          }
+        }
+      }
     }
 
     return null;
