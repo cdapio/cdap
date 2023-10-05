@@ -17,15 +17,19 @@
 package io.cdap.cdap.internal.namespace.credential.handler;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants.Gateway;
+import io.cdap.cdap.common.conf.Constants.Metrics.Credential;
+import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
@@ -73,18 +77,20 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   private final CredentialIdentityManager credentialIdentityManager;
   private final CredentialProfileManager credentialProfileManager;
   private final CredentialProvider credentialProvider;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   GcpWorkloadIdentityHttpHandler(ContextAccessEnforcer accessEnforcer,
       NamespaceQueryAdmin namespaceQueryAdmin,
       CredentialIdentityManager credentialIdentityManager,
       CredentialProfileManager credentialProfileManager,
-      CredentialProvider credentialProvider) {
+      CredentialProvider credentialProvider, MetricsCollectionService metricsCollectionService) {
     this.accessEnforcer = accessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProfileManager = credentialProfileManager;
     this.credentialProvider = credentialProvider;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -101,27 +107,39 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   public void validateIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.PROVISION_CREDENTIAL);
-    NamespaceWorkloadIdentity namespaceWorkloadIdentity =
-        deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
-    if (Strings.isNullOrEmpty(namespaceWorkloadIdentity.getIdentity())) {
-      throw new BadRequestException("Identity cannot be null or empty.");
-    }
-    NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    validateNamespaceIdentity(namespaceMeta, namespaceWorkloadIdentity);
-    CredentialIdentity credentialIdentity = new CredentialIdentity(
-        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
-        namespaceWorkloadIdentity.getIdentity(),
-        namespaceWorkloadIdentity.getServiceAccount());
-    switchToInternalUser();
+    boolean success = false;
     try {
-      credentialProvider.validateIdentity(namespaceMeta, credentialIdentity);
-    } catch (IdentityValidationException e) {
-      throw new BadRequestException(String.format("Identity validation failed with error: %s",
-          e.getMessage()), e);
-    } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
-      throw new NotFoundException(e.getMessage());
+      NamespaceWorkloadIdentity namespaceWorkloadIdentity =
+          deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
+      if (Strings.isNullOrEmpty(namespaceWorkloadIdentity.getIdentity())) {
+        throw new BadRequestException("Identity cannot be null or empty.");
+      }
+      NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
+      validateNamespaceIdentity(namespaceMeta, namespaceWorkloadIdentity);
+      CredentialIdentity credentialIdentity = new CredentialIdentity(
+          NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
+          namespaceWorkloadIdentity.getIdentity(),
+          namespaceWorkloadIdentity.getServiceAccount());
+      switchToInternalUser();
+      try {
+        credentialProvider.validateIdentity(namespaceMeta, credentialIdentity);
+      } catch (IdentityValidationException e) {
+        throw new BadRequestException(String.format("Identity validation failed with error: %s",
+            e.getMessage()), e);
+      } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
+        throw new NotFoundException(e.getMessage());
+      }
+      responder.sendJson(HttpResponseStatus.OK, "Namespace identity validated successfully");
+      success = true;
+    } finally {
+      if (success) {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_VALIDATE_SUCCESS_COUNT, namespace);
+      } else {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_VALIDATE_FAILURE_COUNT, namespace);
+      }
     }
-    responder.sendJson(HttpResponseStatus.OK, "Namespace identity validated successfully");
   }
 
   /**
@@ -142,13 +160,25 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
         GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
     switchToInternalUser();
-    Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
-    if (!identity.isPresent()) {
-      throw new NotFoundException("Namespace identity not found.");
+    boolean success = false;
+    try {
+      Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
+      if (!identity.isPresent()) {
+        throw new NotFoundException("Namespace identity not found.");
+      }
+      NamespaceWorkloadIdentity workloadIdentity = new NamespaceWorkloadIdentity(
+          identity.get().getIdentity(), identity.get().getSecureValue());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(workloadIdentity));
+      success = true;
+    } finally {
+      if (success) {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_GET_SUCCESS_COUNT, namespace);
+      } else {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_GET_FAILURE_COUNT, namespace);
+      }
     }
-    NamespaceWorkloadIdentity workloadIdentity = new NamespaceWorkloadIdentity(
-        identity.get().getIdentity(), identity.get().getSecureValue());
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(workloadIdentity));
   }
 
   /**
@@ -167,26 +197,38 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   public void createIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.SET_SERVICE_ACCOUNT);
-    NamespaceWorkloadIdentity namespaceWorkloadIdentity =
-        deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
-    if (Strings.isNullOrEmpty(namespaceWorkloadIdentity.getIdentity())) {
-      throw new BadRequestException("Identity cannot be null or empty.");
+    boolean success = false;
+    try {
+      NamespaceWorkloadIdentity namespaceWorkloadIdentity =
+          deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
+      if (Strings.isNullOrEmpty(namespaceWorkloadIdentity.getIdentity())) {
+        throw new BadRequestException("Identity cannot be null or empty.");
+      }
+      NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
+      validateNamespaceIdentity(namespaceMeta, namespaceWorkloadIdentity);
+      CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
+          GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
+      switchToInternalUser();
+      Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
+      CredentialIdentity credentialIdentity = new CredentialIdentity(
+          NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
+          namespaceMeta.getIdentity(), namespaceWorkloadIdentity.getServiceAccount());
+      if (identity.isPresent()) {
+        credentialIdentityManager.update(credentialIdentityId, credentialIdentity);
+      } else {
+        credentialIdentityManager.create(credentialIdentityId, credentialIdentity);
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+      success = true;
+    } finally {
+      if (success) {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_UPDATE_SUCCESS_COUNT, namespace);
+      } else {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_UPDATE_FAILURE_COUNT, namespace);
+      }
     }
-    NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    validateNamespaceIdentity(namespaceMeta, namespaceWorkloadIdentity);
-    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
-        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
-    switchToInternalUser();
-    Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
-    CredentialIdentity credentialIdentity = new CredentialIdentity(
-        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
-        namespaceMeta.getIdentity(), namespaceWorkloadIdentity.getServiceAccount());
-    if (identity.isPresent()) {
-      credentialIdentityManager.update(credentialIdentityId, credentialIdentity);
-    } else {
-      credentialIdentityManager.create(credentialIdentityId, credentialIdentity);
-    }
-    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
@@ -204,12 +246,24 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   public void deleteIdentity(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.UNSET_SERVICE_ACCOUNT);
-    NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
-        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
-    switchToInternalUser();
-    credentialIdentityManager.delete(credentialIdentityId);
-    responder.sendStatus(HttpResponseStatus.OK);
+    boolean success = false;
+    try{
+      NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
+      CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
+          GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
+      switchToInternalUser();
+      credentialIdentityManager.delete(credentialIdentityId);
+      responder.sendStatus(HttpResponseStatus.OK);
+      success = true;
+    } finally {
+      if (success) {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_DELETE_SUCCESS_COUNT, namespace);
+      } else {
+        emitWorkloadIdentityCountMetric(
+            Credential.NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_DELETE_FAILURE_COUNT, namespace);
+      }
+    }
   }
 
   private NamespaceMeta getNamespaceMeta(String namespace) throws Exception {
@@ -246,6 +300,11 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
+  }
+
+  private void emitWorkloadIdentityCountMetric(String metricName, String namespace) {
+    metricsCollectionService.getContext(ImmutableMap.of(Tag.NAMESPACE, namespace))
+        .increment(metricName, 1);
   }
 
   private <T> T deserializeRequestContent(FullHttpRequest request, Class<T> clazz)

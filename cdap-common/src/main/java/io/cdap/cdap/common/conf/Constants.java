@@ -1017,6 +1017,28 @@ public final class Constants {
     }
 
     /**
+     * Namespaced Service Accounts metrics related constants.
+     */
+    public static final class Credential {
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_VALIDATE_FAILURE_COUNT
+          = "namespace.credentials.workload.identity.validate.failure";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_VALIDATE_SUCCESS_COUNT
+          = "namespace.credentials.workload.identity.validate.success";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_GET_FAILURE_COUNT
+          = "namespace.credentials.workload.identity.get.failure";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_GET_SUCCESS_COUNT
+          = "namespace.credentials.workload.identity.get.success";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_UPDATE_FAILURE_COUNT
+          = "namespace.credentials.workload.identity.update.failure";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_UPDATE_SUCCESS_COUNT
+          = "namespace.credentials.workload.identity.update.success";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_DELETE_FAILURE_COUNT
+          = "namespace.credentials.workload.identity.delete.failure";
+      public static final String NAMESPACE_CREDENTIALS_WORKLOAD_IDENTITY_DELETE_SUCCESS_COUNT
+          = "namespace.credentials.workload.identity.delete.success";
+    }
+
+    /**
      * Metrics context tags.
      */
     public static final class Tag {
