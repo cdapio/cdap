@@ -19,6 +19,7 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
@@ -198,6 +199,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   public static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
+  private static final String CDAP_INSTALL_NAMESPACE_LABEL = "cdap.k8s.namespace";
+
   private static final String DEFAULT_CONTAINER_LABEL = "cdap.container";
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
   private static final String DEFAULT_POD_NAME_FILE = "pod.name";
@@ -393,7 +396,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String resourcePrefix = "cdap-" + instanceName + "-";
     twillRunner = new KubeTwillRunnerService(context, apiClientFactory, namespace, discoveryService,
         podInfo, resourcePrefix,
-        Collections.singletonMap(instanceLabel, instanceName),
+        ImmutableMap.of(instanceLabel, instanceName, CDAP_INSTALL_NAMESPACE_LABEL, cdapInstallNamespace),
         enableMonitor,
         workloadIdentityEnabled,
         workloadLauncherRoleNameForNamespace,
