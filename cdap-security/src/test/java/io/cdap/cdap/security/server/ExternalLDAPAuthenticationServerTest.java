@@ -20,11 +20,14 @@ import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests for {@link ExternalAuthenticationServer}.
@@ -72,4 +75,19 @@ public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthentica
   protected String getAuthenticatedUserName() {
    return "admin";
   }
+
+  /**
+   * Test request to server with empty password
+   */
+   @Test
+   public void testEmptyPassword() throws Exception {
+     HttpURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN));
+     try {
+       // base64 encoding of admin: (username=admin, password=empty string)
+       urlConn.addRequestProperty("Authorization", "Basic YWRtaW46");
+       Assert.assertEquals(401, urlConn.getResponseCode());
+      } finally {
+       urlConn.disconnect();
+      }
+    }
 }
