@@ -33,8 +33,10 @@ import com.google.cloud.dataproc.v1.EnvironmentConfig;
 import com.google.cloud.dataproc.v1.ExecutionConfig;
 import com.google.cloud.dataproc.v1.JobControllerClient;
 import com.google.cloud.dataproc.v1.LocationName;
+import com.google.cloud.dataproc.v1.PeripheralsConfig;
 import com.google.cloud.dataproc.v1.RuntimeConfig;
 import com.google.cloud.dataproc.v1.SparkBatch;
+import com.google.cloud.dataproc.v1.SparkHistoryServerConfig;
 import com.google.cloud.http.HttpTransportOptions;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -735,8 +737,18 @@ public class ServerlessDataprocRuntimeJobManager implements RuntimeJobManager {
       .setSubnetworkUri("pga-subnet")
       .build();
 
+    //TODO : To make this an advanced option via UI
+    SparkHistoryServerConfig sparkHistoryServerConfig = SparkHistoryServerConfig.newBuilder()
+      .setDataprocCluster("projects/cdf-test-317207/regions/us-west1/clusters/sanket-spark-history").build();
+
+    PeripheralsConfig peripheralsConfig = PeripheralsConfig.newBuilder()
+      .setSparkHistoryServerConfig(sparkHistoryServerConfig)
+      .build();
+
+
     EnvironmentConfig environmentConfig = EnvironmentConfig.newBuilder()
       .setExecutionConfig(executionConfig)
+      .setPeripheralsConfig(peripheralsConfig)
       .build();
 
     RuntimeConfig runtimeConfig = RuntimeConfig.newBuilder()
@@ -801,7 +813,10 @@ public class ServerlessDataprocRuntimeJobManager implements RuntimeJobManager {
     // dataproc.performance.metrics.listener.enabled
     // spark.extraListeners -> com.google.cloud.spark.performance.DataprocMetricsListener
     properties.put("spark.extraListeners","");
-    properties.put("spark.dynamicAllocation.minExecutors","2");
+    properties.put("spark.dataproc.listeners","");
+    // TODO : Initial job has not accepted any resources; check your cluster UI to ensure that workers are registered and have sufficient resources
+    properties.put("spark.dynamicAllocation.enabled", "false");
+//    properties.put("spark.dynamicAllocation.minExecutors","2");
 
     return properties;
   }

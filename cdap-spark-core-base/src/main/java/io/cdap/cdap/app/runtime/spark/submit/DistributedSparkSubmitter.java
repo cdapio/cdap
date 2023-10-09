@@ -76,8 +76,12 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     if (tokenRenewalInterval > 0) {
       config.put("spark.yarn.token.renewal.interval", Long.toString(tokenRenewalInterval));
     }
-    config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-    config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+    // TODO : error Error opening log file '<LOG_DIR>/gc.log': No such file or directory
+//    config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+//    config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+
+    config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  "/tmp");
+    config.put("spark.executorEnv.CDAP_LOG_DIR", "/tmp");
 
     config.put("spark.yarn.security.tokens.hbase.enabled", "false");
     config.put("spark.yarn.security.tokens.hive.enabled", "false");
@@ -92,7 +96,8 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
-    argBuilder.add("--master").add("yarn")
+    argBuilder
+//      .add("--master").add("yarn")
       .add("--deploy-mode").add("cluster");
   }
 

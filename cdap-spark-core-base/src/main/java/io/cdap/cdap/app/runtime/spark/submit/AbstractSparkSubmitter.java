@@ -30,11 +30,15 @@ import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,6 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -61,9 +66,9 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     input -> input.getURI().toString().split("#")[0];
 
   @Override
-  public final <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
-                                            Map<String, String> configs, List<LocalizeResource> resources,
-                                            URI jobFile, final V result) throws Exception {
+  public <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
+                                      Map<String, String> configs, List<LocalizeResource> resources,
+                                      URI jobFile, final V result) throws Exception {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
@@ -207,22 +212,6 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     }
   }
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
-  protected void addMasterPOC(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
-    LOG.warn("SANKET here in add master");
-    // Use at least two threads for Spark Streaming
-    String masterArg = "local[2]";
-
-    String master = configs.get("spark.master");
-    if (master != null) {
-      Matcher matcher = LOCAL_MASTER_PATTERN.matcher(master);
-      if (matcher.matches()) {
-        masterArg = "local[" + matcher.group(1) + "]";
-      }
-    }
-
-    argBuilder.add("--master").add(masterArg);
-  }
-
 
   /**
    * Creates the list of arguments that will be used for calling {@link SparkSubmit#main(String[])}.
@@ -234,7 +223,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @return a list of arguments
    * @throws Exception if there is error while creating submit arguments
    */
-  private List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
+  protected List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
                                              List<LocalizeResource> resources, URI jobFile) throws Exception {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
 
@@ -242,10 +231,23 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     Iterable<LocalizeResource> archivesIterable = getArchives(resources);
     Iterable<LocalizeResource> filesIterable = getFiles(resources);
 
-//    addMasterPOC(configs, builder);
+    addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     configs.putAll(generateSubmitConf());
+    //// TODO : error :  '-Xlog:gc*:file=<LOG_DIR>/gc.log:time,level,tags:filecount=10,filesize=1M', see error log for details.
+    configs.put("spark.driver.extraJavaOptions", "-XX:+UseG1GC -verbose:gc -Xlog:gc*:file=/tmp/gc.log:time,level,tags:filecount=10,filesize=1M -XX:+ExitOnOutOfMemoryError -Dstreaming.checkpoint.rewrite.enabled=true");
+    configs.put("spark.executor.extraJavaOptions","-XX:+UseG1GC -verbose:gc -Xlog:gc*:file=/tmp/gc.log:time,level,tags:filecount=10,filesize=1M -XX:+ExitOnOutOfMemoryError -Dstreaming.checkpoint.rewrite.enabled=true");
+
+    // TODO : Error :  for distributed spark :  $destFile exists and does not match contents
+//    configs.put("spark.files.overwrite","true");
+    configs.put("spark.files","");
+    configs.put("spark.jars","");
+    configs.put("spark.repl.local.jars","");
+
+
+
+
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
 
@@ -278,10 +280,22 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       builder.add("--class").add(SparkMainWrapper.class.getName());
     }
 
-    if ("file".equals(jobFile.getScheme())) {
-      builder.add(jobFile.getPath());
+    LOG.warn("SANKET : URI jobFile " + jobFile.getScheme());
+    LOG.warn("SANKET : URI jobFile " + jobFile.getPath());
+
+    File jobFileCheck = new File(jobFile);
+
+    if (jobFileCheck.exists()) {
+      LOG.warn("SANKET : Exists");
     } else {
-      builder.add(jobFile.toString());
+      LOG.warn("SANKET : Doesn't Exist");
+      jobFile = createJobJar();
+    }
+
+    if ("file".equals(jobFile.getScheme())) {
+      builder.add("file:" + jobFile.getPath());
+    } else {
+      builder.add("file:" + jobFile.toString());
     }
 
     if (!isPySpark) {
@@ -293,4 +307,25 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
     return builder.build();
   }
+
+
+
+  /**
+   * Generates the job jar, which is always be an empty jar file
+   *
+   * @return The generated {@link File} in the given target directory
+   */
+  private URI createJobJar() throws IOException {
+    File tempFile = new File(new File("/tmp"), "cdapSparkJob.jar");
+    if (tempFile.exists()) {
+      return tempFile.toURI();
+    }
+
+    LOG.warn("SANKET : writing " + tempFile.toURI());
+
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(tempFile))) {
+      return tempFile.toURI();
+    }
+  }
+
 }

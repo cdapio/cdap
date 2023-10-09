@@ -84,7 +84,7 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
   }
 
   @Override
-  public Optional<Path> apply(Location location) {
+  public Optional<Path> apply(Location binary.handling.modelocation) {
     try {
       return Optional.of(cache.get(new CacheKey(getCacheName(location), location.lastModified())));
     } catch (Exception e) {

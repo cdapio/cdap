@@ -237,6 +237,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       final List<LocalizeResource> localizeResources = new ArrayList<>();
       final URI jobFile = context.isPySpark() ? getPySparkScript(tempDir) : createJobJar(tempDir);
+      localizeResources.add(new LocalizeResource(jobFile,false));
       List<File> extraPySparkFiles = new ArrayList<>();
 
       boolean sparkMetricsEnabled = cConf.getBoolean(Constants.Metrics.SPARK_METRICS_ENABLED);
@@ -250,7 +251,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
 
       if (masterEnv != null) {
-        // Add cconf, hconf, metrics.properties, logback for master environment
+        // Add cconf, hconf, metrics.properties, logback for master environmentSpark
         localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
         Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
@@ -608,6 +609,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     return jarFile;
   }
 
+
+
   /**
    * Creates the configurations for the spark submitter.
    */
@@ -759,6 +762,13 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
               Files.copy(file, jarOut);
               jarOut.closeEntry();
             }
+/*
+            if (!file.isDirectory() && file.getAbsolutePath().contains("artifacts_archive")) {
+              LOG.warn("SANKET ADDING DATAGEN ");
+              classpath.add(file.getName() + "/USER-datagen-plugins-0.2.0-SNAPSHOT.jar");
+            }
+            LOG.warn("SANKET ADDING DATAGEN 2");
+*/
           }
         }
       }

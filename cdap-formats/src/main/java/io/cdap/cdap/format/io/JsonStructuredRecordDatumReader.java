@@ -205,6 +205,8 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
         return Float.valueOf(key);
       case DOUBLE:
         return Double.valueOf(key);
+      case UNION:
+        return Byte.valueOf(key);
     }
     throw new IOException("Unable to convert string to type " + type);
   }

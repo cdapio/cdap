@@ -491,8 +491,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       twillPreparer.addJVMOptions("-D" + ContextInitializer.CONFIG_FILE_PROPERTY
                                     + "=resources.jar/resources/" + LOGBACK_FILE_NAME);
       // Set the system property to be used by the logback xml
+      // TODO : error Error opening log file '<LOG_DIR>/gc.log': No such file or directory
+//      twillPreparer.addJVMOptions(
+//        "-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
       twillPreparer.addJVMOptions(
-        "-DCDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+        "-DCDAP_LOG_DIR=" + "/tmp");
+
 
       // Runnable has the logback.xml just in the home directory
       for (String runnableName : runnables) {

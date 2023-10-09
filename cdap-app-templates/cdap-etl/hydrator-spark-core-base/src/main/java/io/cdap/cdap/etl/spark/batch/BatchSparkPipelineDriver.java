@@ -194,6 +194,17 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   }
 
   @Override
+  public void run(JavaSparkExecutionContext sec, JavaSparkContext javaSparkContext) throws Exception {
+    this.jsc = javaSparkContext;
+    this.sec = sec;
+
+    // Execution the whole pipeline in one long transaction. This is because the Spark execution
+    // currently share the same contract and API as the MapReduce one.
+    // The API need to expose DatasetContext, hence it needs to be executed inside a transaction
+    Transactionals.execute(sec, this, Exception.class);
+  }
+
+  @Override
   public void run(DatasetContext context) throws Exception {
     BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                              BatchPhaseSpec.class);

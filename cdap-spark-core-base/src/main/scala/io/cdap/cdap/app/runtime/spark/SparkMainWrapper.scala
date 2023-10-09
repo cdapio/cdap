@@ -19,6 +19,8 @@ package io.cdap.cdap.app.runtime.spark
 import io.cdap.cdap.api.common.RuntimeArguments
 import io.cdap.cdap.api.spark.JavaSparkMain
 import io.cdap.cdap.api.spark.SparkMain
+import org.apache.spark.api.java.JavaSparkContext
+import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
 import java.lang.reflect.Method
@@ -106,6 +108,45 @@ object SparkMainWrapper {
         }
       }
     }
+  }
+
+  def directSparkInitialize(sparkSession: SparkSession,mainClassStr: String): Unit = {
+    LOG.info("directSparkInitialize")
+
+    if (stopped) {
+      readyLatch.countDown()
+      return
+    }
+
+    // Initialize the Spark runtime.
+    try {
+      completion = SparkRuntimeUtils.initSparkMain()
+    } finally {
+      readyLatch.countDown()
+    }
+
+    try {
+      val sparkClassLoader = SparkClassLoader.findFromContext()
+      val executionContext = sparkClassLoader.getSparkExecutionContext(false)
+      val serializableExecutionContext = new SerializableSparkExecutionContext(executionContext)
+
+      val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(mainClassStr);
+
+      userSparkClass.asSubclass(classOf[JavaSparkMain]).newInstance().run(
+        sparkClassLoader.createJavaExecutionContext(serializableExecutionContext),
+        JavaSparkContext.fromSparkContext(sparkSession.sparkContext));
+
+    } catch {
+      case e : Throwable => {
+        completion.completedWithException(e)
+        // If it is stopped, ok to ignore the InterruptedException, as system issues interrupt to the main thread
+        // to unblock the main method.
+        if (!(SparkRuntimeEnv.isStopped && e.isInstanceOf[InterruptedException])) {
+          throw e
+        }
+      }
+    }
+
   }
 
   /**

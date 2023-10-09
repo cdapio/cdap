@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 
 import java.io.NotSerializableException;
 import java.io.Serializable;
+import org.apache.spark.api.java.JavaSparkContext;
 
 /**
  * A Java interface for Spark program to implement. It provides access to {@link JavaSparkExecutionContext} for
@@ -74,4 +75,7 @@ public interface JavaSparkMain extends Serializable {
    * @param sec the context for interacting with CDAP
    */
   void run(JavaSparkExecutionContext sec) throws Exception;
+  default void run(JavaSparkExecutionContext sec, JavaSparkContext  javaSparkContext) throws Exception {
+    // no-op
+  }
 }
