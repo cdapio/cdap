@@ -65,6 +65,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   private final FieldValidator fieldValidator;
   private final int fetchSize;
 
+  /**
+   * Default constructor for PostgreSqlStructuredTable.
+   */
   public PostgreSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema,
       int fetchSize) {
     this.connection = connection;
@@ -272,9 +275,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * Generates a SELECT query for scanning over all the provided ranges. For each of the range, it
    * generates a where clause using the {@link #appendRange(StringBuilder, Range)} method. The where
    * clause of each range are OR together. E.g.
-   * <p>
-   * SELECT * FROM table WHERE (key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?) OR ((key3 >= ?)
-   * AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?)) LIMIT limit
+   *
+   * <p>SELECT * FROM table WHERE (key1 = ? AND key2 = ?) OR (key1 = ? AND key2 = ?) OR ((key3 >=
+   * ?) AND (key3 <= ?)) OR ((key4 >= ?) AND (key4 <= ?)) LIMIT limit
    *
    * @param singletonRanges the list of singleton ranges to scan
    * @param ranges the list of ranges to scan
@@ -362,6 +365,12 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
       Collection<Field<?>> filterIndexes, SortOrder sortOrder)
       throws InvalidFieldException, IOException {
+    return scan(keyRange, limit, filterIndexes, tableSchema.getPrimaryKeys(), sortOrder);
+  }
+
+  private CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes, Collection<String> fieldsToSort, SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
     fieldValidator.validateScanRange(keyRange);
     filterIndexes.forEach(fieldValidator::validateField);
     if (!tableSchema.isIndexColumns(
@@ -373,7 +382,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan range {} with filterIndexes {} limit {} sortOrder {}",
         tableSchema.getTableId(), keyRange, filterIndexes, limit, sortOrder);
 
-    String scanQuery = getScanIndexesQuery(keyRange, limit, filterIndexes, sortOrder);
+    String scanQuery = getScanIndexesQuery(keyRange, limit, filterIndexes, fieldsToSort, sortOrder);
     // Since in getScanIndexesQuery we directly set the NULL checks, we need to skip the null fields
     filterIndexes = filterIndexes.stream().filter(f -> f.getValue() != null)
         .collect(Collectors.toList());
@@ -788,7 +797,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Sets the {@link PreparedStatement} arguments by the key {@link Collection<Range>}.
+   * Sets the {@link PreparedStatement} arguments by the key
+   * {@link Collection}&lt;{@link Range}&gt;}.
    */
   private void setStatementFieldByRange(Collection<Range> keyRanges,
       PreparedStatement statement) throws SQLException, InvalidFieldException {
@@ -931,18 +941,24 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * @return the scan query
    */
   private String getScanIndexesQuery(Range range, int limit, Collection<Field<?>> filterIndexes,
-      SortOrder sortOrder) {
+      Collection<String> fieldsToSort, SortOrder sortOrder) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ")
         .append(tableSchema.getTableId().getName())
         .append(" WHERE ");
 
     if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
       appendRange(queryString, range);
-      queryString.append(" AND ");
     }
-    queryString.append(getIndexesFilterClause(filterIndexes));
 
-    queryString.append(getOrderByClause(tableSchema.getPrimaryKeys(), sortOrder));
+    if (!filterIndexes.isEmpty()) {
+      // only add AND if there was range clause applied
+      if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+        queryString.append(" AND ");
+      }
+      queryString.append(getIndexesFilterClause(filterIndexes));
+    }
+
+    queryString.append(getOrderByClause(fieldsToSort, sortOrder));
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
   }

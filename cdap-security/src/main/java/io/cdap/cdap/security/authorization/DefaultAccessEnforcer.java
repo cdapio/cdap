@@ -329,6 +329,9 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       case PROFILE:
         tags.put(Constants.Metrics.Tag.PROFILE, entityId.getEntityName());
         break;
+      case OPERATION_RUN:
+        tags.put(Constants.Metrics.Tag.OPERATION_RUN, entityId.getEntityName());
+        break;
       default:
         // No tags to set
     }

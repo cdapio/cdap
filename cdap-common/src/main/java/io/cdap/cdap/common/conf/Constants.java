@@ -1085,6 +1085,9 @@ public final class Constants {
       public static final String SCHEDULE = "sch";
 
       public static final String METADATA_CONSUMER = "met";
+
+      // For operations
+      public static final String OPERATION_RUN = "operation";
     }
 
     /**
