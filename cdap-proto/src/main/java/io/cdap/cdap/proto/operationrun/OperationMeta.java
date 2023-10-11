@@ -67,4 +67,17 @@ public class OperationMeta {
   public int hashCode() {
     return Objects.hash(resources, createTime, endTime);
   }
+
+  public Set<OperationResource> getResources() {
+    return resources;
+  }
+
+  public Instant getCreateTime() {
+    return createTime;
+  }
+
+  @Nullable
+  public Instant getEndTime() {
+    return endTime;
+  }
 }

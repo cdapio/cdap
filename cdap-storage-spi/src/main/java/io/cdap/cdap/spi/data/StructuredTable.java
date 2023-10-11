@@ -280,7 +280,7 @@ public interface StructuredTable extends Closeable {
   void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
 
   /**
-   * Updates the specific fields in a range of rows from the table
+   * Updates the specific fields in a range of rows from the table.
    *
    * @param keyRange key range of the rows to update: cab only be a primary key prefix
    * @param fields the fields to write to
