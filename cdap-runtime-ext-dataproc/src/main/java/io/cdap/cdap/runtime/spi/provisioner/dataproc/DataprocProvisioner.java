@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -429,8 +428,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   String getImageVersion(ProvisionerContext context, DataprocConf conf) {
     String imageVersion = conf.getImageVersion();
     if (imageVersion == null) {
-      // Dataproc 2.0 is the default version until 6.9.x
-      imageVersion = "2.0";
+      // Dataproc 2.1 is the default version from 6.10.0 and later
+      imageVersion = "2.1";
     }
     return imageVersion;
   }
