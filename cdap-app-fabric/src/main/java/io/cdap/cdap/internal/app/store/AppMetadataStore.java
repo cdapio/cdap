@@ -1623,11 +1623,11 @@ public class AppMetadataStore {
    */
   public void scanActiveRuns(Cursor cursor, int limit,
       BiConsumer<Cursor, RunRecordDetail> consumer) throws IOException {
-    Collection<Field<?>> begin = cursor.fields;
+    Collection<Field<?>> begin = cursor.getFields();
     if (begin.isEmpty()) {
       begin = getRunRecordStatusPrefix(TYPE_RUN_RECORD_ACTIVE);
     }
-    Range range = Range.create(begin, cursor.bound,
+    Range range = Range.create(begin, cursor.getBound(),
         getRunRecordStatusPrefix(TYPE_RUN_RECORD_ACTIVE), Range.Bound.INCLUSIVE);
 
     StructuredTable table = getRunRecordsTable();
@@ -2839,22 +2839,6 @@ public class AppMetadataStore {
     return new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
         .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
             row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD));
-  }
-
-  /**
-   * Represents a position for scanning.
-   */
-  public static final class Cursor {
-
-    public static final Cursor EMPTY = new Cursor(Collections.emptyList(), Range.Bound.INCLUSIVE);
-
-    private final Collection<Field<?>> fields;
-    private final Range.Bound bound;
-
-    Cursor(Collection<Field<?>> fields, Range.Bound bound) {
-      this.fields = fields;
-      this.bound = bound;
-    }
   }
 
   private static final class AppScanEntry implements Map.Entry<ApplicationId, ApplicationMeta> {

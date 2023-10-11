@@ -53,7 +53,7 @@ public class OperationRun {
       @Nullable OperationError error) {
     this.id = id;
     this.type = type;
-    this.done = getStatus().isEndState();
+    this.done = status.isEndState();
     this.status = status;
     this.metadata = metadata;
     this.error = error;

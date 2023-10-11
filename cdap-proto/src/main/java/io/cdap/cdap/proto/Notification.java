@@ -45,7 +45,9 @@ public class Notification {
     TIME,
     PARTITION,
     PROGRAM_STATUS,
-    PROGRAM_HEART_BEAT
+    PROGRAM_HEART_BEAT,
+    OPERATION_STATUS,
+    OPERATION_HEART_BEAT
   }
 
   private final Type notificationType;

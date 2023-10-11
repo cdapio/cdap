@@ -53,4 +53,15 @@ public interface OperationStatePublisher {
    * Publishes the current operation status as STOPPED.
    */
   void publishStopped(OperationRunId runId);
+
+  /**
+   * Publishes the current operation status as STARTING.
+   */
+  void publishStarting(OperationRunId runId);
+
+  /**
+   * Publishes the current operation status as STOPPING.
+   */
+  void publishStopping(OperationRunId runId);
+
 }

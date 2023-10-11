@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.operation;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -23,6 +24,7 @@ import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationResource;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.proto.operation.OperationType;
@@ -79,7 +81,7 @@ public abstract class OperationRunStoreTest {
   }
 
   @Test
-  public void testUpdateMetadata() throws Exception {
+  public void testUpdateResources() throws Exception {
     OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
@@ -90,23 +92,22 @@ public abstract class OperationRunStoreTest {
       OperationRunDetail gotDetail = store.getOperation(runId);
       Assert.assertEquals(expectedDetail, gotDetail);
 
-      OperationMeta updatedMeta = new OperationMeta(Collections.emptySet(),
-          Instant.ofEpochMilli(runIdTime.incrementAndGet()),
-          Instant.ofEpochMilli(runIdTime.incrementAndGet()));
+      OperationMeta updatedMeta = OperationMeta.builder(expectedDetail.getRun().getMetadata())
+          .setResources(ImmutableSet.of(new OperationResource("test"))).build();
       OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
           .setMetadata(updatedMeta).build();
       OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
           .setRun(updatedRun)
           .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
           .build();
-      store.updateOperationMeta(runId, updatedMeta, updatedDetail.getSourceId());
+      store.updateOperationResources(runId, updatedMeta.getResources(), updatedDetail.getSourceId());
       gotDetail = store.getOperation(runId);
       Assert.assertEquals(updatedDetail, gotDetail);
 
       try {
-        store.updateOperationMeta(
+        store.updateOperationResources(
             new OperationRunId(Namespace.DEFAULT.getId(), testId),
-            updatedMeta,
+            updatedMeta.getResources(),
             updatedDetail.getSourceId());
         Assert.fail("Found unexpected run in default namespace");
       } catch (OperationRunNotFoundException e) {
@@ -168,19 +169,23 @@ public abstract class OperationRunStoreTest {
       OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
           .setStatus(OperationRunStatus.FAILED)
           .setError(error)
+          .setMetadata(OperationMeta.builder(expectedDetail.getRun().getMetadata())
+              .setEndTime(Instant.ofEpochMilli(runIdTime.incrementAndGet()))
+              .build())
           .build();
       OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
           .setRun(updatedRun)
           .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
           .build();
-      store.failOperationRun(runId, error, updatedDetail.getSourceId());
-      gotDetail = (OperationRunDetail) store.getOperation(runId);
+      store.failOperationRun(runId, error, updatedRun.getMetadata().getEndTime(), updatedDetail.getSourceId());
+      gotDetail = store.getOperation(runId);
       Assert.assertEquals(updatedDetail, gotDetail);
 
       try {
         store.failOperationRun(
             new OperationRunId(Namespace.DEFAULT.getId(), testId),
             error,
+            Instant.now(), // no need to verify this
             updatedDetail.getSourceId()
         );
         Assert.fail("Found unexpected run in default namespace");
@@ -255,8 +260,10 @@ public abstract class OperationRunStoreTest {
         .setStatus(status)
         .setType(type)
         .setMetadata(
-            new OperationMeta(Collections.emptySet(), Instant.ofEpochMilli(startTime), null))
-        .build();
+            OperationMeta.builder()
+                .setCreateTime(Instant.ofEpochMilli(startTime))
+                .build()
+        ).build();
     OperationRunId runId = new OperationRunId(namespace, id);
     OperationRunDetail detail = OperationRunDetail.builder()
         .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
@@ -278,9 +285,11 @@ public abstract class OperationRunStoreTest {
     // 5 would be of type PUSH 5 would be of type PULL
     for (int i = 0; i < 5; i++) {
       details.add(insertRun(testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
-      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
+      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PUSH_APPS,
+          OperationRunStatus.RUNNING));
       details.add(insertRun(testNamespace, OperationType.PULL_APPS, OperationRunStatus.FAILED));
-      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PULL_APPS, OperationRunStatus.RUNNING));
+      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PULL_APPS,
+          OperationRunStatus.RUNNING));
     }
     // The runs are added in increasing start time, hence reversing the List
     Collections.reverse(details);

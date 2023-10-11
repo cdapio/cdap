@@ -48,6 +48,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenticator;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.Cursor;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -462,8 +463,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
     int limit = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
     RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf,
         Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(
-        AppMetadataStore.Cursor.EMPTY);
+    AtomicReference<Cursor> cursorRef = new AtomicReference<>(Cursor.EMPTY);
     AtomicInteger count = new AtomicInteger();
     AtomicBoolean completed = new AtomicBoolean();
 

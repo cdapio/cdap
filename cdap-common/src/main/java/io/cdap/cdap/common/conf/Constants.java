@@ -361,16 +361,16 @@ public final class Constants {
 
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
 
-    /**
-     * Topic prefix for publishing status transitioning events of program runs to the messaging
-     * system.
-     */
-    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
 
     /**
      * Prefix for program status retry strategy settings.
      */
     public static final String PROGRAM_STATUS_RETRY_STRATEGY_PREFIX = "system.program.state.";
+    /**
+     * Topic prefix for publishing status transitioning events of program runs to the messaging
+     * system.
+     */
+    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
 
     /**
      * Number of topics to use for program status events. All events related to same run should
@@ -1310,6 +1310,19 @@ public final class Constants {
       public static final String COMMIT_PUSH_LATENCY_MILLIS =
           "source.control.git.commit.push.duration.ms";
     }
+
+    /**
+     * Operation metrics.
+     */
+    public static final class Operation {
+
+      public static final String OPERATION_SUCCEEDED_RUNS = "operation.succeeded.runs";
+      public static final String OPERATION_FAILED_RUNS = "operation.failed.runs";
+      public static final String OPERATION_KILLED_RUNS = "operation.killed.runs";
+      public static final String OPERATION_STARTING_DELAY_SECONDS = "operation.starting.delay.seconds";
+      public static final String RUN_TIME_SECONDS = "operation.run.seconds";
+      public static final String PROGRAM_STOPPING_DELAY_SECONDS = "operation.stopping.delay.seconds";
+    }
   }
 
   /**
@@ -1632,8 +1645,8 @@ public final class Constants {
     public static final class Authentication {
 
       /**
-       * Determines which authentication mode to use. Should be chosen from the {@link
-       * io.cdap.cdap.security.auth.AuthenticationMode} enum.
+       * Determines which authentication mode to use. Should be chosen from the
+       * {@link io.cdap.cdap.security.auth.AuthenticationMode} enum.
        */
       public static final String MODE = "security.authentication.mode";
       /**
@@ -2227,10 +2240,10 @@ public final class Constants {
     public static final String START_PROGRAM_EVENT_FETCH_SIZE = "event.reader.start.fetch.size";
     public static final String START_EVENTS_READER_EXTENSIONS_DIR = "events.reader.extensions.start.dir";
     public static final String START_EVENTS_READER_EXTENSIONS_ENABLED_LIST =
-            "events.reader.extensions.start.enabled.list";
+        "events.reader.extensions.start.enabled.list";
     public static final String START_EVENT_PREFIX = "event.reader.start";
     public static final String MINIMUM_FREE_CAPACITY_BEFORE_PULL =
-            "event.readers.capacity.before.pull";
+        "event.readers.capacity.before.pull";
   }
 
   /**
@@ -2432,5 +2445,41 @@ public final class Constants {
     public static final String SSL_ENABLED = "internal.router.service.ssl.enabled";
     public static final String CLIENT_ENABLED = "internal.router.client.enabled";
     public static final String SERVER_ENABLED = "internal.router.server.enabled";
+  }
+
+  /**
+   * Constants for operations.
+   */
+  public static final class Operation {
+
+    /**
+     * Topic prefix for publishing status transitioning events of operation runs to the messaging
+     * system.
+     */
+    public static final String STATUS_EVENT_TOPIC = "operation.status.event.topic";
+    /**
+     * Number of topics to use for operation status events. All events related to same run should
+     * always go to same topic. If this value is 1, {@link #STATUS_EVENT_TOPIC} is a topic name. If
+     * it's more than 1, {@link #STATUS_EVENT_TOPIC} is a prefix, but bare name should still be
+     * subscribed to ensure any pending messages / active run events are processed properly.
+     */
+    public static final String STATUS_EVENT_NUM_PARTITIONS = "operation.status.event.topic.num.partitions";
+    public static final String STATUS_EVENT_FETCH_SIZE = "operation.status.event.fetch.size";
+    public static final String STATUS_EVENT_TX_SIZE = "operation.status.event.tx.size";
+    public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "operatopn.status.event.poll.delay.millis";
+    /**
+     * Topic name for publishing program status recording events to the messaging system.
+     */
+    public static final String STATUS_RECORD_EVENT_TOPIC = "operation.status.record.event.topic";
+    public static final String INIT_BATCH_SIZE = "operation.initialize.batch.size";
+    public static final String STATUS_RETRY_STRATEGY_PREFIX = "operation.status.";
+
+    // Notification keys
+    public static final String RUN_ID_NOTIFICATION_KEY = "operation.notification.run.id";
+    public static final String STATUS_NOTIFICATION_KEY = "operation.notification.status";
+    public static final String RESOURCES_NOTIFICATION_KEY = "operation.notification.resources";
+    public static final String ENDTIME_NOTIFICATION_KEY = "operation.notification.endtime";
+    public static final String ERROR_NOTIFICATION_KEY = "operation.notification.error";
+    public static final String USER_ID_NOTIFICATION_KEY = "userId";
   }
 }

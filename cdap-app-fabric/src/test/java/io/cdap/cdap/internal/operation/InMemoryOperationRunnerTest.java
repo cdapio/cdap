@@ -31,7 +31,6 @@ import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
 import java.time.Instant;
-import java.util.Collections;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,8 +51,7 @@ public class InMemoryOperationRunnerTest {
       .setRunId(runId.getRun())
       .setStatus(OperationRunStatus.PENDING)
       .setType(OperationType.PULL_APPS)
-      .setMetadata(
-          new OperationMeta(Collections.emptySet(), Instant.now(), null))
+      .setMetadata(OperationMeta.builder().setCreateTime(Instant.now()).build())
       .build();
   private static final OperationRunDetail detail = OperationRunDetail.builder()
       .setSourceId(AppFabricTestHelper.createSourceId(0))

@@ -17,6 +17,9 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.id.OperationRunId;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -29,10 +32,12 @@ import java.util.function.Consumer;
 public class OperationLifecycleManager {
 
   private final TransactionRunner transactionRunner;
+  private final OperationRuntime runtime;
 
   @Inject
-  OperationLifecycleManager(TransactionRunner transactionRunner) {
+  OperationLifecycleManager(TransactionRunner transactionRunner, OperationRuntime runtime) {
     this.transactionRunner = transactionRunner;
+    this.runtime = runtime;
   }
 
   /**
@@ -68,6 +73,50 @@ public class OperationLifecycleManager {
       currentLimit -= txBatchSize;
     }
     return currentLimit == 0;
+  }
+
+
+  /**
+   * Scan all pending operations. Needed for try running all pending operation during startup.
+   *
+   * @param txBatchSize batch size of transaction
+   * @param consumer {@link Consumer} to process each scanned run
+   */
+  public void scanPendingOperations(int txBatchSize, Consumer<OperationRunDetail> consumer)
+      throws OperationRunNotFoundException, IOException {
+    String lastKey = null;
+    OperationRunFilter filter = new OperationRunFilter(null, OperationRunStatus.PENDING);
+
+    do {
+      ScanOperationRunsRequest batchRequest = ScanOperationRunsRequest
+          .builder()
+          .setScanAfter(lastKey)
+          .setLimit(txBatchSize)
+          .setFilter(filter)
+          .build();
+
+      lastKey = TransactionRunners.run(transactionRunner, context -> {
+        return getOperationRunStore(context).scanOperations(batchRequest, consumer);
+      }, IOException.class, OperationRunNotFoundException.class);
+    } while (lastKey != null);
+  }
+
+  public void startOperation(OperationRunId runId) throws OperationRunNotFoundException, IOException {
+    OperationRunDetail detail = TransactionRunners.run(
+        transactionRunner,
+        context -> {
+          return getOperationRunStore(context).getOperation(runId);
+        }, OperationRunNotFoundException.class, IOException.class
+    );
+    runtime.run(detail);
+  }
+
+  public void stopOperation(OperationRunId runId) throws NotFoundException {
+    OperationController controller = runtime.getController(runId);
+    if (controller == null) {
+      throw new NotFoundException(runId);
+    }
+    controller.stop();
   }
 
   private OperationRunStore getOperationRunStore(StructuredTableContext context) {

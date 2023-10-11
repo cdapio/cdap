@@ -491,8 +491,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer) {
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(
-        AppMetadataStore.Cursor.EMPTY);
+    AtomicReference<Cursor> cursorRef = new AtomicReference<>(Cursor.EMPTY);
 
     AtomicInteger count = new AtomicInteger();
     do {
@@ -736,7 +735,7 @@ public class DefaultStore implements Store {
   @Override
   public void removeApplication(ApplicationId id) {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(),
-              id.getApplication(), id.getVersion());
+        id.getApplication(), id.getVersion());
 
     TransactionRunners.run(transactionRunner, context -> {
       getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
@@ -790,7 +789,8 @@ public class DefaultStore implements Store {
   @Override
   public void scanApplications(int txBatchSize,
       BiConsumer<ApplicationId, ApplicationMeta> consumer) {
-    scanApplications(ScanApplicationsRequest.builder().setLatestOnly(true).build(), txBatchSize, consumer);
+    scanApplications(ScanApplicationsRequest.builder().setLatestOnly(true).build(), txBatchSize,
+        consumer);
   }
 
   @Override
@@ -1185,8 +1185,8 @@ public class DefaultStore implements Store {
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
    *
    * @param appSpec the {@link ApplicationSpecification} of the existing application
-   * @param programReference the {@link ProgramReference} for which the {@link
-   *     ProgramSpecification} is requested
+   * @param programReference the {@link ProgramReference} for which the
+   *     {@link ProgramSpecification} is requested
    * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
    */
   @Nullable

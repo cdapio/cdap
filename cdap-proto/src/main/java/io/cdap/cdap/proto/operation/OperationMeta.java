@@ -17,17 +17,17 @@
 package io.cdap.cdap.proto.operation;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Metadata for an operation includes
- * 1. The resources on which operation is executed
- * 2. Timestamp of operation create
- * 3. Timestamp of operation endtime
+ * Metadata for an operation includes 1. The resources on which operation is executed 2. Timestamp
+ * of operation create 3. Timestamp of operation endtime
  */
 public class OperationMeta {
+
   private final Set<OperationResource> resources;
   private final Instant createTime;
 
@@ -41,7 +41,8 @@ public class OperationMeta {
    * @param createTime timestamp when the operation was created
    * @param endTime timestamp when the operation reached an end state
    */
-  public OperationMeta(Set<OperationResource> resources, Instant createTime, @Nullable Instant endTime) {
+  private OperationMeta(Set<OperationResource> resources, Instant createTime,
+      @Nullable Instant endTime) {
     this.resources = resources;
     this.createTime = createTime;
     this.endTime = endTime;
@@ -66,5 +67,80 @@ public class OperationMeta {
   @Override
   public int hashCode() {
     return Objects.hash(resources, createTime, endTime);
+  }
+
+  public Set<OperationResource> getResources() {
+    return resources;
+  }
+
+  public Instant getCreateTime() {
+    return createTime;
+  }
+
+  @Nullable
+  public Instant getEndTime() {
+    return endTime;
+  }
+
+  /**
+   * Creates a Builder.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Create a Builder from existing run.
+   *
+   * @param meta existing meta to copy fields from
+   */
+  public static Builder builder(OperationMeta meta) {
+    return new Builder(meta);
+  }
+
+  /**
+   * Builder to create OperationMeta.
+   */
+  @SuppressWarnings("unchecked")
+  public static class Builder {
+
+    private Set<OperationResource> resources;
+    private Instant createTime;
+    private Instant endTime;
+
+    protected Builder() {
+      this.resources = Collections.emptySet();
+    }
+
+    protected Builder(OperationMeta operationMeta) {
+      this.resources = operationMeta.resources;
+      this.createTime = operationMeta.createTime;
+      this.endTime = operationMeta.endTime;
+    }
+
+    public Builder setResources(Set<OperationResource> resources) {
+      this.resources = resources;
+      return this;
+    }
+
+    public Builder setCreateTime(Instant createTime) {
+      this.createTime = createTime;
+      return this;
+    }
+
+    public Builder setEndTime(Instant endTime) {
+      this.endTime = endTime;
+      return this;
+    }
+
+    /**
+     * Builds the OperationMeta.
+     */
+    public OperationMeta build() {
+      if (createTime == null) {
+        throw new IllegalArgumentException("create time must be specified");
+      }
+      return new OperationMeta(resources, createTime, endTime);
+    }
   }
 }

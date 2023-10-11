@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  */
 public class ScanOperationRunsRequest {
 
+  @Nullable
   private final String namespace;
   @Nullable
   private final String scanAfterRunId;
@@ -37,7 +38,7 @@ public class ScanOperationRunsRequest {
    * @param filter additional filters to apply
    * @param limit maximum number of records to return
    */
-  private ScanOperationRunsRequest(String namespace, @Nullable String scanAfterRunId, int limit,
+  private ScanOperationRunsRequest(@Nullable String namespace, @Nullable String scanAfterRunId, int limit,
       OperationRunFilter filter) {
     this.namespace = namespace;
     this.scanAfterRunId = scanAfterRunId;
@@ -49,6 +50,7 @@ public class ScanOperationRunsRequest {
    * namespace to return applications for.
    */
 
+  @Nullable
   public String getNamespace() {
     return namespace;
   }
@@ -95,9 +97,8 @@ public class ScanOperationRunsRequest {
    */
   public static class Builder {
 
-    private String namespace;
     @Nullable
-    private String scanToRunId;
+    private String namespace;
     @Nullable
     private String scanAfterRunId;
     @Nullable
@@ -151,9 +152,6 @@ public class ScanOperationRunsRequest {
      * return new {@link ScanOperationRunsRequest}.
      */
     public ScanOperationRunsRequest build() {
-      if (namespace == null) {
-        throw new IllegalArgumentException("namespace must be specified.");
-      }
       if (filter == null) {
         filter = OperationRunFilter.emptyFilter();
       }
