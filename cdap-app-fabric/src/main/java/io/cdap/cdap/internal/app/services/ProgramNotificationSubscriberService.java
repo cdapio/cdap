@@ -89,6 +89,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.apache.twill.internal.CompositeService;
@@ -278,6 +279,7 @@ class ProgramNotificationSingleTopicSubscriberService
         RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
     long startTs = System.currentTimeMillis();
 
+    AtomicBoolean launching = new AtomicBoolean(false);
     Retries.runWithRetries(
         () ->
             store.scanActiveRuns(
@@ -288,8 +290,10 @@ class ProgramNotificationSingleTopicSubscriberService
                   }
                   try {
                     if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
+                      launching.set(true);
                       runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
                     } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
+                      launching.set(true);
                       runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
                       // It is unknown what is the state of program runs in STARTING state.
                       // A STARTING message is published again to retry STARTING logic.
@@ -314,6 +318,10 @@ class ProgramNotificationSingleTopicSubscriberService
                 }),
         retryStrategy,
         e -> true);
+    if (!launching.get()) {
+      // there is no launching pipeline
+      runRecordMonitorService.emitLaunchingMetrics(0);
+    }
   }
 
   @Nullable
@@ -867,7 +875,7 @@ class ProgramNotificationSingleTopicSubscriberService
     }
   }
 
-  /** write to heart beat table if the recordedRunRecord is not null */
+  /** write to heart beat table if the recordedRunRecord is not null. */
   private void writeToHeartBeatTable(
       @Nullable RunRecordDetail recordedRunRecord,
       long timestampInSeconds,
@@ -1024,7 +1032,7 @@ class ProgramNotificationSingleTopicSubscriberService
 
   /**
    * Helper method to extract the time from the given properties map, or return -1 if no value was
-   * found
+   * found.
    *
    * @param properties the properties map
    * @param option the key to lookup in the properties map
@@ -1057,7 +1065,7 @@ class ProgramNotificationSingleTopicSubscriberService
 
   /**
    * Emit the metrics context for the program, the tags are constructed with the program run id and
-   * the profile id
+   * the profile id.
    */
   private void emitProfileMetrics(
       ProgramRunId programRunId,
