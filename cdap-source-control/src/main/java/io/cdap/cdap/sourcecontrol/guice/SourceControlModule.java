@@ -18,6 +18,10 @@ package io.cdap.cdap.sourcecontrol.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.MapBinder;
+import io.cdap.cdap.common.operation.LongRunningOperation;
+import io.cdap.cdap.proto.operationrun.OperationType;
+import io.cdap.cdap.sourcecontrol.PushOperation;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 
@@ -30,5 +34,8 @@ public class SourceControlModule extends AbstractModule {
   protected void configure() {
     bind(SourceControlOperationRunner.class).toProvider(SourceControlOperationRunnerProvider.class);
     bind(RepositoryCleanupService.class).in(Scopes.SINGLETON);
+    MapBinder<OperationType, LongRunningOperation> operationBinder =
+        MapBinder.newMapBinder(binder(), OperationType.class, LongRunningOperation.class);
+    operationBinder.addBinding(OperationType.SCM_PUSH).to(PushOperation.class);
   }
 }
