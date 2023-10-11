@@ -16,11 +16,8 @@
 
 package io.cdap.cdap.internal.operation;
 
-
-import io.cdap.cdap.proto.id.OperationRunId;
-import io.cdap.cdap.proto.operation.OperationError;
-import io.cdap.cdap.proto.operation.OperationResource;
-import java.util.Set;
+import io.cdap.cdap.proto.operationrun.OperationError;
+import io.cdap.cdap.proto.operationrun.OperationMeta;
 
 /**
  * Publishes operation state messages.
@@ -28,29 +25,29 @@ import java.util.Set;
 public interface OperationStatePublisher {
 
   /**
-   * Publishes message with the current resources. The operation status should be RUNNING
+   * Publishes message with the current metadata. The operation status should be RUNNING
    *
-   * @param resources Current resources for the operation.
+   * @param meta Current metadata for the operation.
    */
-  void publishResources(OperationRunId runId, Set<OperationResource> resources);
+  void publishMetaUpdate(OperationMeta meta);
 
   /**
    * Publishes the current operation status as RUNNING.
    */
-  void publishRunning(OperationRunId runId);
+  void publishRunning();
 
   /**
    * Publishes the current operation status as FAILED.
    */
-  void publishFailed(OperationRunId runId, OperationError error);
+  void publishFailed(OperationError error);
 
   /**
    * Publishes the current operation status as SUCCEEDED.
    */
-  void publishSuccess(OperationRunId runId);
+  void publishSuccess();
 
   /**
    * Publishes the current operation status as STOPPED.
    */
-  void publishStopped(OperationRunId runId);
+  void publishStopped();
 }
