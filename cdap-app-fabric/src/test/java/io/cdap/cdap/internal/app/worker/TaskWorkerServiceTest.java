@@ -130,7 +130,7 @@ public class TaskWorkerServiceTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
-    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 4);
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(
@@ -159,6 +159,51 @@ public class TaskWorkerServiceTest {
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
+  @Test
+  public void testPeriodicRestartWithNeverEndingInflightRequest() throws IOException {
+    CConfiguration cConf = createCConf();
+    SConfiguration sConf = createSConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
+
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService taskWorkerService =
+        new TaskWorkerService(
+            cConf,
+            sConf,
+            discoveryService,
+            discoveryService,
+            metricsCollectionService,
+            new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
+    // start the service
+    taskWorkerService.startAndWait();
+
+    new Thread(
+        () -> {
+          InetSocketAddress addr = taskWorkerService.getBindAddress();
+          URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+          // Post valid request
+          RunnableTaskRequest req =
+              RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
+                  .withParam("200000")
+                  .build();
+          String reqBody = GSON.toJson(req);
+          try {
+            HttpRequests.execute(
+                HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                    .withBody(reqBody)
+                    .build(),
+                new DefaultHttpRequestConfig(false));
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .start();
+
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
+  }
   @Test
   public void testRestartAfterMultipleExecutions() throws IOException {
     CConfiguration cConf = createCConf();
