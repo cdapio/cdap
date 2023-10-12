@@ -108,6 +108,7 @@ class CapabilityApplier {
   private final ArtifactRepository artifactRepository;
   private final File tmpDir;
   private final int autoInstallThreads;
+  private boolean autoInstallDone;
 
   @Inject
   CapabilityApplier(SystemProgramManagementService systemProgramManagementService,
@@ -125,6 +126,7 @@ class CapabilityApplier {
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
         cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.autoInstallThreads = cConf.getInt(Constants.Capability.AUTO_INSTALL_THREADS);
+    this.autoInstallDone = false;
   }
 
   /**
@@ -143,8 +145,10 @@ class CapabilityApplier {
       CapabilityRecord capabilityRecord = currentCapabilityRecords.get(capability);
       if (capabilityRecord != null && capabilityRecord.getCapabilityOperationRecord() != null) {
         LOG.debug(
-            "Capability {} config for status {} skipped because there is already an operation {} in progress.",
-            capability, newConfig.getStatus(),
+            "Capability {} config for status {} skipped because there is already an operation {} in"
+                + " progress.",
+            capability,
+            newConfig.getStatus(),
             capabilityRecord.getCapabilityOperationRecord().getActionType());
         continue;
       }
@@ -210,7 +214,10 @@ class CapabilityApplier {
           capabilityConfig);
       //If already deployed, will be ignored
       deployAllSystemApps(capability, capabilityConfig.getApplications());
-      autoInstallResources(capability, capabilityConfig.getHubs());
+      if (!autoInstallDone) {
+        autoInstallResources(capability, capabilityConfig.getHubs());
+        autoInstallDone = true;
+      }
     }
     //start all programs
     systemProgramManagementService.setProgramsEnabled(enabledPrograms);
