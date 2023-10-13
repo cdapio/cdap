@@ -181,9 +181,11 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   @Override
   public UserIdentity login(final String username, final Object credentials) {
     try {
+      if (credentials instanceof String && ((String) credentials).isEmpty()) {
+        throw new LoginException("Empty password");
+      }
+
       CallbackHandler callbackHandler = null;
-
-
       if (callbackHandlerClass == null) {
         callbackHandler = new CallbackHandler() {
           @Override
