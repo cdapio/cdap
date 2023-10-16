@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Represents metadata about a messaging topic.
- */
-public class TopicMetadata {
-
+public class DefaultTopicMetadata implements TopicMetadata{
   public static final String GENERATION_KEY = MessagingUtils.Constants.GENERATION_KEY;
   public static final String TTL_KEY = MessagingUtils.Constants.TTL_KEY;
 
@@ -37,7 +33,7 @@ public class TopicMetadata {
   /**
    * Creates a new instance for the given topic with the associated properties.
    */
-  public TopicMetadata(TopicId topicId, Map<String, String> properties) {
+  public DefaultTopicMetadata(TopicId topicId, Map<String, String> properties) {
     this(topicId, properties, false);
   }
 
@@ -49,7 +45,7 @@ public class TopicMetadata {
    * @throws IllegalArgumentException if {@code validate} is {@code true} and the provided
    *     properties is not valid.
    */
-  public TopicMetadata(TopicId topicId, Map<String, String> properties, boolean validate) {
+  public DefaultTopicMetadata(TopicId topicId, Map<String, String> properties, boolean validate) {
     this.topicId = topicId;
     this.properties = ImmutableMap.copyOf(properties);
     if (validate) {
@@ -64,7 +60,7 @@ public class TopicMetadata {
    * @param topicId topic id
    * @param properties a list of key/value pairs that will get converted into a {@link Map}.
    */
-  public TopicMetadata(TopicId topicId, Object... properties) {
+  public DefaultTopicMetadata(TopicId topicId, Object... properties) {
     this(topicId, toMap(properties));
   }
 
@@ -118,7 +114,7 @@ public class TopicMetadata {
       return false;
     }
     TopicMetadata that = (TopicMetadata) o;
-    return Objects.equals(topicId, that.topicId) && Objects.equals(properties, that.properties);
+    return Objects.equals(topicId, that.getTopicId()) && Objects.equals(properties, that.getProperties());
   }
 
   @Override

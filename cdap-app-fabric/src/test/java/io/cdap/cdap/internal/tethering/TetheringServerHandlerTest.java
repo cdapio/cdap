@@ -57,7 +57,6 @@ import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.Notification;
@@ -362,22 +361,20 @@ public class TetheringServerHandlerTest {
 
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), topicPrefix + "xyz");
     // Per-peer messaging topic should be created
-    TopicMetadata metadata = messagingService.getTopic(topic);
-    Assert.assertEquals(topic, metadata.getTopicId());
+    Assert.assertNotNull(messagingService.getTopicMetadataProperties(topic));
 
     // Delete the messaging topic
     messagingService.deleteTopic(topic);
     // The topic should be recreated when a control message is received
     expectTetheringControlResponse("xyz", HttpResponseStatus.OK);
-    metadata = messagingService.getTopic(topic);
-    Assert.assertEquals(topic, metadata.getTopicId());
+    Assert.assertNotNull(messagingService.getTopicMetadataProperties(topic));
 
     // Delete tethering
     deleteTethering();
 
     // Messaging topic should be deleted
     try {
-      messagingService.getTopic(topic);
+      messagingService.getTopicMetadataProperties(topic);
       Assert.fail(String.format("Messaging topic %s was not deleted", topic.getTopic()));
     } catch (TopicNotFoundException ignored) {
       // expected

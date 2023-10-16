@@ -19,8 +19,9 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.client.ClientMessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.data.RawMessage;
@@ -50,7 +51,7 @@ public class MessagingServiceMainTest extends MasterServiceMainTestBase {
     // Use a separate TMS client to create topic, then publish and then poll some messages
     TopicId topicId = NamespaceId.SYSTEM.topic("test");
     MessagingService messagingService = new ClientMessagingService(remoteClientFactory, true);
-    messagingService.createTopic(new TopicMetadata(topicId));
+    messagingService.createTopic(new DefaultTopicMetadata(topicId));
 
     // Publish 10 messages
     List<String> messages = new ArrayList<>();
@@ -60,13 +61,16 @@ public class MessagingServiceMainTest extends MasterServiceMainTestBase {
       messages.add(msg);
     }
 
-    try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(topicId).setLimit(10).fetch()) {
-      List<String> received = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
-        .map(RawMessage::getPayload)
-        .map(ByteBuffer::wrap)
-        .map(StandardCharsets.UTF_8::decode)
-        .map(CharSequence::toString)
-        .collect(Collectors.toList());
+    try (CloseableIterator<RawMessage> iterator =
+        messagingService.fetch(
+            new DefaultMessageFetchRequest.Builder().setTopicId(topicId).setLimit(10).build())) {
+      List<String> received =
+          StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
+              .map(RawMessage::getPayload)
+              .map(ByteBuffer::wrap)
+              .map(StandardCharsets.UTF_8::decode)
+              .map(CharSequence::toString)
+              .collect(Collectors.toList());
 
       Assert.assertEquals(messages, received);
     }

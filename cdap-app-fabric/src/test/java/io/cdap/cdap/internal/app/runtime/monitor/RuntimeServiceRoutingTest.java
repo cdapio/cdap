@@ -39,6 +39,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.gateway.handlers.PingHandler;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -140,7 +141,7 @@ public class RuntimeServiceRoutingTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
-    messagingService.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("topic")));
+    messagingService.createTopic(new DefaultTopicMetadata(NamespaceId.SYSTEM.topic("topic")));
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
     runtimeServer.startAndWait();

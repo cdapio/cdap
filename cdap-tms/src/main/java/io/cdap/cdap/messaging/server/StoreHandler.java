@@ -27,6 +27,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.DefaultStoreRequest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.http.AbstractHttpHandler;
@@ -208,7 +209,7 @@ public final class StoreHandler extends AbstractHttpHandler {
   /**
    * A {@link StoreRequest} that gets the request information from {@link GenericRecord}.
    */
-  private static final class GenericRecordStoreRequest extends StoreRequest {
+  private static final class GenericRecordStoreRequest extends DefaultStoreRequest {
 
     private final List<ByteBuffer> payloads;
 

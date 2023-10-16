@@ -18,6 +18,7 @@ package io.cdap.cdap.messaging.store;
 
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -43,18 +44,21 @@ public abstract class MetadataTableTest {
       }
 
       // Create topic default:t1
-      table.createTopic(new TopicMetadata(NamespaceId.DEFAULT.topic("t1"), "ttl", 10));;
+      table.createTopic(new DefaultTopicMetadata(NamespaceId.DEFAULT.topic("t1"), "ttl", 10));
       Assert.assertEquals(1, table.listTopics(NamespaceId.DEFAULT).size());
 
       // Create topic default:t2
-      TopicMetadata topicMetadata = new TopicMetadata(NamespaceId.DEFAULT.topic("t2"), "ttl", 20);
+      TopicMetadata topicMetadata = new DefaultTopicMetadata(NamespaceId.DEFAULT.topic("t2"), "ttl", 20);
       table.createTopic(topicMetadata);
-      Assert.assertEquals(topicMetadata.getTopicId(), table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getTopicId());
-      Assert.assertEquals(topicMetadata.getTTL(), table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getTTL());
+      Assert.assertEquals(
+          topicMetadata.getTopicId(),
+          table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getTopicId());
+      Assert.assertEquals(
+          topicMetadata.getTTL(), table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getTTL());
       Assert.assertEquals(1, table.getMetadata(NamespaceId.DEFAULT.topic("t2")).getGeneration());
 
       // Create topic system:t3
-      table.createTopic(new TopicMetadata(NamespaceId.SYSTEM.topic("t3"), "ttl", 30));
+      table.createTopic(new DefaultTopicMetadata(NamespaceId.SYSTEM.topic("t3"), "ttl", 30));
 
       // List default namespace, should get 2
       Assert.assertEquals(2, table.listTopics(NamespaceId.DEFAULT).size());
@@ -85,7 +89,7 @@ public abstract class MetadataTableTest {
     try (MetadataTable table = createMetadataTable()) {
       TopicId topicId = NamespaceId.DEFAULT.topic("gtopic");
       for (int i = 1; i <= 50; i++) {
-        table.createTopic(new TopicMetadata(topicId, "ttl", 1));
+        table.createTopic(new DefaultTopicMetadata(topicId, "ttl", 1));
 
         TopicMetadata metadata = table.getMetadata(topicId);
         Assert.assertEquals(i, metadata.getGeneration());
@@ -110,23 +114,23 @@ public abstract class MetadataTableTest {
 
       // Update a non-existing topic should fail.
       try {
-        table.updateTopic(new TopicMetadata(topicId, "ttl", 10));
+        table.updateTopic(new DefaultTopicMetadata(topicId, "ttl", 10));
         Assert.fail("Expected TopicNotFoundException");
       } catch (TopicNotFoundException e) {
         // Expected
       }
 
       // Create a topic and validate
-      table.createTopic(new TopicMetadata(topicId, "ttl", 10));
+      table.createTopic(new DefaultTopicMetadata(topicId, "ttl", 10));
       Assert.assertEquals(10, table.getMetadata(topicId).getTTL());
 
       // Update the property and validate
-      table.updateTopic(new TopicMetadata(topicId, "ttl", 30));
+      table.updateTopic(new DefaultTopicMetadata(topicId, "ttl", 30));
       Assert.assertEquals(30, table.getMetadata(topicId).getTTL());
 
       // Create the same topic again should fail
       try {
-        table.createTopic(new TopicMetadata(topicId, "ttl", 10));
+        table.createTopic(new DefaultTopicMetadata(topicId, "ttl", 10));
         Assert.fail("Expected TopicAlreadyExistsException");
       } catch (TopicAlreadyExistsException e) {
         // Expected

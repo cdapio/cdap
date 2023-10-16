@@ -60,6 +60,7 @@ import io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -150,7 +151,8 @@ public class TetheringClientHandlerTest {
   private TransactionRunner transactionRunner;
 
   // User having tethering permissions
-  private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
+  private static final Principal MASTER_PRINCIPAL =
+      new Principal("master", Principal.PrincipalType.USER);
   // User not having tethering permissions
   private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
                                                                         Principal.PrincipalType.USER);
@@ -287,9 +289,10 @@ public class TetheringClientHandlerTest {
                                                                              metadata,
                                                                              DESCRIPTION);
     // Tethering should fail on the client
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
-      .withBody(GSON.toJson(tetheringRequest))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+            .withBody(GSON.toJson(tetheringRequest))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(500, response.getResponseCode());
 
@@ -410,8 +413,9 @@ public class TetheringClientHandlerTest {
     MessagePublisher publisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
     String topic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     try {
-      messagingService.createTopic(new TopicMetadata(new TopicId(NamespaceId.SYSTEM.getNamespace(), topic),
-                                                     Collections.emptyMap()));
+      messagingService.createTopic(
+          new DefaultTopicMetadata(
+              new TopicId(NamespaceId.SYSTEM.getNamespace(), topic), Collections.emptyMap()));
     } catch (TopicAlreadyExistsException ex) {
       // no-op
     }
@@ -427,9 +431,10 @@ public class TetheringClientHandlerTest {
   @Test
   public void testTetherStatus() throws IOException, InterruptedException {
     // Tethering does not exist, should return 404.
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
-                                              clientConfig.resolveURL("tethering/connections/" + SERVER_INSTANCE))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(
+                HttpMethod.GET, clientConfig.resolveURL("tethering/connections/" + SERVER_INSTANCE))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
@@ -437,9 +442,10 @@ public class TetheringClientHandlerTest {
     createTethering(SERVER_INSTANCE, PROJECT, LOCATION, NAMESPACES, DESCRIPTION);
 
     // Tethering status for the peer should be returned.
-    request = HttpRequest.builder(HttpMethod.GET,
-                                  clientConfig.resolveURL("tethering/connections/" + SERVER_INSTANCE))
-      .build();
+    request =
+        HttpRequest.builder(
+                HttpMethod.GET, clientConfig.resolveURL("tethering/connections/" + SERVER_INSTANCE))
+            .build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     PeerState peerState = GSON.fromJson(response.getResponseBodyAsString(), PeerState.class);
@@ -461,18 +467,20 @@ public class TetheringClientHandlerTest {
 
   @Test
   public void testGetTetheringUnknownPeer() throws IOException {
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
-                                              clientConfig.resolveURL("tethering/connections/unknonwn_peer"))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(
+                HttpMethod.GET, clientConfig.resolveURL("tethering/connections/unknonwn_peer"))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
 
   @Test
   public void testDeleteTetheringUnknownPeer() throws IOException {
-    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
-                                              clientConfig.resolveURL("tethering/connections/unknonwn_peer"))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(
+                HttpMethod.DELETE, clientConfig.resolveURL("tethering/connections/unknonwn_peer"))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
   }
@@ -486,8 +494,9 @@ public class TetheringClientHandlerTest {
                                                                              NAMESPACES,
                                                                              metadata,
                                                                              DESCRIPTION);
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
-      .withBody(GSON.toJson(tetheringRequest));
+    HttpRequest.Builder builder =
+        HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+            .withBody(GSON.toJson(tetheringRequest));
 
     // Unprivileged user trying to tether
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
@@ -502,15 +511,17 @@ public class TetheringClientHandlerTest {
 
   @Test
   public void testInvalidNamespace() throws IOException {
-    List<NamespaceAllocation> namespaces = Collections.singletonList(new NamespaceAllocation("foo", null, null));
+    List<NamespaceAllocation> namespaces =
+        Collections.singletonList(new NamespaceAllocation("foo", null, null));
     TetheringCreationRequest tetheringRequest = new TetheringCreationRequest(SERVER_INSTANCE,
                                                                              serverConfig.getConnectionConfig()
                                                                                .getURI().toString(),
                                                                              namespaces,
                                                                              Collections.emptyMap(),
                                                                              DESCRIPTION);
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
-      .withBody(GSON.toJson(tetheringRequest));
+    HttpRequest.Builder builder =
+        HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+            .withBody(GSON.toJson(tetheringRequest));
 
     HttpResponse response = HttpRequests.execute(builder.build());
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
@@ -523,9 +534,10 @@ public class TetheringClientHandlerTest {
                                                                              Collections.emptyList(),
                                                                              Collections.emptyMap(),
                                                                              "");
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
-      .withBody(GSON.toJson(tetheringRequest))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+            .withBody(GSON.toJson(tetheringRequest))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
   }
@@ -537,9 +549,10 @@ public class TetheringClientHandlerTest {
                                                                              Collections.emptyList(),
                                                                              Collections.emptyMap(),
                                                                              "");
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
-      .withBody(GSON.toJson(tetheringRequest))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+            .withBody(GSON.toJson(tetheringRequest))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getResponseCode());
   }
@@ -636,17 +649,19 @@ public class TetheringClientHandlerTest {
       // Tethering connection doesn't exist, nothing to do here.
       return;
     }
-    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE,
-                                              clientConfig.resolveURL("tethering/connections/" + peer))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(
+                HttpMethod.DELETE, clientConfig.resolveURL("tethering/connections/" + peer))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
   }
 
   private boolean tetheringExists(String peer) throws IOException {
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET,
-                                              clientConfig.resolveURL("tethering/connections/" + peer))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(
+                HttpMethod.GET, clientConfig.resolveURL("tethering/connections/" + peer))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
     Assert.assertTrue(responseCode == 200 || responseCode == 404);
@@ -683,9 +698,10 @@ public class TetheringClientHandlerTest {
                                                                              namespaceAllocations,
                                                                              metadata,
                                                                              description);
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
-      .withBody(GSON.toJson(tetheringRequest))
-      .build();
+    HttpRequest request =
+        HttpRequest.builder(HttpMethod.PUT, clientConfig.resolveURL("tethering/create"))
+            .withBody(GSON.toJson(tetheringRequest))
+            .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(expectedResponseStatus.code(), response.getResponseCode());
 
@@ -699,8 +715,9 @@ public class TetheringClientHandlerTest {
     throws IOException, InterruptedException {
     List<PeerState> peers = new ArrayList<>();
     for (int retry = 0; retry < 10; ++retry) {
-      HttpRequest request = HttpRequest.builder(HttpMethod.GET, clientConfig.resolveURL("tethering/connections"))
-        .build();
+      HttpRequest request =
+          HttpRequest.builder(HttpMethod.GET, clientConfig.resolveURL("tethering/connections"))
+              .build();
       HttpResponse response = HttpRequests.execute(request);
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
       Type type = new TypeToken<List<PeerState>>() {

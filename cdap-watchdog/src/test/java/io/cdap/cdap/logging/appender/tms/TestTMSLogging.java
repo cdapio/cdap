@@ -37,9 +37,9 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.context.MapReduceLoggingContext;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -112,7 +112,7 @@ public class TestTMSLogging {
       topicIds.put(i, NamespaceId.SYSTEM.topic(topicPrefic + i));
     }
     for (TopicId topicId : topicIds.values()) {
-      client.createTopic(new TopicMetadata(topicId));
+      client.createTopic(new DefaultTopicMetadata(topicId));
     }
   }
 
@@ -132,7 +132,8 @@ public class TestTMSLogging {
     Logger logger = LoggerFactory.getLogger("TestTMSLogging");
     LoggingTester loggingTester = new LoggingTester();
 
-    LoggingContext loggingContext = new MapReduceLoggingContext("TKL_NS_1", "APP_1", "MR_1", "RUN1");
+    LoggingContext loggingContext =
+        new MapReduceLoggingContext("TKL_NS_1", "APP_1", "MR_1", "RUN1");
     loggingTester.generateLogs(logger, loggingContext);
 
     logAppenderInitializer.close();
@@ -145,11 +146,13 @@ public class TestTMSLogging {
 
     for (Map.Entry<Integer, TopicId> topicId : topicIds.entrySet()) {
       List<ILoggingEvent> fetchedLogs = new ArrayList<>();
-      MessageFetcher messageFetcher = client.prepareFetch(topicId.getValue());
-      try (CloseableIterator<RawMessage> messages = messageFetcher.fetch()) {
+      try (CloseableIterator<RawMessage> messages =
+          client.fetch(
+              new DefaultMessageFetchRequest.Builder().setTopicId(topicId.getValue()).build())) {
         while (messages.hasNext()) {
           RawMessage message = messages.next();
-          ILoggingEvent iLoggingEvent = loggingEventSerializer.fromBytes(ByteBuffer.wrap(message.getPayload()));
+          ILoggingEvent iLoggingEvent =
+              loggingEventSerializer.fromBytes(ByteBuffer.wrap(message.getPayload()));
           fetchedLogs.add(iLoggingEvent);
         }
       }
@@ -177,7 +180,8 @@ public class TestTMSLogging {
 
     for (int i = 0; i < filteredLogs.size(); i++) {
       ILoggingEvent loggingEvent = filteredLogs.get(i);
-      Assert.assertEquals(String.format("Test log message %s arg1 arg2", i), loggingEvent.getFormattedMessage());
+      Assert.assertEquals(
+          String.format("Test log message %s arg1 arg2", i), loggingEvent.getFormattedMessage());
     }
   }
 }

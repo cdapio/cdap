@@ -19,6 +19,7 @@ package io.cdap.cdap.messaging.client;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.DefaultStoreRequest;
 import io.cdap.cdap.proto.id.TopicId;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -132,7 +133,7 @@ public final class StoreRequestBuilder {
   /**
    * A straightforward implementation of {@link StoreRequest}.
    */
-  private static final class SimpleStoreRequest extends StoreRequest {
+  private static final class SimpleStoreRequest extends DefaultStoreRequest {
 
     private final List<byte[]> payloads;
 

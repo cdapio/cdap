@@ -23,6 +23,7 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -116,7 +117,7 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
         programStateTopicPrefix + peer);
     try {
-      messagingService.createTopic(new TopicMetadata(topic, Collections.emptyMap()));
+      messagingService.createTopic(new DefaultTopicMetadata(topic, Collections.emptyMap()));
     } catch (TopicAlreadyExistsException ex) {
       // no-op
     } catch (IOException e) {

@@ -19,16 +19,18 @@ package io.cdap.cdap.messaging.distributed;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.MessageFetchRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.messaging.service.CoreMessagingService;
 import io.cdap.cdap.messaging.store.ForwardingTableFactory;
@@ -40,6 +42,7 @@ import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -153,9 +156,9 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   }
 
   @Override
-  public TopicMetadata getTopic(TopicId topicId)
+  public Map<String, String> getTopicMetadataProperties(TopicId topicId)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    return getMessagingService().getTopic(topicId);
+    return getMessagingService().getTopicMetadataProperties(topicId);
   }
 
   @Override
@@ -165,8 +168,9 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   }
 
   @Override
-  public MessageFetcher prepareFetch(TopicId topicId) throws TopicNotFoundException, IOException {
-    return getMessagingService().prepareFetch(topicId);
+  public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
+      throws TopicNotFoundException, IOException {
+    return getMessagingService().fetch(messageFetchRequest);
   }
 
   @Override

@@ -34,6 +34,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.audit.AuditMessage;
@@ -110,7 +111,8 @@ public class AuditPublishTest {
     Set<EntityId> expectedMetadataChangeEntities = new HashSet<>();
 
     // Metadata change on the artifact and app
-    expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1"));
+    expectedMetadataChangeEntities.add(
+        NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1"));
     expectedMetadataChangeEntities.add(appId);
 
     // All programs would have metadata change
@@ -142,34 +144,45 @@ public class AuditPublishTest {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
 
     // Verify audit messages
-    Tasks.waitFor(expectedAuditEntities, () -> {
-      List<AuditMessage> publishedMessages = fetchAuditMessages();
-      Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
-      for (AuditMessage message : publishedMessages) {
-        EntityId entityId = EntityId.fromMetadataEntity(message.getEntity());
-        if (entityId instanceof NamespacedEntityId) {
-          if (((NamespacedEntityId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
-            // Ignore system audit messages
-            continue;
+    Tasks.waitFor(
+        expectedAuditEntities,
+        () -> {
+          List<AuditMessage> publishedMessages = fetchAuditMessages();
+          Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
+          for (AuditMessage message : publishedMessages) {
+            EntityId entityId = EntityId.fromMetadataEntity(message.getEntity());
+            if (entityId instanceof NamespacedEntityId) {
+              if (((NamespacedEntityId) entityId)
+                  .getNamespace()
+                  .equals(NamespaceId.SYSTEM.getNamespace())) {
+                // Ignore system audit messages
+                continue;
+              }
+            }
+            if (entityId.getEntityType() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
+              ArtifactId artifactId = (ArtifactId) entityId;
+              // Version is dynamic for deploys in test cases
+              entityId =
+                  Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
+            }
+            actualAuditEntities.put(message.getType(), entityId);
           }
-        }
-        if (entityId.getEntityType() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
-          ArtifactId artifactId = (ArtifactId) entityId;
-          // Version is dynamic for deploys in test cases
-          entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
-        }
-        actualAuditEntities.put(message.getType(), entityId);
-      }
-      return actualAuditEntities;
-    }, 5, TimeUnit.SECONDS);
+          return actualAuditEntities;
+        },
+        5,
+        TimeUnit.SECONDS);
   }
 
   private List<AuditMessage> fetchAuditMessages() throws TopicNotFoundException, IOException {
     List<AuditMessage> result = new ArrayList<>();
-    try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(auditTopic).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        messagingService.fetch(
+            new DefaultMessageFetchRequest.Builder().setTopicId(auditTopic).build())) {
       while (iterator.hasNext()) {
         RawMessage message = iterator.next();
-        result.add(GSON.fromJson(new String(message.getPayload(), StandardCharsets.UTF_8), AuditMessage.class));
+        result.add(
+            GSON.fromJson(
+                new String(message.getPayload(), StandardCharsets.UTF_8), AuditMessage.class));
       }
     }
     return result;

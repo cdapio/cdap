@@ -27,7 +27,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
-import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.data.RawMessage;
@@ -125,40 +125,44 @@ public final class FetchHandler extends AbstractHttpHandler {
     }
   }
 
-  /**
-   * Creates a {@link CloseableIterator} of {@link RawMessage} based on the given fetch request.
-   */
-  private CloseableIterator<RawMessage> fetchMessages(GenericRecord fetchRequest,
-      TopicId topicId) throws IOException, TopicNotFoundException {
-    MessageFetcher fetcher = messagingService.prepareFetch(topicId);
+  /** Creates a {@link CloseableIterator} of {@link RawMessage} based on the given fetch request. */
+  private CloseableIterator<RawMessage> fetchMessages(GenericRecord fetchRequest, TopicId topicId)
+      throws IOException, TopicNotFoundException {
+    DefaultMessageFetchRequest.Builder fetchRequestBuilder =
+        new DefaultMessageFetchRequest.Builder();
+
+    fetchRequestBuilder.setTopicId(topicId);
 
     Object startFrom = fetchRequest.get("startFrom");
     if (startFrom != null) {
       if (startFrom instanceof ByteBuffer) {
         // start message id is specified
-        fetcher.setStartMessage(Bytes.toBytes((ByteBuffer) startFrom),
-            (Boolean) fetchRequest.get("inclusive"));
+        fetchRequestBuilder.setStartMessage(
+            Bytes.toBytes((ByteBuffer) startFrom), (Boolean) fetchRequest.get("inclusive"));
       } else if (startFrom instanceof Long) {
         // start by timestamp is specified
-        fetcher.setStartTime((Long) startFrom);
+        fetchRequestBuilder.setStartTime((Long) startFrom);
       } else {
         // This shouldn't happen as it's guaranteed by the schema
-        LOG.warn("Ignore unrecognized type for startFrom. Type={}, Value={}", startFrom.getClass(),
+        LOG.warn(
+            "Ignore unrecognized type for startFrom. Type={}, Value={}",
+            startFrom.getClass(),
             startFrom);
       }
     }
 
     Integer limit = (Integer) fetchRequest.get("limit");
     if (limit != null) {
-      fetcher.setLimit(limit);
+      fetchRequestBuilder.setLimit(limit);
     }
 
     ByteBuffer encodedTx = (ByteBuffer) fetchRequest.get("transaction");
     if (encodedTx != null) {
-      fetcher.setTransaction(TRANSACTION_CODEC.decode(ByteBuffers.getByteArray(encodedTx)));
+      fetchRequestBuilder.setTransaction(
+          TRANSACTION_CODEC.decode(ByteBuffers.getByteArray(encodedTx)));
     }
 
-    return fetcher.fetch();
+    return messagingService.fetch(fetchRequestBuilder.build());
   }
 
   /**

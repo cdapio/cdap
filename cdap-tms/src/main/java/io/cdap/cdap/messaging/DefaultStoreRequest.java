@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,13 @@
 package io.cdap.cdap.messaging;
 
 import io.cdap.cdap.proto.id.TopicId;
-import java.util.Iterator;
 
-/**
- * This class represents messages to be store to the messaging system. The message payloads are
- * provide through the {@link Iterator}.
- */
-public abstract class StoreRequest implements Iterable<byte[]> {
-
+public abstract class DefaultStoreRequest implements StoreRequest {
   private final TopicId topicId;
   private final boolean transactional;
   private final long transactionWritePointer;
 
-  protected StoreRequest(TopicId topicId, boolean transactional, long transactionWritePointer) {
+  protected DefaultStoreRequest(TopicId topicId, boolean transactional, long transactionWritePointer) {
     this.topicId = topicId;
     this.transactional = transactional;
     this.transactionWritePointer = transactionWritePointer;
@@ -39,9 +33,7 @@ public abstract class StoreRequest implements Iterable<byte[]> {
     return topicId;
   }
 
-  /**
-   * Returns {@code true} if the message should be published transactionally.
-   */
+  /** Returns {@code true} if the message should be published transactionally. */
   public boolean isTransactional() {
     return transactional;
   }
@@ -53,9 +45,4 @@ public abstract class StoreRequest implements Iterable<byte[]> {
   public long getTransactionWritePointer() {
     return transactionWritePointer;
   }
-
-  /**
-   * Returns {@code true} if there is payload in this request.
-   */
-  public abstract boolean hasPayload();
 }

@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -353,7 +354,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
   private void createTopicIfNeeded(TopicId topicId) throws IOException {
     try {
-      messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
+      messagingService.createTopic(new DefaultTopicMetadata(topicId, Collections.emptyMap()));
     } catch (TopicAlreadyExistsException ex) {
       // no-op
     }

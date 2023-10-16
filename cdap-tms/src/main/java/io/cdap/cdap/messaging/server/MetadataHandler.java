@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -77,7 +78,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
       @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
     messagingService.createTopic(
-        new TopicMetadata(topicId, decodeTopicProperties(request.content())));
+        new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -88,7 +89,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
       @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
     messagingService.updateTopic(
-        new TopicMetadata(topicId, decodeTopicProperties(request.content())));
+        new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -98,7 +99,8 @@ public final class MetadataHandler extends AbstractHttpHandler {
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    TopicMetadata metadata = messagingService.getTopic(topicId);
+    TopicMetadata metadata =
+        new DefaultTopicMetadata(topicId, messagingService.getTopicMetadataProperties(topicId));
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(metadata.getProperties(), TOPIC_PROPERTY_TYPE));
   }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.messaging.service;
 
 import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.DefaultStoreRequest;
 import io.cdap.cdap.messaging.TopicMetadata;
 import java.util.Iterator;
 import javax.annotation.Nullable;
@@ -24,7 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link StoreRequest} that represents a pending store request to the underlying storage table.
  */
-final class PendingStoreRequest extends StoreRequest {
+final class PendingStoreRequest extends DefaultStoreRequest {
 
   private final StoreRequest originalRequest;
   private final TopicMetadata metadata;

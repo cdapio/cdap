@@ -14,32 +14,26 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.data;
+package io.cdap.cdap.messaging;
 
-/**
- * Represents a unique message in the messaging system. It contains the message id and the payload
- */
-public class RawMessage {
+import io.cdap.cdap.proto.id.TopicId;
+import java.util.Map;
 
-  private final byte[] id;
-  private final byte[] payload;
+/** Represents metadata about a messaging topic. */
+public interface TopicMetadata {
 
-  public RawMessage(byte[] id, byte[] payload) {
-    this.id = id;
-    this.payload = payload;
-  }
+  /** Returns the topic id that this metadata is associated with. */
+  TopicId getTopicId();
 
-  /**
-   * Returns the unique id of this message.
-   */
-  public byte[] getId() {
-    return id;
-  }
+  /** Returns the raw properties for the topic. */
+  Map<String, String> getProperties();
 
-  /**
-   * Returns the published content of this message.
-   */
-  public byte[] getPayload() {
-    return payload;
-  }
+  /** Returns the generation id for the topic. */
+  int getGeneration();
+
+  /** Check whether the topic exists. */
+  boolean exists();
+
+  /** Returns the time-to-live in seconds property of the topic. */
+  long getTTL();
 }

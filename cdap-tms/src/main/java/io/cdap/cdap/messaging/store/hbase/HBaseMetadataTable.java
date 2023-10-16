@@ -24,6 +24,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.PutBuilder;
 import io.cdap.cdap.data2.util.hbase.ScanBuilder;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.store.MetadataTable;
@@ -86,7 +87,7 @@ public final class HBaseMetadataTable implements MetadataTable {
       }
 
       Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
-      TopicMetadata topicMetadata = new TopicMetadata(topicId, properties);
+      TopicMetadata topicMetadata = new DefaultTopicMetadata(topicId, properties);
       if (!topicMetadata.exists()) {
         throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
       }
@@ -116,19 +117,19 @@ public final class HBaseMetadataTable implements MetadataTable {
 
         if (value == null) {
           TreeMap<String, String> properties = new TreeMap<>(topicMetadata.getProperties());
-          properties.put(TopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
+          properties.put(DefaultTopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
           putBuilder.add(columnFamily, COL, Bytes.toBytes(GSON.toJson(properties, MAP_TYPE)));
           completed = table.checkAndPut(rowKey, columnFamily, COL, null, putBuilder.build());
         } else {
           Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
-          TopicMetadata metadata = new TopicMetadata(topicId, properties);
+          TopicMetadata metadata = new DefaultTopicMetadata(topicId, properties);
           if (metadata.exists()) {
             throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
           }
 
           int newGenerationId = (metadata.getGeneration() * -1) + 1;
           TreeMap<String, String> newProperties = new TreeMap<>(properties);
-          newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(newGenerationId));
+          newProperties.put(DefaultTopicMetadata.GENERATION_KEY, Integer.toString(newGenerationId));
 
           putBuilder.add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)));
           completed = table.checkAndPut(rowKey, columnFamily, COL, value, putBuilder.build());
@@ -149,7 +150,7 @@ public final class HBaseMetadataTable implements MetadataTable {
       while (!completed) {
         TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
         TreeMap<String, String> newProperties = new TreeMap<>(topicMetadata.getProperties());
-        newProperties.put(TopicMetadata.GENERATION_KEY,
+        newProperties.put(DefaultTopicMetadata.GENERATION_KEY,
             Integer.toString(oldMetadata.getGeneration()));
 
         Put put = tableUtil.buildPut(rowKey)
@@ -174,7 +175,7 @@ public final class HBaseMetadataTable implements MetadataTable {
       while (!completed) {
         TopicMetadata oldMetadata = getMetadata(topicId);
         TreeMap<String, String> newProperties = new TreeMap<>(oldMetadata.getProperties());
-        newProperties.put(TopicMetadata.GENERATION_KEY,
+        newProperties.put(DefaultTopicMetadata.GENERATION_KEY,
             Integer.toString(oldMetadata.getGeneration() * -1));
         Put put = tableUtil.buildPut(rowKey)
             .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
@@ -215,7 +216,7 @@ public final class HBaseMetadataTable implements MetadataTable {
           TopicId topicId = MessagingUtils.toTopicId(result.getRow());
           byte[] value = result.getValue(columnFamily, COL);
           Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
-          TopicMetadata metadata = new TopicMetadata(topicId, properties);
+          TopicMetadata metadata = new DefaultTopicMetadata(topicId, properties);
           if (metadata.exists()) {
             topicIds.add(topicId);
           }
