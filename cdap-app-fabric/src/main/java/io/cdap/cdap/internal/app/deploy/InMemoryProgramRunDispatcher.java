@@ -49,6 +49,7 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -202,18 +203,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     ArtifactRepository artifactRepository = noAuthArtifactRepository;
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
     if (peer != null) {
-      // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
-      String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3,
-          peer);
-      // Set longer timeouts because we fetch from remote appfabric the first time we get an artifact. Subsequent
-      // reads are served by the cache.
-      HttpRequestConfig requestConfig = new HttpRequestConfig(600000,
-          600000,
-          false);
-      RemoteClient client = remoteClientFactory.createRemoteClient(
-          Constants.Service.ARTIFACT_CACHE_SERVICE,
-          requestConfig,
-          basePath);
+      RemoteClient client = getRemoteClientForTetheredRun(peer);
       RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(
           locationFactory,
           client);
@@ -279,8 +269,15 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(peerEndpoint),
             new NoOpInternalAuthenticator(),
             remoteAuthenticator, pathPrefix);
-        pf = new RemoteIsolatedPluginFinder(locationFactory, factory,
-            tempDir.getAbsolutePath());
+        // This remote client is used to get plugin metadata from remote appfabric
+        RemoteClient remoteClient = factory.createRemoteClient(
+          Constants.Service.APP_FABRIC_HTTP,
+          new DefaultHttpRequestConfig(false),
+          String.format("%s", Constants.Gateway.API_VERSION_3));
+        // This remote client is used to download plugin artifacts from the artifact cache
+        RemoteClient remoteClientInternal = getRemoteClientForTetheredRun(peer);
+        pf = new RemoteIsolatedPluginFinder(locationFactory, remoteClient, remoteClientInternal,
+                                            tempDir.getAbsolutePath());
       }
       try {
         ApplicationSpecification generatedAppSpec =
@@ -327,6 +324,22 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         tempDir, tetheredRun);
     dispatcherContext.addCleanupTask(createCleanupTask(executableProgram));
     return runner.run(executableProgram, updatedOptions);
+  }
+
+  /**
+   * Returns a remote client that fetches artifacts from the artifact cache.
+   *
+   */
+  private RemoteClient getRemoteClientForTetheredRun(String peer) {
+    // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
+    String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3,
+                                    peer);
+    // Set longer timeouts because we fetch from remote appfabric the first time we get an artifact. Subsequent
+    // reads are served by the cache.
+    HttpRequestConfig requestConfig = new HttpRequestConfig(600000,
+                                                            600000,
+                                                            false);
+    return remoteClientFactory.createRemoteClient(Constants.Service.ARTIFACT_CACHE_SERVICE, requestConfig, basePath);
   }
 
   /**
