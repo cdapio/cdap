@@ -188,6 +188,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     }
   }
 
+  public void emitLaunchingMetrics(long value) {
+    emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, value);
+  }
+
   private void emitMetrics(String metricName, long value) {
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(metricName, value);
   }
