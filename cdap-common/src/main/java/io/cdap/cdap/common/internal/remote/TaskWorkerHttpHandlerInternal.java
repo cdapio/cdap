@@ -24,11 +24,10 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
+import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
-import io.cdap.cdap.proto.security.GcpMetadataTaskContext;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -42,8 +41,6 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -210,8 +207,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
           runnableTaskRequest);
       try {
-        // set the GcpMetadataTaskContext before running the task.
-        setGcpMetadataTaskContext(runnableTaskRequest);
+        if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null
+            && runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace() != null) {
+          // set the GcpMetadataTaskContext before running the task.
+          NamespaceId namespaceId = new NamespaceId(
+              runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace());
+          GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
+        }
         runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
         TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
             startTime,
@@ -232,7 +234,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
                 startTime, false, runnableTaskRequest));
       } finally {
         // clear the GcpMetadataTaskContext after the task is completed.
-        clearGcpMetadataTaskContext();
+        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
       }
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
@@ -245,48 +247,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       taskCompletionConsumer.accept(false,
           new TaskDetails(metricsCollectionService, startTime, true, null));
     }
-  }
-
-  private String getSideMetadataServiceEndpoint() {
-    if (cConf.getInt(ArtifactLocalizer.PORT) < 0) {
-      return null;
-    }
-    return String.format("http://%s:%s",
-        InetAddress.getLoopbackAddress().getHostName(), cConf.get(ArtifactLocalizer.PORT));
-  }
-
-  private void setGcpMetadataTaskContext(RunnableTaskRequest runnableTaskRequest)
-      throws IOException {
-    if (getSideMetadataServiceEndpoint() == null ||
-        runnableTaskRequest.getParam().getEmbeddedTaskRequest() == null) {
-      return;
-    }
-    GcpMetadataTaskContext gcpMetadataTaskContext = new GcpMetadataTaskContext(
-        runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace(),
-        SecurityRequestContext.getUserId(), SecurityRequestContext.getUserIP(),
-        SecurityRequestContext.getUserCredential());
-    String setContextEndpoint = String.format("%s/set-context",
-        getSideMetadataServiceEndpoint());
-    HttpRequest httpRequest =
-        HttpRequest.put(new URL(setContextEndpoint))
-            .withBody(GSON.toJson(gcpMetadataTaskContext))
-            .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .build();
-    HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
-    LOG.debug("Set namespace '{}' response: {}",
-        runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace(),
-        tokenResponse.getResponseCode());
-  }
-
-  private void clearGcpMetadataTaskContext() throws IOException {
-    if (getSideMetadataServiceEndpoint() == null) {
-      return;
-    }
-    String clearContextEndpoint = String.format("%s/clear-context",
-        getSideMetadataServiceEndpoint());
-    HttpRequest httpRequest = HttpRequest.delete(new URL(clearContextEndpoint)).build();
-    HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
-    LOG.debug("Clear context response: {}", tokenResponse.getResponseCode());
   }
 
   /**

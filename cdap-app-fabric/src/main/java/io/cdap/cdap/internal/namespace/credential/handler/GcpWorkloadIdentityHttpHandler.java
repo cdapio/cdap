@@ -117,7 +117,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
       credentialProvider.validateIdentity(namespaceMeta, credentialIdentity);
     } catch (IdentityValidationException e) {
       throw new BadRequestException(String.format("Identity validation failed with error: %s",
-          e.getMessage()), e);
+          e.getCause() == null ? e.getMessage() : e.getCause().getMessage()), e);
     } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
       throw new NotFoundException(e.getMessage());
     }
