@@ -47,6 +47,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.utils.StringUtils;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -94,6 +95,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -555,8 +557,8 @@ public class ProgramLifecycleService {
         throw e;
       }
 
-      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(), programId.getProgram(),
-               authenticationContext.getPrincipal().getName(), userArgs);
+      LOG.info("Attempt to run {} program {} as user {} with arguments {}", programId.getType(),
+               programId.getProgram(), StringUtils.decodeUserId(userId, LOG), userArgs);
 
       provisionerNotifier.provisioning(programRunId, programOptions, programDescriptor, userId);
       done = true;
@@ -774,7 +776,8 @@ public class ProgramLifecycleService {
                                                     workflowRunId));
       }
       // send a message to stop the program run
-      LOG.info("Issuing a program stop request with a timeout value of {} secs", gracefulShutdownSecs);
+      LOG.info("Issuing a program stop request with a timeout value of {} secs by user {}", gracefulShutdownSecs,
+               StringUtils.decodeUserId(SecurityRequestContext.getUserId(), LOG));
       programStateWriter.stop(activeRunId, gracefulShutdownSecs);
     }
 

@@ -112,6 +112,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1115,5 +1116,4 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     return builder.build();
   }
-
 }

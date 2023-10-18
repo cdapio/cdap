@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.common.utils;
 
+import org.slf4j.Logger;
+
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 
 /**
@@ -46,4 +49,14 @@ public class StringUtils {
     return str.trim().split("\\s*,\\s*");
   }
 
+  public static String decodeUserId(String encodedUserId, Logger log) {
+    String decodedUserId = "emptyUserId";
+    try {
+      byte[] decodedBytes = Base64.getDecoder().decode(encodedUserId);
+      decodedUserId = new String(decodedBytes);
+    } catch (Exception e) {
+      log.trace("Failed to decode user {} with exception {}", encodedUserId, e);
+    }
+    return decodedUserId;
+  }
 }
