@@ -104,6 +104,19 @@ public class RemoteTaskExecutor {
    * @throws Exception returned by remote task if any
    */
   public byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception {
+    return runTask(runnableTaskRequest, false);
+  }
+
+  /**
+   * Sends the {@link RunnableTaskRequest} to a remote worker and returns the result.
+   * Retries sending the request if the workers are busy.
+   *
+   * @param runnableTaskRequest {@link RunnableTaskRequest} with details of task
+   * @param isIdempotent        if true, task will be retried regardless of exception as it is idempotent
+   * @return byte[] response from remote task
+   * @throws Exception returned by remote task if any
+   */
+  public byte[] runTask(RunnableTaskRequest runnableTaskRequest, boolean isIdempotent) throws Exception {
     //initialize start time for collecting latency metric
     long startTime = System.currentTimeMillis();
     ByteBuffer requestBody = encodeTaskRequest(runnableTaskRequest);
@@ -138,6 +151,13 @@ public class RemoteTaskExecutor {
         } catch (NoRouteToHostException e) {
           throw new RetryableException(
             String.format("Received exception %s for %s", e.getMessage(), runnableTaskRequest.getClassName()));
+        } catch (Exception ex) {
+          if (!isIdempotent) {
+            // this is not an idempotent task. We do not try again.
+            throw ex;
+          }
+          throw new RetryableException(
+            String.format("Received exception %s for %s", ex.getMessage(), runnableTaskRequest.getClassName()));
         }
       }, retryStrategy, Retries.DEFAULT_PREDICATE);
     } catch (Exception e) {
