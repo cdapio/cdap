@@ -23,6 +23,7 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.HttpCodes;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
@@ -58,6 +59,12 @@ public class RemoteIsolatedPluginFinder extends RemotePluginFinder {
       RemoteClientFactory remoteClientFactory,
       @Named(ISOLATED_PLUGIN_DIR) String pluginDir) {
     super(locationFactory, remoteClientFactory);
+    this.pluginDir = new File(pluginDir);
+  }
+
+  public RemoteIsolatedPluginFinder(LocationFactory locationFactory, RemoteClient remoteClient,
+      RemoteClient remoteClientInternal, @Named(ISOLATED_PLUGIN_DIR) String pluginDir) {
+    super(locationFactory, remoteClient, remoteClientInternal);
     this.pluginDir = new File(pluginDir);
   }
 
