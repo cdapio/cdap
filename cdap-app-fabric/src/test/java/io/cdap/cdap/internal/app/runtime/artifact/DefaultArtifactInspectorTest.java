@@ -38,6 +38,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
 import io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlugin;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import java.io.File;
 import java.io.IOException;

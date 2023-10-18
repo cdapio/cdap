@@ -14,13 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;

@@ -31,9 +31,11 @@ import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
+import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
@@ -48,12 +50,15 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * {@link io.cdap.http.HttpHandler} for source control management.
@@ -190,13 +195,55 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   @Path("/apps/{app-id}/pull")
   public void pullApp(FullHttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
-                      @PathParam("app-id") final String appId) throws Exception {
+                      @PathParam("app-id") final String appId,
+                      @QueryParam("dryrun") final boolean dryrun) throws Exception {
     checkSourceControlFeatureFlag();
     ApplicationReference appRef = validateAppReference(namespaceId, appId);
 
     try {
-      ApplicationRecord appRecord = sourceControlService.pullAndDeploy(appRef);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecord));
+      if (dryrun) {
+        PullAppDryrunResponse response = sourceControlService.pullAndDryrun(new NamespaceId((namespaceId)) ,appRef);
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
+      } else {
+        ApplicationRecord appRecord = sourceControlService.pullAndDeploy(appRef);
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecord));
+      }
+    } catch (NoChangesToPullException e) {
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
+    }
+  }
+
+  /**
+   * Pull the requested applications from linked repository and deploy in current namespace.
+   */
+  @POST
+  @Path("/apps/pull")
+  public void pullApps(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @QueryParam("dryrun") final boolean dryrun) throws Exception {
+    checkSourceControlFeatureFlag();
+    List<String> appIds;
+    try {
+      appIds = parseBody(request, new TypeToken<List<String>>() {
+      }.getType());
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid request body: " + e.getMessage());
+    }
+
+    List<ApplicationReference> appRefs = new ArrayList<>();
+    for (String appId: appIds) {
+      ApplicationReference appRef = validateAppReference(namespaceId, appId);
+      appRefs.add(appRef);
+    }
+
+    try {
+      if (dryrun) {
+        List<PullAppDryrunResponse> response = sourceControlService.pullAndDryrunMulti(new NamespaceId(namespaceId), appRefs);
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
+      } else {
+        List<ApplicationRecord> appRecords = sourceControlService.pullAndDeployMulti(appRefs);
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecords));
+      }
     } catch (NoChangesToPullException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());
     }

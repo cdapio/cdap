@@ -18,11 +18,13 @@ package io.cdap.cdap.etl.proto.v2;
 
 import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationValidationContext;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -143,6 +145,138 @@ public final class ETLStage {
 
     // No update action provided so return stage as is.
     return this;
+  }
+
+  public ETLStageValidationResult validateStage(ApplicationValidationContext validationContext) throws Exception {
+    ArtifactVersionRange currentVersionRange;
+    try {
+      currentVersionRange =
+          io.cdap.cdap.api.artifact.ArtifactVersionRange.parse(
+              plugin.getArtifactConfig().getVersion());
+    } catch (Exception e) {
+      return new ETLStageValidationResult(
+          name, label, id,
+          plugin.getName(), plugin.getType(),
+          "INVALID_ARTIFACT_VERSION",
+          plugin.getArtifactConfig(), null );
+    }
+
+    List<ArtifactId> candidates = validationContext.getPluginArtifacts(plugin.getType(), plugin.getName(), null);
+    Optional<ArtifactId> newPluginCandidate = candidates.stream()
+            .max(Comparator.comparing(artifactId -> artifactId.getVersion()));
+
+    if (!newPluginCandidate.isPresent()) {
+      return new ETLStageValidationResult(
+          name, label, id,
+          plugin.getName(), plugin.getType(),
+          "NOT_FOUND",
+          plugin.getArtifactConfig(), null );
+    }
+
+    ArtifactId matchingArtifact = candidates.stream().filter(artifactId -> {
+      if (currentVersionRange.isExactVersion()) {
+        return currentVersionRange.getLower().compareTo(artifactId.getVersion()) == 0;
+      } else {
+        return currentVersionRange.versionIsInRange(artifactId.getVersion());
+      }
+    }).findFirst().orElse(null);
+
+    ArtifactId newPlugin = newPluginCandidate.get();
+    ArtifactSelectorConfig suggestion = new ArtifactSelectorConfig(
+        newPlugin.getScope().name(),
+        newPlugin.getName(),
+        newPlugin.getVersion().getVersion());
+
+    // Current plugin version is exact
+    if (currentVersionRange.isExactVersion()) {
+      if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) < 0) {
+        // Current version is a fixed version and new version is higher than current.
+        if (matchingArtifact == null) {
+          return new ETLStageValidationResult(
+              name, label, id,
+              plugin.getName(), plugin.getType(),
+              "VERSION_MISMATCH_EXACT",
+              plugin.getArtifactConfig(), suggestion );
+        }
+        return new ETLStageValidationResult(
+              name, label, id,
+              plugin.getName(), plugin.getType(),
+              "CAN_UPGRADE",
+              plugin.getArtifactConfig(), suggestion );
+      }
+      if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) == 0) {
+        if (plugin.getArtifactConfig().getScope() != newPlugin.getScope().toString()) {
+          suggestion = new ArtifactSelectorConfig(
+              newPlugin.getScope().toString(),
+              plugin.getName(),
+              currentVersionRange.getVersionString());
+
+          return new ETLStageValidationResult(
+              name, label, id,
+              plugin.getName(), plugin.getType(),
+              "SCOPE_MISMATCH",
+              plugin.getArtifactConfig(), suggestion );
+        }
+      }
+      return null;
+    }
+
+    // Current plugin version is version range.
+    if (!currentVersionRange.isExactVersion()) {
+      if (currentVersionRange.versionIsInRange(newPlugin.getVersion())) {
+        // Scope mismatch
+        if (plugin.getArtifactConfig().getScope() != newPlugin.getScope().toString()) {
+          suggestion = new ArtifactSelectorConfig(
+              newPlugin.getScope().toString(),
+              plugin.getName(),
+              currentVersionRange.getVersionString());
+
+          return new ETLStageValidationResult(
+              name, label, id,
+              plugin.getName(), plugin.getType(),
+              "SCOPE_MISMATCH",
+              plugin.getArtifactConfig(), suggestion );
+        }
+
+        return null;
+      }
+      // Current lower version is higher than newer latest version.
+      if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
+
+        ArtifactVersionRange newVersionRange =
+            new ArtifactVersionRange(newPlugin.getVersion(),
+                true,
+                currentVersionRange.getUpper(), currentVersionRange.isUpperInclusive());
+
+        suggestion = new ArtifactSelectorConfig(
+            newPlugin.getScope().name(),
+            newPlugin.getName(),
+            newVersionRange.getVersionString());
+
+        return new ETLStageValidationResult(
+            name, label, id,
+            plugin.getName(), plugin.getType(),
+            "VERSION_MISMATCH_DOWNGRADE_RANGE",
+            plugin.getArtifactConfig(), suggestion );
+      }
+      // Increase the upper bound to latest available version.
+      ArtifactVersionRange newVersionRange =
+          new ArtifactVersionRange(currentVersionRange.getLower(),
+              currentVersionRange.isLowerInclusive(),
+              newPlugin.getVersion(), true);
+
+      suggestion = new ArtifactSelectorConfig(
+          newPlugin.getScope().name(),
+          newPlugin.getName(),
+          newVersionRange.getVersionString());
+
+      return new ETLStageValidationResult(
+          name, label, id,
+          plugin.getName(), plugin.getType(),
+          "VERSION_MISMATCH_UPGRADE_RANGE",
+          plugin.getArtifactConfig(), suggestion );
+    }
+    return null;
   }
 
   /**

@@ -49,11 +49,11 @@ import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactMeta;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.common.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.worker.ConfiguratorTask;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizer;
@@ -200,7 +200,7 @@ public class RemoteConfiguratorTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1.0.0");
 
     // Don't update the artifacts map so that the fetching of artifact would fail.
-    
+
     AppDeploymentInfo info = AppDeploymentInfo.builder()
       .setArtifactId(artifactId)
       .setArtifactLocation(appJar)
@@ -223,7 +223,7 @@ public class RemoteConfiguratorTest {
     artifacts.put(artifactId, new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace(),
                                                                         artifactId.toApiArtifactId(), appJar),
                                                  new ArtifactMeta(ArtifactClasses.builder().build())));
-    
+
     AppDeploymentInfo info = AppDeploymentInfo.builder()
       .setArtifactId(artifactId)
       .setArtifactLocation(appJar)

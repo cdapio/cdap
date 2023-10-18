@@ -58,4 +58,10 @@ public interface Application<T extends Config> {
     throw new UnsupportedOperationException(
         "Application config update operation is not supported.");
   }
+
+  default ApplicationValidationResult validateConfig(ApplicationValidationContext applicationValidationContext)
+    throws Exception {
+    throw new UnsupportedOperationException(
+        "Application config validation operation is not supported");
+  }
 }

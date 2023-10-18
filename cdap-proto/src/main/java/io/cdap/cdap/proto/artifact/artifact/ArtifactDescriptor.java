@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.artifact;
+package io.cdap.cdap.proto.artifact.artifact;
 
 import io.cdap.cdap.api.artifact.ArtifactId;
 import java.net.URI;
@@ -33,8 +33,7 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   /**
    * Mark with transient to not serialize it. Store the location URI in separate field "locationURI"
    * that gets serialized when this object needs to be transferred through the network. The
-   * recipient should instantiate a {@link Location} based on the received "locationURI" (e.g.
-   * {@link RemoteArtifactRepositoryReader#getArtifact}
+   * recipient should instantiate a {@link Location} based on the received "locationURI"
    */
   private final transient Location location;
   private final URI locationURI;

@@ -17,12 +17,17 @@
 package io.cdap.cdap.etl.proto.v2;
 
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationValidationContext;
+import io.cdap.cdap.api.app.ApplicationValidationResult;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.proto.Connection;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +42,8 @@ import javax.annotation.Nullable;
  * ETL Batch Configuration.
  */
 public final class ETLBatchConfig extends ETLConfig {
+
+  private static final Gson GSON = new Gson();
 
   private final Engine engine;
   private final String schedule;
@@ -168,6 +175,21 @@ public final class ETLBatchConfig extends ETLConfig {
         processTimingEnabled, engine, schedule, driverResources, clientResources,
         numOfRecordsPreview, maxConcurrentRuns, properties, service, connectionConfig, comments,
         pushdownEnabled, transformationPushdown);
+  }
+
+  public ApplicationValidationResult validateBatchConfig(ApplicationValidationContext validationContext)
+    throws Exception {
+    List<ETLStageValidationResult> result = new ArrayList<>();
+    for (ETLStage stage : getStages()) {
+      result.add(stage.validateStage(validationContext));
+    }
+    // Upgrade all actions.
+    for (ETLStage postAction : getPostActions()) {
+      result.add(postAction.validateStage(validationContext));
+    }
+
+    Type resultType = new TypeToken<List<ETLStageValidationResult>>() {}.getType();
+    return new ApplicationValidationResult(GSON.toJson(result, resultType));
   }
 
   @Override

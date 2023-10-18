@@ -25,18 +25,26 @@ import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
+import io.cdap.cdap.sourcecontrol.worker.PullAppDryrunTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import javafx.util.Pair;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,6 +129,38 @@ public class RemoteSourceControlOperationRunner extends
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
+  }
+
+  @Override
+  public PullAppDryrunResponse pullAndDryrun(
+      PullAndDryrunAppOperationRequest pullAndDryrunAppOperationRequest,
+      ReadonlyArtifactRepositoryAccessor artifactRepository
+  ) throws Exception {
+    try {
+      Pair<PullAndDryrunAppOperationRequest, ReadonlyArtifactRepositoryAccessor> params =
+          new Pair<>(pullAndDryrunAppOperationRequest, artifactRepository);
+
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppDryrunTask.class.getName())
+          .withParam(GSON.toJson(params)).build();
+
+      LOG.trace("Pulling application {} from linked repository", pullAndDryrunAppOperationRequest.getApp());
+      byte[] result = remoteTaskExecutor.runTask(request);
+      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PullAppDryrunResponse.class);
+    } catch (RemoteExecutionException e) {
+      throw propagateRemoteException(e, notFoundExceptionProvider, authConfigExceptionProvider);
+    } catch (Exception ex) {
+      throw new SourceControlException(ex.getMessage(), ex);
+    }
+  }
+
+  @Override
+  public List<PullAppDryrunResponse> pullAndDryrunMulti(
+      List<PullAndDryrunAppOperationRequest> pullAndDryrunAppOperationRequests,
+      NamespaceId namespace,
+      RepositoryConfig repoConfig,
+      ReadonlyArtifactRepositoryAccessor artifactRepository
+  ) throws Exception {
+    throw new UnsupportedOperationException("unsupported");
   }
 
   /**

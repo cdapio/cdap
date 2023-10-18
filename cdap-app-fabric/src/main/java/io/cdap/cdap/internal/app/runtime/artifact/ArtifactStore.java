@@ -43,8 +43,11 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.common.PluginNotExistsException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactMeta;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
@@ -92,6 +95,8 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata
@@ -174,7 +179,7 @@ import org.apache.twill.filesystem.LocationFactory;
  * universal_plugin_data
  */
 public class ArtifactStore {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ArtifactStore.class);
   private static final String ARTIFACTS_PATH = "artifacts";
 
   private static final Gson GSON = new GsonBuilder()
@@ -681,6 +686,84 @@ public class ArtifactStore {
     }
     return result;
   }
+
+  /**
+   * Get all plugin classes in a namespace
+   *
+   * @param namespace the namespace to search for plugins. The system namespace is always
+   *     included.
+   *
+   * @return an unmodifiable map of plugin artifact to plugin classes of the given type and name,
+   *     accessible by the given artifact. The map will never be null, and will never be empty.
+   * @throws PluginNotExistsException if no plugin with the given type and name exists in the
+   *     namespace
+   * @throws IOException if there was an exception reading metadata from the metastore
+   */
+  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(
+      NamespaceId namespace)
+      throws IOException, ArtifactNotFoundException, PluginNotExistsException {
+
+    SortedMap<ArtifactDescriptor, PluginClass> result = TransactionRunners.run(transactionRunner,
+        context -> {
+          List<ArtifactDetail> parentArtifactDetails = getArtifacts(namespace);
+          //LOG.info("Parent Artifact Details (" + namespace.getNamespace() +"): "+ GSON.toJson(parentArtifactDetails));
+          if (parentArtifactDetails.isEmpty()) {
+            return new TreeMap<>();
+          }
+
+          SortedMap<ArtifactDescriptor, PluginClass> plugins = new TreeMap<>();
+
+          List<Id.Artifact> parentArtifacts = new ArrayList<>();
+          for (ArtifactDetail parentArtifactDetail : parentArtifactDetails) {
+            parentArtifacts.add(
+                Id.Artifact.from(Id.Namespace.from(namespace.getNamespace()),
+                    parentArtifactDetail.getDescriptor().getArtifactId()));
+
+            Set<PluginClass> parentPlugins = parentArtifactDetail.getMeta().getClasses()
+                .getPlugins();
+            for (PluginClass pluginClass : parentPlugins) {
+              if (isAllowed(pluginClass)) {
+                plugins.put(parentArtifactDetail.getDescriptor(), pluginClass);
+                break;
+              }
+            }
+          }
+
+          Collection<Field<?>> pluginKeys = Arrays.asList(
+              Fields.stringField(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD,
+                  namespace.getNamespace())
+          );
+
+          // Add all plugins that extends from the given set of parents
+          StructuredTable pluginTable = getTable(context,
+              StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+
+          try (CloseableIterator<StructuredRow> iterator =
+              pluginTable.scan(Range.singleton(pluginKeys), Integer.MAX_VALUE)) {
+            addPluginsInRangeToMap(namespace, parentArtifacts, iterator, plugins, null,
+                Integer.MAX_VALUE);
+          }
+
+          // Add all universal plugins
+          Collection<Field<?>> univPluginKeys = Arrays.asList(
+              Fields.stringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD,
+                  namespace.getNamespace())
+          );
+          StructuredTable uniPluginTable = getTable(context,
+              StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+
+          try (CloseableIterator<StructuredRow> iterator =
+              uniPluginTable.scan(Range.singleton(univPluginKeys), Integer.MAX_VALUE)) {
+            addPluginsInRangeToMap(namespace, parentArtifacts, iterator, plugins, null,
+                  Integer.MAX_VALUE);
+          }
+
+          return Collections.unmodifiableSortedMap(plugins);
+        }, IOException.class, ArtifactNotFoundException.class);
+
+    return result;
+  }
+
 
   /**
    * Update artifact properties using an update function. Functions will receive an immutable map.

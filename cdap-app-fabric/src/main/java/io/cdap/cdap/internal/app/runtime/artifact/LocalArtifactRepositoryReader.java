@@ -18,8 +18,10 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.common.ArtifactRepositoryReader;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import java.io.IOException;
 import java.io.InputStream;

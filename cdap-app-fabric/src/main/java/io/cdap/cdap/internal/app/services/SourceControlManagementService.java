@@ -18,23 +18,31 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.app.ArtifactRepositoryAccessor;
+import io.cdap.cdap.common.app.ReadonlyArtifactRepositoryAccessor;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDescriptor;
+import io.cdap.cdap.proto.artifact.artifact.ArtifactDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.sourcecontrol.PullAppDryrunResponse;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
@@ -50,6 +58,7 @@ import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAndDryrunAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -62,7 +71,10 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.SortedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +91,8 @@ public class SourceControlManagementService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  private final ArtifactRepository artifactRepository;
+  private final ArtifactStore artifactStore;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -93,7 +107,8 @@ public class SourceControlManagementService {
                                         AuthenticationContext authenticationContext,
                                         SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
-                                        Store store) {
+                                        Store store, ArtifactRepository artifactRepository,
+                                        ArtifactStore artifactStore) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -102,6 +117,8 @@ public class SourceControlManagementService {
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
+    this.artifactRepository = artifactRepository;
+    this.artifactStore = artifactStore;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
@@ -203,7 +220,7 @@ public class SourceControlManagementService {
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
-    
+
     // AppLifecycleService already enforces ApplicationDetail Access
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
@@ -224,7 +241,7 @@ public class SourceControlManagementService {
         appRef.getApplication(),
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
-    
+
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
@@ -251,7 +268,7 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    
+
     PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
     AppRequest<?> appRequest = pullResponse.getAppRequest();
@@ -279,6 +296,61 @@ public class SourceControlManagementService {
       app.getChangeDetail(), app.getSourceControlMeta());
   }
 
+  public List<ApplicationRecord> pullAndDeployMulti(List<ApplicationReference> appRefs) throws Exception {
+    return new ArrayList<>();
+  }
+
+  public PullAppDryrunResponse pullAndDryrun(NamespaceId namespace ,ApplicationReference appRef) throws Exception {
+    // Dryrun deployment with a generated uuid
+    String versionId = RunIds.generate().getId();
+    ApplicationId appId = appRef.app(versionId);
+    // Enforcing application CREATE permission and Namespace READ_REPOSITORY permission upfront
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+        NamespacePermission.READ_REPOSITORY);
+
+    return pullAndDryrunApplication(namespace, appRef, appId);
+  }
+
+  public List<PullAppDryrunResponse> pullAndDryrunMulti(NamespaceId namespace, List<ApplicationReference> appRefs) throws Exception {
+    List<PullAndDryrunAppOperationRequest> appOperationRequests = new ArrayList<>();
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+
+    for (ApplicationReference appRef: appRefs) {
+      String versionId = RunIds.generate().getId();
+      ApplicationId appId = appRef.app(versionId);
+      accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+      accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+          NamespacePermission.READ_REPOSITORY);
+
+      appOperationRequests.add(new PullAndDryrunAppOperationRequest(
+          appId,
+          appRef,
+          repoConfig
+      ));
+    }
+
+    List<ArtifactDetail> allSystemArtifacts = artifactStore.getArtifacts(NamespaceId.SYSTEM);
+    List<ArtifactDetail> allUserArtifacts = artifactStore.getArtifacts(namespace);
+
+    SortedMap<ArtifactDescriptor, PluginClass> allSystemPlugins = artifactStore.getPluginClasses(NamespaceId.SYSTEM);
+    SortedMap<ArtifactDescriptor, PluginClass> allUserPlugins = artifactStore.getPluginClasses(namespace);
+
+    ReadonlyArtifactRepositoryAccessor readonlyArtifactRepositoryAccessor = new ArtifactRepositoryAccessor(
+        allSystemArtifacts,
+        allUserArtifacts,
+        allSystemPlugins,
+        allUserPlugins
+    );
+
+    return sourceControlOperationRunner.pullAndDryrunMulti(
+        appOperationRequests,
+        namespace,
+        repoConfig,
+        readonlyArtifactRepositoryAccessor
+    );
+  }
+
   /**
    * Pull the application from repository, look up the fileHash in store and compare it with the cone in repository.
    *
@@ -294,6 +366,36 @@ public class SourceControlManagementService {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
     PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
+
+    if (latestMeta != null
+        && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
+      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
+          + "no new change for the pulled application: %s", appRef));
+    }
+    return pullResponse;
+  }
+
+  private PullAppDryrunResponse pullAndDryrunApplication(NamespaceId namespace, ApplicationReference appRef, ApplicationId appId) throws Exception {
+    RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
+    SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
+
+    List<ArtifactDetail> allSystemArtifacts = artifactStore.getArtifacts(NamespaceId.SYSTEM);
+    List<ArtifactDetail> allUserArtifacts = artifactStore.getArtifacts(namespace);
+
+    SortedMap<ArtifactDescriptor, PluginClass> allSystemPlugins = artifactStore.getPluginClasses(NamespaceId.SYSTEM);
+    SortedMap<ArtifactDescriptor, PluginClass> allUserPlugins = artifactStore.getPluginClasses(namespace);
+
+    ReadonlyArtifactRepositoryAccessor readonlyArtifactRepositoryAccessor = new ArtifactRepositoryAccessor(
+        allSystemArtifacts,
+        allUserArtifacts,
+        allSystemPlugins,
+        allUserPlugins
+    );
+
+    PullAppDryrunResponse pullResponse = sourceControlOperationRunner.pullAndDryrun(
+        new PullAndDryrunAppOperationRequest(appId, appRef, repoConfig),
+        readonlyArtifactRepositoryAccessor
+    );
 
     if (latestMeta != null
         && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
