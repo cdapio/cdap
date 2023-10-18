@@ -332,6 +332,12 @@ public class KubeTwillRunnerServiceTest {
 
   }
 
+  @Test
+  public void testDeleteWatchers() {
+    twillRunnerService.addAndStartWatchers(KUBE_NAMESPACE);
+    twillRunnerService.stopAndRemoveWatchers();
+  }
+
   private void enableWorkloadIdentity() {
     String workloadIdentityPool = "test-workload-pool";
     String workloadIdentityProvider =

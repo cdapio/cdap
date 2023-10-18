@@ -64,7 +64,9 @@ import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -1030,7 +1032,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   /**
    * Create and start watchers for the given Kubernetes namespace
    */
-  private synchronized void addAndStartWatchers(String namespace) {
+  @VisibleForTesting
+  synchronized void addAndStartWatchers(String namespace) {
     if (resourceWatchers.containsKey(namespace)) {
       return;
     }
@@ -1068,8 +1071,10 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   /**
    * Stop and remove watchers for all Kubernetes namespaces
    */
-  private synchronized void stopAndRemoveWatchers() {
-    resourceWatchers.keySet().forEach(this::stopAndRemoveWatchers);
+  @VisibleForTesting
+  synchronized void stopAndRemoveWatchers() {
+    resourceWatchers.values().forEach(e -> e.values().forEach(AbstractWatcherThread::close));
+    resourceWatchers.clear();
   }
 
   /**
