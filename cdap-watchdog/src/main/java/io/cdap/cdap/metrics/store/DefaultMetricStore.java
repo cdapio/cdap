@@ -85,6 +85,8 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_DATASET = "dataset";
   private static final String BY_PROFILE = "profile";
   private static final String BY_COMPONENT = "component";
+  private static final String BY_SCHEDULE = "schedule";
+  private static final String BY_ONLY_COMPONENT = "only_component";
   private static final Map<String, AggregationAlias> AGGREGATIONS_ALIAS_DIMENSIONS =
     ImmutableMap.of(BY_WORKFLOW,
                     new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
@@ -194,6 +196,16 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
                        Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
       // i.e. for components only
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+
+    aggs.put(BY_SCHEDULE, new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE)));
+
+    aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
     AGGREGATIONS = Collections.unmodifiableMap(aggs);

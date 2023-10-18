@@ -18,10 +18,14 @@ package io.cdap.cdap.internal.app.runtime.schedule;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.TopicId;
 import org.quartz.Job;
@@ -47,9 +51,12 @@ public class DefaultSchedulerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScheduledJob.class);
     private final ScheduleTaskPublisher taskPublisher;
+    private final MetricsCollectionService metricsCollectionService;
 
-    ScheduledJob(MessagingService messagingService, TopicId topicId) {
+    ScheduledJob(MessagingService messagingService, TopicId topicId,
+                 MetricsCollectionService metricsCollectionService) {
       this.taskPublisher = new ScheduleTaskPublisher(messagingService, topicId);
+      this.metricsCollectionService = metricsCollectionService;
     }
 
     @Override
@@ -86,8 +93,19 @@ public class DefaultSchedulerService {
         // Do not remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
         // logged in cdap master logs making it hard to debug issues.
         LOG.warn("Error while publishing notification for schedule {}. {}", scheduleId, t);
+        emitScheduleJobFailureMetric(scheduleId.getApplication(), scheduleId.getSchedule());
         throw new JobExecutionException(t.getMessage(), t.getCause(), false);
       }
+    }
+
+    private void emitScheduleJobFailureMetric(String application, String schedule) {
+      Map<String, String> tags = ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.COMPONENT, "quartzscheduledjob",
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.SCHEDULE, schedule);
+      MetricsContext metricsContext = metricsCollectionService.getContext(tags);
+      metricsContext.increment(Constants.Metrics.ScheduledJob.SCHEDULE_FAILURE, 1);
     }
   }
 }

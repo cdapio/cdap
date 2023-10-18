@@ -17,12 +17,15 @@
 package io.cdap.cdap.scheduler;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -40,6 +43,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -50,6 +54,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -68,19 +73,22 @@ class ConstraintCheckerService extends AbstractIdleService {
   private ScheduleTaskRunner taskRunner;
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping;
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   ConstraintCheckerService(Store store,
                            ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
                            NamespaceQueryAdmin namespaceQueryAdmin,
                            CConfiguration cConf,
-                           TransactionRunner transactionRunner) {
+                           TransactionRunner transactionRunner,
+                           MetricsCollectionService metricsCollectionService) {
     this.store = store;
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.cConf = cConf;
     this.transactionRunner = transactionRunner;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -271,11 +279,17 @@ class ConstraintCheckerService extends AbstractIdleService {
 
       try {
         taskRunner.launch(job);
+        emitScheduleJobSuccessAndLatencyMetric(job.getSchedule().getScheduleId().getApplication(),
+                                               job.getSchedule().getName(), job.getCreationTime());
       } catch (ConflictException e) {
         LOG.error("Skip job {} because it was rejected while launching: {}", job.getJobKey(), e.getMessage());
+        emitScheduleJobFailureMetric(job.getSchedule().getScheduleId().getApplication(),
+                                     job.getSchedule().getName());
       } catch (Exception e) {
         LOG.error("Skip launching job {} because the program {} encountered an exception while launching.",
                   job.getJobKey(), job.getSchedule().getProgramId(), e);
+        emitScheduleJobFailureMetric(job.getSchedule().getScheduleId().getApplication(),
+                                     job.getSchedule().getName());
       }
       // this should not have a conflict, because any updates to the job will first check to make sure that
       // it is not PENDING_LAUNCH
@@ -308,5 +322,28 @@ class ConstraintCheckerService extends AbstractIdleService {
       return satisfiedState;
     }
 
+    private void emitScheduleJobSuccessAndLatencyMetric(String application, String schedule, long jobCreationTime) {
+      MetricsContext collector = metricsCollectionService.getContext(
+        getScheduleJobMetricsContext(application, schedule));
+      collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_SUCCESS, 1);
+
+      long currTime = System.currentTimeMillis();
+      long latency = currTime - jobCreationTime;
+      collector.gauge(Constants.Metrics.ScheduledJob.SCHEDULE_LATENCY, latency);
+    }
+
+    private void emitScheduleJobFailureMetric(String application, String schedule) {
+      MetricsContext collector = metricsCollectionService.getContext(
+        getScheduleJobMetricsContext(application, schedule));
+      collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_FAILURE, 1);
+    }
+
+    private Map<String, String> getScheduleJobMetricsContext(String application, String schedule) {
+      return ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.COMPONENT, "constraintchecker",
+        Constants.Metrics.Tag.SCHEDULE, schedule);
+    }
   }
 }

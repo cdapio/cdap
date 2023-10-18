@@ -121,6 +121,9 @@ public class MetricsQueryHelper {
       .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
       .put(Constants.Metrics.Tag.CLASS, "class")
       .put(Constants.Metrics.Tag.TRIES, "retry")
+
+      // put schedule job related tag
+      .put(Constants.Metrics.Tag.SCHEDULE, "schedule")
       .build();
 
     tagNameToHuman = mapping;

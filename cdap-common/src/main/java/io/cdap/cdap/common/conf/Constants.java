@@ -964,6 +964,9 @@ public final class Constants {
       //For task worker
       public static final String CLASS = "clz";
       public static final String TRIES = "try";
+
+      //For scheduler
+      public static final String SCHEDULE = "sch";
     }
 
     /**
@@ -1112,6 +1115,16 @@ public final class Constants {
         "authorization.non.internal.visibility.check.count";
       public static final String EXTENSION_CHECK_MILLIS = "authorization.extension.check.millis";
       public static final String EXTENSION_VISIBILITY_MILLIS = "authorization.extension.visibility.millis";
+    }
+
+    /**
+     * Scheduled job metrics
+     */
+    public static final class ScheduledJob {
+      public static final String SCHEDULE_FAILURE = "schedulejob.failure";
+      public static final String SCHEDULE_SUCCESS = "schedulejob.success";
+      public static final String SCHEDULE_NOTIFICATION_FAILURE = "schedulejob.notification.failure";
+      public static final String SCHEDULE_LATENCY = "schedulejob.latency";
     }
   }
 

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.scheduler;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
@@ -24,6 +25,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -38,6 +40,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -182,7 +185,6 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
                                        JobQueueTable jobQueue, Notification notification) throws IOException {
-
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
       if (scheduleIdString == null) {
@@ -206,7 +208,23 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
         LOG.warn("Ignore notification that doesn't have a schedule {} associated with, {}", scheduleId, notification);
         return;
       }
-      jobQueue.addNotification(record, notification);
+      try {
+        jobQueue.addNotification(record, notification);
+      } catch (Exception e) {
+        emitScheduleJobNotificationFailureMetrics(record.getSchedule().getScheduleId().getApplication(),
+                                                  record.getSchedule().getScheduleId().getSchedule());
+        throw e;
+      }
+    }
+
+    private void emitScheduleJobNotificationFailureMetrics(String application, String schedule) {
+      Map<String, String> tags = ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.COMPONENT, "schedulenotification",
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.SCHEDULE, schedule);
+      MetricsContext collector = metricsCollectionService.getContext(tags);
+      collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_NOTIFICATION_FAILURE, 1);
     }
   }
 
