@@ -74,14 +74,21 @@ public class RemotePluginFinder implements PluginFinder {
   @Inject
   public RemotePluginFinder(LocationFactory locationFactory,
       RemoteClientFactory remoteClientFactory) {
-    this.remoteClient = remoteClientFactory.createRemoteClient(
-        Constants.Service.APP_FABRIC_HTTP,
-        new DefaultHttpRequestConfig(false),
-        String.format("%s", Constants.Gateway.API_VERSION_3));
-    this.remoteClientInternal = remoteClientFactory.createRemoteClient(
-        Constants.Service.APP_FABRIC_HTTP,
-        new DefaultHttpRequestConfig(false),
-        String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+    this(locationFactory,
+         remoteClientFactory.createRemoteClient(
+           Constants.Service.APP_FABRIC_HTTP,
+           new DefaultHttpRequestConfig(false),
+           String.format("%s", Constants.Gateway.API_VERSION_3)),
+           remoteClientFactory.createRemoteClient(
+             Constants.Service.APP_FABRIC_HTTP,
+             new DefaultHttpRequestConfig(false),
+             String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3)));
+  }
+
+  public RemotePluginFinder(LocationFactory locationFactory, RemoteClient remoteClient,
+                            RemoteClient remoteClientInternal) {
+    this.remoteClient = remoteClient;
+    this.remoteClientInternal = remoteClientInternal;
     this.locationFactory = locationFactory;
     this.retryStrategy = RetryStrategies.limit(30, RetryStrategies.fixDelay(2, TimeUnit.SECONDS));
   }
