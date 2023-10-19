@@ -34,7 +34,6 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
@@ -51,6 +50,7 @@ import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.LocalGitServer;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
+import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.SourceControlTestBase;
 import io.cdap.http.ChannelPipelineModifier;
@@ -251,7 +251,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     String serverUrl = gitServer.getServerUrl();
     RepositoryConfig repoConfig =
       new RepositoryConfig.Builder(mockRepoConfig).setLink(serverUrl + "ignored").build();
-    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -264,17 +264,16 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     Assert.assertTrue(SystemReader.getInstance() instanceof SecureSystemReader);
 
     // validate pull response
-    AppRequest<?> appRequest = response.getAppRequest();
-    validateTestAppRequest(appRequest);
+    validatePullResponse(response, TEST_APP_NAME);
     Assert.assertEquals(response.getApplicationName(), mockAppDetails.getName());
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test(expected = SourceControlAppConfigNotFoundException.class)
   public void testPullAppConfigNotFoundException() throws Exception {
     String serverUrl = gitServer.getServerUrl();
     RepositoryConfig repoConfig =
       new RepositoryConfig.Builder(mockRepoConfig).setLink(serverUrl + "ignored").build();
-    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -286,7 +285,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     String serverUrl = gitServer.getServerUrl();
     RepositoryConfig repoConfig =
       new RepositoryConfig.Builder(mockRepoConfig).setLink(serverUrl + "ignored").build();
-    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -306,8 +305,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         .setLink(serverUrl + "ignored")
         .setAuth(NON_EXISTS_AUTH_CONFIG)
         .build();
-    PulAppOperationRequest mockPullRequest =
-      new PulAppOperationRequest(mockAppRef, repoConfig);
+    PullAppOperationRequest mockPullRequest =
+      new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);

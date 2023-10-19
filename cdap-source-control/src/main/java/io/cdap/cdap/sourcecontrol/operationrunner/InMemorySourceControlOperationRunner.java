@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -32,10 +33,12 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
 import io.cdap.cdap.sourcecontrol.GitOperationException;
+import io.cdap.cdap.sourcecontrol.InvalidApplicationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
+import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import java.io.File;
 import java.io.FileFilter;
@@ -47,6 +50,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,11 +76,12 @@ public class InMemorySourceControlOperationRunner extends
   }
 
   @Override
-  public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
-    AuthenticationConfigException {
+  public PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
+      AuthenticationConfigException {
     try (
-      RepositoryManager repositoryManager = repoManagerFactory.create(pushAppOperationRequest.getNamespaceId(),
-                                                                      pushAppOperationRequest.getRepositoryConfig())
+        RepositoryManager repositoryManager = repoManagerFactory.create(
+            pushRequest.getNamespaceId(),
+            pushRequest.getRepositoryConfig())
     ) {
       try {
         repositoryManager.cloneRemote();
@@ -84,53 +90,77 @@ public class InMemorySourceControlOperationRunner extends
                                                        e.getMessage()), e);
       }
 
-      LOG.info("Pushing application configs for : {}", pushAppOperationRequest.getApp().getName());
+      LOG.info("Pushing application configs for : {}", pushRequest.getApp().getName());
 
       //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
       return writeAppDetailAndPush(
-        repositoryManager,
-        pushAppOperationRequest.getApp(),
-        pushAppOperationRequest.getCommitDetails()
+          repositoryManager,
+          pushRequest.getApp(),
+          pushRequest.getCommitDetails()
       );
     }
   }
 
   @Override
-  public PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest)
-    throws NotFoundException, AuthenticationConfigException {
-    String applicationName = pulAppOperationRequest.getApp().getApplication();
-    String configFileName = generateConfigFileName(applicationName);
-    LOG.info("Cloning remote to pull application {}", applicationName);
-    Path appRelativePath = null;
-    try (RepositoryManager repositoryManager =
-           repoManagerFactory.create(pulAppOperationRequest.getApp().getNamespaceId(),
-                                     pulAppOperationRequest.getRepositoryConfig())) {
-      appRelativePath = repositoryManager.getFileRelativePath(configFileName);
+  public PullAppResponse<?> pull(PullAppOperationRequest pullRequest)
+      throws NotFoundException, AuthenticationConfigException {
+    AtomicReference<PullAppResponse<?>> response = new AtomicReference<>();
+    pull(
+        new MultiPullAppOperationRequest(
+            pullRequest.getRepositoryConfig(),
+            pullRequest.getApp().getNamespaceId(),
+            ImmutableSet.of(pullRequest.getApp().getApplication())
+        ),
+        response::set
+    );
+    // it should never be null as if the application is not found we will get an exception
+    return response.get();
+  }
+
+  @Override
+  public void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+      throws SourceControlAppConfigNotFoundException, AuthenticationConfigException {
+    LOG.info("Cloning remote to pull applications {}", pullRequest.getApps());
+
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(pullRequest.getNamespace(),
+        pullRequest.getRepositoryConfig())) {
       String commitId = repositoryManager.cloneRemote();
-      Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
-      if (!Files.exists(filePathToRead)) {
-        throw new NotFoundException(String.format("App with name %s not found at path %s in git repository",
-                                                  applicationName,
-                                                  appRelativePath));
+
+      for (String applicationName : pullRequest.getApps()) {
+        PullAppResponse<?> response = pullSingle(repositoryManager, commitId, applicationName);
+        consumer.accept(response);
       }
-      LOG.info("Getting file hash for application {}", applicationName);
+    } catch (GitAPIException | IOException e) {
+      throw new GitOperationException(
+          String.format("Failed to clone repository %s", e.getMessage()), e);
+    }
+  }
+
+  private PullAppResponse<?> pullSingle(RepositoryManager repositoryManager, String commitId,
+      String applicationName) throws SourceControlException, SourceControlAppConfigNotFoundException {
+    String configFileName = generateConfigFileName(applicationName);
+    Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
+    Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
+    if (!Files.exists(filePathToRead)) {
+      throw new SourceControlAppConfigNotFoundException(applicationName, appRelativePath);
+    }
+    LOG.info("Getting file hash for application {}", applicationName);
+    try {
       String fileHash = repositoryManager.getFileHash(appRelativePath, commitId);
       String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
+
       return new PullAppResponse<>(applicationName, fileHash, appRequest);
     } catch (GitAPIException e) {
       throw new GitOperationException(String.format("Failed to pull application %s: %s",
-                                                     applicationName,
-                                                     e.getMessage()), e);
+          applicationName, e.getMessage()), e);
     } catch (JsonSyntaxException e) {
-      throw new IllegalArgumentException(String.format(
-        "Failed to de-serialize application json at path %s. Ensure application json is valid.",
-        appRelativePath), e);
-    } catch (NotFoundException | AuthenticationConfigException | IllegalArgumentException e) {
-      // TODO(CDAP-20410): Create exception classes that derive from a common class instead of propagating.
-      throw e;
+      throw new InvalidApplicationConfigException(appRelativePath, e);
+    } catch (NotFoundException e) {
+      throw new SourceControlAppConfigNotFoundException(applicationName, appRelativePath);
     } catch (Exception e) {
-      throw new SourceControlException(String.format("Failed to pull application %s.", applicationName), e);
+      throw new SourceControlException(
+          String.format("Failed to pull application %s.", applicationName), e);
     }
   }
 

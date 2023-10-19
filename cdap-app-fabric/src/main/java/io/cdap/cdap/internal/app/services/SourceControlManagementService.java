@@ -49,7 +49,7 @@ import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
-import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
@@ -293,7 +293,8 @@ public class SourceControlManagementService {
     throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
-    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
+    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(
+        new PullAppOperationRequest(appRef, repoConfig));
 
     if (latestMeta != null
         && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {

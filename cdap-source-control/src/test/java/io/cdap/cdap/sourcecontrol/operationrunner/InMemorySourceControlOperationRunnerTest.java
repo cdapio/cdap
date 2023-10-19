@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
@@ -34,6 +34,7 @@ import io.cdap.cdap.sourcecontrol.GitOperationException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
+import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.SourceControlTestBase;
 import java.io.IOException;
@@ -51,11 +52,13 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class InMemorySourceControlOperationRunnerTest extends SourceControlTestBase {
-  private static final String FAKE_FILE_HASH = "5905258bb958ceda80b6a37938050ad876920f09";
   private static final String FAKE_COMMIT_HASH = "5905258bb958ceda80b6a37938050ad876920f10";
   private static final ApplicationDetail testAppDetails = new ApplicationDetail(
     TEST_APP_NAME, "v1", "description1", null, null, "conf1", new ArrayList<>(),
     new ArrayList<>(), new ArrayList<>(), null, null);
+  private static final ApplicationDetail testApp2Details = new ApplicationDetail(
+      TEST_APP2_NAME, "v1", "description1", null, null, "conf1", new ArrayList<>(),
+      new ArrayList<>(), new ArrayList<>(), null, null);
   private static final RepositoryConfig testRepoConfig = new RepositoryConfig.Builder()
       .setProvider(Provider.GITHUB)
       .setLink("ignored")
@@ -248,11 +251,27 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
   public void testPullSuccess() throws Exception {
     setupPullTest();
     ApplicationReference appRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
-    PullAppResponse<?> response = operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
-    Assert.assertEquals(response.getApplicationFileHash(), FAKE_FILE_HASH);
-    AppRequest<?> appRequest = response.getAppRequest();
-    validateTestAppRequest(appRequest);
-    Assert.assertEquals(response.getApplicationName(), TEST_APP_NAME);
+    PullAppResponse<?> response = operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
+    validatePullResponse(response, TEST_APP_NAME);
+    Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
+    Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
+  }
+
+  @Test
+  public void testMultiPullSuccess() throws Exception {
+    setupPullTest();
+    List<PullAppResponse<?>> responses = new ArrayList<>();
+    operationRunner.pull(
+        new MultiPullAppOperationRequest(testRepoConfig, NAMESPACE, Sets.newHashSet(TEST_APP_NAME, TEST_APP2_NAME)),
+        responses::add
+    );
+    Assert.assertEquals(responses.size(), 2);
+
+    responses.sort(Comparator.comparing(PullAppResponse::getApplicationName));
+
+    // validate
+    validatePullResponse(responses.get(0), TEST_APP_NAME);
+    validatePullResponse(responses.get(1), TEST_APP2_NAME);
     Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
     Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
   }
@@ -265,21 +284,21 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
       .when(mockRepositoryManager)
       .getFileHash(Mockito.any(Path.class), Mockito.any(String.class));
     try {
-      operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+      operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     } finally {
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
     }
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test(expected = SourceControlAppConfigNotFoundException.class)
   public void testPullFileNotFound() throws Exception {
     setupPullTest();
     ApplicationReference appRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
-    Mockito.doReturn(Paths.get(PATH_PREFIX, "app2.json"))
+    Mockito.doReturn(Paths.get(PATH_PREFIX, "notpresent.json"))
       .when(mockRepositoryManager).getFileRelativePath(Mockito.any());
     try {
-      operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+      operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     } finally {
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
@@ -292,7 +311,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     ApplicationReference appRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
     Mockito.doThrow(new IOException("secure store failure")).when(mockRepositoryManager).cloneRemote();
     try {
-      operationRunner.pull(new PulAppOperationRequest(appRef, testRepoConfig));
+      operationRunner.pull(new PullAppOperationRequest(appRef, testRepoConfig));
     } finally {
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).cloneRemote();
       Mockito.verify(mockRepositoryManager, Mockito.times(1)).close();
@@ -310,13 +329,21 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
     Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
-    Mockito.doReturn(FAKE_FILE_HASH)
+    Mockito.doReturn(TEST_FILE_HASH)
       .when(mockRepositoryManager)
       .getFileHash(Mockito.eq(Paths.get(PATH_PREFIX, TEST_APP_NAME + ".json")), Mockito.eq(FAKE_COMMIT_HASH));
+    Mockito.doReturn(TEST_FILE_HASH)
+        .when(mockRepositoryManager)
+        .getFileHash(Mockito.eq(Paths.get(PATH_PREFIX, TEST_APP2_NAME + ".json")), Mockito.eq(FAKE_COMMIT_HASH));
     Files.createDirectories(baseRepoDirPath);
     Files.write(baseRepoDirPath.resolve(TEST_APP_NAME + ".json"), TEST_APP_SPEC.getBytes(StandardCharsets.UTF_8));
+    Files.write(baseRepoDirPath.resolve(TEST_APP2_NAME + ".json"), TEST_APP_SPEC.getBytes(StandardCharsets.UTF_8));
     Mockito.doNothing().when(mockRepositoryManager).close();
     Path appRelativePath = Paths.get(PATH_PREFIX, testAppDetails.getName() + ".json");
-    Mockito.doReturn(appRelativePath).when(mockRepositoryManager).getFileRelativePath(Mockito.any());
+    Path app2RelativePath = Paths.get(PATH_PREFIX, testApp2Details.getName() + ".json");
+    Mockito.doReturn(appRelativePath).when(mockRepositoryManager)
+        .getFileRelativePath(testAppDetails.getName() + ".json");
+    Mockito.doReturn(app2RelativePath).when(mockRepositoryManager)
+        .getFileRelativePath(testApp2Details.getName() + ".json");
   }
 }

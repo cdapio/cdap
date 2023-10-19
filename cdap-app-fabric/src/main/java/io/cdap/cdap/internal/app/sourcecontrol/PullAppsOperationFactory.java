@@ -14,23 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol;
+package io.cdap.cdap.internal.app.sourcecontrol;
+
 
 /**
- * Exception thrown when an error is encountered while setting up authentication credentials for the
- * remote Git repo.
+ * Factory interface for creating {@link PullAppsOperation}.
+ * This interface is for Guice assisted binding, hence there will be no concrete implementation of it.
  */
-public class AuthenticationConfigException extends SourceControlException {
+public interface PullAppsOperationFactory {
 
-  public AuthenticationConfigException(String message, Exception cause) {
-    super(message, cause);
-  }
-
-  public AuthenticationConfigException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public AuthenticationConfigException(String message) {
-    super(message);
-  }
+  /**
+   * Returns an implementation of {@link PullAppsOperation} that operates on the given {@link
+   * PullAppsRequest}.
+   *
+   * @param request contains list of apps to pull
+   * @return a new instance of {@link PullAppsOperation}.
+   */
+  PullAppsOperation create(PullAppsRequest request);
 }

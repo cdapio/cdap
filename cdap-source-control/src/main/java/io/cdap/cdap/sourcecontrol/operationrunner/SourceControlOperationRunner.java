@@ -21,6 +21,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import java.util.function.Consumer;
 
 /**
  * An interface encapsulating all operations needed for source control management.
@@ -29,20 +30,20 @@ public interface SourceControlOperationRunner extends Service {
   /**
    * Push an application config to remote git repository.
    *
-   * @param pushAppOperationRequest {@link PushAppOperationRequest} of the application to be pushed
+   * @param pushRequest {@link PushAppOperationRequest} of the application to be pushed
    * @return file-paths and file-hashes for the updated configs.
    * @throws NoChangesToPushException      if there is no effective changes on the config file to commit
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
    *                                       call remote Git.
    * @throws SourceControlException when the push operation fails for any other reason.
    */
-  PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
+  PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
     AuthenticationConfigException;
 
   /**
    * Gets an application spec from a Git repository.
    *
-   * @param pulAppOperationRequest The {@link PulAppOperationRequest} of the application to pull from
+   * @param pullRequest The {@link PullAppOperationRequest} of the application to pull from
    * @return the details of the pulled application.
    * @throws NotFoundException             when the requested application is not found in the Git repository.
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
@@ -50,8 +51,23 @@ public interface SourceControlOperationRunner extends Service {
    * @throws IllegalArgumentException      when the fetched application json or file path is invalid.
    * @throws SourceControlException when the operation fails for any other reason.
    */
-  PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
+  PullAppResponse<?> pull(PullAppOperationRequest pullRequest) throws NotFoundException,
     AuthenticationConfigException;
+
+  /**
+   * Pulls multiple application specs from repository. Rather than returning the specs it calls the
+   * given {@link Consumer} for each spec.
+   *
+   * @param pullRequest The {@link MultiPullAppOperationRequest} of the applications to pull
+   * @param consumer {@link Consumer} that would be applied on each spec
+   * @throws NotFoundException             when the requested application is not found in the Git repository.
+   * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
+   *                                       call remote Git.
+   * @throws IllegalArgumentException      when the fetched application json or file path is invalid.
+   * @throws SourceControlException when the operation fails for any other reason.
+   */
+  void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+    throws NotFoundException, AuthenticationConfigException;
 
   /**
    * Lists application configs found in repository.

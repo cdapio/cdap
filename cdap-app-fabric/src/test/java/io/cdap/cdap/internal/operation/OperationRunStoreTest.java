@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.proto.operation.OperationMeta;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public abstract class OperationRunStoreTest {
   private final AtomicLong runIdTime = new AtomicLong(System.currentTimeMillis());
   private final String testNamespace = "test";
 
-  private final PullAppsRequest input = new PullAppsRequest(Collections.emptySet());
+  private final PullAppsRequest input = new PullAppsRequest(Collections.emptySet(), null);
 
 
   @Before
@@ -59,7 +60,7 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testGetOperation() throws Exception {
-    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
@@ -79,7 +80,7 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testUpdateMetadata() throws Exception {
-    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
@@ -116,7 +117,7 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testUpdateStatus() throws Exception {
-    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
@@ -153,7 +154,7 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testFailOperation() throws Exception {
-    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
@@ -223,10 +224,10 @@ public abstract class OperationRunStoreTest {
       gotRuns.clear();
       request = ScanOperationRunsRequest.builder()
           .setNamespace(testNamespace)
-          .setFilter(new OperationRunFilter("PUSH", null)).build();
+          .setFilter(new OperationRunFilter(OperationType.PUSH_APPS, null)).build();
       store.scanOperations(request, gotRuns::add);
       expectedRuns = testNamespaceRuns.stream()
-          .filter(detail -> detail.getRun().getType().equals("PUSH"))
+          .filter(detail -> detail.getRun().getType().equals(OperationType.PUSH_APPS))
           .collect(Collectors.toList());
       Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
@@ -234,27 +235,17 @@ public abstract class OperationRunStoreTest {
       gotRuns.clear();
       request = ScanOperationRunsRequest.builder()
           .setNamespace(testNamespace)
-          .setFilter(new OperationRunFilter("PUSH", OperationRunStatus.FAILED)).build();
-      expectedRuns = testNamespaceRuns.stream()
-          .filter(detail -> detail.getRun().getType().equals("PUSH"))
-          .filter(detail -> detail.getRun().getStatus().equals(OperationRunStatus.FAILED))
-          .collect(Collectors.toList());
-      Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
-
-      gotRuns.clear();
-      request = ScanOperationRunsRequest.builder()
-          .setNamespace(testNamespace).setLimit(20)
-          .setFilter(new OperationRunFilter("PULL", OperationRunStatus.FAILED)).build();
+          .setFilter(new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED)).build();
       store.scanOperations(request, gotRuns::add);
       expectedRuns = testNamespaceRuns.stream()
-          .filter(detail -> detail.getRun().getType().equals("PULL"))
+          .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
           .filter(detail -> detail.getRun().getStatus().equals(OperationRunStatus.FAILED))
           .collect(Collectors.toList());
       Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
     }, Exception.class);
   }
 
-  private OperationRunDetail insertRun(String namespace, String type,
+  private OperationRunDetail insertRun(String namespace, OperationType type,
       OperationRunStatus status)
       throws IOException, OperationRunAlreadyExistsException {
     long startTime = runIdTime.incrementAndGet();
@@ -286,10 +277,10 @@ public abstract class OperationRunStoreTest {
     // 5 would be in running state 5 in Failed
     // 5 would be of type PUSH 5 would be of type PULL
     for (int i = 0; i < 5; i++) {
-      details.add(insertRun(testNamespace, "PUSH", OperationRunStatus.RUNNING));
-      details.add(insertRun(Namespace.DEFAULT.getId(), "PUSH", OperationRunStatus.RUNNING));
-      details.add(insertRun(testNamespace, "PULL", OperationRunStatus.FAILED));
-      details.add(insertRun(Namespace.DEFAULT.getId(), "PULL", OperationRunStatus.RUNNING));
+      details.add(insertRun(testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
+      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
+      details.add(insertRun(testNamespace, OperationType.PULL_APPS, OperationRunStatus.FAILED));
+      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PULL_APPS, OperationRunStatus.RUNNING));
     }
     // The runs are added in increasing start time, hence reversing the List
     Collections.reverse(details);
