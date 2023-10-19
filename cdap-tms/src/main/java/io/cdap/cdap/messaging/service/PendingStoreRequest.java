@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.messaging.service;
 
-import io.cdap.cdap.messaging.StoreRequest;
+import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.DefaultStoreRequest;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 

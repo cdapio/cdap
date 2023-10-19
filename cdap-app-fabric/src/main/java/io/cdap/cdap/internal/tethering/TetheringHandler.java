@@ -26,7 +26,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.profile.Profile;

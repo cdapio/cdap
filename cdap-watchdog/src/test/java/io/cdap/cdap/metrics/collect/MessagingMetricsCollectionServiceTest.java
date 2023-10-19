@@ -31,7 +31,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.BinaryDecoder;
 import io.cdap.cdap.internal.io.ReflectionDatumReader;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
-import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.metrics.MetricsTestBase;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;

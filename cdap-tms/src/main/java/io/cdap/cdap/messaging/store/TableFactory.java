@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.messaging.store;
 
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import java.io.Closeable;
 import java.io.IOException;
 

@@ -22,7 +22,7 @@ import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
 import java.util.Collection;

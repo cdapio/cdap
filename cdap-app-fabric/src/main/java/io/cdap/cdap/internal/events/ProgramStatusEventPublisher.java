@@ -29,7 +29,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfos;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;

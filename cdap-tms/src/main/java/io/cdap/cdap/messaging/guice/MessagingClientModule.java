@@ -18,7 +18,7 @@ package io.cdap.cdap.messaging.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.client.ClientMessagingService;
 
 /**

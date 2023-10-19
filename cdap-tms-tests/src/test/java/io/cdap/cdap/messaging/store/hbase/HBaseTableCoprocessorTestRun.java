@@ -37,7 +37,7 @@ import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.DataCleanupTest;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MetadataTable;

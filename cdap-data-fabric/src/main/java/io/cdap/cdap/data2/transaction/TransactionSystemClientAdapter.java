@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.transaction;
 
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import java.io.InputStream;
 import java.util.Collection;

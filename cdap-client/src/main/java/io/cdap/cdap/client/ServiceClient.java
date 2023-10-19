@@ -27,7 +27,7 @@ import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;

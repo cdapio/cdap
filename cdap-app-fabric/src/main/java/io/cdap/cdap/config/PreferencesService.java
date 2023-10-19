@@ -25,7 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.PreferencesDetail;

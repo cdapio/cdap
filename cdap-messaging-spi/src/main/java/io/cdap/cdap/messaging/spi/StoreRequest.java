@@ -14,30 +14,28 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging;
+package io.cdap.cdap.messaging.spi;
 
 import io.cdap.cdap.proto.id.TopicId;
-import javax.annotation.Nullable;
-import org.apache.tephra.Transaction;
+import java.util.Iterator;
 
 /**
- * A request for fetching messages from the messaging system.
+ * This class represents messages to be store to the messaging system. The message payloads are
+ * provide through the {@link Iterator}.
  */
-public interface MessageFetchRequest {
+public interface StoreRequest extends Iterable<byte[]> {
 
   TopicId getTopicId();
 
-  @Nullable
-  byte[] getStartOffset();
+  /** Returns {@code true} if the message should be published transactionally. */
+  boolean isTransactional();
 
-  boolean isIncludeStart();
+  /**
+   * Returns the transaction write pointer if the message is going to be published transactionally,
+   * that is when {@link #isTransactional()} returns {@code true}.
+   */
+  long getTransactionWritePointer();
 
-  @Nullable
-  Long getStartTime();
-
-  @Nullable
-  Transaction getTransaction();
-
-  int getLimit();
-
+  /** Returns {@code true} if there is payload in this request. */
+  boolean hasPayload();
 }

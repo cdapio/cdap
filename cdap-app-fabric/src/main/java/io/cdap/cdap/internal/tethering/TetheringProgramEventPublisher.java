@@ -42,8 +42,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberS
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.RunRecord;

@@ -20,7 +20,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
-import io.cdap.cdap.messaging.data.RawMessage;
+import io.cdap.cdap.messaging.spi.RawMessage;
 
 /**
  * A {@link CloseableIterator} that converts each {@link RawMessage} to {@link Message}.

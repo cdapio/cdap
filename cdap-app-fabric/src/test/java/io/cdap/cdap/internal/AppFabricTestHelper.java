@@ -72,7 +72,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;

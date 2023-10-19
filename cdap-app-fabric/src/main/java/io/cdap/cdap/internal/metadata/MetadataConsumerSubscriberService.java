@@ -38,7 +38,7 @@ import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import io.cdap.cdap.metadata.MetadataMessageProcessor;

@@ -28,7 +28,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 

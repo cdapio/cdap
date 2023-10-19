@@ -23,7 +23,7 @@ import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;

@@ -15,7 +15,7 @@
  */
 package io.cdap.cdap.messaging.store;
 
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 
 /**
  * Request to scan across a key range in a MessageTable.

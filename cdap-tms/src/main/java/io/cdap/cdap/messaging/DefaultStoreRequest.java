@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging;
 
+import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.proto.id.TopicId;
 
 public abstract class DefaultStoreRequest implements StoreRequest {

@@ -65,7 +65,7 @@ import io.cdap.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.context.AbstractMessagePublisher;
 import io.cdap.cdap.proto.id.NamespaceId;

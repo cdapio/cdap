@@ -22,7 +22,7 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataException;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.common.metadata.MetadataRecord;
 import java.util.HashMap;

@@ -18,7 +18,7 @@ package io.cdap.cdap.support.task;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.healthcheck.VMInformation;
 import io.cdap.cdap.common.healthcheck.VMInformationFetcher;
 import io.cdap.cdap.common.utils.DirUtils;

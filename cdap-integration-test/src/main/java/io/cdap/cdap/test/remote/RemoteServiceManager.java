@@ -23,7 +23,7 @@ import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ServiceClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.test.AbstractProgramManager;

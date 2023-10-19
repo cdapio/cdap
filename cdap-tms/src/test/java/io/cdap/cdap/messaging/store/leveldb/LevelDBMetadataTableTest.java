@@ -21,7 +21,7 @@ import com.google.common.collect.Iterators;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.messaging.store.MetadataTableTest;
 import io.cdap.cdap.messaging.store.TableFactory;

@@ -24,7 +24,7 @@ import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;

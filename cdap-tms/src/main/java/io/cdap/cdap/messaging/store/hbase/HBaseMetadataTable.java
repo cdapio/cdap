@@ -26,7 +26,7 @@ import io.cdap.cdap.data2.util.hbase.PutBuilder;
 import io.cdap.cdap.data2.util.hbase.ScanBuilder;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingUtils;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;

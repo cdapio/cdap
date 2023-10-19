@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset;
 
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;

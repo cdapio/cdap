@@ -36,7 +36,7 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
 import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.loader.MockMetricsWriterModule;

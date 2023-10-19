@@ -19,7 +19,7 @@ package io.cdap.cdap.internal.app.runtime;
 import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;

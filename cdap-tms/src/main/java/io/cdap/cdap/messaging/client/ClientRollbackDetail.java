@@ -17,7 +17,7 @@
 package io.cdap.cdap.messaging.client;
 
 import com.google.common.base.Throwables;
-import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

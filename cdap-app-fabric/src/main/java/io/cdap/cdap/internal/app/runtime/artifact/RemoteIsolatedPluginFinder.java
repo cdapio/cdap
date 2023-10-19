@@ -20,7 +20,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.common.ArtifactNotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.HttpCodes;
 import io.cdap.cdap.common.internal.remote.RemoteClient;

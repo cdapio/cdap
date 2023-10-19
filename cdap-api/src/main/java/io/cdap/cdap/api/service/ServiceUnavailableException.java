@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.common;
+package io.cdap.cdap.api.service;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.retry.RetryableException;

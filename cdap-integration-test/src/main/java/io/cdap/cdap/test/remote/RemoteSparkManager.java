@@ -20,7 +20,7 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.common.utils.Tasks;

@@ -32,7 +32,7 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -48,7 +48,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreData
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;

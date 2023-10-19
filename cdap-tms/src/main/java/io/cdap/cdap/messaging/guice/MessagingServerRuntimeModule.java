@@ -31,7 +31,7 @@ import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.cache.MessageCache;
 import io.cdap.cdap.messaging.distributed.LeaderElectionMessagingService;
 import io.cdap.cdap.messaging.server.FetchHandler;

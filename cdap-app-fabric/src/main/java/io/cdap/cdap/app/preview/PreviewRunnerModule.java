@@ -59,7 +59,7 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;

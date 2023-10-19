@@ -22,7 +22,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
