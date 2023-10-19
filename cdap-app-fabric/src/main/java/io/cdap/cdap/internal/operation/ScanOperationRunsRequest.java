@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.internal.operation;
 
 import javax.annotation.Nullable;
 

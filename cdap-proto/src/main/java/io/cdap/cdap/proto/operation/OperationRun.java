@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.operationrun;
+package io.cdap.cdap.proto.operation;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.Objects;

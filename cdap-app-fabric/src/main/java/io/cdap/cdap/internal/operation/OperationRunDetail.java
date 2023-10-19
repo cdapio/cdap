@@ -14,24 +14,27 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.store;
+package io.cdap.cdap.internal.operation;
 
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
-import io.cdap.cdap.proto.operationrun.OperationRun;
+import io.cdap.cdap.proto.operation.OperationRun;
 import java.util.Arrays;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
  * Store the meta information about operation runs in CDAP. This class contains all information the
  * system needs about a run, which includes information that should not be exposed to users.
- * {@link io.cdap.cdap.proto.operationrun.OperationRun} contains fields that are exposed to users,
- * so everything else like the user request and principal goes here
- *
- * @param <T> The type of the operation request
+ * {@link io.cdap.cdap.proto.operation.OperationRun} contains fields that are exposed to users, so
+ * everything else like the user request and principal goes here. // TODO(samik) Create a wrapper
+ * class similar to OneOf Contains all possible operation requests only one of which should be
+ * non-null. It is the responsibility of the runner to read the correct request class and pass it to
+ * the operation.
  */
-public class OperationRunDetail<T> {
+public class OperationRunDetail {
 
   // carries the OperationRunId, but we don't need to serialize it as it is already in the key of the store
   private final transient OperationRunId runId;
@@ -48,17 +51,21 @@ public class OperationRunDetail<T> {
   @Nullable
   private final String principal;
 
-  @SerializedName("request")
-  private final T request;
+  // Add any new operation request type here
+  // Please also add the type in validateRequests
+  @SerializedName("pullAppsRequest")
+  @Nullable
+  private final PullAppsRequest pullAppsRequest;
 
-  protected OperationRunDetail(OperationRunId runId, OperationRun run, byte[] sourceId,
-      @Nullable String principal,
-      T request) {
+  protected OperationRunDetail(
+      OperationRunId runId, OperationRun run,
+      byte[] sourceId, @Nullable String principal,
+      @Nullable PullAppsRequest pullAppsRequest) {
     this.runId = runId;
     this.run = run;
     this.sourceId = sourceId;
     this.principal = principal;
-    this.request = request;
+    this.pullAppsRequest = pullAppsRequest;
   }
 
   @Nullable
@@ -71,8 +78,8 @@ public class OperationRunDetail<T> {
     return principal;
   }
 
-  public T getRequest() {
-    return request;
+  public PullAppsRequest getPullAppsRequest() {
+    return pullAppsRequest;
   }
 
   public OperationRun getRun() {
@@ -92,24 +99,24 @@ public class OperationRunDetail<T> {
       return false;
     }
 
-    OperationRunDetail<T> that = (OperationRunDetail<T>) o;
+    OperationRunDetail that = (OperationRunDetail) o;
     return Objects.equal(this.getRun(), that.getRun())
         && Arrays.equals(this.getSourceId(), that.getSourceId())
-        && Objects.equal(this.getRequest(), that.getRequest())
+        && Objects.equal(this.getPullAppsRequest(), that.getPullAppsRequest())
         && Objects.equal(this.getPrincipal(), that.getPrincipal());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), Arrays.hashCode(getSourceId()), getRequest(),
-        getPrincipal());
+    return Objects.hashCode(super.hashCode(), Arrays.hashCode(getSourceId()), getPrincipal(),
+        getPullAppsRequest());
   }
 
   /**
    * Builder to create a OperationRunDetail.
    */
-  public static <T> Builder<T> builder() {
-    return new Builder<>();
+  public static Builder builder() {
+    return new Builder();
   }
 
   /**
@@ -117,66 +124,64 @@ public class OperationRunDetail<T> {
    *
    * @param detail existing detail to copy fields from.
    */
-  public static <T> Builder<T> builder(OperationRunDetail<T> detail) {
-    return new Builder<>(detail);
+  public static Builder builder(OperationRunDetail detail) {
+    return new Builder(detail);
   }
 
   /**
    * Builds RunRecordMetas.
    */
-  public static class Builder<T> {
+  public static class Builder {
 
     protected OperationRunId runId;
     protected OperationRun run;
     protected byte[] sourceId;
     protected String principal;
-    protected T request;
+    protected PullAppsRequest pullAppsRequest;
 
     protected Builder() {
     }
 
-    protected Builder(OperationRunDetail<T> detail) {
+    protected Builder(OperationRunDetail detail) {
       sourceId = detail.getSourceId();
       principal = detail.getPrincipal();
-      request = detail.getRequest();
       run = detail.getRun();
       runId = detail.getRunId();
+      pullAppsRequest = detail.getPullAppsRequest();
     }
 
-    public Builder<T> setSourceId(byte[] sourceId) {
+    public Builder setSourceId(byte[] sourceId) {
       this.sourceId = sourceId;
       return this;
     }
 
-    public Builder<T> setPrincipal(String principal) {
+    public Builder setPrincipal(String principal) {
       this.principal = principal;
       return this;
     }
 
-    public Builder<T> setRequest(T request) {
-      this.request = request;
-      return this;
-    }
-
-    public Builder<T> setRun(OperationRun run) {
+    public Builder setRun(OperationRun run) {
       this.run = run;
       return this;
     }
 
-    public Builder<T> setRunId(OperationRunId runId) {
+    public Builder setRunId(OperationRunId runId) {
       this.runId = runId;
+      return this;
+    }
+
+
+    public Builder setPullAppsRequest(PullAppsRequest pullAppsRequest) {
+      this.pullAppsRequest = pullAppsRequest;
       return this;
     }
 
     /**
      * Validates input and returns a OperationRunDetail.
      */
-    public OperationRunDetail<T> build() {
+    public OperationRunDetail build() {
       if (runId == null) {
         throw new IllegalArgumentException("run id must be specified.");
-      }
-      if (request == null) {
-        throw new IllegalArgumentException("Operation run request must be specified.");
       }
       if (sourceId == null) {
         throw new IllegalArgumentException("Operation run source id must be specified.");
@@ -184,8 +189,18 @@ public class OperationRunDetail<T> {
       if (run == null) {
         throw new IllegalArgumentException("Operation run must be specified.");
       }
+      // TODO(samik, CDAP-20809) Validate type to request mapping
+      if (!validateRequests()) {
+        throw new IllegalArgumentException("Exactly one request type can be non-null");
+      }
 
-      return new OperationRunDetail<>(runId, run, sourceId, principal, request);
+      return new OperationRunDetail(runId, run, sourceId, principal, pullAppsRequest);
     }
+
+    private boolean validateRequests() {
+      // validate only one of the request is non-null
+      return Stream.of(pullAppsRequest).filter(java.util.Objects::nonNull).count() == 1;
+    }
+
   }
 }

@@ -14,17 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.internal.operation;
 
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.internal.AppFabricTestHelper;
-import io.cdap.cdap.internal.app.store.OperationRunDetail;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
-import io.cdap.cdap.proto.operationrun.OperationError;
-import io.cdap.cdap.proto.operationrun.OperationMeta;
-import io.cdap.cdap.proto.operationrun.OperationRun;
-import io.cdap.cdap.proto.operationrun.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationError;
+import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationRun;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
@@ -46,6 +46,8 @@ public abstract class OperationRunStoreTest {
   private final AtomicLong runIdTime = new AtomicLong(System.currentTimeMillis());
   private final String testNamespace = "test";
 
+  private final PullAppsRequest input = new PullAppsRequest(Collections.emptySet());
+
 
   @Before
   public void before() throws Exception {
@@ -57,14 +59,14 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testGetOperation() throws Exception {
-    OperationRunDetail<String> expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
     TransactionRunners.run(transactionRunner, context -> {
       OperationRunStore store = new OperationRunStore(context);
-      OperationRunDetail<String> gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      OperationRunDetail gotDetail = store.getOperation(runId);
       Assert.assertEquals(expectedDetail, gotDetail);
       try {
         store.getOperation(new OperationRunId(Namespace.DEFAULT.getId(), testId));
@@ -77,14 +79,14 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testUpdateMetadata() throws Exception {
-    OperationRunDetail<String> expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
     TransactionRunners.run(transactionRunner, context -> {
       OperationRunStore store = new OperationRunStore(context);
-      OperationRunDetail<String> gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      OperationRunDetail gotDetail = store.getOperation(runId);
       Assert.assertEquals(expectedDetail, gotDetail);
 
       OperationMeta updatedMeta = new OperationMeta(Collections.emptySet(),
@@ -92,12 +94,12 @@ public abstract class OperationRunStoreTest {
           Instant.ofEpochMilli(runIdTime.incrementAndGet()));
       OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
           .setMetadata(updatedMeta).build();
-      OperationRunDetail<String> updatedDetail = OperationRunDetail.<String>builder(expectedDetail)
+      OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
           .setRun(updatedRun)
           .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
           .build();
       store.updateOperationMeta(runId, updatedMeta, updatedDetail.getSourceId());
-      gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      gotDetail = store.getOperation(runId);
       Assert.assertEquals(updatedDetail, gotDetail);
 
       try {
@@ -114,26 +116,26 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testUpdateStatus() throws Exception {
-    OperationRunDetail<String> expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
     TransactionRunners.run(transactionRunner, context -> {
       OperationRunStore store = new OperationRunStore(context);
-      OperationRunDetail<String> gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      OperationRunDetail gotDetail = store.getOperation(runId);
       Assert.assertEquals(expectedDetail, gotDetail);
 
       OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
           .setStatus(OperationRunStatus.STOPPING)
           .build();
-      OperationRunDetail<String> updatedDetail = OperationRunDetail.<String>builder(expectedDetail)
+      OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
           .setRun(updatedRun)
           .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
           .build();
       store.updateOperationStatus(runId, updatedRun.getStatus(),
           updatedDetail.getSourceId());
-      gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      gotDetail = (OperationRunDetail) store.getOperation(runId);
       Assert.assertEquals(updatedDetail, gotDetail);
 
       try {
@@ -151,14 +153,14 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testFailOperation() throws Exception {
-    OperationRunDetail<String> expectedDetail = insertRun(testNamespace, "LIST",
+    OperationRunDetail expectedDetail = insertRun(testNamespace, "LIST",
         OperationRunStatus.RUNNING);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
     TransactionRunners.run(transactionRunner, context -> {
       OperationRunStore store = new OperationRunStore(context);
-      OperationRunDetail<String> gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      OperationRunDetail gotDetail = (OperationRunDetail) store.getOperation(runId);
       Assert.assertEquals(expectedDetail, gotDetail);
 
       OperationError error = new OperationError("operation failed", Collections.emptyList());
@@ -166,12 +168,12 @@ public abstract class OperationRunStoreTest {
           .setStatus(OperationRunStatus.FAILED)
           .setError(error)
           .build();
-      OperationRunDetail<String> updatedDetail = OperationRunDetail.<String>builder(expectedDetail)
+      OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
           .setRun(updatedRun)
           .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
           .build();
       store.failOperationRun(runId, error, updatedDetail.getSourceId());
-      gotDetail = (OperationRunDetail<String>) store.getOperation(runId);
+      gotDetail = (OperationRunDetail) store.getOperation(runId);
       Assert.assertEquals(updatedDetail, gotDetail);
 
       try {
@@ -189,15 +191,15 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testScanOperation() throws Exception {
-    List<OperationRunDetail<String>> insertedRuns = insertTestRuns();
+    List<OperationRunDetail> insertedRuns = insertTestRuns();
     // get a filtered list of testNamespace runs
-    List<OperationRunDetail<String>> testNamespaceRuns = insertedRuns.stream()
+    List<OperationRunDetail> testNamespaceRuns = insertedRuns.stream()
         .filter(detail -> detail.getRunId().getNamespace().equals(testNamespace))
         .collect(Collectors.toList());
 
     TransactionRunners.run(transactionRunner, context -> {
       List<OperationRunDetail> gotRuns = new ArrayList<>();
-      List<OperationRunDetail<String>> expectedRuns;
+      List<OperationRunDetail> expectedRuns;
       ScanOperationRunsRequest request;
 
       OperationRunStore store = new OperationRunStore(context);
@@ -252,7 +254,7 @@ public abstract class OperationRunStoreTest {
     }, Exception.class);
   }
 
-  private OperationRunDetail<String> insertRun(String namespace, String type,
+  private OperationRunDetail insertRun(String namespace, String type,
       OperationRunStatus status)
       throws IOException, OperationRunAlreadyExistsException {
     long startTime = runIdTime.incrementAndGet();
@@ -265,11 +267,11 @@ public abstract class OperationRunStoreTest {
             new OperationMeta(Collections.emptySet(), Instant.ofEpochMilli(startTime), null))
         .build();
     OperationRunId runId = new OperationRunId(namespace, id);
-    OperationRunDetail<String> detail = OperationRunDetail.<String>builder()
+    OperationRunDetail detail = OperationRunDetail.builder()
         .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
         .setRunId(runId)
         .setRun(run)
-        .setRequest("")
+        .setPullAppsRequest(input)
         .build();
     TransactionRunners.run(transactionRunner, context -> {
       OperationRunStore operationRunStore = new OperationRunStore(context);
@@ -278,8 +280,8 @@ public abstract class OperationRunStoreTest {
     return detail;
   }
 
-  private List<OperationRunDetail<String>> insertTestRuns() throws Exception {
-    List<OperationRunDetail<String>> details = new ArrayList<>();
+  private List<OperationRunDetail> insertTestRuns() throws Exception {
+    List<OperationRunDetail> details = new ArrayList<>();
     // insert 10 runs with increasing start time in two namespaces
     // 5 would be in running state 5 in Failed
     // 5 would be of type PUSH 5 would be of type PULL

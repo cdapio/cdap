@@ -14,19 +14,18 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.internal.operation;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.internal.app.store.OperationRunDetail;
 import io.cdap.cdap.proto.id.OperationRunId;
-import io.cdap.cdap.proto.operationrun.OperationError;
-import io.cdap.cdap.proto.operationrun.OperationMeta;
-import io.cdap.cdap.proto.operationrun.OperationRun;
-import io.cdap.cdap.proto.operationrun.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationError;
+import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationRun;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -72,7 +71,7 @@ public class OperationRunStore {
    * @param detail the run details of the operation
    * @throws OperationRunAlreadyExistsException when a run with same id exist in namespace
    */
-  public void createOperationRun(OperationRunId runId, OperationRunDetail<?> detail)
+  public void createOperationRun(OperationRunId runId, OperationRunDetail detail)
       throws OperationRunAlreadyExistsException, IOException {
     Optional<StructuredRow> row = getOperationRunInternal(runId);
     if (row.isPresent()) {
@@ -93,11 +92,11 @@ public class OperationRunStore {
    */
   public void updateOperationMeta(OperationRunId runId, OperationMeta metadata,
       @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
-    OperationRunDetail<?> currentDetail = getRunDetail(runId);
+    OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
     OperationRun updatedRun = OperationRun.builder(currentRun)
         .setMetadata(metadata).build();
-    OperationRunDetail<?> updatedDetail = OperationRunDetail.builder(currentDetail)
+    OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
         .setRun(updatedRun).setSourceId(sourceId).build();
 
     Collection<Field<?>> fields = getCommonUpdateFields(runId);
@@ -119,11 +118,11 @@ public class OperationRunStore {
    */
   public void updateOperationStatus(OperationRunId runId, OperationRunStatus status,
       @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
-    OperationRunDetail<?> currentDetail = getRunDetail(runId);
+    OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
     OperationRun updatedRun = OperationRun.builder(currentRun)
         .setStatus(status).build();
-    OperationRunDetail<?> updatedDetail = OperationRunDetail.builder(currentDetail)
+    OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
         .setRun(updatedRun).setSourceId(sourceId).build();
 
     Collection<Field<?>> fields = getCommonUpdateFields(runId);
@@ -148,11 +147,11 @@ public class OperationRunStore {
    */
   public void failOperationRun(OperationRunId runId, OperationError error,
       @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
-    OperationRunDetail<?> currentDetail = getRunDetail(runId);
+    OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
     OperationRun updatedRun = OperationRun.builder(currentRun)
         .setStatus(OperationRunStatus.FAILED).setError(error).build();
-    OperationRunDetail<?> updatedDetail = OperationRunDetail.builder(currentDetail)
+    OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
         .setRun(updatedRun).setSourceId(sourceId).build();
 
     Collection<Field<?>> fields = getCommonUpdateFields(runId);
@@ -173,7 +172,7 @@ public class OperationRunStore {
    * @param runId {@link OperationRunId} for the run
    * @throws OperationRunNotFoundException run with id does not exist in namespace
    */
-  public OperationRunDetail<?> getOperation(OperationRunId runId)
+  public OperationRunDetail getOperation(OperationRunId runId)
       throws OperationRunNotFoundException, IOException {
     Optional<StructuredRow> row = getOperationRunInternal(runId);
     if (!row.isPresent()) {
@@ -200,7 +199,7 @@ public class OperationRunStore {
    *     request
    */
   public String scanOperations(ScanOperationRunsRequest request,
-      Consumer<OperationRunDetail<?>> consumer) throws IOException, OperationRunNotFoundException {
+      Consumer<OperationRunDetail> consumer) throws IOException, OperationRunNotFoundException {
     Range.Bound startBound = Range.Bound.INCLUSIVE;
     final Range.Bound endBound = Range.Bound.INCLUSIVE;
     Collection<Field<?>> startFields = new ArrayList<>();
@@ -236,7 +235,7 @@ public class OperationRunStore {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         lastKey = row.getString(StoreDefinition.OperationRunsStore.ID_FIELD);
-        OperationRunDetail<?> detail = GSON.fromJson(
+        OperationRunDetail detail = GSON.fromJson(
             row.getString(StoreDefinition.OperationRunsStore.DETAILS_FIELD),
             OperationRunDetail.class
         );
@@ -264,15 +263,15 @@ public class OperationRunStore {
     return fields;
   }
 
-  private OperationRunDetail<?> getRunDetail(OperationRunId runId)
+  private OperationRunDetail getRunDetail(OperationRunId runId)
       throws IOException, OperationRunNotFoundException {
     return getOperationRunInternal(runId)
         .map(this::rowToRunDetail)
         .orElseThrow(() -> new OperationRunNotFoundException(runId.getNamespace(), runId.getRun()));
   }
 
-  private OperationRunDetail<?> rowToRunDetail(StructuredRow row) {
-    OperationRunDetail<?> detail = GSON.fromJson(
+  private OperationRunDetail rowToRunDetail(StructuredRow row) {
+    OperationRunDetail detail = GSON.fromJson(
         row.getString(StoreDefinition.OperationRunsStore.DETAILS_FIELD),
         OperationRunDetail.class
     );
@@ -305,7 +304,7 @@ public class OperationRunStore {
     return operationRunsTable.read(key);
   }
 
-  private void writeOperationRun(OperationRunId runId, OperationRunDetail<?> detail)
+  private void writeOperationRun(OperationRunId runId, OperationRunDetail detail)
       throws IOException {
     Collection<Field<?>> fields = ImmutableList.of(
         Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()),

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.operationrun;
+package io.cdap.cdap.proto.operation;
 
 import java.time.Instant;
 import java.util.Objects;
