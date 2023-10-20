@@ -14,28 +14,29 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.operationrun;
+package io.cdap.cdap.internal.app.sourcecontrol;
 
-import java.util.Objects;
+import com.google.common.base.Objects;
+import java.util.Set;
 
 /**
- * Error scoped to a single resource of the operation.
+ * Request type for {@link PullAppsOperation}.
  */
-public class OperationResourceScopedError {
-  private final String resourceUri;
-  private final String message;
+public class PullAppsRequest {
 
-  public OperationResourceScopedError(String resourceUri, String message) {
-    this.resourceUri = resourceUri;
-    this.message = message;
+  private final Set<String> apps;
+
+  /**
+   * Default Constructor.
+   *
+   * @param apps Set of apps to pull.
+   */
+  public PullAppsRequest(Set<String> apps) {
+    this.apps = apps;
   }
 
-  public String getResourceUri() {
-    return resourceUri;
-  }
-
-  public String getMessage() {
-    return message;
+  public Set<String> getApps() {
+    return apps;
   }
 
   @Override
@@ -47,14 +48,12 @@ public class OperationResourceScopedError {
       return false;
     }
 
-    OperationResourceScopedError that = (OperationResourceScopedError) o;
-
-    return Objects.equals(this.resourceUri, that.resourceUri)
-        && Objects.equals(this.message, that.message);
+    PullAppsRequest that = (PullAppsRequest) o;
+    return Objects.equal(this.getApps(), that.getApps());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(resourceUri, message);
+    return Objects.hashCode(getApps());
   }
 }

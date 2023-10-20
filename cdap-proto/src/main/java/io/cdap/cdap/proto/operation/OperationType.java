@@ -14,17 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
-
-import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.proto.operationrun.OperationRunStatus;
+package io.cdap.cdap.proto.operation;
 
 /**
- * Thrown when an operation run already exists.
+ * Types of operation supported by CDAP.
  */
-public class OperationRunAlreadyExistsException extends AlreadyExistsException {
-
-  public OperationRunAlreadyExistsException(String operationId, OperationRunStatus status) {
-    super(String.format("Operation %s already exists with status %s", operationId, status));
-  }
+public enum OperationType {
+  PUSH_APPS,
+  PULL_APPS
 }

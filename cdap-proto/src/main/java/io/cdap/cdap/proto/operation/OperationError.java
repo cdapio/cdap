@@ -14,22 +14,30 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.operationrun;
+package io.cdap.cdap.proto.operation;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
- * Representation of a cdap resource on which an operation is executed.
+ * Error representation for Operation Run.
  */
-public class OperationResource {
-  private final String resourceUri;
+public class OperationError {
 
-  public OperationResource(String resourceUri) {
-    this.resourceUri = resourceUri;
+  private final String message;
+  private final Collection<OperationResourceScopedError> details;
+
+  public OperationError(String message, Collection<OperationResourceScopedError> details) {
+    this.message = message;
+    this.details = details;
   }
 
-  public String getResourceUri() {
-    return resourceUri;
+  public String getMessage() {
+    return message;
+  }
+
+  public Collection<OperationResourceScopedError> getDetails() {
+    return details;
   }
 
   @Override
@@ -41,13 +49,13 @@ public class OperationResource {
       return false;
     }
 
-    OperationResource that = (OperationResource) o;
+    OperationError that = (OperationError) o;
 
-    return Objects.equals(this.resourceUri, that.resourceUri);
+    return this.details.equals(that.details);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(resourceUri);
+    return Objects.hash(details);
   }
 }

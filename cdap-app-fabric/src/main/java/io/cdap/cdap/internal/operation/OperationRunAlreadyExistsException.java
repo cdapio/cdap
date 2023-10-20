@@ -14,17 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.internal.operation;
 
-import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
 
 /**
- * Exception thrown when an operation run with the specified id not found in the specified
- * namespace.
+ * Thrown when an operation run already exists.
  */
-public class OperationRunNotFoundException extends NotFoundException {
+public class OperationRunAlreadyExistsException extends AlreadyExistsException {
 
-  public OperationRunNotFoundException(String namespace, String runId) {
-    super(String.format("Operation run %s does not exist in namespace %s", runId, namespace));
+  public OperationRunAlreadyExistsException(String operationId, OperationRunStatus status) {
+    super(String.format("Operation %s already exists with status %s", operationId, status));
   }
 }

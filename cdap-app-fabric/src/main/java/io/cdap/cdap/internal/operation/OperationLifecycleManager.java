@@ -14,10 +14,9 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.operations;
+package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.internal.app.store.OperationRunDetail;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -46,7 +45,7 @@ public class OperationLifecycleManager {
    *     the caller to identify if there is any further runs left to scan.
    */
   public boolean scanOperations(ScanOperationRunsRequest request, int txBatchSize,
-      Consumer<OperationRunDetail<?>> consumer) throws OperationRunNotFoundException, IOException {
+      Consumer<OperationRunDetail> consumer) throws OperationRunNotFoundException, IOException {
     String lastKey = request.getScanAfter();
     int currentLimit = request.getLimit();
 
