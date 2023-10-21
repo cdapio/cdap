@@ -74,6 +74,7 @@ public class RemoteConfigurator implements Configurator {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ConfiguratorTask.class.getName())
           .withParam(GSON.toJson(deploymentInfo))
+          .withNamespace(deploymentInfo.getNamespaceId().getNamespace())
           .build();
 
       byte[] result = remoteTaskExecutor.runTask(request);

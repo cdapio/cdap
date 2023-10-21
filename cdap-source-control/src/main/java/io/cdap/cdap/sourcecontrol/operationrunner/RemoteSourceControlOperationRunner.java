@@ -78,7 +78,9 @@ public class RemoteSourceControlOperationRunner extends
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
-        .withParam(GSON.toJson(pushAppOperationRequest)).build();
+          .withParam(GSON.toJson(pushAppOperationRequest))
+          .withNamespace(pushAppOperationRequest.getNamespaceId().getNamespace())
+          .build();
 
       LOG.trace("Pushing application {} to linked repository", pushAppOperationRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
@@ -95,7 +97,9 @@ public class RemoteSourceControlOperationRunner extends
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppTask.class.getName())
-        .withParam(GSON.toJson(pulAppOperationRequest)).build();
+          .withParam(GSON.toJson(pulAppOperationRequest))
+          .withNamespace(pulAppOperationRequest.getApp().getNamespace())
+          .build();
 
       LOG.trace("Pulling application {} from linked repository", pulAppOperationRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
@@ -112,7 +116,9 @@ public class RemoteSourceControlOperationRunner extends
     throws AuthenticationConfigException, NotFoundException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ListAppsTask.class.getName())
-        .withParam(GSON.toJson(nameSpaceRepository)).build();
+          .withParam(GSON.toJson(nameSpaceRepository))
+          .withNamespace(nameSpaceRepository.getNamespaceId().getNamespace())
+          .build();
       LOG.trace("Listing applications for namespace {} in linked repository", nameSpaceRepository.getNamespaceId());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), RepositoryAppsResponse.class);
