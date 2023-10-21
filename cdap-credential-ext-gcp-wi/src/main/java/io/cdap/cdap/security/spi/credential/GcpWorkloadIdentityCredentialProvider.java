@@ -283,6 +283,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       throws IOException {
 
     // replace comma with space, see:
+    // https://cloud.google.com/functions/docs/securing/function-identity#access_tokens
     // https://cloud.google.com/iam/docs/reference/sts/rest/v1/TopLevel/token#request-body
     scopes = Arrays.stream(scopes.split(",")).map(String::trim)
         .filter(s -> !s.isEmpty()).distinct().collect(Collectors.joining(" "));
