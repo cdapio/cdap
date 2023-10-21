@@ -95,7 +95,6 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       "https://www.googleapis.com/auth/cloud-platform";
   private static final String PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT =
       "Failed to provision credential with identity '%s'";
-  static final String NAMESPACE_CREATION_HOOK_ENABLED = "namespaces.creation.hook.enabled";
 
   @Override
   public String getName() {
@@ -169,12 +168,14 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
               String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT, identity.getIdentity()), e);
 
           throw new CredentialProvisioningException(
-              String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT, identity.getIdentity()), e);
+              String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT + ": %s",
+                  identity.getIdentity(), e.getMessage()), e);
         }
       }
     } catch (InterruptedException e) {
       throw new CredentialProvisioningException(
-          String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT, identity.getIdentity()), e);
+          String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT + ": %s",
+              identity.getIdentity(), e.getMessage()), e);
     }
 
     // timed out while provisioning the credential.
