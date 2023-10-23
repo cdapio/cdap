@@ -39,7 +39,7 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
   private final String cdapVersion;
   private final Map<String, Lock> locks;
   private final long confReloadInterval;
-  private long lastConfReloadTime = System.currentTimeMillis();
+  private long lastConfReloadTime;
 
   DefaultSystemProvisionerContext(CConfiguration cConf, String provisionerName) {
     this.prefix = String.format("%s%s.", Constants.Provisioner.SYSTEM_PROPERTY_PREFIX,
@@ -49,6 +49,7 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
     this.cdapVersion = ProjectInfo.getVersion().toString();
     this.locks = new ConcurrentHashMap<>();
     this.confReloadInterval = cConf.getLong(Constants.Provisioner.RELOAD_INTERVAL);
+    this.lastConfReloadTime = 0;
 
     reloadProperties();
   }
