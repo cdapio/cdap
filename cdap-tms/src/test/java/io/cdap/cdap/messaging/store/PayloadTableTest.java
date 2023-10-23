@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -54,12 +55,14 @@ public abstract class PayloadTableTest {
   private static final TopicId T1 = NamespaceId.DEFAULT.topic("payloadt1");
   private static final TopicId T2 = NamespaceId.DEFAULT.topic("payloadt2");
   private static final int GENERATION = 1;
-  private static final Map<String, String> DEFAULT_PROPERTY = ImmutableMap.of(TopicMetadata.TTL_KEY,
-      Integer.toString(10000),
-      TopicMetadata.GENERATION_KEY,
-      Integer.toString(GENERATION));
-  private static final TopicMetadata M1 = new TopicMetadata(T1, DEFAULT_PROPERTY);
-  private static final TopicMetadata M2 = new TopicMetadata(T2, DEFAULT_PROPERTY);
+  private static final Map<String, String> DEFAULT_PROPERTY =
+      ImmutableMap.of(
+          DefaultTopicMetadata.TTL_KEY,
+          Integer.toString(10000),
+          DefaultTopicMetadata.GENERATION_KEY,
+          Integer.toString(GENERATION));
+  private static final TopicMetadata M1 = new DefaultTopicMetadata(T1, DEFAULT_PROPERTY);
+  private static final TopicMetadata M2 = new DefaultTopicMetadata(T2, DEFAULT_PROPERTY);
 
   protected abstract PayloadTable getPayloadTable(TopicMetadata topicMetadata) throws Exception;
 
@@ -68,7 +71,7 @@ public abstract class PayloadTableTest {
   @Test
   public void testSingleMessage() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("singlePayload");
-    TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
     String payload = "data";
     long txWritePtr = 123L;
     try (MetadataTable metadataTable = getMetadataTable();
@@ -154,7 +157,7 @@ public abstract class PayloadTableTest {
 
     for (int i = 0; i < 2; i++) {
       final TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
 
       try (MetadataTable metadataTable = getMetadataTable()) {
         metadataTable.createTopic(metadata);
@@ -200,7 +203,7 @@ public abstract class PayloadTableTest {
     // Read from each topic. Each topic should have two messages
     for (int i = 0; i < 2; i++) {
       TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
 
       byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0, (short) 0, rawId, 0);

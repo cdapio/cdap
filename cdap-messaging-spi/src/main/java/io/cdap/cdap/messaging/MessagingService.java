@@ -16,14 +16,17 @@
 
 package io.cdap.cdap.messaging;
 
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -75,7 +78,7 @@ public interface MessagingService {
    * @throws IOException if failed to retrieve topic metadata.
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  TopicMetadata getTopic(TopicId topicId)
+  Map<String, String> getTopicMetadataProperties(TopicId topicId)
       throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
@@ -87,18 +90,6 @@ public interface MessagingService {
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   List<TopicId> listTopics(NamespaceId namespaceId) throws IOException, UnauthorizedException;
-
-  /**
-   * Prepares to fetch messages from the given topic.
-   *
-   * @param topicId the topic to fetch message from
-   * @return a {@link MessageFetcher} for setting up parameters for fetching messages from the
-   *     messaging system
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to fetch messages
-   * @throws ServiceUnavailableException if the messaging service is not available
-   */
-  MessageFetcher prepareFetch(TopicId topicId) throws TopicNotFoundException, IOException;
 
   /**
    * Publishes a list of messages to the messaging system.
@@ -138,4 +129,17 @@ public interface MessagingService {
    */
   void rollback(TopicId topicId, RollbackDetail rollbackDetail)
       throws TopicNotFoundException, IOException, UnauthorizedException;
+
+  /**
+   * Returns a {@link CloseableIterator} that iterates over messages fetched from the messaging
+   * system.
+   *
+   * @param messageFetchRequest the request for fetching messages
+   *
+   * @throws TopicNotFoundException if the topic does not exist
+   * @throws IOException if it fails to create the iterator
+   * @throws ServiceUnavailableException if the messaging service is not available
+   */
+  CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
+      throws TopicNotFoundException, IOException;
 }

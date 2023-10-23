@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.BinaryDecoder;
 import io.cdap.cdap.internal.io.ReflectionDatumReader;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.MetricsTestBase;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -85,7 +86,9 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
     final Map<String, MetricValues> metrics = Maps.newHashMap();
     for (int i = 0; i < cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM); i++) {
     TopicId topicId = NamespaceId.SYSTEM.topic(TOPIC_PREFIX + i);
-      try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(topicId).fetch()) {
+      try (CloseableIterator<RawMessage> iterator =
+          messagingService.fetch(
+              new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
         while (iterator.hasNext()) {
           RawMessage message = iterator.next();
           MetricValues metricsRecord = (MetricValues) recordReader.read(

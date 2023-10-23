@@ -36,6 +36,7 @@ import io.cdap.cdap.data2.util.hbase.ConfigurationWriter;
 import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
 import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.store.DataCleanupTest;
 import io.cdap.cdap.messaging.store.MessageTable;
@@ -145,8 +146,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   public void
   testInvalidTx() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("invalidTx");
-    TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "1000000",
-            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
+    TopicMetadata topic = new DefaultTopicMetadata(topicId, DefaultTopicMetadata.TTL_KEY, "1000000",
+        DefaultTopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
          MessageTable messageTable = getMessageTable(topic)) {
       metadataTable.createTopic(topic);

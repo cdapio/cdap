@@ -42,7 +42,7 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.utils.ResettableByteArrayInputStream;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.MessageFetcher;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
@@ -373,8 +373,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         // if no other thread is persisting
         tryPersist();
 
-        MessageFetcher fetcher = messagingService.prepareFetch(topic);
-        fetcher.setLimit(fetcherLimit);
+        DefaultMessageFetchRequest.Builder builder = new DefaultMessageFetchRequest.Builder();
+        builder.setTopicId(topic)
+        .setLimit(fetcherLimit);
         TopicProcessMeta persistMetaInfo = metadataHandler.getTopicProcessMeta(metricsMetaKey);
         byte[] lastMessageId = null;
 
@@ -383,9 +384,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         }
 
         if (lastMessageId != null) {
-          fetcher.setStartMessage(lastMessageId, false);
+          builder.setStartMessage(lastMessageId, false);
         } else {
-          fetcher.setStartTime(0L);
+          builder.setStartTime(0L);
         }
 
         byte[] currentMessageId = null;
@@ -394,7 +395,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
             new TopicProcessMeta(lastMessageId, Long.MAX_VALUE, Long.MIN_VALUE, 0,
                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                 oldestTsMetricName, latestTsMetricName);
-        try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
+        try (CloseableIterator<RawMessage> iterator = messagingService.fetch(builder.build())) {
           gotMessages = iterator.hasNext();
           while (iterator.hasNext() && isRunning()) {
             RawMessage input = iterator.next();

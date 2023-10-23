@@ -176,6 +176,11 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-messaging-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

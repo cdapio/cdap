@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
@@ -59,12 +60,14 @@ public abstract class MessageTableTest {
   private static final TopicId T1 = NamespaceId.DEFAULT.topic("messaget1");
   private static final TopicId T2 = NamespaceId.DEFAULT.topic("messaget2");
   private static final int GENERATION = 1;
-  private static final Map<String, String> DEFAULT_PROPERTY = ImmutableMap.of(TopicMetadata.TTL_KEY,
-                                                                              Integer.toString(10000),
-                                                                              TopicMetadata.GENERATION_KEY,
-                                                                              Integer.toString(GENERATION));
-  private static final TopicMetadata M1 = new TopicMetadata(T1, DEFAULT_PROPERTY);
-  private static final TopicMetadata M2 = new TopicMetadata(T2, DEFAULT_PROPERTY);
+  private static final Map<String, String> DEFAULT_PROPERTY =
+      ImmutableMap.of(
+          DefaultTopicMetadata.TTL_KEY,
+          Integer.toString(10000),
+          DefaultTopicMetadata.GENERATION_KEY,
+          Integer.toString(GENERATION));
+  private static final TopicMetadata M1 = new DefaultTopicMetadata(T1, DEFAULT_PROPERTY);
+  private static final TopicMetadata M2 = new DefaultTopicMetadata(T2, DEFAULT_PROPERTY);
 
   protected abstract MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception;
 
@@ -73,7 +76,7 @@ public abstract class MessageTableTest {
   @Test
   public void testSingleMessage() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("singleMessage");
-    TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
     String payload = "data";
     long txWritePtr = 123L;
     try (MessageTable table = getMessageTable(metadata);
@@ -209,7 +212,7 @@ public abstract class MessageTableTest {
   @Test
   public void testEmptyPayload() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("testEmptyPayload");
-    TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
 
     // This test the message table supports for empty payload. This is for the case where message table
     // stores only a reference to the payload table
@@ -255,42 +258,49 @@ public abstract class MessageTableTest {
 
     for (int i = 0; i < 2; i++) {
       final TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
 
       try (MetadataTable metadataTable = getMetadataTable()) {
         metadataTable.createTopic(metadata);
       }
 
       final int threadId = i;
-      executor.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          try (MessageTable messageTable = getMessageTable(metadata)) {
-            messageTable.store(new AbstractIterator<MessageTable.Entry>() {
-              int messageCount;
+      executor.submit(
+          new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              try (MessageTable messageTable = getMessageTable(metadata)) {
+                messageTable.store(
+                    new AbstractIterator<MessageTable.Entry>() {
+                      int messageCount;
 
-              @Override
-              protected MessageTable.Entry computeNext() {
-                if (messageCount >= 2) {
-                  return endOfData();
-                }
-                try {
-                  barrier.await();
-                } catch (Exception e) {
-                  throw Throwables.propagate(e);
-                }
-                return new TestMessageEntry(topicId, GENERATION, System.currentTimeMillis(), messageCount, null,
-                                            Bytes.toBytes("message " + threadId + " " + messageCount++));
+                      @Override
+                      protected MessageTable.Entry computeNext() {
+                        if (messageCount >= 2) {
+                          return endOfData();
+                        }
+                        try {
+                          barrier.await();
+                        } catch (Exception e) {
+                          throw Throwables.propagate(e);
+                        }
+                        return new TestMessageEntry(
+                            topicId,
+                            GENERATION,
+                            System.currentTimeMillis(),
+                            messageCount,
+                            null,
+                            Bytes.toBytes("message " + threadId + " " + messageCount++));
+                      }
+                    });
+                storeCompletion.countDown();
+              } catch (Exception e) {
+                LOG.error("Failed to store to MessageTable", e);
               }
-            });
-            storeCompletion.countDown();
-          } catch (Exception e) {
-            LOG.error("Failed to store to MessageTable", e);
-          }
 
-          return null;
-        }
-      });
+              return null;
+            }
+          });
     }
 
     executor.shutdown();
@@ -299,7 +309,7 @@ public abstract class MessageTableTest {
     // Read from each topic. Each topic should have two messages
     for (int i = 0; i < 2; i++) {
       TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
-      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      TopicMetadata metadata = new DefaultTopicMetadata(topicId, DEFAULT_PROPERTY);
       try (
         MessageTable messageTable = getMessageTable(metadata);
         CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(metadata, 0, 10, null)

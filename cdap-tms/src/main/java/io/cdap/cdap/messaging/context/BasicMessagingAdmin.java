@@ -19,6 +19,7 @@ package io.cdap.cdap.messaging.context;
 import io.cdap.cdap.api.messaging.MessagingAdmin;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -50,19 +51,19 @@ public class BasicMessagingAdmin implements MessagingAdmin {
   public void createTopic(String topic,
       Map<String, String> properties)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
-    messagingService.createTopic(new TopicMetadata(namespace.topic(topic), properties));
+    messagingService.createTopic(new DefaultTopicMetadata(namespace.topic(topic), properties));
   }
 
   @Override
   public Map<String, String> getTopicProperties(String topic)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    return messagingService.getTopic(namespace.topic(topic)).getProperties();
+    return messagingService.getTopicMetadataProperties(namespace.topic(topic));
   }
 
   @Override
   public void updateTopic(String topic, Map<String, String> properties)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    messagingService.updateTopic(new TopicMetadata(namespace.topic(topic), properties));
+    messagingService.updateTopic(new DefaultTopicMetadata(namespace.topic(topic), properties));
   }
 
   @Override

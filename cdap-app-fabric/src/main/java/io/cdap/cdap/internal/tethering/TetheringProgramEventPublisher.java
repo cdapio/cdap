@@ -41,6 +41,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -232,7 +233,7 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
 
   private void createTopicIfNeeded(TopicId topicId) throws IOException {
     try {
-      messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
+      messagingService.createTopic(new DefaultTopicMetadata(topicId, Collections.emptyMap()));
       LOG.debug("Created topic {}", topicId.getTopic());
     } catch (TopicAlreadyExistsException ex) {
       // no-op

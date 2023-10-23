@@ -38,6 +38,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.data.RawMessage;
@@ -146,23 +147,27 @@ public class LeaderElectionMessagingServiceTest {
     KillZKSession.kill(zkClient1.getZooKeeperSupplier().get(), zkClient1.getConnectString(), 10000);
 
     // Publish one more message and then fetch from the current leader
-    List<String> messages = Retries
-        .callWithRetries(new Retries.Callable<List<String>, Throwable>() {
-          @Override
-          public List<String> call() throws Throwable {
-            secondService.publish(StoreRequestBuilder.of(topicId).addPayload("Testing2").build());
+    List<String> messages =
+        Retries.callWithRetries(
+            new Retries.Callable<List<String>, Throwable>() {
+              @Override
+              public List<String> call() throws Throwable {
+                secondService.publish(
+                    StoreRequestBuilder.of(topicId).addPayload("Testing2").build());
 
-            List<String> messages = new ArrayList<>();
-            try (CloseableIterator<RawMessage> iterator = secondService.prepareFetch(topicId)
-                .fetch()) {
-              while (iterator.hasNext()) {
-                messages.add(new String(iterator.next().getPayload(), "UTF-8"));
+                List<String> messages = new ArrayList<>();
+                try (CloseableIterator<RawMessage> iterator =
+                    secondService.fetch(
+                        new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
+                  while (iterator.hasNext()) {
+                    messages.add(new String(iterator.next().getPayload(), "UTF-8"));
+                  }
+                }
+                return messages;
               }
-            }
-            return messages;
-          }
-        }, RetryStrategies
-            .timeLimit(10, TimeUnit.SECONDS, RetryStrategies.fixDelay(1, TimeUnit.SECONDS)));
+            },
+            RetryStrategies.timeLimit(
+                10, TimeUnit.SECONDS, RetryStrategies.fixDelay(1, TimeUnit.SECONDS)));
 
     Assert.assertEquals(Arrays.asList("Testing1", "Testing2"), messages);
 
@@ -173,19 +178,24 @@ public class LeaderElectionMessagingServiceTest {
 
     // Try to fetch message from the current leader again.
     // Should see two messages (because the cache is cleared and fetch is from the backing store).
-    messages = Retries.callWithRetries(new Retries.Callable<List<String>, Throwable>() {
-      @Override
-      public List<String> call() throws Throwable {
-        List<String> messages = new ArrayList<>();
-        try (CloseableIterator<RawMessage> iterator = firstService.prepareFetch(topicId).fetch()) {
-          while (iterator.hasNext()) {
-            messages.add(new String(iterator.next().getPayload(), "UTF-8"));
-          }
-        }
-        return messages;
-      }
-    }, RetryStrategies
-        .timeLimit(10, TimeUnit.SECONDS, RetryStrategies.fixDelay(1, TimeUnit.SECONDS)));
+    messages =
+        Retries.callWithRetries(
+            new Retries.Callable<List<String>, Throwable>() {
+              @Override
+              public List<String> call() throws Throwable {
+                List<String> messages = new ArrayList<>();
+                try (CloseableIterator<RawMessage> iterator =
+                    firstService.fetch(
+                        new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
+                  while (iterator.hasNext()) {
+                    messages.add(new String(iterator.next().getPayload(), "UTF-8"));
+                  }
+                }
+                return messages;
+              }
+            },
+            RetryStrategies.timeLimit(
+                10, TimeUnit.SECONDS, RetryStrategies.fixDelay(1, TimeUnit.SECONDS)));
 
     Assert.assertEquals(Arrays.asList("Testing1", "Testing2"), messages);
 
@@ -225,7 +235,8 @@ public class LeaderElectionMessagingServiceTest {
         @Override
         public TopicId call() throws Exception {
           try {
-            return messagingService.getTopic(topicId).getTopicId();
+            messagingService.getTopicMetadataProperties(topicId);
+            return  topicId;
           } catch (ServiceUnavailableException e) {
             return null;
           }

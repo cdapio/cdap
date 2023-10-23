@@ -18,6 +18,7 @@ package io.cdap.cdap.messaging.store;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -41,8 +42,8 @@ public abstract class DataCleanupTest {
   @Test
   public void testPayloadTTLCleanup() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("t2");
-    TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
-            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
+    TopicMetadata topic = new DefaultTopicMetadata(topicId, "ttl", "3",
+            DefaultTopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
          PayloadTable payloadTable = getPayloadTable(topic);
          MessageTable messageTable = getMessageTable(topic)) {
@@ -87,8 +88,8 @@ public abstract class DataCleanupTest {
   @Test
   public void testMessageTTLCleanup() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("t1");
-    TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
-            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
+    TopicMetadata topic = new DefaultTopicMetadata(topicId, "ttl", "3",
+        DefaultTopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
          MessageTable messageTable = getMessageTable(topic);
          PayloadTable payloadTable = getPayloadTable(topic)) {
@@ -129,8 +130,8 @@ public abstract class DataCleanupTest {
   @Test
   public void testOldGenCleanup() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("oldGenCleanup");
-    TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "100000",
-                                            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
+    TopicMetadata topic = new DefaultTopicMetadata(topicId, DefaultTopicMetadata.TTL_KEY, "100000",
+        DefaultTopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable()) {
       int txWritePtr = 100;
       metadataTable.createTopic(topic);
@@ -180,8 +181,8 @@ public abstract class DataCleanupTest {
       metadataTable.deleteTopic(topicId);
 
       Map<String, String> newProperties = new HashMap<>(topic.getProperties());
-      newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(topic.getGeneration() + 1));
-      topic = new TopicMetadata(topicId, newProperties);
+      newProperties.put(DefaultTopicMetadata.GENERATION_KEY, Integer.toString(topic.getGeneration() + 1));
+      topic = new DefaultTopicMetadata(topicId, newProperties);
       metadataTable.createTopic(topic);
 
       // Sleep so that the metadata cache in coprocessor expires

@@ -34,6 +34,9 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
+import io.cdap.cdap.messaging.MessageFetchRequest;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.StoreRequest;
@@ -138,7 +141,7 @@ public class MessagingHttpServiceTest {
     TopicId topic1 = nsId.topic("t1");
 
     // Create a topic
-    client.createTopic(new TopicMetadata(topic1));
+    client.createTopic(new DefaultTopicMetadata(topic1));
     final RollbackDetail rollbackDetail = client.publish(StoreRequestBuilder.of(topic1).setTransaction(1L)
                                                      .addPayload("a").addPayload("b").build());
     try {
@@ -150,7 +153,8 @@ public class MessagingHttpServiceTest {
     }
 
     Set<String> msgs = new HashSet<>();
-    CloseableIterator<RawMessage> messages = client.prepareFetch(topic1).fetch();
+    CloseableIterator<RawMessage> messages =
+        client.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(topic1).build());
     while (messages.hasNext()) {
       RawMessage message = messages.next();
       msgs.add(Bytes.toString(message.getPayload()));
@@ -172,46 +176,48 @@ public class MessagingHttpServiceTest {
 
     // Get a non exist topic should fail
     try {
-      client.getTopic(topic1);
+      client.getTopicMetadataProperties(topic1);
       Assert.fail("Expected TopicNotFoundException");
     } catch (TopicNotFoundException e) {
       // Expected
     }
 
     // Create the topic t1
-    client.createTopic(new TopicMetadata(topic1));
+    client.createTopic(new DefaultTopicMetadata(topic1));
 
     // Create an existing topic should fail
     try {
-      client.createTopic(new TopicMetadata(topic1));
+      client.createTopic(new DefaultTopicMetadata(topic1));
       Assert.fail("Expect TopicAlreadyExistsException");
     } catch (TopicAlreadyExistsException e) {
       // Expected
     }
 
     // Get the topic properties. Verify TTL is the same as the default one
-    Assert.assertEquals(cConf.getInt(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS),
-                        client.getTopic(topic1).getTTL());
+    Assert.assertEquals(
+        cConf.getInt(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS),
+        new DefaultTopicMetadata(topic1, client.getTopicMetadataProperties(topic1)).getTTL());
 
     // Update the topic t1 with new TTL
-    client.updateTopic(new TopicMetadata(topic1, "ttl", "5"));
+    client.updateTopic(new DefaultTopicMetadata(topic1, "ttl", "5"));
 
     // Get the topic t1 properties. Verify TTL is updated
-    Assert.assertEquals(5, client.getTopic(topic1).getTTL());
+    Assert.assertEquals(5, new DefaultTopicMetadata(topic1,client.getTopicMetadataProperties(topic1)).getTTL());
 
     // Try to add another topic t2 with invalid ttl, it should fail
     try {
-      client.createTopic(new TopicMetadata(topic2, "ttl", "xyz"));
+      client.createTopic(new DefaultTopicMetadata(topic2, "ttl", "xyz"));
       Assert.fail("Expect BadRequestException");
     } catch (IllegalArgumentException e) {
       // Expected
     }
 
     // Add topic t2 with valid ttl
-    client.createTopic(new TopicMetadata(topic2, "ttl", "5"));
+    client.createTopic(new DefaultTopicMetadata(topic2, "ttl", "5"));
 
     // Get the topic t2 properties. It should have TTL set based on what provided
-    Assert.assertEquals(5, client.getTopic(topic2).getTTL());
+    Assert.assertEquals(
+        5, new DefaultTopicMetadata(topic2, client.getTopicMetadataProperties(topic2)).getTTL());
 
     // Listing topics under namespace ns1
     List<TopicId> topics = client.listTopics(nsId);
@@ -231,7 +237,7 @@ public class MessagingHttpServiceTest {
 
     // Update a non exist topic should fail
     try {
-      client.updateTopic(new TopicMetadata(topic1));
+      client.updateTopic(new DefaultTopicMetadata(topic1));
       Assert.fail("Expect TopicNotFoundException");
     } catch (TopicNotFoundException e) {
       // Expected
@@ -244,10 +250,11 @@ public class MessagingHttpServiceTest {
   @Test
   public void testGeMetadata() throws Exception {
     TopicId topicId = new NamespaceId("ns2").topic("d");
-    TopicMetadata metadata = new TopicMetadata(topicId, "ttl", "100");
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, "ttl", "100");
     for (int i = 1; i <= 5; i++) {
       client.createTopic(metadata);
-      TopicMetadata topicMetadata = client.getTopic(topicId);
+      TopicMetadata topicMetadata =
+          new DefaultTopicMetadata(topicId, client.getTopicMetadataProperties(topicId));
       Assert.assertEquals(100, topicMetadata.getTTL());
       Assert.assertEquals(i, topicMetadata.getGeneration());
       client.deleteTopic(topicId);
@@ -257,7 +264,7 @@ public class MessagingHttpServiceTest {
   @Test
   public void testDeletes() throws Exception {
     TopicId topicId = new NamespaceId("ns1").topic("del");
-    TopicMetadata metadata = new TopicMetadata(topicId, "ttl", "100");
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, "ttl", "100");
     for (int j = 0; j < 10; j++) {
       client.createTopic(metadata);
       String m1 = String.format("m%d", j);
@@ -266,7 +273,9 @@ public class MessagingHttpServiceTest {
 
       // Fetch messages non-transactionally
       List<RawMessage> messages = new ArrayList<>();
-      try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+
+      try (CloseableIterator<RawMessage> iterator =
+          client.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
         Iterators.addAll(messages, iterator);
       }
       Assert.assertEquals(2, messages.size());
@@ -295,13 +304,15 @@ public class MessagingHttpServiceTest {
 
     // Consume from a non-existing topic should get not found exception
     try {
-      client.prepareFetch(topicId).fetch();
+      MessageFetchRequest request =
+          new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build();
+      client.fetch(request);
       Assert.fail("Expected TopicNotFoundException");
     } catch (TopicNotFoundException e) {
       // Expected
     }
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new DefaultTopicMetadata(topicId));
 
     // Publish a non-transactional message with empty payload should result in failure
     try {
@@ -312,7 +323,8 @@ public class MessagingHttpServiceTest {
     }
 
     // Publish a non-tx message, no RollbackDetail is returned
-    Assert.assertNull(client.publish(StoreRequestBuilder.of(topicId).addPayload("m0").addPayload("m1").build()));
+    Assert.assertNull(
+        client.publish(StoreRequestBuilder.of(topicId).addPayload("m0").addPayload("m1").build()));
 
     // Publish a transactional message, a RollbackDetail should be returned
     RollbackDetail rollbackDetail = client.publish(StoreRequestBuilder.of(topicId)
@@ -325,7 +337,9 @@ public class MessagingHttpServiceTest {
     // Fetch messages non-transactionally (should be able to read all the messages since rolled back messages
     // are still visible until ttl kicks in)
     List<RawMessage> messages = new ArrayList<>();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+    MessageFetchRequest request =
+        new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build();
+    try (CloseableIterator<RawMessage> iterator = client.fetch(request)) {
       Iterators.addAll(messages, iterator);
     }
     Assert.assertEquals(3, messages.size());
@@ -336,10 +350,13 @@ public class MessagingHttpServiceTest {
     // Consume transactionally. It should get only m0 and m1 since m2 has been rolled back
     List<RawMessage> txMessages = new ArrayList<>();
     Transaction transaction = new Transaction(3L, 3L, new long[0], new long[]{2L}, 2L);
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-      .setStartTime(0)
-      .setTransaction(transaction)
-      .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartTime(0)
+                .setTransaction(transaction)
+                .build())) {
       Iterators.addAll(txMessages, iterator);
     }
     Assert.assertEquals(2, txMessages.size());
@@ -350,9 +367,13 @@ public class MessagingHttpServiceTest {
     // Fetch again from a given message offset exclusively.
     // Expects one message to be fetched
     byte[] startMessageId = messages.get(1).getId();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                        .setStartMessage(startMessageId, false)
-                                                        .fetch()) {
+
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(startMessageId, false)
+                .build())) {
       // It should have only one message (m2)
       Assert.assertTrue(iterator.hasNext());
       RawMessage msg = iterator.next();
@@ -362,20 +383,25 @@ public class MessagingHttpServiceTest {
     // Fetch again from the last message offset exclusively
     // Expects no message to be fetched
     startMessageId = messages.get(2).getId();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                        .setStartMessage(startMessageId, false)
-                                                        .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(startMessageId, false)
+                .build())) {
       Assert.assertFalse(iterator.hasNext());
     }
 
     // Fetch with start time. It should get both m0 and m1 since they are published in the same request, hence
     // having the same publish time
     startMessageId = messages.get(1).getId();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                        .setStartTime(new MessageId(startMessageId)
-                                                                        .getPublishTimestamp())
-                                                        .setLimit(2)
-                                                        .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartTime(new MessageId(startMessageId).getPublishTimestamp())
+                .setLimit(2)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -390,9 +416,12 @@ public class MessagingHttpServiceTest {
 
     // Consume without transactional, it should see m2, m3 and m4
     startMessageId = messages.get(1).getId();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                        .setStartMessage(startMessageId, false)
-                                                        .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(startMessageId, false)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -403,19 +432,25 @@ public class MessagingHttpServiceTest {
 
     // Consume using a transaction that doesn't have tx = 2L visible. It should get no message as it should block on m3
     transaction = new Transaction(3L, 3L, new long[0], new long[]{2L}, 2L);
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                        .setStartMessage(startMessageId, false)
-                                                        .setTransaction(transaction)
-                                                        .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(startMessageId, false)
+                .setTransaction(transaction)
+                .build())) {
       Assert.assertFalse(iterator.hasNext());
     }
 
     // Consume using a transaction that has tx = 2L in the invalid list. It should skip m3 and got m4
     transaction = new Transaction(3L, 3L, new long[]{2L}, new long[0], 0L);
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                     .setStartMessage(startMessageId, false)
-                                                     .setTransaction(transaction)
-                                                     .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(startMessageId, false)
+                .setTransaction(transaction)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -424,10 +459,13 @@ public class MessagingHttpServiceTest {
 
     // Consume using a transaction that has tx = 2L committed. It should get m3 and m4
     transaction = new Transaction(3L, 3L, new long[0], new long[0], 0L);
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-                                                     .setStartMessage(startMessageId, false)
-                                                     .setTransaction(transaction)
-                                                     .fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(startMessageId, false)
+                .setTransaction(transaction)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -444,7 +482,7 @@ public class MessagingHttpServiceTest {
     // This test is to verify the message fetching body producer works correctly
     TopicId topicId = new NamespaceId("ns1").topic("testChunkConsume");
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new DefaultTopicMetadata(topicId));
 
     // Publish 10 messages, each payload is half the size of the chunk size
     int payloadSize = cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE) / 2;
@@ -455,7 +493,8 @@ public class MessagingHttpServiceTest {
 
     // Fetch messages. All of them should be fetched correctly
     List<RawMessage> messages = new ArrayList<>();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
       Iterators.addAll(messages, iterator);
     }
     Assert.assertEquals(10, messages.size());
@@ -474,7 +513,7 @@ public class MessagingHttpServiceTest {
     // This test is to verify storing transaction messages to the payload table
     TopicId topicId = new NamespaceId("ns1").topic("testPayloadTable");
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new DefaultTopicMetadata(topicId));
 
     // Try to store to Payload table with empty iterator, expected failure
     try {
@@ -492,7 +531,8 @@ public class MessagingHttpServiceTest {
     }
 
     // Try to consume and there should be no messages
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
       Assert.assertFalse(iterator.hasNext());
     }
 
@@ -501,7 +541,8 @@ public class MessagingHttpServiceTest {
 
     // Consume again and there should be 20 messages
     List<RawMessage> messages = new ArrayList<>();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
       Iterators.addAll(messages, iterator);
     }
     Assert.assertEquals(20, messages.size());
@@ -514,8 +555,12 @@ public class MessagingHttpServiceTest {
 
     // Fetch with message id located inside the payload table, including the message id offset.
     // Should get the last 10 messages
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-      .setStartMessage(messages.get(10).getId(), true).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(messages.get(10).getId(), true)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -529,8 +574,12 @@ public class MessagingHttpServiceTest {
 
     // Fetch with message id located inside the payload table, excluding the message id offset.
     // We start with the 12th message id as offset, hence should get 8 messages.
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-      .setStartMessage(messages.get(1).getId(), false).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(messages.get(1).getId(), false)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -542,15 +591,22 @@ public class MessagingHttpServiceTest {
       Assert.assertEquals(Integer.toString((i + 12) / 2), payload1);
     }
 
-    // Fetch with the last message id in the payload table, exclusively. Should get an empty iterator
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-      .setStartMessage(messages.get(messages.size() - 1).getId(), false).fetch()) {
+    // Fetch with the last message id in the payload table, exclusively. Should get an empty
+    // iterator
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(messages.get(messages.size() - 1).getId(), false)
+                .build())) {
       Assert.assertFalse(iterator.hasNext());
     }
 
     // Consume with a limit
     messages.clear();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).setLimit(6).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder().setTopicId(topicId).setLimit(6).build())) {
       Iterators.addAll(messages, iterator);
     }
     Assert.assertEquals(6, messages.size());
@@ -569,7 +625,8 @@ public class MessagingHttpServiceTest {
 
     // Should get 22 messages
     messages.clear();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(topicId).build())) {
       Iterators.addAll(messages, iterator);
     }
     Assert.assertEquals(22, messages.size());
@@ -580,10 +637,15 @@ public class MessagingHttpServiceTest {
       Assert.assertEquals(Integer.toString(i / 2), payload1);
     }
 
-    // Fetch using the last message id of the first store batch (tx == 1L) as the fetch start offset.
+    // Fetch using the last message id of the first store batch (tx == 1L) as the fetch start
+    // offset.
     // Should get 2 messages back
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId)
-      .setStartMessage(messages.get(19).getId(), false).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder()
+                .setTopicId(topicId)
+                .setStartMessage(messages.get(19).getId(), false)
+                .build())) {
       messages.clear();
       Iterators.addAll(messages, iterator);
     }
@@ -603,9 +665,10 @@ public class MessagingHttpServiceTest {
     // This test is to verify storing transaction messages to the payload table
     TopicId topicId = new NamespaceId("ns1").topic("testReuseRequest");
 
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new DefaultTopicMetadata(topicId));
 
-    StoreRequest request = StoreRequestBuilder.of(topicId).addPayload("m1").addPayload("m2").build();
+    StoreRequest request =
+        StoreRequestBuilder.of(topicId).addPayload("m1").addPayload("m2").build();
 
     // Publish the request twice
     client.publish(request);
@@ -613,7 +676,9 @@ public class MessagingHttpServiceTest {
 
     // Expects four messages
     List<RawMessage> messages = new ArrayList<>();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).setLimit(10).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder().setTopicId(topicId).setLimit(10).build())) {
       Iterators.addAll(messages, iterator);
     }
 
@@ -632,14 +697,16 @@ public class MessagingHttpServiceTest {
     String message = Strings.repeat("01234", 1024 * 1024);
 
     TopicId topicId = new NamespaceId("ns1").topic("testLargePublish");
-    client.createTopic(new TopicMetadata(topicId));
+    client.createTopic(new DefaultTopicMetadata(topicId));
 
     StoreRequest request = StoreRequestBuilder.of(topicId).addPayload(message).build();
     client.publish(request);
 
     // Read it back
     List<RawMessage> messages = new ArrayList<>();
-    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).setLimit(10).fetch()) {
+    try (CloseableIterator<RawMessage> iterator =
+        client.fetch(
+            new DefaultMessageFetchRequest.Builder().setTopicId(topicId).setLimit(10).build())) {
       Iterators.addAll(messages, iterator);
     }
 

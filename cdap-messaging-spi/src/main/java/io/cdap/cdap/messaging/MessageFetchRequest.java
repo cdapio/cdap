@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,30 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.service;
+package io.cdap.cdap.messaging;
 
-import java.io.IOException;
+import io.cdap.cdap.proto.id.TopicId;
+import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
 /**
- * An internal interface used by {@link CoreMessagingService} for providing messaging tables.
- *
- * @param <T> Type of the message table.
+ * A request for fetching messages from the messaging system.
  */
-interface TableProvider<T> {
+public interface MessageFetchRequest {
 
-  /**
-   * Provides an instance of messaging table of type {@code <T>}.
-   */
-  T get() throws IOException;
+  TopicId getTopicId();
+
+  @Nullable
+  byte[] getStartOffset();
+
+  boolean isIncludeStart();
+
+  @Nullable
+  Long getStartTime();
+
+  @Nullable
+  Transaction getTransaction();
+
+  int getLimit();
+
 }

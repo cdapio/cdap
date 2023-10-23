@@ -53,8 +53,8 @@ import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -149,7 +149,7 @@ public class TetheringRuntimeJobManagerTest {
     TetheringConf conf = TetheringConf.fromProperties(PROPERTIES);
     topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
                           cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX) + TETHERED_INSTANCE_NAME);
-    messagingService.createTopic(new TopicMetadata(topicId, Collections.emptyMap()));
+    messagingService.createTopic(new DefaultTopicMetadata(topicId));
     messageFetcher = new MultiThreadMessagingContext(messagingService).getMessageFetcher();
     runtimeJobManager = new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore,
                                                        injector.getInstance(LocationFactory.class));
