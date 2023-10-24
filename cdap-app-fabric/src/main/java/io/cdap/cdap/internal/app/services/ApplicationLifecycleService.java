@@ -93,6 +93,8 @@ import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
+import io.cdap.cdap.proto.app.UpdateSourceControlMetaRequest;
+import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
@@ -129,6 +131,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1571,5 +1574,46 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     store.markApplicationsLatest(appIds);
+  }
+
+  /**
+   * Update scm metadata for the given apps.
+   * This method is to be used only in case of SCM long-running operations (like pushing
+   * multiple applications to a repository in bulk).
+   *
+   * @param namespace {@link NamespaceId} where the apps are deployed
+   * @param appsRequest {@link UpdateMultiSourceControlMetaReqeust}
+   * @throws IOException when the update operation fails
+   * @throws BadRequestException when multiple filehashes are provided for an application
+   */
+  public void updateSourceControlMeta(NamespaceId namespace, UpdateMultiSourceControlMetaReqeust appsRequest)
+      throws IOException, BadRequestException {
+    Map<ApplicationId, SourceControlMeta> updateScmMetaRequests = new HashMap<>();
+    for (UpdateSourceControlMetaRequest appRequest : appsRequest.getApps()) {
+      ApplicationId appId;
+      try {
+        appId = namespace.app(appRequest.getName(), appRequest.getAppVersion());
+      } catch (IllegalArgumentException | NullPointerException e) {
+        throw new BadRequestException(e.getMessage(), e);
+      }
+
+      if (appRequest.getGitFileHash() == null || appRequest.getGitFileHash().isEmpty()) {
+        throw new BadRequestException(String.format(
+            "gitFileHash missing for app (name = %s, version = %s).",
+            appRequest.getName(), appRequest.getAppVersion()
+        ));
+      }
+
+      SourceControlMeta scmMeta = new SourceControlMeta(appRequest.getGitFileHash());
+
+      if (updateScmMetaRequests.put(appId, scmMeta) != null) {
+        throw new BadRequestException(String.format(
+            "Setting multiple filehashes for an application (name = %s, version = %s) is not supported.",
+            appRequest.getName(), appRequest.getAppVersion()
+        ));
+      }
+    }
+
+    store.updateApplicationSourceControlMeta(updateScmMetaRequests);
   }
 }

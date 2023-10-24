@@ -600,6 +600,21 @@ public class DefaultStore implements Store {
     }, ConflictException.class);
   }
 
+  @Override
+  public void updateApplicationSourceControlMeta(Map<ApplicationId, SourceControlMeta> updateRequests)
+      throws IOException {
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore mds = getAppMetadataStore(context);
+      for (Map.Entry<ApplicationId, SourceControlMeta> updateRequest : updateRequests.entrySet()) {
+        try {
+          mds.updateAppScmMeta(updateRequest.getKey(), updateRequest.getValue());
+        } catch (ApplicationNotFoundException e) {
+          // ignore this exception and continue updating the other applications
+        }
+      }
+    }, IOException.class);
+  }
+
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
   @Override
   public List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationReference appRef,

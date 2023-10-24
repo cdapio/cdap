@@ -390,6 +390,16 @@ public interface Store {
                                                              ApplicationSpecification specification);
 
   /**
+   * Updates source control metadata for one or more applications.
+   * If any of the applications in the given collection are not found, this method ignores them.
+   *
+   * @param updateRequests Map of {@link ApplicationId} to {@link SourceControlMeta}
+   * @throws IOException if scm meta update fails
+   */
+  void updateApplicationSourceControlMeta(Map<ApplicationId, SourceControlMeta> updateRequests)
+      throws IOException;
+
+  /**
    * Returns application specification by id.
    *
    * @param id application id

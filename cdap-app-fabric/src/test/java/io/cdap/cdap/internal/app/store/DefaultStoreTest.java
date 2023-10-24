@@ -76,6 +76,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import java.io.IOException;
@@ -608,6 +609,50 @@ public abstract class DefaultStoreTest {
     // Now try marking this non existing app as latest
     // this should throw ApplicationNotFoundException (expected in this test)
     store.markApplicationsLatest(Collections.singletonList(appId));
+  }
+
+  @Test
+  public void testUpdateApplicationScmMeta()
+      throws IOException, ConflictException {
+    // Add an application with a scm meta field
+    ApplicationId appId = new ApplicationId("account1", "application1");
+    ApplicationMeta appMeta = new ApplicationMeta("application1", Specifications.from(new FooApp()),
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()), null);
+
+    store.addApplication(appId, appMeta);
+    Map<ApplicationId, SourceControlMeta> updateRequests = new HashMap<>();
+    updateRequests.put(appId, new SourceControlMeta("updated-file-hash"));
+    store.updateApplicationSourceControlMeta(updateRequests);
+
+    ApplicationMeta storedMeta = store.getApplicationMetadata(appId);
+    Assert.assertNotNull(storedMeta);
+    Assert.assertNotNull(storedMeta.getSourceControlMeta());
+    Assert.assertEquals("updated-file-hash", storedMeta.getSourceControlMeta().getFileHash());
+  }
+
+  @Test
+  public void testUpdateApplicationScmMetaWithNonExistingAppIds()
+      throws IOException, ConflictException {
+    // Add an application with a scm meta field
+    ApplicationId appId = new ApplicationId("account1", "application1");
+    ApplicationMeta appMeta = new ApplicationMeta("application1", Specifications.from(new FooApp()),
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()), new SourceControlMeta("initial-file-hash"));
+
+    store.addApplication(appId, appMeta);
+    // The following appId is not added to the store
+    ApplicationId appId2 = new ApplicationId("account1", "application2");
+
+    Map<ApplicationId, SourceControlMeta> updateRequests = new HashMap<>();
+    updateRequests.put(appId, new SourceControlMeta("updated-file-hash"));
+    updateRequests.put(appId2, new SourceControlMeta("updated-file-hash-2"));
+    store.updateApplicationSourceControlMeta(updateRequests);
+
+    ApplicationMeta storedMeta = store.getApplicationMetadata(appId);
+    Assert.assertNotNull(storedMeta);
+    Assert.assertNotNull(storedMeta.getSourceControlMeta());
+    Assert.assertEquals("updated-file-hash", storedMeta.getSourceControlMeta().getFileHash());
   }
 
   private static class FooApp extends AbstractApplication {

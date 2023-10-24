@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
+import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
@@ -284,6 +285,39 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppLifecycleHttpHan
     }
 
     applicationLifecycleService.markAppsAsLatest(namespaceId, appsMarkLatestRequest);
+    responder.sendString(HttpResponseStatus.OK, "");
+  }
+
+  /**
+   * Update git metadata of the provided applications.
+   *
+   * @param request {@link FullHttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace where the applications are deployed
+   * @throws Exception if either namespace or any of the application doesn't exist
+   */
+  @POST
+  @Path("/apps/updateSourceControlMeta")
+  public void updateSourceControlMeta(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespace) throws Exception {
+    // TODO Add the feature flag check here, after the markLatest API PR is merged and this branch is synced.
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceQueryAdmin.exists(namespaceId)) {
+      throw new NamespaceNotFoundException(namespaceId);
+    }
+
+    UpdateMultiSourceControlMetaReqeust appsRequest;
+    try {
+      appsRequest = parseBody(request, UpdateMultiSourceControlMetaReqeust.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid request body.", e);
+    }
+
+    if (null == appsRequest) {
+      throw new BadRequestException("Empty request body.");
+    }
+
+    applicationLifecycleService.updateSourceControlMeta(namespaceId, appsRequest);
     responder.sendString(HttpResponseStatus.OK, "");
   }
 }

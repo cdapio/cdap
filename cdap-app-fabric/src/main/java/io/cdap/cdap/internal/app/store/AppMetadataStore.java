@@ -768,6 +768,32 @@ public class AppMetadataStore {
   }
 
   /**
+   * Updates the scm metadata of an application.
+   *
+   * @param appId {@link ApplicationId} of the app
+   * @param scmMeta {@link SourceControlMeta} the new scm metadata (git filehash)
+   * @throws IOException when the update operation fails
+   * @throws ApplicationNotFoundException when the application is not found
+   */
+  public void updateAppScmMeta(ApplicationId appId, SourceControlMeta scmMeta)
+      throws IOException, ApplicationNotFoundException {
+    StructuredTable appSpecTable = getApplicationSpecificationTable();
+
+    List<Field<?>> fields = getApplicationPrimaryKeys(appId);
+    Optional<StructuredRow> existing = appSpecTable.read(fields);
+    if (!existing.isPresent()) {
+      throw new ApplicationNotFoundException(appId);
+    }
+
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META, GSON.toJson(scmMeta)));
+    // upsert, because update does not seem to work correctly in the nosql implementation
+    // the following line will only update anyway, as non-existing applications would have
+    // errored out in the previous step in this method.
+    // TODO [CDAP-20853] replace the upsert call with update when the nosql update issue is fixed.
+    appSpecTable.upsert(fields);
+  }
+
+  /**
    * Return the {@link List} of {@link WorkflowNodeStateDetail} for a given Workflow run.
    */
   public List<WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
