@@ -20,7 +20,7 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.common.transaction.MultiThreadTransactionAware;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import org.apache.tephra.TransactionAware;
 
 /**

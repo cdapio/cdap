@@ -36,7 +36,7 @@ import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import java.util.HashMap;
 import javax.annotation.Nullable;
 import org.apache.tephra.TransactionSystemClient;

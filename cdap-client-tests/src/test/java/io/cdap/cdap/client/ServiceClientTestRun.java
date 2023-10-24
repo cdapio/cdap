@@ -26,7 +26,7 @@ import io.cdap.cdap.client.app.FakeApp;
 import io.cdap.cdap.client.app.PingService;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.id.ApplicationId;

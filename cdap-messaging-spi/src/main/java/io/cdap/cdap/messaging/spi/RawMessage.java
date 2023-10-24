@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.data;
+package io.cdap.cdap.messaging.spi;
 
 /**
  * Represents a unique message in the messaging system. It contains the message id and the payload

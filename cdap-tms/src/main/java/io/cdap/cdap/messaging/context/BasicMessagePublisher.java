@@ -18,8 +18,8 @@ package io.cdap.cdap.messaging.context;
 
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.RollbackDetail;
+import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;

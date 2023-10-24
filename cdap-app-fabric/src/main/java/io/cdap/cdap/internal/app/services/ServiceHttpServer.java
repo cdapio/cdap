@@ -63,7 +63,7 @@ import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicSystemHttpServiceContext;
 import io.cdap.cdap.internal.lang.Reflections;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;

@@ -31,7 +31,7 @@ import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
 import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;

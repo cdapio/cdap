@@ -24,7 +24,7 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.security.AccessException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;

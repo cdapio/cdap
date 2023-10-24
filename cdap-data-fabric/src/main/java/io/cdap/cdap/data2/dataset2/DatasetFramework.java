@@ -29,7 +29,7 @@ import io.cdap.cdap.api.dataset.InstanceNotFoundException;
 import io.cdap.cdap.api.dataset.Reconfigurable;
 import io.cdap.cdap.api.dataset.Updatable;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;

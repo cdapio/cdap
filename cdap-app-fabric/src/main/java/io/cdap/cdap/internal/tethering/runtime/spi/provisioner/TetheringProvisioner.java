@@ -21,7 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.provision.ProvisionerExtensionLoader;
 import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.internal.tethering.runtime.spi.runtimejob.TetheringRuntimeJobManager;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;

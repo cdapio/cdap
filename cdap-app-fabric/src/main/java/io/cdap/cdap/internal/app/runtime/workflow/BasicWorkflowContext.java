@@ -40,7 +40,7 @@ import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;

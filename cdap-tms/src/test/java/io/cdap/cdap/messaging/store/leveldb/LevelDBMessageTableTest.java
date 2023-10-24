@@ -20,7 +20,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MessageTableTest;

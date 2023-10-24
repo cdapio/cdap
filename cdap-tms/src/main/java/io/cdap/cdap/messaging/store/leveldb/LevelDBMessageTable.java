@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.messaging.MessagingUtils;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.AbstractMessageTable;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MessageTableKey;

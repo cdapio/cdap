@@ -21,7 +21,7 @@ import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.service.RetryStrategy;

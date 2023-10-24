@@ -23,7 +23,7 @@ import io.cdap.cdap.data2.util.hbase.PutBuilder;
 import io.cdap.cdap.hbase.wd.AbstractRowKeyDistributor;
 import io.cdap.cdap.hbase.wd.DistributedScanner;
 import io.cdap.cdap.messaging.MessagingUtils;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.AbstractMessageTable;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.MessageTableKey;

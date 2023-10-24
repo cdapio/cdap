@@ -36,7 +36,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.DatasetId;

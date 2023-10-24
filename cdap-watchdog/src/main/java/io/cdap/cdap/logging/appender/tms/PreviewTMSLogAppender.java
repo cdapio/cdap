@@ -19,7 +19,7 @@ package io.cdap.cdap.logging.appender.tms;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 
 /**
  * TMS Log Appender used for Preview. Only difference with {@link TMSLogAppender} is an instance of

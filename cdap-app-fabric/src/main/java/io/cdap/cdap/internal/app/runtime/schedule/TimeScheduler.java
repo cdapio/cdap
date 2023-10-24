@@ -31,7 +31,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.NamespaceId;

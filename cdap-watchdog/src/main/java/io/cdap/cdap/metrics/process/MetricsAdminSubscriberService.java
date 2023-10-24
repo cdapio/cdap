@@ -29,7 +29,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingPollingService;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;

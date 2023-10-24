@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;

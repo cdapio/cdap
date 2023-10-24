@@ -33,7 +33,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metrics.collect.LocalMetricsCollectionService;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;

@@ -42,7 +42,7 @@ import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.NamespaceMeta;

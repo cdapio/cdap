@@ -36,7 +36,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.File;
 import java.io.IOException;

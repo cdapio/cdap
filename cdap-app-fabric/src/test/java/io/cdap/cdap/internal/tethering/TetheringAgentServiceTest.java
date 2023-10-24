@@ -22,7 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.tethering.runtime.spi.runtimejob.TetheringRuntimeJobManager;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;

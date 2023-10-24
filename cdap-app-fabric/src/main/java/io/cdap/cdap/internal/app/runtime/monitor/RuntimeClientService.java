@@ -42,7 +42,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.Notification;

@@ -33,7 +33,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;

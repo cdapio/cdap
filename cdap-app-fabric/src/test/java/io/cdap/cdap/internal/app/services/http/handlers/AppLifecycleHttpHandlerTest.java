@@ -58,7 +58,7 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
 import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityReader;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;

@@ -23,7 +23,7 @@ import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ServiceException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;

@@ -94,7 +94,7 @@ import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.BasicMessagingAdmin;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;

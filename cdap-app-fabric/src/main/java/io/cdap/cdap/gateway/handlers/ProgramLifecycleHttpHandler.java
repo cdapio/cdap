@@ -41,7 +41,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;

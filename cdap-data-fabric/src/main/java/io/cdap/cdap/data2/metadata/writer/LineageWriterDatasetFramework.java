@@ -23,7 +23,7 @@ import io.cdap.cdap.api.annotation.ReadWrite;
 import io.cdap.cdap.api.annotation.WriteOnly;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.data.ProgramContext;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data.runtime.DataSetsModules;

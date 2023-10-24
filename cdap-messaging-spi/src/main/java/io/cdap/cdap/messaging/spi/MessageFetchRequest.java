@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,30 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging;
+package io.cdap.cdap.messaging.spi;
 
 import io.cdap.cdap.proto.id.TopicId;
-import java.util.Map;
+import javax.annotation.Nullable;
+import org.apache.tephra.Transaction;
 
-/** Represents metadata about a messaging topic. */
-public interface TopicMetadata {
+/**
+ * A request for fetching messages from the messaging system.
+ */
+public interface MessageFetchRequest {
 
-  /** Returns the topic id that this metadata is associated with. */
   TopicId getTopicId();
 
-  /** Returns the raw properties for the topic. */
-  Map<String, String> getProperties();
+  @Nullable
+  byte[] getStartOffset();
 
-  /** Returns the generation id for the topic. */
-  int getGeneration();
+  boolean isIncludeStart();
 
-  /** Check whether the topic exists. */
-  boolean exists();
+  @Nullable
+  Long getStartTime();
 
-  /** Returns the time-to-live in seconds property of the topic. */
-  long getTTL();
+  @Nullable
+  Transaction getTransaction();
+
+  int getLimit();
+
 }

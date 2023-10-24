@@ -56,7 +56,7 @@ import io.cdap.cdap.internal.app.store.RunRecordDetailWithExistingStatus;
 import io.cdap.cdap.internal.provision.ProvisionRequest;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;

@@ -51,7 +51,7 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.NamespaceMeta;

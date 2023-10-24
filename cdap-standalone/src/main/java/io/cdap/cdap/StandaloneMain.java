@@ -78,7 +78,7 @@ import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.logging.service.LogQueryService;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;

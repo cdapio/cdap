@@ -98,7 +98,7 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.BasicMessagingAdmin;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.Notification;

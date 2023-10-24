@@ -29,7 +29,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingUtils;
-import io.cdap.cdap.messaging.TopicMetadata;
+import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.cache.MessageCache;
 import io.cdap.cdap.messaging.data.MessageId;
 import io.cdap.cdap.messaging.store.ImmutableMessageTableEntry;

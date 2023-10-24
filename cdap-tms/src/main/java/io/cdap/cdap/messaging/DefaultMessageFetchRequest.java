@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging;
 
+import io.cdap.cdap.messaging.spi.MessageFetchRequest;
 import io.cdap.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 

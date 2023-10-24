@@ -86,7 +86,7 @@ import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;

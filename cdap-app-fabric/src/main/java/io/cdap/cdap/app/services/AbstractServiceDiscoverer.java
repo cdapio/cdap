@@ -17,7 +17,7 @@
 package io.cdap.cdap.app.services;
 
 import io.cdap.cdap.api.ServiceDiscoverer;
-import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;

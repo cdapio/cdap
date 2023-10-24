@@ -31,7 +31,7 @@ import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
-import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
