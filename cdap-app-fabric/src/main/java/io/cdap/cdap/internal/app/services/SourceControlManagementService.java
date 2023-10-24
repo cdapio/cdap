@@ -263,7 +263,7 @@ public class SourceControlManagementService {
         appLifecycleService.decodeUserId(authenticationContext));
 
     ApplicationWithPrograms app = appLifecycleService.deployApp(appId, appRequest,
-                                                                sourceControlMeta, x -> { });
+                                                                sourceControlMeta, x -> { }, false);
 
     LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
             + "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),

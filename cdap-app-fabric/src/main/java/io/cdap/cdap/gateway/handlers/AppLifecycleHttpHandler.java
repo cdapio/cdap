@@ -19,11 +19,8 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -32,17 +29,13 @@ import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.security.AccessException;
-import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
-import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
@@ -56,15 +49,12 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.features.Feature;
-import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
@@ -78,7 +68,6 @@ import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -97,7 +86,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -125,23 +113,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * {@link io.cdap.http.HttpHandler} for managing application lifecycle.
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
-
-  // Gson for writing response
-  private static final Gson GSON = new Gson();
-  // Gson for decoding request
-  private static final Gson DECODE_GSON = new GsonBuilder()
-      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
-      .create();
-  private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
+public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   /**
    * Key in json paginated applications list response.
    */
@@ -150,13 +128,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Runtime program service for running and managing programs.
    */
-  private final ProgramRuntimeService runtimeService;
-
-  private final CConfiguration configuration;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacePathLocator namespacePathLocator;
-  private final ApplicationLifecycleService applicationLifecycleService;
-  private final File tmpDir;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final FeatureFlagsProvider featureFlagsProvider;
@@ -169,13 +141,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ApplicationLifecycleService applicationLifecycleService,
       AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext) {
-    this.configuration = configuration;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.runtimeService = runtimeService;
+    super(configuration, namespaceQueryAdmin, runtimeService, applicationLifecycleService);
     this.namespacePathLocator = namespacePathLocator;
-    this.applicationLifecycleService = applicationLifecycleService;
-    this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
-        configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
@@ -775,60 +742,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         appId.getParent(),
         applicationLifecycleService.decodeUserId(authenticationContext));
     // createTempFile() needs a prefix of at least 3 characters
-    return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
-
-      @Override
-      protected void onFinish(HttpResponder responder, File uploadedFile) {
-        try (FileReader fileReader = new FileReader(uploadedFile)) {
-          AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
-
-          try {
-            ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
-                null, createProgramTerminator());
-            LOG.info(
-                "Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
-
-                    + "principal {}", app.getApplicationId().getApplication(),
-                app.getApplicationId().getNamespace(),
-                app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal());
-
-            responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
-          } catch (DatasetManagementException e) {
-            if (e.getCause() instanceof UnauthorizedException) {
-              throw (UnauthorizedException) e.getCause();
-            } else {
-              throw e;
-            }
-          }
-        } catch (ArtifactNotFoundException e) {
-          responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-        } catch (ConflictException e) {
-          responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-        } catch (UnauthorizedException e) {
-          responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
-        } catch (InvalidArtifactException e) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        } catch (IOException e) {
-          LOG.error("Error reading request body for creating app {}.", appId, e);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
-              "Error while reading json request body for app %s.", appId));
-        } catch (Exception e) {
-          LOG.error("Deploy failure", e);
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        }
-      }
-    };
-  }
-
-  private ApplicationRecord getApplicationRecord(ApplicationWithPrograms deployedApp) {
-    return new ApplicationRecord(
-        ArtifactSummary.from(deployedApp.getArtifactId().toApiArtifactId()),
-        deployedApp.getApplicationId().getApplication(),
-        deployedApp.getApplicationId().getVersion(),
-        deployedApp.getSpecification().getDescription(),
-        Optional.ofNullable(deployedApp.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal)
-            .orElse(null),
-        deployedApp.getChangeDetail(), null);
+    return deployAppFromArtifact(appId, false);
   }
 
   private BodyConsumer deployApplication(final HttpResponder responder,
@@ -927,54 +841,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     };
   }
 
-  private ProgramTerminator createProgramTerminator() {
-    return programId -> {
-      switch (programId.getType()) {
-        case SERVICE:
-        case WORKER:
-          killProgramIfRunning(programId);
-          break;
-      }
-    };
-  }
-
-  private void killProgramIfRunning(ProgramId programId) {
-    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId, runtimeService);
-    if (programRunInfo != null) {
-      ProgramController controller = programRunInfo.getController();
-      controller.kill();
-    }
-  }
-
-  private NamespaceId validateNamespace(@Nullable String namespace)
-      throws BadRequestException, NamespaceNotFoundException, AccessException {
-
-    if (namespace == null) {
-      throw new BadRequestException("Path parameter namespace-id cannot be empty");
-    }
-
-    NamespaceId namespaceId;
-    try {
-      namespaceId = new NamespaceId(namespace);
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Invalid namespace '%s'", namespace), e);
-    }
-
-    try {
-      if (!namespaceId.equals(NamespaceId.SYSTEM)) {
-        namespaceQueryAdmin.get(namespaceId);
-      }
-    } catch (NamespaceNotFoundException | AccessException e) {
-      throw e;
-    } catch (Exception e) {
-      // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
-      // In AppFabricServer, NamespaceAdmin is bound to DefaultNamespaceAdmin, which interacts directly with the MDS.
-      // Hence, this exception will never be thrown
-      throw Throwables.propagate(e);
-    }
-    return namespaceId;
-  }
-
   private void validateApplicationId(@Nullable String namespace, @Nullable String appId)
       throws BadRequestException, NamespaceNotFoundException, AccessException {
     validateApplicationId(validateNamespace(namespace), appId);
@@ -990,22 +856,5 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Nullable String versionId)
       throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
-  }
-
-  private ApplicationId validateApplicationVersionId(NamespaceId namespaceId, String appId,
-      String versionId) throws BadRequestException {
-    if (appId == null) {
-      throw new BadRequestException("Path parameter app-id cannot be empty");
-    }
-    if (!EntityId.isValidId(appId)) {
-      throw new BadRequestException(String.format("Invalid app name '%s'", appId));
-    }
-    if (versionId == null) {
-      throw new BadRequestException("Path parameter version-id cannot be empty");
-    }
-    if (EntityId.isValidVersionId(versionId)) {
-      return namespaceId.app(appId, versionId);
-    }
-    throw new BadRequestException(String.format("Invalid version '%s'", versionId));
   }
 }

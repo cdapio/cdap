@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +57,7 @@ public class ApplicationDeployable {
   @Nullable
   private final SourceControlMeta sourceControlMeta;
   private final boolean isUpgrade;
+  private final boolean skipMarkingLatest;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
       ApplicationId applicationId, ApplicationSpecification specification,
@@ -65,7 +67,7 @@ public class ApplicationDeployable {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec,
         applicationDeployScope,
         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
-        null, null, false);
+        null, null, false, false);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -77,7 +79,7 @@ public class ApplicationDeployable {
       boolean updateSchedules,
       Collection<StructuredTableSpecification> systemTables,
       Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail,
-      @Nullable SourceControlMeta sourceControlMeta, boolean isUpgrade) {
+      @Nullable SourceControlMeta sourceControlMeta, boolean isUpgrade, boolean skipMarkingLatest) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -92,6 +94,7 @@ public class ApplicationDeployable {
     this.changeDetail = changeDetail;
     this.sourceControlMeta = sourceControlMeta;
     this.isUpgrade = isUpgrade;
+    this.skipMarkingLatest = skipMarkingLatest;
   }
 
   /**
@@ -184,6 +187,13 @@ public class ApplicationDeployable {
    */
   public boolean isUpgrade() {
     return isUpgrade;
+  }
+
+  /**
+   * Returns true if the application is not to be marked as latest.
+   */
+  public boolean isSkipMarkingLatest() {
+    return skipMarkingLatest;
   }
 
   /**

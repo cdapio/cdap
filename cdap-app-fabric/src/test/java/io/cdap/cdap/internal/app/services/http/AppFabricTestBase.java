@@ -54,6 +54,7 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -200,6 +201,7 @@ public abstract class AppFabricTestBase {
   protected static final String VERSION1 = "1.0.0";
   protected static final String VERSION2 = "2.0.0";
   protected static TransactionRunner transactionRunner;
+  protected static CConfiguration cConf;
 
   private static Injector injector;
 
@@ -230,7 +232,8 @@ public abstract class AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    initializeAndStartServices(createBasicCConf());
+    cConf = createBasicCConf();
+    initializeAndStartServices(cConf);
   }
 
   protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
@@ -544,6 +547,13 @@ public abstract class AppFabricTestBase {
     return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
   }
 
+  protected HttpResponse deployWithoutMarkingLatest(Id.Application appId, AppRequest<?> appRequest)
+      throws Exception {
+    String deployPath = getVersionedInternalAPIPath(
+        "apps/" + appId.getId() + "?skipMarkingLatest=true", appId.getNamespaceId());
+    return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
+  }
+
   protected HttpResponse deploy(ApplicationId appId, AppRequest<? extends Config> appRequest) throws Exception {
     String deployPath = getVersionedAPIPath(String.format("apps/%s/versions/%s/create", appId.getApplication(),
                                                           appId.getVersion()),
@@ -601,6 +611,11 @@ public abstract class AppFabricTestBase {
 
   protected String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
     return getVersionedAPIPath(nonVersionedApiPath, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  }
+
+  protected String getVersionedInternalAPIPath(String nonVersionedApiPath, String namespace) {
+    Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3internal APIs.");
+    return String.format("/%s/namespaces/%s/%s", Gateway.INTERNAL_API_VERSION_3_TOKEN, namespace, nonVersionedApiPath);
   }
 
   protected String getVersionedAPIPath(String nonVersionedApiPath, String version, String namespace) {

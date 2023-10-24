@@ -67,11 +67,15 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(),
         input.getSpecification(),
-        input.getChangeDetail(), input.getSourceControlMeta());
+        input.getChangeDetail(), input.getSourceControlMeta(), !input.isSkipMarkingLatest());
     try {
       int editCount = store.addApplication(input.getApplicationId(), appMeta);
-      // increment metric : app.deploy.event.count.upgrade
-      if (input.isUpgrade()) {
+
+      if (input.isSkipMarkingLatest()) {
+        // TODO [CDAP-20848]
+        // do not emit any metrics. the application may be cleaned up or marked latest later
+      } else if (input.isUpgrade()) {
+        // increment metric : app.deploy.event.count.upgrade
         emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
             Constants.Metrics.AppMetadataStore.DEPLOY_UPGRADE_COUNT);
       } else if (editCount == 1) {

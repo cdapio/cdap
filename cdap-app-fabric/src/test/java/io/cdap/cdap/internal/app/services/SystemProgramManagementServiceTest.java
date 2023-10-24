@@ -123,6 +123,6 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     applicationLifecycleService.deployApp(NamespaceId.SYSTEM, APP_NAME, VERSION, summary, null, null, null,
                                           programId -> {
                                             // no-op
-                                          }, null, false, false, Collections.emptyMap());
+                                          }, null, false, false, false, Collections.emptyMap());
   }
 }

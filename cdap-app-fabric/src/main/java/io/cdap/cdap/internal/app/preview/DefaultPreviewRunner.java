@@ -198,7 +198,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
           preview.getVersion(),
           artifactSummary, config, request.getChange(), null,
           NOOP_PROGRAM_TERMINATOR, null, request.canUpdateSchedules(),
-          true, userProps);
+          true, false, userProps);
     } catch (Exception e) {
       PreviewStatus previewStatus = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED,
           submitTimeMillis,
