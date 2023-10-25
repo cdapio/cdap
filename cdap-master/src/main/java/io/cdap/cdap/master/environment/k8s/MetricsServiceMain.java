@@ -33,7 +33,7 @@ import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
@@ -71,7 +71,7 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     return Arrays.asList(
         new NamespaceQueryAdminModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         new MetricsStoreModule(),
         new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class),

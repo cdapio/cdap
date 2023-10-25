@@ -2397,6 +2397,11 @@
   <!-- Messaging System Configuration -->
 
   <property>
+    <name>messaging.service.extensions.dir</name>
+    <value>/opt/cdap/master/ext/messagingproviders</value>
+  </property>
+
+  <property>
     <name>messaging.cache.size.mb</name>
     <value>30</value>
     <description>

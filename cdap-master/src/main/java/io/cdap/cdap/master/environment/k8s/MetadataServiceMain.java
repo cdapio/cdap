@@ -42,7 +42,7 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.metadata.MetadataConsumerSubscriberService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -77,7 +77,7 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
       EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new NamespaceQueryAdminModule(),
         getDataFabricModule(),
         // Always use local table implementations, which use LevelDB.

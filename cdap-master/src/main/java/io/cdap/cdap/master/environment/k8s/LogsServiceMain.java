@@ -48,7 +48,7 @@ import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
@@ -79,7 +79,7 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
       EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
         new AuthorizationEnforcementModule().getDistributedModules(),
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         getDataFabricModule(),
         // Always use local table implementations, which use LevelDB.
         // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.

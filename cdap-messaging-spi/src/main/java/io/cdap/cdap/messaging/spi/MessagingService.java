@@ -36,6 +36,12 @@ import javax.annotation.Nullable;
 public interface MessagingService {
 
   /**
+   * Returns the name of this MessagingService. The name needs to match with the configuration
+   * provided through {@code messaging.service.name}.
+   */
+  String getName();
+
+  /**
    * Creates a topic with the given metadata.
    *
    * @param topicMetadata topic to be created
@@ -134,7 +140,6 @@ public interface MessagingService {
    * system.
    *
    * @param messageFetchRequest the request for fetching messages
-   *
    * @throws TopicNotFoundException if the topic does not exist
    * @throws IOException if it fails to create the iterator
    * @throws ServiceUnavailableException if the messaging service is not available

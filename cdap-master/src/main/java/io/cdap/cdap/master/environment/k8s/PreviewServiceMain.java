@@ -42,7 +42,7 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
@@ -101,7 +101,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
         new ProgramRunnerRuntimeModule().getStandaloneModules(),
         new MetricsStoreModule(),
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new AuditModule(),
         new SecureStoreClientModule(),
         new MetadataReaderWriterModules().getStandaloneModules(),

@@ -30,7 +30,7 @@ import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
       EnvironmentOptions options, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>();
 
-    modules.add(new MessagingClientModule());
+    modules.add(new MessagingServiceModule(cConf));
     modules.add(new RouterModules().getDistributedModules());
     modules.add(new DFSLocationModule());
     modules.add(new ExternalAuthenticationModule());

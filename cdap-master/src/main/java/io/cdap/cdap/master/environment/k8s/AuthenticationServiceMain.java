@@ -27,7 +27,7 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -56,7 +56,7 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
     }
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new MessagingClientModule());
+    modules.add(new MessagingServiceModule(cConf));
     modules.add(new ExternalAuthenticationModule());
     return modules;
   }
