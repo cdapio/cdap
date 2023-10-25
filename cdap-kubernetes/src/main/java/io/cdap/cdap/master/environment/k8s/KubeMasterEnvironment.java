@@ -68,6 +68,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -549,29 +550,32 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   @Override
   public void createIdentity(String k8sNamespace, String identity) throws ApiException {
-    if (identity.equals("default")) {
-      // skip creating default service account as it already exists.
-      return;
-    }
-
     KubeUtil.validateRFC1123LabelName(identity);
-    LOG.info("Creating credential identity: {}", identity);
-    V1ObjectMeta serviceAccountMetadata = new V1ObjectMeta();
-    serviceAccountMetadata.setName(identity);
-    V1ServiceAccount serviceAccount = new V1ServiceAccount();
-    serviceAccount.setMetadata(serviceAccountMetadata);
     try {
-      coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount,
-          null, null, null, null);
+      LOG.info("Creating credential identity: {}", identity);
+      createK8sSaIfNotExists(k8sNamespace, identity);
     } catch (ApiException e) {
-      if (e.getCode() == 409) {
-        // ignore, the SA already exists.
-        return;
-      }
       LOG.error(
           String.format("Unable to create the service account %s with status %s and body: %s",
-              serviceAccount.getMetadata().getName(), e.getCode(), e.getResponseBody()), e);
+              identity, e.getCode(), e.getResponseBody()), e);
       throw e;
+    }
+  }
+
+  private void createK8sSaIfNotExists(String k8sNamespace, String serviceAccountName)
+      throws ApiException {
+    try {
+      coreV1Api.readNamespacedServiceAccount(serviceAccountName, k8sNamespace, null);
+    } catch (ApiException e) {
+      if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+        throw e;
+      }
+      V1ObjectMeta serviceAccountMetadata = new V1ObjectMeta();
+      serviceAccountMetadata.setName(serviceAccountName);
+      V1ServiceAccount serviceAccount = new V1ServiceAccount();
+      serviceAccount.setMetadata(serviceAccountMetadata);
+      coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount,
+          null, null, null, null);
     }
   }
 
