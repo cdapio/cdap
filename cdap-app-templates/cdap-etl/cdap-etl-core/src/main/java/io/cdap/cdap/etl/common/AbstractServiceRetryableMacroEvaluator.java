@@ -71,11 +71,15 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     double maxMultiplier =
         RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
     Stopwatch stopWatch = new Stopwatch().start();
+    int retryCount = 0;
+    RetryableException retryableException = null;
     try {
       while (stopWatch.elapsedTime(TimeUnit.MILLISECONDS) < TIMEOUT_MILLIS) {
         try {
+          retryCount++;
           return evaluateMacro(macroFunction, args);
         } catch (RetryableException e) {
+          retryableException = e;
           TimeUnit.MILLISECONDS.sleep(delay);
           delay =
               (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier
@@ -86,13 +90,38 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
         }
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException("Thread interrupted while trying evaluate "
-          + "the value for '" + functionName + "' with"
-          + " args " + Arrays.asList(args), e);
+      throw new RuntimeException(
+          "Thread interrupted while trying evaluate "
+              + "the value for '"
+              + functionName
+              + "' with"
+              + " args "
+              + Arrays.asList(args),
+          e);
     }
-    throw new IllegalStateException("Timed out when trying to evaluate the "
-        + "value for '" + functionName + "' with "
-        + "args " + Arrays.asList(args));
+
+    if (retryableException == null) {
+      throw new IllegalStateException(
+          "Exception after "
+              + retryCount
+              + " times trying to evaluate the "
+              + "value for '"
+              + functionName
+              + "' with "
+              + "args "
+              + Arrays.asList(args));
+    }
+
+    throw new IllegalStateException(
+        "Exception after "
+            + retryCount
+            + " times trying to evaluate the "
+            + "value for '"
+            + functionName
+            + "' with "
+            + "args "
+            + Arrays.asList(args),
+        retryableException);
   }
 
   @Override
