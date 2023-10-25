@@ -207,13 +207,16 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
           runnableTaskRequest);
       try {
-        if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null
-            && runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace() != null) {
-          // set the GcpMetadataTaskContext before running the task.
-          NamespaceId namespaceId = new NamespaceId(
+        NamespaceId namespaceId;
+        if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
+          // For system app tasks
+          namespaceId = new NamespaceId(
               runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace());
-          GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
+        } else {
+          namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
         }
+        // set the GcpMetadataTaskContext before running the task.
+        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
         runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
         TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
             startTime,

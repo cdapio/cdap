@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -32,7 +34,6 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.namespace.credential.RemoteNamespaceCredentialProvider;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
-import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
@@ -49,6 +50,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -74,6 +77,8 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   private final NamespaceCredentialProvider credentialProvider;
   private final GcpWorkloadIdentityInternalAuthenticator gcpWorkloadIdentityInternalAuthenticator;
   private GcpMetadataTaskContext gcpMetadataTaskContext;
+  private final LoadingCache<ProvisionedCredentialCacheKey,
+        ProvisionedCredential> credentialLoadingCache;
 
   /**
    * Constructs the {@link GcpMetadataHttpHandlerInternal}.
@@ -89,6 +94,18 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
         new GcpWorkloadIdentityInternalAuthenticator(gcpMetadataTaskContext);
     this.credentialProvider = new RemoteNamespaceCredentialProvider(remoteClientFactory,
         this.gcpWorkloadIdentityInternalAuthenticator);
+    this.credentialLoadingCache = CacheBuilder.newBuilder()
+        // Provisioned credential expire after 60mins, assuming 20% buffer in cache exp (0.8*60).
+        .expireAfterWrite(48, TimeUnit.MINUTES)
+        .build(new CacheLoader<ProvisionedCredentialCacheKey, ProvisionedCredential>() {
+          @Override
+          public ProvisionedCredential load(ProvisionedCredentialCacheKey
+              provisionedCredentialCacheKey) throws Exception {
+            return fetchTokenFromCredentialProvider(
+                provisionedCredentialCacheKey.getGcpMetadataTaskContext(),
+                provisionedCredentialCacheKey.getScopes());
+          }
+        });
   }
 
   /**
@@ -139,6 +156,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       // needed when initializing
       // io.cdap.cdap.common.guice.DFSLocationModule$LocationFactoryProvider#get
       // in io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable.
+      LOG.warn("The GCP Metadata Task Context has been identified as null.");
       GcpTokenResponse gcpTokenResponse = new GcpTokenResponse("Bearer", "invalidToken", 3599);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
       return;
@@ -146,24 +164,21 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
 
     try {
       // fetch token from credential provider
-      GcpTokenResponse gcpTokenResponse =
-          Retries.callWithRetries(() -> fetchTokenFromCredentialProvider(scopes),
-              RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+      ProvisionedCredential provisionedCredential =
+          credentialLoadingCache.get(
+              new ProvisionedCredentialCacheKey(this.gcpMetadataTaskContext, scopes));
+      GcpTokenResponse gcpTokenResponse = new GcpTokenResponse("Bearer",
+          provisionedCredential.get(),
+          Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
       return;
-    } catch (NotFoundException e) {
+    } catch (ExecutionException e) {
+      if (!(e.getCause() instanceof NotFoundException)) {
+        LOG.error("Failed to fetch token from credential provider", e.getCause());
+        throw e;
+      }
       // if credential identity not found,
       // fallback to gcp metadata server for backward compatibility.
-    } catch (Exception ex) {
-      if (ex instanceof HttpErrorStatusProvider) {
-        HttpResponseStatus status = HttpResponseStatus.valueOf(
-            ((HttpErrorStatusProvider) ex).getStatusCode());
-        responder.sendJson(status, exceptionToJson(ex));
-      } else {
-        LOG.warn("Failed to fetch token from credential provider", ex);
-        responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
-      }
-      return;
     }
 
     if (metadataServiceTokenEndpoint == null) {
@@ -177,17 +192,16 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       responder.sendJson(HttpResponseStatus.OK,
           fetchTokenFromMetadataServer(scopes).getResponseBodyAsString());
     } catch (Exception ex) {
-      LOG.warn("Failed to fetch token from metadata service", ex);
+      LOG.error("Failed to fetch token from metadata server", ex);
       responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
     }
   }
 
-  private GcpTokenResponse fetchTokenFromCredentialProvider(String scopes) throws NotFoundException,
-      IOException, CredentialProvisioningException {
-    ProvisionedCredential provisionedCredential =
-        this.credentialProvider.provision(gcpMetadataTaskContext.getNamespace(), scopes);
-    return new GcpTokenResponse("Bearer", provisionedCredential.get(),
-        Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
+  private ProvisionedCredential fetchTokenFromCredentialProvider(
+      GcpMetadataTaskContext gcpMetadataTaskContext, String scopes) throws Exception {
+    return Retries.callWithRetries(() ->
+            this.credentialProvider.provision(gcpMetadataTaskContext.getNamespace(), scopes),
+        RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
   }
 
   private HttpResponse fetchTokenFromMetadataServer(String scopes) throws IOException {
@@ -229,6 +243,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   public void clearContext(HttpRequest request, HttpResponder responder) {
     this.gcpMetadataTaskContext = null;
     this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
+    this.credentialLoadingCache.invalidateAll();
     LOG.trace("Context cleared.");
     responder.sendStatus(HttpResponseStatus.OK);
   }

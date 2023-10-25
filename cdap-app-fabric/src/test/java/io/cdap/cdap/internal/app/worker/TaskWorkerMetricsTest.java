@@ -105,8 +105,7 @@ public class TaskWorkerMetricsTest {
   public void testSimpleRequest() throws IOException {
     String taskClassName = TaskWorkerServiceTest.TestRunnableClass.class.getName();
     RunnableTaskRequest req = RunnableTaskRequest.getBuilder(taskClassName)
-      .withParam("100")
-      .build();
+      .withParam("100").withNamespace("testNamespace").build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())

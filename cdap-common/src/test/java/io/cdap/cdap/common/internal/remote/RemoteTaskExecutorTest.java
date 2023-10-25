@@ -179,7 +179,7 @@ public class RemoteTaskExecutorTest {
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
                                                                    RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(InValidRunnableClass.class.getName()).
-      withParam("param").build();
+      withParam("param").withNamespace("testNamespace").build();
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
     } catch (RemoteExecutionException e) {
@@ -203,7 +203,7 @@ public class RemoteTaskExecutorTest {
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
         RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
-      withParam("param").build();
+      withParam("param").withNamespace("testNamespace").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
     mockMetricsCollector.stopAndWait();
     Assert.assertSame(1, metricCollectors.size());
@@ -224,7 +224,7 @@ public class RemoteTaskExecutorTest {
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
         RemoteTaskExecutor.Type.TASK_WORKER);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
-      withParam("param").build();
+      withParam("param").withNamespace("testNamespace").build();
     try {
       remoteTaskExecutor.runTask(runnableTaskRequest);
     } catch (Exception e) {

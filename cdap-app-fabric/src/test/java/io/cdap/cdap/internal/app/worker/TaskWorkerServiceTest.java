@@ -145,8 +145,8 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "5000";
-    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want)
-      .build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
+        .withParam(want).withNamespace("testNamespace").build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -224,8 +224,8 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want)
-      .build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
+        .withParam(want).withNamespace("testNamespace").build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -248,8 +248,8 @@ public class TaskWorkerServiceTest {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).withParam(want)
-      .build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
+        .withParam(want).withNamespace("testNamespace").build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -267,7 +267,8 @@ public class TaskWorkerServiceTest {
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     // Post invalid request
-    RunnableTaskRequest noClassReq = RunnableTaskRequest.getBuilder("NoClass").build();
+    RunnableTaskRequest noClassReq = RunnableTaskRequest.getBuilder("NoClass")
+        .withNamespace("testNamespace").withParam("100").build();
     String reqBody = GSON.toJson(noClassReq);
     HttpResponse response = HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
@@ -287,8 +288,8 @@ public class TaskWorkerServiceTest {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName()).
-      withParam("1000").build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
+            .withParam("1000").withNamespace("testNamespace").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
