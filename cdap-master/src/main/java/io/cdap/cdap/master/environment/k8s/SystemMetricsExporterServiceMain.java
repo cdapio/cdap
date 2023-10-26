@@ -27,7 +27,7 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.jmx.JmxMetricsCollectorFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class SystemMetricsExporterServiceMain extends AbstractServiceMain<Enviro
       CConfiguration cConf) {
     return Arrays.asList(
         // required by some module added in super class
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new SystemMetricsExporterModule()
     );
   }

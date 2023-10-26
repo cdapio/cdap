@@ -55,7 +55,7 @@ import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
@@ -94,7 +94,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
         // The Dataset set modules are only needed to satisfy dependency injection
         new DataSetsModules().getStandaloneModules(),
         new MetricsStoreModule(),
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new AuditModule(),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),

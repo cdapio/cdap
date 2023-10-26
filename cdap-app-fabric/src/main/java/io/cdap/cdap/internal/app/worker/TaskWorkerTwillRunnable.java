@@ -44,7 +44,7 @@ import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -94,7 +94,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new IOModule());
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(coreSecurityModule);
-    modules.add(new MessagingClientModule());
+    modules.add(new MessagingServiceModule(cConf));
     modules.add(new SystemAppModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
 

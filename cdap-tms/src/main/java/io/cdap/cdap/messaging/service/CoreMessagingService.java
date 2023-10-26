@@ -131,6 +131,11 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException {
     try (MetadataTable metadataTable = createMetadataTable()) {

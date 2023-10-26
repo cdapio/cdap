@@ -118,6 +118,11 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     TopicId topicId = topicMetadata.getTopicId();

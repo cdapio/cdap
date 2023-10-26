@@ -44,7 +44,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerClient;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -175,7 +175,7 @@ public class SystemAppTask implements RunnableTask {
     return Guice.createInjector(new IOModule(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
         new ConfigModule(cConf), RemoteAuthenticatorModules.getDefaultModule(),
-        new MessagingClientModule(), new LocalLocationModule(),
+        new MessagingServiceModule(cConf), new LocalLocationModule(),
         new SecureStoreClientModule(),
         new AuthenticationContextModules().getMasterModule(),
         new SystemAppModule(),

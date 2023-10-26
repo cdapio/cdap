@@ -35,7 +35,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusSubscriberS
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -62,7 +62,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
         new DFSLocationModule(),
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         getDataFabricModule(),
         new RuntimeServerModule(),

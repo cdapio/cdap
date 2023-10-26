@@ -78,7 +78,7 @@ import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.KeyManager;
@@ -151,7 +151,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         new DataSetServiceModules().getStandaloneModules(),
         // The Dataset set modules are only needed to satisfy dependency injection
         new DataSetsModules().getStandaloneModules(),
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
         Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())

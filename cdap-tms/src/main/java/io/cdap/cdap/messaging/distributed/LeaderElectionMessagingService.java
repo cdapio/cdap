@@ -85,6 +85,11 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   }
 
   @Override
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
+
+  @Override
   protected void startUp() throws Exception {
     delayExecutor = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("fencing-delay"));

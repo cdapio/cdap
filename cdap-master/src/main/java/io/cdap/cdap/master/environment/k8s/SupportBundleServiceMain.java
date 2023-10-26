@@ -31,7 +31,7 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.support.guice.SupportBundleServiceModule;
@@ -58,7 +58,7 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
       EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         new NamespaceQueryAdminModule(),
         getDataFabricModule(),
         // Always use local table implementations, which use LevelDB.

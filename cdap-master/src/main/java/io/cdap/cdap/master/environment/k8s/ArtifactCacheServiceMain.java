@@ -32,7 +32,7 @@ import io.cdap.cdap.internal.tethering.ArtifactCacheService;
 import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.util.Arrays;
@@ -55,7 +55,7 @@ public class ArtifactCacheServiceMain extends AbstractServiceMain<EnvironmentOpt
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
       EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-        new MessagingClientModule(),
+        new MessagingServiceModule(cConf),
         RemoteAuthenticatorModules.getDefaultModule(
             TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
             Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
