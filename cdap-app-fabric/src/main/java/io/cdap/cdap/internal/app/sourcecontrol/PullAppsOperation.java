@@ -57,7 +57,7 @@ public class PullAppsOperation implements LongRunningOperation {
   /**
    * Only request is passed using AssistedInject. See {@link PullAppsOperationFactory}
    *
-   * @param request contains apps to push
+   * @param request contains apps to pull
    * @param runner runs git operations. The reason we do not use
    *     {@link io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner} rather than
    *     concrete implementation is because the git operations should always run inMemory.
@@ -88,7 +88,7 @@ public class PullAppsOperation implements LongRunningOperation {
       );
 
       // pull and deploy applications one at a time
-      scmOpRunner.pull(pullReq, response -> {
+      scmOpRunner.multiPull(pullReq, response -> {
         appTobeDeployed.set(new ApplicationReference(context.getRunId().getNamespace(),
             response.getApplicationName()));
         try {

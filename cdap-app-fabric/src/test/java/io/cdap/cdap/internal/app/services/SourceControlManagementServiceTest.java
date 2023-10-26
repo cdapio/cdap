@@ -502,7 +502,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     }
 
     @Override
-    public void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+    public void multiPull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
         throws NotFoundException, AuthenticationConfigException {
     }
 

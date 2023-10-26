@@ -18,9 +18,11 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -39,6 +41,20 @@ public interface SourceControlOperationRunner extends Service {
    */
   PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
     AuthenticationConfigException;
+
+  /**
+   * Push an application config to remote git repository.
+   *
+   * @param pushRequest {@link MultiPushAppOperationRequest} of the applications to be pushed
+   * @param appManager {@link ApplicationManager} to fetch the app details
+   * @return file-paths and file-hashes for the updated configs.
+   * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
+   *                                       call remote Git.
+   * @throws SourceControlException when the push operation fails for any other reason.
+   */
+  List<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+      ApplicationManager appManager)
+      throws NoChangesToPushException, AuthenticationConfigException;
 
   /**
    * Gets an application spec from a Git repository.
@@ -66,7 +82,7 @@ public interface SourceControlOperationRunner extends Service {
    * @throws IllegalArgumentException      when the fetched application json or file path is invalid.
    * @throws SourceControlException when the operation fails for any other reason.
    */
-  void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+  void multiPull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
     throws NotFoundException, AuthenticationConfigException;
 
   /**
