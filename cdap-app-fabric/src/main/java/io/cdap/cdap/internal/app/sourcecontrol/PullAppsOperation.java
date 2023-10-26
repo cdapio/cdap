@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.operation.LongRunningOperation;
 import io.cdap.cdap.internal.operation.LongRunningOperationContext;
@@ -30,9 +31,11 @@ import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.operation.OperationResource;
 import io.cdap.cdap.proto.operation.OperationResourceScopedError;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPullAppOperationRequest;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -88,13 +91,17 @@ public class PullAppsOperation implements LongRunningOperation {
       scmOpRunner.pull(pullReq, response -> {
         appTobeDeployed.set(new ApplicationReference(context.getRunId().getNamespace(),
             response.getApplicationName()));
-        ApplicationId deployedVersion = applicationManager.deployApp(
-            appTobeDeployed.get(), response
-        );
-        deployed.add(deployedVersion);
-        context.updateOperationResources(getResources());
+        try {
+          ApplicationId deployedVersion = applicationManager.deployApp(
+              appTobeDeployed.get(), response
+          );
+          deployed.add(deployedVersion);
+          context.updateOperationResources(getResources());
+        } catch (Exception e) {
+          throw new SourceControlException(e);
+        }
       });
-    } catch (NotFoundException | SourceControlException e) {
+    } catch (Exception e) {
       throw new OperationException(
           "Failed to deploy applications",
           appTobeDeployed.get() != null ? ImmutableList.of(
@@ -105,8 +112,11 @@ public class PullAppsOperation implements LongRunningOperation {
 
     try {
       // all deployed versions are marked latest atomically
-      applicationManager.markAppVersionsLatest(deployed);
-    } catch (SourceControlException e) {
+      applicationManager.markAppVersionsLatest(
+          context.getRunId().getNamespaceId(),
+          deployed.stream().map(ApplicationId::getAppVersion).collect(Collectors.toList())
+      );
+    } catch (BadRequestException | NotFoundException | IOException e) {
       throw new OperationException(
           "Failed to mark applications latest",
           Collections.emptySet()

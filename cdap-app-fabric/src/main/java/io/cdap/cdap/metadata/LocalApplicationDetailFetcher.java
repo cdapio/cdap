@@ -50,9 +50,9 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
    *
    * @param appRef the versionless id of the application
    * @return {@link ApplicationDetail} for the given application
-   * @throws IOException if failed to get {@link ApplicationDetail} for the given {@link
-   *     ApplicationId}
-   * @throws NotFoundException if the given the given application doesn't exist
+   * @throws IOException if failed to get {@link ApplicationDetail} for the given
+   *     {@link ApplicationId}
+   * @throws NotFoundException if the given application doesn't exist
    */
   @Override
   public ApplicationDetail get(ApplicationReference appRef) throws IOException, NotFoundException {
