@@ -29,4 +29,8 @@ public class SourceControlException extends RuntimeException {
   public SourceControlException(String message) {
     super(message);
   }
+
+  public SourceControlException(Throwable cause) {
+    super(cause);
+  }
 }
