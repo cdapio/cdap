@@ -119,6 +119,7 @@ public interface MessagingService {
    * @throws IOException if failed to store messages
    * @throws ServiceUnavailableException if the messaging service is not available
    */
+  @Deprecated
   void storePayload(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException;
 
@@ -132,6 +133,7 @@ public interface MessagingService {
    * @throws IOException if failed to rollback changes
    * @throws ServiceUnavailableException if the messaging service is not available
    */
+  @Deprecated
   void rollback(TopicId topicId, RollbackDetail rollbackDetail)
       throws TopicNotFoundException, IOException, UnauthorizedException;
 

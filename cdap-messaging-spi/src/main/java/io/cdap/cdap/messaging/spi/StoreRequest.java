@@ -28,14 +28,17 @@ public interface StoreRequest extends Iterable<byte[]> {
   TopicId getTopicId();
 
   /** Returns {@code true} if the message should be published transactionally. */
+  @Deprecated
   boolean isTransactional();
 
   /**
    * Returns the transaction write pointer if the message is going to be published transactionally,
    * that is when {@link #isTransactional()} returns {@code true}.
    */
+  @Deprecated
   long getTransactionWritePointer();
 
   /** Returns {@code true} if there is payload in this request. */
+  @Deprecated
   boolean hasPayload();
 }
