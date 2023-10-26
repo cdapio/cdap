@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.sourcecontrol;
 
 import com.google.common.base.Objects;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import java.util.Set;
 
 /**
@@ -25,18 +26,24 @@ import java.util.Set;
 public class PullAppsRequest {
 
   private final Set<String> apps;
+  private final RepositoryConfig config;
 
   /**
    * Default Constructor.
    *
    * @param apps Set of apps to pull.
    */
-  public PullAppsRequest(Set<String> apps) {
+  public PullAppsRequest(Set<String> apps, RepositoryConfig config) {
     this.apps = apps;
+    this.config = config;
   }
 
   public Set<String> getApps() {
     return apps;
+  }
+
+  public RepositoryConfig getConfig() {
+    return config;
   }
 
   @Override
@@ -49,11 +56,12 @@ public class PullAppsRequest {
     }
 
     PullAppsRequest that = (PullAppsRequest) o;
-    return Objects.equal(this.getApps(), that.getApps());
+    return Objects.equal(this.getApps(), that.getApps())
+        && Objects.equal(this.getConfig(), that.getConfig());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getApps());
+    return Objects.hashCode(getApps(), getConfig());
   }
 }

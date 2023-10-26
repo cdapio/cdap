@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.operation;
 
 import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationType;
 import javax.annotation.Nullable;
 
 /**
@@ -25,18 +26,18 @@ import javax.annotation.Nullable;
 public class OperationRunFilter {
 
   @Nullable
-  private final String operationType;
+  private final OperationType operationType;
   @Nullable
   private final OperationRunStatus status;
   // TODO(samik) status and type filters as list
 
-  public OperationRunFilter(@Nullable String operationType, @Nullable OperationRunStatus status) {
+  public OperationRunFilter(@Nullable OperationType operationType, @Nullable OperationRunStatus status) {
     this.operationType = operationType;
     this.status = status;
   }
 
   @Nullable
-  public String getOperationType() {
+  public OperationType getOperationType() {
     return operationType;
   }
 

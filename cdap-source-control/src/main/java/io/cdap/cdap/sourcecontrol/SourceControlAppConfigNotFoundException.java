@@ -16,21 +16,20 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import io.cdap.cdap.common.NotFoundException;
+import java.nio.file.Path;
+
 /**
- * Exception thrown when an error is encountered while setting up authentication credentials for the
- * remote Git repo.
+ * Thrown when the application config file is not present in the repository.
  */
-public class AuthenticationConfigException extends SourceControlException {
+public class SourceControlAppConfigNotFoundException extends NotFoundException {
 
-  public AuthenticationConfigException(String message, Exception cause) {
-    super(message, cause);
+  public SourceControlAppConfigNotFoundException(String applicationName, Path appRelativePath) {
+    super(String.format("App with name %s not found at path %s in git repository",
+        applicationName, appRelativePath));
   }
 
-  public AuthenticationConfigException(String message, Throwable cause) {
+  public SourceControlAppConfigNotFoundException(String message, Throwable cause) {
     super(message, cause);
-  }
-
-  public AuthenticationConfigException(String message) {
-    super(message);
   }
 }

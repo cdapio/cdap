@@ -17,7 +17,8 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import io.cdap.cdap.proto.operation.OperationError;
+import io.cdap.cdap.proto.operation.OperationResource;
+import java.util.Set;
 
 /**
  * LongRunningOperation represents a long-running asynchronous operation.
@@ -27,10 +28,11 @@ public interface LongRunningOperation {
   /**
    * Run the operation with the given request.
    *
-   * @param request the operation input
-   * @param updateMetadata func to update the metadata of the operation. This would be passed by
-   *     the runner.
-   * @return {@link ListenableFuture} containing the {@link OperationError} for the run
+   * @param context the operation context. Contains func to update the resources of the
+   *     operation. This would be passed by the runner.
+   * @return {@link ListenableFuture} containing the {@link OperationResource}s operation on by the
+   *     run
    */
-  ListenableFuture<OperationError> run(LongRunningOperationContext context);
+  ListenableFuture<Set<OperationResource>> run(LongRunningOperationContext context)
+      throws OperationException;
 }

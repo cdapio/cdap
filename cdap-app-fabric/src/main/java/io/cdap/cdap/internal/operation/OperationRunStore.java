@@ -210,12 +210,12 @@ public class OperationRunStore {
     );
     if (request.getFilter().getOperationType() != null) {
       startFields.add(Fields.stringField(StoreDefinition.OperationRunsStore.TYPE_FIELD,
-          request.getFilter().getOperationType())
+          request.getFilter().getOperationType().name())
       );
     }
     if (request.getFilter().getStatus() != null) {
       startFields.add(Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
-          request.getFilter().getStatus().toString()));
+          request.getFilter().getStatus().name()));
     }
 
     Collection<Field<?>> endFields = startFields;
@@ -311,9 +311,9 @@ public class OperationRunStore {
         Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
             runId.getNamespace()),
         Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
-            detail.getRun().getStatus().toString()),
+            detail.getRun().getStatus().name()),
         Fields.stringField(StoreDefinition.OperationRunsStore.TYPE_FIELD,
-            detail.getRun().getType()),
+            detail.getRun().getType().name()),
         Fields.longField(StoreDefinition.OperationRunsStore.START_TIME_FIELD,
             detail.getRun().getMetadata().getCreateTime().toEpochMilli()),
         Fields.longField(StoreDefinition.OperationRunsStore.UPDATE_TIME_FIELD,

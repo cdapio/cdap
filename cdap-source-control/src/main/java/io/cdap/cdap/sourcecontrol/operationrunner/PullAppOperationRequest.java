@@ -23,12 +23,12 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
  * Information required by {@link SourceControlOperationRunner} to execute the task of
  * pulling an application from linked repository.
  */
-public class PulAppOperationRequest {
+public class PullAppOperationRequest {
   private final RepositoryConfig repoConfig;
 
   private final ApplicationReference app;
 
-  public PulAppOperationRequest(ApplicationReference app, RepositoryConfig repoConfig) {
+  public PullAppOperationRequest(ApplicationReference app, RepositoryConfig repoConfig) {
     this.repoConfig = repoConfig;
     this.app = app;
   }

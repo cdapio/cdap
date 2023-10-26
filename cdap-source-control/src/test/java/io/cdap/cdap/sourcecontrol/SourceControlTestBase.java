@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,6 +54,7 @@ public abstract class SourceControlTestBase {
   protected static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT, PAT_CONFIG);
   protected static final String PATH_PREFIX = "pathPrefix";
   protected static final String TEST_APP_NAME = "app1";
+  protected static final String TEST_APP2_NAME = "app2";
   protected static final String TEST_APP_SPEC = "{\n"
       + "  \"artifact\": {\n"
       + "     \"name\": \"cdap-notifiable-workflow\",\n"
@@ -76,6 +78,8 @@ public abstract class SourceControlTestBase {
       + "    },\n"
       + "  \"principal\" : \"test2\"\n"
       + "}";
+
+  protected static final String TEST_FILE_HASH = "a163ca52d8b8180456f8233656ebefe5fe7a4851";
 
   @ClassRule
   public static TemporaryFolder baseTempFolder = new TemporaryFolder();
@@ -150,7 +154,10 @@ public abstract class SourceControlTestBase {
   }
 
 
-  public void validateTestAppRequest(AppRequest<?> appRequest) {
+  public void validatePullResponse(PullAppResponse<?> response, String appName) {
+    Assert.assertEquals(response.getApplicationFileHash(), TEST_FILE_HASH);
+    Assert.assertEquals(response.getApplicationName(), appName);
+    AppRequest<?> appRequest = response.getAppRequest();
     Assert.assertNotNull(appRequest.getArtifact());
     Assert.assertEquals("cdap-notifiable-workflow",
         appRequest.getArtifact().getName());

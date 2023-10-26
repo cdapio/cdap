@@ -16,21 +16,22 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import java.nio.file.Path;
+
 /**
- * Exception thrown when an error is encountered while setting up authentication credentials for the
- * remote Git repo.
+ * Thrown when the application json could not be de-serialized.
  */
-public class AuthenticationConfigException extends SourceControlException {
+public class InvalidApplicationConfigException extends SourceControlException {
 
-  public AuthenticationConfigException(String message, Exception cause) {
-    super(message, cause);
-  }
-
-  public AuthenticationConfigException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public AuthenticationConfigException(String message) {
-    super(message);
+  /**
+   * Default constructor.
+   *
+   * @param appRelativePath the relative path of config file in repository.
+   * @param cause the causing exception.
+   */
+  public InvalidApplicationConfigException(Path appRelativePath, Throwable cause) {
+    super(String.format(
+        "Failed to de-serialize application json at path %s. Ensure application json is valid.",
+        appRelativePath), cause);
   }
 }

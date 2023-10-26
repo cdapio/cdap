@@ -17,7 +17,6 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.operation.OperationRun;
@@ -35,14 +34,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * The {@link HttpHandler} for handling REST calls to namespace endpoints.
+ * The {@link HttpHandler} for handling REST calls to operation endpoints.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/operations")
 public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Gson GSON = new Gson();
-
-  @Inject
+  
   OperationHttpHandler() {
   }
 

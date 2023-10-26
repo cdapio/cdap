@@ -31,12 +31,14 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +57,10 @@ public class RemoteSourceControlOperationRunner extends
   private final RemoteTaskExecutor remoteTaskExecutor;
 
   private final RemoteExceptionProvider<NotFoundException> notFoundExceptionProvider =
-    new RemoteExceptionProvider<>(NotFoundException.class, NotFoundException::new);
+      new RemoteExceptionProvider<>(NotFoundException.class, NotFoundException::new);
+  private final RemoteExceptionProvider<SourceControlAppConfigNotFoundException> gitAppNotFoundExceptionProvider =
+    new RemoteExceptionProvider<>(SourceControlAppConfigNotFoundException.class,
+        SourceControlAppConfigNotFoundException::new);
 
   private final RemoteExceptionProvider<AuthenticationConfigException> authConfigExceptionProvider =
     new RemoteExceptionProvider<>(AuthenticationConfigException.class, AuthenticationConfigException::new);
@@ -74,15 +79,15 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
+  public PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
-          .withParam(GSON.toJson(pushAppOperationRequest))
-          .withNamespace(pushAppOperationRequest.getNamespaceId().getNamespace())
+          .withParam(GSON.toJson(pushRequest))
+          .withNamespace(pushRequest.getNamespaceId().getNamespace())
           .build();
 
-      LOG.trace("Pushing application {} to linked repository", pushAppOperationRequest.getApp());
+      LOG.trace("Pushing application {} to linked repository", pushRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppResponse.class);
     } catch (RemoteExecutionException e) {
@@ -93,22 +98,28 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
+  public PullAppResponse<?> pull(PullAppOperationRequest pullRequest) throws NotFoundException,
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppTask.class.getName())
-          .withParam(GSON.toJson(pulAppOperationRequest))
-          .withNamespace(pulAppOperationRequest.getApp().getNamespace())
+          .withParam(GSON.toJson(pullRequest))
+          .withNamespace(pullRequest.getApp().getNamespace())
           .build();
 
-      LOG.trace("Pulling application {} from linked repository", pulAppOperationRequest.getApp());
+      LOG.trace("Pulling application {} from linked repository", pullRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PullAppResponse.class);
     } catch (RemoteExecutionException e) {
-      throw propagateRemoteException(e, notFoundExceptionProvider, authConfigExceptionProvider);
+      throw propagateRemoteException(e, gitAppNotFoundExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
+  }
+
+  @Override
+  public void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+      throws NotFoundException, AuthenticationConfigException {
+    throw new UnsupportedOperationException("multi pull not supported for RemoteSourceControlOperationRunner");
   }
 
   @Override
