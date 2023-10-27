@@ -22,7 +22,6 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
-import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
@@ -72,7 +71,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -273,14 +271,14 @@ public class BatchSQLEngineAdapter implements Closeable {
    * @return Job representing this pull operation.
    */
   @SuppressWarnings("unchecked,raw")
-  public <T> SQLEngineJob<JavaRDD<T>> pull(SQLEngineJob<SQLDataset> job) {
+  public <T> SQLEngineJob<BatchCollectionFactory<T>> pull(SQLEngineJob<SQLDataset> job) {
     //If this job already exists, return the existing instance.
     SQLEngineJobKey jobKey = new SQLEngineJobKey(job.getDatasetName(), SQLEngineJobType.PULL);
     if (jobs.containsKey(jobKey)) {
-      return (SQLEngineJob<JavaRDD<T>>) jobs.get(jobKey);
+      return (SQLEngineJob<BatchCollectionFactory<T>>) jobs.get(jobKey);
     }
 
-    CompletableFuture<JavaRDD<T>> future = new CompletableFuture<>();
+    CompletableFuture<BatchCollectionFactory<T>> future = new CompletableFuture<>();
 
     Runnable pullTask = () -> {
       try {
@@ -291,7 +289,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
         // Execute pull operation for the supplied dataset
         SQLDataset sqlDataset = job.get();
-        JavaRDD<T> result = pullInternal(sqlDataset);
+        BatchCollectionFactory result = pullInternal(sqlDataset);
         LOG.debug("Started pull for dataset '{}'", job.getDatasetName());
 
         // Log number of records being pulled into metrics
@@ -304,7 +302,7 @@ public class BatchSQLEngineAdapter implements Closeable {
 
     executorService.submit(pullTask);
 
-    SQLEngineJob<JavaRDD<T>> pullJob = new SQLEngineJob<>(jobKey, future);
+    SQLEngineJob<BatchCollectionFactory<T>> pullJob = new SQLEngineJob<>(jobKey, future);
     jobs.put(jobKey, pullJob);
 
     return pullJob;
@@ -314,11 +312,11 @@ public class BatchSQLEngineAdapter implements Closeable {
    * Pull implementation. This method has blocking calls and should be executed in a separate thread.
    *
    * @param dataset the dataset to pull.
-   * @return {@link JavaRDD} representing the records contained in this dataset.
+   * @return {@link BatchCollectionFactory} representing the records contained in this dataset.
    * @throws SQLEngineException if the pull process fails.
    */
   @SuppressWarnings("unchecked,raw")
-  private <T> JavaRDD<T> pullInternal(SQLDataset dataset) throws SQLEngineException {
+  private <T> BatchCollectionFactory<T> pullInternal(SQLDataset dataset) throws SQLEngineException {
     // Create pull operation for this dataset and wait until completion
     SQLPullRequest pullRequest = new SQLPullRequest(dataset);
 
@@ -334,12 +332,10 @@ public class BatchSQLEngineAdapter implements Closeable {
         // Note that we only support Spark collections at this time.
         // If the collection that got generarted is not an instance of a SparkRecordCollection, skip.
         if (recordCollection instanceof SparkRecordCollection) {
-          Schema schema = dataset.getSchema();
-          JavaRDD<T> rdd = (JavaRDD<T>) ((SparkRecordCollection) recordCollection).getDataFrame()
-            .javaRDD()
-            .map(r -> DataFrames.fromRow((Row) r, schema));
           countExecutionStage(SQLEngineJobTypeMetric.SPARK_PULL);
-          return rdd;
+          return new DataframeCollectionFactory<T>(
+              dataset.getSchema(),
+              ((SparkRecordCollection) recordCollection).getDataFrame());
         }
       }
     }
@@ -357,7 +353,7 @@ public class BatchSQLEngineAdapter implements Closeable {
         return f;
       });
     countExecutionStage(SQLEngineJobTypeMetric.PULL);
-    return rdd;
+    return new RDDCollectionFactory<>(rdd);
   }
 
   /**

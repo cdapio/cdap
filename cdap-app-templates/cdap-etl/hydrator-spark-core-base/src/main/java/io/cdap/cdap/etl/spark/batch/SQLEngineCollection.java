@@ -36,7 +36,6 @@ import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
@@ -131,11 +130,11 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
     // Ensure the local collection is only generated once across multiple threads
     synchronized (this) {
       if (localCollection == null) {
-        SQLEngineJob<JavaRDD<T>> pullJob = adapter.pull(job);
+        SQLEngineJob<BatchCollectionFactory<T>> pullJob = adapter.pull(job);
         adapter.waitForJobAndHandleException(pullJob);
-        JavaRDD<T> rdd = pullJob.waitFor();
-        localCollection =
-          new RDDCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+        BatchCollectionFactory<T> pullResult = pullJob.waitFor();
+        localCollection = pullResult.create(sec, jsc, sqlContext, datasetContext,
+            sinkFactory, functionCacheFactory);
       }
     }
     return localCollection;
