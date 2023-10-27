@@ -19,6 +19,7 @@ package io.cdap.cdap.messaging.spi;
 /**
  * This interface represents information needed to rollback message published transactionally.
  */
+@Deprecated
 public interface RollbackDetail {
 
   /**
