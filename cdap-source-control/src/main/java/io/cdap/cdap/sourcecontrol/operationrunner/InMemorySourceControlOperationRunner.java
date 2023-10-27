@@ -49,6 +49,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -93,11 +95,34 @@ public class InMemorySourceControlOperationRunner extends
       LOG.info("Pushing application configs for : {}", pushRequest.getApp().getName());
 
       //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
-      return writeAppDetailAndPush(
+      return SourceControlOperationUtils.writeAppDetailsAndPush(
           repositoryManager,
-          pushRequest.getApp(),
+          Collections.singletonList(pushRequest.getApp()),
+          pushRequest.getCommitDetails()
+      ).get(0);
+    }
+  }
+
+  @Override
+  public void push(
+      MultiPushAppOperationRequest pushRequest,
+      Consumer<Collection<PushAppResponse>> consumer)
+      throws SourceControlAppConfigNotFoundException, AuthenticationConfigException, NoChangesToPushException {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(pushRequest.getNamespaceId(),
+        pushRequest.getRepositoryConfig())) {
+      try {
+        repositoryManager.cloneRemote();
+      } catch (GitAPIException | IOException e) {
+        throw new GitOperationException(String.format("Failed to clone remote repository: %s",
+            e.getMessage()), e);
+      }
+
+      List<PushAppResponse> responses = SourceControlOperationUtils.writeAppDetailsAndPush(
+          repositoryManager,
+          pushRequest.getApps(),
           pushRequest.getCommitDetails()
       );
+      consumer.accept(responses);
     }
   }
 
@@ -138,9 +163,9 @@ public class InMemorySourceControlOperationRunner extends
 
   private PullAppResponse<?> pullSingle(RepositoryManager repositoryManager, String commitId,
       String applicationName) throws SourceControlException, SourceControlAppConfigNotFoundException {
-    String configFileName = generateConfigFileName(applicationName);
+    String configFileName = SourceControlOperationUtils.generateConfigFileName(applicationName);
     Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
-    Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
+    Path filePathToRead = SourceControlOperationUtils.validateAppConfigRelativePath(repositoryManager, appRelativePath);
     if (!Files.exists(filePathToRead)) {
       throw new SourceControlAppConfigNotFoundException(applicationName, appRelativePath);
     }
@@ -162,92 +187,6 @@ public class InMemorySourceControlOperationRunner extends
       throw new SourceControlException(
           String.format("Failed to pull application %s.", applicationName), e);
     }
-  }
-
-  /**
-   * Atomic operation of writing application and push, return the push response.
-   *
-   * @param repositoryManager {@link RepositoryManager} to conduct git operations
-   * @param appToPush         {@link ApplicationDetail} to push
-   * @param commitDetails     {@link CommitMeta} from user input
-   * @return {@link PushAppResponse}
-   * @throws NoChangesToPushException if there's no change between the application in namespace and git repository
-   * @throws SourceControlException   for failures while writing config file or doing git operations
-   */
-  private PushAppResponse writeAppDetailAndPush(RepositoryManager repositoryManager,
-                                                ApplicationDetail appToPush,
-                                                CommitMeta commitDetails)
-    throws NoChangesToPushException {
-    try {
-      // Creates the base directory if it does not exist. This method does not throw an exception if the directory
-      // already exists. This is for the case that the repo is new and user configured prefix path.
-      Files.createDirectories(repositoryManager.getBasePath());
-    } catch (IOException e) {
-      throw new SourceControlException("Failed to create repository base directory", e);
-    }
-
-    String configFileName = generateConfigFileName(appToPush.getName());
-
-    Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
-    Path filePathToWrite;
-    try {
-      filePathToWrite = validateAppConfigRelativePath(repositoryManager, appRelativePath);
-    } catch (IllegalArgumentException e) {
-      throw new SourceControlException(String.format("Failed to push application %s: %s",
-                                                     appToPush.getName(),
-                                                     e.getMessage()), e);
-    }
-    // Opens the file for writing, creating the file if it doesn't exist,
-    // or truncating an existing regular-file to a size of 0
-    try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
-      GSON.toJson(appToPush, writer);
-    } catch (IOException e) {
-      throw new ConfigFileWriteException(
-          String.format("Failed to write application config to path %s", appRelativePath), e
-      );
-    }
-
-    LOG.debug("Wrote application configs for {} in file {}", appToPush.getName(), appRelativePath);
-
-    try {
-      // TODO: CDAP-20383, handle NoChangesToPushException
-      //  Define the case that the application to push does not have any changes
-      String gitFileHash = repositoryManager.commitAndPush(commitDetails, appRelativePath);
-      return new PushAppResponse(appToPush.getName(), appToPush.getAppVersion(), gitFileHash);
-    } catch (GitAPIException e) {
-      throw new GitOperationException(String.format("Failed to push config to git: %s", e.getMessage()), e);
-    }
-  }
-
-  /**
-   * Generate config file name from app name.
-   * Currently, it only adds `.json` as extension with app name being the filename.
-   *
-   * @param appName Name of the application
-   * @return The file name we want to store application config in
-   */
-  private String generateConfigFileName(String appName) {
-    return String.format("%s.json", appName);
-  }
-
-  /**
-   * Validates if the resolved path is not a symbolic link and not a directory.
-   *
-   * @param repositoryManager the RepositoryManager
-   * @param appRelativePath   the relative {@link Path} of the application to write to
-   * @return A valid application config file relative path
-   */
-  private Path validateAppConfigRelativePath(RepositoryManager repositoryManager, Path appRelativePath) throws
-    IllegalArgumentException {
-    Path filePath = repositoryManager.getRepositoryRoot().resolve(appRelativePath);
-    if (Files.isSymbolicLink(filePath)) {
-      throw new IllegalArgumentException(String.format(
-        "%s exists but refers to a symbolic link. Symbolic links are " + "not allowed.", appRelativePath));
-    }
-    if (Files.isDirectory(filePath)) {
-      throw new IllegalArgumentException(String.format("%s refers to a directory not a file.", appRelativePath));
-    }
-    return filePath;
   }
 
   @Override

@@ -38,6 +38,7 @@ import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import org.slf4j.Logger;
@@ -95,6 +96,12 @@ public class RemoteSourceControlOperationRunner extends
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
+  }
+
+  @Override
+  public void push(MultiPushAppOperationRequest pushRequest, Consumer<Collection<PushAppResponse>> consumer)
+      throws NotFoundException, AuthenticationConfigException, NoChangesToPushException {
+    throw new UnsupportedOperationException("multi push not supported for RemoteSourceControlOperationRunner");
   }
 
   @Override

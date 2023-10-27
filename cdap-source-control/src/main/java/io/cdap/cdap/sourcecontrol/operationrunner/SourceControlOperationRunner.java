@@ -21,6 +21,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
+import java.util.Collection;
 import java.util.function.Consumer;
 
 /**
@@ -39,6 +40,21 @@ public interface SourceControlOperationRunner extends Service {
    */
   PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
     AuthenticationConfigException;
+
+  /**
+   * Pushes multiple application specs to repository. Rather than returning the PushAppResponses it
+   * calls the given {@link Consumer} for each response.
+   *
+   * @param pushRequest The {@link MultiPushAppOperationRequest} of the applications to push
+   * @param consumer {@link Consumer} that would be applied on each push response
+   * @throws NotFoundException             when the requested application is not found.
+   * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
+   *                                       call remote Git.
+   * @throws SourceControlException when the operation fails for any other reason.
+   * @throws NoChangesToPushException when the apps being pushed have not changed
+   */
+  void push(MultiPushAppOperationRequest pushRequest, Consumer<Collection<PushAppResponse>> consumer)
+      throws NotFoundException, AuthenticationConfigException, NoChangesToPushException;
 
   /**
    * Gets an application spec from a Git repository.

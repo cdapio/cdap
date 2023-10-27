@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.eclipse.jgit.api.CloneCommand;
@@ -230,6 +232,31 @@ public class RepositoryManager implements AutoCloseable {
   public String commitAndPush(final CommitMeta commitMeta,
       final Path fileChanged)
       throws NoChangesToPushException, GitAPIException {
+
+    return commitAndPush(commitMeta, Collections.singletonList(fileChanged)).get(0);
+  }
+
+  /**
+   * Commits and pushes the changes to a list of given files under the repository root
+   * path.
+   *
+   * @param commitMeta  Details for the commit including author, committer and
+   *                    commit message
+   * @param filesChanged The relative paths to repository root where the files are
+   *                    updated
+   * @return the list of hashes of the written files.
+   *
+   * @throws GitAPIException          when the underlying git commands fail
+   * @throws NoChangesToPushException when there's no file changes for the
+   *                                  commit
+   * @throws GitOperationException    when failed to get filehash due to IOException
+   *                                  or the {@link PushResult} status is not OK
+   * @throws SourceControlException   when failed to get the fileHash before
+   *                                  push
+   */
+  public List<String> commitAndPush(final CommitMeta commitMeta,
+      final List<Path> filesChanged)
+      throws NoChangesToPushException, GitAPIException {
     validateInitialized();
     final Stopwatch stopwatch = new Stopwatch().start();
 
@@ -240,24 +267,28 @@ public class RepositoryManager implements AutoCloseable {
           "No changes have been made for the applications to push.");
     }
 
-    git.add().addFilepattern(fileChanged.toString()).call();
+    for (Path fileChanged : filesChanged) {
+      git.add().addFilepattern(fileChanged.toString()).call();
+    }
 
     RevCommit commit = getCommitCommand(commitMeta).call();
 
-    String fileHash;
-    try {
-      fileHash = getFileHash(fileChanged, commit);
-    } catch (IOException e) {
-      throw new GitOperationException(
-          String.format("Failed to get fileHash for %s", fileChanged),
-          e);
-    }
-
-    if (fileHash == null) {
-      throw new SourceControlException(
-          String.format(
-              "Failed to get fileHash for %s, because the path is not "
-                  + "found in Git tree", fileChanged));
+    List<String> fileHashes = new ArrayList<>();
+    for (Path fileChanged : filesChanged) {
+      try {
+        String fileHash = getFileHash(fileChanged, commit);
+        fileHashes.add(fileHash);
+        if (fileHash == null) {
+          throw new SourceControlException(
+              String.format(
+                  "Failed to get fileHash for %s, because the path is not "
+                      + "found in Git tree", fileChanged));
+        }
+      } catch (IOException e) {
+        throw new GitOperationException(
+            String.format("Failed to get fileHash for %s", fileChanged),
+            e);
+      }
     }
 
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig,
@@ -269,7 +300,9 @@ public class RepositoryManager implements AutoCloseable {
         if (rru.getStatus() != RemoteRefUpdate.Status.OK
             && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
           throw new GitOperationException(
-              String.format("Push failed for %s: %s", fileChanged,
+              String.format("Push failed for %s: %s",
+                  String.join(", ", filesChanged.stream().map(path -> path.toString()).collect(
+                      Collectors.toList())),
                   rru.getStatus()));
         }
       }
@@ -278,7 +311,7 @@ public class RepositoryManager implements AutoCloseable {
     metricsContext.event(
         SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS,
         stopwatch.stop().elapsedTime(TimeUnit.MILLISECONDS));
-    return fileHash;
+    return fileHashes;
   }
 
   private CommitCommand getCommitCommand(final CommitMeta commitMeta) {
