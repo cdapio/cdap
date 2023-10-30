@@ -170,13 +170,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public Map<String, String> getTopicMetadataProperties(TopicId topicId)
       throws TopicNotFoundException, IOException {
-    try {
-      return topicCache.get(topicId).getProperties();
-    } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
-      Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
-      throw Throwables.propagate(e.getCause());
-    }
+    return getTopic(topicId).getProperties();
   }
 
   @Override
@@ -438,20 +432,25 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     return properties;
   }
 
+  private TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+    try {
+      return topicCache.get(topicId);
+    } catch (ExecutionException e) {
+      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
+      throw Throwables.propagate(e.getCause());
+    }
+  }
+
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
-    final TopicMetadata metadata =
-        new DefaultTopicMetadata(
-            messageFetchRequest.getTopicId(),
-            getTopicMetadataProperties(messageFetchRequest.getTopicId()));
+    TopicMetadata metadata = getTopic(messageFetchRequest.getTopicId());
+
     MessageTable messageTable = createMessageTable(metadata);
     try {
       return new MessageCloseableIterator(
-          metadata,
-          () -> createMessageTable(metadata),
-          () -> createPayloadTable(metadata),
-          messageFetchRequest);
+          metadata, messageTable, () -> createPayloadTable(metadata), messageFetchRequest);
     } catch (Throwable t) {
       closeQuietly(messageTable);
       throw t;
@@ -547,13 +546,13 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
 
     MessageCloseableIterator(
         TopicMetadata topicMetadata,
-        TableProvider<MessageTable> messageTableProvider,
+        MessageTable messageTable,
         TableProvider<PayloadTable> payloadTableProvider,
         MessageFetchRequest messageFetchRequest)
         throws IOException {
       this.topicMetadata = topicMetadata;
       this.topicId = topicMetadata.getTopicId();
-      this.messageTable = messageTableProvider.get();
+      this.messageTable = messageTable;
       this.payloadTableProvider = payloadTableProvider;
       this.inclusive = messageFetchRequest.isIncludeStart();
       this.messageLimit = messageFetchRequest.getLimit();
