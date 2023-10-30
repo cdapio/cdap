@@ -198,13 +198,57 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
           == HttpResponseStatus.OK.code()) {
         okResponse++;
       } else if (responses.get(i).get().getResponseCode()
-          == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+                 == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
         conflictResponse++;
       }
     }
     Assert.assertEquals(2, okResponse);
     Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
   }
+
+  @Test
+  public void testRepeatedConcurrentRequests() throws Exception {
+    InetSocketAddress addr = systemWorkerService.getBindAddress();
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            SystemWorkerServiceTest.TestRunnableClass.class.getName())
+        .withParam("500").build();
+
+    String reqBody = GSON.toJson(request);
+    List<Callable<HttpResponse>> calls = new ArrayList<>();
+    int concurrentRequests = 6;
+
+    for (int i = 0; i < concurrentRequests; i++) {
+      calls.add(() -> HttpRequests.execute(
+          HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
+              .withBody(reqBody).build(), new DefaultHttpRequestConfig(false)));
+    }
+
+    Executors.newFixedThreadPool(concurrentRequests).invokeAll(calls);
+
+    // Wait for requests to complete and retry them.
+    Thread.sleep(1000);
+
+    int okResponse = 0;
+    int conflictResponse = 0;
+    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(
+        concurrentRequests).invokeAll(calls);
+    for (int i = 0; i < concurrentRequests; i++) {
+      if (responses.get(i).get().getResponseCode()
+          == HttpResponseStatus.OK.code()) {
+        okResponse++;
+      } else if (responses.get(i).get().getResponseCode()
+                 == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+        conflictResponse++;
+      }
+    }
+
+    Assert.assertEquals(5, okResponse);
+    Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
+  }
+
 
   @Test
   public void testInvalidConcurrentRequests() throws Exception {
