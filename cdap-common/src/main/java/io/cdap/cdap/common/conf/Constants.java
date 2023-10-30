@@ -504,6 +504,8 @@ public final class Constants {
         "task.worker.container.kill.after.request.count";
     public static final String CONTAINER_KILL_AFTER_DURATION_SECOND =
         "task.worker.container.kill.after.duration.second";
+    public static final String REQUEST_LIMIT = "task.worker.request.limit";
+    public static final String USER_CODE_ISOLATION_ENABLED = "task.worker.request.userCodeIsolation.enabled";
     public static final String CONTAINER_RUN_AS_USER = "task.worker.container.run.as.user";
     public static final String CONTAINER_RUN_AS_GROUP = "task.worker.container.run.as.group";
     public static final String CONTAINER_DISK_READONLY = "task.worker.container.disk.readonly";

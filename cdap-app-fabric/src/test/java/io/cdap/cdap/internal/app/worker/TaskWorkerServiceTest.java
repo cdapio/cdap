@@ -24,10 +24,12 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -44,6 +46,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
 import org.junit.Assert;
@@ -51,8 +55,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Unit test for {@link TaskWorkerService}.
@@ -61,7 +63,6 @@ public class TaskWorkerServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceTest.class);
   private static final Gson GSON = new Gson();
   private static final MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
 
@@ -284,12 +285,14 @@ public class TaskWorkerServiceTest {
   }
 
   @Test
-  public void testConcurrentRequests() throws Exception {
+  public void testConcurrentRequestsWithIsolationEnabled() throws Exception {
     InetSocketAddress addr = taskWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
-            .withParam("1000").withNamespace("testNamespace").build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            TestRunnableClass.class.getName())
+        .withParam("1000").withNamespace("testNamespace").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
@@ -310,7 +313,8 @@ public class TaskWorkerServiceTest {
     for (int i = 0; i < concurrentRequests; i++) {
       if (responses.get(i).get().getResponseCode() == HttpResponseStatus.OK.code()) {
         okResponse++;
-      } else if (responses.get(i).get().getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+      } else if (responses.get(i).get().getResponseCode()
+                 == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
         conflictResponse++;
       }
     }
@@ -320,7 +324,67 @@ public class TaskWorkerServiceTest {
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
+  @Test
+  public void testConcurrentRequestsWithIsolationDisabled() throws Exception {
+    CConfiguration cConf = createCConf();
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 2);
+    cConf.setBoolean(TaskWorker.USER_CODE_ISOLATION_ENABLED, false);
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
+        createSConf(), discoveryService, discoveryService,
+        metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+    taskWorkerService.startAndWait();
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            TestRunnableClass.class.getName())
+        .withParam("1000").withNamespace("testNamespace").build();
+
+    String reqBody = GSON.toJson(request);
+    List<Callable<HttpResponse>> calls = new ArrayList<>();
+    int concurrentRequests = 3;
+
+    for (int i = 0; i < concurrentRequests; i++) {
+      calls.add(
+          () -> HttpRequests.execute(
+              HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                  .withBody(reqBody).build(),
+              new DefaultHttpRequestConfig(false))
+      );
+    }
+
+    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(
+        concurrentRequests).invokeAll(calls);
+    int okResponse = 0;
+    int conflictResponse = 0;
+    for (int i = 0; i < concurrentRequests; i++) {
+      if (responses.get(i).get().getResponseCode()
+          == HttpResponseStatus.OK.code()) {
+        okResponse++;
+      } else if (responses.get(i).get().getResponseCode()
+                 == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+        conflictResponse++;
+      }
+    }
+    // Verify that the task worker service doesn't stop automatically.
+    try {
+      Tasks.waitFor(false, () -> taskWorkerService.isRunning(), 1,
+          TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (TimeoutException e) {
+      // ignore.
+    }
+    taskWorkerService.stopAndWait();
+    Assert.assertEquals(2, okResponse);
+    Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
+    Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
+  }
+
   public static class TestRunnableClass implements RunnableTask {
+
     @Override
     public void run(RunnableTaskContext context) throws Exception {
       if (!context.getParam().equals("")) {

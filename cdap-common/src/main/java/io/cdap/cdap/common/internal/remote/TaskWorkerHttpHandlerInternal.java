@@ -24,6 +24,7 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
@@ -82,12 +83,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
 
-  private final AtomicBoolean hasInflightRequest = new AtomicBoolean(false);
-
   /**
    * Holds the total number of requests that have been executed by this handler
    * that should count toward max allowed.
    */
+  private final AtomicInteger runningRequestCount = new AtomicInteger(0);
   private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
 
   private final String metadataServiceEndpoint;
@@ -98,6 +98,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    * If true, pod will restart once an operation finish its execution.
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
+  private final int requestLimit;
 
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
@@ -110,37 +111,48 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
-        discoveryService,
-        discoveryServiceClient, metricsCollectionService);
+        discoveryService, discoveryServiceClient, metricsCollectionService);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
-    this.taskCompletionConsumer = (succeeded, taskDetails) -> {
-      taskDetails.emitMetrics(succeeded);
+    boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
+        TaskWorker.USER_CODE_ISOLATION_ENABLED);
+    if (enableUserCodeIsolationEnabled) {
+      // Run only one request at a time in user code isolation mode.
+      this.requestLimit = 1;
+      // Restart the service to clean up and re-claim resources after user code
+      // execution.
+      this.taskCompletionConsumer = (succeeded, taskDetails) -> {
+        taskDetails.emitMetrics(succeeded);
+        runningRequestCount.decrementAndGet();
+        requestProcessedCount.incrementAndGet();
 
-      String className = taskDetails.getClassName();
+        String className = taskDetails.getClassName();
 
-      if (mustRestart.get()) {
-        stopper.accept(className);
-        return;
-      }
+        if (mustRestart.get()) {
+          stopper.accept(className);
+          return;
+        }
 
-      if (!taskDetails.isTerminateOnComplete() || className == null
-          || killAfterRequestCount <= 0) {
-        // No need to restart.
-        requestProcessedCount.decrementAndGet();
-        hasInflightRequest.set(false);
-        return;
-      }
+        if (!taskDetails.isTerminateOnComplete() || className == null
+            || killAfterRequestCount <= 0) {
+          // No need to restart.
+          return;
+        }
 
-      if (requestProcessedCount.get() >= killAfterRequestCount) {
-        stopper.accept(className);
-      } else {
-        hasInflightRequest.set(false);
-      }
-    };
+        if (requestProcessedCount.get() >= killAfterRequestCount) {
+          stopper.accept(className);
+        }
+      };
 
-    enablePeriodicRestart(cConf, stopper);
+      enablePeriodicRestart(cConf, stopper);
+    } else {
+      this.requestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
+      this.taskCompletionConsumer = (succeeded, taskDetails) -> {
+        taskDetails.emitMetrics(succeeded);
+        runningRequestCount.decrementAndGet();
+      };
+    }
   }
 
   /**
@@ -170,10 +182,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
                   stopper.accept("");
                   return;
                 }
-                // we restart once ongoing request (which has set hasInflightRequest to true)
+                // we restart once ongoing request (which has set runningRequestCount to 1)
                 // finishes.
                 mustRestart.set(true);
-                if (hasInflightRequest.compareAndSet(false, true)) {
+                if (runningRequestCount.compareAndSet(0, 1)) {
                   // there is no ongoing request. pod gets restarted.
                   stopper.accept("");
                 }
@@ -193,11 +205,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    if (!hasInflightRequest.compareAndSet(false, true)) {
+    if (runningRequestCount.incrementAndGet() > requestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      runningRequestCount.decrementAndGet();
       return;
     }
-    requestProcessedCount.incrementAndGet();
 
     long startTime = System.currentTimeMillis();
     try {
@@ -303,15 +315,15 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static class RunnableTaskBodyProducer extends BodyProducer {
 
     private final RunnableTaskContext context;
-    private final BiConsumer<Boolean, TaskDetails> stopper;
+    private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
     private final TaskDetails taskDetails;
     private boolean done;
 
     RunnableTaskBodyProducer(RunnableTaskContext context,
-        BiConsumer<Boolean, TaskDetails> stopper,
+        BiConsumer<Boolean, TaskDetails> taskCompletionConsumer,
         TaskDetails taskDetails) {
       this.context = context;
-      this.stopper = stopper;
+      this.taskCompletionConsumer = taskCompletionConsumer;
       this.taskDetails = taskDetails;
     }
 
@@ -328,14 +340,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     @Override
     public void finished() {
       context.executeCleanupTask();
-      stopper.accept(true, taskDetails);
+      taskCompletionConsumer.accept(true, taskDetails);
     }
 
     @Override
     public void handleError(@Nullable Throwable cause) {
       LOG.error("Error when sending chunks", cause);
       context.executeCleanupTask();
-      stopper.accept(false, taskDetails);
+      taskCompletionConsumer.accept(false, taskDetails);
     }
   }
 }
