@@ -89,7 +89,7 @@ import org.apache.tephra.TransactionCodec;
  * The client implementation of {@link MessagingService}. This client is intended for internal
  * higher level API implementation only.
  *
- * NOTE: This class shouldn't expose to end user (e.g. cdap-client module).
+ * <p>NOTE: This class shouldn't expose to end user (e.g. cdap-client module).
  */
 public final class ClientMessagingService implements MessagingService {
 
@@ -97,10 +97,8 @@ public final class ClientMessagingService implements MessagingService {
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();
   private static final Gson GSON = new Gson();
   // These types for only for Gson to use, hence using the gson TypeToken instead of guava one
-  private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() {
-  }.getType();
-  private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() {
-  }.getType();
+  private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() {}.getType();
 
   private final RemoteClient remoteClient;
   private final boolean compressPayload;
@@ -112,8 +110,9 @@ public final class ClientMessagingService implements MessagingService {
 
   @VisibleForTesting
   public ClientMessagingService(RemoteClientFactory remoteClientFactory, boolean compressPayload) {
-    this.remoteClient = remoteClientFactory.createRemoteClient(
-        Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
+    this.remoteClient =
+        remoteClientFactory.createRemoteClient(
+            Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
     this.compressPayload = compressPayload;
   }
 
@@ -127,9 +126,11 @@ public final class ClientMessagingService implements MessagingService {
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     TopicId topicId = topicMetadata.getTopicId();
 
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
-        .withBody(GSON.toJson(topicMetadata.getProperties()))
-        .build();
+    HttpRequest request =
+        remoteClient
+            .requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
+            .withBody(GSON.toJson(topicMetadata.getProperties()))
+            .build();
     HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
@@ -143,10 +144,11 @@ public final class ClientMessagingService implements MessagingService {
       throws TopicNotFoundException, IOException, UnauthorizedException {
     TopicId topicId = topicMetadata.getTopicId();
 
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT,
-            createTopicPath(topicId) + "/properties")
-        .withBody(GSON.toJson(topicMetadata.getProperties()))
-        .build();
+    HttpRequest request =
+        remoteClient
+            .requestBuilder(HttpMethod.PUT, createTopicPath(topicId) + "/properties")
+            .withBody(GSON.toJson(topicMetadata.getProperties()))
+            .build();
     HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -158,8 +160,8 @@ public final class ClientMessagingService implements MessagingService {
   @Override
   public void deleteTopic(TopicId topicId)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, createTopicPath(topicId))
-        .build();
+    HttpRequest request =
+        remoteClient.requestBuilder(HttpMethod.DELETE, createTopicPath(topicId)).build();
     HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -171,8 +173,8 @@ public final class ClientMessagingService implements MessagingService {
   @Override
   public Map<String, String> getTopicMetadataProperties(TopicId topicId)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createTopicPath(topicId))
-        .build();
+    HttpRequest request =
+        remoteClient.requestBuilder(HttpMethod.GET, createTopicPath(topicId)).build();
     HttpResponse response = remoteClient.execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -180,16 +182,16 @@ public final class ClientMessagingService implements MessagingService {
     }
     handleError(response, "Failed to update topic " + topicId);
 
-    Map<String, String> properties = GSON.fromJson(response.getResponseBodyAsString(),
-        TOPIC_PROPERTY_TYPE);
+    Map<String, String> properties =
+        GSON.fromJson(response.getResponseBodyAsString(), TOPIC_PROPERTY_TYPE);
     return properties;
   }
 
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId)
       throws IOException, UnauthorizedException {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
-        namespaceId.getNamespace() + "/topics").build();
+    HttpRequest request =
+        remoteClient.requestBuilder(HttpMethod.GET, namespaceId.getNamespace() + "/topics").build();
     HttpResponse response = remoteClient.execute(request);
 
     handleError(response, "Failed to list topics in namespace " + namespaceId);
@@ -227,23 +229,29 @@ public final class ClientMessagingService implements MessagingService {
   @Override
   public void rollback(TopicId topicId, RollbackDetail rollbackDetail)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    ByteBuffer requestBody = (rollbackDetail instanceof ClientRollbackDetail)
-        ? ByteBuffer.wrap(((ClientRollbackDetail) rollbackDetail).getEncoded())
-        : encodeRollbackDetail(rollbackDetail);
+    ByteBuffer requestBody =
+        (rollbackDetail instanceof ClientRollbackDetail)
+            ? ByteBuffer.wrap(((ClientRollbackDetail) rollbackDetail).getEncoded())
+            : encodeRollbackDetail(rollbackDetail);
 
-    HttpRequest httpRequest = remoteClient.requestBuilder(HttpMethod.POST,
-            createTopicPath(topicId) + "/rollback")
-        .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
-        .withBody(requestBody)
-        .build();
+    HttpRequest httpRequest =
+        remoteClient
+            .requestBuilder(HttpMethod.POST, createTopicPath(topicId) + "/rollback")
+            .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
+            .withBody(requestBody)
+            .build();
 
     HttpResponse response = remoteClient.execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
     }
-    handleError(response, "Failed to rollback message in topic " + topicId
-        + " with rollback detail " + rollbackDetail);
+    handleError(
+        response,
+        "Failed to rollback message in topic "
+            + topicId
+            + " with rollback detail "
+            + rollbackDetail);
   }
 
   /**
@@ -255,8 +263,7 @@ public final class ClientMessagingService implements MessagingService {
    * @throws IOException if failed to perform the write operation
    * @throws TopicNotFoundException if the topic to write to does not exist
    */
-  private HttpResponse performWriteRequest(StoreRequest request,
-      boolean publish)
+  private HttpResponse performWriteRequest(StoreRequest request, boolean publish)
       throws IOException, TopicNotFoundException, UnauthorizedException {
     GenericRecord record = new GenericData.Record(Schemas.V1.PublishRequest.SCHEMA);
     if (request.isTransactional()) {
@@ -269,8 +276,8 @@ public final class ClientMessagingService implements MessagingService {
     try (OutputStream encoderOutput = compressOutputStream(os)) {
       Encoder encoder = EncoderFactory.get().directBinaryEncoder(encoderOutput, null);
 
-      DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(
-          Schemas.V1.PublishRequest.SCHEMA);
+      DatumWriter<GenericRecord> datumWriter =
+          new GenericDatumWriter<>(Schemas.V1.PublishRequest.SCHEMA);
       datumWriter.write(record, encoder);
       encoder.flush();
     }
@@ -284,11 +291,12 @@ public final class ClientMessagingService implements MessagingService {
       headers.put(HttpHeaders.CONTENT_ENCODING, "gzip");
     }
 
-    HttpRequest httpRequest = remoteClient.requestBuilder(HttpMethod.POST,
-            createTopicPath(topicId) + "/" + writeType)
-        .addHeaders(headers)
-        .withBody(os.toByteBuffer())
-        .build();
+    HttpRequest httpRequest =
+        remoteClient
+            .requestBuilder(HttpMethod.POST, createTopicPath(topicId) + "/" + writeType)
+            .addHeaders(headers)
+            .withBody(os.toByteBuffer())
+            .build();
 
     HttpResponse response = remoteClient.execute(httpRequest);
 
@@ -306,25 +314,20 @@ public final class ClientMessagingService implements MessagingService {
     return compressPayload ? new GZIPOutputStream(outputStream) : outputStream;
   }
 
-  /**
-   * Creates the URL path for making HTTP requests for the given topic.
-   */
+  /** Creates the URL path for making HTTP requests for the given topic. */
   private String createTopicPath(TopicId topicId) {
     return topicId.getNamespace() + "/topics/" + topicId.getTopic();
   }
 
-  /**
-   * Handles error response from the given {@link HttpResponse}.
-   */
+  /** Handles error response from the given {@link HttpResponse}. */
   private void handleError(final HttpResponse response, String errorPrefix) throws IOException {
     handleError(response.getResponseCode(), response::toString, errorPrefix);
   }
 
-  /**
-   * Handles error response based on the given response code.
-   */
-  private void handleError(int responseCode, Supplier<String> responseBodySupplier,
-      String errorPrefix) throws IOException {
+  /** Handles error response based on the given response code. */
+  private void handleError(
+      int responseCode, Supplier<String> responseBodySupplier, String errorPrefix)
+      throws IOException {
     switch (responseCode) {
       case HttpURLConnection.HTTP_OK:
         return;
@@ -342,7 +345,8 @@ public final class ClientMessagingService implements MessagingService {
    * ByteBuffer}, which is needed by the avro record.
    */
   private List<ByteBuffer> convertPayloads(StoreRequest request) {
-    return StreamSupport.stream(request.spliterator(), false).map(ByteBuffer::wrap)
+    return StreamSupport.stream(request.spliterator(), false)
+        .map(ByteBuffer::wrap)
         .collect(Collectors.toList());
   }
 
@@ -351,8 +355,8 @@ public final class ClientMessagingService implements MessagingService {
    * rarely used as the call to {@link #rollback(TopicId, RollbackDetail)} expects a {@link
    * ClientRollbackDetail} which already contains the encoded bytes.
    *
-   * This method looks very similar to the {@code StoreHandler.encodeRollbackDetail} method, but is
-   * intended to have them separated. This is to allow client side classes be moved to separate
+   * <p>This method looks very similar to the {@code StoreHandler.encodeRollbackDetail} method, but
+   * is intended to have them separated. This is to allow client side classes be moved to separate
    * module without any dependency on the server side (this can also be done with a util method in a
    * common module, but it is kind of overkill for a simple method like this for now).
    */
@@ -373,20 +377,19 @@ public final class ClientMessagingService implements MessagingService {
     ExposedByteArrayOutputStream os = new ExposedByteArrayOutputStream();
     Encoder encoder = EncoderFactory.get().directBinaryEncoder(os, null);
 
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(
-        Schemas.V1.PublishRequest.SCHEMA);
+    DatumWriter<GenericRecord> datumWriter =
+        new GenericDatumWriter<>(Schemas.V1.PublishRequest.SCHEMA);
     datumWriter.write(record, encoder);
 
     return os.toByteBuffer();
   }
 
-  /**
-   * Verifies the content-type in the header matches with the required type.
-   */
-  private void verifyContentType(Map<String, ? extends Collection<String>> headers,
-      String requiredContentType) {
+  /** Verifies the content-type in the header matches with the required type. */
+  private void verifyContentType(
+      Map<String, ? extends Collection<String>> headers, String requiredContentType) {
     // Netty 4.1 has all headers set with lower case name
-    // However, the cdap-http library doesn't handle it well, hence we iterate all headers instead of lookup in here
+    // However, the cdap-http library doesn't handle it well, hence we iterate all headers instead
+    // of lookup in here
     boolean passed = false;
     for (Map.Entry<String, ? extends Collection<String>> entry : headers.entrySet()) {
       if (HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(entry.getKey())) {
@@ -402,137 +405,154 @@ public final class ClientMessagingService implements MessagingService {
 
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
-      throws IOException, TopicNotFoundException {
-    GenericRecord record = new GenericData.Record(Schemas.V1.ConsumeRequest.SCHEMA);
-
-    if (messageFetchRequest.getStartOffset() != null) {
-      record.put("startFrom", ByteBuffer.wrap(messageFetchRequest.getStartOffset()));
-    }
-    if (messageFetchRequest.getStartTime() != null) {
-      record.put("startFrom", messageFetchRequest.getStartTime());
-    }
-    record.put("inclusive", messageFetchRequest.isIncludeStart());
-    record.put("limit", messageFetchRequest.getLimit());
-
-    if (messageFetchRequest.getTransaction() != null) {
-      record.put(
-          "transaction",
-          ByteBuffer.wrap(TRANSACTION_CODEC.encode(messageFetchRequest.getTransaction())));
-    }
-
-    // The cask common http library doesn't support read streaming, and we don't want to buffer all
-    // messages
-    // in memory, hence we use the HttpURLConnection directly instead.
-    HttpURLConnection urlConn =
-        remoteClient.openConnection(
-            HttpMethod.POST, createTopicPath(messageFetchRequest.getTopicId()) + "/poll");
-    urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
-    if (compressPayload) {
-      urlConn.setRequestProperty(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
-    }
-
-    // Send the request
-    Encoder encoder = EncoderFactory.get().directBinaryEncoder(urlConn.getOutputStream(), null);
-    DatumWriter<GenericRecord> datumWriter =
-        new GenericDatumWriter<>(Schemas.V1.ConsumeRequest.SCHEMA);
-    datumWriter.write(record, encoder);
-
-    int responseCode = urlConn.getResponseCode();
-    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TopicNotFoundException(
-          messageFetchRequest.getTopicId().getNamespace(),
-          messageFetchRequest.getTopicId().getTopic());
-    }
-
-    handleError(
-        responseCode,
-        () -> {
-          // If there is any error, read the response body from the error stream
-          try (InputStream errorStream = decompressIfNeeded(urlConn, urlConn.getErrorStream())) {
-            return errorStream == null
-                ? ""
-                : urlConn.getResponseMessage()
-                    + new String(ByteStreams.toByteArray(errorStream), StandardCharsets.UTF_8);
-          } catch (IOException e) {
-            return "";
-          } finally {
-            urlConn.disconnect();
-          }
-        },
-        "Failed to update topic " + messageFetchRequest.getTopicId());
-    verifyContentType(urlConn.getHeaderFields(), "avro/binary");
-
-    // Decode the avro array manually instead of using DatumReader in order to support streaming
-    // decode.
-    final InputStream inputStream = decompressIfNeeded(urlConn, urlConn.getInputStream());
-    final Decoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
-    final long initialItemCount = decoder.readArrayStart();
-    return new AbstractCloseableIterator<RawMessage>() {
-
-      // These are for reading individual message (response is an array of messages)
-      final DatumReader<GenericRecord> messageReader =
-          new GenericDatumReader<>(Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
-      GenericRecord messageRecord =
-          new GenericData.Record(Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
-      private long itemCount = initialItemCount;
-
-      @Override
-      protected RawMessage computeNext() {
-        if (initialItemCount == 0) {
-          return endOfData();
-        }
-
-        try {
-          if (itemCount == 0) {
-            itemCount = decoder.arrayNext();
-            if (itemCount == 0) {
-              // The zero item count signals the end of the array
-              return endOfData();
-            }
-          }
-
-          itemCount--;
-
-          // Use DatumReader to decode individual message
-          // This provides greater flexibility on schema evolution.
-          // The response will likely always be an array, but the element schema can evolve.
-          messageRecord = messageReader.read(messageRecord, decoder);
-
-          return new RawMessage.Builder()
-              .setId(Bytes.toBytes((ByteBuffer) messageRecord.get("id")))
-              .setPayload(Bytes.toBytes((ByteBuffer) messageRecord.get("payload")))
-              .build();
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      @Override
-      public void close() {
-        Closeables.closeQuietly(inputStream);
-        urlConn.disconnect();
-      }
-    };
+      throws TopicNotFoundException, IOException {
+    return new ClientMessageFetcher(messageFetchRequest).fetch();
   }
 
-  /**
-   * Based on the given {@link HttpURLConnection} content encoding, optionally wrap the given {@link
-   * InputStream} with either gzip or deflate decompression.
-   */
-  private InputStream decompressIfNeeded(HttpURLConnection urlConn, InputStream is)
-      throws IOException {
-    String contentEncoding = urlConn.getHeaderField(HttpHeaderNames.CONTENT_ENCODING.toString());
-    if (contentEncoding == null) {
-      return is;
+  /** Streams messages from the server with chunk encoding. */
+  private final class ClientMessageFetcher {
+
+    private final TopicId topicId;
+    private final DatumReader<GenericRecord> messageReader;
+
+    private final MessageFetchRequest messageFetchRequest;
+    private GenericRecord messageRecord;
+
+    private ClientMessageFetcher(MessageFetchRequest messageFetchRequest) {
+      this.topicId = messageFetchRequest.getTopicId();
+      this.messageFetchRequest = messageFetchRequest;
+
+      // These are for reading individual message (response is an array of messages)
+      this.messageRecord =
+          new GenericData.Record(Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
+      this.messageReader =
+          new GenericDatumReader<>(Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
     }
 
-    if ("gzip".equalsIgnoreCase(contentEncoding)) {
-      return new GZIPInputStream(is);
-    }
-    if ("deflate".equalsIgnoreCase(contentEncoding)) {
-      return new DeflaterInputStream(is);
+    public CloseableIterator<RawMessage> fetch() throws IOException, TopicNotFoundException {
+      GenericRecord record = new GenericData.Record(Schemas.V1.ConsumeRequest.SCHEMA);
+
+      if (messageFetchRequest.getStartOffset() != null) {
+        record.put("startFrom", ByteBuffer.wrap(messageFetchRequest.getStartOffset()));
+      }
+      if (messageFetchRequest.getStartTime() != null) {
+        record.put("startFrom", messageFetchRequest.getStartTime());
+      }
+      record.put("inclusive", messageFetchRequest.isIncludeStart());
+      record.put("limit", messageFetchRequest.getLimit());
+
+      if (messageFetchRequest.getTransaction() != null) {
+        record.put(
+            "transaction",
+            ByteBuffer.wrap(TRANSACTION_CODEC.encode(messageFetchRequest.getTransaction())));
+      }
+
+      // The cask common http library doesn't support read streaming, and we don't want to buffer
+      // all messages
+      // in memory, hence we use the HttpURLConnection directly instead.
+      HttpURLConnection urlConn =
+          remoteClient.openConnection(HttpMethod.POST, createTopicPath(topicId) + "/poll");
+      urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
+      if (compressPayload) {
+        urlConn.setRequestProperty(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
+      }
+
+      // Send the request
+      Encoder encoder = EncoderFactory.get().directBinaryEncoder(urlConn.getOutputStream(), null);
+      DatumWriter<GenericRecord> datumWriter =
+          new GenericDatumWriter<>(Schemas.V1.ConsumeRequest.SCHEMA);
+      datumWriter.write(record, encoder);
+
+      int responseCode = urlConn.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+        throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
+      }
+
+      handleError(
+          responseCode,
+          () -> {
+            // If there is any error, read the response body from the error stream
+            try (InputStream errorStream = decompressIfNeeded(urlConn, urlConn.getErrorStream())) {
+              return errorStream == null
+                  ? ""
+                  : urlConn.getResponseMessage()
+                      + new String(ByteStreams.toByteArray(errorStream), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+              return "";
+            } finally {
+              urlConn.disconnect();
+            }
+          },
+          "Failed to update topic " + topicId);
+      verifyContentType(urlConn.getHeaderFields(), "avro/binary");
+
+      // Decode the avro array manually instead of using DatumReader in order to support streaming
+      // decode.
+      final InputStream inputStream = decompressIfNeeded(urlConn, urlConn.getInputStream());
+      final Decoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
+      final long initialItemCount = decoder.readArrayStart();
+      return new AbstractCloseableIterator<RawMessage>() {
+
+        private long itemCount = initialItemCount;
+
+        @Override
+        protected RawMessage computeNext() {
+          if (initialItemCount == 0) {
+            return endOfData();
+          }
+
+          try {
+            if (itemCount == 0) {
+              itemCount = decoder.arrayNext();
+              if (itemCount == 0) {
+                // The zero item count signals the end of the array
+                return endOfData();
+              }
+            }
+
+            itemCount--;
+
+            // Use DatumReader to decode individual message
+            // This provides greater flexibility on schema evolution.
+            // The response will likely always be an array, but the element schema can evolve.
+            messageRecord = messageReader.read(messageRecord, decoder);
+
+            return new RawMessage.Builder()
+                .setId(Bytes.toBytes((ByteBuffer) messageRecord.get("id")))
+                .setPayload(Bytes.toBytes((ByteBuffer) messageRecord.get("payload")))
+                .build();
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public void close() {
+          Closeables.closeQuietly(inputStream);
+          urlConn.disconnect();
+        }
+      };
     }
 
-    throw new IllegalArgumentException("Unsupported content encoding " + contentEncoding);
+    /**
+     * Based on the given {@link HttpURLConnection} content encoding, optionally wrap the given
+     * {@link InputStream} with either gzip or deflate decompression.
+     */
+    private InputStream decompressIfNeeded(HttpURLConnection urlConn, InputStream is)
+        throws IOException {
+      String contentEncoding = urlConn.getHeaderField(HttpHeaderNames.CONTENT_ENCODING.toString());
+      if (contentEncoding == null) {
+        return is;
+      }
+
+      if ("gzip".equalsIgnoreCase(contentEncoding)) {
+        return new GZIPInputStream(is);
+      }
+      if ("deflate".equalsIgnoreCase(contentEncoding)) {
+        return new DeflaterInputStream(is);
+      }
+
+      throw new IllegalArgumentException("Unsupported content encoding " + contentEncoding);
+    }
   }
 }
