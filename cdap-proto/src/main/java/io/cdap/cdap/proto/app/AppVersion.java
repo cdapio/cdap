@@ -22,6 +22,7 @@ import java.util.Objects;
  * Contains an app name and version.
  */
 public class AppVersion {
+
   private final String name;
   private final String appVersion;
 
@@ -54,5 +55,10 @@ public class AppVersion {
   @Override
   public int hashCode() {
     return Objects.hash(name, appVersion);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s-%s", name, appVersion);
   }
 }

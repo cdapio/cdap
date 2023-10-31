@@ -31,6 +31,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationResource;
+import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
@@ -170,7 +171,7 @@ public class PullAppsOperationTest {
     ).when(mockManager).deployApp(Mockito.any(), Mockito.any());
 
     Mockito.doThrow(new SourceControlException("")).when(mockManager)
-        .markAppVersionsLatest(Mockito.any());
+        .markAppVersionsLatest(Mockito.any(), Mockito.any());
 
     try {
       operation.run(context).get();
