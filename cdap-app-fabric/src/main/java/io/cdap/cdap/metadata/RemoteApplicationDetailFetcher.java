@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Fetch application detail via internal REST API calls
+ * Fetch application detail via internal REST API calls.
  */
 public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher {
 
@@ -59,6 +59,11 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
 
   private final RemoteClient remoteClient;
 
+  /**
+   * Default constructor.
+   *
+   * @param remoteClientFactory factory to create remote client
+   */
   @Inject
   public RemoteApplicationDetailFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
@@ -68,7 +73,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   }
 
   /**
-   * Get the application detail for the given application reference
+   * Get the application detail for the given application reference.
    */
   public ApplicationDetail get(ApplicationReference appRef)
       throws IOException, NotFoundException, UnauthorizedException {
@@ -81,7 +86,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   }
 
   /**
-   * Scans all application details in the given namespace
+   * Scans all application details in the given namespace.
    */
   @Override
   public void scan(String namespace, Consumer<ApplicationDetail> consumer, Integer batchSize)
