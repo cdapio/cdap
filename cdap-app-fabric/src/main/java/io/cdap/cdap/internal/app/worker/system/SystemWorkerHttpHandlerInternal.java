@@ -100,6 +100,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
     if (requestProcessedCount.incrementAndGet() > requestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      requestProcessedCount.decrementAndGet();
       return;
     }
 
