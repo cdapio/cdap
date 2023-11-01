@@ -57,6 +57,7 @@ import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
@@ -293,6 +294,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           cdapVersionInfo.getFix());
     }
 
+    LaunchMode launchMode = LaunchMode.valueOf(
+        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
+    DataprocMetric.Builder submitJobMetric =
+        DataprocMetric.builder("provisioner.submitJob.response.count")
+            .setRegion(region)
+            .setLaunchMode(launchMode);
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
@@ -339,7 +346,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
 
       // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
+      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles, launchMode);
 
       // step 4: submit hadoop job to dataproc
       try {
@@ -351,15 +358,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
             request.getJob().getReference().getJobId());
       }
-      DataprocUtils.emitMetric(provisionerContext, region,
-          "provisioner.submitJob.response.count");
+      DataprocUtils.emitMetric(provisionerContext, submitJobMetric.build());
     } catch (Exception e) {
       String errorMessage = String.format("Error while launching job %s on cluster %s.",
           getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGcsPath(getStorageClient(), bucket, runRootPath);
-      DataprocUtils.emitMetric(provisionerContext, region,
-          "provisioner.submitJob.response.count", e);
+      DataprocUtils.emitMetric(provisionerContext, submitJobMetric.setException(e).build());
       // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
       // This usually indicates master VM crashing due to OOM.
       if (e instanceof ResourceExhaustedException) {
@@ -678,11 +683,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Creates and returns dataproc job submit request.
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
-      List<LocalFile> localFiles) throws IOException {
+      List<LocalFile> localFiles, LaunchMode launchMode) throws IOException {
     String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
 
-    LaunchMode launchMode = LaunchMode.valueOf(
-        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
         // set main class
         .setMainClass(DataprocJobMain.class.getName())
