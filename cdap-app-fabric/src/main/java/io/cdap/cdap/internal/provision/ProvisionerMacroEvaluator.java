@@ -54,7 +54,7 @@ public class ProvisionerMacroEvaluator implements MacroEvaluator {
       throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
     }
     try {
-      return Bytes.toString(secureStore.get(namespace, arguments[0]).get());
+      return Bytes.toString(secureStore.getData(namespace, arguments[0]));
     } catch (Exception e) {
       throw new InvalidMacroException(
           "Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
