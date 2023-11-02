@@ -113,7 +113,7 @@ public class OAuthStore {
     OAuthClientCredentials clientCreds;
     try {
       String clientCredsJson = new String(
-          secureStore.get(NamespaceId.SYSTEM.getNamespace(), getClientCredsKey(name)).get(),
+          secureStore.getData(NamespaceId.SYSTEM.getNamespace(), getClientCredsKey(name)),
           StandardCharsets.UTF_8);
       clientCreds = GSON.fromJson(clientCredsJson, OAuthClientCredentials.class);
     } catch (IOException e) {
@@ -171,7 +171,7 @@ public class OAuthStore {
       throws OAuthStoreException {
     try {
       String tokenJson = new String(
-          secureStore.get(NamespaceId.SYSTEM.getNamespace(), getRefreshTokenKey(oauthProvider, credentialId)).get(),
+          secureStore.getData(NamespaceId.SYSTEM.getNamespace(), getRefreshTokenKey(oauthProvider, credentialId)),
           StandardCharsets.UTF_8);
       return Optional.of(GSON.fromJson(tokenJson, OAuthRefreshToken.class));
     } catch (IOException e) {
