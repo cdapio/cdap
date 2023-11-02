@@ -304,7 +304,20 @@ public final class DataprocUtils {
    **/
   public static void emitMetric(ProvisionerContext context, String region,
       String metricName, @Nullable Exception e) {
+    emitMetric(context,
+        DataprocMetric.builder(metricName).setRegion(region).setException(e).build());
+  }
+
+  public static void emitMetric(ProvisionerContext context, String region, String metricName) {
+    emitMetric(context, region, metricName, null);
+  }
+
+  /**
+   * Emit a dataproc metric.
+   **/
+  public static void emitMetric(ProvisionerContext context, DataprocMetric dataprocMetric) {
     StatusCode.Code statusCode;
+    Exception e = dataprocMetric.getException();
     if (e == null) {
       statusCode = StatusCode.Code.OK;
     } else {
@@ -316,16 +329,14 @@ public final class DataprocUtils {
         statusCode = StatusCode.Code.INTERNAL;
       }
     }
-    Map<String, String> tags = ImmutableMap.<String, String>builder()
-        .put("reg", region)
-        .put("sc", statusCode.toString())
-        .build();
-    ProvisionerMetrics metrics = context.getMetrics(tags);
-    metrics.count(metricName, 1);
-  }
-
-  public static void emitMetric(ProvisionerContext context, String region, String metricName) {
-    emitMetric(context, region, metricName, null);
+    ImmutableMap.Builder<String, String> tags = ImmutableMap.<String, String>builder()
+        .put("reg", dataprocMetric.getRegion())
+        .put("sc", statusCode.toString());
+    if (dataprocMetric.getLaunchMode() != null) {
+      tags.put("lchmode", dataprocMetric.getLaunchMode().name());
+    }
+    ProvisionerMetrics metrics = context.getMetrics(tags.build());
+    metrics.count(dataprocMetric.getMetricName(), 1);
   }
 
   /**
@@ -451,6 +462,12 @@ public final class DataprocUtils {
     }
   }
 
+  /**
+   * Get a user friendly message pointing to an external troubleshooting doc.
+   *
+   * @param troubleshootingDocsUrl Url for the troubleshooting doc
+   * @return user friendly message pointing to an external troubleshooting doc.
+   */
   public static String getTroubleshootingHelpMessage(@Nullable String troubleshootingDocsUrl) {
     if (Strings.isNullOrEmpty(troubleshootingDocsUrl)) {
       return "";
