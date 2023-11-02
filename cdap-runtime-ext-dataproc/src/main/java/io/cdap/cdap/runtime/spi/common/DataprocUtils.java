@@ -462,6 +462,12 @@ public final class DataprocUtils {
     }
   }
 
+  /**
+   * Get a user friendly message pointing to an external troubleshooting doc.
+   *
+   * @param troubleshootingDocsUrl Url for the troubleshooting doc
+   * @return user friendly message pointing to an external troubleshooting doc.
+   */
   public static String getTroubleshootingHelpMessage(@Nullable String troubleshootingDocsUrl) {
     if (Strings.isNullOrEmpty(troubleshootingDocsUrl)) {
       return "";

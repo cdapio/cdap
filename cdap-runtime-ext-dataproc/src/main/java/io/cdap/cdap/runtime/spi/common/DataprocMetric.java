@@ -20,7 +20,7 @@ import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import javax.annotation.Nullable;
 
 /**
- * Dataproc related metric
+ * Dataproc related metric.
  */
 public class DataprocMetric {
   private final String region;
@@ -98,6 +98,7 @@ public class DataprocMetric {
 
     /**
      * Returns a DataprocMetric.
+     *
      * @return DataprocMetric.
      */
     public DataprocMetric build() {
