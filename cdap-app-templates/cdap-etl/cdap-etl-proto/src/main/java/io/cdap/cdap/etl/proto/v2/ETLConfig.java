@@ -59,11 +59,12 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   // For serialization purpose for upgrade compatibility.
   protected List<Object> comments;
 
-  protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections, Resources resources,
-      Resources driverResources, Resources clientResources,
+  protected ETLConfig(String description, Set<ETLStage> stages, Set<Connection> connections,
+      Resources resources, Resources driverResources, Resources clientResources,
       @Nullable Boolean stageLoggingEnabled, @Nullable Boolean processTimingEnabled,
       @Nullable Integer numOfRecordsPreview, Map<String, String> properties) {
-    this.description = null;
+    // TODO: This is the issue. Description is null when created from ETL Config constructor.
+    this.description = description;
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
@@ -80,14 +81,14 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.comments = new ArrayList<>();
   }
 
-  protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
+  protected ETLConfig(String descrition, Set<ETLStage> stages, Set<Connection> connections,
       Resources resources, Resources driverResources, Resources clientResources,
       @Nullable Boolean stageLoggingEnabled, @Nullable Boolean processTimingEnabled,
       @Nullable Integer numOfRecordsPreview, Map<String, String> properties,
       List<Object> comments) {
-    this(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled,
-        processTimingEnabled,
-        numOfRecordsPreview, properties);
+    // TODO: Pass description here
+    this(descrition, stages, connections, resources, driverResources, clientResources,
+        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
     this.comments = comments;
     this.sinks = null;
     this.transforms = null;
@@ -257,6 +258,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   @SuppressWarnings("unchecked")
   public abstract static class Builder<T extends Builder> {
 
+    protected String description;
     protected List<Object> comments;
     public static final Resources DEFAULT_TEST_RESOURCES = new Resources(2048, 1);
     protected Set<ETLStage> stages;
@@ -348,6 +350,11 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     public T setComments(List<Object> comments) {
       this.comments = comments;
+      return (T) this;
+    }
+
+    public T setDescription(String description) {
+      this.description = description;
       return (T) this;
     }
   }

@@ -51,7 +51,8 @@ public final class ETLBatchConfig extends ETLConfig {
   private final Boolean pushdownEnabled;
   private final ETLTransformationPushdown transformationPushdown;
 
-  private ETLBatchConfig(Set<ETLStage> stages,
+  private ETLBatchConfig(String description,
+      Set<ETLStage> stages,
       Set<Connection> connections,
       List<ETLStage> postActions,
       Resources resources,
@@ -69,9 +70,8 @@ public final class ETLBatchConfig extends ETLConfig {
       List<Object> comments,
       @Nullable Boolean pushdownEnabled,
       @Nullable ETLTransformationPushdown transformationPushdown) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled,
-        processTimingEnabled,
-        numOfRecordsPreview, engineProperties, comments);
+    super(description,stages, connections, resources, driverResources, clientResources,
+        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, engineProperties, comments);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
@@ -163,11 +163,12 @@ public final class ETLBatchConfig extends ETLConfig {
     for (ETLStage postAction : getPostActions()) {
       upgradedPostActions.add(postAction.updateStage(upgradeContext));
     }
-    return new ETLBatchConfig(upgradedStages, connections, upgradedPostActions, resources,
-        stageLoggingEnabled,
-        processTimingEnabled, engine, schedule, driverResources, clientResources,
-        numOfRecordsPreview, maxConcurrentRuns, properties, service, connectionConfig, comments,
-        pushdownEnabled, transformationPushdown);
+    // TODO: Pass description in the ETLBatchConfig constructor
+    // return new ETLBatchConfig(description, ....)
+    return new ETLBatchConfig(description, upgradedStages, connections, upgradedPostActions,
+        resources, stageLoggingEnabled, processTimingEnabled, engine, schedule, driverResources,
+        clientResources, numOfRecordsPreview, maxConcurrentRuns, properties, service,
+        connectionConfig, comments, pushdownEnabled, transformationPushdown);
   }
 
   @Override
@@ -259,6 +260,7 @@ public final class ETLBatchConfig extends ETLConfig {
 
     public Builder(ETLBatchConfig config) {
       super();
+      this.description = config.getDescription();
       this.stages = config.getStages();
       this.connections = config.getConnections();
       this.endingActions = config.getPostActions();
@@ -318,10 +320,10 @@ public final class ETLBatchConfig extends ETLConfig {
     }
 
     public ETLBatchConfig build() {
-      return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
-          processTimingEnabled, engine, schedule, driverResources, clientResources,
-          numOfRecordsPreview, maxConcurrentRuns, properties, false, null, comments,
-          pushdownEnabled, transformationPushdown);
+      return new ETLBatchConfig(description, stages, connections, endingActions, resources,
+          stageLoggingEnabled, processTimingEnabled, engine, schedule, driverResources,
+          clientResources, numOfRecordsPreview, maxConcurrentRuns, properties, false, null,
+          comments, pushdownEnabled, transformationPushdown);
     }
   }
 }

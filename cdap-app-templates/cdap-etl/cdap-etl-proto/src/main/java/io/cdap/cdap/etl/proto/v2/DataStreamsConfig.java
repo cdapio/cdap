@@ -38,7 +38,8 @@ public final class DataStreamsConfig extends ETLConfig {
   // See comments in DataStreamsSparkLauncher for explanation on why we need this.
   private final boolean isUnitTest;
 
-  private DataStreamsConfig(Set<ETLStage> stages,
+  private DataStreamsConfig(String description,
+      Set<ETLStage> stages,
       Set<Connection> connections,
       Resources resources,
       Resources driverResources,
@@ -52,9 +53,8 @@ public final class DataStreamsConfig extends ETLConfig {
       @Nullable Integer numOfRecordsPreview,
       @Nullable Boolean stopGracefully,
       Map<String, String> properties) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled,
-        processTimingEnabled,
-        numOfRecordsPreview, properties);
+    super(description, stages, connections, resources, driverResources, clientResources,
+        stageLoggingEnabled, processTimingEnabled, numOfRecordsPreview, properties);
     this.batchInterval = batchInterval;
     this.isUnitTest = isUnitTest;
     this.extraJavaOpts = "";
@@ -144,10 +144,9 @@ public final class DataStreamsConfig extends ETLConfig {
       updatedStages.add(stage.updateStage(applicationUpdateContext));
     }
 
-    return new DataStreamsConfig(updatedStages, connections, resources, driverResources,
-        clientResources,
-        stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
-        disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGracefully,
+    return new DataStreamsConfig(description, updatedStages, connections, resources,
+        driverResources, clientResources, stageLoggingEnabled, processTimingEnabled, batchInterval,
+        isUnitTest, disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGracefully,
         properties);
   }
 
@@ -190,10 +189,9 @@ public final class DataStreamsConfig extends ETLConfig {
     }
 
     public DataStreamsConfig build() {
-      return new DataStreamsConfig(stages, connections, resources, driverResources, clientResources,
-          stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
-          disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGraceFully,
-          properties);
+      return new DataStreamsConfig(description, stages, connections, resources, driverResources,
+          clientResources, stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
+          disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGraceFully, properties);
     }
   }
 }
