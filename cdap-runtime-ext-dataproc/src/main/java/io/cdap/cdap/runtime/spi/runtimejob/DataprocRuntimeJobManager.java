@@ -57,6 +57,7 @@ import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.VersionInfo;
+import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException;
@@ -293,6 +294,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           cdapVersionInfo.getFix());
     }
 
+    LaunchMode launchMode = LaunchMode.valueOf(
+        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
+    DataprocMetric.Builder submitJobMetric =
+        DataprocMetric.builder("provisioner.submitJob.response.count")
+            .setRegion(region)
+            .setLaunchMode(launchMode);
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
@@ -339,7 +346,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
 
       // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
+      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles, launchMode);
 
       // step 4: submit hadoop job to dataproc
       try {
@@ -351,15 +358,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
             request.getJob().getReference().getJobId());
       }
-      DataprocUtils.emitMetric(provisionerContext, region,
-          "provisioner.submitJob.response.count");
+      DataprocUtils.emitMetric(provisionerContext, submitJobMetric.build());
     } catch (Exception e) {
       String errorMessage = String.format("Error while launching job %s on cluster %s.",
           getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGcsPath(getStorageClient(), bucket, runRootPath);
-      DataprocUtils.emitMetric(provisionerContext, region,
-          "provisioner.submitJob.response.count", e);
+      DataprocUtils.emitMetric(provisionerContext, submitJobMetric.setException(e).build());
       // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
       // This usually indicates master VM crashing due to OOM.
       if (e instanceof ResourceExhaustedException) {
@@ -539,7 +544,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         try {
           LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{}",
               localFile.getSize(), localFile.getURI(), bucket, targetFilePath);
-          uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo,
+          uploadToGcsUtil(localFile, storage, targetFilePath, newBlobInfo,
               Storage.BlobWriteOption.generationMatch(),
               Storage.BlobWriteOption.metagenerationMatch());
         } catch (StorageException e) {
@@ -595,7 +600,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         localFile.getSize(), localFile.getURI(), bucket, targetFilePath,
         bucketObj.getLocationType(), bucketObj.getLocation());
     try {
-      uploadToGCSUtil(localFile, storage, targetFilePath, blobInfo,
+      uploadToGcsUtil(localFile, storage, targetFilePath, blobInfo,
           Storage.BlobWriteOption.doesNotExist());
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
@@ -608,7 +613,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         // Overwrite the file
         Blob existingBlob = storage.get(blobId);
         BlobInfo newBlobInfo = existingBlob.toBuilder().setContentType(contentType).build();
-        uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo,
+        uploadToGcsUtil(localFile, storage, targetFilePath, newBlobInfo,
             Storage.BlobWriteOption.generationNotMatch());
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
@@ -632,11 +637,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads the file to GCS Bucket.
    */
-  private void uploadToGCSUtil(LocalFile localFile, Storage storage, String targetFilePath,
+  private void uploadToGcsUtil(LocalFile localFile, Storage storage, String targetFilePath,
       BlobInfo blobInfo,
       Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     long start = System.nanoTime();
-    uploadToGCS(localFile.getURI(), storage, blobInfo, blobWriteOptions);
+    uploadToGcs(localFile.getURI(), storage, blobInfo, blobWriteOptions);
     long end = System.nanoTime();
     LOG.debug("Successfully uploaded file {} to gs://{}/{} in {} ms.",
         localFile.getURI(), bucket, targetFilePath, TimeUnit.NANOSECONDS.toMillis(end - start));
@@ -645,7 +650,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads the file to GCS bucket.
    */
-  private void uploadToGCS(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
+  private void uploadToGcs(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
       Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     try (InputStream inputStream = openStream(localFileUri);
         WriteChannel writer = storage.writer(blobInfo, blobWriteOptions)) {
@@ -678,11 +683,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Creates and returns dataproc job submit request.
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
-      List<LocalFile> localFiles) throws IOException {
+      List<LocalFile> localFiles, LaunchMode launchMode) throws IOException {
     String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
 
-    LaunchMode launchMode = LaunchMode.valueOf(
-        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
         // set main class
         .setMainClass(DataprocJobMain.class.getName())
@@ -750,6 +753,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         .build();
   }
 
+  /**
+   * Get the list of arguments to pass to the runtime job on the command line.
+   * The DataprocJobMain argument is [class-name] [spark-compat] [list of archive files...]
+   *
+   * @param runtimeJobInfo information about the runtime job
+   * @param localFiles files to localize
+   * @param sparkCompat spark compat version
+   * @param applicationJarLocalizedName localized application jar name
+   * @param launchMode launch mode for the job
+   * @return list of arguments to pass to the runtime job on the command line
+   */
   @VisibleForTesting
   public static List<String> getArguments(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles,
       String sparkCompat, String applicationJarLocalizedName,
@@ -770,6 +784,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     return arguments;
   }
 
+  /**
+   * Get the property map that should be set for the Dataproc Hadoop Job.
+   *
+   * @param runtimeJobInfo information about the runtime job
+   * @return property map that should be set for the Dataproc Hadoop Job
+   */
   @VisibleForTesting
   public static Map<String, String> getProperties(RuntimeJobInfo runtimeJobInfo) {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
@@ -867,9 +887,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns job name from run info. namespace, application, program, run(36 characters) Example:
    * namespace_application_program_8e1cb2ce-a102-48cf-a959-c4f991a2b475
-   * <p>
-   * The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), or hyphens (-).
-   * The maximum length is 100 characters.
+   *
+   * <p>The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), or hyphens (-).
+   * The maximum length is 100 characters.</p>
    *
    * @throws IllegalArgumentException if provided id does not comply with naming restrictions
    */
