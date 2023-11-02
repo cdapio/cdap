@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.namespace.credential.handler;
 
-import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -28,7 +27,6 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
-import io.cdap.cdap.internal.credential.CredentialProfileManager;
 import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
@@ -71,19 +69,16 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   private final ContextAccessEnforcer accessEnforcer;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CredentialIdentityManager credentialIdentityManager;
-  private final CredentialProfileManager credentialProfileManager;
   private final CredentialProvider credentialProvider;
 
   @Inject
   GcpWorkloadIdentityHttpHandler(ContextAccessEnforcer accessEnforcer,
       NamespaceQueryAdmin namespaceQueryAdmin,
       CredentialIdentityManager credentialIdentityManager,
-      CredentialProfileManager credentialProfileManager,
       CredentialProvider credentialProvider) {
     this.accessEnforcer = accessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.credentialIdentityManager = credentialIdentityManager;
-    this.credentialProfileManager = credentialProfileManager;
     this.credentialProvider = credentialProvider;
   }
 
@@ -103,14 +98,10 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.PROVISION_CREDENTIAL);
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
-    if (Strings.isNullOrEmpty(namespaceWorkloadIdentity.getIdentity())) {
-      throw new BadRequestException("Identity cannot be null or empty.");
-    }
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    validateNamespaceIdentity(namespaceMeta, namespaceWorkloadIdentity);
     CredentialIdentity credentialIdentity = new CredentialIdentity(
         NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
-        namespaceWorkloadIdentity.getIdentity(),
+        namespaceMeta.getIdentity(),
         namespaceWorkloadIdentity.getServiceAccount());
     switchToInternalUser();
     try {
@@ -146,8 +137,8 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     if (!identity.isPresent()) {
       throw new NotFoundException("Namespace identity not found.");
     }
-    NamespaceWorkloadIdentity workloadIdentity = new NamespaceWorkloadIdentity(
-        identity.get().getIdentity(), identity.get().getSecureValue());
+    NamespaceWorkloadIdentity workloadIdentity =
+        new NamespaceWorkloadIdentity(identity.get().getSecureValue());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(workloadIdentity));
   }
 
@@ -169,11 +160,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.SET_SERVICE_ACCOUNT);
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
-    if (Strings.isNullOrEmpty(namespaceWorkloadIdentity.getIdentity())) {
-      throw new BadRequestException("Identity cannot be null or empty.");
-    }
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    validateNamespaceIdentity(namespaceMeta, namespaceWorkloadIdentity);
     CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
         GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
     switchToInternalUser();
@@ -230,13 +217,6 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
 
   private void switchToInternalUser() {
     SecurityRequestContext.reset();
-  }
-
-  private void validateNamespaceIdentity(NamespaceMeta namespaceMeta, NamespaceWorkloadIdentity identity)
-      throws BadRequestException {
-    if (!namespaceMeta.getIdentity().equals(identity.getIdentity())) {
-      throw new BadRequestException("Incorrect value provided for namespace identity.");
-    }
   }
 
   private CredentialIdentityId createIdentityIdOrPropagate(String namespace, String name)
