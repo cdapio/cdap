@@ -25,7 +25,6 @@ import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
-import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -49,13 +48,10 @@ public class GcpWorkloadIdentityHttpHandlerInternal extends AbstractHttpHandler 
       BasicThrowable.class, new BasicThrowableCodec()).create();
 
   private final NamespaceCredentialProvider credentialProvider;
-  private final ContextAccessEnforcer accessEnforcer;
 
   @Inject
-  GcpWorkloadIdentityHttpHandlerInternal(
-      ContextAccessEnforcer accessEnforcer, NamespaceCredentialProvider credentialProvider) {
+  GcpWorkloadIdentityHttpHandlerInternal(NamespaceCredentialProvider credentialProvider) {
     this.credentialProvider = credentialProvider;
-    this.accessEnforcer = accessEnforcer;
   }
 
   /**
