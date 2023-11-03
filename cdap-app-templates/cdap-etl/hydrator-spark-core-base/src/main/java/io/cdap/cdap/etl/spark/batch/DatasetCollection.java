@@ -17,25 +17,21 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import io.cdap.cdap.api.data.DatasetContext;
-import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
-import io.cdap.cdap.etl.api.batch.SparkCompute;
-import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import io.cdap.cdap.etl.common.Constants;
-import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.DelegatingSparkCollection;
 import io.cdap.cdap.etl.spark.SparkCollection;
-import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.function.DatasetAggregationAccumulator;
 import io.cdap.cdap.etl.spark.function.DatasetAggregationFinalizeFunction;
 import io.cdap.cdap.etl.spark.function.DatasetAggregationGetKeyFunction;
 import io.cdap.cdap.etl.spark.function.DatasetAggregationReduceFunction;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
+import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
+import io.cdap.cdap.etl.spark.function.TransformFunction;
 import javax.annotation.Nullable;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -174,6 +170,21 @@ public abstract class DatasetCollection<T> extends DelegatingSparkCollection<T>
   public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec,
       @Nullable Integer partitions, StageStatisticsCollector collector) {
     return reduceDatasetAggregate(stageSpec, partitions, collector);
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    return flatMap(stageSpec, new TransformFunction<T>(
+        pluginFunctionContext, functionCacheFactory.newCache()));
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
+      StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    return flatMap(stageSpec,new MultiOutputTransformFunction<T>(
+        pluginFunctionContext, functionCacheFactory.newCache()));
   }
 
   /**
