@@ -20,24 +20,15 @@ package io.cdap.cdap.proto.credential;
  * Defines an identity for credential provisioning.
  */
 public class NamespaceWorkloadIdentity {
-
-  private final String identity;
   private final String serviceAccount;
 
   /**
    * Constructs a namespace identity.
    *
-   * @param identity         The identity.
    * @param serviceAccount   The serviceAccount to store for the identity.
    */
-  public NamespaceWorkloadIdentity(String identity,
-      String serviceAccount) {
-    this.identity = identity;
+  public NamespaceWorkloadIdentity(String serviceAccount) {
     this.serviceAccount = serviceAccount;
-  }
-
-  public String getIdentity() {
-    return identity;
   }
 
   public String getServiceAccount() {
