@@ -55,7 +55,7 @@ public abstract class DelegatingSparkCollection<T> implements SparkCollection<T>
   @Override
   public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
                                                                   StageStatisticsCollector collector) {
-    return getDelegate().transform(stageSpec, collector);
+    return getDelegate().multiOutputTransform(stageSpec, collector);
   }
 
   @Override
@@ -94,8 +94,8 @@ public abstract class DelegatingSparkCollection<T> implements SparkCollection<T>
 
   @Override
   public Runnable createStoreTask(StageSpec stageSpec,
-                                  SparkSink sink) throws Exception {
-    return getDelegate().createStoreTask(stageSpec, sink);
+                                  SparkSink sink) {
+    return () -> getDelegate().createStoreTask(stageSpec, sink).run();
   }
 
   @Override
@@ -135,13 +135,13 @@ public abstract class DelegatingSparkCollection<T> implements SparkCollection<T>
   @Override
   public Runnable createStoreTask(StageSpec stageSpec,
       PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    return getDelegate().createStoreTask(stageSpec, sinkFunction);
+    return () -> getDelegate().createStoreTask(stageSpec, sinkFunction).run();
   }
 
   @Override
   public Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
       Map<String, StageStatisticsCollector> collectors) {
-    return getDelegate().createMultiStoreTask(phaseSpec, group, sinks, collectors);
+    return () -> getDelegate().createMultiStoreTask(phaseSpec, group, sinks, collectors).run();
   }
 
   @Override

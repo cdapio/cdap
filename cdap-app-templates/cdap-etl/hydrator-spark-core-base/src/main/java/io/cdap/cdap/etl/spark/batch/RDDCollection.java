@@ -144,16 +144,16 @@ public class RDDCollection<T> implements BatchCollection<T> {
   @Override
   public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return wrap(rdd.flatMap(new TransformFunction<T>(
-      pluginFunctionContext, functionCacheFactory.newCache())));
+    return flatMap(stageSpec, new TransformFunction<T>(
+      pluginFunctionContext, functionCacheFactory.newCache()));
   }
 
   @Override
   public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
                                                                   StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return wrap(rdd.flatMap(new MultiOutputTransformFunction<T>(
-      pluginFunctionContext, functionCacheFactory.newCache())));
+    return flatMap(stageSpec,new MultiOutputTransformFunction<T>(
+      pluginFunctionContext, functionCacheFactory.newCache()));
   }
 
   @Override
@@ -305,7 +305,7 @@ public class RDDCollection<T> implements BatchCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec, final SparkSink<T> sink) throws Exception {
+  public Runnable createStoreTask(final StageSpec stageSpec, final SparkSink<T> sink) {
     return new Runnable() {
       @Override
       public void run() {

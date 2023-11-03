@@ -290,7 +290,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+  public Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) {
     return () -> {
       try {
         pull().createStoreTask(stageSpec, sink).run();
