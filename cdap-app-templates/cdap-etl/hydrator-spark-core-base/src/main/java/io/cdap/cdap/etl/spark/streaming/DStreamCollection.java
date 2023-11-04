@@ -205,7 +205,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+  public Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) {
     return new Runnable() {
       @Override
       public void run() {
