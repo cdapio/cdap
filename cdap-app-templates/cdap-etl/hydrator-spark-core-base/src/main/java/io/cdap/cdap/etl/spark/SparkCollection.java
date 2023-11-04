@@ -24,6 +24,8 @@ import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
+import io.cdap.cdap.etl.spark.function.TransformFunction;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -81,7 +83,7 @@ public interface SparkCollection<T> {
   Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
                                 Map<String, StageStatisticsCollector> collectors);
 
-  Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
+  Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink);
 
   void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception;
 
