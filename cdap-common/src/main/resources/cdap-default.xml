@@ -5252,6 +5252,23 @@
   </property>
 
   <property>
+    <name>task.worker.request.limit</name>
+    <value>10</value>
+    <description>
+      Number of concurrent requests accepted by task worker pods.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.request.userCodeIsolation.enabled</name>
+    <value>true</value>
+    <description>
+      Whether user code isolation is enabled in task worker. When enabled, task workers will ensure
+      multiple requests that run user code are not executed concurrently.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.bind.address</name>
     <value>0.0.0.0</value>
     <description>
