@@ -19,15 +19,14 @@ package io.cdap.cdap.internal.operation;
 import com.google.inject.Inject;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-/**
- * Service that manages lifecycle of Operation.
- */
+/** Service that manages lifecycle of Operation. */
 public class OperationLifecycleManager {
 
   private final TransactionRunner transactionRunner;
@@ -46,23 +45,29 @@ public class OperationLifecycleManager {
    * @return true if we have scanned till the request limit else return false. This will be used by
    *     the caller to identify if there is any further runs left to scan.
    */
-  public boolean scanOperations(ScanOperationRunsRequest request, int txBatchSize,
-      Consumer<OperationRunDetail> consumer) throws OperationRunNotFoundException, IOException {
+  public boolean scanOperations(
+      ScanOperationRunsRequest request, int txBatchSize, Consumer<OperationRunDetail> consumer)
+      throws OperationRunNotFoundException, IOException {
     String lastKey = request.getScanAfter();
     int currentLimit = request.getLimit();
 
     while (currentLimit > 0) {
-      ScanOperationRunsRequest batchRequest = ScanOperationRunsRequest
-          .builder(request)
-          .setScanAfter(lastKey)
-          .setLimit(Math.min(txBatchSize, currentLimit))
-          .build();
+      ScanOperationRunsRequest batchRequest =
+          ScanOperationRunsRequest.builder(request)
+              .setScanAfter(lastKey)
+              .setLimit(Math.min(txBatchSize, currentLimit))
+              .build();
 
       request = batchRequest;
 
-      lastKey = TransactionRunners.run(transactionRunner, context -> {
-        return getOperationRunStore(context).scanOperations(batchRequest, consumer);
-      }, IOException.class, OperationRunNotFoundException.class);
+      lastKey =
+          TransactionRunners.run(
+              transactionRunner,
+              context -> {
+                return getOperationRunStore(context).scanOperations(batchRequest, consumer);
+              },
+              IOException.class,
+              OperationRunNotFoundException.class);
 
       if (lastKey == null) {
         break;
@@ -85,6 +90,25 @@ public class OperationLifecycleManager {
     }, IOException.class, InvalidFieldException.class);
   }
 
+  /**
+   * Get a specific operation using run id in a namespace.
+   *
+   * @param runId run id of the operation to be fetched
+   * @return operation run detail of the operation to be fetched. If not found, OperationRunNotFoundException is thrown.S
+   */
+  public OperationRunDetail getOperationRun(OperationRunId runId) throws IOException, OperationRunNotFoundException {
+    OperationRunDetail operationRunDetail =
+        TransactionRunners.run(
+            transactionRunner,
+            context -> {
+              return getOperationRunStore(context).getOperation(runId);
+            },
+            IOException.class,
+            OperationRunNotFoundException.class);
+
+    return operationRunDetail;
+  }
+  
   private OperationRunStore getOperationRunStore(StructuredTableContext context) {
     return new OperationRunStore(context);
   }

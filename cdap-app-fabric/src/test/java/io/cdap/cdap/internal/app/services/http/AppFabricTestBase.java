@@ -681,6 +681,38 @@ public abstract class AppFabricTestBase {
     return readResponse(response, JsonObject.class);
   }
 
+  protected JsonObject getOperationListForPaginatedApi(String url) throws Exception {
+    // String uri = "apps/?pageSize=" + pageSize;
+
+    // if (token != null) {
+    //   uri += ("&pageToken=" + token);
+    // }
+
+    // if (orderBy != null) {
+    //   uri += ("&orderBy=" + orderBy);
+    // }
+
+    // if (!Strings.isNullOrEmpty(filter)) {
+    //   uri += ("&nameFilter=" + filter);
+    // }
+
+    // if (nameFilterType != null) {
+    //   uri += ("&nameFilterType=" + nameFilterType);
+    // }
+
+    // if (latestOnly != null) {
+    //   uri += ("&latestOnly=" + latestOnly);
+    // }
+
+    // if (sortCreationTime != null) {
+    //   uri += ("&sortCreationTime=" + sortCreationTime);
+    // }
+
+    HttpResponse response = doGet(url);
+    assertResponseCode(200, response);
+    return readResponse(response, JsonObject.class);
+  }
+
   /**
    * Gets a list of {@link BatchApplicationDetail} from the give set of application version
    *
