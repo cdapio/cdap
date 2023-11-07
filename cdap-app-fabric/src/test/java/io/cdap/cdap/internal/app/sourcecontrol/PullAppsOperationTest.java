@@ -127,7 +127,6 @@ public class PullAppsOperationTest {
   @Test(expected = OperationException.class)
   public void testRunFailedAtFirstApp() throws Exception {
     ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
-    LongRunningOperationContext mockContext = Mockito.mock(LongRunningOperationContext.class);
     PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
 
     Mockito.doThrow(new SourceControlException("")).when(mockManager)
