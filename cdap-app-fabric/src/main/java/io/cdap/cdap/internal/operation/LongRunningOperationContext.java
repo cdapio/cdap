@@ -24,21 +24,43 @@ import java.util.Set;
 /**
  * Provides the context for the current operation run.
  */
-public interface LongRunningOperationContext {
+public class LongRunningOperationContext {
+
+  private final OperationRunId runId;
+  private final OperationType type;
+  private final OperationStatePublisher statePublisher;
+
+  /**
+   * Default constructor.
+   *
+   * @param runId id of the current operation
+   * @param type type of the current operation
+   * @param statePublisher to publish the operation metadata
+   */
+  public LongRunningOperationContext(OperationRunId runId, OperationType type,
+      OperationStatePublisher statePublisher) {
+    this.runId = runId;
+    this.type = type;
+    this.statePublisher = statePublisher;
+  }
 
   /**
    * Get the {@link OperationRunId} for the current run.
    *
    * @return the current runid
    */
-  OperationRunId getRunId();
+  public OperationRunId getRunId() {
+    return runId;
+  }
 
   /**
    * Get the {@link OperationType} to be used by the runner for loading the right operation class.
    *
    * @return the type of the current operation
    */
-  OperationType getType();
+  public OperationType getType() {
+    return type;
+  }
 
   /**
    * Used by the {@link LongRunningOperation} to update the resources operated on in the
@@ -46,8 +68,8 @@ public interface LongRunningOperationContext {
    * resources to be unique
    *
    * @param resources A set of resources to be updated.
-   *
    */
-  // TODO Add exceptions based on implementations.
-  void updateOperationResources(Set<OperationResource> resources);
+  public void updateOperationResources(Set<OperationResource> resources) {
+    statePublisher.publishResources(runId, resources);
+  }
 }

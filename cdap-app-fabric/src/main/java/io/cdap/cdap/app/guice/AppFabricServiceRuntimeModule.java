@@ -136,6 +136,7 @@ import io.cdap.cdap.internal.events.StartProgramEventReaderExtensionProvider;
 import io.cdap.cdap.internal.events.StartProgramEventSubscriber;
 import io.cdap.cdap.internal.namespace.credential.handler.GcpWorkloadIdentityHttpHandler;
 import io.cdap.cdap.internal.namespace.credential.handler.GcpWorkloadIdentityHttpHandlerInternal;
+import io.cdap.cdap.internal.operation.guice.OperationModule;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -198,6 +199,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new SourceControlModule(),
         new EntityVerifierModule(),
         new MasterCredentialProviderModule(),
+        new OperationModule(),
         BootstrapModules.getInMemoryModule(),
         new AbstractModule() {
           @Override
@@ -240,6 +242,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new EntityVerifierModule(),
         new ProvisionerModule(),
         new MasterCredentialProviderModule(),
+        new OperationModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override
@@ -294,6 +297,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new EntityVerifierModule(),
         new ProvisionerModule(),
         new MasterCredentialProviderModule(),
+        new OperationModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override
