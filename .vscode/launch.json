@@ -1,0 +1,364 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "WordCount",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.internal.app.runtime.batch.WordCount",
+            "projectName": "cdap-app-fabric"
+        },
+        {
+            "type": "java",
+            "name": "RemoteExecutionJobMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionJobMain",
+            "projectName": "cdap-app-fabric"
+        },
+        {
+            "type": "java",
+            "name": "RemoteLauncher",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteLauncher",
+            "projectName": "cdap-app-fabric"
+        },
+        {
+            "type": "java",
+            "name": "MasterEnvironmentMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.MasterEnvironmentMain",
+            "projectName": "cdap-app-fabric"
+        },
+        {
+            "type": "java",
+            "name": "CLIMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.cli.CLIMain",
+            "projectName": "cdap-cli"
+        },
+        {
+            "type": "java",
+            "name": "Configuration",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.common.conf.Configuration",
+            "projectName": "cdap-common"
+        },
+        {
+            "type": "java",
+            "name": "TransactionManagerDebuggerMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data2.transaction.TransactionManagerDebuggerMain",
+            "projectName": "cdap-data-fabric"
+        },
+        {
+            "type": "java",
+            "name": "WordCount(1)",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.datapipeline.spark.WordCount",
+            "projectName": "cdap-data-pipeline3_2.12"
+        },
+        {
+            "type": "java",
+            "name": "GenerateCLIDocsTable",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.docgen.cli.GenerateCLIDocsTable",
+            "projectName": "cdap-docs-gen"
+        },
+        {
+            "type": "java",
+            "name": "UpgradeTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.etl.tool.UpgradeTool",
+            "projectName": "cdap-etl-tools"
+        },
+        {
+            "type": "java",
+            "name": "RouterMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.gateway.router.RouterMain",
+            "projectName": "cdap-gateway"
+        },
+        {
+            "type": "java",
+            "name": "HBaseVersion",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data2.util.hbase.HBaseVersion",
+            "projectName": "cdap-hbase-compat-base"
+        },
+        {
+            "type": "java",
+            "name": "KafkaServerMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.kafka.run.KafkaServerMain",
+            "projectName": "cdap-kafka"
+        },
+        {
+            "type": "java",
+            "name": "ClientVersions",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.runtime.main.ClientVersions",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "MasterServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.runtime.main.MasterServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "CoprocessorBuildTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.tools.CoprocessorBuildTool",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "HBaseTableExporter",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.tools.HBaseTableExporter",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "JobQueueDebugger",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.tools.JobQueueDebugger",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "ReplicationStatusTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.tools.ReplicationStatusTool",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "UpgradeTool(1)",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.data.tools.UpgradeTool",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "AppFabricServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.AppFabricServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "ArtifactCacheServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.ArtifactCacheServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "AuthenticationServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.AuthenticationServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "LogsServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.LogsServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "MessagingServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.MessagingServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "MetadataServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.MetadataServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "MetricsServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.MetricsServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "PreviewServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.PreviewServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "RouterServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.RouterServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "RuntimeServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.RuntimeServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "StorageMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.StorageMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "SupportBundleServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.SupportBundleServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "SystemMetricsExporterServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.SystemMetricsExporterServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "TetheringAgentServiceMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.environment.k8s.TetheringAgentServiceMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "MasterStartupTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.startup.MasterStartupTool",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "PostUpgradeJobMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.upgrade.PostUpgradeJobMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "UpgradeJobMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.master.upgrade.UpgradeJobMain",
+            "projectName": "cdap-master"
+        },
+        {
+            "type": "java",
+            "name": "DataprocTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocTool",
+            "projectName": "cdap-runtime-ext-dataproc"
+        },
+        {
+            "type": "java",
+            "name": "DataprocJobMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.runtime.spi.runtimejob.DataprocJobMain",
+            "projectName": "cdap-runtime-ext-dataproc"
+        },
+        {
+            "type": "java",
+            "name": "AuthenticationServerMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.security.runtime.AuthenticationServerMain",
+            "projectName": "cdap-security"
+        },
+        {
+            "type": "java",
+            "name": "AccessTokenGeneratorService",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.security.tools.AccessTokenGeneratorService",
+            "projectName": "cdap-security"
+        },
+        {
+            "type": "java",
+            "name": "AuthenticationTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.security.tools.AuthenticationTool",
+            "projectName": "cdap-security"
+        },
+        {
+            "type": "java",
+            "name": "SparkContainerLauncher",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher",
+            "projectName": "cdap-spark-core3_2.12"
+        },
+        {
+            "type": "java",
+            "name": "SparkContainerDriverLauncher",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerDriverLauncher",
+            "projectName": "cdap-spark-core3_2.12"
+        },
+        {
+            "type": "java",
+            "name": "SparkContainerExecutorLauncher",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.app.runtime.spark.distributed.k8s.SparkContainerExecutorLauncher",
+            "projectName": "cdap-spark-core3_2.12"
+        },
+        {
+            "type": "java",
+            "name": "StandaloneMain",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.StandaloneMain",
+            "projectName": "cdap-standalone"
+        },
+        {
+            "type": "java",
+            "name": "StartStandaloneAndDeployApplicationHelper",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.StartStandaloneAndDeployApplicationHelper",
+            "projectName": "cdap-standalone"
+        },
+        {
+            "type": "java",
+            "name": "WordCount(2)",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.WordCount",
+            "projectName": "cdap-support-bundle"
+        },
+        {
+            "type": "java",
+            "name": "ConfigurationJsonTool",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.ui.ConfigurationJsonTool",
+            "projectName": "cdap-ui"
+        },
+        {
+            "type": "java",
+            "name": "ClassicSparkProgram",
+            "request": "launch",
+            "mainClass": "io.cdap.cdap.spark.app.ClassicSparkProgram",
+            "projectName": "cdap-unit-test"
+        }
+    ]
+}
