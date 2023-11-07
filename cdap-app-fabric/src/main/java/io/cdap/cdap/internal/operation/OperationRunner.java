@@ -16,22 +16,16 @@
 
 package io.cdap.cdap.internal.operation;
 
-import io.cdap.cdap.proto.id.OperationRunId;
-import io.cdap.cdap.proto.operation.OperationType;
-
 /**
- * Abstract implementation of {@link LongRunningOperationContext} providing shared functionalities.
+ * Interface representing runner for LRO.
+ * A runner initiates the run and returns a {@link OperationController} for lifecycle management.
  */
-public abstract class AbstractLongRunningOperationContext implements LongRunningOperationContext {
-
-  private final OperationRunId runId;
-  private final OperationType type;
+public interface OperationRunner {
 
   /**
-   * Default constructor.
+   * Run an operation in asynchronous mode.
+   *
+   * @param runDetail {@link OperationRunDetail} for the operation to be run
    */
-  protected AbstractLongRunningOperationContext(OperationRunId runid, OperationType operationType) {
-    this.runId = runid;
-    this.type = operationType;
-  }
+  OperationController run(OperationRunDetail runDetail) throws IllegalStateException;
 }

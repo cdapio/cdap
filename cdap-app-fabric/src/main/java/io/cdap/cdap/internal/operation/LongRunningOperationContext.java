@@ -18,27 +18,36 @@ package io.cdap.cdap.internal.operation;
 
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationResource;
-import io.cdap.cdap.proto.operation.OperationType;
 import java.util.Set;
 
 /**
  * Provides the context for the current operation run.
  */
-public interface LongRunningOperationContext {
+public class LongRunningOperationContext {
+
+  private final OperationRunId runId;
+  private final OperationStatePublisher statePublisher;
+
+  /**
+   * Default constructor.
+   *
+   * @param runId id of the current operation
+   * @param type type of the current operation
+   * @param statePublisher to publish the operation metadata
+   */
+  public LongRunningOperationContext(OperationRunId runId, OperationStatePublisher statePublisher) {
+    this.runId = runId;
+    this.statePublisher = statePublisher;
+  }
 
   /**
    * Get the {@link OperationRunId} for the current run.
    *
    * @return the current runid
    */
-  OperationRunId getRunId();
-
-  /**
-   * Get the {@link OperationType} to be used by the runner for loading the right operation class.
-   *
-   * @return the type of the current operation
-   */
-  OperationType getType();
+  public OperationRunId getRunId() {
+    return runId;
+  }
 
   /**
    * Used by the {@link LongRunningOperation} to update the resources operated on in the
@@ -46,8 +55,8 @@ public interface LongRunningOperationContext {
    * resources to be unique
    *
    * @param resources A set of resources to be updated.
-   *
    */
-  // TODO Add exceptions based on implementations.
-  void updateOperationResources(Set<OperationResource> resources);
+  public void updateOperationResources(Set<OperationResource> resources) {
+    statePublisher.publishResources(runId, resources);
+  }
 }
