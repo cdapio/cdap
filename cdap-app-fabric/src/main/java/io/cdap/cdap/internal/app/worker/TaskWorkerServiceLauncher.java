@@ -213,6 +213,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
                     String.format("%s:%s", localhost,
                         cConf.getInt(Constants.ArtifactLocalizer.PORT))
                 ));
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withNamespacedWorkloadIdentity(TaskWorkerTwillRunnable.class.getSimpleName());
           }
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
