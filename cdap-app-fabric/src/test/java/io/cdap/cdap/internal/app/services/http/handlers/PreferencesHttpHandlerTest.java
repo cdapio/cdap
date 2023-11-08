@@ -55,7 +55,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
-    store.addApplication(new ApplicationId(namespace, appSpec.getName()), meta);
+    store.addLatestApplication(new ApplicationId(namespace, appSpec.getName()), meta);
   }
 
   @Test
