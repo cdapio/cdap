@@ -40,15 +40,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public abstract class OperationRunStoreTest {
+public abstract class OperationRunStoreTest extends OperationTestBase{
 
   protected static TransactionRunner transactionRunner;
   private final AtomicInteger sourceId = new AtomicInteger();
   private final AtomicLong runIdTime = new AtomicLong(System.currentTimeMillis());
   private final String testNamespace = "test";
-
-  private final PullAppsRequest input = new PullAppsRequest(Collections.emptySet(), null);
-
 
   @Before
   public void before() throws Exception {
@@ -61,7 +58,7 @@ public abstract class OperationRunStoreTest {
   @Test
   public void testGetOperation() throws Exception {
     OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
-        OperationRunStatus.RUNNING);
+        OperationRunStatus.RUNNING,transactionRunner);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
@@ -81,7 +78,7 @@ public abstract class OperationRunStoreTest {
   @Test
   public void testUpdateMetadata() throws Exception {
     OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
-        OperationRunStatus.RUNNING);
+        OperationRunStatus.RUNNING, transactionRunner);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
@@ -118,7 +115,7 @@ public abstract class OperationRunStoreTest {
   @Test
   public void testUpdateStatus() throws Exception {
     OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
-        OperationRunStatus.RUNNING);
+        OperationRunStatus.RUNNING,transactionRunner );
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
@@ -155,7 +152,7 @@ public abstract class OperationRunStoreTest {
   @Test
   public void testFailOperation() throws Exception {
     OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
-        OperationRunStatus.RUNNING);
+        OperationRunStatus.RUNNING, transactionRunner);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
@@ -192,7 +189,7 @@ public abstract class OperationRunStoreTest {
 
   @Test
   public void testScanOperation() throws Exception {
-    List<OperationRunDetail> insertedRuns = insertTestRuns();
+    List<OperationRunDetail> insertedRuns = insertTestRuns(transactionRunner);
     // get a filtered list of testNamespace runs
     List<OperationRunDetail> testNamespaceRuns = insertedRuns.stream()
         .filter(detail -> detail.getRunId().getNamespace().equals(testNamespace))
@@ -243,48 +240,6 @@ public abstract class OperationRunStoreTest {
           .collect(Collectors.toList());
       Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
     }, Exception.class);
-  }
-
-  private OperationRunDetail insertRun(String namespace, OperationType type,
-      OperationRunStatus status)
-      throws IOException, OperationRunAlreadyExistsException {
-    long startTime = runIdTime.incrementAndGet();
-    String id = RunIds.generate(startTime).getId();
-    OperationRun run = OperationRun.builder()
-        .setRunId(id)
-        .setStatus(status)
-        .setType(type)
-        .setMetadata(
-            new OperationMeta(Collections.emptySet(), Instant.ofEpochMilli(startTime), null))
-        .build();
-    OperationRunId runId = new OperationRunId(namespace, id);
-    OperationRunDetail detail = OperationRunDetail.builder()
-        .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
-        .setRunId(runId)
-        .setRun(run)
-        .setPullAppsRequest(input)
-        .build();
-    TransactionRunners.run(transactionRunner, context -> {
-      OperationRunStore operationRunStore = new OperationRunStore(context);
-      operationRunStore.createOperationRun(runId, detail);
-    }, IOException.class, OperationRunAlreadyExistsException.class);
-    return detail;
-  }
-
-  private List<OperationRunDetail> insertTestRuns() throws Exception {
-    List<OperationRunDetail> details = new ArrayList<>();
-    // insert 10 runs with increasing start time in two namespaces
-    // 5 would be in running state 5 in Failed
-    // 5 would be of type PUSH 5 would be of type PULL
-    for (int i = 0; i < 5; i++) {
-      details.add(insertRun(testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
-      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
-      details.add(insertRun(testNamespace, OperationType.PULL_APPS, OperationRunStatus.FAILED));
-      details.add(insertRun(Namespace.DEFAULT.getId(), OperationType.PULL_APPS, OperationRunStatus.RUNNING));
-    }
-    // The runs are added in increasing start time, hence reversing the List
-    Collections.reverse(details);
-    return details;
   }
 
 }

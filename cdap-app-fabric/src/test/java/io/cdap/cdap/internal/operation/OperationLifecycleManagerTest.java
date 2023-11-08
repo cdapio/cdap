@@ -1,28 +1,19 @@
 package io.cdap.cdap.internal.operation;
 
-import com.esotericsoftware.minlog.Log;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.id.Id.Namespace;
-import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.internal.AppFabricTestHelper;
-import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
-import io.cdap.cdap.proto.operation.OperationMeta;
-import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -31,13 +22,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
-import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,14 +33,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class OperationLifecycleManagerTest extends AppFabricTestBase {
+public class OperationLifecycleManagerTest extends OperationTestBase {
   protected static TransactionRunner transactionRunner;
-  private static final AtomicInteger sourceId = new AtomicInteger();
-  private static final AtomicLong runIdTime = new AtomicLong(System.currentTimeMillis());
   private static final String testNamespace = "test";
   private static OperationLifecycleManager operationLifecycleManager;
   private static int batchSize;
-  private static final PullAppsRequest input = new PullAppsRequest(Collections.emptySet(), null);
 
   @ClassRule public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -96,16 +79,16 @@ public class OperationLifecycleManagerTest extends AppFabricTestBase {
   }
 
   @AfterClass
-  public static void afterClass(){
-    try{
-    pg.close();
+  public static void afterClass() {
+    try {
+      pg.close();
+    } catch (Exception e) {
     }
-    catch(Exception e){}
   }
 
   @Test
   public void testScanOperations() throws Exception {
-    List<OperationRunDetail> insertedRuns = insertTestRuns();
+    List<OperationRunDetail> insertedRuns = insertTestRuns(transactionRunner);
     // get a filtered list of testNamespace runs
     List<OperationRunDetail> testNamespaceRuns =
         insertedRuns.stream()
@@ -186,7 +169,8 @@ public class OperationLifecycleManagerTest extends AppFabricTestBase {
   @Test
   public void testGetOperation() throws Exception {
     OperationRunDetail expectedDetail =
-        insertRun(testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING);
+        insertRun(
+            testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING, transactionRunner);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
@@ -204,57 +188,5 @@ public class OperationLifecycleManagerTest extends AppFabricTestBase {
           }
         },
         Exception.class);
-  }
-
-  private static OperationRunDetail insertRun(
-      String namespace, OperationType type, OperationRunStatus status)
-      throws IOException, OperationRunAlreadyExistsException {
-    long startTime = runIdTime.incrementAndGet();
-    String id = RunIds.generate(startTime).getId();
-    OperationRun run =
-        OperationRun.builder()
-            .setRunId(id)
-            .setStatus(status)
-            .setType(type)
-            .setMetadata(
-                new OperationMeta(Collections.emptySet(), Instant.ofEpochMilli(startTime), null))
-            .build();
-    OperationRunId runId = new OperationRunId(namespace, id);
-    OperationRunDetail detail =
-        OperationRunDetail.builder()
-            .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
-            .setRunId(runId)
-            .setRun(run)
-            .setPullAppsRequest(input)
-            .build();
-    TransactionRunners.run(
-        transactionRunner,
-        context -> {
-          OperationRunStore operationRunStore = new OperationRunStore(context);
-          operationRunStore.createOperationRun(runId, detail);
-        },
-        IOException.class,
-        OperationRunAlreadyExistsException.class);
-    return detail;
-  }
-
-  private static List<OperationRunDetail> insertTestRuns() throws Exception {
-    List<OperationRunDetail> details = new ArrayList<>();
-    // insert 10 runs with increasing start time in two namespaces
-    // 5 would be in running state 5 in Failed
-    // 5 would be of type PUSH 5 would be of type PULL
-    for (int i = 0; i < 5; i++) {
-      details.add(insertRun(testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
-      details.add(
-          insertRun(
-              Namespace.DEFAULT.getId(), OperationType.PUSH_APPS, OperationRunStatus.RUNNING));
-      details.add(insertRun(testNamespace, OperationType.PULL_APPS, OperationRunStatus.FAILED));
-      details.add(
-          insertRun(
-              Namespace.DEFAULT.getId(), OperationType.PULL_APPS, OperationRunStatus.RUNNING));
-    }
-    // The runs are added in increasing start time, hence reversing the List
-    Collections.reverse(details);
-    return details;
   }
 }
