@@ -274,6 +274,10 @@
           <artifactId>cdap-event-reader-spi</artifactId>
           <version>${project.version}</version>
       </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

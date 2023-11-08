@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -38,8 +39,6 @@ import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.security.GcpMetadataTaskContext;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -47,7 +46,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
-import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
@@ -57,7 +55,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import joptsimple.internal.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,8 +186,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     }
 
     try {
-      responder.sendJson(HttpResponseStatus.OK,
-          fetchTokenFromMetadataServer(scopes).getResponseBodyAsString());
+      responder.sendJson(HttpResponseStatus.OK, fetchTokenFromMetadataServer(scopes));
     } catch (Exception ex) {
       LOG.error("Failed to fetch token from metadata server", ex);
       responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
@@ -204,15 +200,10 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
         RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
   }
 
-  private HttpResponse fetchTokenFromMetadataServer(String scopes) throws IOException {
-    URL url = new URL(metadataServiceTokenEndpoint);
-    if (!Strings.isNullOrEmpty(scopes)) {
-      url = new URL(String.format("%s?scopes=%s", metadataServiceTokenEndpoint, scopes));
-    }
-    io.cdap.common.http.HttpRequest tokenRequest = io.cdap.common.http.HttpRequest.get(url)
-        .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
-        .build();
-    return HttpRequests.execute(tokenRequest);
+  private String fetchTokenFromMetadataServer(String scopes) throws IOException {
+    GoogleCredentials credentials =
+        GoogleCredentials.getApplicationDefault().createScoped(scopes);
+    return GSON.toJson(credentials.getAccessToken());
   }
 
   /**

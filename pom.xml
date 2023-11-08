@@ -130,6 +130,7 @@
     <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <geronimo.version>2.0.0</geronimo.version>
+    <gcpoauth2.version>1.19.0</gcpoauth2.version>
     <grok.version>0.1.0</grok.version>
     <gson.version>2.3.1</gson.version>
     <guava.version>13.0.1</guava.version>
@@ -1633,6 +1634,21 @@
         <scope>test</scope>
       </dependency>
       <!-- Git dependencies for Source Control Management end -->
+      <dependency>
+        <groupId>com.google.auth</groupId>
+        <artifactId>google-auth-library-oauth2-http</artifactId>
+        <version>${gcpoauth2.version}</version>
+        <exclusions>
+          <exclusion>
+            <artifactId>grpc-api</artifactId>
+            <groupId>io.grpc</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>grpc-census</artifactId>
+            <groupId>io.grpc</groupId>
+          </exclusion>
+        </exclusions>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

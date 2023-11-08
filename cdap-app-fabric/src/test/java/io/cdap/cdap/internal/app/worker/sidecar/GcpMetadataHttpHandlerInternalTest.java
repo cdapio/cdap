@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -88,6 +89,8 @@ public class GcpMetadataHttpHandlerInternalTest {
 
   @Test
   public void testStatus() throws Exception {
+    GoogleCredentials.getApplicationDefault()
+        .createScoped("https://www.googleapis.com/auth/cloud-platform");
     String endpoint = String.format("http://%s:%s/",
         httpService.getBindAddress().getHostName(), httpService.getBindAddress().getPort());
     URL url = new URL(endpoint);
