@@ -47,7 +47,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
-/** Store for operation runs. */
+/**
+ * Store for operation runs.
+ */
 public class OperationRunStore {
 
   private static final Gson GSON = new GsonBuilder().create();
@@ -77,9 +79,8 @@ public class OperationRunStore {
       throws OperationRunAlreadyExistsException, IOException {
     Optional<StructuredRow> row = getOperationRunInternal(runId);
     if (row.isPresent()) {
-      OperationRunStatus status =
-          OperationRunStatus.valueOf(
-              row.get().getString(StoreDefinition.OperationRunsStore.STATUS_FIELD));
+      OperationRunStatus status = OperationRunStatus.valueOf(
+          row.get().getString(StoreDefinition.OperationRunsStore.STATUS_FIELD));
       throw new OperationRunAlreadyExistsException(runId.getRun(), status);
     }
     writeOperationRun(runId, detail);
@@ -105,8 +106,8 @@ public class OperationRunStore {
 
     Collection<Field<?>> fields = getCommonUpdateFields(runId);
     fields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.DETAILS_FIELD, GSON.toJson(updatedDetail)));
+        Fields.stringField(StoreDefinition.OperationRunsStore.DETAILS_FIELD,
+            GSON.toJson(updatedDetail)));
 
     StructuredTable operationRunsTable = getOperationRunsTable(context);
     operationRunsTable.update(fields);
@@ -120,21 +121,22 @@ public class OperationRunStore {
    * @param sourceId the message id which is responsible for the update
    * @throws OperationRunNotFoundException run with id does not exist in namespace
    */
-  public void updateOperationStatus(
-      OperationRunId runId, OperationRunStatus status, @Nullable byte[] sourceId)
-      throws OperationRunNotFoundException, IOException {
+  public void updateOperationStatus(OperationRunId runId, OperationRunStatus status,
+      @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
     OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
-    OperationRun updatedRun = OperationRun.builder(currentRun).setStatus(status).build();
-    OperationRunDetail updatedDetail =
-        OperationRunDetail.builder(currentDetail).setRun(updatedRun).setSourceId(sourceId).build();
+    OperationRun updatedRun = OperationRun.builder(currentRun)
+        .setStatus(status).build();
+    OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
+        .setRun(updatedRun).setSourceId(sourceId).build();
 
     Collection<Field<?>> fields = getCommonUpdateFields(runId);
     fields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.DETAILS_FIELD, GSON.toJson(updatedDetail)));
+        Fields.stringField(StoreDefinition.OperationRunsStore.DETAILS_FIELD,
+            GSON.toJson(updatedDetail)));
     fields.add(
-        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD, GSON.toJson(status)));
+        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
+            GSON.toJson(status)));
 
     StructuredTable operationRunsTable = getOperationRunsTable(context);
     operationRunsTable.update(fields);
@@ -161,11 +163,10 @@ public class OperationRunStore {
 
     Collection<Field<?>> fields = getCommonUpdateFields(runId);
     fields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.DETAILS_FIELD, GSON.toJson(updatedDetail)));
+        Fields.stringField(StoreDefinition.OperationRunsStore.DETAILS_FIELD,
+            GSON.toJson(updatedDetail)));
     fields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.STATUS_FIELD,
+        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
             GSON.toJson(OperationRunStatus.FAILED)));
 
     StructuredTable operationRunsTable = getOperationRunsTable(context);
@@ -184,6 +185,7 @@ public class OperationRunStore {
         .orElseThrow(() -> new OperationRunNotFoundException(runId.getNamespace(), runId.getRun()));
   }
 
+
   /**
    * Scans operations. Allows to optionally set filters and implement pagination. For pagination set
    * {@link ScanOperationRunsRequest#getScanAfter()} to the last application id of the previous
@@ -192,52 +194,45 @@ public class OperationRunStore {
    * @param request parameters defining filters
    * @param consumer {@link Consumer} to process each scanned run
    * @throws IOException if failed to scan the storage
-   * @throws OperationRunNotFoundException if the {@link ScanOperationRunsRequest#getScanAfter()}
-   *     operation run does not exist
+   * @throws OperationRunNotFoundException if the
+   *     {@link ScanOperationRunsRequest#getScanAfter()} operation run does not exist
    * @see ScanOperationRunsRequest#builder(ScanOperationRunsRequest) to create a next page / batch
    *     request
    */
-  public String scanOperations(
-      ScanOperationRunsRequest request, Consumer<OperationRunDetail> consumer)
-      throws IOException, OperationRunNotFoundException {
+  public String scanOperations(ScanOperationRunsRequest request,
+      Consumer<OperationRunDetail> consumer) throws IOException, OperationRunNotFoundException {
     Range.Bound startBound = Range.Bound.INCLUSIVE;
     final Range.Bound endBound = Range.Bound.INCLUSIVE;
     Collection<Field<?>> startFields = new ArrayList<>();
 
     startFields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, request.getNamespace()));
+        Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
+            request.getNamespace())
+    );
     if (request.getFilter().getOperationType() != null) {
-      startFields.add(
-          Fields.stringField(
-              StoreDefinition.OperationRunsStore.TYPE_FIELD,
-              request.getFilter().getOperationType().name()));
+      startFields.add(Fields.stringField(StoreDefinition.OperationRunsStore.TYPE_FIELD,
+          request.getFilter().getOperationType().name())
+      );
     }
     if (request.getFilter().getStatus() != null) {
-      startFields.add(
-          Fields.stringField(
-              StoreDefinition.OperationRunsStore.STATUS_FIELD,
-              request.getFilter().getStatus().name()));
+      startFields.add(Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
+          request.getFilter().getStatus().name()));
     }
 
     Collection<Field<?>> endFields = startFields;
 
     if (request.getScanAfter() != null) {
       startBound = Range.Bound.EXCLUSIVE;
-      startFields.addAll(
-          getRangeFields(new OperationRunId(request.getNamespace(), request.getScanAfter())));
+      startFields = getRangeFields(
+          new OperationRunId(request.getNamespace(), request.getScanAfter()));
     }
 
     Range range = Range.create(endFields, endBound, startFields, startBound);
     StructuredTable table = getOperationRunsTable(context);
     String lastKey = null;
 
-    try (CloseableIterator<StructuredRow> iterator =
-        table.scan(
-            range,
-            request.getLimit(),
-            StoreDefinition.OperationRunsStore.START_TIME_FIELD,
-            SortOrder.DESC)) {
+    try (CloseableIterator<StructuredRow> iterator = table.scan(range, request.getLimit(),
+        StoreDefinition.OperationRunsStore.START_TIME_FIELD, SortOrder.DESC)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         lastKey = row.getString(StoreDefinition.OperationRunsStore.ID_FIELD);
@@ -269,17 +264,16 @@ public class OperationRunStore {
       throws IOException, OperationRunNotFoundException {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, runId.getNamespace()));
+        Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
+            runId.getNamespace()));
     fields.add(Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()));
 
-    Long startTime =
-        getOperationRunInternal(runId)
-            .map(r -> r.getLong(StoreDefinition.OperationRunsStore.START_TIME_FIELD))
-            .orElseThrow(
-                () -> new OperationRunNotFoundException(runId.getNamespace(), runId.getRun()));
+    Long startTime = getOperationRunInternal(runId)
+        .map(r -> r.getLong(StoreDefinition.OperationRunsStore.START_TIME_FIELD))
+        .orElseThrow(() -> new OperationRunNotFoundException(runId.getNamespace(), runId.getRun()));
 
-    fields.add(Fields.longField(StoreDefinition.OperationRunsStore.START_TIME_FIELD, startTime));
+    fields.add(
+        Fields.longField(StoreDefinition.OperationRunsStore.START_TIME_FIELD, startTime));
     return fields;
   }
 
@@ -291,10 +285,10 @@ public class OperationRunStore {
   }
 
   private OperationRunDetail rowToRunDetail(StructuredRow row) {
-    OperationRunDetail detail =
-        GSON.fromJson(
-            row.getString(StoreDefinition.OperationRunsStore.DETAILS_FIELD),
-            OperationRunDetail.class);
+    OperationRunDetail detail = GSON.fromJson(
+        row.getString(StoreDefinition.OperationRunsStore.DETAILS_FIELD),
+        OperationRunDetail.class
+    );
     // RunId is not serialized hence we need to populate it from row
     String namespace = row.getString(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD);
     String id = row.getString(StoreDefinition.OperationRunsStore.ID_FIELD);
@@ -304,43 +298,42 @@ public class OperationRunStore {
   private Collection<Field<?>> getCommonUpdateFields(OperationRunId runId) {
     Collection<Field<?>> fields = new ArrayList<>();
     fields.add(
-        Fields.stringField(
-            StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, runId.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()));
+        Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
+            runId.getNamespace()));
+    fields.add(
+        Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()));
     fields.add(
         Fields.longField(StoreDefinition.OperationRunsStore.UPDATE_TIME_FIELD, clock.millis()));
     return fields;
   }
 
-  private Optional<StructuredRow> getOperationRunInternal(OperationRunId runId) throws IOException {
+  private Optional<StructuredRow> getOperationRunInternal(OperationRunId runId)
+      throws IOException {
     StructuredTable operationRunsTable = getOperationRunsTable(context);
-    Collection<Field<?>> key =
-        ImmutableList.of(
-            Fields.stringField(
-                StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, runId.getNamespace()),
-            Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()));
+    Collection<Field<?>> key = ImmutableList.of(
+        Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
+            runId.getNamespace()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun())
+    );
     return operationRunsTable.read(key);
   }
 
   private void writeOperationRun(OperationRunId runId, OperationRunDetail detail)
       throws IOException {
-    Collection<Field<?>> fields =
-        ImmutableList.of(
-            Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()),
-            Fields.stringField(
-                StoreDefinition.OperationRunsStore.NAMESPACE_FIELD, runId.getNamespace()),
-            Fields.stringField(
-                StoreDefinition.OperationRunsStore.STATUS_FIELD,
-                detail.getRun().getStatus().name()),
-            Fields.stringField(
-                StoreDefinition.OperationRunsStore.TYPE_FIELD, detail.getRun().getType().name()),
-            Fields.longField(
-                StoreDefinition.OperationRunsStore.START_TIME_FIELD,
-                detail.getRun().getMetadata().getCreateTime().toEpochMilli()),
-            Fields.longField(
-                StoreDefinition.OperationRunsStore.UPDATE_TIME_FIELD, System.currentTimeMillis()),
-            Fields.stringField(
-                StoreDefinition.OperationRunsStore.DETAILS_FIELD, GSON.toJson(detail)));
+    Collection<Field<?>> fields = ImmutableList.of(
+        Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
+            runId.getNamespace()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
+            detail.getRun().getStatus().name()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.TYPE_FIELD,
+            detail.getRun().getType().name()),
+        Fields.longField(StoreDefinition.OperationRunsStore.START_TIME_FIELD,
+            detail.getRun().getMetadata().getCreateTime().toEpochMilli()),
+        Fields.longField(StoreDefinition.OperationRunsStore.UPDATE_TIME_FIELD,
+            System.currentTimeMillis()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.DETAILS_FIELD, GSON.toJson(detail))
+    );
     StructuredTable operationRunsTable = getOperationRunsTable(context);
     operationRunsTable.upsert(fields);
   }
@@ -354,10 +347,9 @@ public class OperationRunStore {
   void clearData() throws IOException {
     StructuredTable table = getOperationRunsTable(context);
     table.deleteAll(
-        Range.from(
-            ImmutableList.of(
-                Fields.stringField(
-                    StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, SMALLEST_POSSIBLE_STRING)),
+        Range.from(ImmutableList.of(
+                Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
+                    SMALLEST_POSSIBLE_STRING)),
             Range.Bound.INCLUSIVE));
   }
 }

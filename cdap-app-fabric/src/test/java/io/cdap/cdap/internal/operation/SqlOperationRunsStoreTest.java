@@ -69,7 +69,10 @@ public class SqlOperationRunsStoreTest extends OperationRunStoreTest {
   }
 
   @AfterClass
-  public static void afterClass() throws IOException {
+  public static void afterClass(){
+    try{
     pg.close();
+    }
+    catch(Exception e){}
   }
 }

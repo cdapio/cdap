@@ -23,7 +23,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
-import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.internal.operation.OperationRunFilter;
@@ -39,9 +38,9 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -58,12 +57,14 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   public static final String OPERATIONS_LIST_PAGINATED_KEY = "operations";
 
   @Inject
-  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager) throws Exception {
+  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager)
+      throws Exception {
     this.cConf = cConf;
     this.batchSize = this.cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.operationLifecycleManager = operationLifecycleManager;
   }
-
+  
+  // TODO[CDAP-20881] :  Add RBAC check
   /**
    * API to fetch all running operations in a namespace.
    *
@@ -89,7 +90,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
         responder,
         OPERATIONS_LIST_PAGINATED_KEY,
         jsonListResponder -> {
-          AtomicReference<OperationRun> lastRun = new AtomicReference<>(null);
+          AtomicReference<OperationRun> lastRun = new AtomicReference<>();
           ScanOperationRunsRequest scanRequest =
               getScanRequest(namespaceId, pageToken, pageSize, filter);
           boolean pageLimitReached = false;
@@ -111,43 +112,6 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
           OperationRun run = lastRun.get();
           return !pageLimitReached || run == null ? null : run.getId();
         });
-  }
-
-  private ScanOperationRunsRequest getScanRequest(
-      String namespaceId, String pageToken, Integer pageSize, String filter) {
-    ScanOperationRunsRequest.Builder builder = ScanOperationRunsRequest.builder();
-    builder.setNamespace(namespaceId);
-    if (pageSize != null) {
-      builder.setLimit(pageSize);
-    }
-    if (pageToken != null) {
-      builder.setScanAfter(pageToken);
-    }
-    if (filter != null && !filter.isEmpty()) {
-      OperationType operationType = null;
-      OperationRunStatus operationStatus = null;
-      Pattern typePattern = Pattern.compile("type=(\\w+)");
-      Pattern statusPattern = Pattern.compile("status=(\\w+)");
-      Matcher typeMatcher = typePattern.matcher(filter);
-      Matcher statusMatcher = statusPattern.matcher(filter);
-      while (typeMatcher.find()) {
-        String typeStr = typeMatcher.group(1);
-        operationType = OperationType.valueOf(typeStr.toUpperCase());
-      }
-      while (statusMatcher.find()) {
-        String statusStr = statusMatcher.group(1);
-        operationStatus = OperationRunStatus.valueOf(statusStr.toUpperCase());
-      }
-      builder.setFilter(new OperationRunFilter(operationType, operationStatus));
-    }
-
-    return builder.build();
-  }
-
-  private void validateNamespace(@Nullable String namespaceId) throws BadRequestException {
-    if (namespaceId == null) {
-      throw new BadRequestException("Path parameter namespaceId cannot be empty");
-    }
   }
 
   /**
@@ -184,15 +148,84 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/{id}/stop")
-  public void failOperation(
-      FullHttpRequest request,
-      HttpResponder responder,
+  public void failOperation(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("id") String runId) {
     // // TODO(samik, CDAP-20814) send the message to stop the operation
-    responder.sendString(
-        HttpResponseStatus.OK,
-        String.format(
-            "Updated status for operation run %s in namespace '%s'.", runId, namespaceId));
+    responder.sendString(HttpResponseStatus.OK,
+        String.format("Updated status for operation run %s in namespace '%s'.", runId,
+            namespaceId));
+  }
+
+  private ScanOperationRunsRequest getScanRequest(
+      String namespaceId, String pageToken, Integer pageSize, String filter) {
+    ScanOperationRunsRequest.Builder builder = ScanOperationRunsRequest.builder();
+    builder.setNamespace(namespaceId);
+    if (pageSize != null) {
+      builder.setLimit(pageSize);
+    }
+    if (pageToken != null) {
+      builder.setScanAfter(pageToken);
+    }
+    if (filter != null && !filter.isEmpty()) {
+      OperationRunFilter operationRunFilter = getFilter(filter);
+      builder.setFilter(operationRunFilter);
+    }
+    return builder.build();
+  }
+
+  private OperationRunFilter getFilter(String filter) {
+    Map<String, String> filterKeyValMap = parseFilter(filter);
+    OperationType operationType = null;
+    OperationRunStatus operationStatus = null;
+
+    for (Map.Entry<String, String> entry : filterKeyValMap.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      switch (key) {
+        case "type":
+          try {
+            operationType = OperationType.valueOf(value.toUpperCase());
+          } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid OperationType: " + value);
+          }
+          break;
+        case "status":
+          try {
+            operationStatus = OperationRunStatus.valueOf(value);
+          } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid OperationRunStatus: " + value);
+          }
+          break;
+        default:
+          throw new IllegalArgumentException("Unknown filter key: " + key);
+      }
+    }
+    return new OperationRunFilter(operationType, operationStatus);
+  }
+
+  private static Map<String, String> parseFilter(String filter) {
+    Map<String, String> filterKeyValMap = new HashMap<>();
+    String[] filterKeyValPairs = filter.split("AND");
+
+    for (String keyValPair : filterKeyValPairs) {
+      String[] parts = keyValPair.split("=");
+      if (parts.length == 2) {
+        String key = parts[0].trim();
+        String value = parts[1].trim();
+        filterKeyValMap.put(key, value);
+      } else {
+        throw new IllegalArgumentException("Invalid filter key=val pair: " + keyValPair);
+      }
+    }
+
+    return filterKeyValMap;
+  }
+
+  private void validateNamespace(@Nullable String namespaceId) throws BadRequestException {
+    if (namespaceId == null) {
+      throw new BadRequestException("Path parameter namespaceId cannot be empty");
+    }
   }
 }
