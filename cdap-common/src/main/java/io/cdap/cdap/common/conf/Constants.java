@@ -2432,4 +2432,31 @@ public final class Constants {
     public static final String CLIENT_ENABLED = "internal.router.client.enabled";
     public static final String SERVER_ENABLED = "internal.router.server.enabled";
   }
+
+  /**
+   * Constants for operations.
+   */
+  public static final class Operation {
+
+    /**
+     * Topic prefix for publishing status transitioning events of operation runs to the messaging
+     * system.
+     */
+    public static final String STATUS_EVENT_TOPIC = "operation.status.event.topic";
+    /**
+     * Number of topics to use for operation status events. All events related to same run should
+     * always go to same topic. If this value is 1, {@link #STATUS_EVENT_TOPIC} is a topic name. If
+     * it's more than 1, {@link #STATUS_EVENT_TOPIC} is a prefix, but bare name should still be
+     * subscribed to ensure any pending messages / active run events are processed properly.
+     */
+    public static final String STATUS_EVENT_NUM_PARTITIONS = "operation.status.event.topic.num.partitions";
+    public static final String STATUS_RETRY_STRATEGY_PREFIX = "operation.status.";
+
+    // Notification keys
+    public static final String RUN_ID_NOTIFICATION_KEY = "operation.notification.run.id";
+    public static final String STATUS_NOTIFICATION_KEY = "operation.notification.status";
+    public static final String RESOURCES_NOTIFICATION_KEY = "operation.notification.resources";
+    public static final String ENDTIME_NOTIFICATION_KEY = "operation.notification.endtime";
+    public static final String ERROR_NOTIFICATION_KEY = "operation.notification.error";
+  }
 }

@@ -53,4 +53,8 @@ public interface OperationStatePublisher {
    * Publishes the current operation status as KILLED.
    */
   void publishKilled(OperationRunId runId);
+
+  void publishStopping(OperationRunId runId);
+
+  void publishStarting(OperationRunId runId);
 }
