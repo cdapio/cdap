@@ -16,10 +16,8 @@
 
 package io.cdap.cdap.internal.operation;
 
-import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.internal.AppFabricTestHelper;
-import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.proto.operation.OperationMeta;
@@ -28,7 +26,6 @@ import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
