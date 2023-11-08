@@ -594,6 +594,8 @@ public final class Constants {
     public static final String WORKER_THREADS = "artifact.localizer.worker.threads";
     public static final String PRELOAD_LIST = "artifact.localizer.preload.list";
     public static final String PRELOAD_VERSION_LIMIT = "artifact.localizer.preload.version.limit";
+    public static final String REMOTE_AUTHENTICATOR_NAME =
+        "artifact.localizer.remote.authenticator.name";
   }
 
   /**

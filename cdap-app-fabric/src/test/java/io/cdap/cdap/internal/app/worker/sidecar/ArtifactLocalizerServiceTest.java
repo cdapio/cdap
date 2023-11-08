@@ -27,6 +27,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.NoOpInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -85,7 +86,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
       cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy) -> {
       return new NoOpArtifactManager();
     }), new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService()),
-        remoteClientFactory);
+        remoteClientFactory, new NoOpRemoteAuthenticator());
     // start the service
     artifactLocalizerService.startAndWait();
 
