@@ -39,6 +39,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -126,7 +127,8 @@ public class RemoteConfiguratorTest {
               new ArtifactLocalizer(cConf, remoteClientFactory,
                   ((namespaceId, retryStrategy) -> new NoOpArtifactManager()))
           ),
-          new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory)
+          new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory,
+              new NoOpRemoteAuthenticator())
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override

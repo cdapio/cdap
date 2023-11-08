@@ -64,6 +64,7 @@ public class GCPRemoteAuthenticator implements RemoteAuthenticator {
     if (accessToken == null || accessToken.getExpirationTime().before(Date.from(clock.instant()))) {
       accessToken = googleCredentials.refreshAccessToken();
     }
-    return new Credential(accessToken.getTokenValue(), Credential.CredentialType.EXTERNAL_BEARER);
+    return new Credential(accessToken.getTokenValue(), Credential.CredentialType.EXTERNAL_BEARER,
+        accessToken.getExpirationTime().getTime() / 1000L);
   }
 }

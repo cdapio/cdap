@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
@@ -69,7 +70,8 @@ public class GcpMetadataHttpHandlerInternalTest {
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test",
         new NoOpMetricsCollectionService())
         .setHttpHandlers(
-            new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory)
+            new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory,
+                new NoOpRemoteAuthenticator())
         )
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
           @Override
