@@ -447,7 +447,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
-    store.addApplication(appId, meta);
+    store.addLatestApplication(appId, meta);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
@@ -591,7 +591,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
-    store.addApplication(appId, meta);
+    store.addLatestApplication(appId, meta);
 
     // set default namespace to use the profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds

@@ -495,7 +495,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
-    store.addApplication(testApp, meta);
+    store.addLatestApplication(testApp, meta);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
@@ -602,7 +602,7 @@ public class LineageAdminTest extends AppFabricTestBase {
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       ),
       oneLevelLineage.getRelations());
-    
+
     // Assert that in a different namespace both lineage and metadata should be empty
     NamespaceId customNamespace = new NamespaceId("custom_namespace");
     DatasetId customDataset1 = customNamespace.dataset(dataset1.getEntityName());
@@ -671,7 +671,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
-    store.addApplication(testApp, meta);
+    store.addLatestApplication(testApp, meta);
     LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D1 -|

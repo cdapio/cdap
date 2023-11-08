@@ -594,9 +594,16 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
+  public int addLatestApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).createApplicationVersion(id, meta);
+      return getAppMetadataStore(context).createLatestApplicationVersion(id, meta);
+    }, ConflictException.class);
+  }
+
+  @Override
+  public int addApplication(ApplicationId id, ApplicationMeta meta, boolean isLatest) throws ConflictException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).createApplicationVersion(id, meta, isLatest);
     }, ConflictException.class);
   }
 

@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.store;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -26,6 +28,7 @@ import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -40,8 +43,12 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.SortOrder;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -1365,7 +1372,7 @@ public abstract class AppMetadataStoreTest {
     String appName = "application1";
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationReference appRef = new ApplicationReference(NamespaceId.DEFAULT, appName);
-    
+
     // Concurrently deploy different fist version of the same application
     int numThreads = 10;
     AtomicInteger idGenerator = new AtomicInteger();
@@ -1378,7 +1385,7 @@ public abstract class AppMetadataStoreTest {
         ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
                                                    new ChangeDetail(null, null, null,
                                                                     creationTimeMillis + id));
-        metaStore.createApplicationVersion(appId, meta);
+        metaStore.createLatestApplicationVersion(appId, meta);
       })
     );
 
@@ -1409,7 +1416,7 @@ public abstract class AppMetadataStoreTest {
       latestVersionCount.set(latestVersions.size());
       appEditNumber.set(metaStore.getApplicationEditNumber(appRef));
     });
-    
+
     // There can only be one latest version
     Assert.assertEquals(1, latestVersionCount.get());
     Assert.assertEquals(numThreads, allVersionsCount.get());
@@ -1432,7 +1439,7 @@ public abstract class AppMetadataStoreTest {
       ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
                                                  new ChangeDetail(null, null, null,
                                                                   creationTimeMillis + id));
-      metaStore.createApplicationVersion(appId, meta);
+      metaStore.createLatestApplicationVersion(appId, meta);
     });
 
     // Concurrently deploy different versions of the same application
@@ -1446,7 +1453,7 @@ public abstract class AppMetadataStoreTest {
         ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
                                                    new ChangeDetail(null, null, null,
                                                                     creationTimeMillis + id));
-        metaStore.createApplicationVersion(appId, meta);
+        metaStore.createLatestApplicationVersion(appId, meta);
       })
     );
 
@@ -1526,6 +1533,46 @@ public abstract class AppMetadataStoreTest {
           store.getRuns(shouldExpire).values().forEach(Assert::assertNull);
           store.getRuns(shouldNotExpire).values().forEach(Assert::assertNotNull);
         });
+  }
+
+  /**
+   * Testcase for getting the latest application, where the application was deployed
+   * before 6.8.0 (where the latest column is not set).
+   * In this case, first insert a row in app spec table with the latest column set to null.
+   * This step is expected to fail in the NoSql implementation.
+   */
+  @Test
+  public void testGetLatestOnLegacyRows() throws Exception {
+    Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+    // insert a row in appspec table with latest column set to null
+    String appName = "legacy_app_without_latest";
+    String appVersion = ApplicationId.DEFAULT_VERSION;
+    ApplicationReference appRef = new ApplicationReference(NamespaceId.DEFAULT, appName);
+
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    ApplicationId appId = appRef.app(appVersion);
+    ApplicationSpecification spec = createDummyAppSpec(appId.getApplication(), appId.getVersion(), artifactId);
+    ApplicationMeta appMeta = new ApplicationMeta(appName, spec, null, null);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      metaStore.createLatestApplicationVersion(appId, appMeta);
+      StructuredTable appSpecTable = context.getTable(
+          StoreDefinition.AppMetadataStore.APPLICATION_SPECIFICATIONS);
+
+      List<Field<?>> fields = metaStore.getApplicationPrimaryKeys(
+          NamespaceId.DEFAULT.getNamespace(), appName, appVersion);
+      fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
+      appSpecTable.upsert(fields);
+    });
+
+    ApplicationMeta latestAppMeta = TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      return metaStore.getLatest(appRef);
+    });
+
+    Assert.assertEquals(appName, latestAppMeta.getId());
+    Assert.assertEquals(appVersion, latestAppMeta.getSpec().getAppVersion());
   }
 
   /**
