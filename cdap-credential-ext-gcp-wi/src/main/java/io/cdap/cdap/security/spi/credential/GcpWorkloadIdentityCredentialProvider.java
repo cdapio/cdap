@@ -63,9 +63,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link CredentialProvider} Credential Provider which returns application default credentials.
- * For more details, see
- * medium.com/google-cloud/gcp-workload-identity-federation-with-federated-tokens-d03b8bad0228
+ * {@link CredentialProvider} Credential Provider which returns application default credentials. For
+ * more details, see medium.com/google-cloud/gcp-workload-identity-federation-with-federated-tokens-d03b8bad0228
  */
 public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider {
 
@@ -189,9 +188,11 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
   private ProvisionedCredential getProvisionedCredential(NamespaceMeta namespaceMeta,
       CredentialIdentity identity, @Nullable String scopes) throws IOException, ApiException {
 
-    // get k8s namespace from namespace metadata if namespace creation hook is enabled.
+    // Get k8s namespace from namespace metadata if using a non-default namespace and namespace
+    // creation hook is enabled.
     String k8sNamespace = NamespaceId.DEFAULT.getNamespace();
-    if (credentialProviderContext.isNamespaceCreationHookEnabled()) {
+    if (!namespaceMeta.getName().equals(NamespaceId.DEFAULT.getNamespace())
+        && credentialProviderContext.isNamespaceCreationHookEnabled()) {
       k8sNamespace = namespaceMeta.getConfig().getConfigs().get("k8s.namespace");
     }
 
@@ -227,7 +228,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       // get GSA token using Federating Token as credential
       IamCredentialGenerateAccessTokenResponse iamCredentialGenerateAccessTokenResponse =
           GSON.fromJson(fetchIamServiceAccountToken(securityTokenServiceResponse.getAccessToken(),
-          scopes, identity.getSecureValue()),
+              scopes, identity.getSecureValue()),
               IamCredentialGenerateAccessTokenResponse.class);
       LOG.trace("Successfully generated GSA token using Federating Token as credential.");
 
@@ -235,7 +236,8 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
           Instant.parse(iamCredentialGenerateAccessTokenResponse.getExpireTime()));
 
     } catch (ApiException e) {
-      if ((e.getCode() / 100) != 4) {
+      // Returned code can be 0 if parameter validation fails before an API call is made.
+      if (e.getCode() != 0 && (e.getCode() / 100) != 4) {
         // if there was an API exception that was not a 4xx, we can just retry
         throw new RetryableException(e);
       }
