@@ -235,6 +235,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                     String.format("%s:%s", localhost,
                         cConf.getInt(Constants.ArtifactLocalizer.PORT))
                 ));
+            twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                .withNamespacedWorkloadIdentity(PreviewRunnerTwillRunnable.class.getSimpleName());
           }
 
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);

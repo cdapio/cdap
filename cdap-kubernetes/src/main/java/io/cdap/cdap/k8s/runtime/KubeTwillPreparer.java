@@ -189,6 +189,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final String resourcePrefix;
   private final Map<String, String> extraLabels;
   private final Map<String, SecretDiskRunnable> secretDiskRunnables;
+  private final Set<String> withNamespaceWorkloadIdentityRunnables;
   private final Map<String, V1SecurityContext> containerSecurityContexts;
   private final Map<String, Set<String>> readonlyDisks;
   private final Map<String, Map<String, String>> runnableConfigs;
@@ -240,6 +241,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.dependentRunnableNames = new HashSet<>();
     this.serviceAccountName = null;
     this.secretDiskRunnables = new HashMap<>();
+    this.withNamespaceWorkloadIdentityRunnables = new HashSet<>();
     this.containerSecurityContexts = new HashMap<>();
     this.readonlyDisks = new HashMap<>();
     this.runnableConfigs = runnables.stream()
@@ -365,6 +367,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   @Override
   public SecureTwillPreparer withSecretDisk(String runnableName, SecretDisk... secretDisks) {
     secretDiskRunnables.put(runnableName, new SecretDiskRunnable(Arrays.asList(secretDisks)));
+    return this;
+  }
+
+  @Override
+  public SecureTwillPreparer withNamespacedWorkloadIdentity(String runnableName) {
+    withNamespaceWorkloadIdentityRunnables.add(runnableName);
     return this;
   }
 
@@ -1285,9 +1293,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     environs.put(JAVA_OPTS_KEY, jvmOpts);
     // Add workload identity environment variable if applicable.
     if (workloadIdentityEnabled && WorkloadIdentityUtil.shouldMountWorkloadIdentity(
-        cdapInstallNamespace,
-        programRuntimeNamespace,
-        workloadIdentityServiceAccount)) {
+        cdapInstallNamespace, programRuntimeNamespace, workloadIdentityServiceAccount)
+        && !withNamespaceWorkloadIdentityRunnables.contains(runnableName)) {
       V1EnvVar workloadIdentityEnvVar = WorkloadIdentityUtil.generateWorkloadIdentityEnvVar();
       environs.put(workloadIdentityEnvVar.getName(), workloadIdentityEnvVar.getValue());
     }
@@ -1314,6 +1321,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           .filter(entry -> !entry.getKey().equals(GCE_METADATA_HOST_ENV_VAR))
           .collect(Collectors.toMap(Map.Entry::getKey,
               Map.Entry::getValue));
+      // Add workload identity environment variable in the dependent runnable if applicable.
+      if (workloadIdentityEnabled && WorkloadIdentityUtil.shouldMountWorkloadIdentity(
+          cdapInstallNamespace, programRuntimeNamespace, workloadIdentityServiceAccount)
+          && !withNamespaceWorkloadIdentityRunnables.contains(name)) {
+        V1EnvVar workloadIdentityEnvVar = WorkloadIdentityUtil.generateWorkloadIdentityEnvVar();
+        envs.put(workloadIdentityEnvVar.getName(), workloadIdentityEnvVar.getValue());
+      }
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(
           createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
