@@ -94,7 +94,7 @@ public class InMemoryOperationRunnerTest {
   @Test
   public void testRunWithError() throws Exception {
 
-    Mockito.doThrow(new RuntimeException("test")).when(mockScmRunner).pull(
+    Mockito.doThrow(new RuntimeException("test")).when(mockScmRunner).multiPull(
         Mockito.any(), Mockito.any()
     );
 
