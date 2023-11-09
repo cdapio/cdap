@@ -50,4 +50,14 @@ public class NoSqlAppMetadataStoreTest extends AppMetadataStoreTest {
   public void testScanApplicationsWithNamespaceReverse() {
     super.testScanApplicationsWithNamespaceReverse();
   }
+
+  /**
+   * This testcase tries to create a row in the app spec table, with the latest column set
+   * to null (To test the getLatest method for applications deployed before v6.8.0). Setting
+   * a Boolean column to null in the NoSqlStructuredTable is expected to throw a NullPointerException.
+   */
+  @Override @Test(expected = NullPointerException.class)
+  public void testGetLatestOnLegacyRows() throws Exception {
+    super.testGetLatestOnLegacyRows();
+  }
 }

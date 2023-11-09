@@ -59,7 +59,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -630,6 +629,7 @@ public class AppMetadataStore {
 
   /**
    * Persisting a new application version in the table.
+   * Marks the created application version as latest (always).
    *
    * @param id the application id
    * @param appMeta the application metadata to be written
@@ -638,12 +638,28 @@ public class AppMetadataStore {
    * @throws ConflictException if parent-version provided in the request doesn't match the
    *     latest version, do not allow app to be created
    */
-  public int createApplicationVersion(ApplicationId id, ApplicationMeta appMeta)
+  public int createLatestApplicationVersion(ApplicationId id, ApplicationMeta appMeta)
+      throws IOException, ConflictException {
+    return createApplicationVersion(id, appMeta, true);
+  }
+
+  /**
+   * Persisting a new application version in the table.
+   * Marks the created application version as latest based on the value of markAsLatest.
+   *
+   * @param id the application id
+   * @param appMeta the application metadata to be written
+   * @param markAsLatest boolean, indicating if the application should be marked as latest
+   * @return the number of edits to the application. A new application will return 0.
+   * @throws IOException if failed to write app
+   * @throws ConflictException if parent-version provided in the request doesn't match the
+   *     latest version, do not allow app to be created
+   */
+  public int createApplicationVersion(ApplicationId id, ApplicationMeta appMeta, boolean markAsLatest)
       throws IOException, ConflictException {
     String parentVersion = Optional.ofNullable(appMeta.getChange())
         .map(ChangeDetail::getParentVersion).orElse(null);
 
-    boolean markAsLatest = appMeta.getIsLatest();
     // Fetch the latest version
     ApplicationMeta latest = getLatest(id.getAppReference());
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
@@ -695,9 +711,19 @@ public class AppMetadataStore {
       @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest) throws IOException {
     writeApplicationSerialized(namespaceId, appId, versionId,
         GSON.toJson(
-            new ApplicationMeta(appId, spec, null, null, markAsLatest)),
+            new ApplicationMeta(appId, spec, null, null)),
         change, sourceControlMeta, markAsLatest);
     updateApplicationEdit(namespaceId, appId);
+  }
+
+  @VisibleForTesting
+  List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId,
+      String versionId) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, versionId));
+    return fields;
   }
 
   /**
@@ -2478,15 +2504,6 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId,
-      String versionId) {
-    List<Field<?>> fields = new ArrayList<>();
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, versionId));
-    return fields;
-  }
-
   private List<Field<?>> getApplicationNamespaceAppCreationKeys(ApplicationId appId)
       throws IOException {
     List<Field<?>> fields = new ArrayList<>();
@@ -2644,7 +2661,8 @@ public class AppMetadataStore {
     } else {
       changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
     }
-    return new ApplicationMeta(id, spec, changeDetail, sourceControl, latest);
+
+    return new ApplicationMeta(id, spec, changeDetail, sourceControl);
   }
 
   private void writeToStructuredTableWithPrimaryKeys(

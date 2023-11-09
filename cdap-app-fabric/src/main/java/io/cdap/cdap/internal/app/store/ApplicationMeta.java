@@ -36,23 +36,13 @@ public class ApplicationMeta {
   private final ChangeDetail change;
   @Nullable
   private final SourceControlMeta sourceControlMeta;
-  // the isLatest field does not need to be serialized in the ApplicationMetadata object
-  // as it's stored as a separate column in the app spec table.
-  private final transient boolean isLatest;
 
   public ApplicationMeta(String id, ApplicationSpecification spec,
-      @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta,
-      boolean isLatest) {
+      @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta) {
     this.id = id;
     this.spec = spec;
     this.change = change;
     this.sourceControlMeta = sourceControlMeta;
-    this.isLatest = isLatest;
-  }
-
-  public ApplicationMeta(String id, ApplicationSpecification spec,
-      @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta) {
-    this(id, spec, change, sourceControlMeta, true);
   }
 
   public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable ChangeDetail change) {
@@ -77,10 +67,6 @@ public class ApplicationMeta {
     return sourceControlMeta;
   }
 
-  public boolean getIsLatest() {
-    return isLatest;
-  }
-
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -88,7 +74,6 @@ public class ApplicationMeta {
         .add("spec", ADAPTER.toJson(spec))
         .add("change", change)
         .add("sourceControlMeta", sourceControlMeta)
-        .add("isLatest", isLatest)
         .toString();
   }
 }

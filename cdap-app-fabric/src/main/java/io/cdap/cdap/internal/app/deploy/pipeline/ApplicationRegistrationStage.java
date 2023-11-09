@@ -67,9 +67,9 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
     ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(),
         input.getSpecification(),
-        input.getChangeDetail(), input.getSourceControlMeta(), !input.isSkipMarkingLatest());
+        input.getChangeDetail(), input.getSourceControlMeta());
     try {
-      int editCount = store.addApplication(input.getApplicationId(), appMeta);
+      int editCount = store.addApplication(input.getApplicationId(), appMeta, !input.isSkipMarkingLatest());
 
       if (input.isSkipMarkingLatest()) {
         // TODO [CDAP-20848]

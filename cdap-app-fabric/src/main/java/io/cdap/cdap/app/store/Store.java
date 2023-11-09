@@ -359,6 +359,7 @@ public interface Store {
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
+   * Always marks the added application as latest.
    *
    * @param id            application id
    * @param meta          application metadata to store
@@ -366,7 +367,20 @@ public interface Store {
    * @throws ConflictException if the app cannot be deployed when the user provided parent-version doesn't match the
    *     current latest version
    */
-  int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
+  int addLatestApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException;
+
+  /**
+   * Creates new application if it doesn't exist. Updates existing one otherwise.
+   * Marks the application as latest based on the isLatest param.
+   *
+   * @param id            application id
+   * @param meta          application metadata to store
+   * @param isLatest      boolean, indicating if the application should be marked latest
+   * @return              the number of edits to the application. A new application will return 0.
+   * @throws ConflictException if the app cannot be deployed when the user provided parent-version doesn't match the
+   *     current latest version
+   */
+  int addApplication(ApplicationId id, ApplicationMeta meta, boolean isLatest) throws ConflictException;
 
   /**
    * Marks existing applications as latest.
