@@ -32,6 +32,11 @@ public class OperationException extends Exception {
     this.errors = errors;
   }
 
+  public OperationException(String message, Collection<OperationResourceScopedError> errors, Throwable cause) {
+    super(message, cause);
+    this.errors = errors;
+  }
+
   public OperationError toOperationError() {
     return new OperationError(getMessage(), errors);
   }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
@@ -39,14 +40,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.SystemReader;
 import org.junit.Assert;
 import org.junit.Before;
@@ -359,12 +364,24 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
-      Path filePath = manager.getBasePath().resolve("file1");
+      Path filePath1 = manager.getBasePath().resolve("file1");
+      Path filePath2 = manager.getBasePath().resolve("file2");
       String fileContent = "content";
 
-      Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
-      manager.commitAndPush(commitMeta,
-          manager.getBasePath().relativize(filePath));
+      Files.write(filePath1, fileContent.getBytes(StandardCharsets.UTF_8));
+      Files.write(filePath2, fileContent.getBytes(StandardCharsets.UTF_8));
+
+      Set<PathSupplier> filePaths = ImmutableSet.of(
+          new PathSupplier(manager.getBasePath().relativize(filePath1)),
+          new PathSupplier(manager.getBasePath().relativize(filePath2))
+      );
+
+      Collection<PathSupplier> suppliers = manager.commitAndPush(commitMeta, filePaths,
+          (path, hash) -> {
+            path.setHash(hash);
+            return path;
+          });
+      verifyCommit(suppliers, fileContent, commitMeta);
       // Verify metrics.
       Mockito.verify(mockMetricsContext).event(
           Mockito.eq(SourceControlManagement.CLONE_REPOSITORY_SIZE_BYTES),
@@ -375,7 +392,6 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       Mockito.verify(mockMetricsContext).event(
           Mockito.eq(SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS),
           Mockito.anyLong());
-      verifyCommit(filePath, fileContent, commitMeta);
     }
   }
 
@@ -398,11 +414,16 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       String fileContent = "content";
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
-      manager.commitAndPush(commitMeta, Paths.get("fileThatDoesNotExist.json"));
+      manager.commitAndPush(
+          commitMeta,
+          ImmutableSet.of(new PathSupplier(Paths.get("file1")),
+              new PathSupplier(Paths.get("fileThatDoesNotExist.json"))),
+          (path, hash) -> ""
+      );
     }
   }
 
-  @Test(expected = NoChangesToPushException.class)
+  @Test
   public void testCommitAndPushNoChangeSuccess() throws Exception {
     String pathPrefix = "prefix";
     String serverUrl = gitServer.getServerUrl();
@@ -410,7 +431,6 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             Provider.GITHUB)
         .setLink(serverUrl + "ignored")
         .setDefaultBranch("develop")
-        .setPathPrefix(pathPrefix)
         .setAuth(AUTH_CONFIG)
         .build();
 
@@ -419,9 +439,34 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
-      manager.commitAndPush(commitMeta, Paths.get(pathPrefix));
 
-      verifyNoCommit();
+      Path filePath1 = manager.getBasePath().resolve("file1");
+      Path filePath2 = manager.getBasePath().resolve("file2");
+      String fileContent = "content";
+      Files.write(filePath1, fileContent.getBytes(StandardCharsets.UTF_8));
+      Files.write(filePath2, fileContent.getBytes(StandardCharsets.UTF_8));
+
+      Path file2 = Paths.get("file2");
+      Path file1 = Paths.get("file1");
+      manager.commitAndPush(commitMeta,
+          ImmutableSet.of(new PathSupplier(file1), new PathSupplier(file2)),
+          (path, hash) -> ""
+      );
+
+      Files.write(filePath1, fileContent.getBytes(StandardCharsets.UTF_8));
+      Files.write(filePath2, fileContent.getBytes(StandardCharsets.UTF_8));
+
+      try {
+        manager.commitAndPush(commitMeta,
+            ImmutableSet.of(new PathSupplier(file1), new PathSupplier(file2)),
+            (path, hash) -> ""
+        );
+        Assert.fail();
+      } catch (NoChangesToPushException e) {
+        // expected
+      }
+
+      verifyCommitCount(2);
     }
   }
 
@@ -445,8 +490,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
       gitServer.after();
-      manager.commitAndPush(commitMeta,
-          manager.getBasePath().relativize(filePath));
+      manager.commitAndPush(commitMeta, ImmutableSet.of(new PathSupplier(manager.getBasePath().relativize(filePath))),
+          (path, hash) -> "");
     }
   }
 
@@ -466,29 +511,24 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         RepositoryManager.calculateDirectorySize(root));
   }
 
-  private void verifyNoCommit() throws GitAPIException, IOException {
+  private void verifyCommitCount(int count) throws GitAPIException, IOException {
     Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify")
         .toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
     List<RevCommit> commits = StreamSupport.stream(
             localGit.log().all().call().spliterator(), false)
         .collect(Collectors.toList());
-    Assert.assertEquals(1, commits.size());
+    Assert.assertEquals(count, commits.size());
   }
 
-  private void verifyCommit(Path pathFromRepoRoot, String expectedContent,
-      CommitMeta commitMeta)
+  private void verifyCommit(Collection<PathSupplier> pathSuppliers, String expectedContent, CommitMeta commitMeta)
       throws
       GitAPIException, IOException {
     Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify")
         .toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
-    Path filePath = tempDirPath.resolve(pathFromRepoRoot);
 
-    String actualContent = new String(Files.readAllBytes(filePath),
-        StandardCharsets.UTF_8);
-    Assert.assertEquals(expectedContent, actualContent);
-
+    // verify commit
     List<RevCommit> commits =
         StreamSupport.stream(localGit.log().all().call().spliterator(), false)
             .collect(Collectors.toList());
@@ -500,6 +540,19 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         latestCommit.getAuthorIdent().getName());
     Assert.assertEquals(commitMeta.getCommitter(),
         latestCommit.getCommitterIdent().getName());
+
+    for (PathSupplier pathSupplier : pathSuppliers) {
+      // verify content
+      Path filePath = tempDirPath.resolve(pathSupplier.get());
+      String actualContent = new String(Files.readAllBytes(filePath),
+          StandardCharsets.UTF_8);
+      Assert.assertEquals(expectedContent, actualContent);
+
+      // verify hash
+      String gotHash = TreeWalk.forPath(localGit.getRepository(), pathSupplier.get().toString(),
+          latestCommit.getTree()).getObjectId(0).getName();
+      Assert.assertEquals(pathSupplier.getHash(), gotHash);
+    }
 
     localGit.close();
     DirUtils.deleteDirectoryContents(tempDirPath.toFile());
@@ -539,7 +592,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       throws IOException, NoChangesToPushException, GitAPIException {
     Files.write(manager.getRepositoryRoot().resolve(filePath),
         contents.getBytes(StandardCharsets.UTF_8));
-    manager.commitAndPush(commitMeta, filePath);
+    manager.commitAndPush(commitMeta, ImmutableSet.of(new PathSupplier(filePath)),
+        (path, hash) -> "");
   }
 
   private void installHook(RepositoryManager manager) throws IOException {
@@ -551,5 +605,28 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         PosixFilePermissions.fromString("rwxr--r--")));
     Files.write(gitHookPath, "touch hook_executed\nexit 0".getBytes(
         StandardCharsets.UTF_8));
+  }
+
+  private static class PathSupplier implements Supplier<Path> {
+
+    final Path path;
+    String hash;
+
+    private PathSupplier(Path path) {
+      this.path = path;
+    }
+
+    public void setHash(String hash) {
+      this.hash = hash;
+    }
+
+    private String getHash() {
+      return hash;
+    }
+
+    @Override
+    public Path get() {
+      return path;
+    }
   }
 }
