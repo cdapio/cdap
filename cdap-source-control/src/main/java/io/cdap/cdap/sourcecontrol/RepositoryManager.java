@@ -39,12 +39,15 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -58,6 +61,8 @@ import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.lib.Constants;
@@ -75,8 +80,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A git repository manager that is responsible for handling interfacing with
- * git. It provides version control operations. This is not thread safe.
+ * A git repository manager that is responsible for handling interfacing with git. It provides
+ * version control operations. This is not thread safe.
  */
 public class RepositoryManager implements AutoCloseable {
 
@@ -99,8 +104,8 @@ public class RepositoryManager implements AutoCloseable {
    * @param cConf CDAP configurations.
    * @param namespace The CDAP namespace to whcih the Git repository is linked.
    * @param repoConfig The repository configuration for the CDAP namespace.
-   * @param metricsCollectionService A metrics service to emit metrics related
-   *                                 to SCM operations.
+   * @param metricsCollectionService A metrics service to emit metrics related to SCM
+   *     operations.
    */
   public RepositoryManager(final SecureStore secureStore,
       final CConfiguration cConf, final NamespaceId namespace,
@@ -123,9 +128,8 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Returns the base path in the git repo to store CDAP applications. If an
-   * optional Path prefix is provided in the repository configuration, the
-   * returned path includes it.
+   * Returns the base path in the git repo to store CDAP applications. If an optional Path prefix is
+   * provided in the repository configuration, the returned path includes it.
    *
    * @return the path for the repository base directory.
    */
@@ -140,8 +144,7 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Gets the relative path of a file in git repository based on the user
-   * configured path prefix.
+   * Gets the relative path of a file in git repository based on the user configured path prefix.
    *
    * @param fileName The filename
    * @return the relative {@link Path}
@@ -158,11 +161,10 @@ public class RepositoryManager implements AutoCloseable {
   /**
    * Validates the provided configuration.
    *
-   * @param secureStore         A secure store for fetching credentials if
-   *                            required.
+   * @param secureStore A secure store for fetching credentials if required.
    * @param sourceControlConfig Configuration for source control operations.
-   * @throws RepositoryConfigValidationException when provided repository
-   *                                             configuration is invalid.
+   * @throws RepositoryConfigValidationException when provided repository configuration is
+   *     invalid.
    */
   public static void validateConfig(final SecureStore secureStore,
       final SourceControlConfig sourceControlConfig)
@@ -211,24 +213,24 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Commits and pushes the changes of a given file under the repository root
-   * path.
+   * Commits and pushes the changes of given files under the repository root path.
+   * Processes the hashes to a list of given type S
    *
-   * @param commitMeta  Details for the commit including author, committer and
-   *                    commit message
-   * @param fileChanged The relative path to repository root where the file is
-   *                    updated
-   * @return the hash of the written file.
-   * @throws GitAPIException          when the underlying git commands fail
-   * @throws NoChangesToPushException when there's no file changes for the
-   *                                  commit
-   * @throws GitOperationException    when failed to get filehash due to IOException
-   *                                  or the {@link PushResult} status is not OK
-   * @throws SourceControlException   when failed to get the fileHash before
-   *                                  push
+   * @param <T> Type of elements of the output collection
+   * @param <S> Type of elements of the input collection, must implement {@link Supplier<Path>}
+   * @param commitMeta Details for the commit including author, committer and commit message
+   * @param filesChanged Supplies relative paths to repository root of the updated files
+   * @param hashConsumer a {@link BiFunction} that takes a value of the input collection element type (S),
+   *                     a filehash and returns a value of the output collection element type (T)
+   * @return a {@link Collection} of elements of type T
+   * @throws GitAPIException when the underlying git commands fail
+   * @throws NoChangesToPushException when there's no file changes for the commit
+   * @throws GitOperationException when failed to get filehash due to IOException or the
+   *     {@link PushResult} status is not OK
+   * @throws SourceControlException when failed to get the fileHash before push
    */
-  public String commitAndPush(final CommitMeta commitMeta,
-      final Path fileChanged)
+  public <T, S extends Supplier<Path>> Collection<T> commitAndPush(CommitMeta commitMeta, Collection<S> filesChanged,
+      BiFunction<S, String, T> hashConsumer)
       throws NoChangesToPushException, GitAPIException {
     validateInitialized();
     final Stopwatch stopwatch = new Stopwatch().start();
@@ -240,25 +242,21 @@ public class RepositoryManager implements AutoCloseable {
           "No changes have been made for the applications to push.");
     }
 
-    git.add().addFilepattern(fileChanged.toString()).call();
-
-    RevCommit commit = getCommitCommand(commitMeta).call();
-
-    String fileHash;
-    try {
-      fileHash = getFileHash(fileChanged, commit);
-    } catch (IOException e) {
-      throw new GitOperationException(
-          String.format("Failed to get fileHash for %s", fileChanged),
-          e);
+    List<T> output = new ArrayList<>(filesChanged.size());
+    for (S fileChanged : filesChanged) {
+      DirCache cache = git.add().addFilepattern(fileChanged.get().toString()).call();
+      DirCacheEntry entry = cache.getEntry(fileChanged.get().toString());
+      // This should not happen usually as we have just added the entry
+      if (entry == null) {
+        throw new SourceControlException(
+            String.format(
+                "Failed to get fileHash for %s because some paths are not "
+                    + "found in Git tree", fileChanged.get()));
+      }
+      output.add(hashConsumer.apply(fileChanged, entry.getObjectId().name()));
     }
 
-    if (fileHash == null) {
-      throw new SourceControlException(
-          String.format(
-              "Failed to get fileHash for %s, because the path is not "
-                  + "found in Git tree", fileChanged));
-    }
+    getCommitCommand(commitMeta).call();
 
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig,
         credentialsProvider);
@@ -269,7 +267,7 @@ public class RepositoryManager implements AutoCloseable {
         if (rru.getStatus() != RemoteRefUpdate.Status.OK
             && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
           throw new GitOperationException(
-              String.format("Push failed for %s: %s", fileChanged,
+              String.format("Push failed for %s: %s", filesChanged,
                   rru.getStatus()));
         }
       }
@@ -278,7 +276,7 @@ public class RepositoryManager implements AutoCloseable {
     metricsContext.event(
         SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS,
         stopwatch.stop().elapsedTime(TimeUnit.MILLISECONDS));
-    return fileHash;
+    return output;
   }
 
   private CommitCommand getCommitCommand(final CommitMeta commitMeta) {
@@ -294,16 +292,14 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Initializes the Git repository by cloning remote. If the repository is
-   * already cloned, it resets the git repository to the state in the remote.
-   * All local changes will be lost.
+   * Initializes the Git repository by cloning remote. If the repository is already cloned, it
+   * resets the git repository to the state in the remote. All local changes will be lost.
    *
    * @return the commit ID of the present HEAD.
-   * @throws GitAPIException               when a Git operation fails.
-   * @throws IOException                   when file or network I/O fails.
-   * @throws AuthenticationConfigException when there is a failure while
-   *                                       fetching authentication credentials
-   *                                       for Git.
+   * @throws GitAPIException when a Git operation fails.
+   * @throws IOException when file or network I/O fails.
+   * @throws AuthenticationConfigException when there is a failure while fetching authentication
+   *     credentials for Git.
    */
   public String cloneRemote()
       throws IOException, AuthenticationConfigException, GitAPIException {
@@ -371,20 +367,19 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Returns the <a href="https://git-scm.com/docs/git-hash-object">Git Hash</a>
-   * of the requested file path in the provided commit. It is the caller's
-   * responsibility to handle paths that refer to directories or symlinks.
+   * Returns the <a href="https://git-scm.com/docs/git-hash-object">Git Hash</a> of the requested
+   * file path in the provided commit. It is the caller's responsibility to handle paths that refer
+   * to directories or symlinks.
    *
-   * @param relativePath The path relative to the repository base path (returned
-   *                     by {@link RepositoryManager#getRepositoryRoot()}) on
-   *                     the filesystem.
-   * @param commitHash   The commit ID hash for which to get the file hash.
+   * @param relativePath The path relative to the repository base path (returned by
+   *     {@link RepositoryManager#getRepositoryRoot()}) on the filesystem.
+   * @param commitHash The commit ID hash for which to get the file hash.
    * @return The git file hash of the requested file.
-   * @throws IOException           when file or commit isn't found, there are
-   *                               circular symlinks or other file IO errors.
-   * @throws NotFoundException     when the file isn't committed to Git.
-   * @throws IllegalStateException when {@link RepositoryManager#cloneRemote()}
-   *                               isn't called before this.
+   * @throws IOException when file or commit isn't found, there are circular symlinks or other
+   *     file IO errors.
+   * @throws NotFoundException when the file isn't committed to Git.
+   * @throws IllegalStateException when {@link RepositoryManager#cloneRemote()} isn't called
+   *     before this.
    */
   public String getFileHash(final Path relativePath, final String commitHash)
       throws IOException, NotFoundException,
@@ -524,17 +519,14 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Gets the {@link RevCommit} for a {@link ObjectId} from the local git
-   * repository.
+   * Gets the {@link RevCommit} for a {@link ObjectId} from the local git repository.
    *
-   * @param commitId               the ID of the commit to be fetched.
-   * @param fetchCommitsIfRequired Whether to fetch commits from remote
-   *                               repository when commit isn't found locally.
+   * @param commitId the ID of the commit to be fetched.
+   * @param fetchCommitsIfRequired Whether to fetch commits from remote repository when commit
+   *     isn't found locally.
    * @return the {@link RevCommit}
-   * @throws IOException     when the commit for the provided commitId isn't
-   *                         found.
-   * @throws GitAPIException when there are failures while fetching commits from
-   *                         the remote.
+   * @throws IOException when the commit for the provided commitId isn't found.
+   * @throws GitAPIException when there are failures while fetching commits from the remote.
    */
   private RevCommit getRevCommit(final ObjectId commitId,
       final boolean fetchCommitsIfRequired)
@@ -582,8 +574,8 @@ public class RepositoryManager implements AutoCloseable {
   }
 
   /**
-   * Does a <a href="https://git-scm.com/docs/git-reset"> hard reset </a> to the
-   * remote branch being tracked.
+   * Does a <a href="https://git-scm.com/docs/git-reset"> hard reset </a> to the remote branch being
+   * tracked.
    *
    * @param remoteBranchName branch to reset to.
    * @return the commit ID of the new head.
@@ -605,8 +597,8 @@ public class RepositoryManager implements AutoCloseable {
    *
    * @param directoryPath the path of the root directory.
    * @return the size of the directory in bytes.
-   * @throws IOException when there are failures while reading the file or {@link UncheckedIOException}
-   *     is thrown out and we throw to the cause.
+   * @throws IOException when there are failures while reading the file or
+   *     {@link UncheckedIOException} is thrown out and we throw to the cause.
    */
   @VisibleForTesting
   static long calculateDirectorySize(Path directoryPath) throws IOException {

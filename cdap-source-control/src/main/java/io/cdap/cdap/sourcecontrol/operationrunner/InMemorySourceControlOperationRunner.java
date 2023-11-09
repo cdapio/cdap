@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -29,6 +30,8 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
@@ -49,9 +52,13 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,21 +90,56 @@ public class InMemorySourceControlOperationRunner extends
             pushRequest.getNamespaceId(),
             pushRequest.getRepositoryConfig())
     ) {
-      try {
-        repositoryManager.cloneRemote();
-      } catch (GitAPIException | IOException e) {
-        throw new GitOperationException(String.format("Failed to clone remote repository: %s",
-                                                       e.getMessage()), e);
+      cloneAndCreateBaseDir(repositoryManager);
+      ApplicationDetail app = pushRequest.getApp();
+      writeAppDetail(repositoryManager, app);
+
+      List<PushAppResponse> responses = new ArrayList<>(commitAndPush(repositoryManager,
+          pushRequest.getCommitDetails(),
+          ImmutableList.of(new PushFile(
+                  app.getName(),
+                  app.getAppVersion(),
+                  repositoryManager.getFileRelativePath(generateConfigFileName(app.getName()))
+              )
+          )
+      ));
+
+      // it should never be empty as in case of any error we will get an exception
+      return responses.get(0);
+    }
+  }
+
+  @Override
+  public Collection<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+      ApplicationManager appManager)
+      throws NoChangesToPushException, AuthenticationConfigException {
+    try (
+        RepositoryManager repositoryManager = repoManagerFactory.create(
+            pushRequest.getNamespaceId(),
+            pushRequest.getRepositoryConfig())
+    ) {
+      cloneAndCreateBaseDir(repositoryManager);
+
+      LOG.debug("Pushing application configs for {} apps.", pushRequest.getApps().size());
+
+      List<PushFile> filesToPush = new LinkedList<>();
+
+      for (String appToPush : pushRequest.getApps()) {
+        LOG.trace("Pushing application configs for : {}.", appToPush);
+        ApplicationReference appRef = new ApplicationReference(pushRequest.getNamespaceId(),
+            appToPush);
+        try {
+          ApplicationDetail detail = appManager.get(appRef);
+          writeAppDetail(repositoryManager, detail);
+          filesToPush.add(new PushFile(detail.getName(), detail.getAppVersion(),
+              repositoryManager.getFileRelativePath(generateConfigFileName(detail.getName()))));
+        } catch (IOException | NotFoundException e) {
+          throw new SourceControlException(
+              String.format("Failed to fetch details for app %s", appRef), e);
+        }
       }
 
-      LOG.info("Pushing application configs for : {}", pushRequest.getApp().getName());
-
-      //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
-      return writeAppDetailAndPush(
-          repositoryManager,
-          pushRequest.getApp(),
-          pushRequest.getCommitDetails()
-      );
+      return commitAndPush(repositoryManager, pushRequest.getCommitDetails(), filesToPush);
     }
   }
 
@@ -105,7 +147,7 @@ public class InMemorySourceControlOperationRunner extends
   public PullAppResponse<?> pull(PullAppOperationRequest pullRequest)
       throws NotFoundException, AuthenticationConfigException {
     AtomicReference<PullAppResponse<?>> response = new AtomicReference<>();
-    pull(
+    multiPull(
         new MultiPullAppOperationRequest(
             pullRequest.getRepositoryConfig(),
             pullRequest.getApp().getNamespaceId(),
@@ -118,7 +160,7 @@ public class InMemorySourceControlOperationRunner extends
   }
 
   @Override
-  public void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+  public void multiPull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
       throws SourceControlAppConfigNotFoundException, AuthenticationConfigException {
     LOG.info("Cloning remote to pull applications {}", pullRequest.getApps());
 
@@ -137,7 +179,8 @@ public class InMemorySourceControlOperationRunner extends
   }
 
   private PullAppResponse<?> pullSingle(RepositoryManager repositoryManager, String commitId,
-      String applicationName) throws SourceControlException, SourceControlAppConfigNotFoundException {
+      String applicationName)
+      throws SourceControlException, SourceControlAppConfigNotFoundException {
     String configFileName = generateConfigFileName(applicationName);
     Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
     Path filePathToRead = validateAppConfigRelativePath(repositoryManager, appRelativePath);
@@ -164,20 +207,12 @@ public class InMemorySourceControlOperationRunner extends
     }
   }
 
-  /**
-   * Atomic operation of writing application and push, return the push response.
-   *
-   * @param repositoryManager {@link RepositoryManager} to conduct git operations
-   * @param appToPush         {@link ApplicationDetail} to push
-   * @param commitDetails     {@link CommitMeta} from user input
-   * @return {@link PushAppResponse}
-   * @throws NoChangesToPushException if there's no change between the application in namespace and git repository
-   * @throws SourceControlException   for failures while writing config file or doing git operations
-   */
-  private PushAppResponse writeAppDetailAndPush(RepositoryManager repositoryManager,
-                                                ApplicationDetail appToPush,
-                                                CommitMeta commitDetails)
-    throws NoChangesToPushException {
+  private void cloneAndCreateBaseDir(RepositoryManager repositoryManager) {
+    try {
+      repositoryManager.cloneRemote();
+    } catch (GitAPIException | IOException e) {
+      throw new GitOperationException("Failed to clone remote repository.", e);
+    }
     try {
       // Creates the base directory if it does not exist. This method does not throw an exception if the directory
       // already exists. This is for the case that the repo is new and user configured prefix path.
@@ -185,7 +220,17 @@ public class InMemorySourceControlOperationRunner extends
     } catch (IOException e) {
       throw new SourceControlException("Failed to create repository base directory", e);
     }
+  }
 
+  /**
+   * Write {@link ApplicationDetail} to config file in git repository.
+   *
+   * @param repositoryManager {@link RepositoryManager} to conduct git operations
+   * @param appToPush application details to write
+   * @throws SourceControlException for failures while writing config file or doing git
+   *     operations
+   */
+  private void writeAppDetail(RepositoryManager repositoryManager, ApplicationDetail appToPush) {
     String configFileName = generateConfigFileName(appToPush.getName());
 
     Path appRelativePath = repositoryManager.getFileRelativePath(configFileName);
@@ -207,21 +252,43 @@ public class InMemorySourceControlOperationRunner extends
       );
     }
 
-    LOG.debug("Wrote application configs for {} in file {}", appToPush.getName(), appRelativePath);
+    LOG.debug("Wrote application configs for {} in file {}", appToPush.getName(),
+        appRelativePath);
+  }
 
+  /**
+   * Atomic operation of writing commit and push, return push responses.
+   *
+   * @param repositoryManager {@link RepositoryManager} to conduct git operations
+   * @param commitMeta {@link CommitMeta} from user input
+   * @param filesToPush an {@link Iterator} of objects of the generic type T.
+   * @throws NoChangesToPushException if there's no effective change between applications in
+   *     namespace and git repository
+   * @throws SourceControlException for failures while writing config file or doing git
+   *     operations
+   */
+  //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
+  private Collection<PushAppResponse> commitAndPush(RepositoryManager repositoryManager,
+      CommitMeta commitMeta, List<PushFile> filesToPush) throws NoChangesToPushException {
+
+    // TODO: CDAP-20383, handle NoChangesToPushException
+    //  Define the case that the application to push does not have any changes
     try {
-      // TODO: CDAP-20383, handle NoChangesToPushException
-      //  Define the case that the application to push does not have any changes
-      String gitFileHash = repositoryManager.commitAndPush(commitDetails, appRelativePath);
-      return new PushAppResponse(appToPush.getName(), appToPush.getAppVersion(), gitFileHash);
+      return repositoryManager.commitAndPush(commitMeta, filesToPush,
+          (PushFile pushFile, String hash) -> new PushAppResponse(
+              pushFile.getAppName(),
+              pushFile.getAppVersion(),
+              hash
+          ));
     } catch (GitAPIException e) {
-      throw new GitOperationException(String.format("Failed to push config to git: %s", e.getMessage()), e);
+      throw new GitOperationException(
+          String.format("Failed to push configs to git: %s", e.getMessage()), e);
     }
   }
 
   /**
-   * Generate config file name from app name.
-   * Currently, it only adds `.json` as extension with app name being the filename.
+   * Generate config file name from app name. Currently, it only adds `.json` as extension with app
+   * name being the filename.
    *
    * @param appName Name of the application
    * @return The file name we want to store application config in
@@ -307,6 +374,41 @@ public class InMemorySourceControlOperationRunner extends
   @Override
   protected void shutDown() throws Exception {
     // No-op.
+  }
+
+  /**
+   * Container class to encapsulate files to push information.
+   */
+  public static class PushFile implements Supplier<Path> {
+
+    private final String appName;
+    private final String appVersion;
+    private final Path path;
+
+    /**
+     * Constructs an object encapsulating information for a file to push.
+     * @param appName name of the application to push
+     * @param appVersion version of the application to push
+     * @param path filepath of the application json to push
+     */
+    public PushFile(String appName, String appVersion, Path path) {
+      this.appName = appName;
+      this.appVersion = appVersion;
+      this.path = path;
+    }
+
+    public String getAppName() {
+      return appName;
+    }
+
+    public String getAppVersion() {
+      return appVersion;
+    }
+
+    @Override
+    public Path get() {
+      return path;
+    }
   }
 }
 
