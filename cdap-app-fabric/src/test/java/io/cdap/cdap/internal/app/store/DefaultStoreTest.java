@@ -159,7 +159,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     ProgramDescriptor descriptor = store.loadProgram(appId.mr("mrJob1"));
     Assert.assertNotNull(descriptor);
@@ -494,7 +494,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta("application1", spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     spec = store.getApplication(appId);
     Assert.assertNotNull(spec);
@@ -507,12 +507,12 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta("application1", Specifications.from(new FooApp()),
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(id, appMeta);
+    store.addLatestApplication(id, appMeta);
     // update
     ApplicationMeta appMetaUpdate = new ApplicationMeta("application1", Specifications.from(new ChangedFooApp()),
                                                         new ChangeDetail(null, null, null,
                                                                          System.currentTimeMillis()));
-    store.addApplication(id, appMetaUpdate);
+    store.addLatestApplication(id, appMetaUpdate);
 
     ApplicationSpecification spec = store.getApplication(id);
     Assert.assertNotNull(spec);
@@ -523,15 +523,18 @@ public abstract class DefaultStoreTest {
   public void testAddApplicationWithoutMarkingLatest()
       throws ConflictException {
     long creationTime = System.currentTimeMillis();
-    ApplicationId appId = new ApplicationId("account1", "app1");
-    ApplicationMeta appMeta = new ApplicationMeta("app1", Specifications.from(new FooApp()),
-        new ChangeDetail(null, null, null, creationTime), null, false);
-    store.addApplication(appId, appMeta);
+    String appName = "notLatestApp1";
+    ApplicationId appId = new ApplicationId("account1", appName, "v1");
+    ApplicationMeta appMeta = new ApplicationMeta(appName, Specifications.from(new FooApp()),
+        new ChangeDetail(null, null, null, creationTime), null);
+    store.addApplication(appId, appMeta, false);
 
     ApplicationMeta storedMeta = store.getApplicationMetadata(appId);
-    Assert.assertEquals("app1", storedMeta.getId());
+    Assert.assertEquals(appName, storedMeta.getId());
     Assert.assertEquals(creationTime, storedMeta.getChange().getCreationTimeMillis());
-    Assert.assertFalse(storedMeta.getIsLatest());
+
+    ApplicationMeta latestMeta = store.getLatest(appId.getAppReference());
+    Assert.assertNull(latestMeta);
   }
 
   @Test
@@ -541,26 +544,24 @@ public abstract class DefaultStoreTest {
     // Add 2 new applications without marking them latest
     ApplicationId appId1 = new ApplicationId("account1", "newApp1");
     ApplicationMeta appMeta1 = new ApplicationMeta("newApp1", Specifications.from(new FooApp()),
-        new ChangeDetail(null, null, null, creationTime), null, false);
-    store.addApplication(appId1, appMeta1);
+        new ChangeDetail(null, null, null, creationTime), null);
+    store.addApplication(appId1, appMeta1, false);
 
     ApplicationId appId2 = new ApplicationId("account1", "newApp2");
     ApplicationMeta appMeta2 = new ApplicationMeta("newApp2", Specifications.from(new FooApp()),
-        new ChangeDetail(null, null, null, creationTime), null, false);
-    store.addApplication(appId2, appMeta2);
+        new ChangeDetail(null, null, null, creationTime), null);
+    store.addApplication(appId2, appMeta2, false);
 
     // Now mark them as latest in bulk
     store.markApplicationsLatest(Arrays.asList(appId1, appId2));
 
-    ApplicationMeta storedMeta1 = store.getApplicationMetadata(appId1);
+    ApplicationMeta storedMeta1 = store.getLatest(appId1.getAppReference());
     Assert.assertEquals("newApp1", storedMeta1.getId());
     Assert.assertEquals(creationTime, storedMeta1.getChange().getCreationTimeMillis());
-    Assert.assertTrue(storedMeta1.getIsLatest());
 
-    ApplicationMeta storedMeta2 = store.getApplicationMetadata(appId2);
+    ApplicationMeta storedMeta2 = store.getLatest(appId2.getAppReference());
     Assert.assertEquals("newApp2", storedMeta2.getId());
     Assert.assertEquals(creationTime, storedMeta2.getChange().getCreationTimeMillis());
-    Assert.assertTrue(storedMeta2.getIsLatest());
   }
 
   @Test
@@ -576,28 +577,29 @@ public abstract class DefaultStoreTest {
     ApplicationId appIdV1 = new ApplicationId("account1", appName, oldVersion);
     ApplicationMeta appMetaV1 = new ApplicationMeta(appName, Specifications.from(new FooApp(), appName, oldVersion),
         new ChangeDetail(null, null, null, creationTime));
-    store.addApplication(appIdV1, appMetaV1);
+    store.addLatestApplication(appIdV1, appMetaV1);
 
     // Add a new version of the application without marking latest
     ApplicationId appIdV2 = new ApplicationId("account1", appName, newVersion);
     ApplicationMeta appMetaV2 = new ApplicationMeta(appName, Specifications.from(new FooApp(), appName, newVersion),
-        new ChangeDetail(null, null, null, v2CreationTime), null, false);
-    store.addApplication(appIdV2, appMetaV2);
+        new ChangeDetail(null, null, null, v2CreationTime), null);
+    store.addApplication(appIdV2, appMetaV2, false);
 
     // Now mark the new version as latest
     store.markApplicationsLatest(Collections.singletonList(appIdV2));
+    ApplicationMeta latestMeta = store.getLatest(appIdV1.getAppReference());
 
     ApplicationMeta storedMetaV1 = store.getApplicationMetadata(appIdV1);
     Assert.assertEquals(appName, storedMetaV1.getId());
     Assert.assertEquals(oldVersion, storedMetaV1.getSpec().getAppVersion());
     Assert.assertEquals(creationTime, storedMetaV1.getChange().getCreationTimeMillis());
-    Assert.assertFalse(storedMetaV1.getIsLatest());
+    Assert.assertNotEquals(latestMeta.getSpec().getAppVersion(), storedMetaV1.getSpec().getAppVersion());
 
     ApplicationMeta storedMetaV2 = store.getApplicationMetadata(appIdV2);
     Assert.assertEquals(appName, storedMetaV2.getId());
     Assert.assertEquals(newVersion, storedMetaV2.getSpec().getAppVersion());
     Assert.assertEquals(v2CreationTime, storedMetaV2.getChange().getCreationTimeMillis());
-    Assert.assertTrue(storedMetaV2.getIsLatest());
+    Assert.assertEquals(latestMeta.getSpec().getAppVersion(), storedMetaV2.getSpec().getAppVersion());
   }
 
   @Test(expected = ApplicationNotFoundException.class)
@@ -620,7 +622,7 @@ public abstract class DefaultStoreTest {
         new ChangeDetail(null, null, null,
             System.currentTimeMillis()), null);
 
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
     Map<ApplicationId, SourceControlMeta> updateRequests = new HashMap<>();
     updateRequests.put(appId, new SourceControlMeta("updated-file-hash"));
     store.updateApplicationSourceControlMeta(updateRequests);
@@ -640,7 +642,7 @@ public abstract class DefaultStoreTest {
         new ChangeDetail(null, null, null,
             System.currentTimeMillis()), new SourceControlMeta("initial-file-hash"));
 
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
     // The following appId is not added to the store
     ApplicationId appId2 = new ApplicationId("account1", "application2");
 
@@ -708,7 +710,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     AbstractApplication newApp = new AppWithNoServices();
 
@@ -728,7 +730,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     // Test setting of service instances
     ProgramId programId = appId.program(ProgramType.SERVICE, "NoOpService");
@@ -755,7 +757,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     ProgramId programId = appId.worker(AppWithWorker.WORKER);
     int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
@@ -776,7 +778,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -794,7 +796,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -818,7 +820,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     // add some run records to workflow and service
     for (int i = 0; i < 5; i++) {
@@ -864,7 +866,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -916,14 +918,14 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId1, appMeta);
+    store.addLatestApplication(appId1, appMeta);
 
     spec = Specifications.from(new AppWithServices());
     ApplicationId appId2 = namespaceId.app(spec.getName());
     appMeta = new ApplicationMeta(spec.getName(), spec,
                                   new ChangeDetail(null, null, null,
                                                    System.currentTimeMillis()));
-    store.addApplication(appId2, appMeta);
+    store.addLatestApplication(appId2, appMeta);
 
     ArtifactId artifactId = appId1.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
@@ -986,7 +988,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     ProgramId mapreduceProgramId = new ApplicationId("testRunsLimit", spec.getName())
       .mr(AllProgramsApp.NoOpMR.class.getSimpleName());
@@ -1017,7 +1019,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
@@ -1063,7 +1065,7 @@ public abstract class DefaultStoreTest {
       ApplicationMeta appMeta = new ApplicationMeta(appName, appSpec,
                                                     new ChangeDetail(null, null, null,
                                                                      System.currentTimeMillis()));
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appMeta);
+      store.addLatestApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appMeta);
     }
 
     // Mimicking editing the first count / 2 apps
@@ -1073,7 +1075,7 @@ public abstract class DefaultStoreTest {
       ApplicationMeta appMeta = new ApplicationMeta(appName, appSpec,
           new ChangeDetail("edited" + i, null, null,
               System.currentTimeMillis()));
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName, version), appMeta);
+      store.addLatestApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName, version), appMeta);
     }
 
     List<ApplicationId> allAppsVersion = new ArrayList<>();
@@ -1118,9 +1120,9 @@ public abstract class DefaultStoreTest {
       ApplicationMeta appMeta = new ApplicationMeta(appName, appSpec,
                                                     new ChangeDetail(null, null, null,
                                                                      System.currentTimeMillis()));
-      store.addApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appMeta);
+      store.addLatestApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName), appMeta);
       appName = "test" + (2 * i + 1);
-      store.addApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appMeta);
+      store.addLatestApplication(new ApplicationId(NamespaceId.CDAP.getNamespace(), appName), appMeta);
     }
 
     List<ApplicationId> apps = new ArrayList<ApplicationId>();
@@ -1185,7 +1187,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
@@ -1330,7 +1332,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
     store.saveState(new AppStateKeyValue(namespaceId, spec.getName(), stateKey, stateValue));
 
     Assert.assertNotNull(store.getApplication(appId));
@@ -1357,7 +1359,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
     store.saveState(new AppStateKeyValue(namespaceId, appName, stateKey, stateValue));
 
     Assert.assertNotNull(store.getApplication(appId));
@@ -1388,7 +1390,7 @@ public abstract class DefaultStoreTest {
     List<ApplicationId> expectedApps = new ArrayList<>();
 
     // Insert a row that is null for changeDetail
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
     expectedApps.add(appId);
 
     ApplicationId newVersionAppId = appId.getAppReference().app("new_version");
@@ -1399,7 +1401,7 @@ public abstract class DefaultStoreTest {
                                                      new ChangeDetail(null, null,
                                                                       null, currentTime));
     // Insert a second version
-    store.addApplication(newVersionAppId, newAppMeta);
+    store.addLatestApplication(newVersionAppId, newAppMeta);
     expectedApps.add(newVersionAppId);
 
     // Insert a third version
@@ -1408,7 +1410,7 @@ public abstract class DefaultStoreTest {
     ApplicationMeta anotherAppMeta = new ApplicationMeta(anotherVersionAppId.getApplication(), spec,
                                                          new ChangeDetail(null, null,
                                                                           null, currentTime + 1000));
-    store.addApplication(anotherVersionAppId, anotherAppMeta);
+    store.addLatestApplication(anotherVersionAppId, anotherAppMeta);
     expectedApps.add(anotherVersionAppId);
 
     // Reverse it because we want DESC order

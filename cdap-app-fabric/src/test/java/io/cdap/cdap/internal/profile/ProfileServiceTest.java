@@ -354,7 +354,7 @@ public abstract class ProfileServiceTest {
     ApplicationMeta appMeta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                   new ChangeDetail(null, null, null,
                                                                    System.currentTimeMillis()));
-    store.addApplication(appId, appMeta);
+    store.addLatestApplication(appId, appMeta);
 
     ProgramId programId = NamespaceId.DEFAULT.app(appSpec.getName()).workflow(SampleWorkflow.NAME);
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();

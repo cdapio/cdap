@@ -301,7 +301,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     ApplicationMeta meta = new ApplicationMeta(dummyAppSpec1.getName(), dummyAppSpec1,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
-    store.addApplication(APP1_ID, meta);
+    store.addLatestApplication(APP1_ID, meta);
     WorkflowSpecification scheduledWorfklow2 =
       new WorkflowSpecification("DummyClass", SCHEDULED_PROG2_ID.getProgram(), "scheduled workflow",
                                 Collections.emptyMap(), Collections.emptyList(), Collections.emptyMap(),
@@ -319,7 +319,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     meta = new ApplicationMeta(dummyAppSpec2.getName(), dummyAppSpec2,
                                new ChangeDetail(null, null, null,
                                                 System.currentTimeMillis()));
-    store.addApplication(APP2_ID, meta);
+    store.addLatestApplication(APP2_ID, meta);
   }
 
   /**
