@@ -29,6 +29,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
+import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
@@ -38,6 +39,7 @@ import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import org.slf4j.Logger;
@@ -98,6 +100,13 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
+  public Collection<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+      ApplicationManager appManager)
+      throws NoChangesToPushException, AuthenticationConfigException {
+    throw new UnsupportedOperationException("multi push not supported for RemoteSourceControlOperationRunner");
+  }
+
+  @Override
   public PullAppResponse<?> pull(PullAppOperationRequest pullRequest) throws NotFoundException,
     AuthenticationConfigException {
     try {
@@ -117,7 +126,7 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public void pull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+  public void multiPull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
       throws NotFoundException, AuthenticationConfigException {
     throw new UnsupportedOperationException("multi pull not supported for RemoteSourceControlOperationRunner");
   }

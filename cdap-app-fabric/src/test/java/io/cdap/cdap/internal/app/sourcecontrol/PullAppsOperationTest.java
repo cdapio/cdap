@@ -39,7 +39,6 @@ import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperation
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -75,10 +74,11 @@ public class PullAppsOperationTest {
     RepositoryManager mockRepositoryManager = Mockito.mock(RepositoryManager.class);
     Mockito.doReturn(mockRepositoryManager).when(mockRepositoryManagerFactory)
         .create(Mockito.any(), Mockito.any());
-    Mockito.doReturn(Paths.get("")).when(mockRepositoryManager).getRepositoryRoot();
-    Mockito.doReturn(repositoryBase.getRoot().toPath()).when(mockRepositoryManager)
-        .getRepositoryRoot();
-    Mockito.doReturn(repositoryBase.getRoot().toPath()).when(mockRepositoryManager).getBasePath();
+
+    Path rootPath = repositoryBase.getRoot().toPath();
+    Mockito.doReturn(rootPath).when(mockRepositoryManager).getRepositoryRoot();
+    Mockito.doReturn(rootPath).when(mockRepositoryManager).getBasePath();
+
     Mockito.doReturn("testHash")
         .when(mockRepositoryManager)
         .getFileHash(Mockito.any(), Mockito.any());
