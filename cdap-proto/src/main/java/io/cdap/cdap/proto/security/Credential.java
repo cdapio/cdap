@@ -84,10 +84,31 @@ public class Credential {
 
   private final String value;
   private final CredentialType type;
+  private final Long expirationTimeSecs;
 
+  /**
+   * Constructs the Credential.
+   *
+   * @param value credential value
+   * @param type credential type
+   */
   public Credential(String value, CredentialType type) {
     this.value = value;
     this.type = type;
+    this.expirationTimeSecs = null;
+  }
+
+  /**
+   * Constructs the Credential.
+   *
+   * @param value credential value
+   * @param type credential type
+   * @param expirationTimeSecs the time in seconds after which credential will expire
+   */
+  public Credential(String value, CredentialType type, Long expirationTimeSecs) {
+    this.value = value;
+    this.type = type;
+    this.expirationTimeSecs = expirationTimeSecs;
   }
 
   public String getValue() {
@@ -98,10 +119,15 @@ public class Credential {
     return type;
   }
 
+  public Long getExpirationTimeSecs() {
+    return expirationTimeSecs;
+  }
+
   @Override
   public String toString() {
     return "Credential{"
         + "type=" + type
+        + ", expires_in=" + expirationTimeSecs
         + ", length=" + value.length()
         + "}";
   }

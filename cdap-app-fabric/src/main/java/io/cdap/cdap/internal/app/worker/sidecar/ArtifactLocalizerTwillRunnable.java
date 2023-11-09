@@ -25,9 +25,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -40,6 +42,7 @@ import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -100,7 +103,13 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
-    modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+      modules.add(RemoteAuthenticatorModules.getDefaultModule(
+          Constants.ArtifactLocalizer.REMOTE_AUTHENTICATOR_NAME));
+    } else {
+      modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    }
     modules.add(new AuthenticationContextModules().getMasterModule());
     modules.add(coreSecurityModule);
     modules.add(new MessagingServiceModule(cConf));

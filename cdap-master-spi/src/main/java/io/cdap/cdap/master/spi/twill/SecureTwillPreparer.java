@@ -44,4 +44,13 @@ public interface SecureTwillPreparer extends TwillPreparer {
   SecureTwillPreparer withSecurityContext(String runnableName,
       SecurityContext securityContext);
 
+  /**
+   * Runs the given runnable with namespace workload identity,
+   * this feature removes the GOOGLE_APPLICATION_CREDENTIALS environment variable
+   * to enable namespaced service accounts.
+   *
+   * @param runnableName name of the {@link TwillRunnable}
+   * @return this {@link TwillPreparer}
+   */
+  SecureTwillPreparer withNamespacedWorkloadIdentity(String runnableName);
 }
