@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationResource;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.SortOrder;
@@ -34,12 +35,15 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.store.StoreDefinition.OperationRunsStore;
 import java.io.IOException;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -71,7 +75,7 @@ public class OperationRunStore {
    * @param detail the run details of the operation
    * @throws OperationRunAlreadyExistsException when a run with same id exist in namespace
    */
-  public void createOperationRun(OperationRunId runId, OperationRunDetail detail)
+  public OperationRunDetail createOperationRun(OperationRunId runId, OperationRunDetail detail)
       throws OperationRunAlreadyExistsException, IOException {
     Optional<StructuredRow> row = getOperationRunInternal(runId);
     if (row.isPresent()) {
@@ -80,22 +84,23 @@ public class OperationRunStore {
       throw new OperationRunAlreadyExistsException(runId.getRun(), status);
     }
     writeOperationRun(runId, detail);
+    return detail;
   }
 
   /**
-   * Update the metadata of an operation run.
+   * Update the resources of an operation run.
    *
    * @param runId {@link OperationRunId} for the run
-   * @param metadata new metdata of the run
+   * @param resources updated resources for the run
    * @param sourceId the message id which is responsible for the update
    * @throws OperationRunNotFoundException run with id does not exist in namespace
    */
-  public void updateOperationMeta(OperationRunId runId, OperationMeta metadata,
+  public void updateOperationResources(OperationRunId runId, Set<OperationResource> resources,
       @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
     OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
-    OperationRun updatedRun = OperationRun.builder(currentRun)
-        .setMetadata(metadata).build();
+    OperationRun updatedRun = OperationRun.builder(currentRun).setMetadata(
+        OperationMeta.builder(currentRun.getMetadata()).setResources(resources).build()).build();
     OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
         .setRun(updatedRun).setSourceId(sourceId).build();
 
@@ -145,12 +150,14 @@ public class OperationRunStore {
    * @param sourceId the message id which is responsible for the update
    * @throws OperationRunNotFoundException run with id does not exist in namespace
    */
-  public void failOperationRun(OperationRunId runId, OperationError error,
+  public void failOperationRun(OperationRunId runId, OperationError error, Instant endTime,
       @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
     OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
+    OperationMeta updatedMeta = OperationMeta.builder(currentDetail.getRun().getMetadata())
+        .setEndTime(endTime).build();
     OperationRun updatedRun = OperationRun.builder(currentRun)
-        .setStatus(OperationRunStatus.FAILED).setError(error).build();
+        .setStatus(OperationRunStatus.FAILED).setError(error).setMetadata(updatedMeta).build();
     OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
         .setRun(updatedRun).setSourceId(sourceId).build();
 
@@ -174,14 +181,8 @@ public class OperationRunStore {
    */
   public OperationRunDetail getOperation(OperationRunId runId)
       throws OperationRunNotFoundException, IOException {
-    Optional<StructuredRow> row = getOperationRunInternal(runId);
-    if (!row.isPresent()) {
-      throw new OperationRunNotFoundException(runId.getNamespace(), runId.getRun());
-    }
-    return GSON.fromJson(
-        row.get().getString(StoreDefinition.OperationRunsStore.DETAILS_FIELD),
-        OperationRunDetail.class
-    );
+    return getOperationRunInternal(runId).map(this::rowToRunDetail)
+        .orElseThrow(() -> new OperationRunNotFoundException(runId.getNamespace(), runId.getRun()));
   }
 
 
@@ -235,15 +236,28 @@ public class OperationRunStore {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         lastKey = row.getString(StoreDefinition.OperationRunsStore.ID_FIELD);
-        OperationRunDetail detail = GSON.fromJson(
-            row.getString(StoreDefinition.OperationRunsStore.DETAILS_FIELD),
-            OperationRunDetail.class
-        );
+        OperationRunDetail detail = rowToRunDetail(row);
         consumer.accept(detail);
       }
     }
 
     return lastKey;
+  }
+
+  /**
+   * Returns runs with a given status for all namespaces.
+   */
+  public void scanOperationByStatus(OperationRunStatus status,
+      Consumer<OperationRunDetail> consumer) throws IOException {
+    try (CloseableIterator<StructuredRow> iterator = getOperationRunsTable(context).scan(
+        Fields.stringField(OperationRunsStore.STATUS_FIELD, status.name())
+    )) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        OperationRunDetail detail = rowToRunDetail(row);
+        consumer.accept(detail);
+      }
+    }
   }
 
   private List<Field<?>> getRangeFields(OperationRunId runId)

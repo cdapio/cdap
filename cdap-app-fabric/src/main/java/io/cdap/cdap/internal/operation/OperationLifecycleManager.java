@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -68,6 +70,19 @@ public class OperationLifecycleManager {
       currentLimit -= txBatchSize;
     }
     return currentLimit == 0;
+  }
+
+
+  /**
+   * Scan all pending operations. Needed for try running all pending operation during startup.
+   *
+   * @param consumer {@link Consumer} to process each scanned run
+   */
+  public void scanPendingOperations(Consumer<OperationRunDetail> consumer)
+      throws IOException, InvalidFieldException {
+    TransactionRunners.run(transactionRunner, context -> {
+      getOperationRunStore(context).scanOperationByStatus(OperationRunStatus.PENDING, consumer);
+    }, IOException.class, InvalidFieldException.class);
   }
 
   private OperationRunStore getOperationRunStore(StructuredTableContext context) {
