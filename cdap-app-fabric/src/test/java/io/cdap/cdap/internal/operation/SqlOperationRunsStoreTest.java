@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.operation;
 
+import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -70,9 +71,6 @@ public class SqlOperationRunsStoreTest extends OperationRunStoreTest {
 
   @AfterClass
   public static void afterClass(){
-    try{
-    pg.close();
-    }
-    catch(Exception e){}
+    Closeables.closeQuietly(pg);
   }
 }

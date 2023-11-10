@@ -1,5 +1,6 @@
 package io.cdap.cdap.internal.operation;
 
+import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -41,7 +42,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
 
   @ClassRule public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static EmbeddedPostgres pg;
+  private static EmbeddedPostgres postgres;
 
   @Before
   public void before() throws Exception {
@@ -56,7 +57,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
+    postgres = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     Injector injector =
         Guice.createInjector(
             new ConfigModule(cConf),
@@ -80,10 +81,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
 
   @AfterClass
   public static void afterClass() {
-    try {
-      pg.close();
-    } catch (Exception e) {
-    }
+    Closeables.closeQuietly(postgres);
   }
 
   @Test
