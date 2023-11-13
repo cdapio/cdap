@@ -71,6 +71,7 @@ import javax.ws.rs.PathParam;
  * Handles validation logic for pipelines.
  */
 public class ValidationHandler extends AbstractSystemHttpServiceHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .serializeNulls()
@@ -114,11 +115,13 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       byte[] bytes = getContext().runTask(runnableTaskRequest);
       responder.sendString(Bytes.toString(bytes));
     } catch (RemoteExecutionException e) {
+      LOG.info("#### Exception occurred: ", e);
       RemoteTaskException remoteTaskException = e.getCause();
       responder.sendError(
         getExceptionCode(remoteTaskException.getRemoteExceptionClassName(),
             remoteTaskException.getMessage(), namespace), remoteTaskException.getMessage());
     } catch (Exception e) {
+      LOG.info("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
     }
   }
@@ -139,9 +142,11 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
                                         StageValidationRequest.class);
       validationRequest.validate();
     } catch (JsonSyntaxException e) {
+      LOG.info("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
       return;
     } catch (IllegalArgumentException e) {
+      LOG.info("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid stage config: " + e.getMessage());
       return;
     }
