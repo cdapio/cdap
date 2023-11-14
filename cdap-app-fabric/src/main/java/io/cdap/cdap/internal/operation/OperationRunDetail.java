@@ -100,7 +100,8 @@ public class OperationRunDetail {
     }
 
     OperationRunDetail that = (OperationRunDetail) o;
-    return Objects.equal(this.getRun(), that.getRun())
+    return Objects.equal(this.getRunId(), that.getRunId())
+        && Objects.equal(this.getRun(), that.getRun())
         && Arrays.equals(this.getSourceId(), that.getSourceId())
         && Objects.equal(this.getPullAppsRequest(), that.getPullAppsRequest())
         && Objects.equal(this.getPrincipal(), that.getPrincipal());
@@ -108,8 +109,7 @@ public class OperationRunDetail {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), Arrays.hashCode(getSourceId()), getPrincipal(),
-        getPullAppsRequest());
+    return Objects.hashCode(runId, run, Arrays.hashCode(sourceId), principal, pullAppsRequest);
   }
 
   /**
