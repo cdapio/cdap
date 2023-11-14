@@ -135,10 +135,6 @@
       <artifactId>hadoop-minikdc</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.crypto.tink</groupId>
-      <artifactId>tink</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
       <scope>test</scope>
@@ -197,50 +193,6 @@
       </properties>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-shade-plugin</artifactId>
-            <version>3.2.4</version>
-            <configuration>
-              <createDependencyReducedPom>false</createDependencyReducedPom>
-              <artifactSet>
-                <includes>
-                  <include>com.google.crypto.tink:tink</include>
-                  <include>com.google.protobuf:protobuf-java</include>
-                </includes>
-              </artifactSet>
-              <relocations>
-                <relocation>
-                  <pattern>com.google.protobuf</pattern>
-                  <shadedPattern>io.cdap.cdap.shaded.com.google.protobuf</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.google.crypto.tink</pattern>
-                  <shadedPattern>io.cdap.cdap.shaded.com.google.crypto.tink</shadedPattern>
-                </relocation>
-              </relocations>
-            </configuration>
-            <executions>
-              <execution>
-                <id>shade</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>shade</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>dist-shade</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>shade</goal>
-                </goals>
-                <configuration>
-                  <outputDirectory>${stage.lib.dir}</outputDirectory>
-                  <finalName>${project.groupId}.${project.build.finalName}</finalName>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>

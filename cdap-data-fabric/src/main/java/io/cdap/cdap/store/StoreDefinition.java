@@ -1298,7 +1298,7 @@ public final class StoreDefinition {
             .withId(CREDENTIAL_PROFILES)
             .withFields(Fields.stringType(NAMESPACE_FIELD),
                 Fields.stringType(PROFILE_NAME_FIELD),
-                Fields.stringType(PROFILE_DATA_FIELD))
+                Fields.bytesType(PROFILE_DATA_FIELD))
             .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_NAME_FIELD)
             .build();
 
@@ -1308,7 +1308,7 @@ public final class StoreDefinition {
             .withFields(Fields.stringType(NAMESPACE_FIELD),
                 Fields.stringType(IDENTITY_NAME_FIELD),
                 Fields.stringType(IDENTITY_PROFILE_INDEX_FIELD),
-                Fields.stringType(IDENTITY_DATA_FIELD))
+                Fields.bytesType(IDENTITY_DATA_FIELD))
             .withPrimaryKeys(NAMESPACE_FIELD, IDENTITY_NAME_FIELD)
             .withIndexes(IDENTITY_PROFILE_INDEX_FIELD)
             .build();
