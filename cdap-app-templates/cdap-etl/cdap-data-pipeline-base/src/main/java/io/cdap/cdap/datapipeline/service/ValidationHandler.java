@@ -113,11 +113,13 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       byte[] bytes = getContext().runTask(runnableTaskRequest);
       responder.sendString(Bytes.toString(bytes));
     } catch (RemoteExecutionException e) {
+      LOG.error("#### Exception occurred: ", e);
       RemoteTaskException remoteTaskException = e.getCause();
       responder.sendError(
         getExceptionCode(remoteTaskException.getRemoteExceptionClassName(), remoteTaskException.getMessage(),
                          namespace), remoteTaskException.getMessage());
     } catch (Exception e) {
+      LOG.error("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
     }
   }
@@ -138,9 +140,11 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
                                         StageValidationRequest.class);
       validationRequest.validate();
     } catch (JsonSyntaxException e) {
+      LOG.error("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
       return;
     } catch (IllegalArgumentException e) {
+      LOG.error("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid stage config: " + e.getMessage());
       return;
     }
@@ -152,6 +156,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       try {
         arguments = getContext().getPreferencesForNamespace(namespace, true);
       } catch (IllegalArgumentException iae) {
+        LOG.error("#### Exception occurred: ", iae);
         // If this method returns IllegalArgumentException, it means the namespace doesn't exist.
         // If this is the case, we return a 404 error.
         responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
