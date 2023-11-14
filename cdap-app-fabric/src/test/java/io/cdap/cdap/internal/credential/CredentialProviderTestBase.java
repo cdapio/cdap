@@ -31,13 +31,12 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
-import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.encryption.NoOpAeadCipher;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import io.cdap.cdap.security.spi.credential.ProfileValidationException;
@@ -121,8 +120,8 @@ public class CredentialProviderTestBase {
 
     // Setup credential managers.
     TransactionRunner runner = injector.getInstance(TransactionRunner.class);
-    CredentialProfileStore profileStore = new CredentialProfileStore();
-    CredentialIdentityStore identityStore = new CredentialIdentityStore();
+    CredentialProfileStore profileStore = new CredentialProfileStore(new NoOpAeadCipher());
+    CredentialIdentityStore identityStore = new CredentialIdentityStore(new NoOpAeadCipher());
     credentialProfileManager = new CredentialProfileManager(identityStore, profileStore,
         runner, mockCredentialProviderLoader);
     credentialIdentityManager = new CredentialIdentityManager(identityStore, profileStore,

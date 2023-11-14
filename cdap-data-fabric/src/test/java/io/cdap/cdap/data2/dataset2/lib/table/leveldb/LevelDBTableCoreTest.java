@@ -46,6 +46,7 @@ import org.junit.rules.TemporaryFolder;
 
 
 public class LevelDBTableCoreTest {
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -60,14 +61,14 @@ public class LevelDBTableCoreTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
-      new ConfigModule(conf),
-      new NonCustomLocationUnitTestModule(),
-      new InMemoryDiscoveryModule(),
-      new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getStandaloneModules(),
-      new AuthenticationContextModules().getMasterModule());
+        new ConfigModule(conf),
+        new NonCustomLocationUnitTestModule(),
+        new InMemoryDiscoveryModule(),
+        new DataFabricLevelDBModule(),
+        new TransactionMetricsModule(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getStandaloneModules(),
+        new AuthenticationContextModules().getMasterModule());
     service = injector.getInstance(LevelDBTableService.class);
   }
 
@@ -107,7 +108,8 @@ public class LevelDBTableCoreTest {
       // After deleting the value at default version (i.e. max version),
       // reading highest-versioned value should return the value at a proper version.
       deleteRowColDefaultVersion(table, row, col);
-      Assert.assertTrue(readRowColLatest(table, row, col).equals(String.format("%s-%d", val, numVersion - 1)));
+      Assert.assertTrue(
+          readRowColLatest(table, row, col).equals(String.format("%s-%d", val, numVersion - 1)));
 
       // Reading value at default version (i.e. max version) should return null as it has been deleted above.
       Assert.assertEquals(null, readRowColDefaultVersion(table, row, col));
@@ -133,9 +135,10 @@ public class LevelDBTableCoreTest {
       writeData(table, rowNamePrefix, numRows, colName, 1024, numVersion);
 
       // Scan only the first row and make sure no data from other rows are returned.
-      try (Scanner scanner = table.scan(getRowName(rowNamePrefix, 0).getBytes(StandardCharsets.UTF_8),
-                                        getRowName(rowNamePrefix, 1).getBytes(StandardCharsets.UTF_8),
-                                        null, null, null)) {
+      try (Scanner scanner = table
+          .scan(getRowName(rowNamePrefix, 0).getBytes(StandardCharsets.UTF_8),
+              getRowName(rowNamePrefix, 1).getBytes(StandardCharsets.UTF_8),
+              null, null, null)) {
         Row row;
         while ((row = scanner.next()) != null) {
           String rowName = new String(row.getRow(), StandardCharsets.UTF_8);
@@ -147,9 +150,10 @@ public class LevelDBTableCoreTest {
       // because scan uses the max version at row i + 1 as scan end key (excluded) and we want to make sure
       // nothing from row i + 1 gets returned in such case.
       writeRowColDefaultVersion(table, getRowName(rowNamePrefix, 1), colName, "dummy-value");
-      try (Scanner scanner = table.scan(getRowName(rowNamePrefix, 0).getBytes(StandardCharsets.UTF_8),
-                                        getRowName(rowNamePrefix, 1).getBytes(StandardCharsets.UTF_8),
-                                        null, null, null)) {
+      try (Scanner scanner = table
+          .scan(getRowName(rowNamePrefix, 0).getBytes(StandardCharsets.UTF_8),
+              getRowName(rowNamePrefix, 1).getBytes(StandardCharsets.UTF_8),
+              null, null, null)) {
         Row row;
         while ((row = scanner.next()) != null) {
           String rowName = new String(row.getRow(), StandardCharsets.UTF_8);
@@ -251,12 +255,14 @@ public class LevelDBTableCoreTest {
       }
 
       // Ensure reading the most recent version returns the latest version 9.
-      Assert.assertTrue(readRowColLatest(table, row, col).equals(String.format("%s-%d", val, numVersion - 1)));
+      Assert.assertTrue(
+          readRowColLatest(table, row, col).equals(String.format("%s-%d", val, numVersion - 1)));
 
       // Delete the highest version (i.e. KeyValue.LATEST_TIMESTAMP) should be an noop
       // since there was no value written at that version.
       deleteRowColDefaultVersion(table, row, col);
-      Assert.assertTrue(readRowColLatest(table, row, col).equals(String.format("%s-%d", val, numVersion - 1)));
+      Assert.assertTrue(
+          readRowColLatest(table, row, col).equals(String.format("%s-%d", val, numVersion - 1)));
 
       // Write at the highest version (i.e. KeyValue.LATEST_TIMESTAMP) should hide all old versions.
       writeRowColDefaultVersion(table, row, col, val);
@@ -279,32 +285,33 @@ public class LevelDBTableCoreTest {
    * Write the given value as the latest at the target row and col.
    */
   private void writeRowColDefaultVersion(LevelDBTableCore table, String row, String col, String val)
-    throws IOException {
+      throws IOException {
     table.putDefaultVersion(row.getBytes(StandardCharsets.UTF_8),
-                            col.getBytes(StandardCharsets.UTF_8),
-                            val.getBytes(StandardCharsets.UTF_8));
+        col.getBytes(StandardCharsets.UTF_8),
+        val.getBytes(StandardCharsets.UTF_8));
   }
 
   /**
    * Write the given value as specified version at the target row and col.
    */
   private void writeRowCol(LevelDBTableCore table, String row, String col, String val, long version)
-    throws IOException {
+      throws IOException {
     table.put(row.getBytes(StandardCharsets.UTF_8),
-              col.getBytes(StandardCharsets.UTF_8),
-              val.getBytes(StandardCharsets.UTF_8),
-              version);
+        col.getBytes(StandardCharsets.UTF_8),
+        val.getBytes(StandardCharsets.UTF_8),
+        version);
   }
 
   /**
-   * Read the value from the target row and col at default version.
-   * Return null if there is no value for the specified row and col.
+   * Read the value from the target row and col at default version. Return null if there is no value
+   * for the specified row and col.
    */
   @Nullable
-  private String readRowColDefaultVersion(LevelDBTableCore table, String row, String col) throws IOException {
+  private String readRowColDefaultVersion(LevelDBTableCore table, String row, String col)
+      throws IOException {
     byte[] val = null;
     val = table.getDefaultVersion(row.getBytes(StandardCharsets.UTF_8),
-                                  col.getBytes(StandardCharsets.UTF_8));
+        col.getBytes(StandardCharsets.UTF_8));
     if (val == null) {
       return null;
     }
@@ -312,11 +319,12 @@ public class LevelDBTableCoreTest {
   }
 
   @Nullable
-  private String readRowCol(LevelDBTableCore table, String row, String col, long version) throws IOException {
+  private String readRowCol(LevelDBTableCore table, String row, String col, long version)
+      throws IOException {
     byte[] val = null;
     val = table.get(row.getBytes(StandardCharsets.UTF_8),
-                    col.getBytes(StandardCharsets.UTF_8),
-                    version);
+        col.getBytes(StandardCharsets.UTF_8),
+        version);
     if (val == null) {
       return null;
     }
@@ -324,11 +332,12 @@ public class LevelDBTableCoreTest {
   }
 
   @Nullable
-  private String readRowColLatest(LevelDBTableCore table, String row, String col) throws IOException {
+  private String readRowColLatest(LevelDBTableCore table, String row, String col)
+      throws IOException {
     byte[] val = null;
     val = table.getLatest(row.getBytes(StandardCharsets.UTF_8),
-                          col.getBytes(StandardCharsets.UTF_8),
-                          null);
+        col.getBytes(StandardCharsets.UTF_8),
+        null);
     if (val == null) {
       return null;
     }
@@ -339,26 +348,29 @@ public class LevelDBTableCoreTest {
   /**
    * Delete the value at latest version (i.e. KeyValue.LATEST_TIMESTAMP) in the target row and col.
    */
-  private void deleteRowColDefaultVersion(LevelDBTableCore table, String row, String col) throws IOException {
+  private void deleteRowColDefaultVersion(LevelDBTableCore table, String row, String col)
+      throws IOException {
     table.deleteDefaultVersion(row.getBytes(StandardCharsets.UTF_8),
-                               col.getBytes(StandardCharsets.UTF_8));
+        col.getBytes(StandardCharsets.UTF_8));
   }
 
   /**
    * Delete the value at the specified version in the target row and col.
    */
-  private void deleteRowCol(LevelDBTableCore table, String row, String col, long version) throws IOException {
+  private void deleteRowCol(LevelDBTableCore table, String row, String col, long version)
+      throws IOException {
     table.delete(row.getBytes(StandardCharsets.UTF_8),
-                 col.getBytes(StandardCharsets.UTF_8),
-                 version);
+        col.getBytes(StandardCharsets.UTF_8),
+        version);
   }
 
   /**
-   * Write a number of rows to the table. There is only one col per row. For each row and col, write a number of
-   * values at different versions.
+   * Write a number of rows to the table. There is only one col per row. For each row and col, write
+   * a number of values at different versions.
    */
-  private void writeData(LevelDBTableCore table, String rowPrefix, long numRows, String col, int valNumBytes,
-                         int numVersions) throws IOException {
+  private void writeData(LevelDBTableCore table, String rowPrefix, long numRows, String col,
+      int valNumBytes,
+      int numVersions) throws IOException {
     Random r = new Random();
     byte[] value = new byte[valNumBytes];
     for (long rowIndex = 0; rowIndex < numRows; rowIndex++) {

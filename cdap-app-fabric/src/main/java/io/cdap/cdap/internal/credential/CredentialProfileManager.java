@@ -21,13 +21,12 @@ import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
-import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import io.cdap.cdap.security.spi.credential.ProfileValidationException;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
@@ -80,7 +79,11 @@ public class CredentialProfileManager {
    */
   public Optional<CredentialProfile> get(CredentialProfileId id) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
-      return profileStore.get(context, id);
+      try {
+        return profileStore.get(context, id);
+      } catch (CipherException e) {
+        throw new IOException("Failed to decrypt profile", e);
+      }
     }, IOException.class);
   }
 
@@ -97,11 +100,15 @@ public class CredentialProfileManager {
       throws AlreadyExistsException, BadRequestException, IOException {
     validateProfile(profile);
     TransactionRunners.run(transactionRunner, context -> {
-      if (profileStore.get(context, id).isPresent()) {
+      if (profileStore.exists(context, id)) {
         throw new AlreadyExistsException(String.format("Credential profile '%s:%s' already exists",
             id.getNamespace(), id.getName()));
       }
-      profileStore.write(context, id, profile);
+      try {
+        profileStore.write(context, id, profile);
+      } catch (CipherException e) {
+        throw new IOException("Failed to encrypt profile", e);
+      }
     }, AlreadyExistsException.class, IOException.class);
   }
 
@@ -118,11 +125,15 @@ public class CredentialProfileManager {
       throws BadRequestException, IOException, NotFoundException {
     validateProfile(profile);
     TransactionRunners.run(transactionRunner, context -> {
-      if (!profileStore.get(context, id).isPresent()) {
+      if (!profileStore.exists(context, id)) {
         throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
             id.getNamespace(), id.getName()));
       }
-      profileStore.write(context, id, profile);
+      try {
+        profileStore.write(context, id, profile);
+      } catch (CipherException e) {
+        throw new IOException("Failed to encrypt profile", e);
+      }
     }, IOException.class, NotFoundException.class);
   }
 
@@ -137,7 +148,7 @@ public class CredentialProfileManager {
   public void delete(CredentialProfileId id)
       throws ConflictException, IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      if (!profileStore.get(context, id).isPresent()) {
+      if (!profileStore.exists(context, id)) {
         throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
             id.getNamespace(), id.getName()));
       }

@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.encryption.NoOpAeadCipher;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
@@ -63,16 +64,18 @@ public class ConfigBasedRequestBlockingTest {
     TokenValidator successValidator = new SuccessTokenValidator();
 
     router = new NettyRouter(cConf, SConfiguration.create(), InetAddress.getLoopbackAddress(),
-                             new RouterServiceLookup(cConf, discoveryService, new RouterPathLookup()),
-                             successValidator,
-                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+        new RouterServiceLookup(cConf, discoveryService, new RouterPathLookup()),
+        successValidator,
+        new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+        new NoOpAeadCipher());
     router.startAndWait();
 
-    httpService = NettyHttpService.builder("test").setHttpHandlers(new AuditLogTest.TestHandler()).build();
+    httpService = NettyHttpService.builder("test").setHttpHandlers(new AuditLogTest.TestHandler())
+        .build();
     httpService.start();
 
     cancelDiscovery = discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP,
-                                                                 httpService.getBindAddress()));
+        httpService.getBindAddress()));
   }
 
   @Test
@@ -95,7 +98,7 @@ public class ConfigBasedRequestBlockingTest {
     // Custom message passed in config
     cConf.set(Constants.Router.BLOCK_REQUEST_MESSAGE, "custom message");
     testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE),
-            cConf.get(Constants.Router.BLOCK_REQUEST_MESSAGE), "/get");
+        cConf.get(Constants.Router.BLOCK_REQUEST_MESSAGE), "/get");
   }
 
   @Test
@@ -122,7 +125,7 @@ public class ConfigBasedRequestBlockingTest {
   }
 
   private void testGet(int expectedStatus, String expectedResponse, String path)
-    throws Exception {
+      throws Exception {
 
     InetSocketAddress address = router.getBoundAddress().orElseThrow(IllegalStateException::new);
     URL url = new URL("http", address.getHostName(), address.getPort(), path);
@@ -146,7 +149,8 @@ public class ConfigBasedRequestBlockingTest {
           // but Error Stream won't be populated so rely on content-length header instead
           Assert.assertEquals("0", connection.getHeaderField("content-length"));
         } else {
-          Assert.assertEquals(expectedResponse, Bytes.toString(ByteStreams.toByteArray(inputStream)));
+          Assert
+              .assertEquals(expectedResponse, Bytes.toString(ByteStreams.toByteArray(inputStream)));
         }
       }
       Assert.assertEquals(expectedStatus, connection.getResponseCode());

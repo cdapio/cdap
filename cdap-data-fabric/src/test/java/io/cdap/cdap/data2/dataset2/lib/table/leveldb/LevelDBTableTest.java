@@ -60,27 +60,28 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule(),
-      new InMemoryDiscoveryModule(),
-      new DataFabricLevelDBModule(),
-      new TransactionMetricsModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getStandaloneModules(),
-      new AuthenticationContextModules().getMasterModule());
+        new ConfigModule(cConf),
+        new NonCustomLocationUnitTestModule(),
+        new InMemoryDiscoveryModule(),
+        new DataFabricLevelDBModule(),
+        new TransactionMetricsModule(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getStandaloneModules(),
+        new AuthenticationContextModules().getMasterModule());
     service = injector.getInstance(LevelDBTableService.class);
   }
 
   @Override
   protected LevelDBTable getTable(DatasetContext datasetContext, String name,
-                                  DatasetProperties props, Map<String, String> runtimeArguments) throws Exception {
-    DatasetSpecification spec = DatasetSpecification.builder(name, "table").properties(props.getProperties()).build();
+      DatasetProperties props, Map<String, String> runtimeArguments) throws Exception {
+    DatasetSpecification spec = DatasetSpecification.builder(name, "table")
+        .properties(props.getProperties()).build();
     return new LevelDBTable(datasetContext, name, service, cConf, spec);
   }
 
   @Override
   protected LevelDBTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
-                                            DatasetProperties props) throws IOException {
+      DatasetProperties props) throws IOException {
     DatasetSpecification spec = TABLE_DEFINITION.configure(name, props);
     return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
@@ -94,7 +95,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
   public void testTablesSurviveAcrossRestart() throws Exception {
     // todo make this test run for hbase, too - requires refactoring of their injection
     // test on ASCII table name but also on some non-ASCII ones
-    final String[] tableNames = { "table", "t able", "t\u00C3ble", "100%" };
+    final String[] tableNames = {"table", "t able", "t\u00C3ble", "100%"};
 
     // create a table and verify it is in the list of tables
     for (String tableName : tableNames) {
@@ -107,7 +108,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
     service.clearTables();
     for (String tableName : tableNames) {
       Preconditions.checkState(service.list().contains(
-        PrefixedNamespaces.namespace(cConf, CONTEXT1.getNamespaceId(), tableName)));
+          PrefixedNamespaces.namespace(cConf, CONTEXT1.getNamespaceId(), tableName)));
     }
   }
 }
