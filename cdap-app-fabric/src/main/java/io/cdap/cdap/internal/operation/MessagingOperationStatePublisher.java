@@ -104,7 +104,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishResources(OperationRunId runId, Set<OperationResource> resources) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.RUNNING.name())
         .put(Operation.RESOURCES_NOTIFICATION_KEY, GSON.toJson(resources));
 
@@ -114,7 +114,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishRunning(OperationRunId runId) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.RUNNING.name());
     publish(runId, propertiesBuilder.build());
   }
@@ -122,7 +122,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishFailed(OperationRunId runId, OperationError error) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.FAILED.name())
         .put(Operation.ERROR_NOTIFICATION_KEY, GSON.toJson(error))
         .put(Operation.ENDTIME_NOTIFICATION_KEY, Instant.now().toString());
@@ -132,7 +132,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishSuccess(OperationRunId runId) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.SUCCEEDED.name())
         .put(Operation.ENDTIME_NOTIFICATION_KEY, Instant.now().toString());
     publish(runId, propertiesBuilder.build());
@@ -141,7 +141,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishKilled(OperationRunId runId) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.KILLED.name())
         .put(Operation.ENDTIME_NOTIFICATION_KEY, Instant.now().toString());
     publish(runId, propertiesBuilder.build());
@@ -150,7 +150,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishStopping(OperationRunId runId) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.STOPPING.name());
     publish(runId, propertiesBuilder.build());
   }
@@ -158,7 +158,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
   @Override
   public void publishStarting(OperationRunId runId) {
     ImmutableMap.Builder<String, String> propertiesBuilder = ImmutableMap.<String, String>builder()
-        .put(Operation.RUN_ID_NOTIFICATION_KEY, GSON.toJson(runId))
+        .put(Operation.RUN_ID_NOTIFICATION_KEY, runId.toString())
         .put(Operation.STATUS_NOTIFICATION_KEY, OperationRunStatus.STARTING.name());
     publish(runId, propertiesBuilder.build());
   }

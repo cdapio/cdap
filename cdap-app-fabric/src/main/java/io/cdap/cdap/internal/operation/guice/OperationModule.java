@@ -22,9 +22,11 @@ import io.cdap.cdap.internal.app.sourcecontrol.LocalApplicationManager;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperation;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperationFactory;
 import io.cdap.cdap.internal.operation.InMemoryOperationRunner;
+import io.cdap.cdap.internal.operation.InMemoryOperationRuntime;
 import io.cdap.cdap.internal.operation.LongRunningOperation;
 import io.cdap.cdap.internal.operation.MessagingOperationStatePublisher;
 import io.cdap.cdap.internal.operation.OperationRunner;
+import io.cdap.cdap.internal.operation.OperationRuntime;
 import io.cdap.cdap.internal.operation.OperationStatePublisher;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 
@@ -43,6 +45,7 @@ public class OperationModule extends AbstractModule {
     bind(ApplicationManager.class).to(LocalApplicationManager.class);
     bind(OperationRunner.class).to(InMemoryOperationRunner.class);
     bind(OperationStatePublisher.class).to(MessagingOperationStatePublisher.class);
+    bind(OperationRuntime.class).to(InMemoryOperationRuntime.class);
   }
 }
 

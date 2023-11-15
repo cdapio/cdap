@@ -37,6 +37,7 @@ public class OperationNotification {
 
   private final OperationRunId runId;
   private final OperationRunStatus status;
+
   @Nullable
   private final Set<OperationResource> resources;
   @Nullable
@@ -51,8 +52,10 @@ public class OperationNotification {
   /**
    * Default constructor.
    */
-  public OperationNotification(OperationRunId runId, OperationRunStatus status,
-      @Nullable Set<OperationResource> resources, Instant endTime, @Nullable OperationError error) {
+  OperationNotification(OperationRunId runId, OperationRunStatus status,
+      @Nullable Set<OperationResource> resources, Instant endTime,
+      @Nullable OperationError error
+  ) {
     this.runId = runId;
     this.status = status;
     this.resources = resources;
@@ -68,15 +71,34 @@ public class OperationNotification {
   public static OperationNotification fromNotification(Notification notification) {
     Map<String, String> properties = notification.getProperties();
 
-    OperationRunId runId = GSON.fromJson(properties.get(Operation.RUN_ID_NOTIFICATION_KEY),
-        OperationRunId.class);
+    if (!properties.containsKey(Operation.RUN_ID_NOTIFICATION_KEY)) {
+      throw new IllegalArgumentException("Notification missing operation run id");
+    }
+
+    if (!properties.containsKey(Operation.STATUS_NOTIFICATION_KEY)) {
+      throw new IllegalArgumentException("Notification missing operation status");
+    }
+
+    OperationError error = null;
+    if (properties.containsKey(Operation.ERROR_NOTIFICATION_KEY)) {
+      error = GSON.fromJson(properties.get(Operation.ERROR_NOTIFICATION_KEY),
+          OperationError.class);
+    }
+
+    Set<OperationResource> resources = null;
+    if (properties.containsKey(Operation.RESOURCES_NOTIFICATION_KEY)) {
+      resources = GSON.fromJson(
+          properties.get(Operation.RESOURCES_NOTIFICATION_KEY), resourcesType);
+    }
+
+    Instant endTime = null;
+    if (properties.containsKey(Operation.ENDTIME_NOTIFICATION_KEY)) {
+      endTime = Instant.parse(properties.get(Operation.ENDTIME_NOTIFICATION_KEY));
+    }
+
+    OperationRunId runId = OperationRunId.fromString(properties.get(Operation.RUN_ID_NOTIFICATION_KEY));
     OperationRunStatus status = OperationRunStatus.valueOf(
         properties.get(Operation.STATUS_NOTIFICATION_KEY));
-    OperationError error = GSON.fromJson(properties.get(Operation.ERROR_NOTIFICATION_KEY),
-        OperationError.class);
-    Set<OperationResource> resources = GSON.fromJson(
-        properties.get(Operation.RESOURCES_NOTIFICATION_KEY), resourcesType);
-    Instant endTime = Instant.parse(properties.get(Operation.ENDTIME_NOTIFICATION_KEY));
 
     return new OperationNotification(runId, status, resources, endTime, error);
   }

@@ -49,7 +49,7 @@ public class InMemoryOperationRunnerTest {
   private static final OperationRunId runId = new OperationRunId("namespace", "run");
   private static final OperationRun run = OperationRun.builder()
       .setRunId(runId.getRun())
-      .setStatus(OperationRunStatus.PENDING)
+      .setStatus(OperationRunStatus.STARTING)
       .setType(OperationType.PULL_APPS)
       .setMetadata(
           OperationMeta.builder().setCreateTime(Instant.now()).build())

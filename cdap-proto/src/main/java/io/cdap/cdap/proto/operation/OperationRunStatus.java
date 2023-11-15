@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
  * Status of operation run.
  */
 public enum OperationRunStatus {
-  PENDING,
   STARTING,
   RUNNING,
   STOPPING,
@@ -48,8 +47,6 @@ public enum OperationRunStatus {
       return true;
     }
     switch (this) {
-      case PENDING:
-        return status == STARTING || status == STOPPING;
       case STARTING:
         // RUNNING is the happy path
         // STOPPING happens if the run was manually stopped gracefully(may include a timeout)

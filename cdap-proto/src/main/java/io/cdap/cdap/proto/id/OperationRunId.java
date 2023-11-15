@@ -80,7 +80,7 @@ public class OperationRunId extends NamespacedEntityId implements ParentedId<Nam
   @SuppressWarnings("unused")
   public static OperationRunId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
-    return new OperationRunId(next(iterator, "namespace"), next(iterator, "run"));
+    return new OperationRunId(next(iterator, "namespace"), nextAndEnd(iterator, "run"));
   }
 
   @Override
