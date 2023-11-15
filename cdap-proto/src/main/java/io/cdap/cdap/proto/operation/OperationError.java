@@ -51,7 +51,8 @@ public class OperationError {
 
     OperationError that = (OperationError) o;
 
-    return this.details.equals(that.details);
+    return Objects.equals(this.message, that.message)
+        && Objects.equals(this.details, that.details);
   }
 
   @Override
