@@ -86,13 +86,13 @@ public class OperationLifecycleManager {
     }, IOException.class, InvalidFieldException.class);
   }
 
-  /**
-   * Get a specific operation using run id in a namespace.
-   *
-   * @param runId run id of the operation to be fetched
-   * @return operation run detail of the operation to be fetched. If not found,
-   *     OperationRunNotFoundException is thrown.S
-   */
+ /**
+ * Retrieves details of an operation run identified by the provided {@code OperationRunId}.
+ *
+ * @param runId The unique identifier for the operation run.
+ * @return An {@code OperationRunDetail} object containing information about the specified operation run.
+ * @throws OperationRunNotFoundException If the specified operation run is not found.
+ */
   public OperationRunDetail getOperationRun(OperationRunId runId)
       throws IOException, OperationRunNotFoundException {
     OperationRunDetail operationRunDetail =
