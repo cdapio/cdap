@@ -17,6 +17,9 @@ lib/
 .idea
 data/
 
+# VSCode Files & Dir
+.vscode/
+
 # Gradle Files & Dir #
 build/
 .gradle/

@@ -223,8 +223,8 @@ public class OperationRunStore {
 
     if (request.getScanAfter() != null) {
       startBound = Range.Bound.EXCLUSIVE;
-      startFields = getRangeFields(
-          new OperationRunId(request.getNamespace(), request.getScanAfter()));
+      startFields.addAll(getRangeFields(
+          new OperationRunId(request.getNamespace(), request.getScanAfter())));
     }
 
     Range range = Range.create(endFields, endBound, startFields, startBound);
