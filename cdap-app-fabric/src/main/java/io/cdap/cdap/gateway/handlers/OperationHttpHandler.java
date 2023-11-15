@@ -199,7 +199,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         switch (filterKey) {
           case TYPE:
-            operationType = OperationType.valueOf(filterValue.toUpperCase());
+            operationType = OperationType.valueOf(filterValue);
             break;
           case STATUS:
             operationStatus = OperationRunStatus.valueOf(filterValue);

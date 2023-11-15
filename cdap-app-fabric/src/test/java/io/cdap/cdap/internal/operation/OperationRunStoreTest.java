@@ -29,6 +29,7 @@ import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
