@@ -2452,6 +2452,14 @@ public final class Constants {
      * subscribed to ensure any pending messages / active run events are processed properly.
      */
     public static final String STATUS_EVENT_NUM_PARTITIONS = "operation.status.event.topic.num.partitions";
+    public static final String STATUS_EVENT_FETCH_SIZE = "operation.status.event.fetch.size";
+    public static final String STATUS_EVENT_TX_SIZE = "operation.status.event.tx.size";
+    public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "operatopn.status.event.poll.delay.millis";
+    /**
+     * Topic name for publishing program status recording events to the messaging system.
+     */
+    public static final String STATUS_RECORD_EVENT_TOPIC = "operation.status.record.event.topic";
+    public static final String INIT_BATCH_SIZE = "operation.initialize.batch.size";
     public static final String STATUS_RETRY_STRATEGY_PREFIX = "operation.status.";
 
     // Notification keys
@@ -2460,5 +2468,6 @@ public final class Constants {
     public static final String RESOURCES_NOTIFICATION_KEY = "operation.notification.resources";
     public static final String ENDTIME_NOTIFICATION_KEY = "operation.notification.endtime";
     public static final String ERROR_NOTIFICATION_KEY = "operation.notification.error";
+    public static final String USER_ID_NOTIFICATION_KEY = "userId";
   }
 }

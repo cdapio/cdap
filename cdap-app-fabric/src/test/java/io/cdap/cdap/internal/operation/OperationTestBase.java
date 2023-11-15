@@ -42,6 +42,14 @@ public class OperationTestBase {
   protected static final String testNamespace = "test";
   private static final PullAppsRequest input = new PullAppsRequest(Collections.emptySet(), null);
 
+  protected static OperationRunDetail getRun(OperationRunId runId,
+      TransactionRunner transactionRunner)
+      throws OperationRunNotFoundException, IOException {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return new OperationRunStore(context).getOperation(runId);
+    }, OperationRunNotFoundException.class, IOException.class);
+  }
+
   protected static OperationRunDetail insertRun(
       String namespace,
       OperationType type,
@@ -91,7 +99,7 @@ public class OperationTestBase {
           insertRun(
               testNamespace,
               OperationType.PUSH_APPS,
-              OperationRunStatus.PENDING,
+              OperationRunStatus.STARTING,
               transactionRunner));
       details.add(
           insertRun(
@@ -109,7 +117,7 @@ public class OperationTestBase {
           insertRun(
               testNamespace,
               OperationType.PULL_APPS,
-              OperationRunStatus.PENDING,
+              OperationRunStatus.STARTING,
               transactionRunner));
       details.add(
           insertRun(
