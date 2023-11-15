@@ -16,11 +16,8 @@
 
 package io.cdap.cdap.gateway.handlers;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.security.AccessException;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
@@ -29,20 +26,17 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.features.Feature;
-import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.internal.operation.OperationRunFilter;
 import io.cdap.cdap.internal.operation.OperationRunNotFoundException;
 import io.cdap.cdap.internal.operation.ScanOperationRunsRequest;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.http.HttpHandler;
-import java.util.regex.Matcher;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -51,8 +45,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -63,25 +57,23 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/operations")
 public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   private final CConfiguration cConf;
-  private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(\\w+)=(\\w+)");
+  private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(\"?)(\\w+)=(\\w+)(\"?)");
   private static final String FILTER_SPLITTER = "AND";
   private final FeatureFlagsProvider featureFlagsProvider;
   private static final Gson GSON = new Gson();
   private final OperationLifecycleManager operationLifecycleManager;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final int batchSize;
   public static final String OPERATIONS_LIST_PAGINATED_KEY = "operations";
 
   @Inject
-  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager, NamespaceQueryAdmin namespaceQueryAdmin)
+  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager)
       throws Exception {
     this.cConf = cConf;
     this.batchSize = this.cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.operationLifecycleManager = operationLifecycleManager;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
-  
+
   // TODO[CDAP-20881] :  Add RBAC check
   /**
    * API to fetch all running operations in a namespace.
@@ -101,17 +93,16 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       @QueryParam("pageToken") String pageToken,
       @QueryParam("pageSize") Integer pageSize,
       @QueryParam("filter") String filter)
-      throws BadRequestException, IOException, ForbiddenException, NamespaceNotFoundException {
+      throws BadRequestException, IOException, ForbiddenException {
     checkSourceControlMultiAppFeatureFlag();
-    validateNamespace(namespaceId);
+    validateNamespaceId(namespaceId);
     JsonPaginatedListResponder.respond(
         GSON,
         responder,
         OPERATIONS_LIST_PAGINATED_KEY,
         jsonListResponder -> {
           AtomicReference<OperationRun> lastRun = new AtomicReference<>();
-          ScanOperationRunsRequest scanRequest =
-              getScanRequest(namespaceId, pageToken, pageSize, filter);
+          ScanOperationRunsRequest scanRequest = getScanRequest(namespaceId, pageToken, pageSize, filter);
           boolean pageLimitReached = false;
           try {
             pageLimitReached =
@@ -146,9 +137,9 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("id") String runId)
-      throws BadRequestException, OperationRunNotFoundException, IOException, ForbiddenException, NamespaceNotFoundException {
+      throws BadRequestException, OperationRunNotFoundException, IOException, ForbiddenException {
     checkSourceControlMultiAppFeatureFlag();
-    validateNamespace(namespaceId);
+    validateNamespaceId(namespaceId);
     if (runId == null || runId.isEmpty()) {
       throw new BadRequestException("Path parameter runId cannot be empty");
     }
@@ -178,7 +169,8 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private ScanOperationRunsRequest getScanRequest(
-      String namespaceId, String pageToken, Integer pageSize, String filter) {
+      String namespaceId, String pageToken, Integer pageSize, String filterStr)
+      throws IllegalArgumentException {
     ScanOperationRunsRequest.Builder builder = ScanOperationRunsRequest.builder();
     builder.setNamespace(namespaceId);
     if (pageSize != null) {
@@ -187,15 +179,16 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
     if (pageToken != null) {
       builder.setScanAfter(pageToken);
     }
-    if (filter != null && !filter.isEmpty()) {
-      OperationRunFilter operationRunFilter = getFilter(filter);
+    if (filterStr != null && !filterStr.isEmpty()) {
+      OperationRunFilter operationRunFilter = getFilter(filterStr);
       builder.setFilter(operationRunFilter);
     }
     return builder.build();
   }
 
-  private OperationRunFilter getFilter(String filter) {
-    Map<String, String> filterKeyValMap = parseKeyValStr(filter, FILTER_SPLITTER);
+  // TODO[CDAP-20895] : Add unit tests for extracting OperationRunFilter from filter string
+  private OperationRunFilter getFilter(String filterStr) throws IllegalArgumentException {
+    Map<String, String> filterKeyValMap = parseKeyValStr(filterStr, FILTER_SPLITTER);
     OperationType operationType = null;
     OperationRunStatus operationStatus = null;
 
@@ -203,83 +196,62 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       String filterValue = entry.getValue();
       OperationFilterKey filterKey = OperationFilterKey.valueOf(entry.getKey());
 
-      switch (filterKey) {
-        case TYPE:
-          try {
+      try {
+        switch (filterKey) {
+          case TYPE:
             operationType = OperationType.valueOf(filterValue.toUpperCase());
-          } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid OperationType: " + filterValue);
-          }
-          break;
-        case STATUS:
-          try {
+            break;
+          case STATUS:
             operationStatus = OperationRunStatus.valueOf(filterValue);
-          } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid OperationRunStatus: " + filterValue);
-          }
-          break;
-        default:
-          throw new IllegalArgumentException("Unknown filter key: " + filterKey);
+            break;
+          default:
+            throw new IllegalArgumentException("Unknown filter key: " + filterKey);
+        }
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid " + filterKey.name() + ": " + filterValue, e);
       }
     }
     return new OperationRunFilter(operationType, operationStatus);
   }
 
- /**
- * Parses a string containing key-value pairs separated by a specified splitter.
- *
- * @param input    The input string containing key-value pairs.
- * @param splitter The string used to split key-value pairs.
- * @return A {@code Map<String, String>} containing the parsed key-value pairs.
- * @throws IllegalArgumentException If the input does not match the expected key=val pair pattern.
- */
-
+  /**
+   * Parses a string containing key-value pairs separated by a specified splitter. The string is
+   * enclosed within quotes.
+   *
+   * @param input The input string containing key-value pairs.
+   * @param splitter The string used to split key-value pairs.
+   * @return A {@code Map<String, String>} containing the parsed key-value pairs.
+   * @throws IllegalArgumentException If the input does not match the expected key=val pair pattern.
+   */
   private static Map<String, String> parseKeyValStr(String input, String splitter) {
     Map<String, String> keyValMap = new HashMap<>();
     String[] keyValPairs = input.split(splitter);
-  
+
     for (String keyValPair : keyValPairs) {
       Matcher matcher = KEY_VALUE_PATTERN.matcher(keyValPair.trim());
-      
+
       if (matcher.matches()) {
-          keyValMap.put(matcher.group(1).trim().toUpperCase(), matcher.group(2).trim().toUpperCase());
+        keyValMap.put(matcher.group(2).trim().toUpperCase(), matcher.group(3).trim().toUpperCase());
       } else {
-          throw new IllegalArgumentException("Invalid filter key=val pair: " + keyValPair);
+        throw new IllegalArgumentException("Invalid filter key=val pair: " + keyValPair);
       }
-  }
+    }
     return keyValMap;
   }
 
-  private void validateNamespace(@Nullable String namespace) throws BadRequestException, NamespaceNotFoundException, AccessException{
-    if (namespace == null) {
-      throw new BadRequestException("Path parameter namespaceId cannot be empty");
-    }
-    NamespaceId namespaceId;
+  private NamespaceId validateNamespaceId(String namespaceId) throws BadRequestException {
     try {
-      namespaceId = new NamespaceId(namespace);
+      return new NamespaceId(namespaceId);
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Invalid namespace '%s'", namespace), e);
-    }
-    try {
-      if (!namespaceId.equals(NamespaceId.SYSTEM)) {
-        namespaceQueryAdmin.get(namespaceId);
-      }
-    } catch (NamespaceNotFoundException | AccessException e) {
-      throw e;
-    } catch (Exception e) {
-      // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
-      // In AppFabricServer, NamespaceAdmin is bound to DefaultNamespaceAdmin, which interacts directly with the MDS.
-      // Hence, this exception will never be thrown
-      throw Throwables.propagate(e);
+      throw new BadRequestException(e.getMessage(), e);
     }
   }
 
-  /**
-   * throws {@link ForbiddenException} if the feature is disabled
-   */
+  /** throws {@link ForbiddenException} if the feature is disabled */
   private void checkSourceControlMultiAppFeatureFlag() throws ForbiddenException {
     if (!Feature.SOURCE_CONTROL_MANAGEMENT_MULTI_APP.isEnabled(featureFlagsProvider)) {
-      throw new ForbiddenException("Source Control Management Multiple Apps feature is not enabled.");
+      throw new ForbiddenException(
+          "Source Control Management Multiple Apps feature is not enabled.");
     }
   }
 
