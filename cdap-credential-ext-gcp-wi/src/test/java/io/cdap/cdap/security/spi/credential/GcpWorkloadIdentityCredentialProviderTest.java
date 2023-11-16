@@ -16,6 +16,16 @@
 
 package io.cdap.cdap.security.spi.credential;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -31,8 +41,15 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.ApiResponse;
 import io.kubernetes.client.openapi.models.AuthenticationV1TokenRequest;
 import io.kubernetes.client.openapi.models.V1TokenRequestStatus;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,12 +58,12 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * Unit Tests for {@link GcpWorkloadIdentityCredentialProvider}.
  */
 public class GcpWorkloadIdentityCredentialProviderTest {
+
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
   private static final String IAM_TOKEN = "iam-token";
@@ -63,17 +80,15 @@ public class GcpWorkloadIdentityCredentialProviderTest {
     gcpWorkloadIdentityCredentialProvider.initialize(credentialProviderContext);
 
     GcpWorkloadIdentityCredentialProvider mockedCredentialProvider =
-        Mockito.spy(gcpWorkloadIdentityCredentialProvider);
+        spy(gcpWorkloadIdentityCredentialProvider);
 
-    Mockito
-        .doThrow(new SocketTimeoutException())
+    doThrow(new SocketTimeoutException())
         .doThrow(new ConnectException())
         .doReturn(getSecurityTokenServiceResponse())
         .doReturn(getIamCredentialGenerateAccessTokenResponse())
-        .when(mockedCredentialProvider).executeHttpPostRequest(Mockito.any(), Mockito.anyString(),
-            Mockito.any());
+        .when(mockedCredentialProvider).executeHttpPostRequest(any(), anyString(), any());
 
-    Mockito.doReturn(getMockApiClient()).when(mockedCredentialProvider).getApiClient();
+    doReturn(getMockApiClient()).when(mockedCredentialProvider).getApiClient();
 
     CredentialProfile credentialProfile = new CredentialProfile(
         GcpWorkloadIdentityCredentialProvider.NAME, "profile", Collections.emptyMap());
@@ -92,7 +107,7 @@ public class GcpWorkloadIdentityCredentialProviderTest {
     Assert.assertEquals(credential.getExpiration().toString(), EXPIRES_IN);
     // twice per invocation of
     // {@link GcpWorkloadIdentityCredentialProvider#getProvisionedCredential}
-    Mockito.verify(mockedCredentialProvider.getApiClient(), Mockito.times(8));
+    verify(mockedCredentialProvider, times(4)).getApiClient();
   }
 
   private String getSecurityTokenServiceResponse() {
@@ -109,13 +124,12 @@ public class GcpWorkloadIdentityCredentialProviderTest {
   }
 
   private ApiClient getMockApiClient() throws ApiException {
-    ApiClient mockApiClient = Mockito.mock(ApiClient.class);
-    Mockito.when(mockApiClient.escapeString(Mockito.anyString())).thenCallRealMethod();
+    ApiClient mockApiClient = mock(ApiClient.class);
+    when(mockApiClient.escapeString(anyString())).thenCallRealMethod();
     ApiResponse<Object> apiResponse = getAuthenticationTokenRequestResponse();
-    Mockito
-        .doThrow(new ApiException(500, "Service is unavailable"))
+    doThrow(new ApiException(500, "Service is unavailable"))
         .doReturn(apiResponse)
-        .when(mockApiClient).execute(Mockito.any(), Mockito.any());
+        .when(mockApiClient).execute(any(), any());
     return mockApiClient;
   }
 
@@ -128,8 +142,8 @@ public class GcpWorkloadIdentityCredentialProviderTest {
 
   private ApiResponse<Object> getAuthenticationTokenRequestResponse() {
     AuthenticationV1TokenRequest authenticationV1TokenRequest =
-        Mockito.mock(AuthenticationV1TokenRequest.class);
-    Mockito.doReturn(getV1TokenRequestStatus()).when(authenticationV1TokenRequest).getStatus();
+        mock(AuthenticationV1TokenRequest.class);
+    doReturn(getV1TokenRequestStatus()).when(authenticationV1TokenRequest).getStatus();
     return new
         ApiResponse<Object>(200, Collections.emptyMap(), authenticationV1TokenRequest);
   }
@@ -161,5 +175,21 @@ public class GcpWorkloadIdentityCredentialProviderTest {
     CredentialProfile invalidCredentialProfile = new CredentialProfile(
         "unknown-provider", "profile", Collections.emptyMap());
     gcpWorkloadIdentityCredentialProvider.validateProfile(invalidCredentialProfile);
+  }
+
+  @Test(expected = IOException.class)
+  public void testExecuteHttpPostRequestHandlesHTTPErrorResponse() throws Exception {
+    InputStream errorMessageStream = new ByteArrayInputStream(
+        "Some error here".getBytes(StandardCharsets.UTF_8));
+    OutputStream outputStream = new ByteArrayOutputStream();
+    HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+    when(mockConnection.getResponseCode()).thenReturn(500);
+    when(mockConnection.getOutputStream()).thenReturn(outputStream);
+    when(mockConnection.getInputStream()).thenThrow(new AssertionError("wrong exception"));
+    when(mockConnection.getErrorStream()).thenReturn(errorMessageStream);
+    GcpWorkloadIdentityCredentialProvider gcpWorkloadIdentityCredentialProvider =
+        new GcpWorkloadIdentityCredentialProvider();
+    gcpWorkloadIdentityCredentialProvider
+        .executeHttpPostRequest(() -> mockConnection, "some body", new HashMap<>());
   }
 }

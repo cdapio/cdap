@@ -42,6 +42,7 @@ import io.kubernetes.client.util.Config;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
@@ -298,17 +299,23 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
 
     Map<String, String> headers = new HashMap<>();
     headers.put(HttpHeaders.CONTENT_TYPE, "application/json");
-    return executeHttpPostRequest(url, securityTokenServiceRequestJson, headers);
+    return executeHttpPostRequest(() -> (HttpURLConnection) url.openConnection(),
+        securityTokenServiceRequestJson, headers);
+  }
+
+  @VisibleForTesting
+  interface ConnectionProvider {
+    HttpURLConnection getConnection() throws IOException;
   }
 
   /**
    * Executes a http post request with the specified parameters.
    */
   @VisibleForTesting
-  String executeHttpPostRequest(URL url, String body, Map<String, String> headers)
-      throws IOException {
+  String executeHttpPostRequest(ConnectionProvider connectionProvider, String body,
+      Map<String, String> headers) throws IOException {
 
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    HttpURLConnection connection = connectionProvider.getConnection();
     connection.setRequestMethod(HttpMethod.POST);
     connection.setUseCaches(false);
     for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -321,14 +328,25 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       outputStream.writeBytes(body);
       outputStream.flush();
     }
+    InputStream inputStream;
+    boolean errorResponse = false;
+    if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) {
+      inputStream = connection.getErrorStream();
+      errorResponse = true;
+    } else {
+      inputStream = connection.getInputStream();
+    }
 
     StringBuilder response = new StringBuilder();
-    try (BufferedReader in = new BufferedReader(
-        new InputStreamReader(connection.getInputStream()))) {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(inputStream))) {
       String inputLine;
       while ((inputLine = in.readLine()) != null) {
         response.append(inputLine);
       }
+    }
+    if (errorResponse) {
+      throw new IOException(String.format("Failed to call URL %s with code; response code %d:\n%s",
+          connection.getURL(), connection.getResponseCode(), response.toString()));
     }
     return response.toString();
   }
@@ -346,6 +364,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     headers.put(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", token));
     headers.put(HttpHeaders.CONTENT_TYPE, "application/json");
     String generateAccessTokenRequestJson = GSON.toJson(credentialsGenerateAccessTokenRequest);
-    return executeHttpPostRequest(url, generateAccessTokenRequestJson, headers);
+    return executeHttpPostRequest(() -> (HttpURLConnection) url.openConnection(),
+        generateAccessTokenRequestJson, headers);
   }
 }
