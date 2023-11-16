@@ -132,7 +132,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
               namespace), remoteTaskException.getMessage());
     } catch (Exception e) {
       LOG.error("#### Exception occurred: ", e);
-      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
+      responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
     }
   }
 
