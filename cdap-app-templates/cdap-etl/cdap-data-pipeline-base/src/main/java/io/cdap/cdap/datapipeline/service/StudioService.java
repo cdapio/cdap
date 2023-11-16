@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
  * Service that handles pipeline studio operations, like validation and schema propagation.
  */
 public class StudioService extends AbstractSystemService {
+
   private static final Logger LOG = LoggerFactory.getLogger(StudioService.class);
   private static final String CONNECTION_TYPE_CONFIG = "connectionTypeConfig";
   private static final Gson GSON = new Gson();
@@ -54,7 +55,8 @@ public class StudioService extends AbstractSystemService {
   @Override
   protected void configure() {
     setName(Constants.STUDIO_SERVICE_NAME);
-    setDescription("Handles pipeline studio operations, like validation, connections and schema propagation.");
+    setDescription(
+        "### Handles pipeline studio operations, like validation, connections and schema propagation.");
     addHandler(new ValidationHandler());
     addHandler(new DraftHandler());
     addHandler(new ConnectionHandler(connectionConfig));
@@ -70,7 +72,8 @@ public class StudioService extends AbstractSystemService {
     String connConfig = context.getSpecification().getProperty(CONNECTION_TYPE_CONFIG);
     connectionConfig = GSON.fromJson(connConfig, ConnectionConfig.class);
     // only do the connection creation on first instance to avoid transaction conflict
-    if (context.getInstanceId() != 0 || connectionConfig == null || connectionConfig.getConnections().isEmpty()) {
+    if (context.getInstanceId() != 0 || connectionConfig == null
+        || connectionConfig.getConnections().isEmpty()) {
       return;
     }
 
@@ -89,19 +92,22 @@ public class StudioService extends AbstractSystemService {
         continue;
       }
 
-      NamespaceSummary namespaceSummary = context.getAdmin().getNamespaceSummary(creationRequest.getNamespace());
+      NamespaceSummary namespaceSummary = context.getAdmin()
+          .getNamespaceSummary(creationRequest.getNamespace());
       if (namespaceSummary == null) {
-        LOG.warn("Namespace {} does not exist, skipping creating connection {}", creationRequest.getNamespace(),
-                 creationRequest.getName());
+        LOG.warn("Namespace {} does not exist, skipping creating connection {}",
+            creationRequest.getNamespace(),
+            creationRequest.getName());
       }
 
       ConnectionId connectionId = new ConnectionId(namespaceSummary, creationRequest.getName());
       long now = System.currentTimeMillis();
       Connection connectionInfo = new Connection(
-        creationRequest.getName(), connectionId.getConnectionId(), creationRequest.getPlugin().getName(),
-        creationRequest.getDescription(), true,
-        creationRequest.getName().equals(connectionConfig.getDefaultConnection()) ? true : false,
-        now, now, creationRequest.getPlugin());
+          creationRequest.getName(), connectionId.getConnectionId(),
+          creationRequest.getPlugin().getName(),
+          creationRequest.getDescription(), true,
+          creationRequest.getName().equals(connectionConfig.getDefaultConnection()) ? true : false,
+          now, now, creationRequest.getPlugin());
       try {
         connectionStore.saveConnection(connectionId, connectionInfo, false);
       } catch (ConnectionConflictException e) {
