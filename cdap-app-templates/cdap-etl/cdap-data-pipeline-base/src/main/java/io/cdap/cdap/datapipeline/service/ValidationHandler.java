@@ -71,10 +71,11 @@ import javax.ws.rs.PathParam;
  * Handles validation logic for pipelines.
  */
 public class ValidationHandler extends AbstractSystemHttpServiceHandler {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .serializeNulls()
-    .create();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .serializeNulls()
+      .create();
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() {
   }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(ValidationHandler.class);
@@ -88,11 +89,12 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @POST
   @Path("v1/contexts/{context}/validations/stage")
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("context") String namespace) throws IOException, AccessException {
+      @PathParam("context") String namespace) throws IOException, AccessException {
     LOG.info("### Received request for stage validation");
     try {
       if (!getContext().getAdmin().namespaceExists(namespace)) {
-        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
+        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
+            String.format("Namespace '%s' does not exist", namespace));
         return;
       }
 
@@ -110,12 +112,14 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   }
 
   private void validateRemotely(HttpServiceRequest request, HttpServiceResponder responder,
-                                String namespace) throws IOException {
+      String namespace) throws IOException {
     String validationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
-    RemoteValidationRequest remoteValidationRequest = new RemoteValidationRequest(namespace, validationRequestString);
-    RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getName()).
-      withParam(GSON.toJson(remoteValidationRequest)).
-      build();
+    RemoteValidationRequest remoteValidationRequest = new RemoteValidationRequest(namespace,
+        validationRequestString);
+    RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(
+            RemoteValidationTask.class.getName()).
+        withParam(GSON.toJson(remoteValidationRequest)).
+        build();
     try {
       byte[] bytes = getContext().runTask(runnableTaskRequest);
       responder.sendString(Bytes.toString(bytes));
@@ -123,8 +127,9 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       LOG.error("#### Exception occurred: ", e);
       RemoteTaskException remoteTaskException = e.getCause();
       responder.sendError(
-        getExceptionCode(remoteTaskException.getRemoteExceptionClassName(), remoteTaskException.getMessage(),
-                         namespace), remoteTaskException.getMessage());
+          getExceptionCode(remoteTaskException.getRemoteExceptionClassName(),
+              remoteTaskException.getMessage(),
+              namespace), remoteTaskException.getMessage());
     } catch (Exception e) {
       LOG.error("#### Exception occurred: ", e);
       responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
@@ -133,26 +138,30 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
 
   private int getExceptionCode(String exceptionClass, String exceptionMessage, String namespace) {
     if (IllegalArgumentException.class.getName().equals(exceptionClass)) {
-      return String.format(RemoteValidationTask.NAMESPACE_DOES_NOT_EXIST, namespace).equals(exceptionMessage) ?
-        HttpURLConnection.HTTP_NOT_FOUND : HttpURLConnection.HTTP_BAD_REQUEST;
+      return String.format(RemoteValidationTask.NAMESPACE_DOES_NOT_EXIST, namespace)
+          .equals(exceptionMessage) ?
+          HttpURLConnection.HTTP_NOT_FOUND : HttpURLConnection.HTTP_BAD_REQUEST;
     }
     return HttpURLConnection.HTTP_INTERNAL_ERROR;
   }
 
   private void validateLocally(HttpServiceRequest request, HttpServiceResponder responder,
-                               String namespace) throws IOException {
+      String namespace) throws IOException {
     StageValidationRequest validationRequest;
     try {
-      validationRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
-                                        StageValidationRequest.class);
+      validationRequest = GSON.fromJson(
+          StandardCharsets.UTF_8.decode(request.getContent()).toString(),
+          StageValidationRequest.class);
       validationRequest.validate();
     } catch (JsonSyntaxException e) {
       LOG.error("#### Exception occurred: ", e);
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
+      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+          "Unable to decode request body: " + e.getMessage());
       return;
     } catch (IllegalArgumentException e) {
       LOG.error("#### Exception occurred: ", e);
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid stage config: " + e.getMessage());
+      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+          "Invalid stage config: " + e.getMessage());
       return;
     }
 
@@ -167,50 +176,59 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
         // If this method returns IllegalArgumentException, it means the namespace doesn't exist.
         // If this is the case, we return a 404 error.
         responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
-                            String.format("Namespace '%s' does not exist", namespace));
+            String.format("Namespace '%s' does not exist", namespace));
         return;
       }
     }
 
     Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
-      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
-      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
-      ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, getContext()),
-      OAuthAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthAccessTokenMacroEvaluator(getContext())
+        SecureStoreMacroEvaluator.FUNCTION_NAME,
+        new SecureStoreMacroEvaluator(namespace, getContext()),
+        OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext()),
+        ConnectionMacroEvaluator.FUNCTION_NAME,
+        new ConnectionMacroEvaluator(namespace, getContext()),
+        OAuthAccessTokenMacroEvaluator.FUNCTION_NAME,
+        new OAuthAccessTokenMacroEvaluator(getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
-                                                              DefaultMacroEvaluator.MAP_FUNCTIONS);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments),
+        evaluators,
+        DefaultMacroEvaluator.MAP_FUNCTIONS);
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
-      .skipInvalidMacros()
-      .setEscaping(false)
-      .setFunctionWhitelist(evaluators.keySet())
-      .build();
+        .skipInvalidMacros()
+        .setEscaping(false)
+        .setFunctionWhitelist(evaluators.keySet())
+        .build();
     Function<Map<String, String>, Map<String, String>> macroFn =
-      macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
+        macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator,
+            macroParserOptions);
     String validationResponse = GSON.toJson(ValidationUtils.validate(
-      namespace, validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn, getContext()));
+        namespace, validationRequest, getContext().createServicePluginConfigurer(namespace),
+        macroFn, getContext()));
     responder.sendString(validationResponse);
   }
 
   @POST
   @Path("v1/contexts/{context}/validations/pipeline")
   public void validatePipeline(HttpServiceRequest request, HttpServiceResponder responder,
-                               @PathParam("context") String namespace) throws IOException {
+      @PathParam("context") String namespace) throws IOException {
     if (!getContext().getAdmin().namespaceExists(namespace)) {
-      responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
+      responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
+          String.format("Namespace '%s' does not exist", namespace));
       return;
     }
 
     AppRequest<JsonObject> appRequest;
     try {
-      appRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), APP_REQUEST_TYPE);
+      appRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
+          APP_REQUEST_TYPE);
       appRequest.validate();
     } catch (JsonSyntaxException e) {
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
+      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+          "Unable to decode request body: " + e.getMessage());
       return;
     } catch (IllegalArgumentException e) {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
-                          "Invalid artifact in pipeline request: " + e.getMessage());
+          "Invalid artifact in pipeline request: " + e.getMessage());
       return;
     }
 
@@ -222,8 +240,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       responder.sendJson(validateStreamingPipeline(appRequest));
     } else {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
-                          String.format("Invalid artifact '%s'. Must be '%s' or '%s'.", artifactSummary.getName(),
-                                        StudioUtil.ARTIFACT_BATCH_NAME, StudioUtil.ARTIFACT_STREAMING_NAME));
+          String.format("Invalid artifact '%s'. Must be '%s' or '%s'.", artifactSummary.getName(),
+              StudioUtil.ARTIFACT_BATCH_NAME, StudioUtil.ARTIFACT_STREAMING_NAME));
     }
   }
 
@@ -239,8 +257,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   // TODO: (CDAP-14686, CDAP-14687) remove once real logic is implemented
   private StageSpec getDummyStageSpec() {
     PluginSpec pluginSpec = new PluginSpec(BatchSource.PLUGIN_TYPE, "file", Collections.emptyMap(),
-                                           new ArtifactId("core-plugins", new ArtifactVersion("2.2.0"),
-                                                          ArtifactScope.SYSTEM));
+        new ArtifactId("core-plugins", new ArtifactVersion("2.2.0"),
+            ArtifactScope.SYSTEM));
     return StageSpec.builder("dummy", pluginSpec).build();
   }
 }
