@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2023 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package io.cdap.cdap.internal.operation;
 
 import com.google.common.io.Closeables;
@@ -41,7 +57,8 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
   private static OperationLifecycleManager operationLifecycleManager;
   private static int batchSize;
 
-  @ClassRule public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  @ClassRule 
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static EmbeddedPostgres postgres;
 
@@ -104,7 +121,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
 
           // verify the scan without filters picks all runs for testNamespace
           request = ScanOperationRunsRequest.builder().setNamespace(testNamespace).build();
-          operationLifecycleManager.scanOperations(request, batchSize, d -> gotRuns.add(d));
+          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
           expectedRuns = testNamespaceRuns;
           Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
@@ -112,7 +129,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
           gotRuns.clear();
           request =
               ScanOperationRunsRequest.builder().setNamespace(testNamespace).setLimit(2).build();
-          operationLifecycleManager.scanOperations(request, batchSize, d -> gotRuns.add(d));
+          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
           expectedRuns = testNamespaceRuns.stream().limit(2).collect(Collectors.toList());
           Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
@@ -123,7 +140,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
                   .setNamespace(testNamespace)
                   .setFilter(new OperationRunFilter(OperationType.PUSH_APPS, null))
                   .build();
-          operationLifecycleManager.scanOperations(request, batchSize, d -> gotRuns.add(d));
+          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
           expectedRuns =
               testNamespaceRuns.stream()
                   .filter(detail -> detail.getRun().getType().equals(OperationType.PUSH_APPS))
@@ -139,7 +156,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
                   .setFilter(
                       new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
                   .build();
-          operationLifecycleManager.scanOperations(request, batchSize, d -> gotRuns.add(d));
+          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
           expectedRuns =
               testNamespaceRuns.stream()
                   .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
@@ -156,7 +173,7 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
                   .setFilter(
                       new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
                   .build();
-          operationLifecycleManager.scanOperations(request, batchSize, d -> gotRuns.add(d));
+          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
           expectedRuns =
               testNamespaceRuns.stream()
                   .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))

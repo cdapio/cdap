@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
-
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -62,15 +61,15 @@ public class OperationLifecycleManager {
     while (currentLimit > 0) {
       ScanOperationRunsRequest batchRequest = ScanOperationRunsRequest
           .builder(request)
-          .setScanAfter(lastKey)
-          .setLimit(Math.min(txBatchSize, currentLimit))
-          .build();
+              .setScanAfter(lastKey)
+              .setLimit(Math.min(txBatchSize, currentLimit))
+              .build();
 
       request = batchRequest;
 
       lastKey = TransactionRunners.run(transactionRunner, context -> {
-        return getOperationRunStore(context).scanOperations(batchRequest, consumer);
-      }, IOException.class, OperationRunNotFoundException.class);
+                return getOperationRunStore(context).scanOperations(batchRequest, consumer);
+              }, IOException.class, OperationRunNotFoundException.class);
 
       if (lastKey == null) {
         break;
@@ -80,25 +79,23 @@ public class OperationLifecycleManager {
     return currentLimit == 0;
   }
 
-   /**
- * Retrieves details of an operation run identified by the provided {@code OperationRunId}.
- *
- * @param runId The unique identifier for the operation run.
- * @return An {@code OperationRunDetail} object containing information about the specified operation run.
- * @throws OperationRunNotFoundException If the specified operation run is not found.
- */
+  /**
+   * Retrieves details of an operation run identified by the provided {@code OperationRunId}.
+   *
+   * @param runId The unique identifier for the operation run.
+   * @return An {@code OperationRunDetail} object containing information about the specified
+   *     operation run.
+   * @throws OperationRunNotFoundException If the specified operation run is not found.
+   */
   public OperationRunDetail getOperationRun(OperationRunId runId)
       throws IOException, OperationRunNotFoundException {
-    OperationRunDetail operationRunDetail =
-        TransactionRunners.run(
-            transactionRunner,
-            context -> {
-              return getOperationRunStore(context).getOperation(runId);
-            },
-            IOException.class,
-            OperationRunNotFoundException.class);
-
-    return operationRunDetail;
+    return TransactionRunners.run(
+        transactionRunner,
+        context -> {
+          return getOperationRunStore(context).getOperation(runId);
+        },
+        IOException.class,
+        OperationRunNotFoundException.class);
   }
 
   /**
