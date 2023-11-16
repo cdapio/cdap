@@ -91,6 +91,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
       @PathParam("context") String namespace) throws IOException, AccessException {
     LOG.info("### Received request for stage validation");
+    System.out.println("### Received request for stage validation");
     try {
       if (!getContext().getAdmin().namespaceExists(namespace)) {
         responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
@@ -101,13 +102,16 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       //Validate remotely if remote execution is enabled
       if (getContext().isRemoteTaskEnabled()) {
         LOG.info("### Validating remotely");
+        System.out.println("### Validating remotely");
         validateRemotely(request, responder, namespace);
         return;
       }
       LOG.info("### Validating locally");
+      System.out.println("### Validating locally");
       validateLocally(request, responder, namespace);
     } catch (Exception e) {
       LOG.error("#### Exception occurred: ", e);
+      System.out.println("#### Exception occurred: " + e);
     }
   }
 
@@ -126,10 +130,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     } catch (RemoteExecutionException e) {
       LOG.error("#### Exception occurred: ", e);
       RemoteTaskException remoteTaskException = e.getCause();
-      responder.sendError(
-          getExceptionCode(remoteTaskException.getRemoteExceptionClassName(),
-              remoteTaskException.getMessage(),
-              namespace), remoteTaskException.getMessage());
+      responder.sendJson(GSON.toJson(e));
     } catch (Exception e) {
       LOG.error("#### Exception occurred: ", e.getMessage());
       responder.sendJson(GSON.toJson(e));
