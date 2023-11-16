@@ -19,6 +19,9 @@ package io.cdap.cdap.security.spi.credential;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -77,6 +80,8 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       LoggerFactory.getLogger(GcpWorkloadIdentityCredentialProvider.class);
   private CredentialProviderContext credentialProviderContext;
   private ApiClient client;
+  private final LoadingCache<ProvisionedCredentialCacheKey,
+      ProvisionedCredential> credentialLoadingCache;
   static final String CONNECT_TIMEOUT_SECS = "k8s.api.client.connect.timeout.secs";
   static final String CONNECT_TIMEOUT_SECS_DEFAULT = "120";
   static final String READ_TIMEOUT_SECS = "k8s.api.client.read.timeout.secs";
@@ -95,6 +100,30 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
       "https://www.googleapis.com/auth/cloud-platform";
   private static final String PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT =
       "Failed to provision credential with identity '%s'";
+
+  /**
+   * Constructs the {@link GcpWorkloadIdentityCredentialProvider}.
+   */
+  public GcpWorkloadIdentityCredentialProvider() {
+    this.credentialLoadingCache = CacheBuilder.newBuilder()
+        // Provisioned credential expire after 60mins, assuming 20% buffer in cache exp (0.8*60).
+        .expireAfterWrite(48, TimeUnit.MINUTES)
+        .build(new CacheLoader<ProvisionedCredentialCacheKey, ProvisionedCredential>() {
+          @Override
+          public ProvisionedCredential load(ProvisionedCredentialCacheKey
+              provisionedCredentialCacheKey) throws Exception {
+            return getProvisionedCredential(provisionedCredentialCacheKey.getNamespaceMeta(),
+                provisionedCredentialCacheKey.getCredentialIdentity(),
+                provisionedCredentialCacheKey.getScopes());
+          }
+        });
+  }
+
+  @VisibleForTesting
+  public LoadingCache<ProvisionedCredentialCacheKey,
+      ProvisionedCredential> getCredentialLoadingCache() {
+    return credentialLoadingCache;
+  }
 
   @Override
   public String getName() {
@@ -156,23 +185,22 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     try {
       while (stopWatch.elapsed(TimeUnit.SECONDS) < timeout) {
         try {
-          return getProvisionedCredential(namespaceMeta, identity, scopes);
-        } catch (RetryableException e) {
+          return getCredentialLoadingCache().get(new ProvisionedCredentialCacheKey(namespaceMeta,
+              identity, scopes));
+        } catch (Exception e) {
+          if (!(e.getCause() instanceof RetryableException)) {
+            throw e;
+          }
           TimeUnit.MILLISECONDS.sleep(delay);
           delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier
               + 1)));
           delay = Math.min(delay, maxDelay);
-        } catch (Exception e) {
-
-          LOG.error(
-              String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT, identity.getIdentity()), e);
-
-          throw new CredentialProvisioningException(
-              String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT + ": %s",
-                  identity.getIdentity(), e.getMessage()), e);
         }
       }
-    } catch (InterruptedException e) {
+    } catch (Throwable e) {
+      LOG.error(
+          String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT, identity.getIdentity()),
+          e);
       throw new CredentialProvisioningException(
           String.format(PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT + ": %s",
               identity.getIdentity(), e.getMessage()), e);
@@ -186,7 +214,8 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
         ));
   }
 
-  private ProvisionedCredential getProvisionedCredential(NamespaceMeta namespaceMeta,
+  @VisibleForTesting
+  ProvisionedCredential getProvisionedCredential(NamespaceMeta namespaceMeta,
       CredentialIdentity identity, @Nullable String scopes) throws IOException, ApiException {
 
     // Get k8s namespace from namespace metadata if using a non-default namespace and namespace
@@ -346,7 +375,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     }
     if (errorResponse) {
       throw new IOException(String.format("Failed to call URL %s with code; response code %d:\n%s",
-          connection.getURL(), connection.getResponseCode(), response.toString()));
+          connection.getURL(), connection.getResponseCode(), response));
     }
     return response.toString();
   }

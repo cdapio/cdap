@@ -26,6 +26,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -81,6 +84,21 @@ public class GcpWorkloadIdentityCredentialProviderTest {
 
     GcpWorkloadIdentityCredentialProvider mockedCredentialProvider =
         spy(gcpWorkloadIdentityCredentialProvider);
+
+    LoadingCache<ProvisionedCredentialCacheKey,
+        ProvisionedCredential> cache = CacheBuilder.newBuilder()
+        .build(new CacheLoader<ProvisionedCredentialCacheKey, ProvisionedCredential>() {
+          @Override
+          public ProvisionedCredential load(ProvisionedCredentialCacheKey
+              provisionedCredentialCacheKey) throws Exception {
+            return mockedCredentialProvider.getProvisionedCredential(
+                provisionedCredentialCacheKey.getNamespaceMeta(),
+                provisionedCredentialCacheKey.getCredentialIdentity(),
+                provisionedCredentialCacheKey.getScopes());
+          }
+        });
+
+    doReturn(cache).when(mockedCredentialProvider).getCredentialLoadingCache();
 
     doThrow(new SocketTimeoutException())
         .doThrow(new ConnectException())
