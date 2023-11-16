@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
+
+import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -76,6 +78,27 @@ public class OperationLifecycleManager {
       currentLimit -= txBatchSize;
     }
     return currentLimit == 0;
+  }
+
+   /**
+ * Retrieves details of an operation run identified by the provided {@code OperationRunId}.
+ *
+ * @param runId The unique identifier for the operation run.
+ * @return An {@code OperationRunDetail} object containing information about the specified operation run.
+ * @throws OperationRunNotFoundException If the specified operation run is not found.
+ */
+  public OperationRunDetail getOperationRun(OperationRunId runId)
+      throws IOException, OperationRunNotFoundException {
+    OperationRunDetail operationRunDetail =
+        TransactionRunners.run(
+            transactionRunner,
+            context -> {
+              return getOperationRunStore(context).getOperation(runId);
+            },
+            IOException.class,
+            OperationRunNotFoundException.class);
+
+    return operationRunDetail;
   }
 
   /**
