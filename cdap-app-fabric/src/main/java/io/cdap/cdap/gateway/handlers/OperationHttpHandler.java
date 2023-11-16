@@ -43,6 +43,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.util.HashMap;
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -188,7 +189,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
 
   // TODO[CDAP-20895] : Add unit tests for extracting OperationRunFilter from filter string
   private OperationRunFilter getFilter(String filterStr) throws IllegalArgumentException {
-    Map<String, String> filterKeyValMap = parseKeyValStr(filterStr, FILTER_SPLITTER);
+    ImmutableMap<String, String> filterKeyValMap = parseKeyValStr(filterStr, FILTER_SPLITTER);
     OperationType operationType = null;
     OperationRunStatus operationStatus = null;
 
@@ -223,8 +224,9 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
    * @return A {@code Map<String, String>} containing the parsed key-value pairs.
    * @throws IllegalArgumentException If the input does not match the expected key=val pair pattern.
    */
-  private static Map<String, String> parseKeyValStr(String input, String splitter) {
-    Map<String, String> keyValMap = new HashMap<>();
+  private static ImmutableMap<String, String> parseKeyValStr(String input, String splitter) {
+    //Map<String, String> keyValMap = new HashMap<>();
+    ImmutableMap.Builder<String, String> keyValMap = ImmutableMap.<String, String>builder();
     String[] keyValPairs = input.split(splitter);
 
     for (String keyValPair : keyValPairs) {
@@ -236,7 +238,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
         throw new IllegalArgumentException("Invalid filter key=val pair: " + keyValPair);
       }
     }
-    return keyValMap;
+    return keyValMap.build();
   }
 
   private NamespaceId validateNamespaceId(String namespaceId) throws BadRequestException {
