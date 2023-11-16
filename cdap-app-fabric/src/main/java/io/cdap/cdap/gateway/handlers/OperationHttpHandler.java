@@ -65,7 +65,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   public static final String OPERATIONS_LIST_PAGINATED_KEY = "operations";
 
   @Inject
-  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager){
+  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager) {
     this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.operationLifecycleManager = operationLifecycleManager;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
