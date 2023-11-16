@@ -56,7 +56,6 @@ import javax.ws.rs.QueryParam;
 /** The {@link HttpHandler} for handling REST calls to operation endpoints. */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/operations")
 public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
-  private final CConfiguration cConf;
   private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(\"?)(\\w+)=(\\w+)(\"?)");
   private static final String FILTER_SPLITTER = "AND";
   private final FeatureFlagsProvider featureFlagsProvider;
@@ -66,15 +65,13 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   public static final String OPERATIONS_LIST_PAGINATED_KEY = "operations";
 
   @Inject
-  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager)
-      throws Exception {
-    this.cConf = cConf;
-    this.batchSize = this.cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
+  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager){
+    this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.operationLifecycleManager = operationLifecycleManager;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
-  // TODO[CDAP-20881] :  Add RBAC check
+  // TODO(CDAP-20881) :  Add RBAC check
   /**
    * API to fetch all running operations in a namespace.
    *
@@ -186,7 +183,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
     return builder.build();
   }
 
-  // TODO[CDAP-20895] : Add unit tests for extracting OperationRunFilter from filter string
+  // TODO(CDAP-20895) : Add unit tests for extracting OperationRunFilter from filter string
   private OperationRunFilter getFilter(String filterStr) throws IllegalArgumentException {
     ImmutableMap<String, String> filterKeyValMap = parseKeyValStr(filterStr, FILTER_SPLITTER);
     OperationType operationType = null;
@@ -247,7 +244,6 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /** throws {@link ForbiddenException} if the feature is disabled */
   private void checkSourceControlMultiAppFeatureFlag() throws ForbiddenException {
     if (!Feature.SOURCE_CONTROL_MANAGEMENT_MULTI_APP.isEnabled(featureFlagsProvider)) {
       throw new ForbiddenException(
