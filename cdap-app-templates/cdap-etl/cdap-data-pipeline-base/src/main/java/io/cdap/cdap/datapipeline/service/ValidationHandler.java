@@ -89,17 +89,24 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @Path("v1/contexts/{context}/validations/stage")
   public void validateStage(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace) throws IOException, AccessException {
-    if (!getContext().getAdmin().namespaceExists(namespace)) {
-      responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
-      return;
-    }
+    LOG.info("### Received request for stage validation");
+    try {
+      if (!getContext().getAdmin().namespaceExists(namespace)) {
+        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
+        return;
+      }
 
-    //Validate remotely if remote execution is enabled
-    if (getContext().isRemoteTaskEnabled()) {
-      validateRemotely(request, responder, namespace);
-      return;
+      //Validate remotely if remote execution is enabled
+      if (getContext().isRemoteTaskEnabled()) {
+        LOG.info("### Validating remotely");
+        validateRemotely(request, responder, namespace);
+        return;
+      }
+      LOG.info("### Validating locally");
+      validateLocally(request, responder, namespace);
+    } catch (Exception e) {
+      LOG.error("#### Exception occurred: ", e);
     }
-    validateLocally(request, responder, namespace);
   }
 
   private void validateRemotely(HttpServiceRequest request, HttpServiceResponder responder,
