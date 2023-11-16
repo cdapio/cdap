@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -42,8 +43,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
-import java.util.HashMap;
-import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -225,7 +224,6 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
    * @throws IllegalArgumentException If the input does not match the expected key=val pair pattern.
    */
   private static ImmutableMap<String, String> parseKeyValStr(String input, String splitter) {
-    //Map<String, String> keyValMap = new HashMap<>();
     ImmutableMap.Builder<String, String> keyValMap = ImmutableMap.<String, String>builder();
     String[] keyValPairs = input.split(splitter);
 
