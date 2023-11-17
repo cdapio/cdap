@@ -132,8 +132,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       RemoteTaskException remoteTaskException = e.getCause();
       responder.sendJson(GSON.toJson(e));
     } catch (Exception e) {
-      LOG.error("#### Exception occurred: ", e.getMessage());
-      responder.sendJson(GSON.toJson(e));
+      LOG.error("#### Exception occurred: ", e);
+      responder.sendString(GSON.toJson(e));
     }
   }
 
