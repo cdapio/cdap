@@ -125,7 +125,7 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
     String path = String.format("%s/support/bundles%s", Constants.Gateway.API_VERSION_3, queryBuilder);
 
-    HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, path).toURL()).build();
+    HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, "%s", path).toURL()).build();
     AtomicReference<HttpResponse> response =
       new AtomicReference<>(HttpRequests.execute(request, new DefaultHttpRequestConfig(false)));
 
@@ -155,7 +155,7 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
     String path = String.format("%s/support/bundles/%s", Constants.Gateway.API_VERSION_3, bundleId);
 
-    HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, path).toURL()).build();
+    HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, "%s", path).toURL()).build();
     return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
   }
 }

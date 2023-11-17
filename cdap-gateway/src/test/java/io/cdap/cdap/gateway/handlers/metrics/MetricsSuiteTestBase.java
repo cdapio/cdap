@@ -211,8 +211,7 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static URI getEndPoint(String path) {
-    // Replace "%" with "%%" for literal path
-    return URIScheme.createURI(discoverable, path.replace("%", "%%"));
+    return URIScheme.createURI(discoverable, "%s", path);
   }
 
   public static HttpResponse doGet(String resource) throws Exception {

@@ -198,7 +198,7 @@ public abstract class AbstractMasterServiceManager implements MasterServiceManag
 
   private boolean isEndpointAlive(Discoverable discoverable) {
     try {
-      URL url = URIScheme.createURI(discoverable, "/ping").toURL();
+      URL url = URIScheme.createURI(discoverable, "%s", "/ping").toURL();
       int responseCode = HttpRequests.execute(HttpRequest.get(url).build(), httpRequestConfig)
           .getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_OK) {
