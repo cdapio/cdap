@@ -170,11 +170,10 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
   }
 
   /**
-   * Opens a {@link HttpURLConnection} to the given service for the given
-   * program run.
+   * Opens a {@link HttpURLConnection} to the given service.
    *
    * @throws BadRequestException if the request for service routing is not
-   *                             valid
+   *                             valid.
    */
   private HttpURLConnection openConnection(HttpRequest request, String service,
       String path) throws BadRequestException {
@@ -184,7 +183,7 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
       throw new ServiceUnavailableException(service);
     }
 
-    URI uri = URIScheme.createURI(discoverable, path);
+    URI uri = URIScheme.createURI(discoverable, "%s", path);
     LOG.trace("Routing request for service '{}' to uri '{}'.", service, uri);
     try {
       URL url = uri.toURL();

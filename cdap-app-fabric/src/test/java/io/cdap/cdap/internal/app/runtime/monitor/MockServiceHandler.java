@@ -28,6 +28,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * A mock handler for testing service routing. It provides service endpoints for
@@ -39,9 +40,9 @@ public final class MockServiceHandler extends AbstractHttpHandler {
   @Path("/get/{status}")
   @GET
   public void get(HttpRequest request, HttpResponder responder,
-      @PathParam("status") int statusCode) {
+      @PathParam("status") int statusCode, @QueryParam("queryParam") String queryParam) {
     responder.sendString(HttpResponseStatus.valueOf(statusCode),
-        "Status is " + statusCode);
+        "Status is " + statusCode + " and query param is " + queryParam);
   }
 
   @Path("/delete/{status}")

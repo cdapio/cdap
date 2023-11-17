@@ -200,4 +200,26 @@ public class InternalServiceRoutingHandlerTest {
         .createRemoteClient(MOCK_SERVICE,
             DefaultHttpRequestConfig.DEFAULT, "");
   }
+
+
+  @Test
+  public void testUrlEncodedGetQueryParam()
+      throws IOException, UnauthorizedException {
+    RemoteClient remoteClient = injector.getInstance(RemoteClientFactory.class)
+        .createRemoteClient(
+            Constants.Service.INTERNAL_ROUTER,
+            DefaultHttpRequestConfig.DEFAULT,
+            Constants.Gateway.INTERNAL_API_VERSION_3 + "/router");
+    // We add a %20d at the end of the URL to ensure it that the router
+    // handles URL encoded string correctly.
+    HttpMethod method = HttpMethod.GET;
+    HttpRequest request = remoteClient.requestBuilder(method,
+            String.format("services/%s/mock/%s/%d",
+                MOCK_SERVICE, method.name().toLowerCase(), 200) +
+            "?queryParam=abc%20d")
+        .build();
+
+    HttpResponse response = remoteClient.execute(request);
+    Assert.assertTrue(response.getResponseBodyAsString().contains("abc d"));
+  }
 }
