@@ -35,6 +35,8 @@ import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
 import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
+import io.cdap.cdap.security.encryption.AeadCipher;
+import io.cdap.cdap.security.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.http.SSLConfig;
 import io.cdap.http.SSLHandlerFactory;
@@ -94,6 +96,7 @@ public class NettyRouter extends AbstractIdleService {
   private final UserIdentityExtractor userIdentityExtractor;
   private final boolean sslEnabled;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final AeadCipher userCredentialAeadCipher;
 
   private InetSocketAddress boundAddress;
   private Cancellable serverCancellable;
@@ -105,7 +108,9 @@ public class NettyRouter extends AbstractIdleService {
       @Named(Constants.Router.ADDRESS) InetAddress hostname,
       RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
       UserIdentityExtractor userIdentityExtractor,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION)
+          AeadCipher userCredentialAeadCipher) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS);
@@ -121,6 +126,7 @@ public class NettyRouter extends AbstractIdleService {
     this.port = sslEnabled
         ? cConf.getInt(Constants.Router.ROUTER_SSL_PORT)
         : cConf.getInt(Constants.Router.ROUTER_PORT);
+    this.userCredentialAeadCipher = userCredentialAeadCipher;
   }
 
   /**
@@ -225,7 +231,7 @@ public class NettyRouter extends AbstractIdleService {
             if (securityEnabled) {
               pipeline.addLast("access-token-authenticator",
                   new AuthenticationHandler(cConf, sConf, discoveryServiceClient,
-                      userIdentityExtractor));
+                      userIdentityExtractor, userCredentialAeadCipher));
             }
             if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
               pipeline.addLast("audit-log", new AuditLogHandler());

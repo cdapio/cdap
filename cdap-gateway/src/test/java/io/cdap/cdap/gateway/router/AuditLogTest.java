@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.encryption.NoOpAeadCipher;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
@@ -82,7 +83,8 @@ public class AuditLogTest {
   public static void init() throws Exception {
     // Configure a log appender programmatically for the audit log
     TestLogAppender.addAppender(Constants.Router.AUDIT_LOGGER_NAME);
-    ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME)).setLevel(Level.TRACE);
+    ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME))
+        .setLevel(Level.TRACE);
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
@@ -93,18 +95,21 @@ public class AuditLogTest {
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
-    RouterServiceLookup serviceLookup = new RouterServiceLookup(cConf, discoveryService, new RouterPathLookup());
+    RouterServiceLookup serviceLookup = new RouterServiceLookup(cConf, discoveryService,
+        new RouterPathLookup());
 
     TokenValidator successValidator = new SuccessTokenValidator();
-    router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, successValidator,
-                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
+    router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup,
+        successValidator,
+        new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
+        new NoOpAeadCipher());
     router.startAndWait();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new TestHandler()).build();
     httpService.start();
 
     cancelDiscovery = discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP,
-                                                                 httpService.getBindAddress()));
+        httpService.getBindAddress()));
 
     int port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
     baseURI = URI.create(String.format("http://%s:%d", cConf.get(Constants.Router.ADDRESS), port));
@@ -126,20 +131,23 @@ public class AuditLogTest {
     urlConn = createURLConnection("/put", HttpMethod.PUT);
     urlConn.getOutputStream().write("Test Put".getBytes(StandardCharsets.UTF_8));
     Assert.assertEquals(200, urlConn.getResponseCode());
-    Assert.assertEquals("Test Put", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
+    Assert.assertEquals("Test Put",
+        new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     urlConn.getInputStream().close();
 
     urlConn = createURLConnection("/post", HttpMethod.POST);
     urlConn.getOutputStream().write("Test Post".getBytes(StandardCharsets.UTF_8));
     Assert.assertEquals(200, urlConn.getResponseCode());
-    Assert.assertEquals("Test Post", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
+    Assert.assertEquals("Test Post",
+        new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     urlConn.getInputStream().close();
 
     urlConn = createURLConnection("/postHeaders", HttpMethod.POST);
     urlConn.setRequestProperty("user-id", "cdap");
     urlConn.getOutputStream().write("Post Headers".getBytes(StandardCharsets.UTF_8));
     Assert.assertEquals(200, urlConn.getResponseCode());
-    Assert.assertEquals("Post Headers", new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
+    Assert.assertEquals("Post Headers",
+        new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     urlConn.getInputStream().close();
 
     List<String> loggedMessages = TestLogAppender.INSTANCE.getLoggedMessages();
@@ -147,9 +155,11 @@ public class AuditLogTest {
 
     Assert.assertTrue(loggedMessages.get(0).endsWith("\"GET /get HTTP/1.1\" - - 200 0 -"));
     Assert.assertTrue(loggedMessages.get(1).endsWith("\"PUT /put HTTP/1.1\" - Test Put 200 8 -"));
-    Assert.assertTrue(loggedMessages.get(2).endsWith("\"POST /post HTTP/1.1\" - Test Post 200 9 Test Post"));
     Assert.assertTrue(
-      loggedMessages.get(3).endsWith("\"POST /postHeaders HTTP/1.1\" {user-id=cdap} Post Headers 200 12 Post Headers"));
+        loggedMessages.get(2).endsWith("\"POST /post HTTP/1.1\" - Test Post 200 9 Test Post"));
+    Assert.assertTrue(
+        loggedMessages.get(3).endsWith(
+            "\"POST /postHeaders HTTP/1.1\" {user-id=cdap} Post Headers 200 12 Post Headers"));
   }
 
   private HttpURLConnection createURLConnection(String path, HttpMethod method) throws IOException {
@@ -177,21 +187,25 @@ public class AuditLogTest {
     @PUT
     @AuditPolicy(AuditDetail.REQUEST_BODY)
     public void put(FullHttpRequest request, HttpResponder responder) {
-      responder.sendContent(HttpResponseStatus.OK, request.content().retainedDuplicate(), EmptyHttpHeaders.INSTANCE);
+      responder.sendContent(HttpResponseStatus.OK, request.content().retainedDuplicate(),
+          EmptyHttpHeaders.INSTANCE);
     }
 
     @Path("/post")
     @POST
     @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
     public void post(FullHttpRequest request, HttpResponder responder) {
-      responder.sendContent(HttpResponseStatus.OK, request.content().retainedDuplicate(), EmptyHttpHeaders.INSTANCE);
+      responder.sendContent(HttpResponseStatus.OK, request.content().retainedDuplicate(),
+          EmptyHttpHeaders.INSTANCE);
     }
 
     @Path("/postHeaders")
     @POST
     @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY, AuditDetail.HEADERS})
-    public void postHeaders(FullHttpRequest request, HttpResponder responder, @HeaderParam("user-id") String userId) {
-      responder.sendContent(HttpResponseStatus.OK, request.content().retainedDuplicate(), EmptyHttpHeaders.INSTANCE);
+    public void postHeaders(FullHttpRequest request, HttpResponder responder,
+        @HeaderParam("user-id") String userId) {
+      responder.sendContent(HttpResponseStatus.OK, request.content().retainedDuplicate(),
+          EmptyHttpHeaders.INSTANCE);
     }
   }
 
@@ -207,7 +221,6 @@ public class AuditLogTest {
     static void addAppender(String loggerName) {
       LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
       Logger logger = loggerContext.getLogger(loggerName);
-
 
       // Check if the logger already contains the logAppender
       if (Iterators.contains(logger.iteratorForAppenders(), INSTANCE)) {

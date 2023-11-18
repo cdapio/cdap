@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
+import io.cdap.cdap.security.encryption.NoOpAeadCipher;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import java.net.InetSocketAddress;
@@ -60,6 +61,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
   }
 
   private static class HttpRouterService extends RouterService {
+
     private final String hostname;
     private final DiscoveryService discoveryService;
 
@@ -75,19 +77,22 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       CConfiguration cConf = CConfiguration.create();
       SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getInMemoryModules(),
-                                               new ExternalAuthenticationModule(),
-                                               new InMemoryDiscoveryModule(),
-                                               new AppFabricTestModule(cConf));
-      DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-      UserIdentityExtractor userIdentityExtractor = injector.getInstance(UserIdentityExtractor.class);
+          new ExternalAuthenticationModule(),
+          new InMemoryDiscoveryModule(),
+          new AppFabricTestModule(cConf));
+      DiscoveryServiceClient discoveryServiceClient = injector
+          .getInstance(DiscoveryServiceClient.class);
+      UserIdentityExtractor userIdentityExtractor = injector
+          .getInstance(UserIdentityExtractor.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
       router =
-        new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
-                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
-                                                new RouterPathLookup()),
-                        new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient);
+          new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
+              new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
+                  new RouterPathLookup()),
+              new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
+              new NoOpAeadCipher());
       router.startAndWait();
     }
 

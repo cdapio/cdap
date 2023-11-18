@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AuthenticationMode;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
+import io.cdap.cdap.security.encryption.NoOpAeadCipher;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.server.GrantAccessToken;
@@ -55,16 +56,19 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class AuthServerAnnounceTest {
+
   private static final String HOSTNAME = "127.0.0.1";
   private static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static final String ANNOUNCE_URLS = "https://vip.cask.co:80,http://vip.cask.co:1000";
   private static final Gson GSON = new Gson();
-  private static final Type TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
+  private static final Type TYPE = new TypeToken<Map<String, List<String>>>() {
+  }.getType();
 
   @Test
   public void testEmptyAnnounceAddressURLsConfig() throws Exception {
-    HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
+    HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME,
+        DISCOVERY_SERVICE);
     routerService.startUp();
     try {
       Assert.assertEquals(Collections.EMPTY_LIST, getAuthURI(routerService));
@@ -75,36 +79,40 @@ public class AuthServerAnnounceTest {
 
   @Test
   public void testAnnounceURLsConfig() throws Exception {
-    HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
+    HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME,
+        DISCOVERY_SERVICE);
     routerService.cConf.set(Constants.Security.AUTH_SERVER_ANNOUNCE_URLS, ANNOUNCE_URLS);
     routerService.startUp();
     try {
       List<String> expected = Stream.of(ANNOUNCE_URLS.split(","))
-        .map(url -> String.format("%s/%s", url, GrantAccessToken.Paths.GET_TOKEN))
-        .collect(Collectors.toList());
+          .map(url -> String.format("%s/%s", url, GrantAccessToken.Paths.GET_TOKEN))
+          .collect(Collectors.toList());
       Assert.assertEquals(expected, getAuthURI(routerService));
     } finally {
       routerService.shutDown();
     }
   }
 
-  private List<String> getAuthURI(HttpRouterService routerService) throws IOException, URISyntaxException {
+  private List<String> getAuthURI(HttpRouterService routerService)
+      throws IOException, URISyntaxException {
     DefaultHttpClient client = new DefaultHttpClient();
     String url = resolveURI("/v3/apps", routerService);
     HttpGet get = new HttpGet(url);
     HttpResponse response = client.execute(get);
     Map<String, List<String>> responseMap =
-      GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
+        GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
     return responseMap.get("auth_uri");
   }
 
-  private String resolveURI(String path, HttpRouterService routerService) throws URISyntaxException {
+  private String resolveURI(String path, HttpRouterService routerService)
+      throws URISyntaxException {
     InetSocketAddress address = routerService.getRouterAddress();
     return new URI(String.format("%s://%s:%d", "http", address.getHostName(),
-                                 address.getPort())).resolve(path).toASCIIString();
+        address.getPort())).resolve(path).toASCIIString();
   }
 
   private static class HttpRouterService extends AbstractIdleService {
+
     private final String hostname;
     private final DiscoveryService discoveryService;
     private CConfiguration cConf = CConfiguration.create();
@@ -119,10 +127,11 @@ public class AuthServerAnnounceTest {
     protected void startUp() {
       SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getInMemoryModules(),
-                                               new ExternalAuthenticationModule(),
-                                               new InMemoryDiscoveryModule(),
-                                               new AppFabricTestModule(cConf));
-      DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+          new ExternalAuthenticationModule(),
+          new InMemoryDiscoveryModule(),
+          new AppFabricTestModule(cConf));
+      DiscoveryServiceClient discoveryServiceClient = injector
+          .getInstance(DiscoveryServiceClient.class);
       TokenValidator validator = new MissingTokenValidator();
       UserIdentityExtractor userIdentityExtractor = new MockAccessTokenIdentityExtractor(validator);
       cConf.set(Constants.Router.ADDRESS, hostname);
@@ -132,10 +141,10 @@ public class AuthServerAnnounceTest {
       cConf.setEnum(Constants.Security.Authentication.MODE, AuthenticationMode.MANAGED);
 
       router =
-        new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
-                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
-                                                new RouterPathLookup()),
-                        validator, userIdentityExtractor, discoveryServiceClient);
+          new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
+              new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
+                  new RouterPathLookup()),
+              validator, userIdentityExtractor, discoveryServiceClient, new NoOpAeadCipher());
       router.startAndWait();
     }
 

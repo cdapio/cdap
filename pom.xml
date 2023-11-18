@@ -171,7 +171,6 @@
     <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.15.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
-    <tink.version>1.6.0</tink.version>
     <thrift.version>0.9.3</thrift.version>
     <twill.version>1.3.1</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
@@ -1599,17 +1598,6 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.crypto.tink</groupId>
-        <artifactId>tink</artifactId>
-        <version>${tink.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>commons-collections</groupId>
         <artifactId>commons-collections</artifactId>
         <version>${commons.collections.version}</version>
@@ -2051,8 +2039,8 @@
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
         <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
-        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,com.google.protobuf,\
-          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging,com.google.crypto.tink</dependency.groupId.exclusions>
+        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,\
+          org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</dependency.groupId.exclusions>
       </properties>
       <build>
         <pluginManagement>
@@ -2757,7 +2745,7 @@
         <module>cdap-runtime-ext-remote-hadoop</module>
         <module>cdap-runtime-spi</module>
         <module>cdap-securestore-ext-cloudkms</module>
-	<module>cdap-securestore-ext-gcp-secretstore</module>
+        <module>cdap-securestore-ext-gcp-secretstore</module>
         <module>cdap-securestore-spi</module>
         <module>cdap-support-bundle</module>
         <module>cdap-operational-stats-core</module>
@@ -2773,6 +2761,7 @@
         <module>cdap-event-reader-spi</module>
         <module>cdap-authenticator-ext-gcp</module>
         <module>cdap-source-control</module>
+        <module>cdap-encryption-ext-tink</module>
       </modules>
     </profile>
     <profile>

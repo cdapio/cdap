@@ -22,18 +22,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.proto.security.Credential;
-import io.cdap.cdap.security.auth.CipherException;
-import io.cdap.cdap.security.auth.TinkCipher;
 import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.auth.UserIdentityPair;
+import io.cdap.cdap.security.encryption.AeadCipher;
 import io.cdap.cdap.security.server.GrantAccessToken;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -86,10 +87,12 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final List<String> authServerURLs;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UserIdentityExtractor userIdentityExtractor;
+  private final AeadCipher userCredentialAeadCipher;
 
   public AuthenticationHandler(CConfiguration cConf, SConfiguration sConf,
       DiscoveryServiceClient discoveryServiceClient,
-      UserIdentityExtractor userIdentityExtractor) {
+      UserIdentityExtractor userIdentityExtractor,
+      AeadCipher userCredentialAeadCipher) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
@@ -98,6 +101,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     this.authServerURLs = getConfiguredAuthServerURLs(cConf);
     this.discoveryServiceClient = discoveryServiceClient;
     this.userIdentityExtractor = userIdentityExtractor;
+    this.userCredentialAeadCipher = userCredentialAeadCipher;
   }
 
   @Override
@@ -239,7 +243,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    * Get user credential from {@link UserIdentityPair} and return it in encrypted form if enabled.
    */
   @Nullable
-  private Credential getUserCredential(UserIdentityPair userIdentityPair) throws CipherException {
+  private Credential getUserCredential(UserIdentityPair userIdentityPair)
+      throws CipherException {
     String userCredential = userIdentityPair.getUserCredential();
     UserIdentity userIdentity = userIdentityPair.getUserIdentity();
     if (userIdentity.getIdentifierType() == UserIdentity.IdentifierType.INTERNAL) {
@@ -250,7 +255,9 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         false)) {
       return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
     }
-    String encryptedCredential = new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
+    String encryptedCredential = userCredentialAeadCipher
+        .encryptToBase64(userCredential,
+            Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
     return new Credential(encryptedCredential, Credential.CredentialType.EXTERNAL_ENCRYPTED);
   }
 
