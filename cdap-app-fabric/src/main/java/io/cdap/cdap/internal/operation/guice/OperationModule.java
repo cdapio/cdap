@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.operation.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.internal.app.sourcecontrol.LocalApplicationManager;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperation;
@@ -50,7 +51,7 @@ public class OperationModule extends AbstractModule {
     bind(ApplicationManager.class).to(LocalApplicationManager.class);
     bind(OperationRunner.class).to(InMemoryOperationRunner.class);
     bind(OperationStatePublisher.class).to(MessagingOperationStatePublisher.class);
-    bind(OperationRuntime.class).to(InMemoryOperationRuntime.class);
+    bind(OperationRuntime.class).to(InMemoryOperationRuntime.class).in(Scopes.SINGLETON);
   }
 }
 

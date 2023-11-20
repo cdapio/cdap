@@ -17,13 +17,16 @@
 package io.cdap.cdap.internal.operation;
 
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.proto.operation.OperationType;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -34,23 +37,22 @@ import org.slf4j.LoggerFactory;
  */
 public class InMemoryOperationRuntime implements OperationRuntime {
 
-  private final CConfiguration cConf;
   private final ConcurrentHashMap<OperationRunId, OperationController> controllers;
+  private final ConcurrentHashMap<OperationType, AtomicInteger> operationCounters;
+  private final ImmutableMap<OperationType, Integer> maxOperationCounts;
   private final OperationRunner runner;
   private final OperationStatePublisher statePublisher;
-  private final TransactionRunner transactionRunner;
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryOperationRuntime.class);
 
   @Inject
-  InMemoryOperationRuntime(CConfiguration cConf, OperationRunner runner,
-      OperationStatePublisher statePublisher,
-      TransactionRunner transactionRunner) {
-    this.cConf = cConf;
+  InMemoryOperationRuntime(OperationRunner runner, OperationStatePublisher statePublisher,
+      CConfiguration cConf) {
     this.runner = runner;
     this.statePublisher = statePublisher;
-    this.transactionRunner = transactionRunner;
     this.controllers = new ConcurrentHashMap<>();
+    this.operationCounters = new ConcurrentHashMap<>();
+    this.maxOperationCounts = getMaxCountsFromCconf(cConf);
   }
 
   /**
@@ -60,15 +62,28 @@ public class InMemoryOperationRuntime implements OperationRuntime {
    * @return {@link OperationController} for the run
    */
   public OperationController run(OperationRunDetail runDetail) {
+    OperationType type = runDetail.getRun().getType();
+    AtomicInteger counter = operationCounters.computeIfAbsent(
+        runDetail.getRun().getType(),
+        t -> new AtomicInteger()
+    );
     return controllers.computeIfAbsent(
         runDetail.getRunId(),
         runId -> {
           try {
+            if (counter.incrementAndGet() > maxOperationCounts.get(type) && maxOperationCounts.get(type) > 0) {
+              counter.decrementAndGet();
+              throw new TooManyRequestsException(
+                  String.format("Maximum number of %s operations allowed is %d", type,
+                      maxOperationCounts.get(type))
+              );
+            }
             OperationController controller = runner.run(runDetail);
             LOG.debug("Added controller for {}", runId);
-            controller.complete().addListener(() -> remove(runId), Threads.SAME_THREAD_EXECUTOR);
+            controller.complete()
+                .addListener(() -> remove(runId, counter), Threads.SAME_THREAD_EXECUTOR);
             return controller;
-          } catch (IllegalStateException e) {
+          } catch (IllegalStateException | TooManyRequestsException e) {
             statePublisher.publishFailed(runDetail.getRunId(),
                 new OperationError(e.getMessage(), Collections.emptyList())
             );
@@ -89,11 +104,24 @@ public class InMemoryOperationRuntime implements OperationRuntime {
     });
   }
 
-  private void remove(OperationRunId runId) {
+  private void remove(OperationRunId runId, AtomicInteger counter) {
     OperationController controller = controllers.remove(runId);
     if (controller != null) {
       LOG.debug("Controller removed for {}", runId);
     }
+    if (counter != null) {
+      counter.decrementAndGet();
+    }
+  }
+
+  private ImmutableMap<OperationType, Integer> getMaxCountsFromCconf(CConfiguration cConf) {
+    ImmutableMap.Builder<OperationType, Integer> builder = ImmutableMap.builder();
+    for (OperationType type : OperationType.values()) {
+      String maxCountConfString = String.format("operation.%s.max.count",
+          type.name().toLowerCase());
+      builder.put(type, cConf.getInt(maxCountConfString, -1));
+    }
+    return builder.build();
   }
 
 }

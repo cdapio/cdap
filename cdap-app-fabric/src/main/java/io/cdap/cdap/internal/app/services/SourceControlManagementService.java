@@ -23,6 +23,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
+import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -70,6 +71,7 @@ import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +90,7 @@ public class SourceControlManagementService {
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
   private final OperationLifecycleManager operationLifecycleManager;
+  private final AtomicBoolean multiOpRunning;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -113,6 +116,7 @@ public class SourceControlManagementService {
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
     this.operationLifecycleManager = operationLifecycleManager;
+    this.multiOpRunning = new AtomicBoolean(false);
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context)
@@ -360,17 +364,27 @@ public class SourceControlManagementService {
    * @throws NotFoundException when the repository or any of the apps are not found
    */
   public OperationRun pushApps(NamespaceId namespace, PushMultipleAppsRequest request)
-      throws NotFoundException, IOException {
+      throws NotFoundException, IOException, TooManyRequestsException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
-    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
-    String principal = authenticationContext.getPrincipal().getName();
-    CommitMeta commitMeta = new CommitMeta(principal, principal, System.currentTimeMillis(),
-        request.getCommitMessage());
-    PushAppsRequest pushOpRequest = new PushAppsRequest(new HashSet<>(request.getApps()),
-        repoConfig, commitMeta);
-    return operationLifecycleManager.createPushOperation(namespace.getNamespace(),
-        RunIds.generate().getId(), pushOpRequest, principal);
+    if (!multiOpRunning.compareAndSet(false, true)) {
+      throw new TooManyRequestsException("Another bulk git operation is running. "
+          + "Please try again later.");
+    }
+    try {
+      RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+      String principal = authenticationContext.getPrincipal().getName();
+      CommitMeta commitMeta = new CommitMeta(principal, principal, System.currentTimeMillis(),
+          request.getCommitMessage());
+      PushAppsRequest pushOpRequest = new PushAppsRequest(new HashSet<>(request.getApps()),
+          repoConfig, commitMeta);
+      return operationLifecycleManager.createPushOperation(namespace.getNamespace(),
+          RunIds.generate().getId(), pushOpRequest, principal);
+    } catch (Exception e) {
+      // try to set multiOpRunning as false if not already done so
+      multiOpRunning.compareAndSet(true, false);
+      throw (e);
+    }
   }
 
   /**
@@ -383,15 +397,25 @@ public class SourceControlManagementService {
    * @throws NotFoundException when the repository or any of the apps are not found
    */
   public OperationRun pullApps(NamespaceId namespace, PullMultipleAppsRequest request)
-      throws NotFoundException, IOException {
+      throws NotFoundException, IOException, TooManyRequestsException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
-    String principal = authenticationContext.getPrincipal().getName();
-    PullAppsRequest pullOpRequest = new PullAppsRequest(new HashSet<>(request.getApps()),
-        repoConfig);
+    if (!multiOpRunning.compareAndSet(false, true)) {
+      throw new TooManyRequestsException("Another bulk git operation is running. "
+          + "Please try again later.");
+    }
+    try {
+      RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+      String principal = authenticationContext.getPrincipal().getName();
+      PullAppsRequest pullOpRequest = new PullAppsRequest(new HashSet<>(request.getApps()),
+          repoConfig);
 
-    return operationLifecycleManager.createPullOperation(namespace.getNamespace(),
-        RunIds.generate().getId(), pullOpRequest, principal);
+      return operationLifecycleManager.createPullOperation(namespace.getNamespace(),
+          RunIds.generate().getId(), pullOpRequest, principal);
+    } catch (Exception e) {
+      // try to set multiOpRunning as false if not already done so
+      multiOpRunning.compareAndSet(true, false);
+      throw (e);
+    }
   }
 }
