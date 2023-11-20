@@ -48,7 +48,7 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    CConfiguration cConf = createBasicCConf();
+    CConfiguration cConf = createBasicCconf();
     // we enable Kerberos for these unit tests, so we can test namespace group permissions (see
     // testDataDirCreation).
     cConf.setInt(Constants.AppFabric.MAX_CONCURRENT_RUNS, 2);

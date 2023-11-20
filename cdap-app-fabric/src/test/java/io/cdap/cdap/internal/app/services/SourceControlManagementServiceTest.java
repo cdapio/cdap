@@ -89,7 +89,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    cConf = createBasicCConf();
+    cConf = createBasicCconf();
     initializeAndStartServices(cConf);
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     sourceControlService =

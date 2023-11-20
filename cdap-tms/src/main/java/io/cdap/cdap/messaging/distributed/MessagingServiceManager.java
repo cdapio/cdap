@@ -42,6 +42,6 @@ public class MessagingServiceManager extends AbstractMasterServiceManager {
 
   @Override
   public int getMaxInstances() {
-    return getCConf().getInt(Constants.MessagingSystem.MAX_INSTANCES);
+    return getCconf().getInt(Constants.MessagingSystem.MAX_INSTANCES);
   }
 }

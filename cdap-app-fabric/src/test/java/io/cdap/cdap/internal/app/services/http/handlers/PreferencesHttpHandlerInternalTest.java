@@ -114,9 +114,9 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
 
   @Test
   public void testNamespace() throws Exception {
-    String uriInstance = getPreferenceURI();
-    String uriNamespace1 = getPreferenceURI(TEST_NAMESPACE1);
-    String uriNamespace2 = getPreferenceURI(TEST_NAMESPACE2);
+    String uriInstance = getPreferenceUri();
+    String uriNamespace1 = getPreferenceUri(TEST_NAMESPACE1);
+    String uriNamespace2 = getPreferenceUri(TEST_NAMESPACE2);
     PreferencesDetail detail1 = null;
     PreferencesDetail detail2 = null;
 
@@ -212,7 +212,7 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     Assert.assertEquals(detail1, detail2);
 
     // Get preferences on invalid namespace should succeed, but get back a PreferencesDetail with empty property.
-    PreferencesDetail detail = getPreferencesInternal(getPreferenceURI("invalidNamespace"), false,
+    PreferencesDetail detail = getPreferencesInternal(getPreferenceUri("invalidNamespace"), false,
                                                       HttpResponseStatus.OK);
     Assert.assertTrue(detail.getProperties().isEmpty());
     Assert.assertFalse(detail.getResolved());
@@ -223,14 +223,15 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
   public void testApplication() throws Exception {
     String appName = AllProgramsApp.NAME;
     String namespace1 = TEST_NAMESPACE1;
-    String uriInstance = getPreferenceURI();
-    String uriNamespace1 = getPreferenceURI(namespace1);
-    String uriApp = getPreferenceURI(namespace1, appName);
+    String uriInstance = getPreferenceUri();
+    String uriNamespace1 = getPreferenceUri(namespace1);
+    String uriApp = getPreferenceUri(namespace1, appName);
     PreferencesDetail detail;
     Map<String, String> combinedProperties = Maps.newHashMap();
 
     // Application not created yet. Get preferences should succeed and get back one with empty properties.
-    detail = getPreferencesInternal(getPreferenceURI(namespace1, "some_non_existing_app"), false,
+    detail = getPreferencesInternal(
+        getPreferenceUri(namespace1, "some_non_existing_app"), false,
                                     HttpResponseStatus.OK);
     Assert.assertTrue(detail.getProperties().isEmpty());
     Assert.assertFalse(detail.getResolved());
@@ -241,7 +242,7 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     Map<String, String> propMap = Maps.newHashMap();
     Assert.assertEquals(propMap, getPreferences(uriApp, false, 200));
     Assert.assertEquals(propMap, getPreferences(uriApp, true, 200));
-    getPreferences(getPreferenceURI(namespace1, "InvalidAppName"), false, 404);
+    getPreferences(getPreferenceUri(namespace1, "InvalidAppName"), false, 404);
 
     // Application created but no preferences created yet. API call still succeeds but result is empty.
     detail = getPreferencesInternal(uriApp, false, HttpResponseStatus.OK);
@@ -315,10 +316,10 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
 
   @Test
   public void testProgram() throws Exception {
-    String uriInstance = getPreferenceURI();
+    String uriInstance = getPreferenceUri();
     String namespace2 = TEST_NAMESPACE2;
     String appName = AllProgramsApp.NAME;
-    String uriNamespace2Service = getPreferenceURI(namespace2, appName, "services", AllProgramsApp.NoOpService.NAME);
+    String uriNamespace2Service = getPreferenceUri(namespace2, appName, "services", AllProgramsApp.NoOpService.NAME);
     PreferencesDetail detail;
     Map<String, String> programProperties = Maps.newHashMap();
 
@@ -326,11 +327,12 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     addApplication(namespace2, new AllProgramsApp());
 
     // Get preferences on invalid program type
-    getPreferencesInternal(getPreferenceURI(
+    getPreferencesInternal(getPreferenceUri(
       namespace2, appName, "invalidType", "somename"), false, HttpResponseStatus.BAD_REQUEST);
 
     // Get preferences on non-existing program id. Should succeed and get back a PreferencesDetail with empty properites
-    detail = getPreferencesInternal(getPreferenceURI(namespace2, appName, "services", "somename"),
+    detail = getPreferencesInternal(
+        getPreferenceUri(namespace2, appName, "services", "somename"),
                                     false,
                                     HttpResponseStatus.OK);
     Assert.assertTrue(detail.getProperties().isEmpty());

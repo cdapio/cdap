@@ -36,7 +36,7 @@ public class LogSaverServiceManager extends AbstractMasterServiceManager {
 
   @Override
   public int getMaxInstances() {
-    return getCConf().getInt(Constants.LogSaver.MAX_INSTANCES);
+    return getCconf().getInt(Constants.LogSaver.MAX_INSTANCES);
   }
 
   @Override

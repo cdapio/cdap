@@ -99,7 +99,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     );
 
     // fetch and validate the application version is created
-    HttpResponse response = doGet(getVersionedAPIPath(
+    HttpResponse response = doGet(getVersionedApiPath(
         String.format("apps/%s/versions/%s", deployedAppId.getApplication(),
             deployedAppId.getVersion()),
         Constants.Gateway.API_VERSION_3_TOKEN, namespace));
@@ -113,7 +113,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Delete the application
     Assert.assertEquals(
         200,
-        doDelete(getVersionedAPIPath("apps/",
+        doDelete(getVersionedApiPath("apps/",
             Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 
@@ -134,7 +134,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
 
     // fetch and validate the application version is created
     // fetch and validate the application version is created
-    HttpResponse response = doGet(getVersionedAPIPath(
+    HttpResponse response = doGet(getVersionedApiPath(
         String.format("apps/%s/versions/%s", deployedAppId.getApplication(),
             deployedAppId.getVersion()),
         Constants.Gateway.API_VERSION_3_TOKEN, namespace));
@@ -148,7 +148,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Delete the application
     Assert.assertEquals(
         200,
-        doDelete(getVersionedAPIPath("apps/",
+        doDelete(getVersionedApiPath("apps/",
             Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 
@@ -176,7 +176,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
 
     // fetch and validate the application version is created
     // fetch and validate the application version is created
-    HttpResponse response = doGet(getVersionedAPIPath(
+    HttpResponse response = doGet(getVersionedApiPath(
         String.format("apps/%s/versions/%s", deployedAppId.getApplication(),
             deployedAppId.getVersion()),
         Constants.Gateway.API_VERSION_3_TOKEN, namespace));
@@ -190,7 +190,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Delete the application
     Assert.assertEquals(
         200,
-        doDelete(getVersionedAPIPath("apps/",
+        doDelete(getVersionedApiPath("apps/",
             Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 }

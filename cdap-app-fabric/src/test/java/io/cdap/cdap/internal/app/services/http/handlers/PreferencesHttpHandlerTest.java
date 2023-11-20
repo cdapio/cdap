@@ -61,60 +61,60 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testInstance() throws Exception {
     Map<String, String> propMap = Maps.newHashMap();
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), true, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), true, 200));
     propMap.put("k1", "3@#3");
     propMap.put("@#$#ljfds", "231@#$");
-    setPreferences(getPreferenceURI(), propMap, 200);
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), true, 200));
+    setPreferences(getPreferenceUri(), propMap, 200);
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), true, 200));
     propMap.clear();
-    deletePreferences(getPreferenceURI(), 200);
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), true, 200));
+    deletePreferences(getPreferenceUri(), 200);
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), true, 200));
   }
 
   @Test
   public void testNamespace() throws Exception {
     Map<String, String> propMap = Maps.newHashMap();
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE2), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE2), true, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE2), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE2), true, 200));
     propMap.put("k1", "3@#3");
     propMap.put("@#$#ljfds", "231@#$");
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1), propMap, 200);
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200));
+    setPreferences(getPreferenceUri(TEST_NAMESPACE1), propMap, 200);
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200));
 
     Map<String, String> instanceMap = Maps.newHashMap();
     instanceMap.put("k1", "432432*#######");
-    setPreferences(getPreferenceURI(), instanceMap, 200);
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(), true, 200));
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE2), true, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200));
+    setPreferences(getPreferenceUri(), instanceMap, 200);
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(), true, 200));
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE2), true, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200));
 
     instanceMap.put("k2", "(93424");
-    setPreferences(getPreferenceURI(), instanceMap, 200);
+    setPreferences(getPreferenceUri(), instanceMap, 200);
     instanceMap.putAll(propMap);
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200));
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200));
 
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE1), 200);
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE2), 200);
+    deletePreferences(getPreferenceUri(TEST_NAMESPACE1), 200);
+    deletePreferences(getPreferenceUri(TEST_NAMESPACE2), 200);
 
     instanceMap.clear();
     instanceMap.put("*&$kjh", "*(&*1");
-    setPreferences(getPreferenceURI(), instanceMap, 200);
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE2), true, 200));
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200));
+    setPreferences(getPreferenceUri(), instanceMap, 200);
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE2), true, 200));
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200));
     instanceMap.clear();
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE2), false, 200));
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200));
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE2), false, 200));
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200));
 
-    deletePreferences(getPreferenceURI(), 200);
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE2), true, 200));
-    Assert.assertEquals(instanceMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200));
-    getPreferences(getPreferenceURI("invalidNamespace"), true, 404);
+    deletePreferences(getPreferenceUri(), 200);
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE2), true, 200));
+    Assert.assertEquals(instanceMap, getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200));
+    getPreferences(getPreferenceUri("invalidNamespace"), true, 404);
   }
 
   @Test
@@ -123,34 +123,37 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
 
     addApplication(TEST_NAMESPACE1, new AllProgramsApp());
     Map<String, String> propMap = Maps.newHashMap();
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200));
-    getPreferences(getPreferenceURI(TEST_NAMESPACE1, "InvalidAppName"), false, 404);
-    setPreferences(getPreferenceURI(), ImmutableMap.of("k1", "instance"), 200);
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1), ImmutableMap.of("k1", "namespace"), 200);
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), ImmutableMap.of("k1", "application"), 200);
+    Assert.assertEquals(propMap, getPreferences(
+        getPreferenceUri(TEST_NAMESPACE1, appName), false, 200));
+    Assert.assertEquals(propMap, getPreferences(
+        getPreferenceUri(TEST_NAMESPACE1, appName), true, 200));
+    getPreferences(getPreferenceUri(TEST_NAMESPACE1, "InvalidAppName"), false, 404);
+    setPreferences(getPreferenceUri(), ImmutableMap.of("k1", "instance"), 200);
+    setPreferences(
+        getPreferenceUri(TEST_NAMESPACE1), ImmutableMap.of("k1", "namespace"), 200);
+    setPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), ImmutableMap.of("k1", "application"), 200);
     Assert.assertEquals("application",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), false, 200).get("k1"));
+                        getPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), false, 200).get("k1"));
     Assert.assertEquals("application",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
-    Assert.assertEquals("namespace", getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200).get("k1"));
-    Assert.assertEquals("namespace", getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200).get("k1"));
-    Assert.assertEquals("instance", getPreferences(getPreferenceURI(), true, 200).get("k1"));
-    Assert.assertEquals("instance", getPreferences(getPreferenceURI(), false, 200).get("k1"));
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE1, appName), 200);
+                        getPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), true, 200).get("k1"));
+    Assert.assertEquals("namespace", getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200).get("k1"));
+    Assert.assertEquals("namespace", getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200).get("k1"));
+    Assert.assertEquals("instance", getPreferences(getPreferenceUri(), true, 200).get("k1"));
+    Assert.assertEquals("instance", getPreferences(getPreferenceUri(), false, 200).get("k1"));
+    deletePreferences(getPreferenceUri(TEST_NAMESPACE1, appName), 200);
     Assert.assertEquals("namespace",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
-    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), false, 200).get("k1"));
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE1), 200);
+                        getPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), true, 200).get("k1"));
+    Assert.assertNull(getPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), false, 200).get("k1"));
+    deletePreferences(getPreferenceUri(TEST_NAMESPACE1), 200);
     Assert.assertEquals("instance",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
+                        getPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), true, 200).get("k1"));
     Assert.assertEquals("instance",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200).get("k1"));
-    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200).get("k1"));
-    deletePreferences(getPreferenceURI(), 200);
-    Assert.assertNull(getPreferences(getPreferenceURI(), true, 200).get("k1"));
-    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200).get("k1"));
-    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
+                        getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200).get("k1"));
+    Assert.assertNull(getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200).get("k1"));
+    deletePreferences(getPreferenceUri(), 200);
+    Assert.assertNull(getPreferences(getPreferenceUri(), true, 200).get("k1"));
+    Assert.assertNull(getPreferences(getPreferenceUri(TEST_NAMESPACE1), true, 200).get("k1"));
+    Assert.assertNull(getPreferences(getPreferenceUri(TEST_NAMESPACE1, appName), true, 200).get("k1"));
   }
 
   @Test
@@ -161,30 +164,35 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     addApplication(TEST_NAMESPACE2, new AllProgramsApp());
     Map<String, String> propMap = Maps.newHashMap();
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
-    getPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "invalidType", "somename"), false, 400);
-    getPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", "somename"), false, 404);
+      getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
+    getPreferences(
+        getPreferenceUri(TEST_NAMESPACE2, appName, "invalidType", "somename"), false, 400);
+    getPreferences(
+        getPreferenceUri(TEST_NAMESPACE2, appName, "services", "somename"), false, 404);
     propMap.put("k1", "k349*&#$");
-    setPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), propMap, 200);
+    setPreferences(
+        getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), propMap, 200);
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
+      getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
     propMap.put("k1", "instance");
-    setPreferences(getPreferenceURI(), propMap, 200);
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), true, 200));
+    setPreferences(getPreferenceUri(), propMap, 200);
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), true, 200));
     propMap.put("k1", "k349*&#$");
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), 200);
+      getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
+    deletePreferences(
+        getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), 200);
     propMap.put("k1", "instance");
-    Assert.assertEquals(0, getPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName),
+    Assert.assertEquals(0, getPreferences(
+        getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName),
                                           false, 200).size());
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), true, 200));
-    deletePreferences(getPreferenceURI(), 200);
+      getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), true, 200));
+    deletePreferences(getPreferenceUri(), 200);
     propMap.clear();
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), false, 200));
+      getPreferenceUri(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceUri(), false, 200));
   }
 
   @Test
@@ -199,20 +207,20 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
     properties.put("2nd key", "2nd value");
     properties.put(SystemArguments.PROFILE_NAME, "USER:MyProfile");
     Map<String, String> expected = ImmutableMap.copyOf(properties);
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1), properties, 200);
-    Assert.assertEquals(expected, getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200));
+    setPreferences(getPreferenceUri(TEST_NAMESPACE1), properties, 200);
+    Assert.assertEquals(expected, getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200));
 
     // put some property with non-existing profile, it should fail with 404
     properties.put(SystemArguments.PROFILE_NAME, "NonExisting");
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1), properties, 404);
-    Assert.assertEquals(expected, getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200));
+    setPreferences(getPreferenceUri(TEST_NAMESPACE1), properties, 404);
+    Assert.assertEquals(expected, getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200));
 
     // disable the profile and put again, it should fail with 409
     disableProfile(myProfile, 200);
     properties.put(SystemArguments.PROFILE_NAME, "USER:MyProfile");
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1), properties, 409);
-    Assert.assertEquals(expected, getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200));
+    setPreferences(getPreferenceUri(TEST_NAMESPACE1), properties, 409);
+    Assert.assertEquals(expected, getPreferences(getPreferenceUri(TEST_NAMESPACE1), false, 200));
 
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE1), 200);
+    deletePreferences(getPreferenceUri(TEST_NAMESPACE1), 200);
   }
 }
