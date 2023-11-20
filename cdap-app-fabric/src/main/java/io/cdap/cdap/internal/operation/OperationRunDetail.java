@@ -64,9 +64,8 @@ public class OperationRunDetail {
 
   protected OperationRunDetail(
       OperationRunId runId, OperationRun run,
-      byte[] sourceId, @Nullable String principal,
-      @Nullable PullAppsRequest pullAppsRequest,
-      @Nullable PushAppsRequest pushAppsRequest) {
+      @Nullable byte[] sourceId, @Nullable String principal,
+      @Nullable PullAppsRequest pullAppsRequest, @Nullable PushAppsRequest pushAppsRequest) {
     this.runId = runId;
     this.run = run;
     this.sourceId = sourceId;
