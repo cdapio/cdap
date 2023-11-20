@@ -150,7 +150,7 @@ public abstract class SupportBundleTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    initializeAndStartServices(createBasicCConf());
+    initializeAndStartServices(createBasicCconf());
   }
 
   protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
@@ -246,7 +246,7 @@ public abstract class SupportBundleTestBase {
     supportBundleInternalService.stopAndWait();
   }
 
-  protected static CConfiguration createBasicCConf() throws IOException {
+  protected static CConfiguration createBasicCconf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
@@ -269,7 +269,7 @@ public abstract class SupportBundleTestBase {
   protected static URI getEndPoint(String path) {
     Discoverable discoverable = appFabricEndpointStrategy.pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull("SupportBundle endpoint is missing, service may not be running.", discoverable);
-    return URIScheme.createURI(discoverable,"%s", path);
+    return URIScheme.createURI(discoverable, "%s", path);
   }
 
   protected static HttpResponse doGet(String resource) throws Exception {
@@ -329,7 +329,7 @@ public abstract class SupportBundleTestBase {
 
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
 
-    String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
+    String versionedApiPath = getVersionedApiPath("apps/", apiVersion, namespace);
     HttpRequest.Builder builder = HttpRequest.post(getEndPoint(versionedApiPath).toURL())
       .addHeader(Constants.Gateway.API_KEY, "api-key-example")
       .addHeader(AbstractAppFabricHttpHandler.ARCHIVE_NAME_HEADER,
@@ -353,11 +353,11 @@ public abstract class SupportBundleTestBase {
     return response;
   }
 
-  protected String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
-    return getVersionedAPIPath(nonVersionedApiPath, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+  protected String getVersionedApiPath(String nonVersionedApiPath, String namespace) {
+    return getVersionedApiPath(nonVersionedApiPath, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
-  protected String getVersionedAPIPath(String nonVersionedApiPath, String version, String namespace) {
+  protected String getVersionedApiPath(String nonVersionedApiPath, String version, String namespace) {
     if (!Constants.Gateway.API_VERSION_3_TOKEN.equals(version)) {
       throw new IllegalArgumentException(String.format("Unsupported version '%s'. Only v3 is supported.", version));
     }
@@ -369,7 +369,7 @@ public abstract class SupportBundleTestBase {
     String path =
       String.format("apps/%s/versions/%s/%s/%s/runs?status=%s", program.getApplication(), program.getVersion(),
                     program.getType().getCategoryName(), program.getProgram(), status.toString());
-    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespace()));
+    HttpResponse response = doGet(getVersionedApiPath(path, program.getNamespace()));
     assertResponseCode(200, response);
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }

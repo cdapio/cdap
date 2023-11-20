@@ -136,7 +136,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    CConfiguration cConfiguration = createBasicCConf();
+    CConfiguration cConfiguration = createBasicCconf();
     // use a fast retry strategy with not too many retries, to speed up the test
     String prefix = "system.metadata.";
     cConfiguration.set(prefix + Constants.Retry.TYPE, RetryStrategyType.FIXED_DELAY.toString());

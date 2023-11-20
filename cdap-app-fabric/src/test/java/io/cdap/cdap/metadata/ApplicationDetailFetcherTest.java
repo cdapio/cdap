@@ -120,7 +120,7 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
     // Delete the application
     Assert.assertEquals(
       200,
-      doDelete(getVersionedAPIPath("apps/",
+      doDelete(getVersionedApiPath("apps/",
                                    Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 
@@ -169,7 +169,7 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
     // Delete the application
     Assert.assertEquals(
         200,
-        doDelete(getVersionedAPIPath("apps/",
+        doDelete(getVersionedApiPath("apps/",
             Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 }

@@ -44,12 +44,12 @@ public class TransactionServiceManager extends AbstractMasterServiceManager {
 
   @Override
   public boolean isServiceEnabled() {
-    return getCConf().getBoolean(Constants.Transaction.TX_ENABLED);
+    return getCconf().getBoolean(Constants.Transaction.TX_ENABLED);
   }
 
   @Override
   public int getMaxInstances() {
-    return getCConf().getInt(Constants.Transaction.Container.MAX_INSTANCES);
+    return getCconf().getInt(Constants.Transaction.Container.MAX_INSTANCES);
   }
 
   @Override

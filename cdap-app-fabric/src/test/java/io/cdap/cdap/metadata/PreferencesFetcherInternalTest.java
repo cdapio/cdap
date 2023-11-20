@@ -89,8 +89,8 @@ public class PreferencesFetcherInternalTest extends AppFabricTestBase {
 
     // Set preferences on instance and fetch again.
     Map<String, String> instanceProperties = ImmutableMap.of("instance-key1", "instance-val1");
-    setPreferences(getPreferenceURI(), instanceProperties, 200);
-    preferenceURIList.add(getPreferenceURI());
+    setPreferences(getPreferenceUri(), instanceProperties, 200);
+    preferenceURIList.add(getPreferenceUri());
     entityId = new InstanceId("");
     preferences = fetcher.get(entityId, false);
     Assert.assertEquals(instanceProperties, preferences.getProperties());
@@ -117,8 +117,8 @@ public class PreferencesFetcherInternalTest extends AppFabricTestBase {
 
     // Set preferences on application and fetch again, resolved preferences should be returned.
     Map<String, String> appProperties = ImmutableMap.of("app-key1", "app-val1");
-    setPreferences(getPreferenceURI(namespace, appName), appProperties, 200);
-    preferenceURIList.add(getPreferenceURI(namespace, appName));
+    setPreferences(getPreferenceUri(namespace, appName), appProperties, 200);
+    preferenceURIList.add(getPreferenceUri(namespace, appName));
     preferences = fetcher.get(entityId, true);
     Map<String, String> resolvedProperites = new HashMap<>();
     resolvedProperites.putAll(instanceProperties);
@@ -135,7 +135,7 @@ public class PreferencesFetcherInternalTest extends AppFabricTestBase {
     // Cleanup: delete the app
     Assert.assertEquals(
       200,
-      doDelete(getVersionedAPIPath("apps/",
+      doDelete(getVersionedApiPath("apps/",
                                    Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 }
