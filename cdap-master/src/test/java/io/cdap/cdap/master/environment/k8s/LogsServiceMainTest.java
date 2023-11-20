@@ -116,7 +116,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     Discoverable discoverable = new RandomEndpointStrategy(
       () -> discoveryServiceClient.discover(serviceName)).pick(10, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
-    URL url = URIScheme.createURI(discoverable, path).toURL();
+    URL url = URIScheme.createURI(discoverable, "%s", path).toURL();
     return HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
   }
 

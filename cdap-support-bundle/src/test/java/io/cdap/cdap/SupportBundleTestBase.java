@@ -269,8 +269,7 @@ public abstract class SupportBundleTestBase {
   protected static URI getEndPoint(String path) {
     Discoverable discoverable = appFabricEndpointStrategy.pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull("SupportBundle endpoint is missing, service may not be running.", discoverable);
-    // The path is literal and we need to escape "%" before passing to createURI, which takes a format string.
-    return URIScheme.createURI(discoverable, path.replace("%", "%%"));
+    return URIScheme.createURI(discoverable,"%s", path);
   }
 
   protected static HttpResponse doGet(String resource) throws Exception {

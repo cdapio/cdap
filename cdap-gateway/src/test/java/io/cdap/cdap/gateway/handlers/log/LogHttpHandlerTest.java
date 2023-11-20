@@ -836,8 +836,7 @@ public class LogHttpHandlerTest {
       () -> discoveryServiceClient.discover(Constants.Service.LOG_QUERY)).pick(10, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 
-    // Path is literal, hence replacing the "%" with "%%" for formatter
-    URL url = URIScheme.createURI(discoverable, path.replace("%", "%%")).toURL();
+    URL url = URIScheme.createURI(discoverable, "%s", path).toURL();
     return HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
   }
 }
