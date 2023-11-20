@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.operation;
 
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperationFactory;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsOperationFactory;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
 
 /**
  * Abstract runner implementation with common functionality.
@@ -25,9 +27,12 @@ import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 public abstract class AbstractOperationRunner implements OperationRunner {
 
   private final PullAppsOperationFactory pullOperationFactory;
+  private final PushAppsOperationFactory pushAppsOperationFactory;
 
-  AbstractOperationRunner(PullAppsOperationFactory pullOperationFactory) {
+  AbstractOperationRunner(PullAppsOperationFactory pullOperationFactory,
+      PushAppsOperationFactory pushAppsOperationFactory) {
     this.pullOperationFactory = pullOperationFactory;
+    this.pushAppsOperationFactory = pushAppsOperationFactory;
   }
 
   /**
@@ -40,12 +45,17 @@ public abstract class AbstractOperationRunner implements OperationRunner {
       throws IllegalStateException {
     switch (detail.getRun().getType()) {
       case PULL_APPS:
-        PullAppsRequest request = detail.getPullAppsRequest();
-        if (request == null) {
+        PullAppsRequest pullReq = detail.getPullAppsRequest();
+        if (pullReq == null) {
           throw new IllegalStateException("Missing request for pull operation");
         }
-        return pullOperationFactory.create(request);
+        return pullOperationFactory.create(pullReq);
       case PUSH_APPS:
+        PushAppsRequest pushReq = detail.getPushAppsRequest();
+        if (pushReq == null) {
+          throw new IllegalStateException("Missing request for push operation");
+        }
+        return pushAppsOperationFactory.create(pushReq);
       default:
         throw new IllegalStateException(
             String.format("Invalid operation type %s", detail.getRun().getType()));

@@ -1344,8 +1344,8 @@ public final class StoreDefinition {
         new StructuredTableSpecification.Builder()
             .withId(OPERATION_RUNS)
             .withFields(
-                Fields.stringType(ID_FIELD),
                 Fields.stringType(NAMESPACE_FIELD),
+                Fields.stringType(ID_FIELD),
                 Fields.stringType(TYPE_FIELD),
                 Fields.stringType(STATUS_FIELD),
                 Fields.longType(START_TIME_FIELD),

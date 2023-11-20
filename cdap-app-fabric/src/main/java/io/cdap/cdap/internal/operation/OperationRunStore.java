@@ -321,13 +321,13 @@ public class OperationRunStore {
   private void writeOperationRun(OperationRunId runId, OperationRunDetail detail)
       throws IOException {
     Collection<Field<?>> fields = ImmutableList.of(
-        Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()),
         Fields.stringField(StoreDefinition.OperationRunsStore.NAMESPACE_FIELD,
             runId.getNamespace()),
-        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
-            detail.getRun().getStatus().name()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.ID_FIELD, runId.getRun()),
         Fields.stringField(StoreDefinition.OperationRunsStore.TYPE_FIELD,
             detail.getRun().getType().name()),
+        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
+            detail.getRun().getStatus().name()),
         Fields.longField(StoreDefinition.OperationRunsStore.START_TIME_FIELD,
             detail.getRun().getMetadata().getCreateTime().toEpochMilli()),
         Fields.longField(StoreDefinition.OperationRunsStore.UPDATE_TIME_FIELD,
