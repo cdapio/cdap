@@ -109,7 +109,9 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
+import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -1497,10 +1499,24 @@ public abstract class AppFabricTestBase {
                                 appRef.getNamespace(), appRef.getApplication()), GSON.toJson(request));
   }
 
+  protected HttpResponse pushApplications(String namespace, List<String> apps, String commitMessage)
+      throws Exception {
+    PushMultipleAppsRequest request = new PushMultipleAppsRequest(apps, commitMessage);
+    return doPost(String.format("%s/namespaces/%s/repository/apps/push",
+        Constants.Gateway.API_VERSION_3, namespace), GSON.toJson(request));
+  }
+
   protected HttpResponse pullApplication(ApplicationReference appRef) throws Exception {
     return doPost(String.format("%s/namespaces/%s/repository/apps/%s/pull",
                                 Constants.Gateway.API_VERSION_3,
                                 appRef.getNamespace(), appRef.getApplication()));
+  }
+
+  protected HttpResponse pullApplications(String namespace, List<String> apps)
+      throws Exception {
+    PullMultipleAppsRequest request = new PullMultipleAppsRequest(apps);
+    return doPost(String.format("%s/namespaces/%s/repository/apps/pull",
+        Constants.Gateway.API_VERSION_3, namespace), GSON.toJson(request));
   }
 
   protected HttpResponse listApplicationsFromRepository(String namespace) throws Exception {

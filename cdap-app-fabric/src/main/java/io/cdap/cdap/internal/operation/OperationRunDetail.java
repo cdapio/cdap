@@ -58,15 +58,20 @@ public class OperationRunDetail {
   @Nullable
   private final PullAppsRequest pullAppsRequest;
 
+  @SerializedName("pushAppsRequest")
+  @Nullable
+  private final PushAppsRequest pushAppsRequest;
+
   protected OperationRunDetail(
       OperationRunId runId, OperationRun run,
-      byte[] sourceId, @Nullable String principal,
-      @Nullable PullAppsRequest pullAppsRequest) {
+      @Nullable byte[] sourceId, @Nullable String principal,
+      @Nullable PullAppsRequest pullAppsRequest, @Nullable PushAppsRequest pushAppsRequest) {
     this.runId = runId;
     this.run = run;
     this.sourceId = sourceId;
     this.principal = principal;
     this.pullAppsRequest = pullAppsRequest;
+    this.pushAppsRequest = pushAppsRequest;
   }
 
   @Nullable

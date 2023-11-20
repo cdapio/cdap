@@ -17,12 +17,19 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
+import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationRun;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -35,13 +42,16 @@ public class OperationLifecycleManager {
 
   private final TransactionRunner transactionRunner;
   private final OperationRuntime runtime;
+  private final OperationStatePublisher statePublisher;
   private static final Logger LOG = LoggerFactory.getLogger(OperationLifecycleManager.class);
 
 
   @Inject
-  OperationLifecycleManager(TransactionRunner transactionRunner, OperationRuntime runtime) {
+  OperationLifecycleManager(TransactionRunner transactionRunner, OperationRuntime runtime,
+      OperationStatePublisher statePublisher) {
     this.transactionRunner = transactionRunner;
     this.runtime = runtime;
+    this.statePublisher = statePublisher;
   }
 
   /**
@@ -61,15 +71,15 @@ public class OperationLifecycleManager {
     while (currentLimit > 0) {
       ScanOperationRunsRequest batchRequest = ScanOperationRunsRequest
           .builder(request)
-              .setScanAfter(lastKey)
-              .setLimit(Math.min(txBatchSize, currentLimit))
-              .build();
+          .setScanAfter(lastKey)
+          .setLimit(Math.min(txBatchSize, currentLimit))
+          .build();
 
       request = batchRequest;
 
       lastKey = TransactionRunners.run(transactionRunner, context -> {
-                return getOperationRunStore(context).scanOperations(batchRequest, consumer);
-              }, IOException.class, OperationRunNotFoundException.class);
+        return getOperationRunStore(context).scanOperations(batchRequest, consumer);
+      }, IOException.class, OperationRunNotFoundException.class);
 
       if (lastKey == null) {
         break;
@@ -105,6 +115,59 @@ public class OperationLifecycleManager {
    */
   public OperationController startOperation(OperationRunDetail detail) {
     return runtime.run(detail);
+  }
+
+  /**
+   * Create a new pull operation. Inserts the run in DB and then send TMS message.
+   */
+  public OperationRun createPushOperation(String namespace, String runId, PushAppsRequest request, String principal)
+      throws IOException {
+    OperationMeta meta = OperationMeta.builder().setCreateTime(Instant.now()).build();
+    OperationRunId operationRunId = new OperationRunId(namespace, runId);
+    OperationRun run = OperationRun.builder()
+        .setRunId(runId)
+        .setMetadata(meta)
+        .setStatus(OperationRunStatus.STARTING)
+        .setType(OperationType.PUSH_APPS)
+        .build();
+    OperationRunDetail detail = OperationRunDetail.builder()
+        .setRun(run)
+        .setPrincipal(principal)
+        .setPushAppsRequest(request)
+        .setRunId(operationRunId)
+        .build();
+    TransactionRunners.run(transactionRunner, context -> {
+      getOperationRunStore(context).createOperationRun(operationRunId, detail);
+      statePublisher.publishStarting(operationRunId);
+    }, IOException.class);
+    return run;
+  }
+
+  /**
+   * Create a new pull operation. Inserts the run in DB and then send TMS message.
+   */
+  public OperationRun createPullOperation(String namespace, String runId, PullAppsRequest request, String principal)
+      throws IOException {
+    OperationMeta meta = OperationMeta.builder().setCreateTime(Instant.now()).build();
+    OperationRunId operationRunId = new OperationRunId(namespace, runId);
+    OperationRun run = OperationRun.builder()
+        .setRunId(runId)
+        .setMetadata(meta)
+        .setStatus(OperationRunStatus.STARTING)
+        .setType(OperationType.PULL_APPS)
+        .build();
+    OperationRunDetail detail = OperationRunDetail.builder()
+        .setRun(run)
+        .setPrincipal(principal)
+        .setPullAppsRequest(request)
+        .setRunId(operationRunId)
+        .build();
+    TransactionRunners.run(transactionRunner, context -> {
+      getOperationRunStore(context).createOperationRun(operationRunId, detail);
+      statePublisher.publishStarting(operationRunId);
+    }, IOException.class);
+
+    return run;
   }
 
 
