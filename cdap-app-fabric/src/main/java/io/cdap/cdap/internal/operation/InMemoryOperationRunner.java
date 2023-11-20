@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperationFactory;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsOperationFactory;
 
 /**
  * Implementation of {@link OperationRunner} to run an operation in the same service.
@@ -33,8 +34,8 @@ public class InMemoryOperationRunner extends AbstractOperationRunner {
    */
   @Inject
   public InMemoryOperationRunner(OperationStatePublisher statePublisher,
-      PullAppsOperationFactory pullOperationFactory) {
-    super(pullOperationFactory);
+      PullAppsOperationFactory pullOperationFactory, PushAppsOperationFactory pushAppsOperationFactory) {
+    super(pullOperationFactory, pushAppsOperationFactory);
     this.statePublisher = statePublisher;
   }
 
