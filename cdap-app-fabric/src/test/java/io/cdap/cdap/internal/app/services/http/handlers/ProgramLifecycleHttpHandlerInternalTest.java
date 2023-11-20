@@ -81,7 +81,7 @@ public class ProgramLifecycleHttpHandlerInternalTest extends AppFabricTestBase {
     Assert.assertEquals(ProfileId.NATIVE, runRecordMeta.getProfileId());
 
     // cleanup
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getResponseCode());
   }

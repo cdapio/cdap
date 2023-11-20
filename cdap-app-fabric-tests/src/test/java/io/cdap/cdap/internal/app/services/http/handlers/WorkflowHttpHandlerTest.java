@@ -117,7 +117,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   private void waitForStatusCode(final String path, final Id.Program program, final int expectedStatusCode)
     throws Exception {
     Tasks.waitFor(true, () -> {
-      HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
+      HttpResponse response = doPost(getVersionedApiPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
                                                          program.getNamespaceId()));
       return expectedStatusCode == response.getResponseCode();
     }, 60, TimeUnit.SECONDS);
@@ -134,7 +134,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String argString = GSON.toJson(args, new TypeToken<Map<String, String>>() {
     }.getType());
     String path = String.format("apps/%s/workflows/%s/runtimeargs", programId.getApplicationId(), programId.getId());
-    String versionedRuntimeArgsUrl = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
+    String versionedRuntimeArgsUrl = getVersionedApiPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
                                                          programId.getNamespaceId());
     response = doPut(versionedRuntimeArgsUrl, argString);
 
@@ -174,7 +174,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowId.getApplication(),
                                 workflowId.getProgram(), runId);
 
-    return getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
+    return getVersionedApiPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
   }
 
   private Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramId workflowId, String runId)
@@ -633,7 +633,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
   private HttpResponse getWorkflowNodeStatesResponse(ProgramId workflowId, String runId) throws Exception {
     String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state", workflowId.getApplication(),
                                 workflowId.getProgram(), runId);
-    path = getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
+    path = getVersionedApiPath(path, Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
     return doGet(path);
   }
 
@@ -1212,7 +1212,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
                                                @Nullable String key) throws Exception {
     String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/token", workflowId.getApplicationId(),
                                             workflowId.getId(), runId);
-    String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
+    String versionedUrl = getVersionedApiPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
                                               Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
     return readResponse(response, new TypeToken<WorkflowTokenDetail>() { }.getType(), GSON);
@@ -1223,7 +1223,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
                                                    @Nullable String key) throws Exception {
     String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/nodes/%s/token",
                                             workflowId.getApplicationId(), workflowId.getId(), runId, nodeName);
-    String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
+    String versionedUrl = getVersionedApiPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
                                               Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
     return readResponse(response, new TypeToken<WorkflowTokenNodeDetail>() { }.getType(), GSON);

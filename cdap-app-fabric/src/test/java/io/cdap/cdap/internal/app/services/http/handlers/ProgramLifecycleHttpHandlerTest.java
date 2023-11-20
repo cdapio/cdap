@@ -130,7 +130,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    cConf = createBasicCConf();
+    cConf = createBasicCconf();
     initializeAndStartServices(cConf);
   }
 
@@ -273,10 +273,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(service2Run.getRuns().isEmpty());
 
     // cleanup
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    response = doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getResponseCode());
   }
 
@@ -411,7 +411,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                 runId, 400); // active run not found
 
     // cleanup
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
   }
@@ -422,7 +422,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMapreduceHistory() throws Exception {
-    doDelete(getVersionedAPIPath("apps/",
+    doDelete(getVersionedApiPath("apps/",
                                  Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     testHistory(DummyAppWithTrackingTable.class);
   }
@@ -433,10 +433,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testNonExistingProgramHistory() throws Exception {
     deploy(DummyAppWithTrackingTable.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
-    int historyStatus = doPost(getVersionedAPIPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
+    int historyStatus = doPost(
+        getVersionedApiPath("apps/" + DUMMY_APP_ID + ProgramType.MAPREDUCE + "/NonExisting",
                                                    Constants.Gateway.API_VERSION_3_TOKEN,
                                                    TEST_NAMESPACE2)).getResponseCode();
-    int deleteStatus = doDelete(getVersionedAPIPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
+    int deleteStatus = doDelete(
+        getVersionedApiPath("apps/" + DUMMY_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN,
                                                     TEST_NAMESPACE2)).getResponseCode();
     Assert.assertTrue("Unexpected history status " + historyStatus + " and/or deleteStatus " + deleteStatus,
                       historyStatus == 404 && deleteStatus == 200);
@@ -481,7 +483,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                 sleepWorkflow1.getApplicationId(), sleepWorkflow1.getType().getCategoryName(),
                                 sleepWorkflow1.getId(), ProgramRunStatus.COMPLETED, 1, 0, Integer.MAX_VALUE);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
-                        doGet(getVersionedAPIPath(path, sleepWorkflow1.getNamespaceId())).getResponseCode());
+                        doGet(getVersionedApiPath(path, sleepWorkflow1.getNamespaceId())).getResponseCode());
 
 
     // second run
@@ -599,8 +601,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testBatchStatus() throws Exception {
-    final String statusUrl1 = getVersionedAPIPath("status", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    final String statusUrl2 = getVersionedAPIPath("status", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    final String statusUrl1 = getVersionedApiPath("status", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    final String statusUrl2 = getVersionedApiPath("status", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
 
     // invalid json must return 400
     Assert.assertEquals(400, doPost(statusUrl1, "").getResponseCode());
@@ -736,7 +738,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testBatchInstances() throws Exception {
-    String instancesUrl1 = getVersionedAPIPath("instances", Constants.Gateway.API_VERSION_3_TOKEN,
+    String instancesUrl1 = getVersionedApiPath("instances", Constants.Gateway.API_VERSION_3_TOKEN,
                                                TEST_NAMESPACE1);
 
     Assert.assertEquals(400, doPost(instancesUrl1, "").getResponseCode());
@@ -811,7 +813,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(1, returnedBody.get(0).get("provisioned").getAsInt());
 
     // Increase service instances to 2
-    String setInstanceUrl = getVersionedAPIPath(
+    String setInstanceUrl = getVersionedApiPath(
       String.format("apps/%s/services/%s/instances", AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, doPut(setInstanceUrl, gson.toJson(new Instances(2))).getResponseCode());
@@ -1559,9 +1561,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testBatchStartStop() throws Exception {
-    final String batchStartUrl = getVersionedAPIPath("start", Constants.Gateway.API_VERSION_3_TOKEN,
+    final String batchStartUrl = getVersionedApiPath("start", Constants.Gateway.API_VERSION_3_TOKEN,
                                                      TEST_NAMESPACE1);
-    final String batchStopUrl = getVersionedAPIPath("stop", Constants.Gateway.API_VERSION_3_TOKEN,
+    final String batchStopUrl = getVersionedApiPath("stop", Constants.Gateway.API_VERSION_3_TOKEN,
                                                      TEST_NAMESPACE1);
 
     // invalid json must return 400
@@ -1628,7 +1630,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testGetRunCount() throws Exception {
-    final String batchRunCount = getVersionedAPIPath("runcount", Constants.Gateway.API_VERSION_3_TOKEN,
+    final String batchRunCount = getVersionedApiPath("runcount", Constants.Gateway.API_VERSION_3_TOKEN,
                                                      TEST_NAMESPACE1);
 
     // deploy, check the status
@@ -1711,8 +1713,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @After
   public void cleanup() throws Exception {
-    doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
   }
 
   private void setLCMFlag(boolean lcmFlag) {
@@ -1721,7 +1723,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private HttpResponse getServiceAvailability(Id.Service serviceId) throws Exception {
     String activeUrl = String.format("apps/%s/services/%s/available", serviceId.getApplicationId(), serviceId.getId());
-    String versionedActiveUrl = getVersionedAPIPath(activeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+    String versionedActiveUrl = getVersionedApiPath(activeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                                     serviceId.getNamespaceId());
     return doGet(versionedActiveUrl);
   }
@@ -1729,7 +1731,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private ServiceInstances getServiceInstances(Id.Service serviceId) throws Exception {
     String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplicationId(),
                                        serviceId.getId());
-    String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+    String versionedInstanceUrl = getVersionedApiPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                                       serviceId.getNamespaceId());
     HttpResponse response = doGet(versionedInstanceUrl);
     Assert.assertEquals(200, response.getResponseCode());
@@ -1739,7 +1741,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private int setServiceInstances(Id.Service serviceId, int instances) throws Exception {
     String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplicationId(),
                                        serviceId.getId());
-    String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+    String versionedInstanceUrl = getVersionedApiPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                                       serviceId.getNamespaceId());
     String instancesBody = GSON.toJson(new Instances(instances));
     return doPut(versionedInstanceUrl, instancesBody).getResponseCode();
@@ -1748,7 +1750,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private HttpResponse callService(Id.Service serviceId, HttpMethod method, String endpoint) throws Exception {
     String serviceUrl = String.format("apps/%s/service/%s/methods/%s",
                                       serviceId.getApplicationId(), serviceId.getId(), endpoint);
-    String versionedServiceUrl = getVersionedAPIPath(serviceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+    String versionedServiceUrl = getVersionedApiPath(serviceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                                      serviceId.getNamespaceId());
     if (HttpMethod.GET.equals(method)) {
       return doGet(versionedServiceUrl);
@@ -1780,13 +1782,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private HttpResponse requestProgramSpecification(String namespace, String appId, String programType,
                                                    String programId) throws Exception {
-    String uri = getVersionedAPIPath(String.format("apps/%s/%s/%s", appId, programType, programId),
+    String uri = getVersionedApiPath(String.format("apps/%s/%s/%s", appId, programType, programId),
                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     return doGet(uri);
   }
 
   private void testListInitialState(String namespace, ProgramType programType) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath(programType.getCategoryName(),
+    HttpResponse response = doGet(getVersionedApiPath(programType.getCategoryName(),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals(EMPTY_ARRAY_JSON, response.getResponseBodyAsString());
@@ -1816,12 +1818,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private HttpResponse requestProgramList(String namespace, String programType)
     throws Exception {
-    return doGet(getVersionedAPIPath(programType, Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    return doGet(getVersionedApiPath(programType, Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 
   private HttpResponse requestAppDetail(String namespace, String appName)
     throws Exception {
-    String uri = getVersionedAPIPath(String.format("apps/%s", appName),
+    String uri = getVersionedApiPath(String.format("apps/%s", appName),
                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     return doGet(uri);
   }
@@ -1895,7 +1897,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String basePath = String.format("apps/%s%s/%s/%s/runs", program.getApplication(),
         urlAppVersionPart,
         program.getType().getCategoryName(), program.getProgram());
-    String runsUrl = getVersionedAPIPath(basePath + "?status=" + status.name(),
+    String runsUrl = getVersionedApiPath(basePath + "?status=" + status.name(),
         Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespace());
     int trials = 0;
     while (trials++ < 5) {
@@ -1904,7 +1906,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
           LIST_OF_RUN_RECORD);
       if (result != null && result.size() >= size) {
         for (RunRecord m : result) {
-          String runUrl = getVersionedAPIPath(basePath + "/" + m.getPid(), Constants.Gateway.API_VERSION_3_TOKEN,
+          String runUrl = getVersionedApiPath(basePath + "/" + m.getPid(), Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespace());
           response = doGet(runUrl);
           RunRecord actualRunRecord = GSON.fromJson(response.getResponseBodyAsString(), RunRecord.class);
@@ -1918,10 +1920,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void testVersionedProgramRuntimeArgs(ProgramId programId) throws Exception {
-    String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + programId.getApplication()
-                                                           + "/versions/" + programId.getVersion()
-                                                           + "/" + programId.getType().getCategoryName()
-                                                           + "/" + programId.getProgram() + "/runtimeargs",
+    String versionedRuntimeArgsUrl = getVersionedApiPath("apps/" + programId.getApplication()
+                                                         + "/versions/" + programId.getVersion()
+                                                         + "/" + programId.getType().getCategoryName()
+                                                         + "/" + programId.getProgram() + "/runtimeargs",
                                                          Constants.Gateway.API_VERSION_3_TOKEN,
                                                          programId.getNamespace());
     verifyRuntimeArgs(versionedRuntimeArgsUrl);
@@ -1932,17 +1934,17 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     deploy(app, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     ApplicationDetail appDetails = getAppDetails(namespace, appId);
 
-    String versionedRuntimeArgsUrl = getVersionedAPIPath(
+    String versionedRuntimeArgsUrl = getVersionedApiPath(
         "apps/" + appId + "/" + programType + "/" + programId
             + "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
         namespace);
     verifyRuntimeArgs(versionedRuntimeArgsUrl);
 
-    String versionedRuntimeArgsAppVersionUrl = getVersionedAPIPath("apps/" + appId
-            + "/versions/"
-            + appDetails.getAppVersion()
-            + "/" + programType
-            + "/" + programId + "/runtimeargs",
+    String versionedRuntimeArgsAppVersionUrl = getVersionedApiPath("apps/" + appId
+                                                                   + "/versions/"
+                                                                   + appDetails.getAppVersion()
+                                                                   + "/" + programType
+                                                                   + "/" + programId + "/runtimeargs",
         Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     verifyRuntimeArgs(versionedRuntimeArgsAppVersionUrl);
   }

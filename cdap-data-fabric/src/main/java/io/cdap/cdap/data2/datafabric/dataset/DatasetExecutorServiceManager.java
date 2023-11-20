@@ -36,7 +36,7 @@ public class DatasetExecutorServiceManager extends AbstractMasterServiceManager 
 
   @Override
   public int getMaxInstances() {
-    return getCConf().getInt(Constants.Dataset.Executor.MAX_INSTANCES);
+    return getCconf().getInt(Constants.Dataset.Executor.MAX_INSTANCES);
   }
 
   @Override

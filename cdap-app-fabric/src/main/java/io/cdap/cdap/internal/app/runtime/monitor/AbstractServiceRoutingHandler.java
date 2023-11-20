@@ -20,9 +20,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.io.Closeables;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
-import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -170,11 +170,10 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
   }
 
   /**
-   * Opens a {@link HttpURLConnection} to the given service for the given
-   * program run.
+   * Opens a {@link HttpURLConnection} to the given service.
    *
    * @throws BadRequestException if the request for service routing is not
-   *                             valid
+   *                             valid.
    */
   private HttpURLConnection openConnection(HttpRequest request, String service,
       String path) throws BadRequestException {
@@ -184,7 +183,7 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
       throw new ServiceUnavailableException(service);
     }
 
-    URI uri = URIScheme.createURI(discoverable, path);
+    URI uri = URIScheme.createURI(discoverable, "%s", path);
     LOG.trace("Routing request for service '{}' to uri '{}'.", service, uri);
     try {
       URL url = uri.toURL();

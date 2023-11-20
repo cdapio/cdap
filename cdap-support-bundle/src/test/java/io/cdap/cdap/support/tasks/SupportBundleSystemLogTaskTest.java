@@ -103,7 +103,7 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     long startTime = System.currentTimeMillis();
 
     HttpResponse appsResponse =
-      doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+      doGet(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
                                 NAMESPACE.getNamespace()));
     Assert.assertEquals(200, appsResponse.getResponseCode());
     String version = getResponseApplicationRecordVersion(appsResponse.getResponseBodyAsString());

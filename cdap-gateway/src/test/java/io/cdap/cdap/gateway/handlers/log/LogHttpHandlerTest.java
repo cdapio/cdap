@@ -357,7 +357,7 @@ public class LogHttpHandlerTest {
                                 String endPoint, int expectedStatusCode) throws IOException {
     String path = String.format("apps/%s/%s/%s/runs/%s/logs/%s?max=1000", appId, programType, programName, runId,
                                 endPoint);
-    HttpResponse response = doGet(getVersionedAPIPath(path, namespaceId));
+    HttpResponse response = doGet(getVersionedApiPath(path, namespaceId));
     Assert.assertEquals(expectedStatusCode, response.getResponseCode());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       return ImmutableList.of();
@@ -429,7 +429,7 @@ public class LogHttpHandlerTest {
     RunRecord runRecord = mockLogReader.getRunRecord(programId);
     String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=json",
                             "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
-    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, MockLogReader.TEST_NAMESPACE));
+    HttpResponse response = doGet(getVersionedApiPath(logsUrl, MockLogReader.TEST_NAMESPACE));
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     List<LogDataOffset> logDataOffsetList = GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGDATA_OFFSET_TYPE);
     Assert.assertEquals(logDataOffsetList.size(), 15);
@@ -467,7 +467,7 @@ public class LogHttpHandlerTest {
     String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs?format=json&filter=MDC:asdf=nothing",
                                    appId, entityType, entityId, runRecord.getPid());
 
-    HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
+    HttpResponse response = doGet(getVersionedApiPath(logsUrl, namespace));
     verifyLogs(response, entityId, "json", true, true, true, 0, 0);
   }
 
@@ -476,7 +476,7 @@ public class LogHttpHandlerTest {
     for (String format : FORMATS) {
       String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s&format=%s",
                                      appId, entityType, entityId, getFromOffset(5), escape, format);
-      HttpResponse response = doGet(getVersionedAPIPath(nextUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(nextUrl, namespace));
       verifyLogs(response, entityId, format, false, false, escape, 10, 5);
     }
   }
@@ -485,7 +485,7 @@ public class LogHttpHandlerTest {
     for (String format : FORMATS) {
       String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&format=%s",
                                           appId, entityType, entityId, getFromOffset(10), format);
-      HttpResponse response = doGet(getVersionedAPIPath(nextNoMaxUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(nextNoMaxUrl, namespace));
       verifyLogs(response, entityId, format, false, false, true, 50, 10);
     }
   }
@@ -495,7 +495,7 @@ public class LogHttpHandlerTest {
       String nextFilterUrl =
         String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=ERROR&format=%s",
                       appId, entityType, entityId, getFromOffset(12), format);
-      HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(nextFilterUrl, namespace));
       verifyLogs(response, entityId, format, true, false, true, 8, 12);
     }
   }
@@ -503,7 +503,7 @@ public class LogHttpHandlerTest {
   private void testNextNoFrom(String appId, String entityType, String entityId, String namespace) throws Exception {
     for (String format : FORMATS) {
       String nextNoFromUrl = String.format("apps/%s/%s/%s/logs/next?format=%s", appId, entityType, entityId, format);
-      HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(nextNoFromUrl, namespace));
       verifyLogs(response, entityId, format, false, false, true, 50, 30);
     }
   }
@@ -527,7 +527,7 @@ public class LogHttpHandlerTest {
       nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=%s&max=100&suppress=%s",
                                     appId, entityType, entityId, runRecord.getPid(), format, fieldsToSuppress);
     }
-    HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
+    HttpResponse response = doGet(getVersionedApiPath(nextNoFromUrl, namespace));
     verifyLogs(response, entityId, format, true, false, true, expectedEvents, 20, suppress);
   }
 
@@ -535,7 +535,7 @@ public class LogHttpHandlerTest {
     for (String format : FORMATS) {
       String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=10&format=%s",
                                      appId, entityType, entityId, getToOffset(25), format);
-      HttpResponse response = doGet(getVersionedAPIPath(prevUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(prevUrl, namespace));
       verifyLogs(response, entityId, format, false, false, true, 10, 15);
     }
   }
@@ -560,7 +560,7 @@ public class LogHttpHandlerTest {
                       appId, entityType, entityId, runRecord.getPid(), format, fieldsToSuppress);
     }
 
-    HttpResponse response = doGet(getVersionedAPIPath(prevRunIdUrl, namespace));
+    HttpResponse response = doGet(getVersionedApiPath(prevRunIdUrl, namespace));
     verifyLogs(response, entityId, format, true, false, true, expectedEvents, 20, suppress);
   }
 
@@ -586,7 +586,7 @@ public class LogHttpHandlerTest {
     for (String format : FORMATS) {
       String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&format=%s",
                                           appId, entityType, entityId, getToOffset(70), format);
-      HttpResponse response = doGet(getVersionedAPIPath(prevNoMaxUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(prevNoMaxUrl, namespace));
       verifyLogs(response, entityId, format, false, false, true, 50, 20);
     }
   }
@@ -596,14 +596,14 @@ public class LogHttpHandlerTest {
       String prevFilterUrl =
         String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&format=%s&filter=loglevel=ERROR",
                       appId, entityType, entityId, getToOffset(41), format);
-      HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(prevFilterUrl, namespace));
       verifyLogs(response, entityId, format, true, false, true, 8, 26);
     }
   }
 
   private void testPrevNoFrom(String appId, String entityType, String entityId, String namespace) throws Exception {
     String prevNoFrom = String.format("apps/%s/%s/%s/logs/prev", appId, entityType, entityId);
-    HttpResponse response = doGet(getVersionedAPIPath(prevNoFrom, namespace));
+    HttpResponse response = doGet(getVersionedApiPath(prevNoFrom, namespace));
     verifyLogs(response, entityId, "text", false, false, true, 50, 30);
   }
 
@@ -628,7 +628,7 @@ public class LogHttpHandlerTest {
                                     appId, entityType, entityId, runRecord.getPid(), format, startTime,
                                     stopTime, fieldsToSuppress);
     }
-    HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
+    HttpResponse response = doGet(getVersionedApiPath(nextNoFromUrl, namespace));
     verifyLogs(response, entityId, format, true, true, true, expectedEvents, 20, suppress);
   }
 
@@ -638,13 +638,13 @@ public class LogHttpHandlerTest {
     for (String format : FORMATS) {
       String logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s",
                                      appId, entityType, entityId, startTime, stopTime, format);
-      HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(logsUrl, namespace));
       verifyLogs(response, entityId, format, false, true, true, 15, 20);
 
       // Try with invalid time range -> start > stop
       logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s",
                               appId, entityType, entityId, 350, 300, format);
-      response = doGet(getVersionedAPIPath(logsUrl, namespace));
+      response = doGet(getVersionedApiPath(logsUrl, namespace));
       Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
     }
   }
@@ -655,20 +655,21 @@ public class LogHttpHandlerTest {
     for (String format : FORMATS) {
       String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=loglevel=ERROR", appId,
                                            entityType, entityId, startTime, stopTime, format);
-      HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
+      HttpResponse response = doGet(getVersionedApiPath(logsFilterUrl, namespace));
       verifyLogs(response, entityId, format, true, true, true, 8, 20);
 
       // Test origin filter
       String originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=.origin=plugin",
                                              appId, entityType, entityId, startTime, stopTime, format);
       // There are 2 logs with .origin=plugin and loglevel=ERROR starting from 24
-      response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20loglevel=ERROR", namespace));
+      response = doGet(
+          getVersionedApiPath(originFilterUrl + "%20AND%20loglevel=ERROR", namespace));
       verifyLogs(response, entityId, format, 6, true, true, 2, 24, ImmutableList.of());
 
       // There are 3 logs with .origin=program and MDC:eventType=lifeCycle starting from 22
       originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=.origin=program", appId,
                                       entityType, entityId, startTime, stopTime, format);
-      response = doGet(getVersionedAPIPath(originFilterUrl + "%20AND%20MDC:eventType=lifecycle", namespace));
+      response = doGet(getVersionedApiPath(originFilterUrl + "%20AND%20MDC:eventType=lifecycle", namespace));
       verifyLogs(response, entityId, format, 6, true, true, 3, 22, ImmutableList.of());
 
       originFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s&filter=loglevel=ERROR", appId,
@@ -677,7 +678,7 @@ public class LogHttpHandlerTest {
       // Therefore, ".origin=plugin OR .origin=program OR .origin=system" is first combined to a single OrFilter,
       // which all logs can pass. Then loglevel=ERROR is combined with this OrFilter to form an AndFilter.
       // The whole filter therefore filters out logs with loglevel=ERROR.
-      response = doGet(getVersionedAPIPath(
+      response = doGet(getVersionedApiPath(
         originFilterUrl + "%20AND%20.origin=plugin%20OR%20.origin=program%20OR%20.origin=system", namespace));
       verifyLogs(response, entityId, format, 2, true, true, 8, 20, ImmutableList.of());
     }
@@ -823,7 +824,7 @@ public class LogHttpHandlerTest {
    * @param nonVersionedApiPath API path without version
    * @param namespace the namespace
    */
-  private static String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
+  private static String getVersionedApiPath(String nonVersionedApiPath, String namespace) {
     String version = Constants.Gateway.API_VERSION_3_TOKEN;
     return String.format("/%s/namespaces/%s/%s", version, namespace, nonVersionedApiPath);
   }
@@ -836,8 +837,7 @@ public class LogHttpHandlerTest {
       () -> discoveryServiceClient.discover(Constants.Service.LOG_QUERY)).pick(10, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 
-    // Path is literal, hence replacing the "%" with "%%" for formatter
-    URL url = URIScheme.createURI(discoverable, path.replace("%", "%%")).toURL();
+    URL url = URIScheme.createURI(discoverable, "%s", path).toURL();
     return HttpRequests.execute(HttpRequest.get(url).build(), new DefaultHttpRequestConfig(false));
   }
 }

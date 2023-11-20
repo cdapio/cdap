@@ -81,7 +81,8 @@ public class ProfileHttpHandlerTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    CConfiguration cConf = AppFabricTestHelper.enableAuthorization(createBasicCConf(), TEMPORARY_FOLDER);
+    CConfiguration cConf = AppFabricTestHelper.enableAuthorization(
+        createBasicCconf(), TEMPORARY_FOLDER);
     initializeAndStartServices(cConf);
     PermissionManager permissionManager = getInjector().getInstance(PermissionManager.class);
     permissionManager.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM, EntityType.PROFILE), READ_WRITE_USER,
