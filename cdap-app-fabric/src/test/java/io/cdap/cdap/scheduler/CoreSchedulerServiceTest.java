@@ -496,7 +496,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                                                @Nullable String key) throws Exception {
     String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/token", workflowId.getApplication(),
                                             workflowId.getProgram(), runId);
-    String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
+    String versionedUrl = getVersionedApiPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
                                               Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
     HttpResponse response = doGet(versionedUrl);
     return readResponse(response, new TypeToken<WorkflowTokenDetail>() { }.getType(), GSON);

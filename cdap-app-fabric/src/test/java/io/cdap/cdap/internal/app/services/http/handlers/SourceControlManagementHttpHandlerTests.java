@@ -90,7 +90,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    cConf = createBasicCConf();
+    cConf = createBasicCconf();
     initializeAndStartServices(cConf);
     sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
   }

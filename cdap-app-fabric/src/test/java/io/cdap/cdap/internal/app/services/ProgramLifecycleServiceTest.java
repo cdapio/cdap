@@ -71,7 +71,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    cConf = createBasicCConf();
+    cConf = createBasicCconf();
     initializeAndStartServices(cConf);
     Injector injector = getInjector();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);

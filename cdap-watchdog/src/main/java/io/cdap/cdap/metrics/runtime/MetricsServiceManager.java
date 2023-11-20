@@ -36,7 +36,7 @@ public class MetricsServiceManager extends AbstractMasterServiceManager {
 
   @Override
   public int getMaxInstances() {
-    return getCConf().getInt(Constants.Metrics.MAX_INSTANCES);
+    return getCconf().getInt(Constants.Metrics.MAX_INSTANCES);
   }
 
   @Override

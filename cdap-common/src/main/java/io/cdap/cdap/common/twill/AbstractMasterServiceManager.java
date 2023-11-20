@@ -80,7 +80,7 @@ public abstract class AbstractMasterServiceManager implements MasterServiceManag
   /**
    * Returns the {@link CConfiguration}.
    */
-  protected final CConfiguration getCConf() {
+  protected final CConfiguration getCconf() {
     return cConf;
   }
 

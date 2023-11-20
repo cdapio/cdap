@@ -214,9 +214,8 @@ public class InternalServiceRoutingHandlerTest {
     // handles URL encoded string correctly.
     HttpMethod method = HttpMethod.GET;
     HttpRequest request = remoteClient.requestBuilder(method,
-            String.format("services/%s/mock/%s/%d",
-                MOCK_SERVICE, method.name().toLowerCase(), 200) +
-            "?queryParam=abc%20d")
+            String.format("services/%s/mock/%s/%d", MOCK_SERVICE,
+                method.name().toLowerCase(), 200) + "?queryParam=abc%20d")
         .build();
 
     HttpResponse response = remoteClient.execute(request);

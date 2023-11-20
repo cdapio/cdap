@@ -111,7 +111,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    cConf = createBasicCConf();
+    cConf = createBasicCconf();
     initializeAndStartServices(cConf);
   }
 
@@ -168,7 +168,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDeployValid() throws Exception {
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
   }
@@ -263,7 +263,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(GSON.toJson(config), appDetails.getConfiguration());
 
     Assert.assertEquals(200,
-      doDelete(getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId())).getResponseCode());
+      doDelete(getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId())).getResponseCode());
   }
 
   @Test
@@ -316,7 +316,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // clean up the app
     Assert.assertEquals(200,
-                        doDelete(getVersionedAPIPath("apps/" + applicationId.getApplication(),
+                        doDelete(getVersionedApiPath("apps/" + applicationId.getApplication(),
                                                      applicationId.getNamespace())).getResponseCode());
 
     // deletion of app should delete the dataset owner information as they themselves are not deleted
@@ -342,7 +342,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // cleanup app
     Assert.assertEquals(200,
-                        doDelete(getVersionedAPIPath("apps/" + applicationId.getApplication(),
+                        doDelete(getVersionedApiPath("apps/" + applicationId.getApplication(),
                                                      applicationId.getNamespace())).getResponseCode());
 
     // cleanup
@@ -631,7 +631,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployFailure() throws Exception {
     deploy(AppWithDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     deploy(AppWithDatasetDuplicate.class, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -640,7 +640,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testListNonExistentNamespace() throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+    HttpResponse response = doGet(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
                                                       NONEXISTENT_NAMESPACE));
     Assert.assertEquals(404, response.getResponseCode());
   }
@@ -679,7 +679,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertFalse(emptyListReceived);
 
     //delete app in testnamespace1
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -720,7 +720,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(emptyListReceived);
 
     //delete app in testnamespace1
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -766,7 +766,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(emptyListReceived);
 
     //delete app in testnamespace1
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -808,7 +808,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, currentResultSize2);
 
     //delete app in testnamespace1
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -875,7 +875,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, currentResultSize);
 
     //delete app in testnamespace1
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -938,7 +938,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(creationTimeDescSorted, creationTimeList);
     
     //delete app in testnamespace1
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/",
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
                                             Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
@@ -1013,13 +1013,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ns2AppName, apps.get(0).get("name").getAsString());
 
     //delete app in testnamespace1
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    response = doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     apps = getAppList(TEST_NAMESPACE1);
     Assert.assertTrue(apps.isEmpty());
 
     //delete app in testnamespace2
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    response = doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getResponseCode());
     deleteArtifact(ns2ArtifactId, 200);
 
@@ -1099,13 +1099,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, ns2Apps.get(ns2AppName).size());
 
     //delete app in testnamespace1
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    response = doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
     apps = getAppList(TEST_NAMESPACE1);
     Assert.assertTrue(apps.isEmpty());
 
     //delete app in testnamespace2
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    response = doDelete(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getResponseCode());
     deleteArtifact(ns2ArtifactId, 200);
 
@@ -1137,7 +1137,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDelete() throws Exception {
     // Delete an non-existing app
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN,
+    HttpResponse response = doDelete(getVersionedApiPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN,
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
@@ -1160,7 +1160,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(program);
     waitState(program, "RUNNING");
     // Try to delete an App while its service is running
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
     Assert.assertEquals("'" + appReference
@@ -1174,7 +1175,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(program);
     waitState(program, "RUNNING");
     // Try to delete all Apps while service is running
-    response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(getVersionedApiPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
         TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
     Assert.assertEquals("'" + program.getNamespace()
@@ -1187,12 +1188,12 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Delete the app in the wrong namespace
     response = doDelete(
-        getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
             TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     // Delete an non-existing app with version
-    response = doDelete(getVersionedAPIPath("apps/XYZ/versions/" + VERSION1,
+    response = doDelete(getVersionedApiPath("apps/XYZ/versions/" + VERSION1,
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
@@ -1211,7 +1212,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(program1, 200);
     waitState(program1, "RUNNING");
     // Try to delete an App while its service is running
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
         String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
         Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
@@ -1223,31 +1224,34 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program1, "STOPPED");
 
     // Delete the app with version in the wrong namespace
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
         String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the app with version after stopping the service
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the App after stopping the service
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
     // deleting the app should not delete the artifact
-    response = doGet(getVersionedAPIPath("artifacts/" + artifactId.getName(), Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doGet(
+        getVersionedApiPath("artifacts/" + artifactId.getName(), Constants.Gateway.API_VERSION_3_TOKEN,
                                          TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
 
@@ -1280,7 +1284,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(testDataString, new String(state.get(), StandardCharsets.UTF_8));
     // delete state
     String deleteStateUrl = String.format("apps/%s/state", AllProgramsApp.NAME);
-    String versionedStateDeletePath = getVersionedAPIPath(deleteStateUrl,
+    String versionedStateDeletePath = getVersionedApiPath(deleteStateUrl,
         Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     doDelete(versionedStateDeletePath);
     // verify that state does not exist
@@ -1290,7 +1294,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // cleanup
     Assert.assertEquals(200,
-        doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME,
+        doDelete(getVersionedApiPath("apps/" + AllProgramsApp.NAME,
             TEST_NAMESPACE1)).getResponseCode());
   }
 
@@ -1301,7 +1305,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeleteLCMFlagEnabled() throws Exception {
     setLCMFlag(true);
     // Delete an non-existing app
-    HttpResponse response = doDelete(getVersionedAPIPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN,
+    HttpResponse response = doDelete(getVersionedApiPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN,
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
@@ -1319,7 +1323,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(program);
     waitState(program, "RUNNING");
     // Try to delete an App while its service is running
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
     Assert.assertEquals("'" + applicationId
@@ -1333,7 +1338,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(program);
     waitState(program, "RUNNING");
     // Try to delete all Apps while service is running
-    response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(getVersionedApiPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
         TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
     Assert.assertEquals("'" + program.getNamespace()
@@ -1346,12 +1351,12 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Delete the app in the wrong namespace
     response = doDelete(
-        getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
             TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     // Delete an non-existing app with version
-    response = doDelete(getVersionedAPIPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    response = doDelete(getVersionedApiPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
     // Deploy an app with version
@@ -1369,7 +1374,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(program1, 200);
     waitState(program1, "RUNNING");
     // Try to delete an App while its service is running
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
         String.format("apps/%s", appId.getApplication()),
         Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
@@ -1384,31 +1389,34 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program1, "STOPPED");
 
     // Delete the app with version in the wrong namespace
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
         String.format("apps/%s", appId.getApplication()),
         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the app with version after stopping the service
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
       String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath(
+    response = doDelete(getVersionedApiPath(
       String.format("apps/%s", appId.getApplication()),
       Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the App after stopping the service
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(
+        getVersionedApiPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
     // deleting the app should not delete the artifact
-    response = doGet(getVersionedAPIPath("artifacts/" + artifactId.getName(), Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doGet(
+        getVersionedApiPath("artifacts/" + artifactId.getName(), Constants.Gateway.API_VERSION_3_TOKEN,
                                          TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
 
@@ -1430,7 +1438,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
 
-    HttpResponse response = doDelete(getVersionedAPIPath(
+    HttpResponse response = doDelete(getVersionedApiPath(
       String.format("apps/%s/versions/%s",  AllProgramsApp.NAME, appDetails.getAppVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(403, response.getResponseCode());
@@ -1491,6 +1499,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   protected HttpResponse getAppListResponseWhenFailingWithException(String namespace) throws Exception {
-    return doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    return doGet(getVersionedApiPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 }

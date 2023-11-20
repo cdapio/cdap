@@ -36,7 +36,7 @@ public class MetricsProcessorStatusServiceManager extends AbstractMasterServiceM
 
   @Override
   public int getMaxInstances() {
-    return getCConf().getInt(Constants.MetricsProcessor.MAX_INSTANCES);
+    return getCconf().getInt(Constants.MetricsProcessor.MAX_INSTANCES);
   }
 
   @Override
