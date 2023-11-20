@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.sourcecontrol;
 
-
 /**
  * Factory interface for creating {@link PushAppsOperation}.
  * This interface is for Guice assisted binding, hence there will be no concrete implementation of it.
@@ -27,7 +26,7 @@ public interface PushAppsOperationFactory {
    * Returns an implementation of {@link PushAppsOperation} that operates on the given {@link
    * PushAppsRequest}.
    *
-   * @param request contains list of apps to pull
+   * @param request contains list of apps to push
    * @return a new instance of {@link PushAppsOperation}.
    */
   PushAppsOperation create(PushAppsRequest request);
