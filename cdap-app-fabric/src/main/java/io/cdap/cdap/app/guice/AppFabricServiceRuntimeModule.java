@@ -151,6 +151,7 @@ import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.security.encryption.guice.DataStorageAeadEncryptionModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -200,6 +201,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new EntityVerifierModule(),
         new MasterCredentialProviderModule(),
         new OperationModule(),
+        new DataStorageAeadEncryptionModule(),
         BootstrapModules.getInMemoryModule(),
         new AbstractModule() {
           @Override
@@ -243,6 +245,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new ProvisionerModule(),
         new MasterCredentialProviderModule(),
         new OperationModule(),
+        new DataStorageAeadEncryptionModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override
@@ -298,6 +301,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new ProvisionerModule(),
         new MasterCredentialProviderModule(),
         new OperationModule(),
+        new DataStorageAeadEncryptionModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override

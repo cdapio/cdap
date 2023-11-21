@@ -14,13 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.credential.store;
+package io.cdap.cdap.internal.credential;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.security.encryption.AeadCipher;
+import io.cdap.cdap.security.encryption.guice.DataStorageAeadEncryptionModule;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -29,6 +32,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition.CredentialProviderStore;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,13 +42,29 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * Storage for credential identities.
  */
 public class CredentialIdentityStore {
 
+  /**
+   * DO NOT CHANGE THIS VALUE! CHANGING THIS VALUE IS BACKWARDS-INCOMPATIBLE. Values encrypted using
+   * a different value will not decrypt properly!
+   */
+  private static final byte[] CREDENTIAL_IDENTITY_STORE_AD = "CredentialIdentityStore"
+      .getBytes(StandardCharsets.UTF_8);
   private static final Gson GSON = new Gson();
+
+  private final AeadCipher dataStorageCipher;
+
+  @Inject
+  CredentialIdentityStore(@Named(DataStorageAeadEncryptionModule.DATA_STORAGE_ENCRYPTION)
+      AeadCipher dataStorageCipher) {
+    this.dataStorageCipher = dataStorageCipher;
+  }
 
   /**
    * Lists entries in the credential identity table for a given namespace.
@@ -85,6 +105,18 @@ public class CredentialIdentityStore {
   }
 
   /**
+   * Returns whether an entry exists in the identity table.
+   *
+   * @param context The transaction context to use.
+   * @param id      The identity reference to fetch.
+   * @return Whether the credential identity exists.
+   */
+  public boolean exists(StructuredTableContext context, CredentialIdentityId id)
+      throws IOException {
+    return readIdentity(context, id).isPresent();
+  }
+
+  /**
    * Fetch an entry from the identity table.
    *
    * @param context The transaction context to use.
@@ -93,15 +125,13 @@ public class CredentialIdentityStore {
    * @throws IOException If any failure reading from storage occurs.
    */
   public Optional<CredentialIdentity> get(StructuredTableContext context, CredentialIdentityId id)
-      throws IOException {
-    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_IDENTITIES);
-    Collection<Field<?>> key = Arrays.asList(
-        Fields.stringField(CredentialProviderStore.NAMESPACE_FIELD,
-            id.getNamespace()),
-        Fields.stringField(CredentialProviderStore.IDENTITY_NAME_FIELD,
-            id.getName()));
-    return table.read(key).map(row -> GSON.fromJson(row
-        .getString(CredentialProviderStore.IDENTITY_DATA_FIELD), CredentialIdentity.class));
+      throws CipherException, IOException {
+    return readIdentity(context, id)
+        .map(row -> row.getBytes(CredentialProviderStore.IDENTITY_DATA_FIELD))
+        .map(encryptedIdentity -> dataStorageCipher
+            .decrypt(encryptedIdentity, CREDENTIAL_IDENTITY_STORE_AD))
+        .map(decrypted -> new String(decrypted, StandardCharsets.UTF_8))
+        .map(decryptedStr -> GSON.fromJson(decryptedStr, CredentialIdentity.class));
   }
 
   /**
@@ -113,7 +143,7 @@ public class CredentialIdentityStore {
    * @throws IOException If any failure reading from storage occurs.
    */
   public void write(StructuredTableContext context, CredentialIdentityId id,
-      CredentialIdentity identity) throws IOException {
+      CredentialIdentity identity) throws CipherException, IOException {
     StructuredTable identityTable =
         context.getTable(CredentialProviderStore.CREDENTIAL_IDENTITIES);
     Collection<Field<?>> row = Arrays.asList(
@@ -121,8 +151,9 @@ public class CredentialIdentityStore {
             id.getNamespace()),
         Fields.stringField(CredentialProviderStore.IDENTITY_NAME_FIELD,
             id.getName()),
-        Fields.stringField(CredentialProviderStore.IDENTITY_DATA_FIELD,
-            GSON.toJson(identity)),
+        Fields.bytesField(CredentialProviderStore.IDENTITY_DATA_FIELD,
+            dataStorageCipher.encrypt(GSON.toJson(identity).getBytes(StandardCharsets.UTF_8),
+                CREDENTIAL_IDENTITY_STORE_AD)),
         Fields.stringField(CredentialProviderStore.IDENTITY_PROFILE_INDEX_FIELD,
             toProfileIndex(identity.getProfileNamespace(), identity.getProfileName())));
     identityTable.upsert(row);
@@ -158,5 +189,16 @@ public class CredentialIdentityStore {
 
   private static String toProfileIndex(String profileNamespace, String profileName) {
     return String.format("%s:%s", profileNamespace, profileName);
+  }
+
+  private Optional<StructuredRow> readIdentity(StructuredTableContext context,
+      CredentialIdentityId id) throws IOException {
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_IDENTITIES);
+    Collection<Field<?>> key = Arrays.asList(
+        Fields.stringField(CredentialProviderStore.NAMESPACE_FIELD,
+            id.getNamespace()),
+        Fields.stringField(CredentialProviderStore.IDENTITY_NAME_FIELD,
+            id.getName()));
+    return table.read(key);
   }
 }

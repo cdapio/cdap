@@ -56,16 +56,16 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
-      new ConfigModule(conf),
-      new NonCustomLocationUnitTestModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new InMemoryDiscoveryModule(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModules(),
-      new DataFabricLevelDBModule(),
-      new TransactionMetricsModule());
+        new ConfigModule(conf),
+        new NonCustomLocationUnitTestModule(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new InMemoryDiscoveryModule(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new DataSetsModules().getInMemoryModules(),
+        new DataFabricLevelDBModule(),
+        new TransactionMetricsModule());
 
     dsFramework = injector.getInstance(DatasetFramework.class);
   }
@@ -73,7 +73,8 @@ public class LevelDBMetricsTableTest extends MetricsTableTest {
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name);
-    return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
-                                           DatasetProperties.EMPTY, null);
+    return DatasetsUtil
+        .getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
+            DatasetProperties.EMPTY, null);
   }
 }

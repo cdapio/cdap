@@ -281,6 +281,7 @@
         </stage.eventwriters.ext.dir>
         <stage.metadataconsumers.ext.dir>${stage.opt.dir}/ext/metadataconsumers/data-catalog-consumer
         </stage.metadataconsumers.ext.dir>
+        <stage.encryption.ext.dir>${stage.opt.dir}/ext/encryption</stage.encryption.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
@@ -380,6 +381,12 @@
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-credential-ext-gcp-wi</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-encryption-ext-tink</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -763,6 +770,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-credential-ext-gcp-wi/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy encryption extensions -->
+              <execution>
+                <id>copy-encryption-ext-tink</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.encryption.ext.dir}/tink</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-encryption-ext-tink/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>

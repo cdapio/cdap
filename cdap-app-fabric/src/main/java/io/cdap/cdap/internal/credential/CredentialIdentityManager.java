@@ -18,11 +18,10 @@ package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.internal.credential.store.CredentialIdentityStore;
-import io.cdap.cdap.internal.credential.store.CredentialProfileStore;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -70,7 +69,11 @@ public class CredentialIdentityManager {
    */
   public Optional<CredentialIdentity> get(CredentialIdentityId id) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
-      return identityStore.get(context, id);
+      try {
+        return identityStore.get(context, id);
+      } catch (CipherException e) {
+        throw new IOException("Failed to decrypt identity", e);
+      }
     }, IOException.class);
   }
 
@@ -86,7 +89,7 @@ public class CredentialIdentityManager {
   public void create(CredentialIdentityId id, CredentialIdentity identity)
       throws AlreadyExistsException, IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      if (identityStore.get(context, id).isPresent()) {
+      if (identityStore.exists(context, id)) {
         throw new AlreadyExistsException(String.format("Credential identity '%s:%s' already exists",
             id.getNamespace(), id.getName()));
       }
@@ -106,7 +109,7 @@ public class CredentialIdentityManager {
   public void update(CredentialIdentityId id, CredentialIdentity identity)
       throws IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      if (!identityStore.get(context, id).isPresent()) {
+      if (!identityStore.exists(context, id)) {
         throw new NotFoundException(String.format("Credential identity '%s:%s' not found",
             id.getNamespace(), id.getName()));
       }
@@ -123,7 +126,7 @@ public class CredentialIdentityManager {
    */
   public void delete(CredentialIdentityId id) throws IOException, NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
-      if (!identityStore.get(context, id).isPresent()) {
+      if (!identityStore.exists(context, id)) {
         throw new NotFoundException(String.format("Credential identity '%s:%s' not found",
             id.getNamespace(), id.getName()));
       }
@@ -136,10 +139,14 @@ public class CredentialIdentityManager {
     // Validate the referenced profile exists.
     CredentialProfileId profileId = new CredentialProfileId(identity.getProfileNamespace(),
         identity.getProfileName());
-    if (!profileStore.get(context, profileId).isPresent()) {
+    if (!profileStore.exists(context, profileId)) {
       throw new NotFoundException(String.format("Credential profile '%s:%s' not found",
           profileId.getNamespace(), profileId.getName()));
     }
-    identityStore.write(context, id, identity);
+    try {
+      identityStore.write(context, id, identity);
+    } catch (CipherException e) {
+      throw new IOException("Failed to encrypt identity", e);
+    }
   }
 }

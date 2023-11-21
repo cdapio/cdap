@@ -26,6 +26,7 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.proto.element.EntityType;
@@ -37,11 +38,11 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
-import io.cdap.cdap.security.auth.CipherException;
-import io.cdap.cdap.security.auth.TinkCipher;
+import io.cdap.cdap.security.encryption.AeadCipher;
+import io.cdap.cdap.security.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import java.nio.charset.StandardCharsets;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,12 +74,15 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   private final boolean metricsCollectionEnabled;
   private final boolean metricsTagsEnabled;
   private final MetricsCollectionService metricsCollectionService;
+  private final AeadCipher userEncryptionAeadCipher;
 
   @Inject
   DefaultAccessEnforcer(CConfiguration cConf, SConfiguration sConf,
       AccessControllerInstantiator accessControllerInstantiator,
       @Named(INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION)
+          AeadCipher userEncryptionAeadCipher) {
     super(cConf);
     this.sConf = sConf;
     this.accessControllerInstantiator = accessControllerInstantiator;
@@ -94,6 +98,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     this.metricsTagsEnabled = cConf.getBoolean(Constants.Metrics.AUTHORIZATION_METRICS_TAGS_ENABLED,
         false);
     this.metricsCollectionService = metricsCollectionService;
+    this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
 
   @Override
@@ -264,10 +269,9 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     // When user credential encryption is enabled, credential should be encrypted upon arrival
     // at router and decrypted right here before calling auth extension.
     try {
-      String plainCredential = new String(
-          new TinkCipher(sConf).decryptFromBase64(userCredential.getValue(),
-              null),
-          StandardCharsets.UTF_8);
+      String plainCredential = userEncryptionAeadCipher
+          .decryptStringFromBase64(userCredential.getValue(),
+              Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
       return new Principal(principal.getName(),
           principal.getType(),
           principal.getKerberosPrincipal(),

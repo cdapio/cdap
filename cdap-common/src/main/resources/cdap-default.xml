@@ -6133,6 +6133,34 @@
     </description>
   </property>
 
+  <!-- Configurations for encryption -->
+  <property>
+    <name>security.encryption.extensions.dir</name>
+    <value>/opt/cdap/master/ext/encryption</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for CDAP
+      encryption extensions.
+    </description>
+  </property>
+
+  <property>
+    <name>security.encryption.user.credential.encryption.cipher.name</name>
+    <value>NONE</value>
+    <description>
+      Encryption mode for user credential encryption. User credential encryption provides protection
+      against credential compromise as it moves between microservices.
+    </description>
+  </property>
+
+  <property>
+    <name>security.encryption.data.storage.encryption.cipher.name</name>
+    <value>NONE</value>
+    <description>
+      Encryption mode for sensitive data storage. Sensitive data (e.g. stored passwords, etc)
+      may be encrypted by CDAP for additional protections at rest.
+    </description>
+  </property>
+
 <!--  Artifact localizer settings -->
   <property>
     <name>artifact.localizer.preload.list</name>

@@ -1851,6 +1851,42 @@ public final class Constants {
     }
 
     /**
+     * Security configurations for encryption.
+     */
+    public static final class Encryption {
+      /**
+       * Directory for encryption extensions.
+       */
+      public static final String EXTENSIONS_DIR = "security.encryption.extensions.dir";
+      /**
+       * Encryption cipher for user credentials.
+       */
+      public static final String USER_CREDENTIAL_ENCRYPTION_CIPHER_NAME =
+          "security.encryption.user.credential.encryption.cipher.name";
+      /**
+       * Prefix for properties used for user credential encryption.
+       */
+      public static final String USER_CREDENTIAL_ENCRYPTION_PROPERTIES_PREFIX =
+          "security.encryption.user.credential.encryption.properties.";
+      /**
+       * Encryption mode for sensitive data storage.
+       */
+      public static final String DATA_STORAGE_ENCRYPTION_CIPHER_NAME =
+          "security.encryption.data.storage.encryption.cipher.name";
+      /**
+       * Prefix for properties used for sensitive data storage encryption.
+       */
+      public static final String DATA_STORAGE_ENCRYPTION_PROPERTIES_PREFIX =
+          "security.encryption.data.storage.encryption.properties.";
+
+      /**
+       * Associated Data for user credential encryption.
+       */
+      public static final String USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA
+          = "UserCredentialEncryptionAD";
+    }
+
+    /**
      * Path to the Kerberos keytab file used by CDAP master.
      */
     public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
@@ -2228,10 +2264,10 @@ public final class Constants {
     public static final String START_PROGRAM_EVENT_FETCH_SIZE = "event.reader.start.fetch.size";
     public static final String START_EVENTS_READER_EXTENSIONS_DIR = "events.reader.extensions.start.dir";
     public static final String START_EVENTS_READER_EXTENSIONS_ENABLED_LIST =
-            "events.reader.extensions.start.enabled.list";
+        "events.reader.extensions.start.enabled.list";
     public static final String START_EVENT_PREFIX = "event.reader.start";
     public static final String MINIMUM_FREE_CAPACITY_BEFORE_PULL =
-            "event.readers.capacity.before.pull";
+        "event.readers.capacity.before.pull";
   }
 
   /**
