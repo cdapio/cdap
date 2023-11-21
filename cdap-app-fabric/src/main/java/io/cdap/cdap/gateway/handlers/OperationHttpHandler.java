@@ -31,6 +31,7 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.internal.operation.OperationRunFilter;
 import io.cdap.cdap.internal.operation.OperationRunNotFoundException;
+import io.cdap.cdap.internal.operation.OperationStatePublisher;
 import io.cdap.cdap.internal.operation.ScanOperationRunsRequest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.OperationRunId;
@@ -53,33 +54,39 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
-/** The {@link HttpHandler} for handling REST calls to operation endpoints. */
+/**
+ * The {@link HttpHandler} for handling REST calls to operation endpoints.
+ */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/operations")
 public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
+
+  private final OperationLifecycleManager operationLifecycleManager;
+  private final int batchSize;
   private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(\"?)(\\w+)=(\\w+)(\"?)");
   private static final String FILTER_SPLITTER = "AND";
   private final FeatureFlagsProvider featureFlagsProvider;
   private static final Gson GSON = new Gson();
-  private final OperationLifecycleManager operationLifecycleManager;
-  private final int batchSize;
   public static final String OPERATIONS_LIST_PAGINATED_KEY = "operations";
 
   @Inject
-  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager) {
+  OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager,
+      OperationStatePublisher statePublisher) {
     this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.operationLifecycleManager = operationLifecycleManager;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   // TODO(CDAP-20881) :  Add RBAC check
+
   /**
    * API to fetch all running operations in a namespace.
    *
    * @param namespaceId Namespace to fetch runs from
-   * @param pageToken the token identifier for the current page requested in a paginated request
+   * @param pageToken the token identifier for the current page requested in a paginated
+   *     request
    * @param pageSize the number of application details returned in a paginated request
-   * @param filter optional filters in EBNF grammar. Currently Only one status and one type filter
-   *     is supported with AND expression.
+   * @param filter optional filters in EBNF grammar. Currently Only one status and one type
+   *     filter is supported with AND expression.
    */
   @GET
   @Path("/")
@@ -92,14 +99,15 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       @QueryParam("filter") String filter)
       throws BadRequestException, IOException, ForbiddenException {
     checkSourceControlMultiAppFeatureFlag();
-    validateNamespaceId(namespaceId);
+    NamespaceId namespace = validateNamespaceId(namespaceId);
     JsonPaginatedListResponder.respond(
         GSON,
         responder,
         OPERATIONS_LIST_PAGINATED_KEY,
         jsonListResponder -> {
           AtomicReference<OperationRun> lastRun = new AtomicReference<>();
-          ScanOperationRunsRequest scanRequest = getScanRequest(namespaceId, pageToken, pageSize, filter);
+          ScanOperationRunsRequest scanRequest = getScanRequest(namespaceId, pageToken, pageSize,
+              filter);
           boolean pageLimitReached = false;
           try {
             pageLimitReached =
@@ -138,7 +146,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
     checkSourceControlMultiAppFeatureFlag();
     validateNamespaceId(namespaceId);
     if (runId == null || runId.isEmpty()) {
-      throw new BadRequestException("Path parameter runId cannot be empty");
+      throw new BadRequestException("runId cannot be empty");
     }
     responder.sendJson(
         HttpResponseStatus.OK,
@@ -158,11 +166,14 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/{id}/stop")
   public void failOperation(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
-      @PathParam("id") String runId) {
-    // // TODO(samik, CDAP-20814) send the message to stop the operation
-    responder.sendString(HttpResponseStatus.OK,
-        String.format("Updated status for operation run %s in namespace '%s'.", runId,
-            namespaceId));
+      @PathParam("id") String runId)
+      throws OperationRunNotFoundException, IOException, BadRequestException, ForbiddenException {
+    checkSourceControlMultiAppFeatureFlag();
+    validateNamespaceId(namespaceId);
+    if (runId == null || runId.isEmpty()) {
+      throw new BadRequestException("runId cannot be empty");
+    }
+    operationLifecycleManager.sendStopNotification(new OperationRunId(namespaceId, runId));
   }
 
   private ScanOperationRunsRequest getScanRequest(
@@ -218,7 +229,8 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
    * @param input The input string containing key-value pairs.
    * @param splitter The string used to split key-value pairs.
    * @return A {@code Map<String, String>} containing the parsed key-value pairs.
-   * @throws IllegalArgumentException If the input does not match the expected key=val pair pattern.
+   * @throws IllegalArgumentException If the input does not match the expected key=val pair
+   *     pattern.
    */
   private static ImmutableMap<String, String> parseKeyValStr(String input, String splitter) {
     ImmutableMap.Builder<String, String> keyValMap = ImmutableMap.<String, String>builder();

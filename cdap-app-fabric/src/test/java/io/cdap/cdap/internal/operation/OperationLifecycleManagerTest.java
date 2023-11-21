@@ -93,7 +93,8 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
 
     transactionRunner = injector.getInstance(TransactionRunner.class);
     operationLifecycleManager =
-        new OperationLifecycleManager(transactionRunner, Mockito.mock(OperationRuntime.class));
+        new OperationLifecycleManager(transactionRunner, Mockito.mock(OperationRuntime.class),
+            null);
     StoreDefinition.OperationRunsStore.create(injector.getInstance(StructuredTableAdmin.class));
     batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
   }

@@ -108,7 +108,7 @@ public class OperationNotificationSingleTopicSubscriberServiceTest extends Opera
     OperationStatePublisher mockStatePublisher = Mockito.mock(OperationStatePublisher.class);
     InMemoryOperationRuntime mockRuntime = Mockito.mock(InMemoryOperationRuntime.class);
     OperationLifecycleManager lifecycleManager =
-        new OperationLifecycleManager(transactionRunner, mockRuntime);
+        new OperationLifecycleManager(transactionRunner, mockRuntime, mockStatePublisher);
     OperationNotificationSingleTopicSubscriberService subscriberService =
         new OperationNotificationSingleTopicSubscriberService(
             mockMsgService,
@@ -152,7 +152,7 @@ public class OperationNotificationSingleTopicSubscriberServiceTest extends Opera
     OperationStatePublisher mockStatePublisher = Mockito.mock(OperationStatePublisher.class);
     InMemoryOperationRuntime mockRuntime = Mockito.mock(InMemoryOperationRuntime.class);
     OperationLifecycleManager lifecycleManager = new OperationLifecycleManager(transactionRunner,
-        mockRuntime);
+        mockRuntime, mockStatePublisher);
     OperationNotificationSingleTopicSubscriberService subscriberService =
         new OperationNotificationSingleTopicSubscriberService(
             mockMsgService,
@@ -181,7 +181,7 @@ public class OperationNotificationSingleTopicSubscriberServiceTest extends Opera
     OperationStatePublisher mockStatePublisher = Mockito.mock(OperationStatePublisher.class);
     InMemoryOperationRuntime mockRuntime = Mockito.mock(InMemoryOperationRuntime.class);
     OperationLifecycleManager lifecycleManager =
-        new OperationLifecycleManager(transactionRunner, mockRuntime);
+        new OperationLifecycleManager(transactionRunner, mockRuntime, mockStatePublisher);
     OperationNotificationSingleTopicSubscriberService subscriberService =
         new OperationNotificationSingleTopicSubscriberService(
             mockMsgService,
@@ -213,7 +213,7 @@ public class OperationNotificationSingleTopicSubscriberServiceTest extends Opera
     OperationStatePublisher mockStatePublisher = Mockito.mock(OperationStatePublisher.class);
     InMemoryOperationRuntime mockRuntime = Mockito.mock(InMemoryOperationRuntime.class);
     OperationLifecycleManager lifecycleManager = new OperationLifecycleManager(transactionRunner,
-        mockRuntime);
+        mockRuntime, mockStatePublisher);
     OperationNotificationSingleTopicSubscriberService subscriberService =
         new OperationNotificationSingleTopicSubscriberService(
             mockMsgService,
