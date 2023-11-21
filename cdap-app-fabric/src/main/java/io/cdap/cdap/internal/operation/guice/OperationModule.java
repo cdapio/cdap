@@ -21,6 +21,8 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.internal.app.sourcecontrol.LocalApplicationManager;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperation;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperationFactory;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsOperation;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsOperationFactory;
 import io.cdap.cdap.internal.operation.InMemoryOperationRunner;
 import io.cdap.cdap.internal.operation.InMemoryOperationRuntime;
 import io.cdap.cdap.internal.operation.LongRunningOperation;
@@ -41,6 +43,9 @@ public class OperationModule extends AbstractModule {
     install(new FactoryModuleBuilder()
         .implement(LongRunningOperation.class, PullAppsOperation.class)
         .build(PullAppsOperationFactory.class));
+    install(new FactoryModuleBuilder()
+        .implement(LongRunningOperation.class, PushAppsOperation.class)
+        .build(PushAppsOperationFactory.class));
     // TODO(samik) change based on worker enabled on not
     bind(ApplicationManager.class).to(LocalApplicationManager.class);
     bind(OperationRunner.class).to(InMemoryOperationRunner.class);

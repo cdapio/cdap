@@ -193,6 +193,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
     validateMessagingTopic(Constants.Scheduler.TIME_EVENT_TOPIC, problemKeys);
     validateMessagingTopic(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC, problemKeys);
     validateMessagingTopic(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC, problemKeys);
+    validateMessagingTopic(Constants.Operation.STATUS_EVENT_TOPIC, problemKeys);
   }
 
   private void checkProgramConfigurations(Set<String> problemKeys) {

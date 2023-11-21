@@ -2611,7 +2611,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.event.topic}:${program.status.event.topic.num.partitions},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.event.topic}:${program.status.event.topic.num.partitions},${operation.status.event.topic}:${operation.status.event.topic.num.partitions},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -4376,47 +4376,6 @@
   <property>
     <name>spark.metrics.strategy.retry.policy.type</name>
     <value>exponential.backoff</value>
-    <description>
-      The type of retry policy for programs. Allowed options:
-      "none", "fixed.delay", or "exponential.backoff".
-    </description>
-  </property>
-
-  <property>
-    <name>operation.status.retry.policy.base.delay.ms</name>
-    <value>1000</value>
-    <description>
-      The base delay between retries in milliseconds
-    </description>
-  </property>
-
-  <property>
-    <name>operation.status.retry.policy.max.delay.ms</name>
-    <value>3000</value>
-    <description>
-      The maximum delay between retries in milliseconds
-    </description>
-  </property>
-
-  <property>
-    <name>operation.status.retry.policy.max.retries</name>
-    <value>1000</value>
-    <description>
-      The maximum number of retries to attempt before aborting
-    </description>
-  </property>
-
-  <property>
-    <name>operation.status.retry.policy.max.time.secs</name>
-    <value>600</value>
-    <description>
-      The maximum elapsed time in seconds before retries are aborted
-    </description>
-  </property>
-
-  <property>
-    <name>operation.status.retry.policy.type</name>
-    <value>fixed.delay</value>
     <description>
       The type of retry policy for programs. Allowed options:
       "none", "fixed.delay", or "exponential.backoff".
@@ -6290,6 +6249,95 @@
     <value>true</value>
     <description>
       Adds the preload directive, expressing intent to add your HSTS policy to browsers.
+    </description>
+  </property>
+
+<!--  Operation configurations -->
+
+  <property>
+    <name>operation.status.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.retry.policy.max.delay.ms</name>
+    <value>3000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for programs. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.event.topic</name>
+    <value>operationstatusevent</value>
+    <description>
+      Topic prefix for publishing status transitioning events of operation runs to
+      the messaging system.
+    </description>
+  </property>f
+
+  <property>
+    <name>operation.status.event.topic.num.partitions</name>
+    <value>1</value>
+    <description>
+      Number of topics to use for operation run events.
+      All events related to same run should always go to same topic.
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.event.fetch.size</name>
+    <value>10</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each
+      processing cycle for operation status update events
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.event.tx.size</name>
+    <value>${operation.status.event.fetch.size}</value>
+    <description>
+      Maximum number of events to process in one transaction when messages are
+      fetched from the messaging system
+      in each processing cycle for operation status update events
+    </description>
+  </property>
+
+  <property>
+    <name>operation.status.event.poll.delay.millis</name>
+    <value>1000</value>
+    <description>
+      The delay in milliseconds to check again for new operation status events
+      after it detects there was no event
     </description>
   </property>
 
