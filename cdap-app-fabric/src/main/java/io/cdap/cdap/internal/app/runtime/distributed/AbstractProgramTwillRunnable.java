@@ -171,9 +171,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controllerFuture = new CompletableFuture<>();
     programCompletion = new CompletableFuture<>();
 
+    // Make sure InetAddressCachePolicy is statically initialized before runnable class is loaded.
+    // This is to ensure that InetAddress caching policy is not infinite.
+    // Look at CDAP-20781 for more information.
+    getClass().getClassLoader().loadClass("sun.net.InetAddressCachePolicy");
+
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
-    System.setSecurityManager(new ProgramContainerSecurityManager(System.getSecurityManager()));
+    System.setSecurityManager(new io.cdap.cdap.internal.app.runtime.distributed.ProgramContainerSecurityManager(System.getSecurityManager()));
     SLF4JBridgeHandler.removeHandlersForRootLogger();
     SLF4JBridgeHandler.install();
 
@@ -290,11 +295,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void handleCommand(Command command) throws Exception {
     // need to make sure controller exists before handling the command
-    if (ProgramCommands.SUSPEND.equals(command)) {
+    if (io.cdap.cdap.internal.app.runtime.distributed.ProgramCommands.SUSPEND.equals(command)) {
       controllerFuture.get().suspend().get();
       return;
     }
-    if (ProgramCommands.RESUME.equals(command)) {
+    if (io.cdap.cdap.internal.app.runtime.distributed.ProgramCommands.RESUME.equals(command)) {
       controllerFuture.get().resume().get();
       return;
     }
@@ -449,7 +454,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         services.add(binding.getProvider().get());
       }
     }
-    services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));
+    services.add(new io.cdap.cdap.internal.app.runtime.distributed.ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));
   }
 
   private void startCoreServices() {
