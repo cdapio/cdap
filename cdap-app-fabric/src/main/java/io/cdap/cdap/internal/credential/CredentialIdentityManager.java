@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.credential;
 
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants.Metrics.Credential;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
@@ -27,6 +29,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -38,13 +41,16 @@ public class CredentialIdentityManager {
   private final CredentialIdentityStore identityStore;
   private final CredentialProfileStore profileStore;
   private final TransactionRunner transactionRunner;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   CredentialIdentityManager(CredentialIdentityStore identityStore,
-      CredentialProfileStore profileStore, TransactionRunner transactionRunner) {
+      CredentialProfileStore profileStore, TransactionRunner transactionRunner,
+      MetricsCollectionService metricsCollectionService) {
     this.identityStore = identityStore;
     this.profileStore = profileStore;
     this.transactionRunner = transactionRunner;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -94,6 +100,7 @@ public class CredentialIdentityManager {
             id.getNamespace(), id.getName()));
       }
       validateAndWriteIdentity(context, id, identity);
+      emitCredentialIdentityCountMetric(context);
     }, AlreadyExistsException.class, IOException.class, NotFoundException.class);
   }
 
@@ -131,6 +138,7 @@ public class CredentialIdentityManager {
             id.getNamespace(), id.getName()));
       }
       identityStore.delete(context, id);
+      emitCredentialIdentityCountMetric(context);
     }, IOException.class, NotFoundException.class);
   }
 
@@ -148,5 +156,11 @@ public class CredentialIdentityManager {
     } catch (CipherException e) {
       throw new IOException("Failed to encrypt identity", e);
     }
+  }
+
+  private void emitCredentialIdentityCountMetric(StructuredTableContext context)
+      throws IOException {
+    metricsCollectionService.getContext(Collections.emptyMap())
+        .gauge(Credential.CREDENTIAL_IDENTITY_COUNT, identityStore.getIdentityCount(context));
   }
 }
