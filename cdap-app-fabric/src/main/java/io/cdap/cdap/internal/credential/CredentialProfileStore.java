@@ -153,6 +153,18 @@ public class CredentialProfileStore {
     table.delete(key);
   }
 
+  /**
+   * Returns the count of all credential profiles.
+   *
+   * @param context The transaction context to use.
+   * @return The number of credential profiles.
+   * @throws IOException If any failure reading from storage occurs.
+   */
+  public long getProfileCount(StructuredTableContext context) throws IOException {
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_PROFILES);
+    return table.count(Collections.singletonList(Range.all()));
+  }
+
   private static Collection<CredentialProfileId> profilesFromRowIterator(
       Iterator<StructuredRow> iterator) {
     return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator,

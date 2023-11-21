@@ -123,9 +123,9 @@ public class CredentialProviderTestBase {
     CredentialProfileStore profileStore = new CredentialProfileStore(new NoOpAeadCipher());
     CredentialIdentityStore identityStore = new CredentialIdentityStore(new NoOpAeadCipher());
     credentialProfileManager = new CredentialProfileManager(identityStore, profileStore,
-        runner, mockCredentialProviderLoader);
+        runner, mockCredentialProviderLoader, new NoOpMetricsCollectionService());
     credentialIdentityManager = new CredentialIdentityManager(identityStore, profileStore,
-        runner);
+        runner, new NoOpMetricsCollectionService());
   }
 
   @AfterClass
