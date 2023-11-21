@@ -97,8 +97,6 @@ public class ScanOperationRunsRequest {
 
     private String namespace;
     @Nullable
-    private String scanToRunId;
-    @Nullable
     private String scanAfterRunId;
     @Nullable
     private OperationRunFilter filter;
@@ -151,9 +149,6 @@ public class ScanOperationRunsRequest {
      * return new {@link ScanOperationRunsRequest}.
      */
     public ScanOperationRunsRequest build() {
-      if (namespace == null) {
-        throw new IllegalArgumentException("namespace must be specified.");
-      }
       if (filter == null) {
         filter = OperationRunFilter.emptyFilter();
       }

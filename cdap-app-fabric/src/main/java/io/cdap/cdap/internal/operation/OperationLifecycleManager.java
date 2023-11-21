@@ -17,13 +17,15 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.proto.operation.OperationRunStatus;
-import io.cdap.cdap.spi.data.InvalidFieldException;
+import io.cdap.cdap.proto.operation.OperationError;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service that manages lifecycle of Operation.
@@ -31,10 +33,14 @@ import java.util.function.Consumer;
 public class OperationLifecycleManager {
 
   private final TransactionRunner transactionRunner;
+  private final OperationRuntime runtime;
+  private static final Logger LOG = LoggerFactory.getLogger(OperationLifecycleManager.class);
+
 
   @Inject
-  OperationLifecycleManager(TransactionRunner transactionRunner) {
+  OperationLifecycleManager(TransactionRunner transactionRunner, OperationRuntime runtime) {
     this.transactionRunner = transactionRunner;
+    this.runtime = runtime;
   }
 
   /**
@@ -72,18 +78,48 @@ public class OperationLifecycleManager {
     return currentLimit == 0;
   }
 
+  /**
+   * Runs a given operation. It is the responsibility of the caller to validate state transition.
+   *
+   * @param detail {@link OperationRunDetail} of the operation
+   */
+  public OperationController startOperation(OperationRunDetail detail) {
+    return runtime.run(detail);
+  }
+
 
   /**
-   * Scan all pending operations. Needed for try running all pending operation during startup.
+   * Initiate operation stop. It is the responsibility of the caller to validate state transition.
    *
-   * @param consumer {@link Consumer} to process each scanned run
+   * @param detail {@link OperationRunDetail} of the operation
+   * @throws IllegalStateException in case the operation is not running. It is the
+   *     responsibility of the caller to handle the same
    */
-  public void scanPendingOperations(Consumer<OperationRunDetail> consumer)
-      throws IOException, InvalidFieldException {
-    TransactionRunners.run(transactionRunner, context -> {
-      getOperationRunStore(context).scanOperationByStatus(OperationRunStatus.PENDING, consumer);
-    }, IOException.class, InvalidFieldException.class);
+  public void stopOperation(OperationRunDetail detail) {
+    OperationController controller = runtime.getController(detail);
+    if (controller == null) {
+      throw new IllegalStateException("Operation is not running");
+    }
+    controller.stop();
   }
+
+  /**
+   * Checks if the operation is running. If not sends a failure notification
+   * Called after service restart.
+   *
+   * @param detail {@link OperationRunDetail} of the operation
+   */
+  public void isRunning(OperationRunDetail detail, OperationStatePublisher statePublisher) {
+    // If there is no active controller that means the operation is not running and should be failed
+    if (runtime.getController(detail) == null) {
+      LOG.debug("No running operation for {}, sending failure notification", detail.getRunId());
+      statePublisher.publishFailed(detail.getRunId(),
+          new OperationError("Failed after service restart as operation is not running",
+              Collections.emptyList()));
+      return;
+    }
+  }
+
 
   private OperationRunStore getOperationRunStore(StructuredTableContext context) {
     return new OperationRunStore(context);

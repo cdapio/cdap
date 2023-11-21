@@ -160,8 +160,7 @@ public abstract class OperationRunStoreTest extends OperationTestBase {
 
     TransactionRunners.run(transactionRunner, context -> {
       OperationRunStore store = new OperationRunStore(context);
-      OperationRunDetail gotDetail = (OperationRunDetail) store.getOperation(runId);
-      Assert.assertEquals(expectedDetail, gotDetail);
+      Assert.assertEquals(expectedDetail, store.getOperation(runId));
 
       OperationError error = new OperationError("operation failed", Collections.emptyList());
       OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
@@ -177,8 +176,7 @@ public abstract class OperationRunStoreTest extends OperationTestBase {
           .build();
       store.failOperationRun(runId, error, updatedRun.getMetadata().getEndTime(),
           updatedDetail.getSourceId());
-      gotDetail = store.getOperation(runId);
-      Assert.assertEquals(updatedDetail, gotDetail);
+      Assert.assertEquals(updatedDetail, store.getOperation(runId));
 
       try {
         store.failOperationRun(
@@ -253,11 +251,12 @@ public abstract class OperationRunStoreTest extends OperationTestBase {
   public void testScanOperationByStatus() throws Exception {
     TransactionRunners.run(transactionRunner, context -> {
       Set<OperationRunDetail> expectedRuns =  insertTestRuns(transactionRunner).stream().filter(
-          d -> d.getRun().getStatus().equals(OperationRunStatus.PENDING)
+          d -> d.getRun().getStatus().equals(OperationRunStatus.STARTING)
       ).collect(Collectors.toSet());
       Set<OperationRunDetail> gotRuns = new HashSet<>();
       OperationRunStore store = new OperationRunStore(context);
-      store.scanOperationByStatus(OperationRunStatus.PENDING, gotRuns::add);
+      store.scanOperationByStatus(OperationRunStatus.STARTING, gotRuns::add);
+      Assert.assertEquals(expectedRuns.size(), gotRuns.size());
       Assert.assertTrue(expectedRuns.containsAll(gotRuns));
     }, InvalidFieldException.class, IOException.class);
   }
