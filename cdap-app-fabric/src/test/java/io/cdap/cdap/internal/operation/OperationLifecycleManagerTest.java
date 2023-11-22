@@ -22,6 +22,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -52,12 +53,11 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 public class OperationLifecycleManagerTest extends OperationTestBase {
+
   protected static TransactionRunner transactionRunner;
-  private static final String testNamespace = "test";
-  private static OperationLifecycleManager operationLifecycleManager;
   private static int batchSize;
 
-  @ClassRule 
+  @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static EmbeddedPostgres postgres;
@@ -92,9 +92,6 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
             });
 
     transactionRunner = injector.getInstance(TransactionRunner.class);
-    operationLifecycleManager =
-        new OperationLifecycleManager(transactionRunner, Mockito.mock(OperationRuntime.class),
-            null);
     StoreDefinition.OperationRunsStore.create(injector.getInstance(StructuredTableAdmin.class));
     batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
   }
@@ -106,6 +103,8 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
 
   @Test
   public void testScanOperations() throws Exception {
+    OperationLifecycleManager manager =
+        new OperationLifecycleManager(transactionRunner, null, null);
     List<OperationRunDetail> insertedRuns = insertTestRuns(transactionRunner);
     // get a filtered list of testNamespace runs
     List<OperationRunDetail> testNamespaceRuns =
@@ -113,98 +112,127 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
             .filter(detail -> detail.getRunId().getNamespace().equals(testNamespace))
             .collect(Collectors.toList());
 
-    TransactionRunners.run(
-        transactionRunner,
-        context -> {
-          List<OperationRunDetail> gotRuns = new ArrayList<>();
-          List<OperationRunDetail> expectedRuns;
-          ScanOperationRunsRequest request;
+    List<OperationRunDetail> gotRuns = new ArrayList<>();
+    List<OperationRunDetail> expectedRuns;
+    ScanOperationRunsRequest request;
 
-          // verify the scan without filters picks all runs for testNamespace
-          request = ScanOperationRunsRequest.builder().setNamespace(testNamespace).build();
-          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
-          expectedRuns = testNamespaceRuns;
-          Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
+    // verify the scan without filters picks all runs for testNamespace
+    request = ScanOperationRunsRequest.builder().setNamespace(testNamespace).build();
+    manager.scanOperations(request, batchSize, gotRuns::add);
+    expectedRuns = testNamespaceRuns;
+    Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
-          // verify limit
-          gotRuns.clear();
-          request =
-              ScanOperationRunsRequest.builder().setNamespace(testNamespace).setLimit(2).build();
-          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
-          expectedRuns = testNamespaceRuns.stream().limit(2).collect(Collectors.toList());
-          Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
+    // verify limit
+    gotRuns.clear();
+    request =
+        ScanOperationRunsRequest.builder().setNamespace(testNamespace).setLimit(2).build();
+    manager.scanOperations(request, batchSize, gotRuns::add);
+    expectedRuns = testNamespaceRuns.stream().limit(2).collect(Collectors.toList());
+    Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
-          // verify the scan with type filter
-          gotRuns.clear();
-          request =
-              ScanOperationRunsRequest.builder()
-                  .setNamespace(testNamespace)
-                  .setFilter(new OperationRunFilter(OperationType.PUSH_APPS, null))
-                  .build();
-          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
-          expectedRuns =
-              testNamespaceRuns.stream()
-                  .filter(detail -> detail.getRun().getType().equals(OperationType.PUSH_APPS))
-                  .collect(Collectors.toList());
-          Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
+    // verify the scan with type filter
+    gotRuns.clear();
+    request =
+        ScanOperationRunsRequest.builder()
+            .setNamespace(testNamespace)
+            .setFilter(new OperationRunFilter(OperationType.PUSH_APPS, null))
+            .build();
+    manager.scanOperations(request, batchSize, gotRuns::add);
+    expectedRuns =
+        testNamespaceRuns.stream()
+            .filter(detail -> detail.getRun().getType().equals(OperationType.PUSH_APPS))
+            .collect(Collectors.toList());
+    Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
-          // verify the scan with status filter and limit
-          gotRuns.clear();
-          request =
-              ScanOperationRunsRequest.builder()
-                  .setNamespace(testNamespace)
-                  .setLimit(2)
-                  .setFilter(
-                      new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
-                  .build();
-          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
-          expectedRuns =
-              testNamespaceRuns.stream()
-                  .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
-                  .filter(detail -> detail.getRun().getStatus().equals(OperationRunStatus.FAILED))
-                  .limit(2)
-                  .collect(Collectors.toList());
-          Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
+    // verify the scan with status filter and limit
+    gotRuns.clear();
+    request =
+        ScanOperationRunsRequest.builder()
+            .setNamespace(testNamespace)
+            .setLimit(2)
+            .setFilter(
+                new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
+            .build();
+    manager.scanOperations(request, batchSize, gotRuns::add);
+    expectedRuns =
+        testNamespaceRuns.stream()
+            .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
+            .filter(detail -> detail.getRun().getStatus().equals(OperationRunStatus.FAILED))
+            .limit(2)
+            .collect(Collectors.toList());
+    Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
 
-          // verify the scan with status filter
-          gotRuns.clear();
-          request =
-              ScanOperationRunsRequest.builder()
-                  .setNamespace(testNamespace)
-                  .setFilter(
-                      new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
-                  .build();
-          operationLifecycleManager.scanOperations(request, batchSize, gotRuns::add);
-          expectedRuns =
-              testNamespaceRuns.stream()
-                  .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
-                  .filter(detail -> detail.getRun().getStatus().equals(OperationRunStatus.FAILED))
-                  .collect(Collectors.toList());
-          Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
-        });
+    // verify the scan with status filter
+    gotRuns.clear();
+    request =
+        ScanOperationRunsRequest.builder()
+            .setNamespace(testNamespace)
+            .setFilter(
+                new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
+            .build();
+    manager.scanOperations(request, batchSize, gotRuns::add);
+    expectedRuns =
+        testNamespaceRuns.stream()
+            .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
+            .filter(detail -> detail.getRun().getStatus().equals(OperationRunStatus.FAILED))
+            .collect(Collectors.toList());
+    Assert.assertArrayEquals(expectedRuns.toArray(), gotRuns.toArray());
   }
 
   @Test
   public void testGetOperation() throws Exception {
+    OperationLifecycleManager manager =
+        new OperationLifecycleManager(transactionRunner, null, null);
     OperationRunDetail expectedDetail =
         insertRun(
             testNamespace, OperationType.PUSH_APPS, OperationRunStatus.RUNNING, transactionRunner);
     String testId = expectedDetail.getRun().getId();
     OperationRunId runId = new OperationRunId(testNamespace, testId);
 
-    TransactionRunners.run(
-        transactionRunner,
-        context -> {
-          OperationRunDetail gotDetail = operationLifecycleManager.getOperationRun(runId);
-          Assert.assertEquals(expectedDetail, gotDetail);
-          try {
-            operationLifecycleManager.getOperationRun(
-                new OperationRunId(Namespace.DEFAULT.getId(), testId));
-            Assert.fail("Found unexpected run in default namespace");
-          } catch (OperationRunNotFoundException e) {
-            // expected
-          }
-        },
-        Exception.class);
+    OperationRunDetail gotDetail = manager.getOperationRun(runId);
+    Assert.assertEquals(expectedDetail, gotDetail);
+    try {
+      manager.getOperationRun(
+          new OperationRunId(Namespace.DEFAULT.getId(), testId));
+      Assert.fail("Found unexpected run in default namespace");
+    } catch (OperationRunNotFoundException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testCreatePushOperation() throws Exception {
+    OperationStatePublisher publisher = Mockito.mock(OperationStatePublisher.class);
+    OperationLifecycleManager manager =
+        new OperationLifecycleManager(transactionRunner, null, publisher);
+    // happy path
+    manager.createPushOperation(testNamespace, "1", testPushRequest, "test");
+    Mockito.verify(publisher).publishStarting(new OperationRunId(testNamespace, "1"));
+
+    // test two run at a time fails
+    try {
+      manager.createPushOperation(testNamespace, "2", testPushRequest, "test");
+      Assert.fail("Expected exception");
+    } catch (TooManyRequestsException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testCreatePullOperation() throws Exception {
+    OperationStatePublisher publisher = Mockito.mock(OperationStatePublisher.class);
+    OperationLifecycleManager manager =
+        new OperationLifecycleManager(transactionRunner, null, publisher);
+    // happy path
+    manager.createPullOperation(testNamespace, "1", testPullRequest, "test");
+    Mockito.verify(publisher).publishStarting(new OperationRunId(testNamespace, "1"));
+
+    // test two run at a time fails
+    try {
+      manager.createPullOperation(testNamespace, "2", testPullRequest, "test");
+      Assert.fail("Expected exception");
+    } catch (TooManyRequestsException e) {
+      // expected
+    }
   }
 }

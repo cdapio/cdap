@@ -18,13 +18,20 @@ package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.TooManyRequestsException;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
+import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -67,15 +74,15 @@ public class OperationLifecycleManager {
     while (currentLimit > 0) {
       ScanOperationRunsRequest batchRequest = ScanOperationRunsRequest
           .builder(request)
-             .setScanAfter(lastKey)
-             .setLimit(Math.min(txBatchSize, currentLimit))
-             .build();
+          .setScanAfter(lastKey)
+          .setLimit(Math.min(txBatchSize, currentLimit))
+          .build();
 
       request = batchRequest;
 
       lastKey = TransactionRunners.run(transactionRunner, context -> {
-                return getOperationRunStore(context).scanOperations(batchRequest, consumer);
-              }, IOException.class, OperationRunNotFoundException.class);
+        return getOperationRunStore(context).scanOperations(batchRequest, consumer);
+      }, IOException.class, OperationRunNotFoundException.class);
 
       if (lastKey == null) {
         break;
@@ -129,6 +136,63 @@ public class OperationLifecycleManager {
     return runtime.run(detail);
   }
 
+  /**
+   * Create a new pull operation. Inserts the run in DB and then send TMS message.
+   */
+  public OperationRun createPushOperation(String namespace, String runId, PushAppsRequest request,
+      String principal)
+      throws IOException, TooManyRequestsException {
+    OperationMeta meta = OperationMeta.builder().setCreateTime(Instant.now()).build();
+    OperationRunId operationRunId = new OperationRunId(namespace, runId);
+    OperationRun run = OperationRun.builder()
+        .setRunId(runId)
+        .setMetadata(meta)
+        .setStatus(OperationRunStatus.STARTING)
+        .setType(OperationType.PUSH_APPS)
+        .build();
+    OperationRunDetail detail = OperationRunDetail.builder()
+        .setRun(run)
+        .setPrincipal(principal)
+        .setPushAppsRequest(request)
+        .setRunId(operationRunId)
+        .build();
+    TransactionRunners.run(transactionRunner, context -> {
+      validateOnlyOneGitOperationRunning(namespace, context);
+      getOperationRunStore(context).createOperationRun(operationRunId, detail);
+      statePublisher.publishStarting(operationRunId);
+    }, TooManyRequestsException.class, IOException.class);
+    return run;
+  }
+
+  /**
+   * Create a new pull operation. Inserts the run in DB and then send TMS message.
+   */
+  public OperationRun createPullOperation(String namespace, String runId, PullAppsRequest request,
+      String principal)
+      throws IOException, TooManyRequestsException {
+    OperationMeta meta = OperationMeta.builder().setCreateTime(Instant.now()).build();
+    OperationRunId operationRunId = new OperationRunId(namespace, runId);
+    OperationRun run = OperationRun.builder()
+        .setRunId(runId)
+        .setMetadata(meta)
+        .setStatus(OperationRunStatus.STARTING)
+        .setType(OperationType.PULL_APPS)
+        .build();
+    OperationRunDetail detail = OperationRunDetail.builder()
+        .setRun(run)
+        .setPrincipal(principal)
+        .setPullAppsRequest(request)
+        .setRunId(operationRunId)
+        .build();
+    TransactionRunners.run(transactionRunner, context -> {
+      validateOnlyOneGitOperationRunning(namespace, context);
+      getOperationRunStore(context).createOperationRun(operationRunId, detail);
+      statePublisher.publishStarting(operationRunId);
+    }, TooManyRequestsException.class, IOException.class);
+
+    return run;
+  }
+
 
   /**
    * Initiate operation stop. It is the responsibility of the caller to validate state transition.
@@ -146,8 +210,8 @@ public class OperationLifecycleManager {
   }
 
   /**
-   * Checks if the operation is running. If not sends a failure notification
-   * Called after service restart.
+   * Checks if the operation is running. If not sends a failure notification Called after service
+   * restart.
    *
    * @param detail {@link OperationRunDetail} of the operation
    */
@@ -159,6 +223,24 @@ public class OperationLifecycleManager {
           new OperationError("Failed after service restart as operation is not running",
               Collections.emptyList()));
       return;
+    }
+  }
+
+  // Validate only one multi git operation running at a time
+  private void validateOnlyOneGitOperationRunning(String namespaceId,
+      StructuredTableContext context)
+      throws TooManyRequestsException, OperationRunNotFoundException, IOException {
+    OperationRunStore store = getOperationRunStore(context);
+    OperationRunDetail existing = store.getLatestActiveOperation(namespaceId,
+        OperationType.PULL_APPS);
+    if (existing != null) {
+      throw new TooManyRequestsException(
+          String.format("Already running a bulk pull operation %s", existing.getRun()));
+    }
+    existing = store.getLatestActiveOperation(namespaceId, OperationType.PUSH_APPS);
+    if (existing != null) {
+      throw new TooManyRequestsException(
+          String.format("Already running a bulk push operation %s", existing.getRun()));
     }
   }
 

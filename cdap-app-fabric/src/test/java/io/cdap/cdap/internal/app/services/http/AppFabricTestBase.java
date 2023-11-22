@@ -109,7 +109,9 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
+import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -518,6 +520,16 @@ public abstract class AppFabricTestBase {
   }
 
   /**
+   * Deploys an application but does not mark the new version as latest.
+   */
+  protected HttpResponse deployWithoutMarkingLatest(Id.Application appId, AppRequest<?> appRequest)
+      throws Exception {
+    String deployPath = getVersionedInternalApiPath(
+        "apps/" + appId.getId() + "?skipMarkingLatest=true", appId.getNamespaceId());
+    return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
+  }
+
+  /**
    * Deploys an application.
    */
   protected HttpResponse deploy(Class<?> application, int expectedCode) throws Exception {
@@ -544,13 +556,6 @@ public abstract class AppFabricTestBase {
   protected HttpResponse deploy(Id.Application appId,
                                 AppRequest<?> appRequest) throws Exception {
     String deployPath = getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId());
-    return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
-  }
-
-  protected HttpResponse deployWithoutMarkingLatest(Id.Application appId, AppRequest<?> appRequest)
-      throws Exception {
-    String deployPath = getVersionedInternalApiPath(
-        "apps/" + appId.getId() + "?skipMarkingLatest=true", appId.getNamespaceId());
     return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
   }
 
@@ -709,6 +714,13 @@ public abstract class AppFabricTestBase {
     return readResponse(response, ApplicationDetail.class);
   }
 
+  protected ApplicationDetail getAppDetails(String namespace, String appName, String appVersion) throws Exception {
+    HttpResponse response = getAppResponse(namespace, appName, appVersion);
+    assertResponseCode(200, response);
+    Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
+    return readResponse(response, ApplicationDetail.class);
+  }
+
   protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {
     return doGet(getVersionedApiPath(String.format("apps/%s", appName),
                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
@@ -727,13 +739,6 @@ public abstract class AppFabricTestBase {
     assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
     return readResponse(response, SET_STRING_TYPE);
-  }
-
-  protected ApplicationDetail getAppDetails(String namespace, String appName, String appVersion) throws Exception {
-    HttpResponse response = getAppResponse(namespace, appName, appVersion);
-    assertResponseCode(200, response);
-    Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, ApplicationDetail.class);
   }
 
   /**
@@ -1402,6 +1407,15 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
+  protected List<RunRecord> getProgramRuns(ProgramId program, ProgramRunStatus status) throws Exception {
+    String path = String.format("apps/%s/versions/%s/%s/%s/runs?status=%s", program.getApplication(),
+        program.getVersion(), program.getType().getCategoryName(), program.getProgram(),
+        status.toString());
+    HttpResponse response = doGet(getVersionedApiPath(path, program.getNamespace()));
+    assertResponseCode(200, response);
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
+  }
+
   protected int getProgramRunRecord(Id.Program program, String runId) throws Exception {
     String path = String.format("apps/%s/%s/%s/runs/%s", program.getApplicationId(),
                                 program.getType().getCategoryName(), program.getId(), runId);
@@ -1438,25 +1452,16 @@ public abstract class AppFabricTestBase {
     Tasks.waitFor(true, () -> getProgramRuns(program, status).size() == expected, 15, TimeUnit.SECONDS);
   }
 
-  protected List<RunRecord> getProgramRuns(ProgramId program, ProgramRunStatus status) throws Exception {
-    String path = String.format("apps/%s/versions/%s/%s/%s/runs?status=%s", program.getApplication(),
-                                program.getVersion(), program.getType().getCategoryName(), program.getProgram(),
-                                status.toString());
-    HttpResponse response = doGet(getVersionedApiPath(path, program.getNamespace()));
-    assertResponseCode(200, response);
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
-  }
-
   protected HttpResponse createNamespace(String id) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), null);
   }
 
-  protected HttpResponse deleteNamespace(String name) throws Exception {
-    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
-  }
-
   protected HttpResponse createNamespace(String metadata, String id) throws Exception {
     return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), metadata);
+  }
+
+  protected HttpResponse deleteNamespace(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
   }
 
   protected HttpResponse listAllNamespaces() throws Exception {
@@ -1497,10 +1502,24 @@ public abstract class AppFabricTestBase {
                                 appRef.getNamespace(), appRef.getApplication()), GSON.toJson(request));
   }
 
+  protected HttpResponse pushApplications(String namespace, List<String> apps, String commitMessage)
+      throws Exception {
+    PushMultipleAppsRequest request = new PushMultipleAppsRequest(apps, commitMessage);
+    return doPost(String.format("%s/namespaces/%s/repository/apps/push",
+        Constants.Gateway.API_VERSION_3, namespace), GSON.toJson(request));
+  }
+
   protected HttpResponse pullApplication(ApplicationReference appRef) throws Exception {
     return doPost(String.format("%s/namespaces/%s/repository/apps/%s/pull",
                                 Constants.Gateway.API_VERSION_3,
                                 appRef.getNamespace(), appRef.getApplication()));
+  }
+
+  protected HttpResponse pullApplications(String namespace, List<String> apps)
+      throws Exception {
+    PullMultipleAppsRequest request = new PullMultipleAppsRequest(apps);
+    return doPost(String.format("%s/namespaces/%s/repository/apps/pull",
+        Constants.Gateway.API_VERSION_3, namespace), GSON.toJson(request));
   }
 
   protected HttpResponse listApplicationsFromRepository(String namespace) throws Exception {
@@ -1565,6 +1584,20 @@ public abstract class AppFabricTestBase {
     return buildAppArtifact(cls, name, new Manifest());
   }
 
+  private File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
+    if (!name.endsWith(".jar")) {
+      name += ".jar";
+    }
+    File destination = new File(tmpFolder.newFolder(), name);
+    return buildAppArtifact(cls, manifest, destination);
+  }
+
+  protected File buildAppArtifact(Class<?> cls, Manifest manifest, File destination) throws IOException {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
+    Locations.linkOrCopyOverwrite(appJar, destination);
+    return destination;
+  }
+
   /**
    * If the configuration has authorization enabled, e.g. with
    * {@link io.cdap.cdap.internal.AppFabricTestHelper#enableAuthorization(CConfiguration, TemporaryFolder)}, allows
@@ -1578,20 +1611,6 @@ public abstract class AppFabricTestBase {
     } finally {
       SecurityRequestContext.setUserId(currentId);
     }
-  }
-
-  private File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
-    if (!name.endsWith(".jar")) {
-      name += ".jar";
-    }
-    File destination = new File(tmpFolder.newFolder(), name);
-    return buildAppArtifact(cls, manifest, destination);
-  }
-
-  protected File buildAppArtifact(Class<?> cls, Manifest manifest, File destination) throws IOException {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
-    Locations.linkOrCopyOverwrite(appJar, destination);
-    return destination;
   }
 
   protected DatasetMeta getDatasetMeta(DatasetId datasetId)

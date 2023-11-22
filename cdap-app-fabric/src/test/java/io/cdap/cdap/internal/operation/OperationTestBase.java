@@ -20,6 +20,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationMeta;
 import io.cdap.cdap.proto.operation.OperationRun;
@@ -40,7 +41,9 @@ public class OperationTestBase {
   private static final AtomicInteger sourceId = new AtomicInteger();
   private static final AtomicLong runIdTime = new AtomicLong(System.currentTimeMillis());
   protected static final String testNamespace = "test";
-  private static final PullAppsRequest input = new PullAppsRequest(Collections.emptySet(), null);
+  protected static final PullAppsRequest testPullRequest = new PullAppsRequest(Collections.emptySet(), null);
+  protected static final PushAppsRequest testPushRequest = new PushAppsRequest(Collections.emptySet(), null, null);
+
 
   protected static OperationRunDetail getRun(OperationRunId runId,
       TransactionRunner transactionRunner)
@@ -75,7 +78,7 @@ public class OperationTestBase {
             .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
             .setRunId(runId)
             .setRun(run)
-            .setPullAppsRequest(input)
+            .setPullAppsRequest(testPullRequest)
             .build();
     TransactionRunners.run(
         transactionRunner,
