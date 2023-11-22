@@ -27,7 +27,7 @@ public interface NamespaceCredentialProvider {
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
    * @param namespace The identity namespace.
-   * @param scopes A comma separated list of OAuth scopes requested.
+   * @param scopes    A comma separated list of OAuth scopes requested.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
    * @throws IOException                     If any transport errors occur.
@@ -35,4 +35,15 @@ public interface NamespaceCredentialProvider {
    */
   ProvisionedCredential provision(String namespace, String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException;
+
+  /**
+   * Validates the provided identity.
+   *
+   * @param namespace      The identity namespace.
+   * @param serviceAccount The service account to validate.
+   * @throws IdentityValidationException If validation fails.
+   * @throws IOException                 If any transport errors occur.
+   */
+  void validateIdentity(String namespace, String serviceAccount)
+      throws IdentityValidationException, IOException;
 }

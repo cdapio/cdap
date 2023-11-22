@@ -30,8 +30,8 @@ import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
-import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
+import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
 import io.cdap.cdap.proto.credential.NamespaceWorkloadIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -64,18 +64,19 @@ import javax.ws.rs.PathParam;
 @Singleton
 @Path(Gateway.API_VERSION_3)
 public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
+
   private static final Gson GSON = new Gson();
 
   private final ContextAccessEnforcer accessEnforcer;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CredentialIdentityManager credentialIdentityManager;
-  private final CredentialProvider credentialProvider;
+  private final NamespaceCredentialProvider credentialProvider;
 
   @Inject
   GcpWorkloadIdentityHttpHandler(ContextAccessEnforcer accessEnforcer,
       NamespaceQueryAdmin namespaceQueryAdmin,
       CredentialIdentityManager credentialIdentityManager,
-      CredentialProvider credentialProvider) {
+      NamespaceCredentialProvider credentialProvider) {
     this.accessEnforcer = accessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.credentialIdentityManager = credentialIdentityManager;
@@ -98,19 +99,13 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.PROVISION_CREDENTIAL);
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
-    NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    CredentialIdentity credentialIdentity = new CredentialIdentity(
-        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
-        namespaceMeta.getIdentity(),
-        namespaceWorkloadIdentity.getServiceAccount());
     switchToInternalUser();
     try {
-      credentialProvider.validateIdentity(namespaceMeta, credentialIdentity);
+      credentialProvider
+          .validateIdentity(namespace, namespaceWorkloadIdentity.getServiceAccount());
     } catch (IdentityValidationException e) {
       throw new BadRequestException(String.format("Identity validation failed with error: %s",
           e.getCause() == null ? e.getMessage() : e.getCause().getMessage()), e);
-    } catch (io.cdap.cdap.proto.credential.NotFoundException e) {
-      throw new NotFoundException(e.getMessage());
     }
     responder.sendJson(HttpResponseStatus.OK, "Namespace identity validated successfully");
   }
@@ -118,9 +113,9 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   /**
    * Fetches a credential identity.
    *
-   * @param request      The HTTP request.
-   * @param responder    The HTTP responder.
-   * @param namespace    The identity namespace.
+   * @param request   The HTTP request.
+   * @param responder The HTTP responder.
+   * @param namespace The identity namespace.
    * @throws BadRequestException If the identity name is invalid.
    * @throws IOException         If transport errors occur.
    * @throws NotFoundException   If the namespace or identity are not found.
@@ -130,8 +125,9 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   public void getIdentity(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
-        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
+    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
+        NamespaceId.SYSTEM.getNamespace(),
+        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getNamespaceId()));
     switchToInternalUser();
     Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
     if (!identity.isPresent()) {
@@ -161,8 +157,9 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
-        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
+    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
+        NamespaceId.SYSTEM.getNamespace(),
+        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getNamespaceId()));
     switchToInternalUser();
     Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
     CredentialIdentity credentialIdentity = new CredentialIdentity(
@@ -179,9 +176,9 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   /**
    * Deletes an identity.
    *
-   * @param request      The HTTP request.
-   * @param responder    The HTTP responder.
-   * @param namespace    The identity namespace.
+   * @param request   The HTTP request.
+   * @param responder The HTTP responder.
+   * @param namespace The identity namespace.
    * @throws BadRequestException If the identity name is invalid.
    * @throws IOException         If transport errors occur.
    * @throws NotFoundException   If the namespace or identity are not found.
@@ -192,8 +189,9 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespace) throws Exception {
     accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.UNSET_SERVICE_ACCOUNT);
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
-    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(namespace,
-        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity()));
+    CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
+        NamespaceId.SYSTEM.getNamespace(),
+        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getNamespaceId()));
     switchToInternalUser();
     credentialIdentityManager.delete(credentialIdentityId);
     responder.sendStatus(HttpResponseStatus.OK);

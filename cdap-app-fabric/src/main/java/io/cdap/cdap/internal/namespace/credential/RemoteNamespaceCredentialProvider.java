@@ -27,7 +27,9 @@ import io.cdap.cdap.internal.credential.RemoteCredentialProvider;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
+import io.cdap.cdap.proto.credential.NamespaceWorkloadIdentity;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.common.http.HttpMethod;
@@ -37,10 +39,11 @@ import java.io.IOException;
 import joptsimple.internal.Strings;
 
 /**
- * Remote implementation for {@link NamespaceCredentialProvider} used in
- * {@link io.cdap.cdap.common.conf.Constants.ArtifactLocalizer}.
+ * Remote implementation for {@link NamespaceCredentialProvider} used in {@link
+ * io.cdap.cdap.common.conf.Constants.ArtifactLocalizer}.
  */
 public class RemoteNamespaceCredentialProvider implements NamespaceCredentialProvider {
+
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
   private final RemoteClient remoteClient;
@@ -48,7 +51,7 @@ public class RemoteNamespaceCredentialProvider implements NamespaceCredentialPro
   /**
    * Construct the {@link RemoteCredentialProvider}.
    *
-   * @param remoteClientFactory A factory to create {@link RemoteClient}.
+   * @param remoteClientFactory   A factory to create {@link RemoteClient}.
    * @param internalAuthenticator An authenticator to propagate internal identity headers.
    */
   public RemoteNamespaceCredentialProvider(RemoteClientFactory remoteClientFactory,
@@ -63,11 +66,11 @@ public class RemoteNamespaceCredentialProvider implements NamespaceCredentialPro
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
    * @param namespace The identity namespace.
-   * @param scopes A comma separated list of OAuth scopes requested.
+   * @param scopes    A comma separated list of OAuth scopes requested.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
-   * @throws IOException If any transport errors occur.
-   * @throws NotFoundException If the profile or identity are not found.
+   * @throws IOException                     If any transport errors occur.
+   * @throws NotFoundException               If the profile or identity are not found.
    */
   @Override
   public ProvisionedCredential provision(String namespace, String scopes)
@@ -94,5 +97,23 @@ public class RemoteNamespaceCredentialProvider implements NamespaceCredentialPro
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), ProvisionedCredential.class);
+  }
+
+  @Override
+  public void validateIdentity(String namespace, String serviceAccount)
+      throws IdentityValidationException, IOException {
+    String url = String.format("namespaces/%s/credentials/workloadIdentity/validate",
+        namespace);
+    io.cdap.common.http.HttpRequest tokenRequest =
+        remoteClient.requestBuilder(HttpMethod.POST, url)
+            .withBody(GSON.toJson(new NamespaceWorkloadIdentity(serviceAccount))).build();
+    HttpResponse response = remoteClient.execute(tokenRequest, Idempotency.NONE);
+
+    if (response.getResponseCode() != HttpResponseStatus.OK.code()) {
+      throw new IdentityValidationException(String.format(
+          "Failed to provision credential with response code: %s and error: %s",
+          response.getResponseCode(),
+          response.getResponseBodyAsString()));
+    }
   }
 }
