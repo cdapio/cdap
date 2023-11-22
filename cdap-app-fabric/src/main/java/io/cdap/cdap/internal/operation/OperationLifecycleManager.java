@@ -17,8 +17,10 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -35,13 +37,17 @@ public class OperationLifecycleManager {
 
   private final TransactionRunner transactionRunner;
   private final OperationRuntime runtime;
+  private final OperationStatePublisher statePublisher;
+
   private static final Logger LOG = LoggerFactory.getLogger(OperationLifecycleManager.class);
 
 
   @Inject
-  OperationLifecycleManager(TransactionRunner transactionRunner, OperationRuntime runtime) {
+  OperationLifecycleManager(TransactionRunner transactionRunner, OperationRuntime runtime,
+      OperationStatePublisher statePublisher) {
     this.transactionRunner = transactionRunner;
     this.runtime = runtime;
+    this.statePublisher = statePublisher;
   }
 
   /**
@@ -61,9 +67,9 @@ public class OperationLifecycleManager {
     while (currentLimit > 0) {
       ScanOperationRunsRequest batchRequest = ScanOperationRunsRequest
           .builder(request)
-              .setScanAfter(lastKey)
-              .setLimit(Math.min(txBatchSize, currentLimit))
-              .build();
+             .setScanAfter(lastKey)
+             .setLimit(Math.min(txBatchSize, currentLimit))
+             .build();
 
       request = batchRequest;
 
@@ -96,6 +102,22 @@ public class OperationLifecycleManager {
         },
         IOException.class,
         OperationRunNotFoundException.class);
+  }
+
+  /**
+   * Validates state transition and sends STOPPING notification for an operation.
+   *
+   * @param runId {@link OperationRunId} of the operation
+   */
+  public void sendStopNotification(OperationRunId runId)
+      throws OperationRunNotFoundException, IOException, BadRequestException {
+    // validate the run exists
+    OperationRunDetail runDetail = getOperationRun(runId);
+    if (!runDetail.getRun().getStatus().canTransitionTo(OperationRunStatus.STOPPING)) {
+      throw new BadRequestException(String.format("Operation run in %s state cannot to be stopped",
+          runDetail.getRun().getStatus()));
+    }
+    statePublisher.publishStopping(runId);
   }
 
   /**
