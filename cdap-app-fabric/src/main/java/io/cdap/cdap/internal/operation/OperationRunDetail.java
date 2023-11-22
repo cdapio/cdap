@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.operation;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationRun;
 import java.util.Arrays;
@@ -57,15 +58,21 @@ public class OperationRunDetail {
   @Nullable
   private final PullAppsRequest pullAppsRequest;
 
+  @SerializedName("pushAppsRequest")
+  @Nullable
+  private final PushAppsRequest pushAppsRequest;
+
   protected OperationRunDetail(
       OperationRunId runId, OperationRun run,
       byte[] sourceId, @Nullable String principal,
-      @Nullable PullAppsRequest pullAppsRequest) {
+      @Nullable PullAppsRequest pullAppsRequest,
+      @Nullable PushAppsRequest pushAppsRequest) {
     this.runId = runId;
     this.run = run;
     this.sourceId = sourceId;
     this.principal = principal;
     this.pullAppsRequest = pullAppsRequest;
+    this.pushAppsRequest = pushAppsRequest;
   }
 
   @Nullable
@@ -80,6 +87,10 @@ public class OperationRunDetail {
 
   public PullAppsRequest getPullAppsRequest() {
     return pullAppsRequest;
+  }
+
+  public PushAppsRequest getPushAppsRequest() {
+    return pushAppsRequest;
   }
 
   public OperationRun getRun() {
@@ -138,6 +149,7 @@ public class OperationRunDetail {
     protected byte[] sourceId;
     protected String principal;
     protected PullAppsRequest pullAppsRequest;
+    protected PushAppsRequest pushAppsRequest;
 
     protected Builder() {
     }
@@ -148,6 +160,7 @@ public class OperationRunDetail {
       run = detail.getRun();
       runId = detail.getRunId();
       pullAppsRequest = detail.getPullAppsRequest();
+      pushAppsRequest = detail.getPushAppsRequest();
     }
 
     public Builder setSourceId(byte[] sourceId) {
@@ -176,15 +189,17 @@ public class OperationRunDetail {
       return this;
     }
 
+    public Builder setPushAppsRequest(PushAppsRequest pushAppsRequest) {
+      this.pushAppsRequest = pushAppsRequest;
+      return this;
+    }
+
     /**
      * Validates input and returns a OperationRunDetail.
      */
     public OperationRunDetail build() {
       if (runId == null) {
         throw new IllegalArgumentException("run id must be specified.");
-      }
-      if (sourceId == null) {
-        throw new IllegalArgumentException("Operation run source id must be specified.");
       }
       if (run == null) {
         throw new IllegalArgumentException("Operation run must be specified.");
@@ -194,12 +209,12 @@ public class OperationRunDetail {
         throw new IllegalArgumentException("Exactly one request type can be non-null");
       }
 
-      return new OperationRunDetail(runId, run, sourceId, principal, pullAppsRequest);
+      return new OperationRunDetail(runId, run, sourceId, principal, pullAppsRequest, pushAppsRequest);
     }
 
     private boolean validateRequests() {
       // validate only one of the request is non-null
-      return Stream.of(pullAppsRequest).filter(java.util.Objects::nonNull).count() == 1;
+      return Stream.of(pullAppsRequest, pushAppsRequest).filter(java.util.Objects::nonNull).count() == 1;
     }
 
   }

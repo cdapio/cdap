@@ -2490,7 +2490,7 @@ public final class Constants {
     public static final String STATUS_EVENT_NUM_PARTITIONS = "operation.status.event.topic.num.partitions";
     public static final String STATUS_EVENT_FETCH_SIZE = "operation.status.event.fetch.size";
     public static final String STATUS_EVENT_TX_SIZE = "operation.status.event.tx.size";
-    public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "operatopn.status.event.poll.delay.millis";
+    public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "operation.status.event.poll.delay.millis";
     /**
      * Topic name for publishing program status recording events to the messaging system.
      */

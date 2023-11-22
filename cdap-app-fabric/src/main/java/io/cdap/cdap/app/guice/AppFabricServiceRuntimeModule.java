@@ -67,6 +67,7 @@ import io.cdap.cdap.gateway.handlers.FileFetcherHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ImpersonationHandler;
 import io.cdap.cdap.gateway.handlers.InstanceOperationHttpHandler;
 import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
+import io.cdap.cdap.gateway.handlers.OperationHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationsDashboardHttpHandler;
 import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
@@ -471,6 +472,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppStateHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandlerInternal.class);
+      handlerBinder.addBinding().to(OperationHttpHandler.class);
 
       FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
       if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
