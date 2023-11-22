@@ -24,25 +24,26 @@ import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
+import io.cdap.cdap.proto.credential.ValidateIdentityRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
-import joptsimple.internal.Strings;
 
 /**
- * Remote implementation for {@link CredentialProvider} used in
- * {@link io.cdap.cdap.common.conf.Constants.ArtifactLocalizer}.
+ * Remote implementation for {@link CredentialProvider} used in {@link
+ * io.cdap.cdap.common.conf.Constants.ArtifactLocalizer}.
  */
 public class RemoteCredentialProvider implements CredentialProvider {
+
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
   private final RemoteClient remoteClient;
@@ -50,7 +51,7 @@ public class RemoteCredentialProvider implements CredentialProvider {
   /**
    * Construct the {@link RemoteCredentialProvider}.
    *
-   * @param remoteClientFactory A factory to create {@link RemoteClient}.
+   * @param remoteClientFactory   A factory to create {@link RemoteClient}.
    * @param internalAuthenticator An authenticator to propagate internal identity headers.
    */
   public RemoteCredentialProvider(RemoteClientFactory remoteClientFactory,
@@ -64,24 +65,22 @@ public class RemoteCredentialProvider implements CredentialProvider {
   /**
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
-   * @param namespace The identity namespace.
+   * @param namespace    The identity namespace.
    * @param identityName The identity name.
-   * @param scopes A comma separated list of OAuth scopes requested.
+   * @param context      The context to use for provisioning.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
-   * @throws IOException If any transport errors occur.
-   * @throws NotFoundException If the profile or identity are not found.
+   * @throws IOException                     If any transport errors occur.
+   * @throws NotFoundException               If the profile or identity are not found.
    */
   @Override
   public ProvisionedCredential provision(String namespace, String identityName,
-      String scopes) throws CredentialProvisioningException, IOException, NotFoundException {
+      CredentialProvisionContext context)
+      throws CredentialProvisioningException, IOException, NotFoundException {
     String url = String.format("namespaces/%s/credentials/identities/%s/provision",
         namespace, identityName);
-    if (!Strings.isNullOrEmpty(scopes)) {
-      url = String.format("%s?scopes=%s", url, scopes);
-    }
     io.cdap.common.http.HttpRequest tokenRequest =
-        remoteClient.requestBuilder(HttpMethod.GET, url).build();
+        remoteClient.requestBuilder(HttpMethod.POST, url).withBody(GSON.toJson(context)).build();
     HttpResponse response = remoteClient.execute(tokenRequest, Idempotency.NONE);
 
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
@@ -102,20 +101,21 @@ public class RemoteCredentialProvider implements CredentialProvider {
   /**
    * Validates the provided identity.
    *
-   * @param namespaceMeta The identity namespace metadata.
-   * @param identity The identity to validate.
+   * @param namespace The identity namespace.
+   * @param identity  The identity to validate.
+   * @param context   The context to use for provisioning.
    * @throws IdentityValidationException If validation fails.
-   * @throws IOException If any transport errors occur.
-   * @throws NotFoundException If the profile is not found.
+   * @throws IOException                 If any transport errors occur.
+   * @throws NotFoundException           If the profile is not found.
    */
   @Override
-  public void validateIdentity(NamespaceMeta namespaceMeta, CredentialIdentity identity)
+  public void validateIdentity(String namespace, CredentialIdentity identity,
+      CredentialProvisionContext context)
       throws IdentityValidationException, IOException, NotFoundException {
-    String url = String.format("namespaces/%s/credentials/identities/validate",
-        namespaceMeta.getNamespaceId().getNamespace());
+    String url = String.format("namespaces/%s/credentials/identities/validate", namespace);
     io.cdap.common.http.HttpRequest tokenRequest =
         remoteClient.requestBuilder(HttpMethod.POST, url)
-            .withBody(GSON.toJson(identity)).build();
+            .withBody(GSON.toJson(new ValidateIdentityRequest(identity, context))).build();
     HttpResponse response = remoteClient.execute(tokenRequest, Idempotency.NONE);
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new NotFoundException(String.format("Credential Profile %s Not Found.",

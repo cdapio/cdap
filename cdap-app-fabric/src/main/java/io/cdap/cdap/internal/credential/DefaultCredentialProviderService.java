@@ -18,17 +18,15 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
@@ -51,21 +49,18 @@ public class DefaultCredentialProviderService extends AbstractIdleService
   private final Map<String, CredentialProvider> credentialProviders;
   private final CredentialIdentityManager credentialIdentityManager;
   private final CredentialProfileManager credentialProfileManager;
-  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
   DefaultCredentialProviderService(CConfiguration cConf,
       ContextAccessEnforcer contextAccessEnforcer,
       CredentialProviderLoader credentialProviderLoader,
       CredentialIdentityManager credentialIdentityManager,
-      CredentialProfileManager credentialProfileManager,
-      NamespaceAdmin namespaceAdmin) {
+      CredentialProfileManager credentialProfileManager) {
     this.cConf = cConf;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProfileManager = credentialProfileManager;
-    this.namespaceAdmin = namespaceAdmin;
   }
 
   @Override
@@ -87,6 +82,7 @@ public class DefaultCredentialProviderService extends AbstractIdleService
    *
    * @param namespace    The identity namespace.
    * @param identityName The identity name.
+   * @param context      The context to use for provisioning.
    * @return A provisioned credential.
    * @throws CredentialProvisioningException If provisioning fails in the extension.
    * @throws IOException                     If any transport errors occur.
@@ -94,48 +90,43 @@ public class DefaultCredentialProviderService extends AbstractIdleService
    */
   @Override
   public ProvisionedCredential provision(String namespace, String identityName,
-      String scopes)
+      CredentialProvisionContext context)
       throws CredentialProvisioningException, IOException, NotFoundException {
     CredentialIdentityId identityId =
         new CredentialIdentityId(namespace, identityName);
     contextAccessEnforcer.enforce(identityId, StandardPermission.USE);
-    NamespaceMeta namespaceMeta;
-    try {
-      namespaceMeta = namespaceAdmin.get(new NamespaceId(namespace));
-    } catch (Exception e) {
-      throw new IOException(String.format("Failed to get namespace '%s' metadata",
-          namespace), e);
-    }
     Optional<CredentialIdentity> optIdentity = credentialIdentityManager.get(identityId);
     if (!optIdentity.isPresent()) {
       throw new NotFoundException(String.format("Credential identity '%s' was not found.",
           identityId));
     }
     CredentialIdentity identity = optIdentity.get();
-    return validateAndProvisionIdentity(namespaceMeta, identity, scopes);
+    return validateAndProvisionIdentity(namespace, identity, context);
   }
 
   /**
    * Validates an identity.
    *
-   * @param namespaceMeta The identity namespace metadata.
-   * @param identity The identity to validate.
+   * @param namespace The identity namespace.
+   * @param identity  The identity to validate.
+   * @param context   The context to use for provisioning.
    * @throws IdentityValidationException If identity validation fails in the extension.
    * @throws IOException                 If any transport errors occur.
    * @throws NotFoundException           If the identity or profile are not found.
    */
   @Override
-  public void validateIdentity(NamespaceMeta namespaceMeta, CredentialIdentity identity)
+  public void validateIdentity(String namespace, CredentialIdentity identity,
+      CredentialProvisionContext context)
       throws IdentityValidationException, IOException, NotFoundException {
     try {
-      validateAndProvisionIdentity(namespaceMeta, identity, null);
+      validateAndProvisionIdentity(namespace, identity, context);
     } catch (CredentialProvisioningException e) {
       throw new IdentityValidationException(e);
     }
   }
 
-  private ProvisionedCredential validateAndProvisionIdentity(NamespaceMeta namespaceMeta,
-      CredentialIdentity identity, String scopes)
+  private ProvisionedCredential validateAndProvisionIdentity(String namespace,
+      CredentialIdentity identity, CredentialProvisionContext context)
       throws CredentialProvisioningException, IOException, NotFoundException {
     CredentialProfileId profileId = new CredentialProfileId(identity.getProfileNamespace(),
         identity.getProfileName());
@@ -153,7 +144,6 @@ public class DefaultCredentialProviderService extends AbstractIdleService
           String.format("Unsupported credential provider type '%s'", providerType));
     }
     // Provision and return the credential.
-    return credentialProviders.get(providerType).provision(namespaceMeta, profile,
-        identity, scopes);
+    return credentialProviders.get(providerType).provision(namespace, profile, identity, context);
   }
 }

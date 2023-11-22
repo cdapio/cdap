@@ -38,4 +38,14 @@ public class IdentityValidationException extends Exception {
   public IdentityValidationException(String message) {
     super(message);
   }
+
+  /**
+   * Creates a new identity validation exception.
+   *
+   * @param message The message of identity validation failure.
+   * @param cause   The cause of identity validation failure.
+   */
+  public IdentityValidationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
