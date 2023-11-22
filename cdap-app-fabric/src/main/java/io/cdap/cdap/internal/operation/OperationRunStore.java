@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.operation.OperationMeta;
 import io.cdap.cdap.proto.operation.OperationResource;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -44,6 +45,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -260,6 +262,43 @@ public class OperationRunStore {
     }
   }
 
+  /**
+   * Get the latest active operation of a given type in a namespace.
+   *
+   * @param namespaceId to serach in
+   * @param type {@link OperationType} to search
+   */
+  public OperationRunDetail getLatestActiveOperation(String namespaceId, OperationType type)
+      throws OperationRunNotFoundException, IOException {
+    AtomicReference<OperationRunDetail> latestRun = new AtomicReference<>();
+    // get STARTING
+    ScanOperationRunsRequest request = ScanOperationRunsRequest.builder()
+        .setNamespace(namespaceId).setFilter(new OperationRunFilter(type, OperationRunStatus.STARTING))
+        .setLimit(1).build();
+    scanOperations(request, latestRun::set);
+
+    // get RUNNING
+    request = ScanOperationRunsRequest.builder()
+        .setNamespace(namespaceId).setFilter(new OperationRunFilter(type, OperationRunStatus.RUNNING))
+        .setLimit(1).build();
+    scanOperations(request, detail -> {
+      if (latestRun.get() != null && isRunLater(detail.getRun(), latestRun.get().getRun())) {
+        latestRun.set(detail);
+      }
+    });
+
+    // get STOPPING
+    request = ScanOperationRunsRequest.builder()
+        .setNamespace(namespaceId).setFilter(new OperationRunFilter(type, OperationRunStatus.STOPPING))
+        .setLimit(1).build();
+    scanOperations(request,  detail -> {
+      if (latestRun.get() != null && isRunLater(detail.getRun(), latestRun.get().getRun())) {
+        latestRun.set(detail);
+      }
+    });
+    return latestRun.get();
+  }
+
   private List<Field<?>> getRangeFields(OperationRunId runId)
       throws IOException, OperationRunNotFoundException {
     List<Field<?>> fields = new ArrayList<>();
@@ -341,6 +380,10 @@ public class OperationRunStore {
   private StructuredTable getOperationRunsTable(StructuredTableContext context) {
     return context.getTable(StoreDefinition.OperationRunsStore.OPERATION_RUNS);
   }
+
+private boolean isRunLater(OperationRun run1, OperationRun run2) {
+    return run1.getMetadata().getCreateTime().isAfter(run2.getMetadata().getCreateTime());
+}
 
   @VisibleForTesting
   // USE ONLY IN TESTS: WILL DELETE ALL OPERATION RUNS

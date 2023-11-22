@@ -28,14 +28,20 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.operation.OperationMeta;
+import io.cdap.cdap.proto.operation.OperationRun;
+import io.cdap.cdap.proto.operation.OperationRunStatus;
+import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
@@ -61,6 +67,7 @@ import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.common.http.HttpResponse;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -119,17 +126,20 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         AuthenticationContext authenticationContext,
         SourceControlOperationRunner sourceControlRunner,
         ApplicationLifecycleService applicationLifecycleService,
-        Store store) {
+        Store store, OperationLifecycleManager manager) {
+
         return Mockito.spy(new SourceControlManagementService(cConf, secureStore, transactionRunner,
                                                               accessEnforcer, authenticationContext,
                                                               sourceControlRunner, applicationLifecycleService,
-                                                              store));
+                                                              store, manager));
       }
     });
   }
 
   private static void setScmFeatureFlag(boolean flag) {
     cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.SOURCE_CONTROL_MANAGEMENT_GIT.getFeatureFlagString(), flag);
+    cConf.setBoolean(FEATURE_FLAG_PREFIX
+        + Feature.SOURCE_CONTROL_MANAGEMENT_MULTI_APP.getFeatureFlagString(), flag);
   }
 
   private void assertResponseCode(int expected, HttpResponse response) {
@@ -495,6 +505,124 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
       .listApps(Mockito.any());
     HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
     assertResponseCode(404, response);
+  }
+
+  @Test
+  public void testPushAppsSucceeds() throws Exception {
+    String commitMessage = "push two apps";
+    OperationRun expectedResponse = OperationRun.builder().setRunId("1")
+        .setStatus(OperationRunStatus.STARTING).setType(OperationType.PUSH_APPS).setMetadata(
+            OperationMeta.builder().setCreateTime(Instant.now()).build()
+        ).build();
+
+    Mockito.doReturn(expectedResponse).when(sourceControlService)
+        .pushApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pushApplications(Namespace.DEFAULT.getId(),
+        Arrays.asList("appToPush1", "appToPush2"), commitMessage);
+
+    assertResponseCode(200, response);
+    OperationMeta result = readResponse(response, OperationRun.class);
+    Assert.assertEquals(result, expectedResponse);
+  }
+
+  @Test
+  public void testPushAppsInvalidRequest() throws Exception {
+    // Push empty commit message
+    String commitMessage = "";
+    HttpResponse response = pushApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"), commitMessage);
+
+    // Assert the response
+    assertResponseCode(400, response);
+    Assert.assertEquals(response.getResponseBodyAsString(),
+        "Please specify commit message in the request body.");
+  }
+
+  @Test
+  public void testPushAppsNotFound() throws Exception {
+    String commitMessage = "push two apps";
+    Mockito.doThrow(new NotFoundException("apps not found")).when(sourceControlService)
+        .pushApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pushApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"), commitMessage);
+
+    assertResponseCode(404, response);
+    Assert.assertEquals(response.getResponseBodyAsString(), "apps not found");
+  }
+
+  @Test
+  public void testPushAppsSourceControlException() throws Exception {
+    String commitMessage = "push two apps";
+    Mockito.doThrow(new SourceControlException("Failed to push apps.")).when(sourceControlService)
+        .pushApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pushApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"), commitMessage);
+
+    assertResponseCode(500, response);
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Failed to push apps."));
+  }
+
+  @Test
+  public void testPushAppsInvalidAuthenticationConfig() throws Exception {
+    String commitMessage = "push two apps";
+    Mockito.doThrow(new AuthenticationConfigException("Repository config not valid")).when(sourceControlService)
+        .pushApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pushApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"), commitMessage);
+
+    assertResponseCode(500, response);
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Repository config not valid"));
+  }
+
+  @Test
+  public void testPullAppsSucceeds() throws Exception {
+    OperationRun expectedResponse = OperationRun.builder().setRunId("2")
+        .setStatus(OperationRunStatus.STARTING).setType(OperationType.PULL_APPS).setMetadata(
+            OperationMeta.builder().setCreateTime(Instant.now()).build()
+        ).build();
+
+    Mockito.doReturn(expectedResponse).when(sourceControlService)
+        .pullApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pullApplications(Namespace.DEFAULT.getId(),
+        Arrays.asList("appToPush1", "appToPush2"));
+
+    assertResponseCode(200, response);
+    OperationMeta result = readResponse(response, OperationRun.class);
+    Assert.assertEquals(result, expectedResponse);
+  }
+
+  @Test
+  public void testPullAppsNotFound() throws Exception {
+    Mockito.doThrow(new NotFoundException("apps not found")).when(sourceControlService)
+        .pullApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pullApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"));
+
+    // Assert the app is not found
+    assertResponseCode(404, response);
+    Assert.assertEquals(response.getResponseBodyAsString(), "apps not found");
+  }
+
+  @Test
+  public void testPullAppsSourceControlException() throws Exception {
+    Mockito.doThrow(new SourceControlException("Failed to pull apps.")).when(sourceControlService)
+        .pullApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pullApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"));
+
+    assertResponseCode(500, response);
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Failed to pull apps."));
+  }
+
+  @Test
+  public void testPullAppsInvalidAuthenticationConfig() throws Exception {
+    Mockito.doThrow(new AuthenticationConfigException("Repository config not valid.")).when(sourceControlService)
+        .pullApps(Mockito.any(), Mockito.any());
+    HttpResponse response = pullApplications(NamespaceId.DEFAULT.getNamespace(),
+        Arrays.asList("appToPush1", "appToPush2"));
+
+    assertResponseCode(500, response);
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Repository config not valid."));
   }
 
   private String buildRepoRequestString(Provider provider, String link, String defaultBranch,
