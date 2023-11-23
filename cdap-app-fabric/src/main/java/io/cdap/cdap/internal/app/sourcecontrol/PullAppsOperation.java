@@ -26,6 +26,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.operation.LongRunningOperation;
 import io.cdap.cdap.internal.operation.LongRunningOperationContext;
 import io.cdap.cdap.internal.operation.OperationException;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.operation.OperationResource;
@@ -41,6 +42,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Defines operation for doing SCM Pull for connected repositories.
@@ -53,6 +56,8 @@ public class PullAppsOperation implements LongRunningOperation {
   private final ApplicationManager applicationManager;
 
   private final Set<ApplicationId> deployed;
+
+  private static final Logger LOG = LoggerFactory.getLogger(PullAppsOperation.class);
 
   /**
    * Only request is passed using AssistedInject. See {@link PullAppsOperationFactory}
@@ -89,8 +94,25 @@ public class PullAppsOperation implements LongRunningOperation {
 
       // pull and deploy applications one at a time
       scmOpRunner.multiPull(pullReq, response -> {
-        appTobeDeployed.set(new ApplicationReference(context.getRunId().getNamespace(),
-            response.getApplicationName()));
+        ApplicationReference appRef = new ApplicationReference(context.getRunId().getNamespace(),
+            response.getApplicationName());
+        appTobeDeployed.set(appRef);
+
+        try {
+          ApplicationDetail currentDetail = applicationManager.get(appRef);
+          if (currentDetail.getSourceControlMeta() != null && currentDetail.getSourceControlMeta()
+              .getFileHash().equals(response.getApplicationFileHash())) {
+            LOG.trace("Application {} already have same commit, skipping",
+                response.getApplicationName());
+            return;
+          }
+        } catch (NotFoundException e) {
+          // if application does not exist, we create it
+          LOG.trace("Application {} does not exist, creating it", response.getApplicationName());
+        } catch (Exception e) {
+          throw new SourceControlException(e);
+        }
+
         try {
           ApplicationId deployedVersion = applicationManager.deployApp(
               appTobeDeployed.get(), response

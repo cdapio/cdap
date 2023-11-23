@@ -22,15 +22,18 @@ import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.operation.LongRunningOperationContext;
 import io.cdap.cdap.internal.operation.OperationException;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationResource;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
@@ -39,6 +42,7 @@ import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperation
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -54,6 +58,15 @@ public class PullAppsOperationTest {
 
   private static final AppRequest<?> TEST_APP_REQUEST = new AppRequest<>(
       new ArtifactSummary("name", "version"));
+
+  private static final ApplicationDetail testAppDetails = new ApplicationDetail(
+      "testApp", "v1", "description1", null, null, "conf1", new ArrayList<>(),
+      new ArrayList<>(), new ArrayList<>(), null, null);
+
+  private static final ApplicationDetail testAppDetailsWithGitMeta = new ApplicationDetail(
+      "testApp", "v1", "description1", null, new SourceControlMeta("testHash"), "conf1",
+      new ArrayList<>(),
+      new ArrayList<>(), new ArrayList<>(), null, null);
 
   private static final Gson GSON = new Gson();
 
@@ -112,6 +125,43 @@ public class PullAppsOperationTest {
   public void testRunSuccess() throws Exception {
     ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
     PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
+    Mockito.when(mockManager.get(Mockito.any())).thenReturn(testAppDetails);
+
+    Mockito.doAnswer(i -> {
+          ApplicationReference appref = (ApplicationReference) i.getArguments()[0];
+          return appref.app(appref.getApplication());
+        }
+    ).when(mockManager).deployApp(Mockito.any(), Mockito.any());
+
+    gotResources = operation.run(context).get();
+
+    verifyCreatedResources(ImmutableSet.of("1", "2", "3", "4"));
+  }
+
+  @Test
+  public void testRunSuccessNoPull() throws Exception {
+    ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
+    PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
+
+    Mockito.when(mockManager.get(Mockito.any())).thenReturn(testAppDetailsWithGitMeta);
+
+    Mockito.doAnswer(i -> {
+          ApplicationReference appref = (ApplicationReference) i.getArguments()[0];
+          return appref.app(appref.getApplication());
+        }
+    ).when(mockManager).deployApp(Mockito.any(), Mockito.any());
+
+    gotResources = operation.run(context).get();
+
+    verifyCreatedResources(ImmutableSet.of());
+  }
+
+  @Test
+  public void testRunSuccessNewPipelines() throws Exception {
+    ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
+    PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
+
+    Mockito.when(mockManager.get(Mockito.any())).thenThrow(new NotFoundException(""));
 
     Mockito.doAnswer(i -> {
           ApplicationReference appref = (ApplicationReference) i.getArguments()[0];
@@ -128,6 +178,7 @@ public class PullAppsOperationTest {
   public void testRunFailedAtFirstApp() throws Exception {
     ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
     PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
+    Mockito.when(mockManager.get(Mockito.any())).thenReturn(testAppDetails);
 
     Mockito.doThrow(new SourceControlException("")).when(mockManager)
         .deployApp(Mockito.any(), Mockito.any());
@@ -139,6 +190,7 @@ public class PullAppsOperationTest {
   public void testRunFailedAtSecondApp() throws Exception {
     ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
     PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
+    Mockito.when(mockManager.get(Mockito.any())).thenReturn(testAppDetails);
 
     Mockito.doAnswer(
             i -> {
@@ -161,6 +213,7 @@ public class PullAppsOperationTest {
   public void testRunFailedWhenMarkingLatest() throws Exception {
     ApplicationManager mockManager = Mockito.mock(ApplicationManager.class);
     PullAppsOperation operation = new PullAppsOperation(this.req, opRunner, mockManager);
+    Mockito.when(mockManager.get(Mockito.any())).thenReturn(testAppDetails);
 
     Mockito.doAnswer(
         i -> {
