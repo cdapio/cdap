@@ -145,7 +145,7 @@ public abstract class DatasetServiceTestBase {
 
   protected static void initialize() throws Exception {
     locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    initializeAndStartService(createCConf());
+    initializeAndStartService(createCconf());
   }
 
   @AfterClass
@@ -182,13 +182,7 @@ public abstract class DatasetServiceTestBase {
         }
       });
 
-    AccessEnforcer authEnforcer = injector.getInstance(AccessEnforcer.class);
-
-    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
-
     transactionRunner = injector.getInstance(TransactionRunner.class);
-
-    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     dsFramework = injector.getInstance(RemoteDatasetFramework.class);
     // Tx Manager to support working with datasets
@@ -196,11 +190,7 @@ public abstract class DatasetServiceTestBase {
     txManager.startAndWait();
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StoreDefinition.createAllTables(structuredTableAdmin);
-    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    TransactionSystemClientService txSystemClientService =
-      new DelegatingTransactionSystemClientService(txSystemClient);
 
-    NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
@@ -212,6 +202,7 @@ public abstract class DatasetServiceTestBase {
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory =
       injector.getInstance(CommonNettyHttpServiceFactory.class);
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
                                                      discoveryService, commonNettyHttpServiceFactory, handlers);
@@ -236,6 +227,13 @@ public abstract class DatasetServiceTestBase {
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(transactionRunner);
+
+    AccessEnforcer authEnforcer = injector.getInstance(AccessEnforcer.class);
+    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
+    NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
+    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    TransactionSystemClientService txSystemClientService =
+      new DelegatingTransactionSystemClientService(txSystemClient);
 
     DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(
       typeManager, namespaceAdmin, namespacePathLocator,
@@ -278,7 +276,7 @@ public abstract class DatasetServiceTestBase {
     return discoverable;
   }
 
-  protected static CConfiguration createCConf() throws IOException {
+  protected static CConfiguration createCconf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     File dataDir = new File(TMP_FOLDER.newFolder(), "data");
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());

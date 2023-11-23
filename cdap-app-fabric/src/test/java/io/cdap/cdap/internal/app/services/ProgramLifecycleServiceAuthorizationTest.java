@@ -35,11 +35,10 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
-import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -59,7 +58,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Test authorization for ProgramLifeCycleService
+ * Test authorization for ProgramLifeCycleService.
  */
 public class ProgramLifecycleServiceAuthorizationTest {
 
@@ -68,24 +67,24 @@ public class ProgramLifecycleServiceAuthorizationTest {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
 
   private static CConfiguration cConf;
-  private static AccessController accessController;
+  private static PermissionManager permissionManager;
   private static AppFabricServer appFabricServer;
   private static ProgramLifecycleService programLifecycleService;
 
   @BeforeClass
   public static void setup() throws Exception {
-    cConf = createCConf();
+    cConf = createCconf();
     final Injector injector = AppFabricTestHelper.getInjector(cConf);
-    accessController = injector.getInstance(AccessControllerInstantiator.class).get();
+    permissionManager = injector.getInstance(PermissionManager.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
-    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                           new Principal(user, Principal.PrincipalType.USER),
-                           EnumSet.allOf(StandardPermission.class));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                            new Principal(user, Principal.PrincipalType.USER),
+                            EnumSet.allOf(StandardPermission.class));
     // Starting the Appfabric server will create the default namespace
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -93,9 +92,9 @@ public class ProgramLifecycleServiceAuthorizationTest {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    accessController.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                            new Principal(user, Principal.PrincipalType.USER),
-                            Collections.singleton(StandardPermission.UPDATE));
+    permissionManager.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                             new Principal(user, Principal.PrincipalType.USER),
+                             Collections.singleton(StandardPermission.UPDATE));
   }
 
   @Test
@@ -126,24 +125,24 @@ public class ProgramLifecycleServiceAuthorizationTest {
     }
 
     // no auto grant now, need to have privileges on the program to be able to see the programs
-    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
-                                                                           AllProgramsApp.NoOpService.NAME)), ALICE,
-                           Collections.singleton(ApplicationPermission.EXECUTE));
-    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKER,
-                                                                           AllProgramsApp.NoOpWorker.NAME)), ALICE,
-                           Collections.singleton(ApplicationPermission.EXECUTE));
-    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SPARK,
-                                                                           AllProgramsApp.NoOpSpark.NAME)), ALICE,
-                           Collections.singleton(ApplicationPermission.EXECUTE));
-    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
-                                                                           AllProgramsApp.NoOpMR.NAME)), ALICE,
-                           Collections.singleton(ApplicationPermission.EXECUTE));
-    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
-                                                                           AllProgramsApp.NoOpMR2.NAME)), ALICE,
-                           Collections.singleton(ApplicationPermission.EXECUTE));
-    accessController.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKFLOW,
-                                                                           AllProgramsApp.NoOpWorkflow.NAME)), ALICE,
-                           Collections.singleton(ApplicationPermission.EXECUTE));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
+                                                                            AllProgramsApp.NoOpService.NAME)), ALICE,
+                            Collections.singleton(ApplicationPermission.EXECUTE));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKER,
+                                                                            AllProgramsApp.NoOpWorker.NAME)), ALICE,
+                            Collections.singleton(ApplicationPermission.EXECUTE));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SPARK,
+                                                                            AllProgramsApp.NoOpSpark.NAME)), ALICE,
+                            Collections.singleton(ApplicationPermission.EXECUTE));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                            AllProgramsApp.NoOpMR.NAME)), ALICE,
+                            Collections.singleton(ApplicationPermission.EXECUTE));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.MAPREDUCE,
+                                                                            AllProgramsApp.NoOpMR2.NAME)), ALICE,
+                            Collections.singleton(ApplicationPermission.EXECUTE));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.WORKFLOW,
+                                                                            AllProgramsApp.NoOpWorkflow.NAME)), ALICE,
+                            Collections.singleton(ApplicationPermission.EXECUTE));
 
     for (ProgramType type : ProgramType.values()) {
       // Skip custom permission.
@@ -163,7 +162,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
     AppFabricTestHelper.shutdown();
   }
 
-  private static CConfiguration createCConf() throws IOException {
+  private static CConfiguration createCconf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
@@ -171,7 +170,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     LocationFactory locationFactory = new LocalLocationFactory(new File(TEMPORARY_FOLDER.newFolder().toURI()));
-    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessControllerV2.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
     return cConf;
   }
@@ -180,7 +179,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
     throws Exception {
     int count = 0;
     for (Map.Entry<EntityId, Set<? extends Permission>> privilege : neededPrivileges.entrySet()) {
-      accessController.grant(Authorizable.fromEntityId(privilege.getKey()), ALICE, privilege.getValue());
+      permissionManager.grant(Authorizable.fromEntityId(privilege.getKey()), ALICE, privilege.getValue());
       count++;
       if (count < neededPrivileges.size()) {
         try {

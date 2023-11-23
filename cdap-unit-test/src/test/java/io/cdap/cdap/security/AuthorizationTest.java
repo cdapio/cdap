@@ -67,9 +67,9 @@ import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
+import io.cdap.cdap.security.authorization.RoleController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spark.stream.TestSparkCrossNSDatasetApp;
 import io.cdap.cdap.test.ApplicationManager;
@@ -166,7 +166,7 @@ public class AuthorizationTest extends TestBase {
 
     private static String[] getAuthConfigs(File tmpDir) throws IOException {
       LocationFactory locationFactory = new LocalLocationFactory(tmpDir);
-      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
+      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessControllerV2.class);
       return new String[]{
         Constants.Security.ENABLED, "true",
         Constants.Security.Authorization.ENABLED, "true",
@@ -195,7 +195,6 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testNamespaces() throws Exception {
     NamespaceAdmin namespaceAdmin = getNamespaceAdmin();
-    AccessController accessController = getAccessController();
     try {
       namespaceAdmin.create(AUTH_NAMESPACE_META);
       Assert.fail("Namespace create should have failed because alice is not authorized on " + AUTH_NAMESPACE);
@@ -214,6 +213,8 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
+
+    RoleController accessController = getAccessController();
     // grant privileges again
     grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
     namespaceAdmin.exists(AUTH_NAMESPACE);
@@ -235,7 +236,6 @@ public class AuthorizationTest extends TestBase {
       // Expected
     }
     createAuthNamespace();
-    AccessController accessController = getAccessController();
     ApplicationId dummyAppId = AUTH_NAMESPACE.app(DummyApp.class.getSimpleName());
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
@@ -264,6 +264,7 @@ public class AuthorizationTest extends TestBase {
                           EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
     cleanUpEntities.add(AUTH_NAMESPACE.datasetModule(DummyApp.CustomDummyDataset.class.getName()));
 
+    RoleController accessController = getAccessController();
     // this time it should be successful
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, DummyApp.class);
     // Bob should not have any privileges on Alice's app
@@ -294,7 +295,7 @@ public class AuthorizationTest extends TestBase {
     appManager.delete();
 
     // Should still have the privilege for the app since we no longer revoke privileges after deletion of an entity
-    Assert.assertTrue(!getAccessController().isVisible(Collections.singleton(dummyAppId), BOB).isEmpty());
+    Assert.assertTrue(!getAccessEnforcerSpi().isVisible(Collections.singleton(dummyAppId), BOB).isEmpty());
 
     // bob should still have privileges granted to him
     Assert.assertEquals(4, accessController.listGrants(BOB).size());
@@ -543,7 +544,7 @@ public class AuthorizationTest extends TestBase {
   }
 
   @Test
-  public void testCrossNSService() throws Exception {
+  public void testCrossNsService() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(CrossNsDatasetAccessApp.APP_NAME);
     ArtifactId artifact = AUTH_NAMESPACE.artifact(CrossNsDatasetAccessApp.class.getSimpleName(), "1.0-SNAPSHOT");
@@ -573,7 +574,7 @@ public class AuthorizationTest extends TestBase {
     ServiceManager serviceManager = appManager.getServiceManager(CrossNsDatasetAccessApp.SERVICE_NAME);
 
     testSystemDatasetAccessFromService(serviceManager);
-    testCrossNSDatasetAccessFromService(serviceManager);
+    testCrossNsDatasetAccessFromService(serviceManager);
   }
 
   private void testSystemDatasetAccessFromService(ServiceManager serviceManager) throws Exception {
@@ -608,29 +609,30 @@ public class AuthorizationTest extends TestBase {
 
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM.dataset("store"));
+    cleanUpEntities.add(NamespaceId.SYSTEM.dataset("store"));
   }
 
-  private void testCrossNSDatasetAccessFromService(ServiceManager serviceManager) throws Exception {
-    NamespaceMeta outputDatasetNS = new NamespaceMeta.Builder().setName("outputNS").build();
-    NamespaceId outputDatasetNSId = outputDatasetNS.getNamespaceId();
-    DatasetId datasetId = outputDatasetNSId.dataset("store");
+  private void testCrossNsDatasetAccessFromService(ServiceManager serviceManager) throws Exception {
+    NamespaceMeta outputDatasetNs = new NamespaceMeta.Builder().setName("outputNS").build();
+    NamespaceId outputDatasetNsId = outputDatasetNs.getNamespaceId();
+    DatasetId datasetId = outputDatasetNsId.dataset("store");
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(outputDatasetNSId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE,
+      .put(outputDatasetNsId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE,
           StandardPermission.DELETE, NamespacePermission.UPDATE_REPOSITORY_METADATA))
       .put(datasetId, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET, StandardPermission.DELETE))
-      .put(outputDatasetNSId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
+      .put(outputDatasetNsId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges
     );
-    getNamespaceAdmin().create(outputDatasetNS);
+    getNamespaceAdmin().create(outputDatasetNs);
     addDatasetInstance(datasetId, "keyValueTable");
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
 
     Map<String, String> args = ImmutableMap.of(
-      CrossNsDatasetAccessApp.OUTPUT_DATASET_NS, outputDatasetNS.getNamespaceId().getNamespace(),
+      CrossNsDatasetAccessApp.OUTPUT_DATASET_NS, outputDatasetNs.getNamespaceId().getNamespace(),
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
@@ -651,7 +653,7 @@ public class AuthorizationTest extends TestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
-    assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
+    assertDatasetIsEmpty(outputDatasetNs.getNamespaceId(), "store");
 
     // Give BOB permission to write to the dataset in another namespace
     grantAndAssertSuccess(datasetId, BOB, EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
@@ -674,7 +676,7 @@ public class AuthorizationTest extends TestBase {
     // switch back to alice and verify the data its fine now to verify.
     SecurityRequestContext.setUserId(ALICE.getName());
 
-    DataSetManager<KeyValueTable> dataSetManager = getDataset(outputDatasetNS.getNamespaceId().dataset("store"));
+    DataSetManager<KeyValueTable> dataSetManager = getDataset(outputDatasetNs.getNamespaceId().dataset("store"));
     KeyValueTable results = dataSetManager.get();
 
     for (int i = 0; i < 10; i++) {
@@ -682,11 +684,12 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
 
-    getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
+    getNamespaceAdmin().delete(outputDatasetNs.getNamespaceId());
+    cleanUpEntities.add(NamespaceId.SYSTEM.dataset("store"));
   }
 
   @Test
-  public void testCrossNSMapReduce() throws Exception {
+  public void testCrossNsMapReduce() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(DatasetCrossNSAccessWithMAPApp.class.getSimpleName());
 
@@ -712,15 +715,15 @@ public class AuthorizationTest extends TestBase {
 
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM);
 
-    testCrossNSSystemDatasetAccessWithAuthMapReduce(mrManager);
-    testCrossNSDatasetAccessWithAuthMapReduce(mrManager);
+    testCrossNsSystemDatasetAccessWithAuthMapReduce(mrManager);
+    testCrossNsDatasetAccessWithAuthMapReduce(mrManager);
   }
 
-  private void testCrossNSSystemDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
+  private void testCrossNsSystemDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
     addDatasetInstance(NamespaceId.SYSTEM.dataset("table1"), "keyValueTable").create();
     addDatasetInstance(NamespaceId.SYSTEM.dataset("table2"), "keyValueTable").create();
-    NamespaceMeta otherNS = new NamespaceMeta.Builder().setName("otherNS").build();
-    NamespaceId otherNsId = otherNS.getNamespaceId();
+    NamespaceMeta otherNs = new NamespaceMeta.Builder().setName("otherNS").build();
+    NamespaceId otherNsId = otherNs.getNamespaceId();
     DatasetId datasetId = otherNsId.dataset("otherTable");
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
@@ -731,39 +734,39 @@ public class AuthorizationTest extends TestBase {
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    getNamespaceAdmin().create(otherNS);
+    getNamespaceAdmin().create(otherNs);
     addDatasetInstance(datasetId, "keyValueTable").create();
     addDummyData(NamespaceId.SYSTEM, "table1");
-
-    // first test that reading system namespace fails with valid table as output
-    Map<String, String> argsForMR = ImmutableMap.of(
-      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, NamespaceId.SYSTEM.getNamespace(),
-      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NAME, "table1",
-      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, otherNS.getNamespaceId().getNamespace(),
-      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "otherTable");
 
     // give privilege to BOB on all the datasets
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table1"), BOB, EnumSet.of(StandardPermission.GET));
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(StandardPermission.UPDATE));
-    grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_STANDARD_PERMISSIONS);
+    grantAndAssertSuccess(otherNs.getNamespaceId().dataset("otherTable"), BOB, ALL_STANDARD_PERMISSIONS);
+
+    // first test that reading system namespace fails with valid table as output
+    Map<String, String> argsForMr = ImmutableMap.of(
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, NamespaceId.SYSTEM.getNamespace(),
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NAME, "table1",
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, otherNs.getNamespaceId().getNamespace(),
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "otherTable");
 
     // Switch to BOB and run the  mapreduce job. The job will fail at the runtime since BOB is trying to read from
     // system namespace
     SecurityRequestContext.setUserId(BOB.getName());
-    assertProgramFailure(argsForMR, mrManager);
-    assertDatasetIsEmpty(otherNS.getNamespaceId(), "otherTable");
+    assertProgramFailure(argsForMr, mrManager);
+    assertDatasetIsEmpty(otherNs.getNamespaceId(), "otherTable");
 
     // now try reading a table from valid namespace and writing to system namespace
-    argsForMR = ImmutableMap.of(
-      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, otherNS.getName(),
+    argsForMr = ImmutableMap.of(
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, otherNs.getName(),
       DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NAME, "otherTable",
       DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, NamespaceId.SYSTEM.getNamespace(),
       DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "table2");
 
-    addDummyData(otherNS.getNamespaceId(), "otherTable");
+    addDummyData(otherNs.getNamespaceId(), "otherTable");
 
     // verify that the program fails
-    assertProgramFailure(argsForMR, mrManager);
+    assertProgramFailure(argsForMr, mrManager);
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "table2");
 
     // switch to back to ALICE
@@ -772,84 +775,86 @@ public class AuthorizationTest extends TestBase {
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM.dataset("table1"));
     deleteDatasetInstance(NamespaceId.SYSTEM.dataset("table2"));
-    getNamespaceAdmin().delete(otherNS.getNamespaceId());
+    getNamespaceAdmin().delete(otherNs.getNamespaceId());
+    cleanUpEntities.add(NamespaceId.SYSTEM.dataset("table1"));
+    cleanUpEntities.add(NamespaceId.SYSTEM.dataset("table2"));
   }
 
-  private void testCrossNSDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
-    NamespaceMeta inputDatasetNS = new NamespaceMeta.Builder().setName("inputNS").build();
-    NamespaceId inputDatasetNSId = inputDatasetNS.getNamespaceId();
-    NamespaceMeta outputDatasetNS = new NamespaceMeta.Builder().setName("outputNS").build();
-    NamespaceId outputDatasetNSId = outputDatasetNS.getNamespaceId();
-    DatasetId table1Id = inputDatasetNSId.dataset("table1");
-    DatasetId table2Id = outputDatasetNSId.dataset("table2");
+  private void testCrossNsDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
+    NamespaceMeta inputDatasetNs = new NamespaceMeta.Builder().setName("inputNS").build();
+    NamespaceId inputDatasetNsId = inputDatasetNs.getNamespaceId();
+    NamespaceMeta outputDatasetNs = new NamespaceMeta.Builder().setName("outputNS").build();
+    NamespaceId outputDatasetNsId = outputDatasetNs.getNamespaceId();
+    DatasetId table1Id = inputDatasetNsId.dataset("table1");
+    DatasetId table2Id = outputDatasetNsId.dataset("table2");
 
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(inputDatasetNSId, namespaceAdminPermissions)
-      .put(outputDatasetNSId, namespaceAdminPermissions)
+      .put(inputDatasetNsId, namespaceAdminPermissions)
+      .put(outputDatasetNsId, namespaceAdminPermissions)
       // We need to write some data into table1
       .put(table1Id, EnumSet.allOf(StandardPermission.class))
       // Need to read data from table2
       .put(table2Id, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET, StandardPermission.DELETE))
-      .put(inputDatasetNSId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
-      .put(outputDatasetNSId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
+      .put(inputDatasetNsId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
+      .put(outputDatasetNsId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    getNamespaceAdmin().create(inputDatasetNS);
-    getNamespaceAdmin().create(outputDatasetNS);
+    getNamespaceAdmin().create(inputDatasetNs);
+    getNamespaceAdmin().create(outputDatasetNs);
     addDatasetInstance(table1Id, "keyValueTable").create();
     addDatasetInstance(table2Id, "keyValueTable").create();
 
-    addDummyData(inputDatasetNSId, "table1");
+    addDummyData(inputDatasetNsId, "table1");
 
-    Map<String, String> argsForMR = ImmutableMap.of(
-      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, inputDatasetNS.getNamespaceId().getNamespace(),
+    Map<String, String> argsForMr = ImmutableMap.of(
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, inputDatasetNs.getNamespaceId().getNamespace(),
       DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NAME, "table1",
-      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, outputDatasetNS.getNamespaceId().getNamespace(),
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, outputDatasetNs.getNamespaceId().getNamespace(),
       DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "table2");
 
     // Switch to BOB and run the  mapreduce job. The job will fail at the runtime since BOB does not have permission
     // on the input and output datasets in another namespaces.
     SecurityRequestContext.setUserId(BOB.getName());
-    assertProgramFailure(argsForMR, mrManager);
+    assertProgramFailure(argsForMr, mrManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
+    assertDatasetIsEmpty(outputDatasetNs.getNamespaceId(), "table2");
 
     // give privilege to BOB on the input dataset
-    grantAndAssertSuccess(inputDatasetNS.getNamespaceId().dataset("table1"), BOB, EnumSet.of(StandardPermission.GET));
+    grantAndAssertSuccess(inputDatasetNs.getNamespaceId().dataset("table1"), BOB, EnumSet.of(StandardPermission.GET));
 
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
     // dataset
     SecurityRequestContext.setUserId(BOB.getName());
-    assertProgramFailure(argsForMR, mrManager);
+    assertProgramFailure(argsForMr, mrManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
+    assertDatasetIsEmpty(outputDatasetNs.getNamespaceId(), "table2");
 
     // give privilege to BOB on the output dataset
-    grantAndAssertSuccess(outputDatasetNS.getNamespaceId().dataset("table2"), BOB,
+    grantAndAssertSuccess(outputDatasetNs.getNamespaceId().dataset("table2"), BOB,
                           EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
     // switch back to BOB and run MR again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
-    mrManager.start(argsForMR);
+    mrManager.start(argsForMr);
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
 
     // Verify results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
-    verifyDummyData(outputDatasetNS.getNamespaceId(), "table2");
-    getNamespaceAdmin().delete(inputDatasetNS.getNamespaceId());
-    getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
+    verifyDummyData(outputDatasetNs.getNamespaceId(), "table2");
+    getNamespaceAdmin().delete(inputDatasetNs.getNamespaceId());
+    getNamespaceAdmin().delete(outputDatasetNs.getNamespaceId());
   }
 
   @Test
-  public void testCrossNSSpark() throws Exception {
+  public void testCrossNsSpark() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(TestSparkCrossNSDatasetApp.APP_NAME);
 
@@ -878,8 +883,8 @@ public class AuthorizationTest extends TestBase {
     SparkManager sparkManager = appManager.getSparkManager(TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram
                                                              .class.getSimpleName());
 
-    testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
-    testCrossNSDatasetAccessWithAuthSpark(sparkManager);
+    testCrossNsSystemDatasetAccessWithAuthSpark(sparkManager);
+    testCrossNsDatasetAccessWithAuthSpark(sparkManager);
   }
 
   @Test
@@ -901,9 +906,9 @@ public class AuthorizationTest extends TestBase {
 
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, AppWithSchedule.class);
     String workflowName = AppWithSchedule.SampleWorkflow.class.getSimpleName();
-    ProgramId workflowID = new ProgramId(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(),
+    ProgramId workflowId = new ProgramId(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(),
                                          ProgramType.WORKFLOW, workflowName);
-    cleanUpEntities.add(workflowID);
+    cleanUpEntities.add(workflowId);
 
     final WorkflowManager workflowManager =
       appManager.getWorkflowManager(workflowName);
@@ -928,7 +933,7 @@ public class AuthorizationTest extends TestBase {
     }
 
     // give BOB READ permission in the workflow
-    grantAndAssertSuccess(workflowID, BOB, EnumSet.of(StandardPermission.GET));
+    grantAndAssertSuccess(workflowId, BOB, EnumSet.of(StandardPermission.GET));
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -944,7 +949,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
     // give BOB EXECUTE permission in the workflow
-    grantAndAssertSuccess(workflowID, BOB, EnumSet.of(ApplicationPermission.EXECUTE));
+    grantAndAssertSuccess(workflowId, BOB, EnumSet.of(ApplicationPermission.EXECUTE));
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -985,7 +990,7 @@ public class AuthorizationTest extends TestBase {
                         workflowManager.getSchedule(scheduleId.getSchedule()).status(HttpURLConnection.HTTP_OK));
 
     // revoke EXECUTE from BOB
-    getAccessController().revoke(Authorizable.fromEntityId(appId), BOB, EnumSet.of(ApplicationPermission.EXECUTE));
+    getPermissionManager().revoke(Authorizable.fromEntityId(appId), BOB, EnumSet.of(ApplicationPermission.EXECUTE));
 
     try {
       // delete schedule should fail since we revoke the ADMIN privilege from BOB
@@ -1011,30 +1016,30 @@ public class AuthorizationTest extends TestBase {
     SecurityRequestContext.setUserId(ALICE.getName());
   }
 
-  private void testCrossNSSystemDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
+  private void testCrossNsSystemDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
     addDatasetInstance(NamespaceId.SYSTEM.dataset("table1"), "keyValueTable").create();
     addDatasetInstance(NamespaceId.SYSTEM.dataset("table2"), "keyValueTable").create();
-    NamespaceMeta otherNS = new NamespaceMeta.Builder().setName("otherNS").build();
-    NamespaceId otherNSId = otherNS.getNamespaceId();
-    DatasetId otherTableId = otherNSId.dataset("otherTable");
+    NamespaceMeta otherNs = new NamespaceMeta.Builder().setName("otherNS").build();
+    NamespaceId otherNsId = otherNs.getNamespaceId();
+    DatasetId otherTableId = otherNsId.dataset("otherTable");
 
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(otherNSId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE,
+      .put(otherNsId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE,
           NamespacePermission.UPDATE_REPOSITORY_METADATA))
       .put(otherTableId, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE))
-      .put(otherNSId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
+      .put(otherNsId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    getNamespaceAdmin().create(otherNS);
+    getNamespaceAdmin().create(otherNs);
     addDatasetInstance(otherTableId, "keyValueTable").create();
     addDummyData(NamespaceId.SYSTEM, "table1");
 
     // give privilege to BOB on all the datasets
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table1"), BOB, EnumSet.of(StandardPermission.GET));
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(StandardPermission.UPDATE));
-    grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_STANDARD_PERMISSIONS);
+    grantAndAssertSuccess(otherNs.getNamespaceId().dataset("otherTable"), BOB, ALL_STANDARD_PERMISSIONS);
 
     // Switch to Bob and run the spark program. this will fail because bob is trying to read from a system dataset
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1043,24 +1048,24 @@ public class AuthorizationTest extends TestBase {
       NamespaceId.SYSTEM.getNamespace(),
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAME, "table1",
       TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAMESPACE,
-      otherNS.getNamespaceId().getNamespace(),
+      otherNs.getNamespaceId().getNamespace(),
       TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAME, "otherTable"
     );
 
     assertProgramFailure(args, sparkManager);
-    assertDatasetIsEmpty(otherNS.getNamespaceId(), "otherTable");
+    assertDatasetIsEmpty(otherNs.getNamespaceId(), "otherTable");
 
     // try running spark job with valid input namespace but writing to system namespace this should fail too
     args = ImmutableMap.of(
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAMESPACE,
-      otherNS.getNamespaceId().getNamespace(),
+      otherNs.getNamespaceId().getNamespace(),
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAME, "otherTable",
       TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAMESPACE,
       NamespaceId.SYSTEM.getNamespace(),
       TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAME, "table2"
     );
 
-    addDummyData(otherNS.getNamespaceId(), "otherTable");
+    addDummyData(otherNs.getNamespaceId(), "otherTable");
 
     assertProgramFailure(args, sparkManager);
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "table2");
@@ -1071,44 +1076,46 @@ public class AuthorizationTest extends TestBase {
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM.dataset("table1"));
     deleteDatasetInstance(NamespaceId.SYSTEM.dataset("table2"));
-    getNamespaceAdmin().delete(otherNS.getNamespaceId());
+    getNamespaceAdmin().delete(otherNs.getNamespaceId());
+    cleanUpEntities.add(NamespaceId.SYSTEM.dataset("table1"));
+    cleanUpEntities.add(NamespaceId.SYSTEM.dataset("table2"));
   }
 
-  private void testCrossNSDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
-    NamespaceMeta inputDatasetNSMeta = new NamespaceMeta.Builder().setName("inputDatasetNS").build();
-    NamespaceMeta outputDatasetNSMeta = new NamespaceMeta.Builder().setName("outputDatasetNS").build();
-    NamespaceId inputDatasetNSMetaId = inputDatasetNSMeta.getNamespaceId();
-    DatasetId inputTableId = inputDatasetNSMetaId.dataset("input");
-    NamespaceId outputDatasetNSMetaId = outputDatasetNSMeta.getNamespaceId();
-    DatasetId outputTableId = outputDatasetNSMetaId.dataset("output");
+  private void testCrossNsDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
+    NamespaceMeta inputDatasetNsMeta = new NamespaceMeta.Builder().setName("inputDatasetNS").build();
+    NamespaceMeta outputDatasetNsMeta = new NamespaceMeta.Builder().setName("outputDatasetNS").build();
+    NamespaceId inputDatasetNsMetaId = inputDatasetNsMeta.getNamespaceId();
+    DatasetId inputTableId = inputDatasetNsMetaId.dataset("input");
+    NamespaceId outputDatasetNsMetaId = outputDatasetNsMeta.getNamespaceId();
+    DatasetId outputTableId = outputDatasetNsMetaId.dataset("output");
 
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(inputDatasetNSMetaId, namespaceAdminPermissions)
-      .put(outputDatasetNSMetaId, namespaceAdminPermissions)
+      .put(inputDatasetNsMetaId, namespaceAdminPermissions)
+      .put(outputDatasetNsMetaId, namespaceAdminPermissions)
       .put(inputTableId, EnumSet.allOf(StandardPermission.class))
-      .put(inputDatasetNSMetaId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
+      .put(inputDatasetNsMetaId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .put(outputTableId, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET, StandardPermission.DELETE))
-      .put(outputDatasetNSMetaId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
+      .put(outputDatasetNsMetaId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    getNamespaceAdmin().create(inputDatasetNSMeta);
-    getNamespaceAdmin().create(outputDatasetNSMeta);
+    getNamespaceAdmin().create(inputDatasetNsMeta);
+    getNamespaceAdmin().create(outputDatasetNsMeta);
     addDatasetInstance(inputTableId, "keyValueTable").create();
     addDatasetInstance(outputTableId, "keyValueTable").create();
     // write sample stuff in input dataset
-    addDummyData(inputDatasetNSMeta.getNamespaceId(), "input");
+    addDummyData(inputDatasetNsMeta.getNamespaceId(), "input");
 
     // Switch to Bob and run the spark program. this will fail because bob does not have access to either input or
     // output dataset
     SecurityRequestContext.setUserId(BOB.getName());
     Map<String, String> args = ImmutableMap.of(
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAMESPACE,
-      inputDatasetNSMeta.getNamespaceId().getNamespace(),
+      inputDatasetNsMeta.getNamespaceId().getNamespace(),
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAME, "input",
       TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAMESPACE,
-      outputDatasetNSMeta.getNamespaceId().getNamespace(),
+      outputDatasetNsMeta.getNamespaceId().getNamespace(),
       TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAME, "output"
     );
 
@@ -1116,10 +1123,10 @@ public class AuthorizationTest extends TestBase {
 
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
+    assertDatasetIsEmpty(outputDatasetNsMeta.getNamespaceId(), "output");
 
     // give privilege to BOB on the input dataset
-    grantAndAssertSuccess(inputDatasetNSMeta.getNamespaceId().dataset("input"), BOB,
+    grantAndAssertSuccess(inputDatasetNsMeta.getNamespaceId().dataset("input"), BOB,
                           EnumSet.of(StandardPermission.GET));
 
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
@@ -1130,10 +1137,10 @@ public class AuthorizationTest extends TestBase {
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
+    assertDatasetIsEmpty(outputDatasetNsMeta.getNamespaceId(), "output");
 
     // give privilege to BOB on the output dataset
-    grantAndAssertSuccess(outputDatasetNSMeta.getNamespaceId().dataset("output"), BOB,
+    grantAndAssertSuccess(outputDatasetNsMeta.getNamespaceId().dataset("output"), BOB,
                           EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
     // switch back to BOB and run spark again. this should work
@@ -1145,9 +1152,9 @@ public class AuthorizationTest extends TestBase {
 
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
-    verifyDummyData(outputDatasetNSMeta.getNamespaceId(), "output");
-    getNamespaceAdmin().delete(inputDatasetNSMeta.getNamespaceId());
-    getNamespaceAdmin().delete(outputDatasetNSMeta.getNamespaceId());
+    verifyDummyData(outputDatasetNsMeta.getNamespaceId(), "output");
+    getNamespaceAdmin().delete(inputDatasetNsMeta.getNamespaceId());
+    getNamespaceAdmin().delete(outputDatasetNsMeta.getNamespaceId());
   }
 
   @Test
@@ -1184,9 +1191,9 @@ public class AuthorizationTest extends TestBase {
 
     pfsService.start();
     pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
-    URL pfsURL = pfsService.getServiceURL();
+    URL pfsUrl = pfsService.getServiceURL();
     String apiPath = String.format("partitions/%s/subpartitions/%s", partition, subPartition);
-    URL url = new URL(pfsURL, apiPath);
+    URL url = new URL(pfsUrl, apiPath);
     HttpResponse response;
     try {
       response = executeAuthenticated(HttpRequest.post(url).withBody(text));
@@ -1200,8 +1207,8 @@ public class AuthorizationTest extends TestBase {
     grantAndAssertSuccess(datasetId, BOB, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET));
     pfsService.start();
     pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
-    pfsURL = pfsService.getServiceURL();
-    url = new URL(pfsURL, apiPath);
+    pfsUrl = pfsService.getServiceURL();
+    url = new URL(pfsUrl, apiPath);
     try  {
       response = executeAuthenticated(HttpRequest.post(url).withBody(text));
       // should succeed now because bob was granted write privileges on the dataset
@@ -1261,28 +1268,27 @@ public class AuthorizationTest extends TestBase {
     NamespaceId namespaceId = new NamespaceId("namespaceImpersonation");
     // We will create a namespace as owner bob, the keytab url is provided to pass the check for DefaultNamespaceAdmin
     // in unit test, it is useless, since impersonation will never happen
-    NamespaceMeta ownerNSMeta = new NamespaceMeta.Builder().setName(namespaceId.getNamespace())
+    NamespaceMeta ownerNsMeta = new NamespaceMeta.Builder().setName(namespaceId.getNamespace())
       .setPrincipal(BOB.getName()).setKeytabUri("/tmp/").build();
-    KerberosPrincipalId bobPrincipalId = new KerberosPrincipalId(BOB.getName());
-
     // grant alice admin to the namespace, but creation should still fail since alice needs to have privilege on
     // principal bob
     grantAndAssertSuccess(namespaceId, ALICE, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE));
     cleanUpEntities.add(namespaceId);
     try {
-      getNamespaceAdmin().create(ownerNSMeta);
+      getNamespaceAdmin().create(ownerNsMeta);
       Assert.fail("Namespace creation should fail since alice does not have privilege on principal bob");
     } catch (UnauthorizedException e) {
       // expected
     }
 
+    KerberosPrincipalId bobPrincipalId = new KerberosPrincipalId(BOB.getName());
     // grant alice admin on principal bob, now creation of namespace should work
     grantAndAssertSuccess(bobPrincipalId, ALICE, EnumSet.of(AccessPermission.SET_OWNER));
     cleanUpEntities.add(bobPrincipalId);
-    getNamespaceAdmin().create(ownerNSMeta);
+    getNamespaceAdmin().create(ownerNsMeta);
 
     // deploy dummy app with ns impersonation
-    deployDummyAppWithImpersonation(ownerNSMeta, null);
+    deployDummyAppWithImpersonation(ownerNsMeta, null);
   }
 
   private void testDeployAppWithOwner() throws Exception {
@@ -1305,7 +1311,6 @@ public class AuthorizationTest extends TestBase {
     DatasetTypeId datasetTypeId = namespaceId.datasetType(KeyValueTable.class.getName());
     String owner = appOwner != null ? appOwner : nsMeta.getConfig().getPrincipal();
     KerberosPrincipalId principalId = new KerberosPrincipalId(owner);
-    Principal principal = new Principal(owner, Principal.PrincipalType.USER);
     DatasetId dummyDatasetId = namespaceId.dataset("customDataset");
     DatasetTypeId dummyTypeId = namespaceId.datasetType(DummyApp.CustomDummyDataset.class.getName());
     DatasetModuleId dummyModuleId = namespaceId.datasetModule((DummyApp.CustomDummyDataset.class.getName()));
@@ -1344,6 +1349,7 @@ public class AuthorizationTest extends TestBase {
     revokeAndAssertSuccess(dummyTypeId);
     revokeAndAssertSuccess(dummyModuleId);
 
+    Principal principal = new Principal(owner, Principal.PrincipalType.USER);
     // grant privileges to owner
     grantAndAssertSuccess(namespaceId, principal, EnumSet.of(StandardPermission.GET));
     grantAndAssertSuccess(datasetId, principal, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
@@ -1361,8 +1367,6 @@ public class AuthorizationTest extends TestBase {
   @After
   @Override
   public void afterTest() throws Exception {
-    AccessController accessController = getAccessController();
-
     SecurityRequestContext.setUserId(ALICE.getName());
     grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(),
         new HashSet<Permission>() {
@@ -1385,7 +1389,9 @@ public class AuthorizationTest extends TestBase {
     for (EntityId entityId : cleanUpEntities) {
       revokeAndAssertSuccess(entityId);
     }
+    RoleController accessController = getAccessController();
     Assert.assertEquals(Collections.emptySet(), accessController.listGrants(ALICE));
+    Assert.assertEquals(Collections.emptySet(), accessController.listGrants(BOB));
   }
 
   @AfterClass
@@ -1397,10 +1403,10 @@ public class AuthorizationTest extends TestBase {
   }
 
   private void createAuthNamespace() throws Exception {
-    AccessController accessController = getAccessController();
     grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(StandardPermission.CREATE));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
     grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(StandardPermission.GET));
+    RoleController accessController = getAccessController();
     Assert.assertEquals(ImmutableSet.of(new GrantedPermission(AUTH_NAMESPACE, StandardPermission.GET),
                                         new GrantedPermission(AUTH_NAMESPACE, StandardPermission.CREATE)),
                         accessController.listGrants(ALICE));
@@ -1412,11 +1418,10 @@ public class AuthorizationTest extends TestBase {
   }
 
   private void grantAndAssertSuccess(Authorizable authorizable, Principal principal,
-                                     Set<? extends Permission> permissions)
-    throws Exception {
-    AccessController accessController = getAccessController();
+                                     Set<? extends Permission> permissions) {
+    RoleController accessController = getAccessController();
     Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
-    accessController.grant(authorizable, principal, permissions);
+    getPermissionManager().grant(authorizable, principal, permissions);
     ImmutableSet.Builder<GrantedPermission> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Permission permission : permissions) {
       expectedPrivilegesAfterGrant.add(new GrantedPermission(authorizable, permission));
@@ -1426,21 +1431,23 @@ public class AuthorizationTest extends TestBase {
   }
 
   private void revokeAndAssertSuccess(final EntityId entityId) throws Exception {
-    AccessController accessController = getAccessController();
-    accessController.revoke(Authorizable.fromEntityId(entityId));
+    RoleController accessController = getAccessController();
+    getPermissionManager().revoke(Authorizable.fromEntityId(entityId));
     assertNoAccess(entityId);
   }
 
   private void assertNoAccess(Principal principal, final EntityId entityId) throws Exception {
-    AccessController accessController = getAccessController();
+    RoleController accessController = getAccessController();
     Predicate<GrantedPermission> entityFilter = new Predicate<GrantedPermission>() {
       @Override
       public boolean apply(GrantedPermission input) {
         return Authorizable.fromEntityId(entityId).equals(input.getAuthorizable());
       }
     };
-    Assert.assertTrue(Sets.filter(accessController.listGrants(principal), entityFilter).isEmpty());
+    Set<GrantedPermission> grantedPermissionSet = accessController.listGrants(principal);
+    Assert.assertTrue(Sets.filter(grantedPermissionSet, entityFilter).isEmpty());
   }
+
   private void assertNoAccess(final EntityId entityId) throws Exception {
     assertNoAccess(ALICE, entityId);
     assertNoAccess(BOB, entityId);
@@ -1481,7 +1488,7 @@ public class AuthorizationTest extends TestBase {
 
   private void assertAllAccess(Principal principal, EntityId... entityIds) throws Exception {
     for (EntityId entityId : entityIds) {
-      getAccessController().enforce(entityId, principal, EnumSet.allOf(StandardPermission.class));
+      getAccessEnforcerSpi().enforce(entityId, principal, EnumSet.allOf(StandardPermission.class));
     }
   }
 

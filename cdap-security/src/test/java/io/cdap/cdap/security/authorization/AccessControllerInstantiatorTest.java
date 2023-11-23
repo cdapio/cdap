@@ -25,8 +25,11 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +55,8 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  public static AuthenticationContext authenticationContext = new AuthenticationTestContext();
+
   @Test
   public void testAuthenticationDisabled() throws IOException {
     CConfiguration cConf = CConfiguration.create();
@@ -70,12 +75,12 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
 
   private void assertDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature) throws IOException {
     try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(cConf, AUTH_CONTEXT_FACTORY)) {
-      AccessController accessController = instantiator.get();
+      AccessControllerSpi accessController = instantiator.get();
       Assert.assertTrue(
         String.format("When %s is disabled, a %s must be returned, but got %s.",
-                      feature.name().toLowerCase(), NoOpAccessController.class.getSimpleName(),
+                      feature.name().toLowerCase(), NoOpAccessControllerV2.class.getSimpleName(),
                       accessController.getClass().getName()),
-        accessController instanceof NoOpAccessController
+        accessController instanceof NoOpAccessControllerV2
       );
     }
   }
@@ -104,7 +109,8 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
 
   @Test(expected = InvalidAccessControllerException.class)
   public void testAccessControllerJarPathIsNotJar() throws Throwable {
-    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt").getPath());
+    CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, TEMPORARY_FOLDER.newFile("abc.txt")
+      .getPath());
     try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
       Assert.fail("Instantiation of AccessController should have failed because extension jar is not a jar file");
@@ -155,7 +161,7 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
       Assert.fail(
           "Instantiation of AccessController should have failed because the AccessController class defined "
               + "in the extension jar's manifest does not implement "
-              + AccessController.class.getName());
+              + AccessControllerSpi.class.getName());
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
@@ -174,7 +180,7 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
       Assert.fail(
           "Instantiation of AccessController should have failed because the AccessController class defined "
               + "in the extension jar's manifest does not implement "
-              + AccessController.class.getName());
+              + AccessControllerSpi.class.getName());
     } catch (Throwable e) {
       throw e.getCause();
     }
@@ -194,9 +200,10 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     try (AccessControllerInstantiator instantiator =
            new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       // should be able to load the ExternalAccessController class via the AccessControllerInstantiatorService
-      AccessController externalAccessController1 = instantiator.get();
-      externalAccessController1.listAllRoles();
-      externalAccessController1.listGrants(new Principal("test", Principal.PrincipalType.USER));
+      AccessControllerSpi externalAccessController1 = instantiator.get();
+      externalAccessController1.listAllRoles(authenticationContext.getPrincipal());
+      externalAccessController1.listGrants(authenticationContext.getPrincipal(),
+        new Principal("test", Principal.PrincipalType.USER));
 
       ClassLoader accessControllerClassLoader = externalAccessController1.getClass().getClassLoader();
 
@@ -224,9 +231,9 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     try (AccessControllerInstantiator instantiator =
            new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       // should be able to load the ExternalAccessController class via the AccessControllerInstantiatorService
-      AccessController externalAccessController1 = instantiator.get();
+      AccessControllerSpi externalAccessController1 = instantiator.get();
       Assert.assertNotNull(externalAccessController1);
-      AccessController externalAccessController2 = instantiator.get();
+      AccessControllerSpi externalAccessController2 = instantiator.get();
       Assert.assertNotNull(externalAccessController2);
       // verify that get returns the same  instance each time it is called.
       Assert.assertEquals(externalAccessController1, externalAccessController2);
@@ -234,7 +241,7 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
       ClassLoader accessControllerClassLoader = externalAccessController1.getClass().getClassLoader();
       ClassLoader parent = accessControllerClassLoader.getParent();
       // should be able to load the AccessController interface via the parent
-      parent.loadClass(AccessController.class.getName());
+      parent.loadClass(AccessControllerSpi.class.getName());
       // should not be able to load the ExternalAccessController class via the parent class loader
       try {
         parent.loadClass(ValidExternalAccessController.class.getName());
@@ -290,17 +297,18 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     }
   }
 
-  public static class ValidExternalAccessControllerBase extends NoOpAccessController {
+  public static class ValidExternalAccessControllerBase extends NoOpAccessControllerV2 {
 
     @Override
-    public Set<Role> listAllRoles() {
+    public AuthorizedResult<Set<Role>> listAllRoles(Principal caller) {
       Assert.assertEquals(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader());
-      return super.listAllRoles();
+      return super.listAllRoles(caller);
     }
   }
 
   public static final class ValidExternalAccessController extends ValidExternalAccessControllerBase {
     private Properties properties;
+
     @Override
     public void initialize(AuthorizationContext context) {
       this.properties = context.getExtensionProperties();
@@ -311,9 +319,9 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     }
 
     @Override
-    public Set<GrantedPermission> listGrants(Principal principal) {
+    public AuthorizedResult<Set<GrantedPermission>> listGrants(Principal caller, Principal principal) {
       assertContextClassLoader();
-      return super.listGrants(principal);
+      return super.listGrants(caller, principal);
     }
 
     private static void assertContextClassLoader() {

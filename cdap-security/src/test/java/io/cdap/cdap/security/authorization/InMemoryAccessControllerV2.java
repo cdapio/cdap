@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,9 +28,12 @@ import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
+import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.authorization.NotFoundException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
@@ -41,16 +44,21 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * In-memory implementation of {@link AccessController}.
+ * In-memory implementation of {@link AccessControllerSpi}.
  */
-public class InMemoryAccessController implements AccessController {
+public class InMemoryAccessControllerV2 implements AccessControllerSpi {
 
   private final Set<Principal> superUsers = new HashSet<>();
   // Bypass enforcement for tests that want to simulate every user as a super user
   private final Principal allSuperUsers = new Principal("*", Principal.PrincipalType.USER);
+
+  private final AuthorizationResponse authorizedResult = new AuthorizationResponse.Builder()
+    .setAuthorized(AuthorizationResponse.AuthorizationStatus.AUTHORIZED)
+    .setAuditLogContext(AuditLogContext.Builder.defaultNotRequired()).build();
 
   @Override
   public void initialize(AuthorizationContext context) {
@@ -63,28 +71,23 @@ public class InMemoryAccessController implements AccessController {
     }
   }
 
-  @Override
-  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
-    throws UnauthorizedException {
-    enforce(parentId, entityType, principal, Collections.singleton(permission));
-  }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
+  public AuthorizationResponse enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
     throws UnauthorizedException {
-    enforce(entity, null, principal, permissions);
+    return enforce(entity, null, principal, permissions);
   }
 
-  private void enforce(EntityId entity, @Nullable EntityType childType,
-                       Principal principal, Set<? extends Permission> permissions) throws UnauthorizedException {
+  private AuthorizationResponse enforce(EntityId entity, @Nullable EntityType childType,
+            Principal principal, Set<? extends Permission> permissions) throws UnauthorizedException {
     // super users do not have any enforcement
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
-      return;
+      return AuthorizationResponse.Builder.defaultNotRequired();
     }
     // permissions allowed for this principal
     Set<? extends Permission> allowed = getPermissions(entity, childType, principal);
     if (allowed.containsAll(permissions)) {
-      return;
+      return authorizedResult;
     }
     Set<Permission> allowedForRoles = new HashSet<>();
     // permissions allowed for any of the roles to which this principal belongs if its not a role
@@ -96,12 +99,21 @@ public class InMemoryAccessController implements AccessController {
     if (!allowedForRoles.containsAll(permissions)) {
       throw new UnauthorizedException(principal, Sets.difference(permissions, allowed), entity, childType);
     }
+    return authorizedResult;
   }
 
   @Override
-  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) {
+  public AuthorizationResponse enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+                                               Permission permission) throws UnauthorizedException {
+    return enforce(parentId, entityType, principal, Collections.singleton(permission));
+  }
+
+  @Override
+  public Map<? extends EntityId, AuthorizationResponse> isVisible(Set<? extends EntityId> entityIds,
+                                                                  Principal principal) {
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
-      return entityIds;
+      return entityIds.stream()
+        .collect(Collectors.toMap(x -> x, x -> AuthorizationResponse.Builder.defaultNotRequired()));
     }
     Set<EntityId> results =  new HashSet<>();
     for (EntityId entityId : entityIds) {
@@ -116,26 +128,33 @@ public class InMemoryAccessController implements AccessController {
         }
       }
     }
-    return results;
+    return results.stream()
+      .collect(Collectors.toMap(x -> x,
+                                x -> authorizedResult));
   }
 
   @Override
-  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+  public AuthorizationResponse grant(Principal caller, Authorizable authorizable, Principal principal,
+                                     Set<? extends Permission> permissions) {
     getPermissions(authorizable, principal).addAll(permissions);
+    return authorizedResult;
   }
 
   @Override
-  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+  public AuthorizationResponse revoke(Principal caller, Authorizable authorizable, Principal principal,
+                                      Set<? extends Permission> permissions) {
     getPermissions(authorizable, principal).removeAll(permissions);
+    return authorizedResult;
   }
 
   @Override
-  public void revoke(Authorizable authorizable) {
+  public AuthorizationResponse revoke(Principal caller, Authorizable authorizable) {
     InMemoryPrivilegeHolder.getPrivileges().remove(authorizable);
+    return authorizedResult;
   }
 
   @Override
-  public void createRole(Role role) throws AlreadyExistsException {
+  public AuthorizationResponse createRole(Principal caller, Role role) throws AlreadyExistsException {
     if (InMemoryPrivilegeHolder.getRoleToPrincipals().containsKey(role)) {
       throw new AlreadyExistsException(role);
     }
@@ -144,46 +163,55 @@ public class InMemoryAccessController implements AccessController {
     if (InMemoryPrivilegeHolder.getRoleToPrincipals().putIfAbsent(role, principals) != null) {
       throw new AlreadyExistsException(role);
     }
+    return authorizedResult;
   }
 
   @Override
-  public void dropRole(Role role) throws NotFoundException {
+  public AuthorizationResponse dropRole(Principal caller, Role role) throws NotFoundException {
     Set<Principal> removed = InMemoryPrivilegeHolder.getRoleToPrincipals().remove(role);
     if (removed == null) {
       throw new NotFoundException(role);
     }
+    return authorizedResult;
   }
 
   @Override
-  public void addRoleToPrincipal(Role role, Principal principal) throws NotFoundException {
+  public AuthorizationResponse addRoleToPrincipal(Principal caller, Role role, Principal principal)
+  throws NotFoundException {
     Set<Principal> principals = InMemoryPrivilegeHolder.getRoleToPrincipals().get(role);
     if (principals == null) {
       throw new NotFoundException(role);
     }
     principals.add(principal);
+    return authorizedResult;
   }
 
   @Override
-  public void removeRoleFromPrincipal(Role role, Principal principal) throws NotFoundException {
+  public AuthorizationResponse removeRoleFromPrincipal(Principal caller, Role role, Principal principal)
+  throws NotFoundException {
     Set<Principal> principals = InMemoryPrivilegeHolder.getRoleToPrincipals().get(role);
     if (principals == null) {
       throw new NotFoundException(role);
     }
     principals.remove(principal);
+    return new AuthorizationResponse.Builder()
+      .setAuthorized(AuthorizationResponse.AuthorizationStatus.AUTHORIZED)
+      .setAuditLogContext(AuditLogContext.Builder.defaultNotRequired()).build();
   }
 
   @Override
-  public Set<Role> listRoles(Principal principal) {
-    return Collections.unmodifiableSet(getRoles(principal));
+  public AuthorizedResult<Set<Role>> listRoles(Principal caller, Principal principal) {
+    return new AuthorizedResult<>(Collections.unmodifiableSet(getRoles(principal)), authorizedResult);
   }
 
   @Override
-  public Set<Role> listAllRoles() {
-    return Collections.unmodifiableSet(InMemoryPrivilegeHolder.getRoleToPrincipals().keySet());
+  public AuthorizedResult<Set<Role>> listAllRoles(Principal caller) {
+    return new AuthorizedResult<>(
+      Collections.unmodifiableSet(InMemoryPrivilegeHolder.getRoleToPrincipals().keySet()), authorizedResult);
   }
 
   @Override
-  public Set<GrantedPermission> listGrants(Principal principal) {
+  public AuthorizedResult<Set<GrantedPermission>> listGrants(Principal caller, Principal principal) {
     Set<GrantedPermission> privileges = new HashSet<>();
     // privileges for this principal
     privileges.addAll(getPrivileges(principal));
@@ -194,7 +222,7 @@ public class InMemoryAccessController implements AccessController {
         privileges.addAll(getPrivileges(role));
       }
     }
-    return Collections.unmodifiableSet(privileges);
+    return new AuthorizedResult<>(privileges, authorizedResult);
   }
 
   private Set<GrantedPermission> getPrivileges(Principal principal) {

@@ -106,7 +106,7 @@ public class AuthorizationClient implements AccessController {
       throws AccessException {
     GrantRequest grantRequest = new GrantRequest(authorizable, principal, permissions);
 
-    URL url = resolveURL(AUTHORIZATION_BASE + "/privileges/grant");
+    URL url = resolveUrl(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
     executePrivilegeRequest(request);
   }
@@ -123,11 +123,17 @@ public class AuthorizationClient implements AccessController {
     revoke(new RevokeRequest(authorizable, principal, permissions));
   }
 
+  private void revoke(RevokeRequest revokeRequest) throws AccessException {
+    URL url = resolveUrl(AUTHORIZATION_BASE + "/privileges/revoke");
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
+    executePrivilegeRequest(request);
+  }
+
   @Override
   public Set<GrantedPermission> listGrants(Principal principal) throws AccessException {
     String urlStr = String.format(AUTHORIZATION_BASE + "%s/%s/privileges", principal.getType(),
         principal.getName());
-    URL url = resolveURL(urlStr);
+    URL url = resolveUrl(urlStr);
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = doExecuteRequest(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -139,7 +145,7 @@ public class AuthorizationClient implements AccessController {
 
   @Override
   public void createRole(Role role) throws AccessException {
-    URL url = resolveURL(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
+    URL url = resolveUrl(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse httpResponse = doExecuteRequest(request, HttpURLConnection.HTTP_CONFLICT);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
@@ -149,7 +155,7 @@ public class AuthorizationClient implements AccessController {
 
   @Override
   public void dropRole(Role role) throws AccessException {
-    URL url = resolveURL(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
+    URL url = resolveUrl(String.format(AUTHORIZATION_BASE + "roles/%s", role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
   }
@@ -166,30 +172,24 @@ public class AuthorizationClient implements AccessController {
 
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws AccessException {
-    URL url = resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
-        principal.getName(), role.getName()));
+    URL url = resolveUrl(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
+                                       principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
     executeExistingRolesRequest(role, request);
   }
 
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws AccessException {
-    URL url = resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
-        principal.getName(), role.getName()));
+    URL url = resolveUrl(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
+                                       principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
   }
 
-  private void revoke(RevokeRequest revokeRequest) throws AccessException {
-    URL url = resolveURL(AUTHORIZATION_BASE + "/privileges/revoke");
-    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
-    executePrivilegeRequest(request);
-  }
-
   private Set<Role> listRolesHelper(@Nullable Principal principal) throws AccessException {
-    URL url = principal == null ? resolveURL(AUTHORIZATION_BASE + "roles") :
-        resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles", principal.getType(),
-            principal.getName()));
+    URL url = principal == null ? resolveUrl(AUTHORIZATION_BASE + "roles") :
+        resolveUrl(String.format(AUTHORIZATION_BASE + "%s/%s/roles", principal.getType(),
+                                 principal.getName()));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = doExecuteRequest(request);
 
@@ -240,7 +240,7 @@ public class AuthorizationClient implements AccessController {
     }
   }
 
-  private URL resolveURL(String urlStr) throws AccessIOException {
+  private URL resolveUrl(String urlStr) throws AccessIOException {
     try {
       return config.resolveURLV3(urlStr);
     } catch (MalformedURLException e) {
