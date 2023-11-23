@@ -25,7 +25,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
 
-
 /**
  * A {@link PrivateModule} that can be used in tests. Tests can enforce authorization in this module by setting
  * {@link Constants.Security.Authorization#ENABLED} and {@link Constants.Security#ENABLED} to {@code true}. However,
@@ -41,5 +40,7 @@ public class AuthorizationTestModule extends PrivateModule {
     expose(AccessControllerInstantiator.class);
     bind(PermissionManager.class).to(DelegatingPermissionManager.class).in(Scopes.SINGLETON);
     expose(PermissionManager.class);
+    bind(RoleController.class).to(DelegatingRoleController.class).in(Scopes.SINGLETON);;
+    expose(RoleController.class);
   }
 }

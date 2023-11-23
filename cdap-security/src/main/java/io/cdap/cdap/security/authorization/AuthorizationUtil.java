@@ -19,6 +19,7 @@ package io.cdap.cdap.security.authorization;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -30,6 +31,8 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility functions for Authorization
+ * Utility functions for Authorization.
  */
 public final class AuthorizationUtil {
 
@@ -54,8 +57,8 @@ public final class AuthorizationUtil {
   private AuthorizationUtil() {
   }
 
-  /*
-   * Checks the visibility of the entity info in batch size and returns the visible entities
+  /**
+   * Checks the visibility of the entity info in batch size and returns the visible entities.
    *
    * @param entityInfo the entity info to check visibility
    * @param accessEnforcer enforcer to make the authorization check
@@ -87,7 +90,7 @@ public final class AuthorizationUtil {
   }
 
   /**
-   * Checks if authorization is enabled
+   * Checks if authorization is enabled.
    */
   public static boolean isSecurityAuthorizationEnabled(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(
@@ -96,7 +99,7 @@ public final class AuthorizationUtil {
 
   /**
    * Helper function, to run the callable as the principal provided and reset back when the call is
-   * done
+   * done.
    */
   public static <T> T authorizeAs(String userName, Callable<T> callable) throws Exception {
     String oldUserName = SecurityRequestContext.getUserId();
@@ -155,5 +158,59 @@ public final class AuthorizationUtil {
               + "user name.", masterPrincipal), e);
     }
     return masterPrincipal;
+  }
+
+  /**
+   * This method store data in {@link SecurityRequestContext}.
+   */
+  public static void setAuthorizationDataInContext(AuthorizationResponse authorizationResponse) {
+    SecurityRequestContext.enqueueAuditLogContext(authorizationResponse.getAuditLogContext());
+  }
+
+  public static void setAuthorizationDataInContext(Collection<AuthorizationResponse> authorizationResponseList) {
+    authorizationResponseList.stream().forEach(x -> AuthorizationUtil.setAuthorizationDataInContext(x));
+  }
+
+  /**
+   * Throw a {@link UnauthorizedException} if the {@link AuthorizationResponse} is having
+   * "UNAUTHORIZED" state.
+   */
+  public static void throwIfUnauthorized(AuthorizationResponse authorizationResponse) {
+    if (authorizationResponse.isAuthorized() == AuthorizationResponse.AuthorizationStatus.UNAUTHORIZED) {
+      throw createUnauthorizedException(authorizationResponse);
+    }
+  }
+
+  /**
+   * Creates a {@link UnauthorizedException} from a {@link AuthorizationResponse}.
+   *
+   * @return {@link UnauthorizedException}
+   */
+  public static UnauthorizedException createUnauthorizedException(AuthorizationResponse authorizationResponse) {
+    return new UnauthorizedException(authorizationResponse.getPrincipal(),
+                                     authorizationResponse.getMissingPermissions(),
+                                     authorizationResponse.getEntity(),
+                                     null,
+                                     authorizationResponse.isRequiresAllPermissions(),
+                                     authorizationResponse.isIncludePrincipal(),
+                                     authorizationResponse.getAddendum());
+  }
+
+  static void incrementCheckMetricExtension(MetricsContext metricsContext,
+                                            AuthorizationResponse authorizationResponse) {
+    switch (authorizationResponse.isAuthorized()) {
+      case AUTHORIZED:
+        metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_SUCCESS_COUNT, 1);
+        break;
+      case UNAUTHORIZED:
+        metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_UNAUTHORIZED_COUNT, 1);
+        break;
+      case NOT_REQUIRED:
+        metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_BYPASS_COUNT, 1);
+        break;
+
+      default:
+        metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_FAILURE_COUNT, 1);
+    }
   }
 }

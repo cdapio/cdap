@@ -42,6 +42,8 @@ import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
 import io.cdap.cdap.security.authorization.DefaultAuthorizationContext;
 import io.cdap.cdap.security.authorization.DelegatingPermissionManager;
+import io.cdap.cdap.security.authorization.DelegatingRoleController;
+import io.cdap.cdap.security.authorization.RoleController;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
@@ -53,14 +55,13 @@ import org.apache.tephra.TransactionSystemClient;
  * {@link PrivateModule} for authorization classes. This module is necessary and must be in
  * app-fabric because classes like {@link DatasetFramework}, {@link DynamicDatasetCache}, {@link
  * DefaultAdmin} are not available in cdap-security.
- *
  * This module is part of the injector created in StandaloneMain and MasterServiceMain, which makes
  * it available to services. The requirements for this module are: 1. This module is used for
  * creating and exposing {@link AccessControllerInstantiator}. 2. The {@link
  * AccessControllerInstantiator} needs a {@link DefaultAuthorizationContext}. 3. The {@link
  * DefaultAuthorizationContext} needs a {@link DatasetContext}, a {@link Admin} and a {@link
  * Transactional}.
- *
+ * -
  * These requirements are fulfilled by: 1. Constructing a {@link Singleton} {@link
  * MultiThreadDatasetCache} by injecting a {@link DatasetFramework}, a {@link
  * TransactionSystemClient} and a {@link MetricsCollectionService}. This {@link
@@ -99,6 +100,9 @@ public class AuthorizationModule extends PrivateModule {
 
     bind(PermissionManager.class).to(DelegatingPermissionManager.class);
     expose(PermissionManager.class);
+
+    bind(RoleController.class).to(DelegatingRoleController.class);
+    expose(RoleController.class);
   }
 
   @Singleton

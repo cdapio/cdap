@@ -45,12 +45,15 @@ import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.auth.CipherException;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.encryption.FakeAeadCipher;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcerSpi;
 import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.cdap.security.spi.encryption.CipherException;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
@@ -80,17 +83,17 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   private static FakeAeadCipher fakeAeadCipherService;
 
   private static class ControllerWrapper {
-
-    private final AccessController accessController;
+    private final AccessControllerSpi accessController;
     private final DefaultAccessEnforcer defaultAccessEnforcer;
     private final MetricsContext mockMetricsContext;
+    private final AuthenticationContext authenticationContext;
 
-    ControllerWrapper(AccessController accessController,
-        DefaultAccessEnforcer defaultAccessEnforcer,
-        MetricsContext mockMetricsContext) {
+    ControllerWrapper(AccessControllerSpi accessController, DefaultAccessEnforcer defaultAccessEnforcer,
+                      MetricsContext mockMetricsContext, AuthenticationContext authenticationContext) {
       this.accessController = accessController;
       this.defaultAccessEnforcer = defaultAccessEnforcer;
       this.mockMetricsContext = mockMetricsContext;
+      this.authenticationContext = authenticationContext;
     }
   }
 
@@ -100,10 +103,9 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   @BeforeClass
   public static void setupClass() throws Exception {
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes()
-        .put(Attributes.Name.MAIN_CLASS, InMemoryAccessController.class.getName());
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessControllerV2.class.getName());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(
-        locationFactory, InMemoryAccessController.class, manifest);
+      locationFactory, InMemoryAccessControllerV2.class, manifest);
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     fakeAeadCipherService = new FakeAeadCipher();
     fakeAeadCipherService.initialize();
@@ -113,17 +115,18 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
       SConfiguration sConf,
       AccessEnforcer internalAccessEnforcer) {
     MetricsCollectionService mockMetricsCollectionService = mock(MetricsCollectionService.class);
+    SecurityMetricsService securityMetricsService = new SecurityMetricsService(cConf, mockMetricsCollectionService);
     MetricsContext mockMetricsContext = mock(MetricsContext.class);
     when(mockMetricsCollectionService.getContext(any(Map.class))).thenReturn(mockMetricsContext);
-    AccessControllerInstantiator accessControllerInstantiator = new AccessControllerInstantiator(
-        cConf,
-        AUTH_CONTEXT_FACTORY);
-    DefaultAccessEnforcer defaultAccessEnforcer = new DefaultAccessEnforcer(cConf, sConf,
-        accessControllerInstantiator,
-        internalAccessEnforcer,
-        mockMetricsCollectionService, fakeAeadCipherService);
-    return new ControllerWrapper(accessControllerInstantiator.get(), defaultAccessEnforcer,
-        mockMetricsContext);
+    AccessControllerInstantiator accessControllerInstantiator = new AccessControllerInstantiator(cConf,
+                                                                                                 AUTH_CONTEXT_FACTORY);
+    DefaultAccessEnforcer defaultAccessEnforcer = new DefaultAccessEnforcer(cConf, sConf, accessControllerInstantiator,
+                                                                            internalAccessEnforcer,
+                                                                            fakeAeadCipherService,
+                                                                            new AuthenticationTestContext(),
+                                                                            securityMetricsService);
+    return new ControllerWrapper(accessControllerInstantiator.get(), defaultAccessEnforcer, mockMetricsContext,
+                                 new AuthenticationTestContext());
   }
 
   @Test
@@ -144,8 +147,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   public void testPropagationDisabled() throws AccessException {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF, null);
-    controllerWrapper.accessController.grant(Authorizable.fromEntityId(NS), ALICE,
-        ImmutableSet.of(StandardPermission.UPDATE));
+    controllerWrapper.accessController.grant(null, Authorizable.fromEntityId(NS), ALICE,
+                                             ImmutableSet.of(StandardPermission.UPDATE));
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
     accessEnforcer.enforce(NS, ALICE, StandardPermission.UPDATE);
     try {
@@ -166,20 +169,19 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   @Test
   public void testAuthEnforce() throws IOException, AccessException {
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, SCONF, null);
-    AccessController accessController = controllerWrapper.accessController;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer authEnforcementService = controllerWrapper.defaultAccessEnforcer;
     // update privileges for alice. Currently alice has not been granted any privileges.
     assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.UPDATE);
 
     // grant some test privileges
     DatasetId ds = NS.dataset("ds");
-    accessController
-        .grant(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(StandardPermission.GET,
-            StandardPermission.UPDATE));
-    accessController
-        .grant(Authorizable.fromEntityId(ds), BOB, ImmutableSet.of(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(NS, EntityType.DATASET), ALICE,
-        ImmutableSet.of(StandardPermission.LIST));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS), ALICE,
+      ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds), BOB,
+      ImmutableSet.of(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(),
+      Authorizable.fromEntityId(NS, EntityType.DATASET), ALICE, ImmutableSet.of(StandardPermission.LIST));
 
     // auth enforcement for alice should succeed on ns for actions read, write and list datasets
     authEnforcementService
@@ -198,11 +200,11 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     // bob enforcement should succeed since we grant him admin privilege
     authEnforcementService.enforce(ds, BOB, StandardPermission.UPDATE);
     // revoke all of alice's privileges
-    accessController
-        .revoke(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(StandardPermission.GET));
+    accessController.revoke(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS),
+      ALICE, ImmutableSet.of(StandardPermission.GET));
     assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.GET);
 
-    accessController.revoke(Authorizable.fromEntityId(NS));
+    accessController.revoke(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS));
 
     assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.GET);
     assertAuthorizationFailure(authEnforcementService, NS, ALICE, StandardPermission.UPDATE);
@@ -219,8 +221,8 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   @Test
   public void testIsVisible() throws AccessException {
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, SCONF, null);
-    AccessController accessController = controllerWrapper.accessController;
-    DefaultAccessEnforcer authEnforcementService = controllerWrapper.defaultAccessEnforcer;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
+    final DefaultAccessEnforcer authEnforcementService = controllerWrapper.defaultAccessEnforcer;
 
     NamespaceId ns1 = new NamespaceId("ns1");
     NamespaceId ns2 = new NamespaceId("ns2");
@@ -229,31 +231,30 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     DatasetId ds21 = ns2.dataset("ds21");
     DatasetId ds22 = ns2.dataset("ds22");
     DatasetId ds23 = ns2.dataset("ds33");
-    Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
     // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
-    accessController.grant(Authorizable.fromEntityId(ns1), ALICE,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(ns2), ALICE,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(ds11), ALICE,
-        Collections.singleton(StandardPermission.GET));
-    accessController.grant(Authorizable.fromEntityId(ds11), BOB,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(ds21), ALICE,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(ds12), BOB,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController
-        .grant(Authorizable.fromEntityId(ds12), BOB, EnumSet.allOf(StandardPermission.class));
-    accessController.grant(Authorizable.fromEntityId(ds21), ALICE,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(ds23), ALICE,
-        Collections.singleton(StandardPermission.UPDATE));
-    accessController.grant(Authorizable.fromEntityId(ds22), BOB,
-        Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ns1),
+      ALICE, Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ns2),
+      ALICE, Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds11),
+      ALICE, Collections.singleton(StandardPermission.GET));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds11), BOB,
+      Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds21),
+      ALICE, Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds12), BOB,
+      Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds12), BOB,
+      EnumSet.allOf(StandardPermission.class));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds21),
+      ALICE, Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds23),
+      ALICE, Collections.singleton(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds22), BOB,
+      Collections.singleton(StandardPermission.UPDATE));
 
-    Assert.assertEquals(namespaces.size(),
-        authEnforcementService.isVisible(namespaces, ALICE).size());
+    Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
+    Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, ALICE).size());
     // bob should also be able to list two namespaces since he has privileges on the dataset in both namespaces
     Assert
         .assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, BOB).size());
@@ -286,14 +287,12 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
         new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
-    AccessController accessController = controllerWrapper.accessController;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
 
-    assertAuthorizationFailure(accessEnforcer, NS, userWithCredEncrypted,
-        StandardPermission.UPDATE);
-
-    accessController.grant(Authorizable.fromEntityId(NS), userWithCredEncrypted,
-        ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    assertAuthorizationFailure(accessEnforcer, NS, userWithCredEncrypted, StandardPermission.UPDATE);
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS),
+      userWithCredEncrypted, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
     accessEnforcer.enforce(NS, userWithCredEncrypted, StandardPermission.GET);
     accessEnforcer.enforce(NS, userWithCredEncrypted, StandardPermission.UPDATE);
@@ -321,11 +320,11 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
             Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
-    AccessController accessController = controllerWrapper.accessController;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
 
-    accessController.grant(Authorizable.fromEntityId(NS), userWithCredEncrypted,
-        ImmutableSet.of(StandardPermission.GET, StandardPermission.GET));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS),
+      userWithCredEncrypted, ImmutableSet.of(StandardPermission.GET, StandardPermission.GET));
 
     accessEnforcer.enforce(NS, userWithCredEncrypted, StandardPermission.GET);
     // Verify the metrics context was not called
@@ -344,15 +343,15 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
         new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
     ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
-    AccessController accessController = controllerWrapper.accessController;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
 
     Set<NamespaceId> namespaces = ImmutableSet.of(NS);
 
     Assert.assertEquals(0, accessEnforcer.isVisible(namespaces, userWithCredEncrypted).size());
 
-    accessController.grant(Authorizable.fromEntityId(NS), userWithCredEncrypted,
-        ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS),
+      userWithCredEncrypted, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
 
     Assert.assertEquals(1, accessEnforcer.isVisible(namespaces, userWithCredEncrypted).size());
     // Verify the metrics context was called with correct metrics
@@ -388,14 +387,13 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
             Credential.CredentialType.INTERNAL));
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
-    ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF,
-        new NoOpAccessController());
-    AccessController accessController = controllerWrapper.accessController;
+    ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF, new NoOpAccessController());
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
     // Make sure that the actual access controller does not have access.
-    assertAuthorizationFailure(accessController, NS, userWithInternalCred, StandardPermission.GET);
-    assertAuthorizationFailure(accessController, NS, userWithInternalCred,
-        StandardPermission.UPDATE);
+    assertAuthorizationFailureV2(accessController, NS, userWithInternalCred, StandardPermission.GET);
+    assertAuthorizationFailureV2(accessController, NS, userWithInternalCred, StandardPermission.UPDATE);
+
     // The no-op access enforcer allows all requests through, so this should succeed if it is using the right
     // access controller.
     accessEnforcer.enforce(NS, userWithInternalCred, StandardPermission.GET);
@@ -412,14 +410,12 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
             Credential.CredentialType.INTERNAL));
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
-    ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF,
-        new NoOpAccessController());
-    AccessController accessController = controllerWrapper.accessController;
+    ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF, new NoOpAccessController());
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
     Set<EntityId> namespaces = ImmutableSet.of(NS);
     // Make sure that the actual access controller does not have access.
-    Assert.assertEquals(Collections.emptySet(),
-        accessController.isVisible(namespaces, userWithInternalCred));
+    Assert.assertEquals(Collections.emptyMap(), accessController.isVisible(namespaces, userWithInternalCred));
     // The no-op access enforcer allows all requests through, so this should succeed if it is using the right
     // access controller.
     Assert.assertEquals(namespaces, accessEnforcer.isVisible(namespaces, userWithInternalCred));
@@ -433,14 +429,12 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.setBoolean(Constants.Metrics.AUTHORIZATION_METRICS_ENABLED, false);
     ControllerWrapper controllerWrapper = createControllerWrapper(cConfCopy, SCONF, null);
-    AccessController accessController = controllerWrapper.accessController;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer accessEnforcer = controllerWrapper.defaultAccessEnforcer;
     DatasetId ds = NS.dataset("ds");
-    accessController
-        .grant(Authorizable.fromEntityId(NS), ALICE, ImmutableSet.of(StandardPermission.GET,
-            StandardPermission.UPDATE));
-    accessEnforcer
-        .enforce(NS, ALICE, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(NS), ALICE,
+      ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
+    accessEnforcer.enforce(NS, ALICE, ImmutableSet.of(StandardPermission.GET, StandardPermission.UPDATE));
     // Verify the metrics context was not called
     verify(controllerWrapper.mockMetricsContext, times(0))
         .increment(any(String.class), any(Long.class));
@@ -456,12 +450,12 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
 
   private void verifyDisabled(CConfiguration cConf) throws IOException, AccessException {
     ControllerWrapper controllerWrapper = createControllerWrapper(cConf, SCONF, null);
-    AccessController accessController = controllerWrapper.accessController;
+    AccessControllerSpi accessController = controllerWrapper.accessController;
     DefaultAccessEnforcer authEnforcementService = controllerWrapper.defaultAccessEnforcer;
     DatasetId ds = NS.dataset("ds");
     // All enforcement operations should succeed, since authorization is disabled
-    accessController.grant(Authorizable.fromEntityId(ds), BOB,
-        ImmutableSet.of(StandardPermission.UPDATE));
+    accessController.grant(controllerWrapper.authenticationContext.getPrincipal(), Authorizable.fromEntityId(ds), BOB,
+                           ImmutableSet.of(StandardPermission.UPDATE));
     authEnforcementService.enforce(NS, ALICE, StandardPermission.UPDATE);
     authEnforcementService.enforce(ds, BOB, StandardPermission.UPDATE);
     authEnforcementService.enforce(NS, BOB, StandardPermission.GET);
@@ -488,25 +482,37 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   }
 
   private void assertAuthorizationFailure(AccessEnforcer authEnforcementService,
-      EntityType entityType,
-      EntityId parentId, Principal principal,
-      Permission permission) throws AccessException {
+                                          EntityType entityType,
+                                          EntityId parentId, Principal principal,
+                                          Permission permission) throws AccessException {
     try {
       authEnforcementService.enforceOnParent(entityType, parentId, principal, permission);
       Assert.fail(String.format("Expected %s to not have '%s' privilege on %s in %s but it does.",
-          principal, permission, entityType, parentId));
+                                principal, permission, entityType, parentId));
     } catch (UnauthorizedException expected) {
       // expected
     }
   }
 
   private void assertAuthorizationFailure(AccessEnforcer authEnforcementService,
-      EntityId entityId, Principal principal,
-      Set<? extends Permission> permissions) throws AccessException {
+                                          EntityId entityId, Principal principal,
+                                          Set<? extends Permission> permissions) throws AccessException {
     try {
       authEnforcementService.enforce(entityId, principal, permissions);
       Assert.fail(String.format("Expected %s to not have '%s' privileges on %s but it does.",
-          principal, permissions, entityId));
+                                principal, permissions, entityId));
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+  }
+
+  private void assertAuthorizationFailureV2(AccessEnforcerSpi authEnforcementService,
+                                            EntityId entityId, Principal principal,
+                                            Permission permission) throws AccessException {
+    try {
+      authEnforcementService.enforce(entityId, principal, permission);
+      Assert.fail(String.format("Expected %s to not have '%s' privilege on %s but it does.",
+                                principal, permission, entityId));
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -518,7 +524,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     NamespaceId namespaceId = new NamespaceId(namespaceName);
     Map<String, String> expectedTags = new HashMap<>();
     expectedTags.put(Constants.Metrics.Tag.NAMESPACE, namespaceName);
-    Map<String, String> tags = DefaultAccessEnforcer.createEntityIdMetricsTags(namespaceId);
+    Map<String, String> tags = SecurityMetricsService.createEntityIdMetricsTags(namespaceId);
     Assert.assertEquals(expectedTags, tags);
   }
 
@@ -536,7 +542,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     expectedTags.put(Constants.Metrics.Tag.PROGRAM, programName);
     expectedTags.put(Constants.Metrics.Tag.PROGRAM_TYPE,
         ProgramTypeMetricTag.getTagName(programId.getType()));
-    Map<String, String> tags = DefaultAccessEnforcer.createEntityIdMetricsTags(programId);
+    Map<String, String> tags = SecurityMetricsService.createEntityIdMetricsTags(programId);
     Assert.assertEquals(expectedTags, tags);
   }
 }

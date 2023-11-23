@@ -22,6 +22,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -98,6 +99,7 @@ public class SecureStoreTest {
           bind(AccessEnforcer.class).to(NoOpAccessController.class);
           bind(NamespaceAdmin.class).to(InMemoryNamespaceAdmin.class).in(Scopes.SINGLETON);
           bind(NamespaceQueryAdmin.class).to(NamespaceAdmin.class);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       }
     );
@@ -116,7 +118,7 @@ public class SecureStoreTest {
     httpServer.stop();
   }
 
-  private URL getURL(String path) throws MalformedURLException {
+  private URL getUrl(String path) throws MalformedURLException {
     if (!path.startsWith("/")) {
       path = "/" + path;
     }
@@ -182,19 +184,19 @@ public class SecureStoreTest {
   }
 
   public HttpResponse create(String key, SecureKeyCreateRequest keyCreateRequest) throws Exception {
-    return HttpRequests.execute(HttpRequest.put(getURL("/v3/namespaces/default/securekeys/" + key))
+    return HttpRequests.execute(HttpRequest.put(getUrl("/v3/namespaces/default/securekeys/" + key))
                                   .withBody(GSON.toJson(keyCreateRequest)).build());
   }
 
   public HttpResponse get(String key) throws Exception {
-    return HttpRequests.execute(HttpRequest.get(getURL("/v3/namespaces/default/securekeys/" + key)).build());
+    return HttpRequests.execute(HttpRequest.get(getUrl("/v3/namespaces/default/securekeys/" + key)).build());
   }
 
   public HttpResponse delete(String key) throws Exception {
-    return HttpRequests.execute(HttpRequest.delete(getURL("/v3/namespaces/default/securekeys/" + key)).build());
+    return HttpRequests.execute(HttpRequest.delete(getUrl("/v3/namespaces/default/securekeys/" + key)).build());
   }
 
   public HttpResponse list() throws Exception {
-    return HttpRequests.execute(HttpRequest.get(getURL("/v3/namespaces/default/securekeys")).build());
+    return HttpRequests.execute(HttpRequest.get(getUrl("/v3/namespaces/default/securekeys")).build());
   }
 }

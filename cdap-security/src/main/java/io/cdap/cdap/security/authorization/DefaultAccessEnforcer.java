@@ -20,35 +20,37 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.conf.SConfiguration;
-import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.security.encryption.AeadCipher;
 import io.cdap.cdap.security.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
+import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.encryption.CipherException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * the master. It calls the access controller directly to enforce authorization policies.
  */
 @Singleton
-public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
+public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements RoleController {
 
   public static final String INTERNAL_ACCESS_ENFORCER = "internal";
 
@@ -71,18 +73,17 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   private final int logTimeTakenAsWarn;
   private final AccessEnforcer internalAccessEnforcer;
   private final boolean internalAuthEnabled;
-  private final boolean metricsCollectionEnabled;
-  private final boolean metricsTagsEnabled;
-  private final MetricsCollectionService metricsCollectionService;
   private final AeadCipher userEncryptionAeadCipher;
+  private final AuthenticationContext authenticationContext;
+  private final SecurityMetricsService securityMetricsService;
 
   @Inject
   DefaultAccessEnforcer(CConfiguration cConf, SConfiguration sConf,
       AccessControllerInstantiator accessControllerInstantiator,
       @Named(INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer,
-      MetricsCollectionService metricsCollectionService,
-      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION)
-          AeadCipher userEncryptionAeadCipher) {
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher,
+      AuthenticationContext authenticationContext,
+      SecurityMetricsService securityMetricsService) {
     super(cConf);
     this.sConf = sConf;
     this.accessControllerInstantiator = accessControllerInstantiator;
@@ -93,18 +94,15 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
         Constants.Security.Authorization.EXTENSION_OPERATION_TIME_WARN_THRESHOLD);
     this.internalAccessEnforcer = internalAccessEnforcer;
     this.internalAuthEnabled = SecurityUtil.isInternalAuthEnabled(cConf);
-    this.metricsCollectionEnabled = cConf.getBoolean(
-        Constants.Metrics.AUTHORIZATION_METRICS_ENABLED, false);
-    this.metricsTagsEnabled = cConf.getBoolean(Constants.Metrics.AUTHORIZATION_METRICS_TAGS_ENABLED,
-        false);
-    this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = userEncryptionAeadCipher;
+    this.authenticationContext = authenticationContext;
+    this.securityMetricsService = securityMetricsService;
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-      throws AccessException {
-    MetricsContext metricsContext = createEntityIdMetricsContext(entity);
+  public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions) {
+    MetricsContext metricsContext = securityMetricsService.createEntityIdMetricsContext(entity);
+    AuthorizationResponse authorizationResponse;
     if (internalAuthEnabled && principal.getFullCredential() != null
         && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforce({}, {}, {})", entity, principal, permissions);
@@ -121,8 +119,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
       return;
     }
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity,
-        principal)) {
+    if (isAccessingSystemNsasMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity,
+                                                                                           principal)) {
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_BYPASS_COUNT, 1);
       return;
     }
@@ -132,8 +130,10 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     LOG.trace("Enforcing permissions {} on {} for principal {}.", permissions, entity, principal);
     long startTime = System.nanoTime();
     try {
-      accessControllerInstantiator.get().enforce(entity, principal, permissions);
-      metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_SUCCESS_COUNT, 1);
+      authorizationResponse = accessControllerInstantiator.get().enforce(entity, principal, permissions);
+      AuthorizationUtil.incrementCheckMetricExtension(metricsContext, authorizationResponse);
+      AuthorizationUtil.setAuthorizationDataInContext(authorizationResponse);
+      AuthorizationUtil.throwIfUnauthorized(authorizationResponse);
     } catch (Throwable e) {
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_FAILURE_COUNT, 1);
       throw e;
@@ -153,7 +153,8 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
       Permission permission)
       throws AccessException {
-    MetricsContext metricsContext = createEntityIdMetricsContext(parentId);
+    MetricsContext metricsContext = securityMetricsService.createEntityIdMetricsContext(parentId);
+    AuthorizationResponse authorizationResponse;
     if (internalAuthEnabled && principal.getFullCredential() != null
         && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforceOnParent({}, {}, {})", parentId, principal, permission);
@@ -172,7 +173,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     }
 
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(
+    if (isAccessingSystemNsasMasterUser(parentId, principal) || isEnforcingOnSamePrincipalId(
         parentId, principal)) {
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_BYPASS_COUNT, 1);
       return;
@@ -184,9 +185,11 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
         parentId, principal);
     long startTime = System.nanoTime();
     try {
-      accessControllerInstantiator.get()
+      authorizationResponse = accessControllerInstantiator.get()
           .enforceOnParent(entityType, parentId, principal, permission);
-      metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_SUCCESS_COUNT, 1);
+      AuthorizationUtil.incrementCheckMetricExtension(metricsContext, authorizationResponse);
+      AuthorizationUtil.setAuthorizationDataInContext(authorizationResponse);
+      AuthorizationUtil.throwIfUnauthorized(authorizationResponse);
     } catch (Throwable e) {
       metricsContext.increment(Constants.Metrics.Authorization.EXTENSION_CHECK_FAILURE_COUNT, 1);
       throw e;
@@ -206,7 +209,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
       throws AccessException {
     // Pass null for creating metrics context. Aggregations are not supported for visibility checks.
-    MetricsContext metricsContext = createEntityIdMetricsContext(null);
+    MetricsContext metricsContext = securityMetricsService.createEntityIdMetricsContext(null);
     if (internalAuthEnabled && principal.getFullCredential() != null
         && principal.getFullCredential().getType() == Credential.CredentialType.INTERNAL) {
       LOG.trace("Internal Principal enforce({}, {})", entityIds, principal);
@@ -224,7 +227,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     Set<EntityId> visibleEntities = new HashSet<>();
     // filter out entity id which is in system namespace and principal is the master user
     for (EntityId entityId : entityIds) {
-      if (isAccessingSystemNSAsMasterUser(entityId, principal) || isEnforcingOnSamePrincipalId(
+      if (isAccessingSystemNsasMasterUser(entityId, principal) || isEnforcingOnSamePrincipalId(
           entityId, principal)) {
         visibleEntities.add(entityId);
       }
@@ -237,7 +240,16 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
     Set<? extends EntityId> moreVisibleEntities;
     long startTime = System.nanoTime();
     try {
-      moreVisibleEntities = accessControllerInstantiator.get().isVisible(difference, principal);
+      Map<? extends EntityId, AuthorizationResponse> mapOfEntityResult =
+        accessControllerInstantiator.get().isVisible(difference, principal);
+      List<AuthorizationResponse> checkResults = mapOfEntityResult.values().stream()
+        .collect(Collectors.toList());
+      AuthorizationUtil.setAuthorizationDataInContext(checkResults);
+      moreVisibleEntities = mapOfEntityResult.entrySet()
+          .stream()
+          .filter(entry -> entry.getValue().isAuthorized() != AuthorizationResponse.AuthorizationStatus.UNAUTHORIZED)
+          .map(Map.Entry::getKey)
+          .collect(Collectors.toSet());
     } finally {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       metricsContext.gauge(Constants.Metrics.Authorization.EXTENSION_VISIBILITY_MILLIS, timeTaken);
@@ -282,7 +294,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
   }
 
 
-  private boolean isAccessingSystemNSAsMasterUser(EntityId entityId, Principal principal) {
+  private boolean isAccessingSystemNsasMasterUser(EntityId entityId, Principal principal) {
     return entityId instanceof NamespacedEntityId
         && ((NamespacedEntityId) entityId).getNamespaceId().equals(NamespaceId.SYSTEM)
         && principal.equals(masterUser);
@@ -293,66 +305,85 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
         && principal.getName().equals(entityId.getEntityName());
   }
 
-  /**
-   * Constructs metrics tags for a given entity ID.
-   */
-  static Map<String, String> createEntityIdMetricsTags(EntityId entityId) {
-    Map<String, String> tags = new HashMap<>();
-    for (EntityId currEntityId : entityId.getHierarchy()) {
-      addTagsForEntityId(tags, currEntityId);
-    }
-    return tags;
+  @Override
+  public void createRole(Role role) throws AccessException {
+    AuthorizationResponse authorizationResponse = accessControllerInstantiator.get()
+      .createRole(authenticationContext.getPrincipal(), role);
+    AuthorizationUtil.setAuthorizationDataInContext(authorizationResponse);
+    AuthorizationUtil.throwIfUnauthorized(authorizationResponse);
+    AuthorizationUtil
+      .incrementCheckMetricExtension(securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF),
+                                     authorizationResponse);
   }
 
-  private static void addTagsForEntityId(Map<String, String> tags, EntityId entityId) {
-    switch (entityId.getEntityType()) {
-      case INSTANCE:
-        tags.put(Constants.Metrics.Tag.INSTANCE_ID, entityId.getEntityName());
-        break;
-      case NAMESPACE:
-        tags.put(Constants.Metrics.Tag.NAMESPACE, entityId.getEntityName());
-        break;
-      case PROGRAM_RUN:
-        ProgramRunId programRunId = (ProgramRunId) entityId;
-        tags.put(Constants.Metrics.Tag.RUN_ID, entityId.getEntityName());
-        tags.put(ProgramTypeMetricTag.getTagName(programRunId.getType()),
-            programRunId.getProgram());
-        break;
-      case DATASET:
-        tags.put(Constants.Metrics.Tag.DATASET, entityId.getEntityName());
-        break;
-      case APPLICATION:
-        tags.put(Constants.Metrics.Tag.APP, entityId.getEntityName());
-        break;
-      case PROGRAM:
-        ProgramId programId = (ProgramId) entityId;
-        tags.put(Constants.Metrics.Tag.PROGRAM, programId.getProgram());
-        tags.put(Constants.Metrics.Tag.PROGRAM_TYPE,
-            ProgramTypeMetricTag.getTagName(programId.getType()));
-        break;
-      case PROFILE:
-        tags.put(Constants.Metrics.Tag.PROFILE, entityId.getEntityName());
-        break;
-      case OPERATION_RUN:
-        tags.put(Constants.Metrics.Tag.OPERATION_RUN, entityId.getEntityName());
-        break;
-      default:
-        // No tags to set
-    }
+  @Override
+  public void dropRole(Role role) throws AccessException {
+    AuthorizationResponse authorizationResponse = accessControllerInstantiator.get()
+      .dropRole(authenticationContext.getPrincipal(), role);
+    AuthorizationUtil.setAuthorizationDataInContext(authorizationResponse);
+    AuthorizationUtil.throwIfUnauthorized(authorizationResponse);
+    AuthorizationUtil
+      .incrementCheckMetricExtension(
+        securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF), authorizationResponse);
   }
 
-  /**
-   * Constructs tags and returns a metrics context for a given entity ID.
-   */
-  private MetricsContext createEntityIdMetricsContext(EntityId entityId) {
-    if (!metricsCollectionEnabled) {
-      return new NoopMetricsContext();
-    }
-    Map<String, String> tags = Collections.emptyMap();
-    if (metricsTagsEnabled && entityId != null) {
-      tags = createEntityIdMetricsTags(entityId);
-    }
-    return metricsCollectionService == null ? new NoopMetricsContext(tags)
-        : metricsCollectionService.getContext(tags);
+  @Override
+  public void addRoleToPrincipal(Role role, Principal principal) throws AccessException {
+    AuthorizationResponse authorizationResponse = accessControllerInstantiator.get()
+      .addRoleToPrincipal(authenticationContext.getPrincipal(), role, principal);
+    AuthorizationUtil.setAuthorizationDataInContext(authorizationResponse);
+    AuthorizationUtil.throwIfUnauthorized(authorizationResponse);
+    AuthorizationUtil
+      .incrementCheckMetricExtension(
+        securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF), authorizationResponse);
+  }
+
+  @Override
+  public void removeRoleFromPrincipal(Role role, Principal principal) throws AccessException {
+    AuthorizationResponse authorizationResponse =
+      accessControllerInstantiator.get().removeRoleFromPrincipal(authenticationContext.getPrincipal(), role, principal);
+    AuthorizationUtil.setAuthorizationDataInContext(authorizationResponse);
+    AuthorizationUtil.throwIfUnauthorized(authorizationResponse);
+    AuthorizationUtil
+      .incrementCheckMetricExtension(
+        securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF), authorizationResponse);
+  }
+
+  @Override
+  public Set<Role> listRoles(Principal principal) throws AccessException {
+    AuthorizedResult<Set<Role>> roleAuthResult =
+      accessControllerInstantiator.get().listRoles(authenticationContext.getPrincipal(), principal);
+    AuthorizationUtil.setAuthorizationDataInContext(roleAuthResult.getAuthorizationResponse());
+    AuthorizationUtil.throwIfUnauthorized(roleAuthResult.getAuthorizationResponse());
+    AuthorizationUtil
+      .incrementCheckMetricExtension(
+        securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF),
+        roleAuthResult.getAuthorizationResponse());
+    return roleAuthResult.getResult();
+  }
+
+  @Override
+  public Set<Role> listAllRoles() throws AccessException {
+    AuthorizedResult<Set<Role>> roleAuthResult = accessControllerInstantiator.get()
+      .listAllRoles(authenticationContext.getPrincipal());
+    AuthorizationUtil.setAuthorizationDataInContext(roleAuthResult.getAuthorizationResponse());
+    AuthorizationUtil.throwIfUnauthorized(roleAuthResult.getAuthorizationResponse());
+    AuthorizationUtil
+      .incrementCheckMetricExtension(
+        securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF),
+        roleAuthResult.getAuthorizationResponse());
+    return roleAuthResult.getResult();
+  }
+
+  @Override
+  public Set<GrantedPermission> listGrants(Principal principal) throws AccessException {
+    AuthorizedResult<Set<GrantedPermission>> grantedPermissionAuthResult =
+      accessControllerInstantiator.get().listGrants(authenticationContext.getPrincipal(), principal);
+    AuthorizationUtil.setAuthorizationDataInContext(grantedPermissionAuthResult.getAuthorizationResponse());
+    AuthorizationUtil.throwIfUnauthorized(grantedPermissionAuthResult.getAuthorizationResponse());
+    AuthorizationUtil
+      .incrementCheckMetricExtension(securityMetricsService.createEntityIdMetricsContext(InstanceId.SELF),
+                                     grantedPermissionAuthResult.getAuthorizationResponse());
+    return grantedPermissionAuthResult.getResult();
   }
 }
