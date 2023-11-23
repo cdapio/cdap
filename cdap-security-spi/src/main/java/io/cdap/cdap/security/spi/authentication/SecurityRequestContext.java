@@ -13,10 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.security.spi.authentication;
 
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import javax.annotation.Nullable;
 
 /**
@@ -28,12 +32,15 @@ public final class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
   private static final ThreadLocal<Credential> userCredential = new InheritableThreadLocal<>();
   private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
+  private static final ThreadLocal<Queue<AuditLogContext>> auditLogContextQueue = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }
 
   /**
-   * @return the userId set on the current thread or null if userId is not set
+   * Get the userId set on the current thread or null if userId is not set.
+   *
+   * @return the userId in String
    */
   @Nullable
   public static String getUserId() {
@@ -41,7 +48,9 @@ public final class SecurityRequestContext {
   }
 
   /**
-   * @return the user credential set on the current thread or null if user credential is not set
+   * Get the user credential set on the current thread or null if user credential is not set.
+   *
+   * @return the user {@link Credential}
    */
   @Nullable
   public static Credential getUserCredential() {
@@ -49,10 +58,12 @@ public final class SecurityRequestContext {
   }
 
   /**
-   * @return the userIP set on the current thread or null if userIP is not set
+   * Get the userIP set on the current thread or null if userIP is not set.
+   *
+   * @return the userIP in string
    */
   @Nullable
-  public static String getUserIP() {
+  public static String getUserIp() {
     return userIP.get();
   }
 
@@ -77,25 +88,47 @@ public final class SecurityRequestContext {
   /**
    * Set the userIP on the current thread.
    *
-   * @param userIPParam userIP to be set
+   * @param userIpParam userIP to be set
    */
-  public static void setUserIP(String userIPParam) {
-    userIP.set(userIPParam);
+  public static void setUserIp(String userIpParam) {
+    userIP.set(userIpParam);
   }
 
   /**
-   * Returns a {@link Principal} for the user set on the current thread
+   * Returns a {@link Principal} for the user set on the current thread.
    */
   public static Principal toPrincipal() {
     return new Principal(userId.get(), Principal.PrincipalType.USER, userCredential.get());
   }
 
   /**
-   * Clears security state for this thread
+   * Clears security state for this thread.
    */
   public static void reset() {
     userId.remove();
     userIP.remove();
     userCredential.remove();
+    auditLogContextQueue.remove();
+  }
+
+  /**
+   * Creates a queue if not present and adds the {@link AuditLogContext} to it.
+   */
+  public static void enqueueAuditLogContext(AuditLogContext auditLog) {
+    Queue<AuditLogContext> queue = auditLogContextQueue.get();
+    if (queue == null) {
+      ArrayDeque<AuditLogContext> newQueue = new ArrayDeque<>();
+      newQueue.add(auditLog);
+      auditLogContextQueue.set(newQueue);
+    } else {
+      queue.add(auditLog);
+    }
+  }
+
+  /**
+   * Resets / removes the audit log queue.
+   */
+  public static void clearAuditLogQueue(AuditLogContext auditLog) {
+    auditLogContextQueue.remove();
   }
 }

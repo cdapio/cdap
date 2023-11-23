@@ -28,7 +28,7 @@ import io.cdap.cdap.proto.security.PermissionType;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
 import io.cdap.cdap.security.server.BasicAuthenticationHandler;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.cli.CLI;
@@ -56,7 +56,7 @@ import org.junit.runners.model.Statement;
 /**
  * Tests authorization CLI commands. These tests are in their own class because they need authorization enabled.
  */
-public class AuthorizationCLITest  {
+public class AuthorizationCliTest {
 
   /**
    * An {@link ExternalResource} that wraps a {@link TemporaryFolder} and {@link StandaloneTester} to execute them in
@@ -81,7 +81,7 @@ public class AuthorizationCLITest  {
     /**
      * Return the base URI of Standalone for use in tests.
      */
-    public URI getBaseURI() {
+    public URI getBaseUri() {
       return standaloneTester.getBaseURI();
     }
 
@@ -90,10 +90,10 @@ public class AuthorizationCLITest  {
       Location realmfile = locationFactory.create("realmfile");
       realmfile.createNew();
       File file = new File(AppJarHelper.createDeploymentJar(locationFactory,
-                                                            InMemoryAccessController.AuthorizableEntityId.class)
+                                                            InMemoryAccessControllerV2.AuthorizableEntityId.class)
                              .toURI());
       Location authExtensionJar = AppJarHelper.createDeploymentJar(
-        locationFactory, InMemoryAccessController.class, file);
+        locationFactory, InMemoryAccessControllerV2.class, file);
       return new String[] {
         // We want to enable security, but bypass it for only testing authorization commands
         Constants.Security.ENABLED, "true",
@@ -123,11 +123,11 @@ public class AuthorizationCLITest  {
 
   @BeforeClass
   public static void setup() throws Exception {
-    CLIConfig cliConfig = CLITestBase.createCLIConfig(AUTH_STANDALONE.getBaseURI());
+    CLIConfig cliConfig = CLITestBase.createCLIConfig(AUTH_STANDALONE.getBaseUri());
     LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
     CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
     cli = cliMain.getCLI();
-    CLITestBase.testCommandOutputContains(cli, "connect " + AUTH_STANDALONE.getBaseURI(), "Successfully connected");
+    CLITestBase.testCommandOutputContains(cli, "connect " + AUTH_STANDALONE.getBaseUri(), "Successfully connected");
     authorizationClient = new AuthorizationClient(cliConfig.getClientConfig());
     // Grant the privileges on the instance first. This is so that the current user can create a namespace.
     // This needs to be done using the client because in these tests, it is impossible to set the
@@ -139,7 +139,7 @@ public class AuthorizationCLITest  {
   }
 
   @Test
-  public void testAuthorizationCLI() throws Exception {
+  public void testAuthorizationCli() throws Exception {
     Role role = new Role("admins");
     Principal principal = new Principal("spiderman", Principal.PrincipalType.USER);
 

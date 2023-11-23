@@ -72,8 +72,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
@@ -84,7 +84,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
-import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -249,15 +249,6 @@ public class AppFabricTestHelper {
     ensureNamespaceExists(namespaceId, CConfiguration.create());
   }
 
-  private static <T> T startService(Injector injector, Class<T> cls) {
-    T instance = injector.getInstance(cls);
-    if (instance instanceof Service) {
-      services.add((Service) instance);
-      ((Service) instance).startAndWait();
-    }
-    return instance;
-  }
-
   private static void ensureNamespaceExists(NamespaceId namespaceId, CConfiguration cConf) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
     try {
@@ -272,18 +263,18 @@ public class AppFabricTestHelper {
     }
   }
 
+  private static <T> T startService(Injector injector, Class<T> cls) {
+    T instance = injector.getInstance(cls);
+    if (instance instanceof Service) {
+      services.add((Service) instance);
+      ((Service) instance).startAndWait();
+    }
+    return instance;
+  }
+
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        @Nullable String config, CConfiguration cConf) throws Exception {
     deployApplication(namespace, applicationClz, config, null, cConf);
-  }
-
-
-  public static ApplicationDetail getAppInfo(Id.Namespace namespace, String appName, CConfiguration cConf)
-    throws Exception {
-    ensureNamespaceExists(namespace.toEntityId(), cConf);
-    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
-    ApplicationId appId = new ApplicationId(namespace.getId(), appName);
-    return appFabricClient.getInfo(appId);
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
@@ -295,6 +286,13 @@ public class AppFabricTestHelper {
     deployedJar.delete(true);
   }
 
+  public static ApplicationDetail getAppInfo(Id.Namespace namespace, String appName, CConfiguration cConf)
+    throws Exception {
+    ensureNamespaceExists(namespace.toEntityId(), cConf);
+    AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
+    ApplicationId appId = new ApplicationId(namespace.getId(), appName);
+    return appFabricClient.getInfo(appId);
+  }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      Supplier<File> folderSupplier) throws Exception {
@@ -416,10 +414,10 @@ public class AppFabricTestHelper {
     confSetter.accept(Constants.Security.KERBEROS_ENABLED, Boolean.toString(false));
     confSetter.accept(Constants.Security.Authorization.ENABLED, Boolean.toString(true));
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessController.class.getName());
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessControllerV2.class.getName());
     LocationFactory locationFactory = new LocalLocationFactory(temporaryFolder.newFolder());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(
-      locationFactory, InMemoryAccessController.class, manifest);
+      locationFactory, InMemoryAccessControllerV2.class, manifest);
     confSetter.accept(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     confSetter.accept(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers",
               UserGroupInformation.getCurrentUser().getShortUserName());

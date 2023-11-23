@@ -130,10 +130,11 @@ import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.InvalidAccessControllerException;
+import io.cdap.cdap.security.authorization.RoleController;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -213,6 +214,8 @@ public class TestBase {
   private static TestManager testManager;
   private static NamespaceAdmin namespaceAdmin;
   private static AccessControllerInstantiator accessControllerInstantiator;
+  private static RoleController roleController;
+  private static PermissionManager permissionManager;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static MessagingService messagingService;
@@ -234,6 +237,9 @@ public class TestBase {
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
 
+  /**
+   * Method to initialize, inject and start services.
+   */
   @BeforeClass
   public static void initialize() throws Exception {
     if (nestedStartCount++ > 0) {
@@ -247,11 +253,11 @@ public class TestBase {
     File localDataDir = TMP_FOLDER.newFolder();
 
     customConfiguration = getCustomConfiguration();
-    cConf = createCConf(localDataDir, customConfiguration);
+    cConf = createCconf(localDataDir, customConfiguration);
 
-    CConfiguration previewCConf = createPreviewConf(cConf);
-    LevelDBTableService previewLevelDBTableService = new LevelDBTableService();
-    previewLevelDBTableService.setConfiguration(previewCConf);
+    CConfiguration previewCconf = createPreviewConf(cConf);
+    LevelDBTableService previewLevelDbTableService = new LevelDBTableService();
+    previewLevelDbTableService.setConfiguration(previewCconf);
 
     //enable default services
     File capabilityFolder = new File(localDataDir.toString(), "capability");
@@ -366,6 +372,8 @@ public class TestBase {
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
+    roleController = injector.getInstance(RoleController.class);
+    permissionManager = injector.getInstance(PermissionManager.class);
 
     namespaceAdminPermissions = new HashSet<>();
     namespaceAdminPermissions.addAll(EnumSet.allOf(StandardPermission.class));
@@ -377,10 +385,9 @@ public class TestBase {
       SecurityRequestContext.setUserId(user);
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(user, Principal.PrincipalType.USER);
-      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+      permissionManager.grant(Authorizable.fromEntityId(instance), principal,
           EnumSet.allOf(StandardPermission.class));
-      accessControllerInstantiator.get()
-          .grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal, namespaceAdminPermissions);
+      permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal, namespaceAdminPermissions);
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
@@ -458,7 +465,7 @@ public class TestBase {
   }
 
   /**
-   *
+   * Delete the given capability.
    */
   protected static void removeCapability(String capability) throws Exception {
     File capabilityFile = new File(cConf.get(Constants.Capability.CONFIG_DIR),
@@ -524,8 +531,8 @@ public class TestBase {
         ));
   }
 
-  private static CConfiguration createCConf(File localDataDir,
-      Map<String, String> customConfiguration)
+  private static CConfiguration createCconf(File localDataDir,
+                                            Map<String, String> customConfiguration)
       throws IOException, NoSuchAlgorithmException {
     CConfiguration cConf = CConfiguration.create();
 
@@ -592,6 +599,9 @@ public class TestBase {
     ByteStreams.copy(Resources.newInputStreamSupplier(url), Files.newOutputStreamSupplier(outFile));
   }
 
+  /**
+   * Method to call after tests to clean up and stop services.
+   */
   @AfterClass
   public static void finish() throws Exception {
     if (--nestedStartCount != 0) {
@@ -609,14 +619,13 @@ public class TestBase {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"),
           Principal.PrincipalType.USER);
-      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
+      permissionManager.grant(Authorizable.fromEntityId(instance), principal,
           ImmutableSet.of(StandardPermission.UPDATE));
-      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+      permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
           principal, ImmutableSet.of(StandardPermission.UPDATE));
     }
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    accessControllerInstantiator.close();
 
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
@@ -720,7 +729,7 @@ public class TestBase {
   }
 
   /**
-   * Creates and returns {@link ApplicationManager} for the passed {@link ApplicationId}
+   * Creates and returns {@link ApplicationManager} for the passed {@link ApplicationId}.
    */
   protected static ApplicationManager getApplicationManager(ApplicationId appId) throws Exception {
     return getTestManager().getApplicationManager(appId);
@@ -958,10 +967,10 @@ public class TestBase {
   }
 
   /**
-   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
+   * Gets Dataset manager of Dataset instance of type {@literal <T>}.
    *
    * @param datasetId the id of the dataset to get
-   * @return Dataset Manager of Dataset instance of type <T>
+   * @return Dataset Manager of Dataset instance of type {@literal <T>}
    */
   protected final <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception {
     return getTestManager().getDataset(datasetId);
@@ -978,7 +987,7 @@ public class TestBase {
   }
 
   /**
-   * Gets the app detail of an application
+   * Gets the app detail of an application.
    *
    * @param applicationId the app id of the application
    * @return ApplicationDetail of the app
@@ -988,7 +997,7 @@ public class TestBase {
   }
 
   /**
-   * Add a new schedule to an existing application
+   * Add a new schedule to an existing application.
    *
    * @param scheduleId the ID of the schedule to add
    * @param scheduleDetail the {@link ScheduleDetail} describing the new schedule.
@@ -1037,6 +1046,8 @@ public class TestBase {
   }
 
   /**
+   * Get a MetadataAdmin to interact with metadata.
+   *
    * @return {@link MetadataAdmin} to interact with metadata
    */
   protected static MetadataAdmin getMetadataAdmin() {
@@ -1065,13 +1076,24 @@ public class TestBase {
   }
 
   /**
-   * Returns an {@link AccessController} for performing authorization operations.
+   * Returns an {@link RoleController} for performing authorization operations.
    */
   @Beta
-  protected static AccessController getAccessController()
-      throws IOException, InvalidAccessControllerException {
+  protected static RoleController getAccessController() {
+    return roleController;
+  }
+
+  @Beta
+  protected static PermissionManager getPermissionManager() {
+    return permissionManager;
+  }
+
+  @Beta
+  protected static AccessControllerSpi getAccessEnforcerSpi() {
     return accessControllerInstantiator.get();
   }
+
+
 
   /**
    * Returns a {@link PreviewManager} to interact with preview.
@@ -1126,25 +1148,25 @@ public class TestBase {
   }
 
   private static CConfiguration createPreviewConf(CConfiguration cConf) {
-    CConfiguration previewCConf = CConfiguration.copy(cConf);
+    CConfiguration previewCconf = CConfiguration.copy(cConf);
 
     // Change all services bind address to local host
     String localhost = InetAddress.getLoopbackAddress().getHostName();
-    StreamSupport.stream(previewCConf.spliterator(), false)
+    StreamSupport.stream(previewCconf.spliterator(), false)
         .map(Map.Entry::getKey)
         .filter(s -> s.endsWith(".bind.address"))
-        .forEach(key -> previewCConf.set(key, localhost));
+        .forEach(key -> previewCconf.set(key, localhost));
 
     Path previewDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview")
         .toAbsolutePath();
 
-    previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
+    previewCconf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewCconf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     // Use No-SQL store for preview data
-    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION,
+    previewCconf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION,
         Constants.Dataset.DATA_STORAGE_NOSQL);
 
-    return previewCConf;
+    return previewCconf;
   }
 
   public static SparkCompat getCurrentSparkCompat() {

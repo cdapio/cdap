@@ -177,14 +177,14 @@ public class DraftServiceTest extends DataPipelineServiceTest {
     listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
     // Grant her nesessary privilidges
     Authorizable namespaceAuthorizable = Authorizable.fromEntityId(NamespaceId.DEFAULT);
-    getAccessController().grant(namespaceAuthorizable,
+    getPermissionManager().grant(namespaceAuthorizable,
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.GET));
 
     // Check Alice can list requests now
     expectedCode = HttpURLConnection.HTTP_OK;
     listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
-    // Check Bob still can't do it
+    // Check Bob still can't do itDelegatingPermissionManager
     user = "bob";
     expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
     listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
@@ -200,7 +200,7 @@ public class DraftServiceTest extends DataPipelineServiceTest {
     createBatchPipelineDraft(draftId, "TestPipeline1", "This is a test pipeline.");
     // Grant Alice create priviledge. Note that we don't differenciate create and update,
     // so update is used in both cases
-    getAccessController().grant(namespaceAuthorizable,
+    getPermissionManager().grant(namespaceAuthorizable,
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.UPDATE));
     // Now Alice should be able to create draft

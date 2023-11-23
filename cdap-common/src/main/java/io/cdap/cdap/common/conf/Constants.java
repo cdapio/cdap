@@ -1257,8 +1257,12 @@ public final class Constants {
 
       public static final String INTERNAL_CHECK_SUCCESS_COUNT = "authorization.internal.check.success.count";
       public static final String INTERNAL_CHECK_FAILURE_COUNT = "authorization.internal.check.failure.count";
+      public static final String INTERNAL_CHECK_UNAUTHORIZED_COUNT = "authorization.internal.check.unauthorized.count";
+      public static final String INTERNAL_CHECK_NOT_REQUIRED_COUNT = "authorization.internal.check.not_required.count";
       public static final String INTERNAL_VISIBILITY_CHECK_COUNT = "authorization.internal.visibility.check.count";
       public static final String EXTENSION_CHECK_SUCCESS_COUNT = "authorization.extension.check.success.count";
+      public static final String EXTENSION_CHECK_UNAUTHORIZED_COUNT =
+        "authorization.extension.check.unauthorized.count";
       public static final String EXTENSION_CHECK_FAILURE_COUNT = "authorization.extension.check.failure.count";
       public static final String EXTENSION_CHECK_BYPASS_COUNT = "authorization.extension.check.bypass.count";
       public static final String NON_INTERNAL_VISIBILITY_CHECK_COUNT =

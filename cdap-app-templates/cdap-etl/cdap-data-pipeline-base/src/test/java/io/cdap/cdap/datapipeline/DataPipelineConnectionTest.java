@@ -778,10 +778,10 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     listConnections(NamespaceId.DEFAULT.getNamespace());
 
     // Grant Alice nesessary privileges
-    getAccessController().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+    getPermissionManager().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.GET));
-    getAccessController().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.SYSTEM_APP_ENTITY),
+    getPermissionManager().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.SYSTEM_APP_ENTITY),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.LIST));
 
@@ -814,14 +814,14 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     // Grant Alice permissions to create connection
     ConnectionEntityId connectionEntityId = new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(),
                                                                    ConnectionId.getConnectionId(conn));
-    getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
+    getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.CREATE));
     expectedCode = HttpURLConnection.HTTP_OK;
     addConnection(conn, creationRequest);
 
     // Grant Alice permission to use connection
-    getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
+    getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.USE));
     browseConnection(conn, directory.getCanonicalPath(), 10);
@@ -834,7 +834,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     deleteConnection(conn);
 
     // Grant Alice permission to delete connection
-    getAccessController().grant(Authorizable.fromEntityId(connectionEntityId),
+    getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.DELETE));
     expectedCode = HttpURLConnection.HTTP_OK;

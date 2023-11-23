@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2021 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,16 +24,16 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Enforces authorization for a {@link Principal} to perform an {@link Permission} on an {@link
  * EntityId}.
- * This is an API to be used by services and handlers.
- * This should not used as a SPI, for SPI please use {@link AccessEnforcerSpi}
+ * This is the NEW SPI as compared to old {@link AccessEnforcer}, which will now act like an API for services.
  */
 @Beta
-public interface AccessEnforcer {
+public interface AccessEnforcerSpi {
 
   /**
    * Enforces authorization for the specified {@link Principal} for the specified {@link Permission}
@@ -42,32 +42,36 @@ public interface AccessEnforcer {
    * @param entity the {@link EntityId} on which authorization is to be enforced
    * @param principal the {@link Principal} that performs the permission
    * @param permission the {@link Permission} being performed
-   * @throws UnauthorizedException if the principal is not authorized to perform the specified
-   *     permission on the entity
+   *
+   * @return EnforcementResult
    */
-  default void enforce(EntityId entity, Principal principal, Permission permission)
-      throws AccessException {
-    enforce(entity, principal, Collections.singleton(permission));
+  default AuthorizationResponse enforce(EntityId entity, Principal principal, Permission permission)
+    throws AccessException {
+    return enforce(entity, principal, Collections.singleton(permission));
   }
 
   /**
    * Enforces authorization for the specified {@link Principal} for the specified {@link Permission
    * permissions} on the specified {@link EntityId}.
+   * Should NOT throw  UnauthorizedException if the principal is not authorized to perform the specified
+   * permissions on the entity.
    *
    * @param entity the {@link EntityId} on which authorization is to be enforced
    * @param principal the {@link Principal} that performs the permissions
    * @param permissions the {@link Permission permissions} being performed
-   * @throws UnauthorizedException if the principal is not authorized to perform the specified
-   *     permissions on the entity
+   *
+   * @return EnforcementResult
    */
-  void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-      throws AccessException;
+  AuthorizationResponse enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
+    throws AccessException;
 
   /**
    * Enforces specific {@link Permission#isCheckedOnParent()} permission for {@link EntityType} on
    * it's parent {@link EntityId}. E.g. one can check if it's possible to {@link
    * StandardPermission#LIST} {@link EntityType#PROFILE} in specific {@link
    * io.cdap.cdap.proto.id.NamespaceId}.
+   * Should NOT throw UnauthorizedException if the principal is not authorized to perform the specified
+   * permission on the entity.
    *
    * @param entityType the {@link EntityType} on which authorization is to be enforced
    * @param parentId the {@link EntityId} of parent entity on which authorization is to be
@@ -75,11 +79,11 @@ public interface AccessEnforcer {
    * @param principal the {@link Principal} that performs the permission
    * @param permission the {@link Permission} being performed. Permission must return true on
    *     {@link Permission#isCheckedOnParent()}.
-   * @throws UnauthorizedException if the principal is not authorized to perform the specified
-   *     permission on the entity
+   *
+   * @return EnforcementResult
    */
-  void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
-      Permission permission) throws AccessException;
+  AuthorizationResponse enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+                                        Permission permission) throws AccessException;
 
   /**
    * Checks whether the set of {@link EntityId}s are visible to the specified {@link Principal}. An
@@ -91,7 +95,7 @@ public interface AccessEnforcer {
    * @param principal the principal to check the visibility for
    * @return a set of entities that are visible to the principal
    */
-  Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
-      throws AccessException;
+  Map<? extends EntityId, AuthorizationResponse> isVisible(Set<? extends EntityId> entityIds, Principal principal)
+    throws AccessException;
 
 }
