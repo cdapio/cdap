@@ -149,6 +149,7 @@ public class OperationRunStore {
    *
    * @param runId {@link OperationRunId} for the run
    * @param error error related to the failure
+   * @param endTime the operation end time
    * @param sourceId the message id which is responsible for the update
    * @throws OperationRunNotFoundException run with id does not exist in namespace
    */
@@ -156,7 +157,7 @@ public class OperationRunStore {
       @Nullable byte[] sourceId) throws OperationRunNotFoundException, IOException {
     OperationRunDetail currentDetail = getRunDetail(runId);
     OperationRun currentRun = currentDetail.getRun();
-    OperationMeta updatedMeta = OperationMeta.builder(currentDetail.getRun().getMetadata())
+    OperationMeta updatedMeta = OperationMeta.builder(currentRun.getMetadata())
         .setEndTime(endTime).build();
     OperationRun updatedRun = OperationRun.builder(currentRun)
         .setStatus(OperationRunStatus.FAILED).setError(error).setMetadata(updatedMeta).build();
@@ -170,6 +171,68 @@ public class OperationRunStore {
     fields.add(
         Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
             GSON.toJson(OperationRunStatus.FAILED)));
+
+    StructuredTable operationRunsTable = getOperationRunsTable(context);
+    operationRunsTable.update(fields);
+  }
+
+  /**
+   * Mark an operation run as killed.
+   *
+   * @param runId {@link OperationRunId} for the run
+   * @param endTime the operation end time
+   * @param sourceId the message id which is responsible for the update
+   * @throws OperationRunNotFoundException run with id does not exist in namespace
+   */
+  public void killOperationRun(OperationRunId runId, Instant endTime, @Nullable byte[] sourceId)
+      throws OperationRunNotFoundException, IOException {
+    OperationRunDetail currentDetail = getRunDetail(runId);
+    OperationRun currentRun = currentDetail.getRun();
+    OperationMeta updatedMeta = OperationMeta.builder(currentRun.getMetadata())
+        .setEndTime(endTime).build();
+    OperationRun updatedRun = OperationRun.builder(currentRun)
+        .setStatus(OperationRunStatus.KILLED).setMetadata(updatedMeta).build();
+    OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
+        .setRun(updatedRun).setSourceId(sourceId).build();
+
+    Collection<Field<?>> fields = getCommonUpdateFields(runId);
+    fields.add(
+        Fields.stringField(StoreDefinition.OperationRunsStore.DETAILS_FIELD,
+            GSON.toJson(updatedDetail)));
+    fields.add(
+        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
+            GSON.toJson(OperationRunStatus.KILLED)));
+
+    StructuredTable operationRunsTable = getOperationRunsTable(context);
+    operationRunsTable.update(fields);
+  }
+
+  /**
+   * Mark an operation run as succeeded.
+   *
+   * @param runId {@link OperationRunId} for the run
+   * @param endTime the operation end time
+   * @param sourceId the message id which is responsible for the update
+   * @throws OperationRunNotFoundException run with id does not exist in namespace
+   */
+  public void succeedOperationRun(OperationRunId runId, Instant endTime, @Nullable byte[] sourceId)
+      throws OperationRunNotFoundException, IOException {
+    OperationRunDetail currentDetail = getRunDetail(runId);
+    OperationRun currentRun = currentDetail.getRun();
+    OperationMeta updatedMeta = OperationMeta.builder(currentRun.getMetadata())
+        .setEndTime(endTime).build();
+    OperationRun updatedRun = OperationRun.builder(currentRun)
+        .setStatus(OperationRunStatus.SUCCEEDED).setMetadata(updatedMeta).build();
+    OperationRunDetail updatedDetail = OperationRunDetail.builder(currentDetail)
+        .setRun(updatedRun).setSourceId(sourceId).build();
+
+    Collection<Field<?>> fields = getCommonUpdateFields(runId);
+    fields.add(
+        Fields.stringField(StoreDefinition.OperationRunsStore.DETAILS_FIELD,
+            GSON.toJson(updatedDetail)));
+    fields.add(
+        Fields.stringField(StoreDefinition.OperationRunsStore.STATUS_FIELD,
+            GSON.toJson(OperationRunStatus.SUCCEEDED)));
 
     StructuredTable operationRunsTable = getOperationRunsTable(context);
     operationRunsTable.update(fields);
@@ -273,13 +336,15 @@ public class OperationRunStore {
     AtomicReference<OperationRunDetail> latestRun = new AtomicReference<>();
     // get STARTING
     ScanOperationRunsRequest request = ScanOperationRunsRequest.builder()
-        .setNamespace(namespaceId).setFilter(new OperationRunFilter(type, OperationRunStatus.STARTING))
+        .setNamespace(namespaceId)
+        .setFilter(new OperationRunFilter(type, OperationRunStatus.STARTING))
         .setLimit(1).build();
     scanOperations(request, latestRun::set);
 
     // get RUNNING
     request = ScanOperationRunsRequest.builder()
-        .setNamespace(namespaceId).setFilter(new OperationRunFilter(type, OperationRunStatus.RUNNING))
+        .setNamespace(namespaceId)
+        .setFilter(new OperationRunFilter(type, OperationRunStatus.RUNNING))
         .setLimit(1).build();
     scanOperations(request, detail -> {
       if (latestRun.get() != null && isRunLater(detail.getRun(), latestRun.get().getRun())) {
@@ -289,9 +354,10 @@ public class OperationRunStore {
 
     // get STOPPING
     request = ScanOperationRunsRequest.builder()
-        .setNamespace(namespaceId).setFilter(new OperationRunFilter(type, OperationRunStatus.STOPPING))
+        .setNamespace(namespaceId)
+        .setFilter(new OperationRunFilter(type, OperationRunStatus.STOPPING))
         .setLimit(1).build();
-    scanOperations(request,  detail -> {
+    scanOperations(request, detail -> {
       if (latestRun.get() != null && isRunLater(detail.getRun(), latestRun.get().getRun())) {
         latestRun.set(detail);
       }
@@ -381,12 +447,12 @@ public class OperationRunStore {
     return context.getTable(StoreDefinition.OperationRunsStore.OPERATION_RUNS);
   }
 
-private boolean isRunLater(OperationRun run1, OperationRun run2) {
+  private boolean isRunLater(OperationRun run1, OperationRun run2) {
     return run1.getMetadata().getCreateTime().isAfter(run2.getMetadata().getCreateTime());
-}
+  }
 
-  @VisibleForTesting
   // USE ONLY IN TESTS: WILL DELETE ALL OPERATION RUNS
+  @VisibleForTesting
   void clearData() throws IOException {
     StructuredTable table = getOperationRunsTable(context);
     table.deleteAll(
