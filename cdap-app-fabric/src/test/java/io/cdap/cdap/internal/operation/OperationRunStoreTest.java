@@ -193,6 +193,83 @@ public abstract class OperationRunStoreTest extends OperationTestBase {
   }
 
   @Test
+  public void testKillOperation() throws Exception {
+    OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
+        OperationRunStatus.RUNNING, transactionRunner);
+    String testId = expectedDetail.getRun().getId();
+    OperationRunId runId = new OperationRunId(testNamespace, testId);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      OperationRunStore store = new OperationRunStore(context);
+      Assert.assertEquals(expectedDetail, store.getOperation(runId));
+
+      OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
+          .setStatus(OperationRunStatus.KILLED)
+          .setMetadata(OperationMeta.builder(expectedDetail.getRun().getMetadata())
+              .setEndTime(Instant.ofEpochMilli(runIdTime.incrementAndGet()))
+              .build())
+          .build();
+      OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
+          .setRun(updatedRun)
+          .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
+          .build();
+      store.killOperationRun(runId, updatedRun.getMetadata().getEndTime(),
+          updatedDetail.getSourceId());
+      Assert.assertEquals(updatedDetail, store.getOperation(runId));
+
+      try {
+        store.killOperationRun(
+            new OperationRunId(Namespace.DEFAULT.getId(), testId),
+            Instant.now(), // no need to verify this
+            updatedDetail.getSourceId()
+        );
+        Assert.fail("Found unexpected run in default namespace");
+      } catch (OperationRunNotFoundException e) {
+        // expected
+      }
+    }, Exception.class);
+  }
+
+  @Test
+  public void testSucceedOperation() throws Exception {
+    OperationRunDetail expectedDetail = insertRun(testNamespace, OperationType.PUSH_APPS,
+        OperationRunStatus.RUNNING, transactionRunner);
+    String testId = expectedDetail.getRun().getId();
+    OperationRunId runId = new OperationRunId(testNamespace, testId);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      OperationRunStore store = new OperationRunStore(context);
+      Assert.assertEquals(expectedDetail, store.getOperation(runId));
+
+      OperationRun updatedRun = OperationRun.builder(expectedDetail.getRun())
+          .setStatus(OperationRunStatus.SUCCEEDED)
+          .setMetadata(OperationMeta.builder(expectedDetail.getRun().getMetadata())
+              .setEndTime(Instant.ofEpochMilli(runIdTime.incrementAndGet()))
+              .build())
+          .build();
+      OperationRunDetail updatedDetail = OperationRunDetail.builder(expectedDetail)
+          .setRun(updatedRun)
+          .setSourceId(AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()))
+          .build();
+      store.succeedOperationRun(runId, updatedRun.getMetadata().getEndTime(),
+          updatedDetail.getSourceId());
+      Assert.assertEquals(updatedDetail, store.getOperation(runId));
+
+      try {
+        store.succeedOperationRun(
+            new OperationRunId(Namespace.DEFAULT.getId(), testId),
+            Instant.now(), // no need to verify this
+            updatedDetail.getSourceId()
+        );
+        Assert.fail("Found unexpected run in default namespace");
+      } catch (OperationRunNotFoundException e) {
+        // expected
+      }
+    }, Exception.class);
+  }
+
+
+  @Test
   public void testScanOperation() throws Exception {
     List<OperationRunDetail> insertedRuns = insertTestRuns(transactionRunner);
     // get a filtered list of testNamespace runs
@@ -237,7 +314,8 @@ public abstract class OperationRunStoreTest extends OperationTestBase {
       gotRuns.clear();
       request = ScanOperationRunsRequest.builder()
           .setNamespace(testNamespace)
-          .setFilter(new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED)).build();
+          .setFilter(new OperationRunFilter(OperationType.PULL_APPS, OperationRunStatus.FAILED))
+          .build();
       store.scanOperations(request, gotRuns::add);
       expectedRuns = testNamespaceRuns.stream()
           .filter(detail -> detail.getRun().getType().equals(OperationType.PULL_APPS))
@@ -250,7 +328,7 @@ public abstract class OperationRunStoreTest extends OperationTestBase {
   @Test
   public void testScanOperationByStatus() throws Exception {
     TransactionRunners.run(transactionRunner, context -> {
-      Set<OperationRunDetail> expectedRuns =  insertTestRuns(transactionRunner).stream().filter(
+      Set<OperationRunDetail> expectedRuns = insertTestRuns(transactionRunner).stream().filter(
           d -> d.getRun().getStatus().equals(OperationRunStatus.STARTING)
       ).collect(Collectors.toSet());
       Set<OperationRunDetail> gotRuns = new HashSet<>();
