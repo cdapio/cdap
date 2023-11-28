@@ -36,6 +36,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.credential.SecurityTokenServiceRequest.TokenType;
@@ -92,7 +93,7 @@ public class GcpWorkloadIdentityCredentialProviderTest {
           public ProvisionedCredential load(ProvisionedCredentialCacheKey
               provisionedCredentialCacheKey) throws Exception {
             return mockedCredentialProvider.getProvisionedCredential(
-                provisionedCredentialCacheKey.getNamespaceMeta(),
+                provisionedCredentialCacheKey.getK8sNamespace(),
                 provisionedCredentialCacheKey.getCredentialIdentity(),
                 provisionedCredentialCacheKey.getScopes());
           }
@@ -110,16 +111,21 @@ public class GcpWorkloadIdentityCredentialProviderTest {
 
     CredentialProfile credentialProfile = new CredentialProfile(
         GcpWorkloadIdentityCredentialProvider.NAME, "profile", Collections.emptyMap());
-    CredentialIdentity credentialIdentity = new CredentialIdentity(
-        NamespaceId.DEFAULT.getNamespace(), "default",
-        NamespaceMeta.DEFAULT.getIdentity(), "secureVal");
+    Map<String, String> properties = new HashMap<>();
+    properties.put(GcpWorkloadIdentityCredentialProvider.K8S_NAMESPACE_PROPERTY, "default");
+    properties
+        .put(GcpWorkloadIdentityCredentialProvider.GCP_WRAPPED_CDAP_NAMESPACE_PROPERTY, "default");
 
     // validate profile
     mockedCredentialProvider.validateProfile(credentialProfile);
+
+    CredentialIdentity credentialIdentity = new CredentialIdentity(
+        NamespaceId.DEFAULT.getNamespace(), "default",
+        NamespaceMeta.DEFAULT.getIdentity(), "secureVal");
     // provision credential
     ProvisionedCredential credential =
-        mockedCredentialProvider.provision(NamespaceMeta.DEFAULT, credentialProfile,
-            credentialIdentity, null);
+        mockedCredentialProvider.provision(NamespaceId.SYSTEM.getNamespace(), credentialProfile,
+            credentialIdentity, new CredentialProvisionContext(properties));
 
     Assert.assertEquals(credential.get(), IAM_TOKEN);
     Assert.assertEquals(credential.getExpiration().toString(), EXPIRES_IN);
@@ -196,7 +202,7 @@ public class GcpWorkloadIdentityCredentialProviderTest {
   }
 
   @Test(expected = IOException.class)
-  public void testExecuteHttpPostRequestHandlesHTTPErrorResponse() throws Exception {
+  public void testExecuteHttpPostRequestHandlesHttpErrorResponse() throws Exception {
     InputStream errorMessageStream = new ByteArrayInputStream(
         "Some error here".getBytes(StandardCharsets.UTF_8));
     OutputStream outputStream = new ByteArrayOutputStream();

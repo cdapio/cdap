@@ -26,10 +26,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -59,7 +59,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.HttpHeaders;
 import okhttp3.OkHttpClient;
@@ -101,6 +100,23 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
   private static final String PROVISIONING_FAILURE_ERROR_MESSAGE_FORMAT =
       "Failed to provision credential with identity '%s'";
 
+  // Property key configurations
+  /**
+   * A comma-separated string of OAuth scopes supported for Google OAuth2 access tokens.
+   */
+  static final String GCP_OAUTH_SCOPES_PROPERTY = "gcp.oauth.scopes";
+  /**
+   * Represents the CDAP namespace for which this property is actually being queried for. This is
+   * necessary because the CDAP namespace may not be the same as the identity's storage namespace.
+   * Property name is defined in GcpWorkloadIdentityUtil.java.
+   */
+  static final String GCP_WRAPPED_CDAP_NAMESPACE_PROPERTY = "gcp.wrapped.cdap.namespace";
+  /**
+   * When namespace creation is enabled, represents the Kubernetes namespace this k8s service
+   * account exists in. If namespace creation is disabled, assume it's in the default namespace.
+   */
+  static final String K8S_NAMESPACE_PROPERTY = "k8s.namespace";
+
   /**
    * Constructs the {@link GcpWorkloadIdentityCredentialProvider}.
    */
@@ -112,7 +128,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
           @Override
           public ProvisionedCredential load(ProvisionedCredentialCacheKey
               provisionedCredentialCacheKey) throws Exception {
-            return getProvisionedCredential(provisionedCredentialCacheKey.getNamespaceMeta(),
+            return getProvisionedCredential(provisionedCredentialCacheKey.getK8sNamespace(),
                 provisionedCredentialCacheKey.getCredentialIdentity(),
                 provisionedCredentialCacheKey.getScopes());
           }
@@ -165,9 +181,14 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
   }
 
   @Override
-  public ProvisionedCredential provision(NamespaceMeta namespaceMeta,
-      CredentialProfile profile, CredentialIdentity identity, @Nullable String scopes)
+  public ProvisionedCredential provision(String namespace,
+      CredentialProfile profile, CredentialIdentity identity, CredentialProvisionContext context)
       throws CredentialProvisioningException {
+    if (!NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      throw new CredentialProvisioningException(String
+          .format("Provisioning tokens for credential identities in non-system namespace '%s' is "
+              + "disallowed.", namespace));
+    }
 
     // Provision the credential with exponential delay on retryable failure.
     long delay = Long.parseLong(
@@ -185,8 +206,17 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     try {
       while (stopWatch.elapsed(TimeUnit.SECONDS) < timeout) {
         try {
-          return getCredentialLoadingCache().get(new ProvisionedCredentialCacheKey(namespaceMeta,
-              identity, scopes));
+          // Get k8s namespace from namespace metadata if using a non-default namespace and
+          // namespace creation hook is enabled.
+          String k8sNamespace = NamespaceId.DEFAULT.getNamespace();
+          String cdapWrappedNamespace = context.getProperties().get(
+              GCP_WRAPPED_CDAP_NAMESPACE_PROPERTY);
+          if (!cdapWrappedNamespace.equals(NamespaceId.DEFAULT.getNamespace())
+              && credentialProviderContext.isNamespaceCreationHookEnabled()) {
+            k8sNamespace = context.getProperties().get(K8S_NAMESPACE_PROPERTY);
+          }
+          return getCredentialLoadingCache().get(new ProvisionedCredentialCacheKey(k8sNamespace,
+              identity, context.getProperties().get(GCP_OAUTH_SCOPES_PROPERTY)));
         } catch (Exception e) {
           if (!(e.getCause() instanceof RetryableException)) {
             throw e;
@@ -215,16 +245,8 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
   }
 
   @VisibleForTesting
-  ProvisionedCredential getProvisionedCredential(NamespaceMeta namespaceMeta,
-      CredentialIdentity identity, @Nullable String scopes) throws IOException, ApiException {
-
-    // Get k8s namespace from namespace metadata if using a non-default namespace and namespace
-    // creation hook is enabled.
-    String k8sNamespace = NamespaceId.DEFAULT.getNamespace();
-    if (!namespaceMeta.getName().equals(NamespaceId.DEFAULT.getNamespace())
-        && credentialProviderContext.isNamespaceCreationHookEnabled()) {
-      k8sNamespace = namespaceMeta.getConfig().getConfigs().get("k8s.namespace");
-    }
+  ProvisionedCredential getProvisionedCredential(String k8sNamespace, CredentialIdentity identity,
+      String scopes) throws IOException, ApiException {
 
     try {
       String workloadIdentityPool =
@@ -334,6 +356,7 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
 
   @VisibleForTesting
   interface ConnectionProvider {
+
     HttpURLConnection getConnection() throws IOException;
   }
 

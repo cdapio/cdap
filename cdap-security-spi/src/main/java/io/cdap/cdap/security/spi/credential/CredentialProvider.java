@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.security.spi.credential;
 
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
-import javax.annotation.Nullable;
 
 /**
  * Defines an SPI for provisioning a credential.
@@ -47,15 +46,15 @@ public interface CredentialProvider {
    * Provisions a short-lived credential for the provided identity using the provided credential
    * profile.
    *
-   * @param namespaceMeta The credential identity namespace metadata.
-   * @param profile  The credential profile to use.
-   * @param identity The credential identity to use.
-   * @param scopes A comma separated list of OAuth scopes requested.
+   * @param namespace The credential identity namespace.
+   * @param profile       The credential profile to use.
+   * @param identity      The credential identity to use.
+   * @param context The context to use for provisioning.
    * @return A credential provisioned using the specified profile and identity.
    * @throws CredentialProvisioningException If the credential provisioning fails.
    */
-  ProvisionedCredential provision(NamespaceMeta namespaceMeta, CredentialProfile profile,
-      CredentialIdentity identity, @Nullable String scopes)
+  ProvisionedCredential provision(String namespace, CredentialProfile profile,
+      CredentialIdentity identity, CredentialProvisionContext context)
       throws CredentialProvisioningException;
 
   /**
