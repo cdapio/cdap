@@ -1311,6 +1311,23 @@ public final class Constants {
       public static final String COMMIT_PUSH_LATENCY_MILLIS =
           "source.control.git.commit.push.duration.ms";
     }
+
+    /**
+     * Credential Provider Metrics.
+     */
+    public static final class Credential {
+      public static final String CREDENTIAL_IDENTITY_COUNT = "credential.identity.count";
+      public static final String CREDENTIAL_PROFILE_COUNT = "credential.profile.count";
+    }
+
+    /**
+     * Workload Identity Metrics.
+     */
+    public static final class WorkloadIdentity {
+
+      public static final String NAMESPACE_WORKLOAD_IDENTITY_COUNT =
+          "namespace.workload.identity.count";
+    }
   }
 
   /**
@@ -1854,6 +1871,7 @@ public final class Constants {
      * Security configurations for encryption.
      */
     public static final class Encryption {
+
       /**
        * Directory for encryption extensions.
        */

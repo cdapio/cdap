@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
  */
 public final class GcpWorkloadIdentityUtil {
 
-  private static final String NAMESPACE_IDENTITY_NAME_PREFIX = "ns-gcp-wi";
+  public static final String NAMESPACE_IDENTITY_NAME_PREFIX = "ns-gcp-wi";
 
   public static final String SYSTEM_PROFILE_NAME = "ns-gcp-wi";
 
