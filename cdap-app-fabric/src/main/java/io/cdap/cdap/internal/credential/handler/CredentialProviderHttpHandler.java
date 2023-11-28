@@ -30,13 +30,13 @@ import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CreateCredentialIdentityRequest;
 import io.cdap.cdap.proto.credential.CreateCredentialProfileRequest;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
+import io.cdap.cdap.proto.credential.ValidateIdentityRequest;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
@@ -120,16 +120,11 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void validateIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace)
       throws BadRequestException, NotFoundException, IOException {
-    CredentialIdentity identity = deserializeRequestContent(request, CredentialIdentity.class);
-    NamespaceMeta namespaceMeta;
-    try {
-      namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(namespace));
-    } catch (Exception e) {
-      throw new IOException(String.format("Failed to get namespace '%s' metadata",
-          namespace), e);
-    }
+    ValidateIdentityRequest identityValidationRequest = deserializeRequestContent(request,
+        ValidateIdentityRequest.class);
+    CredentialIdentity identity = identityValidationRequest.getIdentity();
     if (Strings.isNullOrEmpty(identity.getIdentity())) {
-     throw new BadRequestException("Identity cannot be null or empty.");
+      throw new BadRequestException("Identity cannot be null or empty.");
     }
     if (!identity.getProfileNamespace().equals(namespace)
         && !identity.getProfileNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
@@ -137,7 +132,8 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
           + "associated with a profile in a different namespace.");
     }
     try {
-      credentialProvider.validateIdentity(namespaceMeta, identity);
+      credentialProvider
+          .validateIdentity(namespace, identity, identityValidationRequest.getContext());
     } catch (IdentityValidationException e) {
       throw new BadRequestException(String.format("Identity failed validation with error: %s",
           e.getMessage()), e);

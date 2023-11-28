@@ -28,9 +28,12 @@ import io.cdap.cdap.internal.credential.CredentialProfileManager;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.CredentialProfileId;
@@ -71,11 +74,11 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
    * @param namespace The identity namespace.
-   * @param scopes A comma separated list of OAuth scopes requested.
+   * @param scopes    A comma separated list of OAuth scopes requested.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
-   * @throws IOException If any transport errors occur.
-   * @throws NotFoundException If the profile or identity are not found.
+   * @throws IOException                     If any transport errors occur.
+   * @throws NotFoundException               If the profile or identity are not found.
    */
   @Override
   public ProvisionedCredential provision(String namespace, String scopes)
@@ -83,16 +86,44 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
     contextAccessEnforcer.enforce(new NamespaceId(namespace),
         NamespacePermission.PROVISION_CREDENTIAL);
     NamespaceMeta namespaceMeta;
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    try {
+      namespaceMeta = namespaceAdmin.get(namespaceId);
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to get namespace '%s' metadata",
+          namespace), e);
+    }
+    String identityName =
+        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceId);
+    switchToInternalUser();
+    return credentialProvider.provision(NamespaceId.SYSTEM.getNamespace(), identityName,
+        new CredentialProvisionContext(
+            GcpWorkloadIdentityUtil.createProvisionPropertiesMap(scopes, namespaceMeta)));
+  }
+
+  @Override
+  public void validateIdentity(String namespace, String serviceAccount)
+      throws IdentityValidationException, IOException {
+    NamespaceMeta namespaceMeta;
     try {
       namespaceMeta = namespaceAdmin.get(new NamespaceId(namespace));
     } catch (Exception e) {
       throw new IOException(String.format("Failed to get namespace '%s' metadata",
           namespace), e);
     }
-    String identityName =
-        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getIdentity());
-    switchToInternalUser();
-    return credentialProvider.provision(namespace, identityName, scopes);
+    CredentialIdentity credentialIdentity = new CredentialIdentity(
+        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
+        namespaceMeta.getIdentity(), serviceAccount);
+    try {
+      credentialProvider
+          .validateIdentity(NamespaceId.SYSTEM.getNamespace(), credentialIdentity,
+              new CredentialProvisionContext(
+                  GcpWorkloadIdentityUtil.createProvisionPropertiesMap(null, namespaceMeta)));
+    } catch (NotFoundException e) {
+      // This should never happen.
+      throw new IdentityValidationException("Could not find GCP workload identity provider profile",
+          e);
+    }
   }
 
   private void switchToInternalUser() {

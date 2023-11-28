@@ -16,16 +16,15 @@
 
 package io.cdap.cdap.security.spi.credential;
 
-import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import java.util.Objects;
 
 /**
- * Defines the contents of key used for
- * caching {@link io.cdap.cdap.proto.credential.ProvisionedCredential}.
+ * Defines the contents of key used for caching {@link io.cdap.cdap.proto.credential.ProvisionedCredential}.
  */
 public final class ProvisionedCredentialCacheKey {
-  private final NamespaceMeta namespaceMeta;
+
+  private final String k8sNamespace;
   private final CredentialIdentity credentialIdentity;
   private final String scopes;
   private transient Integer hashCode;
@@ -33,19 +32,19 @@ public final class ProvisionedCredentialCacheKey {
   /**
    * Constructs the {@link ProvisionedCredentialCacheKey}.
    *
-   * @param namespaceMeta the {@link NamespaceMeta}
+   * @param k8sNamespace       the namespace.
    * @param credentialIdentity the {@link CredentialIdentity}
-   * @param scopes the comma separated list of OAuth scopes.
+   * @param scopes             the comma separated list of OAuth scopes.
    */
-  public ProvisionedCredentialCacheKey(NamespaceMeta namespaceMeta,
-      CredentialIdentity credentialIdentity, String scopes) {
-    this.namespaceMeta = namespaceMeta;
+  public ProvisionedCredentialCacheKey(String k8sNamespace, CredentialIdentity credentialIdentity,
+      String scopes) {
+    this.k8sNamespace = k8sNamespace;
     this.credentialIdentity = credentialIdentity;
     this.scopes = scopes;
   }
 
-  public NamespaceMeta getNamespaceMeta() {
-    return namespaceMeta;
+  public String getK8sNamespace() {
+    return k8sNamespace;
   }
 
   public CredentialIdentity getCredentialIdentity() {
@@ -59,11 +58,12 @@ public final class ProvisionedCredentialCacheKey {
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ProvisionedCredentialCacheKey)) {
-      return  false;
+      return false;
     }
     ProvisionedCredentialCacheKey that = (ProvisionedCredentialCacheKey) o;
-    return Objects.equals(namespaceMeta.getNamespaceId().getNamespace(),
-        that.namespaceMeta.getNamespaceId().getNamespace())
+    return Objects.equals(k8sNamespace, that.k8sNamespace)
+        && Objects.equals(credentialIdentity.getIdentity(),
+        that.getCredentialIdentity().getIdentity())
         && Objects.equals(credentialIdentity.getSecureValue(),
         that.getCredentialIdentity().getSecureValue())
         && Objects.equals(scopes, that.scopes);
@@ -73,8 +73,9 @@ public final class ProvisionedCredentialCacheKey {
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(namespaceMeta.getNamespaceId().getNamespace(),
-          credentialIdentity.getSecureValue(), scopes);
+      this.hashCode = hashCode = Objects
+          .hash(k8sNamespace, credentialIdentity.getIdentity(), credentialIdentity.getSecureValue(),
+              scopes);
     }
     return hashCode;
   }

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.proto.credential;
 
-import io.cdap.cdap.proto.NamespaceMeta;
 import java.io.IOException;
 
 /**
@@ -27,26 +26,29 @@ public interface CredentialProvider {
   /**
    * Provisions a short-lived credential for the provided identity using the provided identity.
    *
-   * @param namespace The identity namespace.
+   * @param namespace    The identity namespace.
    * @param identityName The identity name.
-   * @param scopes A comma separated list of OAuth scopes requested.
+   * @param context      The context to use for provisioning.
    * @return A short-lived credential.
    * @throws CredentialProvisioningException If provisioning the credential fails.
    * @throws IOException                     If any transport errors occur.
    * @throws NotFoundException               If the profile or identity are not found.
    */
-  ProvisionedCredential provision(String namespace, String identityName, String scopes)
+  ProvisionedCredential provision(String namespace, String identityName,
+      CredentialProvisionContext context)
       throws CredentialProvisioningException, IOException, NotFoundException;
 
   /**
    * Validates the provided identity.
    *
-   * @param namespaceMeta    The identity namespace metadata.
-   * @param identity The identity to validate.
+   * @param namespace The identity namespace.
+   * @param identity  The identity to validate.
+   * @param context   The context to use for provisioning.
    * @throws IdentityValidationException If validation fails.
    * @throws IOException                 If any transport errors occur.
    * @throws NotFoundException           If the profile is not found.
    */
-  void validateIdentity(NamespaceMeta namespaceMeta, CredentialIdentity identity)
+  void validateIdentity(String namespace, CredentialIdentity identity,
+      CredentialProvisionContext context)
       throws IdentityValidationException, IOException, NotFoundException;
 }
