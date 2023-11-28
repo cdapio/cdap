@@ -108,6 +108,12 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-hbase-compat-base</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.protobuf</groupId>
+          <artifactId>protobuf-java</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

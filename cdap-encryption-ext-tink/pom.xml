@@ -34,8 +34,7 @@
     <tink-gcpkms.version>1.9.0</tink-gcpkms.version>
     <!-- Tink and Cloud KMS have conflicting versioning. We override these properties to ensure
          that the proper versions are picked up and not used from the parent pom. -->
-    <!-- Tink uses protobuf 3.21.12, but we default to Cloud KMS version. -->
-    <protobuf.version>3.24.4</protobuf.version>
+    <!-- Tink uses protobuf 3.21.12, but we default to Cloud KMS versionv (3.23.2). -->
     <!-- Tink uses guava 31.1-jre, but we default to Cloud KMS version. -->
     <guava.version>32.1.2-jre</guava.version>
     <gcp-libraries-bom.version>26.23.0</gcp-libraries-bom.version>
