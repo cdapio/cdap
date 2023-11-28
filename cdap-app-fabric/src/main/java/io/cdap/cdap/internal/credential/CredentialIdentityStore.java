@@ -177,6 +177,18 @@ public class CredentialIdentityStore {
     table.delete(key);
   }
 
+  /**
+   * Returns the count of all credential identities.
+   *
+   * @param context The transaction context to use.
+   * @return The number of credential identities.
+   * @throws IOException If any failure reading from storage occurs.
+   */
+  public long getIdentityCount(StructuredTableContext context) throws IOException {
+    StructuredTable table = context.getTable(CredentialProviderStore.CREDENTIAL_IDENTITIES);
+    return table.count(Collections.singletonList(Range.all()));
+  }
+
   private static Collection<CredentialIdentityId> identitiesFromRowIterator(
       Iterator<StructuredRow> iterator) {
     return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator,

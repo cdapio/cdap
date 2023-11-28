@@ -17,20 +17,24 @@
 package io.cdap.cdap.internal.credential;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants.Metrics.Credential;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import io.cdap.cdap.security.spi.credential.ProfileValidationException;
 import io.cdap.cdap.security.spi.encryption.CipherException;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -46,15 +50,18 @@ public class CredentialProfileManager {
   private final CredentialProfileStore profileStore;
   private final TransactionRunner transactionRunner;
   private final Map<String, CredentialProvider> credentialProviders;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   CredentialProfileManager(CredentialIdentityStore identityStore,
       CredentialProfileStore profileStore, TransactionRunner transactionRunner,
-      CredentialProviderLoader credentialProviderLoader) {
+      CredentialProviderLoader credentialProviderLoader,
+      MetricsCollectionService metricsCollectionService) {
     this.identityStore = identityStore;
     this.profileStore = profileStore;
     this.transactionRunner = transactionRunner;
     this.credentialProviders = credentialProviderLoader.loadCredentialProviders();
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -106,6 +113,7 @@ public class CredentialProfileManager {
       }
       try {
         profileStore.write(context, id, profile);
+        emitCredentialProfileCountMetric(context);
       } catch (CipherException e) {
         throw new IOException("Failed to encrypt profile", e);
       }
@@ -160,6 +168,7 @@ public class CredentialProfileManager {
             + "has the following attached identities: %s", GSON.toJson(profileIdentities)));
       }
       profileStore.delete(context, id);
+      emitCredentialProfileCountMetric(context);
     }, ConflictException.class, IOException.class, NotFoundException.class);
   }
 
@@ -179,5 +188,11 @@ public class CredentialProfileManager {
       throw new BadRequestException(String.format("Failed to validate profile with error: %s",
           e.getMessage()), e);
     }
+  }
+
+  private void emitCredentialProfileCountMetric(StructuredTableContext context)
+      throws IOException {
+    metricsCollectionService.getContext(Collections.emptyMap())
+        .gauge(Credential.CREDENTIAL_PROFILE_COUNT, profileStore.getProfileCount(context));
   }
 }

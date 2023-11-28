@@ -20,11 +20,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants.Gateway;
+import io.cdap.cdap.common.conf.Constants.Metrics.WorkloadIdentity;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
@@ -50,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Optional;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -71,16 +74,19 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CredentialIdentityManager credentialIdentityManager;
   private final NamespaceCredentialProvider credentialProvider;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   GcpWorkloadIdentityHttpHandler(ContextAccessEnforcer accessEnforcer,
       NamespaceQueryAdmin namespaceQueryAdmin,
       CredentialIdentityManager credentialIdentityManager,
-      NamespaceCredentialProvider credentialProvider) {
+      NamespaceCredentialProvider credentialProvider,
+      MetricsCollectionService metricsCollectionService) {
     this.accessEnforcer = accessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProvider = credentialProvider;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   /**
@@ -171,6 +177,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
       credentialIdentityManager.create(credentialIdentityId, credentialIdentity);
     }
     responder.sendStatus(HttpResponseStatus.OK);
+    emitNamespaceWorkloadIdentityCountMetric();
   }
 
   /**
@@ -195,6 +202,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     switchToInternalUser();
     credentialIdentityManager.delete(credentialIdentityId);
     responder.sendStatus(HttpResponseStatus.OK);
+    emitNamespaceWorkloadIdentityCountMetric();
   }
 
   private NamespaceMeta getNamespaceMeta(String namespace) throws Exception {
@@ -239,6 +247,14 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     } catch (JsonSyntaxException | IOException e) {
       throw new BadRequestException("Unable to parse request: " + e.getMessage(), e);
     }
+  }
+
+  private void emitNamespaceWorkloadIdentityCountMetric() throws IOException {
+    long namespaceIdentitiesCount = credentialIdentityManager
+        .list(NamespaceId.SYSTEM.getNamespace()).stream().filter(identityId -> identityId.getName()
+            .startsWith(GcpWorkloadIdentityUtil.NAMESPACE_IDENTITY_NAME_PREFIX)).count();
+    metricsCollectionService.getContext(Collections.emptyMap())
+        .gauge(WorkloadIdentity.NAMESPACE_WORKLOAD_IDENTITY_COUNT, namespaceIdentitiesCount);
   }
 }
 
