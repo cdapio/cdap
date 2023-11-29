@@ -151,7 +151,7 @@
     <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.10.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
-    <logback.version>1.2.11</logback.version>
+    <logback.version>1.3.12</logback.version>
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>1.10.19</mockito.version>
     <mysql.version>5.1.21</mysql.version>
