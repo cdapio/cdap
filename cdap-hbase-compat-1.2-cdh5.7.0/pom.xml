@@ -35,6 +35,12 @@
     </repository>
   </repositories>
 
+  <properties>
+    <!-- Not set at the parent pom level to avoid impacting other child modules. -->
+    <!-- Not set in cdap-hbase-compat-base to avoid protobuf being pulled into cdap-data-fabric. -->
+    <protobuf.version>2.5.0</protobuf.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -159,6 +165,11 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-hdfs</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf.version}</version>
     </dependency>
   </dependencies>
 
