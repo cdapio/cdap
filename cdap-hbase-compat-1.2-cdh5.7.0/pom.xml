@@ -38,7 +38,7 @@
   <properties>
     <!-- Not set at the parent pom level to avoid impacting other child modules. -->
     <!-- Not set in cdap-hbase-compat-base to avoid protobuf being pulled into cdap-data-fabric. -->
-    <protobuf.version>2.5.0</protobuf.version>
+    <protobuf.version>3.16.3</protobuf.version>
   </properties>
 
   <dependencies>
