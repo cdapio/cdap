@@ -48,6 +48,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
+import io.cdap.cdap.common.lang.PackageFilterClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -518,6 +519,13 @@ public class PluginInstantiator implements Closeable {
     classLoaders.invalidateAll();
     if (ownedParentClassLoader) {
       Closeables.closeQuietly((Closeable) parentClassLoader);
+      if (parentClassLoader instanceof CombineClassLoader) {
+        CombineClassLoader cl = ((CombineClassLoader) parentClassLoader);
+        if (cl.delegates.size() > 1 && cl.delegates.get(1) instanceof PackageFilterClassLoader) {
+          System.out.println("Debug: Closing parent class loader");
+          ((PackageFilterClassLoader) cl.delegates.get(1)).close();
+        }
+      }
     }
     try {
       DirUtils.deleteDirectoryContents(tmpDir);

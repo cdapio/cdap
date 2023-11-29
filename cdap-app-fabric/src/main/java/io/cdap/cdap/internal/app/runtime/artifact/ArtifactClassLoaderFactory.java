@@ -101,9 +101,13 @@ final class ArtifactClassLoaderFactory {
     }
 
     final ClassLoader finalProgramClassLoader = programClassLoader;
+    ClassLoader finalSparkClassLoader = sparkClassLoader;
     return new CloseableClassLoader(programClassLoader, () -> {
       if (finalProgramClassLoader instanceof Closeable) {
         Closeables.closeQuietly((Closeable) finalProgramClassLoader);
+      }
+      if (finalSparkClassLoader instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) finalSparkClassLoader);
       }
     });
   }

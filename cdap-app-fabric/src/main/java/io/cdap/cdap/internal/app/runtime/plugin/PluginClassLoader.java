@@ -24,6 +24,7 @@ import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.PackageFilterClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -104,5 +105,11 @@ public class PluginClassLoader extends DirectoryClassLoader {
    */
   public String getTopLevelJar() {
     return topLevelJar;
+  }
+
+  @Override
+  public void close() throws IOException {
+    super.close();
+    System.out.println("Debug: Closed plugin class loader!");
   }
 }

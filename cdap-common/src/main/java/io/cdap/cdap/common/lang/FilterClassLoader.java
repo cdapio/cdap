@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.lang;
 
 import com.google.common.collect.Lists;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -30,10 +31,22 @@ import java.util.Set;
 /**
  * ClassLoader that filters out certain resources.
  */
-public final class FilterClassLoader extends ClassLoader {
+public final class FilterClassLoader extends ClassLoader implements Closeable {
 
   private final ClassLoader extensionClassLoader;
+  private final ClassLoader parentClassLoader;
+  private final boolean ownsParent;
   private final Filter filter;
+
+  @Override
+  public void close() throws IOException {
+    if (this.ownsParent) {
+      if (parentClassLoader instanceof Closeable) {
+        System.out.println("Debug: Closing parent class loader");
+        ((Closeable) parentClassLoader).close();
+      }
+    }
+  }
 
   /**
    * Represents filtering  that the {@link FilterClassLoader} needs to apply.
@@ -91,6 +104,18 @@ public final class FilterClassLoader extends ClassLoader {
     return new FilterClassLoader(parentClassLoader, defaultFilter());
   }
 
+  public FilterClassLoader(ClassLoader parentClassLoader, Filter filter, boolean ownsParent) {
+   super(parentClassLoader);
+    this.ownsParent = ownsParent;
+    if (ownsParent) {
+      this.parentClassLoader = parentClassLoader;
+    } else {
+      this.parentClassLoader = null;
+    }
+    this.extensionClassLoader = new URLClassLoader(new URL[0],
+        ClassLoader.getSystemClassLoader().getParent());
+    this.filter = filter;
+  }
   /**
    * Create a {@link FilterClassLoader} that filter classes based on the given {@link Filter} on the
    * given parent ClassLoader.
@@ -99,10 +124,7 @@ public final class FilterClassLoader extends ClassLoader {
    * @param filter Filter to apply for the ClassLoader
    */
   public FilterClassLoader(ClassLoader parentClassLoader, Filter filter) {
-    super(parentClassLoader);
-    this.extensionClassLoader = new URLClassLoader(new URL[0],
-        ClassLoader.getSystemClassLoader().getParent());
-    this.filter = filter;
+    this(parentClassLoader, filter, false);
   }
 
   @Override

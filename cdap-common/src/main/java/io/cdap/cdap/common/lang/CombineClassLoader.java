@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class CombineClassLoader extends URLClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(CombineClassLoader.class);
-  private final List<ClassLoader> delegates;
+  public final List<ClassLoader> delegates;
 
   /**
    * Creates a CombineClassLoader with the given parent and a list of ClassLoaders for delegation.
