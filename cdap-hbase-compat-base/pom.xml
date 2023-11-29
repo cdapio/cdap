@@ -29,11 +29,6 @@
   <name>CDAP HBase Compactability Base</name>
   <packaging>jar</packaging>
 
-  <properties>
-    <!-- Not set at the parent pom level to avoid impacting other child modules. -->
-    <protobuf.version>2.5.0</protobuf.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -143,11 +138,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-      <version>${protobuf.version}</version>
-    </dependency>
+
   </dependencies>
 
   <build>
