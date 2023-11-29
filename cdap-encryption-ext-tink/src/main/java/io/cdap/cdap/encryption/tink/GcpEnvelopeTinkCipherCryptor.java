@@ -101,10 +101,6 @@ public class GcpEnvelopeTinkCipherCryptor extends AbstractTinkAeadCipherCryptor 
   private void validateProperties(AeadCipherContext context) throws CipherInitializationException {
     Map<String, String> properties = context.getProperties();
     List<String> invalidProperties = new ArrayList<>();
-    String projectId = properties.get(TINK_GCP_KMS_PROJECT_ID);
-    if (projectId == null || projectId.isEmpty()) {
-      invalidProperties.add(TINK_GCP_KMS_PROJECT_ID);
-    }
     String location = properties.get(TINK_GCP_KMS_LOCATION);
     if (location == null || location.isEmpty()) {
       invalidProperties.add(TINK_GCP_KMS_LOCATION);
