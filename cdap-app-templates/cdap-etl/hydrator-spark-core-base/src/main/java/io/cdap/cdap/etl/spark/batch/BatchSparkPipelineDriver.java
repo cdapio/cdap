@@ -62,6 +62,7 @@ import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SQLContext;
@@ -141,15 +142,22 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       }
     }
 
-    // If SQL engine is not initiated : use default spark method (RDDCollection)
+    // If SQL engine is not initiated : use default spark method (RDDCollection or OpaqueDatasetCollection)
+    boolean shouldForceDatasets = Boolean.parseBoolean(
+        sec.getRuntimeArguments().getOrDefault(Constants.DATASET_FORCE, Boolean.FALSE.toString()));
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
       new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
     this.functionCacheFactory = functionCacheFactory;
+    JavaRDD<RecordInfo<Object>> rdd = sourceFactory
+        .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+        .flatMap(sourceFunction);
+    if (shouldForceDatasets) {
+      return OpaqueDatasetCollection.fromRdd(
+          rdd, sec, jsc, new SQLContext(jsc), datasetContext, sinkFactory, functionCacheFactory);
+    }
     return new RDDCollection<>(sec, functionCacheFactory, jsc,
-                               new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
-                                 .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-                                 .flatMap(sourceFunction));
+                               new SQLContext(jsc), datasetContext, sinkFactory, rdd);
   }
 
   @Override
