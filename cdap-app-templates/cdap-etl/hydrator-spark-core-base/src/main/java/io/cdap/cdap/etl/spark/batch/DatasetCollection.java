@@ -56,9 +56,11 @@ import scala.Tuple2;
 public abstract class DatasetCollection<T> extends DelegatingSparkCollection<T>
     implements BatchCollection<T>{
   private static final Encoder KRYO_OBJECT_ENCODER = Encoders.kryo(Object.class);
+  private static final Encoder KRYO_ARRAY_ENCODER = Encoders.kryo(Object[].class);
   private static final Encoder KRYO_TUPLE_ENCODER = Encoders.tuple(
       KRYO_OBJECT_ENCODER, KRYO_OBJECT_ENCODER);
   private static final Encoder JAVA_OBJECT_ENCODER = Encoders.javaSerialization(Object.class);
+  private static final Encoder JAVA_ARRAY_ENCODER = Encoders.javaSerialization(Object[].class);
   private static final Encoder JAVA_TUPLE_ENCODER = Encoders.tuple(
       JAVA_OBJECT_ENCODER, JAVA_OBJECT_ENCODER);
 
@@ -113,6 +115,13 @@ public abstract class DatasetCollection<T> extends DelegatingSparkCollection<T>
   }
 
   /**
+   * helper function to provide a generified encoder for array of serializable type
+   * @param useKryoForDatasets
+   */
+  protected static <V> Encoder<V[]> arrayEncoder(boolean useKryoForDatasets) {
+    return useKryoForDatasets ? KRYO_ARRAY_ENCODER : JAVA_ARRAY_ENCODER;
+  }
+  /**
    * helper function to provide a generified encoder for tuple of two serializable types
    */
   protected <V1, V2> Encoder<Tuple2<V1, V2>> tupleEncoder() {
@@ -126,6 +135,12 @@ public abstract class DatasetCollection<T> extends DelegatingSparkCollection<T>
     return objectEncoder(useKryoForDatasets);
   }
 
+  /**
+   * helper function to provide a generified encoder for array of serializable type
+   */
+  protected  <V> Encoder<V[]> arrayEncoder() {
+    return arrayEncoder(useKryoForDatasets);
+  }
   @Override
   public <U> SparkCollection<U> map(Function<T, U> function) {
     MapFunction<T, U> mapFunction = function::call;
@@ -158,10 +173,25 @@ public abstract class DatasetCollection<T> extends DelegatingSparkCollection<T>
     return wrap(getDataset().persist(cacheStorageLevel));
   }
 
+  private static <T> Object[] arrayWrapper(T value) {
+    return value == null ? null : new Object[]{value};
+  }
+
+  private static <T> T arrayUnWrapper(Object[] array) {
+    return array == null ? null : (T) array[0];
+  }
+
   @Override
   public SparkCollection union(SparkCollection other) {
     if (other instanceof DatasetCollection) {
-      return wrap(getDataset().unionAll(((DatasetCollection) other).getDataset()));
+      //We need to workaround https://issues.apache.org/jira/browse/SPARK-46176 that
+      //causes problems with union for Dataset[Object]. We'll wrap and unwrap value into array.
+      MapFunction<T, Object[]> wrapper = DatasetCollection::arrayWrapper;
+      MapFunction<Object[], T> unWrapper = DatasetCollection::arrayUnWrapper;
+      Dataset<Object[]> left = getDataset().map(wrapper, arrayEncoder());
+      Dataset<Object[]> right = ((DatasetCollection) other).getDataset()
+          .map(wrapper, arrayEncoder());
+      return wrap(left.unionAll(right).map(unWrapper, objectEncoder()));
     }
     return super.union(other);
   }

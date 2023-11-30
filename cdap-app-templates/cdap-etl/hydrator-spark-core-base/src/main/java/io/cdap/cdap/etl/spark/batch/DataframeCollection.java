@@ -84,6 +84,11 @@ public class DataframeCollection extends DatasetCollection<StructuredRecord>
     super(sec, jsc, sqlContext, datasetContext, sinkFactory, functionCacheFactory);
     this.schema = Objects.requireNonNull(schema);
     this.dataframe = dataframe;
+    if (!Row.class.isAssignableFrom(dataframe.encoder().clsTag().runtimeClass())) {
+      throw new IllegalArgumentException(
+          "Dataframe collection received dataset of " + dataframe.encoder().clsTag()
+              .runtimeClass());
+    }
   }
 
   /**
