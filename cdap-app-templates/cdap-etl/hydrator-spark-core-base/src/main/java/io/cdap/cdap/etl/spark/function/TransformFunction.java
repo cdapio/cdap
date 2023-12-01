@@ -20,6 +20,7 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
+import java.util.concurrent.ExecutionException;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.Iterator;
@@ -43,15 +44,21 @@ public class TransformFunction<T> implements FlatMapFunction<T, RecordInfo<Objec
 
   @Override
   public Iterator<RecordInfo<Object>> call(T input) throws Exception {
-    if (transform == null) {
-      Transform<T, Object> plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
-      transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer(),
-                                         pluginFunctionContext.getStageStatisticsCollector());
-      emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
+    try {
+      if (transform == null) {
+        Transform<T, Object> plugin = pluginFunctionContext.createAndInitializePlugin(
+            functionCache);
+        transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
+            pluginFunctionContext.getDataTracer(),
+            pluginFunctionContext.getStageStatisticsCollector());
+        emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
+      }
+      emitter.reset();
+      transform.transform(input, emitter);
+      return emitter.getEmitted().iterator();
+    } catch (Exception e) {
+      throw new ExecutionException("Error when transforming stage "
+          + pluginFunctionContext.getStageName() + ": " + e, e);
     }
-    emitter.reset();
-    transform.transform(input, emitter);
-    return emitter.getEmitted().iterator();
   }
 }

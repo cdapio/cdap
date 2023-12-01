@@ -38,6 +38,12 @@ public final class Constants {
   public static final String CONSOLIDATE_STAGES = "spark.cdap.pipeline.consolidate.stages";
   public static final String CACHE_FUNCTIONS = "spark.cdap.pipeline.functioncache.enable";
   public static final String DATASET_KRYO_ENABLED = "spark.cdap.pipeline.dataset.kryo.enable";
+
+  /**
+   * Force using Datasets instead of RDDs right out of BatchSource. Should mostly
+   * be used for testing
+   */
+  public static final String DATASET_FORCE = "spark.cdap.pipeline.dataset.force";
   public static final String DATASET_AGGREGATE_ENABLED = "spark.cdap.pipeline.aggregate.dataset.enable";
   public static final String DISABLE_ELT_PUSHDOWN = "cdap.pipeline.pushdown.disable";
   public static final String DATASET_AGGREGATE_IGNORE_PARTITIONS =
