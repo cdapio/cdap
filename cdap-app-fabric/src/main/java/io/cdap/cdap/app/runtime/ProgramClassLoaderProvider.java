@@ -19,7 +19,7 @@ package io.cdap.cdap.app.runtime;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 
 /**
- * A provider for for program classloading creation.
+ * A provider for program classloading creation.
  */
 public interface ProgramClassLoaderProvider {
 

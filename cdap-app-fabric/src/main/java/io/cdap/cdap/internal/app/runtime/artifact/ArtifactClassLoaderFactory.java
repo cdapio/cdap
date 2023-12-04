@@ -31,7 +31,6 @@ import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
-import java.io.Closeable;
 import java.io.File;
 import java.util.Iterator;
 import javax.annotation.Nullable;
@@ -48,8 +47,7 @@ final class ArtifactClassLoaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
 
   private final CConfiguration cConf;
-  @Nullable
-  private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
+  @Nullable private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
   private final File tmpDir;
 
   @VisibleForTesting
@@ -57,12 +55,13 @@ final class ArtifactClassLoaderFactory {
     this(cConf, null);
   }
 
-  ArtifactClassLoaderFactory(CConfiguration cConf,
-      @Nullable ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
+  ArtifactClassLoaderFactory(
+      CConfiguration cConf, @Nullable ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.cConf = cConf;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.tmpDir =
+        new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR))
+            .getAbsoluteFile();
   }
 
   /**
@@ -77,35 +76,30 @@ final class ArtifactClassLoaderFactory {
    *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
    */
   CloseableClassLoader createClassLoader(File unpackDir) {
-    ClassLoader sparkClassLoader = null;
+    ClassLoader parentClassLoader = null;
     if (programRuntimeProviderLoader != null) {
       try {
         // Try to create a ProgramClassLoader from the Spark runtime system if it is available.
         // It is needed because we don't know what program types that an artifact might have.
         // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
-        sparkClassLoader = programRuntimeProviderLoader.get(ProgramType.SPARK)
-            .createProgramClassLoader(cConf, ProgramType.SPARK);
+        parentClassLoader =
+            programRuntimeProviderLoader
+                .get(ProgramType.SPARK)
+                .getRuntimeClassLoader(ProgramType.SPARK, cConf);
       } catch (Exception e) {
         // If Spark is not supported, exception is expected. We'll use the default filter.
         LOG.warn("Spark is not supported. Not using ProgramClassLoader from Spark");
         LOG.trace("Failed to create spark program runner with error:", e);
       }
     }
-
-    ProgramClassLoader programClassLoader = null;
-    if (sparkClassLoader != null) {
-      programClassLoader = new ProgramClassLoader(cConf, unpackDir, sparkClassLoader);
-    } else {
-      programClassLoader = new ProgramClassLoader(cConf, unpackDir,
-          FilterClassLoader.create(getClass().getClassLoader()));
+    if (parentClassLoader == null) {
+      parentClassLoader = FilterClassLoader.create(getClass().getClassLoader());
     }
 
-    final ClassLoader finalProgramClassLoader = programClassLoader;
-    return new CloseableClassLoader(programClassLoader, () -> {
-      if (finalProgramClassLoader instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) finalProgramClassLoader);
-      }
-    });
+    ProgramClassLoader programClassLoader =
+        new ProgramClassLoader(cConf, unpackDir, parentClassLoader);
+    return new CloseableClassLoader(
+        programClassLoader, () -> Closeables.closeQuietly(programClassLoader));
   }
 
   /**
@@ -117,18 +111,22 @@ final class ArtifactClassLoaderFactory {
    *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
    * @see #createClassLoader(File)
    */
-  CloseableClassLoader createClassLoader(Location artifactLocation,
-      EntityImpersonator entityImpersonator) {
+  CloseableClassLoader createClassLoader(
+      Location artifactLocation, EntityImpersonator entityImpersonator) {
     try {
-      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
-          () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
-              () -> DirUtils.createTempDir(tmpDir)));
+      ClassLoaderFolder classLoaderFolder =
+          entityImpersonator.impersonate(
+              () ->
+                  BundleJarUtil.prepareClassLoaderFolder(
+                      artifactLocation, () -> DirUtils.createTempDir(tmpDir)));
 
       CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
-      return new CloseableClassLoader(classLoader, () -> {
-        Closeables.closeQuietly(classLoader);
-        Closeables.closeQuietly(classLoaderFolder);
-      });
+      return new CloseableClassLoader(
+          classLoader,
+          () -> {
+            Closeables.closeQuietly(classLoader);
+            Closeables.closeQuietly(classLoaderFolder);
+          });
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -143,8 +141,8 @@ final class ArtifactClassLoaderFactory {
    *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
    * @see #createClassLoader(File)
    */
-  CloseableClassLoader createClassLoader(Iterator<Location> artifactLocations,
-      EntityImpersonator entityImpersonator) {
+  CloseableClassLoader createClassLoader(
+      Iterator<Location> artifactLocations, EntityImpersonator entityImpersonator) {
     if (!artifactLocations.hasNext()) {
       throw new IllegalArgumentException("Cannot create a classloader without an artifact.");
     }
@@ -155,17 +153,20 @@ final class ArtifactClassLoaderFactory {
     }
 
     try {
-      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
-          () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
-              () -> DirUtils.createTempDir(tmpDir)));
+      ClassLoaderFolder classLoaderFolder =
+          entityImpersonator.impersonate(
+              () ->
+                  BundleJarUtil.prepareClassLoaderFolder(
+                      artifactLocation, () -> DirUtils.createTempDir(tmpDir)));
 
-      CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations,
-          entityImpersonator);
-      return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
-          parentClassLoader, "lib"), () -> {
-        Closeables.closeQuietly(parentClassLoader);
-        Closeables.closeQuietly(classLoaderFolder);
-      });
+      CloseableClassLoader parentClassLoader =
+          createClassLoader(artifactLocations, entityImpersonator);
+      return new CloseableClassLoader(
+          new DirectoryClassLoader(classLoaderFolder.getDir(), parentClassLoader, "lib"),
+          () -> {
+            Closeables.closeQuietly(parentClassLoader);
+            Closeables.closeQuietly(classLoaderFolder);
+          });
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
