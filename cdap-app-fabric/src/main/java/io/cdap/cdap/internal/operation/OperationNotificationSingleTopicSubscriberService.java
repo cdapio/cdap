@@ -182,11 +182,10 @@ class OperationNotificationSingleTopicSubscriberService
         runStore.updateOperationStatus(runId, OperationRunStatus.STARTING, messageIdBytes);
         break;
       case RUNNING:
-      case SUCCEEDED:
-        runStore.updateOperationStatus(runId, notification.getStatus(), messageIdBytes);
         if (notification.getResources() != null) {
           runStore.updateOperationResources(runId, notification.getResources(), messageIdBytes);
         }
+        runStore.updateOperationStatus(runId, OperationRunStatus.RUNNING, messageIdBytes);
         break;
       case STOPPING:
         try {
@@ -196,8 +195,11 @@ class OperationNotificationSingleTopicSubscriberService
         }
         runStore.updateOperationStatus(runId, OperationRunStatus.STOPPING, messageIdBytes);
         break;
+      case SUCCEEDED:
+        runStore.succeedOperationRun(runId, notification.getEndTime(), messageIdBytes);
+        break;
       case KILLED:
-        runStore.updateOperationStatus(runId, OperationRunStatus.KILLED, messageIdBytes);
+        runStore.killOperationRun(runId, notification.getEndTime(), messageIdBytes);
         break;
       case FAILED:
         runStore.failOperationRun(runId, notification.getError(), notification.getEndTime(),
