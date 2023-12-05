@@ -56,9 +56,9 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
       FunctionCache.Factory functionCacheFactory) {
     super(sec, jsc, sqlContext, datasetContext, sinkFactory, functionCacheFactory);
     this.dataset = dataset;
-    if (Row.class.isAssignableFrom(dataset.encoder().clsTag().runtimeClass())) {
+    if (Row.class.isAssignableFrom(dataset.exprEnc().clsTag().runtimeClass())) {
       throw new IllegalArgumentException(
-          "Opaque collection received dataset of Row (" + dataset.encoder().clsTag()
+          "Opaque collection received dataset of Row (" + dataset.exprEnc().clsTag()
               .runtimeClass() + "). DataframeCollection should be used.");
     }
   }
