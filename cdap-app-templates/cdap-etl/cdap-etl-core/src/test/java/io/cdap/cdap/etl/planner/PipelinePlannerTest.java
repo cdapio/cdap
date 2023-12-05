@@ -1095,6 +1095,56 @@ public class PipelinePlannerTest {
     Assert.assertEquals(expected, actual);
   }
 
+  @Test
+  public void testConditionalBranchShouldHaveCorrectInputSchemaKeyName() {
+    /*
+      n1 - condition - n2 (REDUCE) --- n4
+                      |
+                      |---- n3
+     */
+
+    Schema schema = Schema.recordOf("stuff", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
+    Set<StageSpec> stageSpecs = ImmutableSet.of(
+      StageSpec.builder("n1", NODE)
+        .addOutput(schema, "condition")
+        .build(),
+      StageSpec.builder("condition", CONDITION)
+        .addInputSchema("n1", schema)
+        .addOutput(schema, "n2", "n3")
+        .build(),
+      StageSpec.builder("n2", REDUCE)
+        .addInputSchema("condition", schema)
+        .addOutput(schema, "n4")
+        .build(),
+      StageSpec.builder("n3", NODE)
+        .build(),
+      StageSpec.builder("n4", NODE)
+        .build()
+    );
+
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("n1", "condition"),
+      new Connection("condition", "n2", true),
+      new Connection("n2", "n4"),
+      new Connection("condition", "n3", false)
+    );
+
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.Connector.PLUGIN_TYPE,
+                                              CONDITION.getType());
+    Set<String> reduceTypes = ImmutableSet.of(REDUCE.getType());
+    Set<String> emptySet = ImmutableSet.of();
+    PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes, emptySet, emptySet, emptySet);
+    PipelineSpec pipelineSpec = PipelineSpec.builder().addStages(stageSpecs).addConnections(connections).build();
+
+    PipelinePlan actual = planner.plan(pipelineSpec);
+    String phaseName = actual.getPhases().keySet().stream().filter( x -> x.contains("condition.to.n4"))
+      .findFirst().get();
+    Schema schema1 = actual.getPhase(phaseName).getStage("n2").getInputSchemas().get("condition.connector");
+
+    Assert.assertNotNull(schema1);
+    Assert.assertEquals(schema, schema1);
+  }
+
   private static PluginSpec connectorSpec(String originalName, String type) {
     return new PluginSpec(Constants.Connector.PLUGIN_TYPE, "connector",
                           ImmutableMap.of(Constants.Connector.TYPE, type,
