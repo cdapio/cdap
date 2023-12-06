@@ -1307,13 +1307,16 @@ public final class Constants {
      * Source Control Management metrics.
      */
     public static final class SourceControlManagement {
-
       public static final String CLONE_REPOSITORY_SIZE_BYTES =
           "source.control.git.repository.clone.size.bytes";
       public static final String CLONE_LATENCY_MS =
           "source.control.git.clone.latency.ms";
       public static final String COMMIT_PUSH_LATENCY_MILLIS =
           "source.control.git.commit.push.duration.ms";
+      public static final String PULL_PIPELINE_COUNT =
+          "source.control.git.repository.pull.count";
+      public static final String PUSH_PIPELINE_COUNT =
+          "source.control.git.repository.push.count";
     }
 
     /**
