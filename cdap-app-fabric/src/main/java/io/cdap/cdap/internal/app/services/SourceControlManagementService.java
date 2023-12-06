@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -26,6 +28,8 @@ import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants.Metrics.SourceControlManagement;
+import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
@@ -89,6 +93,7 @@ public class SourceControlManagementService {
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
   private final OperationLifecycleManager operationLifecycleManager;
+  private final MetricsCollectionService metricsCollectionService;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -104,7 +109,8 @@ public class SourceControlManagementService {
       SourceControlOperationRunner sourceControlOperationRunner,
       ApplicationLifecycleService applicationLifecycleService,
       Store store,
-      OperationLifecycleManager operationLifecycleManager) {
+      OperationLifecycleManager operationLifecycleManager,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -114,6 +120,7 @@ public class SourceControlManagementService {
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
     this.operationLifecycleManager = operationLifecycleManager;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context)
@@ -220,6 +227,9 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
 
+    metricsCollectionService.getContext(ImmutableMap.of(Tag.NAMESPACE, appRef.getNamespace()))
+        .gauge(SourceControlManagement.PUSH_PIPELINE_COUNT, 1);
+
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
@@ -273,6 +283,8 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
+    metricsCollectionService.getContext(ImmutableMap.of(Tag.NAMESPACE, appRef.getNamespace()))
+        .gauge(SourceControlManagement.PULL_PIPELINE_COUNT, 1);
 
     PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
@@ -370,6 +382,8 @@ public class SourceControlManagementService {
         request.getCommitMessage());
     PushAppsRequest pushOpRequest = new PushAppsRequest(new HashSet<>(request.getApps()),
         repoConfig, commitMeta);
+    metricsCollectionService.getContext(ImmutableMap.of(Tag.NAMESPACE, namespace.getNamespace()))
+        .gauge(SourceControlManagement.PUSH_PIPELINE_COUNT, pushOpRequest.getApps().size());
     return operationLifecycleManager.createPushOperation(namespace.getNamespace(),
         RunIds.generate().getId(), pushOpRequest, principal);
   }
@@ -391,7 +405,8 @@ public class SourceControlManagementService {
     String principal = authenticationContext.getPrincipal().getName();
     PullAppsRequest pullOpRequest = new PullAppsRequest(new HashSet<>(request.getApps()),
         repoConfig);
-
+    metricsCollectionService.getContext(ImmutableMap.of(Tag.NAMESPACE, namespace.getNamespace()))
+        .gauge(SourceControlManagement.PULL_PIPELINE_COUNT, pullOpRequest.getApps().size());
     return operationLifecycleManager.createPullOperation(namespace.getNamespace(),
         RunIds.generate().getId(), pullOpRequest, principal);
   }
