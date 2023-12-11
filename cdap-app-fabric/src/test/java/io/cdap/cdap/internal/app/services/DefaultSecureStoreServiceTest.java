@@ -43,11 +43,11 @@ import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
-import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
+import io.cdap.cdap.security.authorization.RoleController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -77,7 +77,8 @@ public class DefaultSecureStoreServiceTest {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static AppFabricServer appFabricServer;
-  private static AccessController accessController;
+  private static RoleController roleController;
+  private static PermissionManager permissionManager;
   private static DiscoveryServiceClient discoveryServiceClient;
 
   @ClassRule
@@ -87,7 +88,7 @@ public class DefaultSecureStoreServiceTest {
   public static void setup() throws Exception {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    CConfiguration cConf = createCConf();
+    CConfiguration cConf = createCconf();
     final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -95,13 +96,14 @@ public class DefaultSecureStoreServiceTest {
     waitForService(Constants.Service.DATASET_MANAGER);
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
-    accessController = injector.getInstance(AccessControllerInstantiator.class).get();
+    roleController = injector.getInstance(RoleController.class);
+    permissionManager = injector.getInstance(PermissionManager.class);
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
-    accessController.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                           new Principal(user, Principal.PrincipalType.USER),
-                           EnumSet.allOf(StandardPermission.class));
+    permissionManager.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                         new Principal(user, Principal.PrincipalType.USER),
+                         EnumSet.allOf(StandardPermission.class));
     // Starting the Appfabric server will create the default namespace
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -109,9 +111,9 @@ public class DefaultSecureStoreServiceTest {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    accessController.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                            new Principal(user, Principal.PrincipalType.USER),
-                            Collections.singleton(StandardPermission.UPDATE));
+    permissionManager.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT),
+                          new Principal(user, Principal.PrincipalType.USER),
+                          Collections.singleton(StandardPermission.UPDATE));
   }
 
   private static void waitForService(String service) {
@@ -126,7 +128,7 @@ public class DefaultSecureStoreServiceTest {
     AppFabricTestHelper.shutdown();
   }
 
-  private static CConfiguration createCConf() throws Exception {
+  private static CConfiguration createCconf() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
@@ -136,7 +138,7 @@ public class DefaultSecureStoreServiceTest {
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
-    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessControllerV2.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
 
     // set secure store provider
@@ -217,24 +219,24 @@ public class DefaultSecureStoreServiceTest {
   private void grantAndAssertSuccess(Authorizable authorizable, Principal principal,
                                      Set<? extends Permission> permissions)
     throws Exception {
-    Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
-    accessController.grant(authorizable, principal, permissions);
+    Set<GrantedPermission> existingPrivileges = roleController.listGrants(principal);
+    permissionManager.grant(authorizable, principal, permissions);
     ImmutableSet.Builder<GrantedPermission> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Permission permission : permissions) {
       expectedPrivilegesAfterGrant.add(new GrantedPermission(authorizable, permission));
     }
     Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
-                        accessController.listGrants(principal));
+                        roleController.listGrants(principal));
   }
 
   private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<? extends Permission> permissions)
     throws Exception {
-    Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
-    accessController.revoke(Authorizable.fromEntityId(entityId), principal, permissions);
+    Set<GrantedPermission> existingPrivileges = roleController.listGrants(principal);
+    permissionManager.revoke(Authorizable.fromEntityId(entityId), principal, permissions);
     Set<GrantedPermission> revokedPrivileges = new HashSet<>();
     for (Permission permission : permissions) {
       revokedPrivileges.add(new GrantedPermission(entityId, permission));
     }
-    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), accessController.listGrants(principal));
+    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), roleController.listGrants(principal));
   }
 }

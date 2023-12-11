@@ -67,7 +67,7 @@ public final class GcpMetadataTaskContextUtil {
     }
     GcpMetadataTaskContext gcpMetadataTaskContext = new GcpMetadataTaskContext(
         namespaceId.getNamespace(),
-        SecurityRequestContext.getUserId(), SecurityRequestContext.getUserIP(),
+        SecurityRequestContext.getUserId(), SecurityRequestContext.getUserIp(),
         SecurityRequestContext.getUserCredential());
     String setContextEndpoint = String.format("%s/set-context",
         getSidecarMetadataServiceEndpoint(cConf));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Cask Data, Inc.
+ * Copyright © 2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,50 +29,56 @@ import java.util.Set;
  * provide management access or not depending on security type. In the latter case permission must
  * be managed using native tools for the security environment.
  */
-public interface PermissionManager {
+public interface PermissionManagerSpi {
 
   /**
    * Grants a {@link Principal} authorization to perform a set of {@link Permission permissions} on
    * {@link EntityId} represented by the {@link Authorizable} Note: this grant is used to support
    * wildcard privilege management.
    *
+   * @param caller , the principal who is performing this call.
    * @param authorizable The {@link Authorizable} on which the {@link Permission} are to be
-   *     granted
-   * @param principal the {@link Principal} that performs the permissions. This could be a user,
-   *     or role
+   *                     granted
+   * @param principal the {@link Principal} that for whom we are setting the permissions. This could be a user,
+   *                  or role
    * @param permissions the set of {@link Permission permissions} to grant.
    */
-  void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-      throws AccessException;
+  AuthorizationResponse grant(Principal caller, Authorizable authorizable, Principal principal,
+                              Set<? extends Permission> permissions) throws AccessException;
 
   /**
    * Revokes a {@link Principal} authorization to perform a set of {@link Permission permissions} on
    * {@link EntityId} represented by the {@link Authorizable} Note: this revoke is used to support
    * wildcard privilege management.
    *
+   * @param caller , the principal who is performing this call .
    * @param authorizable the {@link Authorizable} whose {@link Permission permissions} are to be
-   *     revoked
+ *     revoked
    * @param principal the {@link Principal} that performs the permissions. This could be a user,
-   *     group or role
+*     group or role
    * @param permissions the set of {@link Permission permissions} to revoke
    */
-  void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-      throws AccessException;
+  AuthorizationResponse revoke(Principal caller, Authorizable authorizable, Principal principal,
+                               Set<? extends Permission> permissions) throws AccessException;
 
   /**
    * Revokes all {@link Principal}s authorization to perform any set of {@link Permission
    * permissions} on {@link EntityId} represented by the {@link Authorizable}.
    *
+   * @param caller , the principal who is performing this call.
    * @param authorizable the {@link Authorizable} on which all {@link Permission permissions}
-   *     are to be revoked
+   *                     are to be revoked
    */
-  void revoke(Authorizable authorizable) throws AccessException;
+  AuthorizationResponse revoke(Principal caller, Authorizable authorizable) throws AccessException;
 
   /**
    * Returns all the {@link GrantedPermission} for the specified {@link Principal}.
    *
+   * @param caller , the principal who is performing this call.
    * @param principal the {@link Principal} for which to return privileges
-   * @return a {@link Set} of {@link GrantedPermission} for the specified principal
+   * @return a AuthorizationResult which consists of ( setof {@link GrantedPermission} for the specified principal)
+   *          and {@link AuthorizationResponse}
    */
-  Set<GrantedPermission> listGrants(Principal principal) throws AccessException;
+  AuthorizedResult<Set<GrantedPermission>> listGrants(Principal caller, Principal principal)
+    throws AccessException;
 }

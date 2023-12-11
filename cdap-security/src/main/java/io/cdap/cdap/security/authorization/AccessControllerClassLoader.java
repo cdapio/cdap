@@ -26,7 +26,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.FinallyAdapter;
 import io.cdap.cdap.internal.asm.Signatures;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link DirectoryClassLoader} for {@link AccessController} extensions.
+ * {@link DirectoryClassLoader} for {@link AccessControllerSpi} extensions.
  */
 public class AccessControllerClassLoader extends DirectoryClassLoader {
 
@@ -92,7 +92,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
       // Trace dependencies for AccessController class. This will make classes from cdap-security-spi as well
       // as cdap-proto and other dependencies of cdap-security-spi available to the access controller extension.
       return ClassPathResources.getResourcesWithDependencies(baseClassLoader,
-          AccessController.class);
+          AccessControllerSpi.class);
     } catch (IOException e) {
       LOG.error(
           "Failed to determine resources for access controller class loader while tracing dependencies of "
@@ -130,7 +130,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
   }
 
   /**
-   * Returns the class name of the {@link AccessController}.
+   * Returns the class name of the {@link AccessControllerSpi}.
    */
   public String getAccessControllerClassName() {
     return accessControllerClassName;
@@ -150,7 +150,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
 
     // Rewrite the AccessController class to wrap every methods call with context classloader change
     Set<java.lang.reflect.Method> accessControlMethods = Stream.of(Authorizer.class,
-            AccessController.class)
+            AccessControllerSpi.class)
         .flatMap(c -> Stream.of(c.getMethods())).collect(Collectors.toSet());
 
     ClassReader cr = new ClassReader(input);
@@ -279,7 +279,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
   }
 
   /**
-   * Returns the {@link AccessController} class name as declared in the Manifest.
+   * Returns the {@link AccessControllerSpi} class name as declared in the Manifest.
    */
   private String extractAccessControllerClassName() throws InvalidAccessControllerException {
     Manifest manifest = getManifest();
@@ -302,7 +302,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
                   + "Please set the attribute %s to the fully qualified class name of the class that "
 
                   + "implements %s in the extension jar's manifest.",
-              extensionJar, Attributes.Name.MAIN_CLASS, AccessController.class.getName()));
+              extensionJar, Attributes.Name.MAIN_CLASS, AccessControllerSpi.class.getName()));
     }
     return manifestAttributes.getValue(Attributes.Name.MAIN_CLASS);
   }

@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.common.conf.Constants;
@@ -64,34 +65,34 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     // is fixed since we may perform auth checks in the thread processing the last chunk.
     if (msg instanceof HttpRequest) {
 
-      String currentUserID = null;
+      String currentUserId = null;
       Credential currentUserCredential = null;
-      String currentUserIP = null;
+      String currentUserIp = null;
 
       if (internalAuthEnabled) {
         // When internal auth is enabled, all requests should typically have user id and credential
         // associated with them, for instance, end user credential for user originated ones and
         // internal system credential for system originated requests. If there is none, set
         // default empty user id and credential.
-        currentUserID = EMPTY_USER_ID;
+        currentUserId = EMPTY_USER_ID;
         currentUserCredential = EMPTY_USER_CREDENTIAL;
-        currentUserIP = EMPTY_USER_IP;
+        currentUserIp = EMPTY_USER_IP;
       }
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) msg;
-      String userID = request.headers().get(Constants.Security.Headers.USER_ID);
-      if (userID != null) {
-        currentUserID = userID;
+      String userId = request.headers().get(Constants.Security.Headers.USER_ID);
+      if (userId != null) {
+        currentUserId = userId;
       }
-      String userIP = request.headers().get(Constants.Security.Headers.USER_IP);
-      if (userIP != null) {
-        currentUserIP = userIP;
+      String userIp = request.headers().get(Constants.Security.Headers.USER_IP);
+      if (userIp != null) {
+        currentUserIp = userIp;
       }
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
-          LOG.error("Invalid Authorization header format for {}@{}", currentUserID, currentUserIP);
+          LOG.error("Invalid Authorization header format for {}@{}", currentUserId, currentUserIp);
           if (internalAuthEnabled) {
             throw new UnauthenticatedException("Invalid Authorization header format");
           }
@@ -110,11 +111,11 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
         }
       }
       LOG.trace("Got user ID '{}' user IP '{}' from IP '{}' and authorization header length '{}'",
-          userID, userIP, ctx.channel().remoteAddress(),
+          userId, userIp, ctx.channel().remoteAddress(),
           authHeader == null ? "NULL" : authHeader.length());
-      SecurityRequestContext.setUserId(currentUserID);
+      SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserCredential(currentUserCredential);
-      SecurityRequestContext.setUserIP(currentUserIP);
+      SecurityRequestContext.setUserIp(currentUserIp);
     }
 
     try {

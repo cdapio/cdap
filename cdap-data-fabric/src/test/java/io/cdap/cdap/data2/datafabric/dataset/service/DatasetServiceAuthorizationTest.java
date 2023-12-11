@@ -42,10 +42,10 @@ import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
-import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
+import io.cdap.cdap.security.authorization.RoleController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
-import io.cdap.cdap.security.spi.authorization.AccessController;
+import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.Collection;
@@ -65,23 +65,25 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
 
-  private static AccessController accessController;
+  private static RoleController roleController;
+  private static PermissionManager permissionManager;
 
   @BeforeClass
   public static void setup() throws Exception {
     locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    initializeAndStartService(createCConf());
-    accessController = injector.getInstance(AccessControllerInstantiator.class).get();
+    initializeAndStartService(createCconf());
+    roleController = injector.getInstance(RoleController.class);
+    permissionManager = injector.getInstance(PermissionManager.class);
   }
 
-  protected static CConfiguration createCConf() throws IOException {
-    CConfiguration cConf = DatasetServiceTestBase.createCConf();
+  protected static CConfiguration createCconf() throws IOException {
+    CConfiguration cConf = DatasetServiceTestBase.createCconf();
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
-    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessController.class);
+    Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAccessControllerV2.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
     return cConf;
   }
@@ -90,7 +92,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   public void testDatasetInstances() throws Exception {
     final DatasetId dsId = NamespaceId.DEFAULT.dataset("myds");
     final DatasetId dsId1 = NamespaceId.DEFAULT.dataset("myds1");
-    DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
+    final DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
     SecurityRequestContext.setUserId(ALICE.getName());
     assertAuthorizationFailure(
         () -> dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY),
@@ -234,9 +236,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     final DatasetModuleId module1 = NamespaceId.DEFAULT.datasetModule("module1");
     final DatasetModuleId module2 = NamespaceId.DEFAULT.datasetModule("module2");
     final DatasetTypeId type1 = NamespaceId.DEFAULT.datasetType("datasetType1");
-    DatasetTypeId type1x = NamespaceId.DEFAULT.datasetType("datasetType1x");
+    final DatasetTypeId type1x = NamespaceId.DEFAULT.datasetType("datasetType1x");
     final DatasetTypeId type2 = NamespaceId.DEFAULT.datasetType("datasetType2");
-    DatasetId datasetId = NamespaceId.DEFAULT.dataset("succeed");
+    final DatasetId datasetId = NamespaceId.DEFAULT.dataset("succeed");
     SecurityRequestContext.setUserId(ALICE.getName());
     final Location moduleJar = createModuleJar(TestModule1x.class);
     assertAuthorizationFailure(
@@ -303,7 +305,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
   @After
   public void cleanup() throws Exception {
-    accessController.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT));
+    permissionManager.revoke(Authorizable.fromEntityId(NamespaceId.DEFAULT));
   }
 
   private Set<DatasetId> summaryToDatasetIdSet(Collection<DatasetSpecificationSummary> datasetSpecs) {
@@ -320,15 +322,15 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   private void grantAndAssertSuccess(EntityId entityId, EntityType childType,
                                      Principal principal, Set<? extends Permission> permissions)
     throws AccessException {
-    Set<GrantedPermission> existingPrivileges = accessController.listGrants(principal);
+    Set<GrantedPermission> existingPrivileges = roleController.listGrants(principal);
     Authorizable authorizable = Authorizable.fromEntityId(entityId, childType);
-    accessController.grant(authorizable, principal, permissions);
+    permissionManager.grant(authorizable, principal, permissions);
     ImmutableSet.Builder<GrantedPermission> expectedPrivilegesAfterGrant = ImmutableSet.builder();
     for (Permission permission : permissions) {
       expectedPrivilegesAfterGrant.add(new GrantedPermission(authorizable, permission));
     }
     Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
-                        accessController.listGrants(principal));
+                        roleController.listGrants(principal));
   }
 
   private void assertNotFound(DatasetOperationExecutor operation, String failureMsg) throws Exception {
