@@ -227,8 +227,7 @@ abstract class DataprocClient implements AutoCloseable {
           .setDiskConfig(workerDiskConfig);
 
       //Set default concurrency settings for fixed cluster
-      if (Strings.isNullOrEmpty(conf.getAutoScalingPolicy())
-          && !conf.isPredefinedAutoScaleEnabled()) {
+      if (Strings.isNullOrEmpty(conf.getAutoScalingPolicy())) {
         //Set spark.default.parallelism according to cluster size.
         //Spark defaults it to number of current executors, but when we configure the job
         //executors may not have started yet, so this value gets artificially low.
