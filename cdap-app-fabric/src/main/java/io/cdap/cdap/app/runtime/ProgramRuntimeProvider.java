@@ -24,29 +24,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Provider for runtime system of programs.
- */
+/** Provider for runtime system of programs. */
 public interface ProgramRuntimeProvider {
 
-  /**
-   * Annotation for implementation to specify what are the supported {@link ProgramType}.
-   */
+  /** Annotation for implementation to specify what are the supported {@link ProgramType}. */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   @interface SupportedProgramType {
 
-    /**
-     * Returns the list of supported {@link ProgramType}.
-     */
+    /** Returns the list of supported {@link ProgramType}. */
     ProgramType[] value();
   }
 
-  /**
-   * The execution mode of the program runtime system.
-   */
+  /** The execution mode of the program runtime system. */
   enum Mode {
-    LOCAL, DISTRIBUTED
+    LOCAL,
+    DISTRIBUTED
   }
 
   /**
@@ -70,12 +63,15 @@ public interface ProgramRuntimeProvider {
   boolean isSupported(ProgramType programType, CConfiguration cConf);
 
   /**
-   * Creates a ClassLoader for the given program type. This is useful if you need the program class
-   * loader but do not need to run a program.
+   * Returns a ClassLoader for the given program type. This is useful if you only need the runtime
+   * classloader for the given program type, but not for program execution.
    *
-   * @param cConf The configuration to use
    * @param programType The type of program
+   * @param cConf The configuration to use
    * @return a {@link ClassLoader} for the given program runner
+   * @throws UnsupportedOperationException if the given program type is not supported by this
+   *     provider. Caller can use the {@link #isSupported(ProgramType, CConfiguration)} method to
+   *     check.
    */
-  ClassLoader createProgramClassLoader(CConfiguration cConf, ProgramType programType);
+  ClassLoader getRuntimeClassLoader(ProgramType programType, CConfiguration cConf);
 }

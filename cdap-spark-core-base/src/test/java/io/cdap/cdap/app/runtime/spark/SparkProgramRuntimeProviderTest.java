@@ -52,7 +52,7 @@ public class SparkProgramRuntimeProviderTest {
     ServiceLoader<ProgramRuntimeProvider> serviceLoader = ServiceLoader.load(ProgramRuntimeProvider.class,
                                                                              noSparkClassLoader);
     SparkProgramRuntimeProvider runtimeProvider = (SparkProgramRuntimeProvider) serviceLoader.iterator().next();
-    ClassLoader sparkClassLoader = runtimeProvider.createProgramClassLoader(cConf, ProgramType.SPARK);
+    ClassLoader sparkClassLoader = runtimeProvider.getRuntimeClassLoader(ProgramType.SPARK, cConf);
     // Load any spark streaming class.
     sparkClassLoader.loadClass("org.apache.spark.streaming.StreamingContext");
     MasterEnvironments.setMasterEnvironment(tmpMasterEnv);
