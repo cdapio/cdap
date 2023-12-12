@@ -1313,10 +1313,14 @@ public final class Constants {
           "source.control.git.clone.latency.ms";
       public static final String COMMIT_PUSH_LATENCY_MILLIS =
           "source.control.git.commit.push.duration.ms";
-      public static final String PULL_PIPELINE_COUNT =
-          "source.control.git.repository.pull.count";
-      public static final String PUSH_PIPELINE_COUNT =
-          "source.control.git.repository.push.count";
+      public static final String PULL_OPERATION_COUNT =
+          "source.control.git.pull.operation.count";
+      public static final String PUSH_OPERATION_COUNT =
+          "source.control.git.push.operation.count";
+      public static final String PULL_APP_COUNT =
+          "source.control.git.pull.app.count";
+      public static final String PUSH_APP_COUNT =
+          "source.control.git.push.app.count";
     }
 
     /**
