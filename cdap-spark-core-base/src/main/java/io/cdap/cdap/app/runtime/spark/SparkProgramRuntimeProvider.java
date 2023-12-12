@@ -29,6 +29,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.spi.InstanceBinding;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
@@ -40,9 +41,6 @@ import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -55,6 +53,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ProgramRuntimeProvider} that provides runtime system support for {@link ProgramType#SPARK} program.
@@ -94,16 +94,18 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     boolean rewriteYarnClient = cConf.getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
 
     try {
-      ClassLoader sparkRunnerClassLoader = sparkRunnerClassLoader = createClassLoader(filterScalaClasses,
-                                                                                      rewriteYarnClient,
-                                                                                      rewriteCheckpointTempFileName);
+      SparkRunnerClassLoader sparkRunnerClassLoader = createClassLoader(
+          filterScalaClasses, rewriteYarnClient, rewriteCheckpointTempFileName);
 
       // SparkResourceFilter must be instantiated using the above classloader as it has the
       // org.apache.spark.streaming.StreamingContext class, otherwise it will cause NoClassDefFoundError at runtime
       // because the parent classloader does not have Spark resources loaded.
       FilterClassLoader.Filter sparkClassLoaderFilter = (FilterClassLoader.Filter) sparkRunnerClassLoader
-        .loadClass(SparkResourceFilter.class.getName()).newInstance();
-      return new FilterClassLoader(sparkRunnerClassLoader, sparkClassLoaderFilter);
+        .loadClass(io.cdap.cdap.app.runtime.spark.SparkResourceFilter.class.getName()).newInstance();
+       ClassLoader filterClassLoader = new FilterClassLoader(sparkRunnerClassLoader, sparkClassLoaderFilter);
+      // Creating a CloseableClassLoader ensures that the caller can close the SparkRunnerClassLoader
+      // that is held by the FilterClassLoader.
+      return new CloseableClassLoader(filterClassLoader, sparkRunnerClassLoader);
     } catch (IOException e) {
       throw new RuntimeException(e);
     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
