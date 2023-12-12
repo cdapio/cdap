@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.lang;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -30,10 +31,10 @@ import javax.annotation.Nullable;
  * A {@link ClassLoader} that filter class based on package name. Classes in the bootstrap
  * ClassLoader is always loadable from this ClassLoader.
  */
-public class PackageFilterClassLoader extends ClassLoader {
+public class PackageFilterClassLoader extends ClassLoader implements Closeable {
 
   private final Predicate<String> predicate;
-  private final ClassLoader bootstrapClassLoader;
+  private final URLClassLoader bootstrapClassLoader;
 
   /**
    * Constructs a new instance that only allow class's package name passes the given {@link
@@ -128,5 +129,10 @@ public class PackageFilterClassLoader extends ClassLoader {
       return packageName.substring(1);
     }
     return packageName;
+  }
+
+  @Override
+  public void close() throws IOException {
+    this.bootstrapClassLoader.close();
   }
 }
