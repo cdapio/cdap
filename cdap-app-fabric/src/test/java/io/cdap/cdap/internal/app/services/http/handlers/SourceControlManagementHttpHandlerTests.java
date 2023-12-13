@@ -23,6 +23,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NotFoundException;
@@ -126,12 +127,12 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         AuthenticationContext authenticationContext,
         SourceControlOperationRunner sourceControlRunner,
         ApplicationLifecycleService applicationLifecycleService,
-        Store store, OperationLifecycleManager manager) {
+        Store store, OperationLifecycleManager manager, MetricsCollectionService metricsService) {
 
         return Mockito.spy(new SourceControlManagementService(cConf, secureStore, transactionRunner,
                                                               accessEnforcer, authenticationContext,
                                                               sourceControlRunner, applicationLifecycleService,
-                                                              store, manager));
+                                                              store, manager, metricsService));
       }
     });
   }

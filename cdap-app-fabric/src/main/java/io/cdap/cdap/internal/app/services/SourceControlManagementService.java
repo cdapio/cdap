@@ -16,8 +16,11 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -26,6 +29,8 @@ import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants.Metrics.SourceControlManagement;
+import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
@@ -89,6 +94,7 @@ public class SourceControlManagementService {
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
   private final OperationLifecycleManager operationLifecycleManager;
+  private final MetricsCollectionService metricsCollectionService;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -104,7 +110,8 @@ public class SourceControlManagementService {
       SourceControlOperationRunner sourceControlOperationRunner,
       ApplicationLifecycleService applicationLifecycleService,
       Store store,
-      OperationLifecycleManager operationLifecycleManager) {
+      OperationLifecycleManager operationLifecycleManager,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -114,6 +121,7 @@ public class SourceControlManagementService {
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
     this.operationLifecycleManager = operationLifecycleManager;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context)
@@ -217,6 +225,10 @@ public class SourceControlManagementService {
    */
   public PushAppResponse pushApp(ApplicationReference appRef, String commitMessage)
       throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
+    MetricsContext metricsContext = getMetricContext(appRef.getNamespaceId());
+    metricsContext.increment(SourceControlManagement.PUSH_OPERATION_COUNT, 1);
+    metricsContext.increment(SourceControlManagement.PUSH_APP_COUNT, 1);
+
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
 
@@ -266,6 +278,9 @@ public class SourceControlManagementService {
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    */
   public ApplicationRecord pullAndDeploy(ApplicationReference appRef) throws Exception {
+    MetricsContext metricsContext = getMetricContext(appRef.getNamespaceId());
+    metricsContext.increment(SourceControlManagement.PULL_OPERATION_COUNT, 1);
+    metricsContext.increment(SourceControlManagement.PULL_APP_COUNT, 1);
     // Deploy with a generated uuid
     String versionId = RunIds.generate().getId();
     ApplicationId appId = appRef.app(versionId);
@@ -362,6 +377,9 @@ public class SourceControlManagementService {
    */
   public OperationRun pushApps(NamespaceId namespace, PushMultipleAppsRequest request)
       throws NotFoundException, IOException, TooManyRequestsException {
+    MetricsContext metricsContext = getMetricContext(namespace);
+    metricsContext.increment(SourceControlManagement.PUSH_OPERATION_COUNT, 1);
+    metricsContext.increment(SourceControlManagement.PUSH_APP_COUNT, request.getApps().size());
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
@@ -385,14 +403,21 @@ public class SourceControlManagementService {
    */
   public OperationRun pullApps(NamespaceId namespace, PullMultipleAppsRequest request)
       throws NotFoundException, IOException, TooManyRequestsException {
+    MetricsContext metricsContext = getMetricContext(namespace);
+    metricsContext.increment(SourceControlManagement.PULL_OPERATION_COUNT, 1);
+    metricsContext.increment(SourceControlManagement.PULL_APP_COUNT, request.getApps().size());
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     String principal = authenticationContext.getPrincipal().getName();
     PullAppsRequest pullOpRequest = new PullAppsRequest(new HashSet<>(request.getApps()),
         repoConfig);
-
     return operationLifecycleManager.createPullOperation(namespace.getNamespace(),
         RunIds.generate().getId(), pullOpRequest, principal);
+  }
+
+  private MetricsContext getMetricContext(NamespaceId namespace) {
+    return metricsCollectionService.getContext(
+        ImmutableMap.of(Tag.NAMESPACE, namespace.getNamespace()));
   }
 }
