@@ -41,9 +41,10 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.sourcecontrol.RepositoryManager.CommitResult;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -136,12 +137,13 @@ public class PushAppsOperationTest {
     Mockito.doReturn(testApp2Details).when(mockManager).get(
         new ApplicationReference(NamespaceId.DEFAULT.getNamespace(), testApp2Details.getName()));
 
-    PushAppResponse mockTestApp1Response = new PushAppResponse(
+    PushAppMeta mockTestApp1Response = new PushAppMeta(
         testApp1Details.getName(), testApp1Details.getAppVersion(), "file-hash1");
-    PushAppResponse mockTestApp2Response = new PushAppResponse(
+    PushAppMeta mockTestApp2Response = new PushAppMeta(
         testApp2Details.getName(), testApp2Details.getAppVersion(), "file-hash2");
 
-    Mockito.doReturn(ImmutableList.of(mockTestApp1Response, mockTestApp2Response))
+    Mockito.doReturn(new CommitResult<>("commitId",
+            ImmutableList.of(mockTestApp1Response, mockTestApp2Response)))
         .when(mockRepositoryManager)
         .commitAndPush(Mockito.any(CommitMeta.class), Mockito.anyCollection(), Mockito.any(BiFunction.class));
 
@@ -185,12 +187,13 @@ public class PushAppsOperationTest {
     Mockito.doReturn(testApp2Details).when(mockManager).get(
         new ApplicationReference(NamespaceId.DEFAULT.getNamespace(), testApp2Details.getName()));
 
-    PushAppResponse mockTestApp1Response = new PushAppResponse(
+    PushAppMeta mockTestApp1Response = new PushAppMeta(
         testApp1Details.getName(), testApp1Details.getAppVersion(), "file-hash1");
-    PushAppResponse mockTestApp2Response = new PushAppResponse(
+    PushAppMeta mockTestApp2Response = new PushAppMeta(
         testApp2Details.getName(), testApp2Details.getAppVersion(), "file-hash2");
 
-    Mockito.doReturn(ImmutableList.of(mockTestApp1Response, mockTestApp2Response))
+    Mockito.doReturn(new CommitResult<>("commitId",
+            ImmutableList.of(mockTestApp1Response, mockTestApp2Response)))
         .when(mockRepositoryManager)
         .commitAndPush(Mockito.any(CommitMeta.class), Mockito.anyCollection(), Mockito.any(BiFunction.class));
 

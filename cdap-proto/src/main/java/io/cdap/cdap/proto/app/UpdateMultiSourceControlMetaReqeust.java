@@ -24,13 +24,20 @@ import java.util.Objects;
  */
 public class UpdateMultiSourceControlMetaReqeust {
   private final Collection<UpdateSourceControlMetaRequest> apps;
+  private final String commitId;
 
-  public UpdateMultiSourceControlMetaReqeust(Collection<UpdateSourceControlMetaRequest> apps) {
+  public UpdateMultiSourceControlMetaReqeust(Collection<UpdateSourceControlMetaRequest> apps,
+      String commitId) {
     this.apps = apps;
+    this.commitId = commitId;
   }
 
   public Collection<UpdateSourceControlMetaRequest> getApps() {
     return apps;
+  }
+
+  public String getCommitId() {
+    return commitId;
   }
 
   @Override
@@ -42,11 +49,12 @@ public class UpdateMultiSourceControlMetaReqeust {
       return false;
     }
     UpdateMultiSourceControlMetaReqeust that = (UpdateMultiSourceControlMetaReqeust) o;
-    return Objects.equals(apps, that.apps);
+    return Objects.equals(apps, that.apps)
+        && Objects.equals(commitId, that.commitId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(apps);
+    return Objects.hash(apps, commitId);
   }
 }

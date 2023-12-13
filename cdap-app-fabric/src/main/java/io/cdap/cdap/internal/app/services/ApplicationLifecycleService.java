@@ -125,6 +125,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -1604,7 +1605,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         ));
       }
 
-      SourceControlMeta scmMeta = new SourceControlMeta(appRequest.getGitFileHash());
+      SourceControlMeta scmMeta = new SourceControlMeta(appRequest.getGitFileHash(),
+          appsRequest.getCommitId(), Instant.now());
 
       if (updateScmMetaRequests.put(appId, scmMeta) != null) {
         throw new BadRequestException(String.format(

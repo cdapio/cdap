@@ -82,6 +82,7 @@ import io.cdap.cdap.store.DefaultNamespaceStore;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -624,7 +625,7 @@ public abstract class DefaultStoreTest {
 
     store.addLatestApplication(appId, appMeta);
     Map<ApplicationId, SourceControlMeta> updateRequests = new HashMap<>();
-    updateRequests.put(appId, new SourceControlMeta("updated-file-hash"));
+    updateRequests.put(appId, new SourceControlMeta("updated-file-hash", "commitId", Instant.now()));
     store.updateApplicationSourceControlMeta(updateRequests);
 
     ApplicationMeta storedMeta = store.getApplicationMetadata(appId);
@@ -640,15 +641,16 @@ public abstract class DefaultStoreTest {
     ApplicationId appId = new ApplicationId("account1", "application1");
     ApplicationMeta appMeta = new ApplicationMeta("application1", Specifications.from(new FooApp()),
         new ChangeDetail(null, null, null,
-            System.currentTimeMillis()), new SourceControlMeta("initial-file-hash"));
+            System.currentTimeMillis()), new SourceControlMeta("initial-file-hash", "commitId",
+        Instant.now()));
 
     store.addLatestApplication(appId, appMeta);
     // The following appId is not added to the store
     ApplicationId appId2 = new ApplicationId("account1", "application2");
 
     Map<ApplicationId, SourceControlMeta> updateRequests = new HashMap<>();
-    updateRequests.put(appId, new SourceControlMeta("updated-file-hash"));
-    updateRequests.put(appId2, new SourceControlMeta("updated-file-hash-2"));
+    updateRequests.put(appId, new SourceControlMeta("updated-file-hash", "commitId", Instant.now()));
+    updateRequests.put(appId2, new SourceControlMeta("updated-file-hash-2", "commitId", Instant.now()));
     store.updateApplicationSourceControlMeta(updateRequests);
 
     ApplicationMeta storedMeta = store.getApplicationMetadata(appId);

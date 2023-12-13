@@ -18,17 +18,25 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.proto.artifact.AppRequest;
 
+/**
+ * Encapsulates the information generated from pull operation.
+ */
 public class PullAppResponse<T> {
 
   private final String applicationName;
   private final String applicationFileHash;
   private final AppRequest<T> appRequest;
+  private final String commitId;
 
+  /**
+   * Default contrictor for PullAppResponse.
+   */
   public PullAppResponse(String applicationName, String applicationFileHash,
-      AppRequest<T> appRequest) {
+      AppRequest<T> appRequest, String commitId) {
     this.applicationName = applicationName;
     this.applicationFileHash = applicationFileHash;
     this.appRequest = appRequest;
+    this.commitId = commitId;
   }
 
   public String getApplicationName() {
@@ -41,5 +49,9 @@ public class PullAppResponse<T> {
 
   public AppRequest<?> getAppRequest() {
     return appRequest;
+  }
+
+  public String getCommitId() {
+    return commitId;
   }
 }

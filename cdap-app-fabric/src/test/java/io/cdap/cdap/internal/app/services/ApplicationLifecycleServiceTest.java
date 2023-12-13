@@ -48,7 +48,6 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -60,9 +59,9 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
-import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
 import io.cdap.cdap.proto.app.UpdateSourceControlMetaRequest;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -80,7 +79,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -721,13 +719,13 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 AllProgramsApp.NAME,
                 applicationDetail.getAppVersion(),
                 "updated-file-hash"
-            ))
-        )
+            )), "updated-commit-id")
     );
 
     ApplicationDetail updatedDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
     Assert.assertNotNull(updatedDetail.getSourceControlMeta());
     Assert.assertEquals("updated-file-hash", updatedDetail.getSourceControlMeta().getFileHash());
+    Assert.assertEquals("updated-commit-id", updatedDetail.getSourceControlMeta().getCommitId());
   }
 
   @Test
@@ -748,13 +746,13 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 "someValidAppNameThatDoesNotExist",
                 "some-version",
                 "some-file-hash"
-            ))
-        )
+            )), "updated-commit-id")
     );
 
     ApplicationDetail updatedDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
     Assert.assertNotNull(updatedDetail.getSourceControlMeta());
     Assert.assertEquals("updated-file-hash", updatedDetail.getSourceControlMeta().getFileHash());
+    Assert.assertEquals("updated-commit-id", updatedDetail.getSourceControlMeta().getCommitId());
   }
 
   @Test(expected = BadRequestException.class)
@@ -770,8 +768,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 AllProgramsApp.NAME,
                 "-SNAPSHOT",
                 "some-other-file-hash"
-            ))
-        )
+            )),
+            "commit-id")
     );
   }
 
@@ -784,8 +782,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 "$invalid AppName",
                 "-SNAPSHOT",
                 "some-file-hash"
-            ))
-        )
+            )),
+            "commit-id")
     );
   }
 
@@ -798,8 +796,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 null,
                 "-SNAPSHOT",
                 "some-file-hash"
-            ))
-        )
+            )),
+            "commitId")
     );
   }
 
@@ -812,8 +810,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 AllProgramsApp.NAME,
                 null,
                 "some-file-hash"
-            ))
-        )
+            )),
+            "commitId")
     );
   }
 
@@ -826,8 +824,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 AllProgramsApp.NAME,
                 "-SNAPSHOT",
                 null
-            ))
-        )
+            )),
+            "commitId")
     );
   }
 
@@ -840,8 +838,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                 AllProgramsApp.NAME,
                 "-SNAPSHOT",
                 ""
-            ))
-        )
+            )),
+            "commitId")
     );
   }
 
