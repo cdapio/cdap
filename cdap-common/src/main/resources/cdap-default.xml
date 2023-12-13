@@ -6010,6 +6010,14 @@
     </description>
   </property>
   <property>
+    <name>feature.source.control.management.multi.app.enabled</name>
+    <value>true</value>
+    <description>
+      If true, source control management bulk sync operations for multiple
+      pipelines will be enabled.
+    </description>
+  </property>
+  <property>
     <name>source.control.git.command.timeout.seconds</name>
     <value>30</value>
     <description>
