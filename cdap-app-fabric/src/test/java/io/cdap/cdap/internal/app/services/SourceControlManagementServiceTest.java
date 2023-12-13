@@ -16,11 +16,17 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -29,6 +35,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
@@ -45,6 +52,8 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
@@ -55,11 +64,16 @@ import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -87,6 +101,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static final SourceControlOperationRunner sourceControlOperationRunnerSpy =
       Mockito.spy(new MockSourceControlOperationRunner());
 
+  private static final Instant fixedInstant = Instant.ofEpochSecond(1646358109);
+
   @BeforeClass
   public static void beforeClass() throws Exception {
     cConf = createBasicCconf();
@@ -103,6 +119,26 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
         bind(SourceControlOperationRunner.class).toInstance(sourceControlOperationRunnerSpy);
+      }
+
+      @Provides
+      @Singleton
+      public SourceControlManagementService provideSourceControlManagementService(
+          CConfiguration cConf,
+          SecureStore secureStore,
+          TransactionRunner transactionRunner,
+          AccessEnforcer accessEnforcer,
+          AuthenticationContext authenticationContext,
+          SourceControlOperationRunner sourceControlRunner,
+          ApplicationLifecycleService applicationLifecycleService,
+          Store store, MetricsCollectionService metricsCollectionService,
+          OperationLifecycleManager manager) {
+
+        return new SourceControlManagementService(cConf, secureStore, transactionRunner,
+            accessEnforcer, authenticationContext,
+            sourceControlRunner, applicationLifecycleService,
+            store, manager, metricsCollectionService,
+            Clock.fixed(fixedInstant, ZoneId.systemDefault()));
       }
     });
   }
@@ -202,20 +238,24 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
-    PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
-        appId1.getId() + " hash");
-
+    PushAppsResponse expectedAppResponse = new PushAppsResponse(
+        ImmutableList.of(
+            new PushAppMeta(appId1.getId(), appId1.getVersion(), appId1.getId() + " hash")),
+        "commitId");
     Mockito.doReturn(expectedAppResponse).when(sourceControlOperationRunnerSpy).push(Mockito.any());
 
     // Assert the result is as expected
-    PushAppResponse result = sourceControlService.pushApp(namespaceId.appReference(appId1.getId()),
+    PushAppsResponse result = sourceControlService.pushApp(namespaceId.appReference(appId1.getId()),
         "some commit");
 
     Assert.assertEquals(result, expectedAppResponse);
 
     // Assert the source control meta field is updated
     ApplicationDetail appDetail = getAppDetails(Id.Namespace.DEFAULT.getId(), appId1.getId());
-    SourceControlMeta metaFromPushResult = new SourceControlMeta(result.getFileHash());
+    PushAppMeta appMeta = result.getApps().iterator().next();
+    SourceControlMeta metaFromPushResult = new SourceControlMeta(appMeta.getFileHash(),
+        result.getCommitId(),
+        fixedInstant);
     Assert.assertEquals(appDetail.getSourceControlMeta(), metaFromPushResult);
 
     // Cleanup
@@ -228,7 +268,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testPushAppsRepoNotFoundException() throws Exception {
     // Deploy one application in default namespace
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig",
+        "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, ConfigTestApp.class);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
@@ -237,8 +278,10 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Do not set the repository config
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
 
-    PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
-                                                              appId1.getId() + " hash");
+    PushAppsResponse expectedAppResponse = new PushAppsResponse(
+        ImmutableList.of(
+            new PushAppMeta(appId1.getId(), appId1.getVersion(), appId1.getId() + " hash")),
+        "commitId");
 
     Mockito.doReturn(expectedAppResponse).when(sourceControlOperationRunnerSpy).push(Mockito.any());
 
@@ -265,7 +308,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testPushAppsSourceControlException() throws Exception {
     // Deploy one application in default namespace
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig",
+        "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, ConfigTestApp.class);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
@@ -278,7 +322,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new SourceControlException("push apps failed", new Exception()))
-      .when(sourceControlOperationRunnerSpy).push(Mockito.any());
+        .when(sourceControlOperationRunnerSpy).push(Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -298,10 +342,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
 
     // Deploy app artifact in default namespace
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig",
+        "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, ConfigTestApp.class);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
-    AppRequest<?> mockAppRequest = new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), config);
+    AppRequest<?> mockAppRequest = new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()),
+        config);
 
     // Set the repository config
     String namespace = Id.Namespace.DEFAULT.getId();
@@ -310,20 +356,24 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
-        appId1.getId() + " " + "hash", mockAppRequest);
+        appId1.getId() + " " + "hash", mockAppRequest, "commitId");
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy)
         .pull(Mockito.any(PullAppOperationRequest.class));
 
     // Assert the result is as expected
-    ApplicationRecord result = sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
+    ApplicationRecord result = sourceControlService.pullAndDeploy(
+        namespaceId.appReference(appId1.getId()));
 
     Assert.assertNotNull(result.getSourceControlMeta());
-    Assert.assertEquals(result.getSourceControlMeta().getFileHash(), expectedPullResponse.getApplicationFileHash());
+    Assert.assertEquals(result.getSourceControlMeta().getFileHash(),
+        expectedPullResponse.getApplicationFileHash());
     Assert.assertEquals(result.getName(), appId1.getId());
 
     // Assert the source control meta field is updated
     ApplicationDetail appDetail = getAppDetails(Id.Namespace.DEFAULT.getId(), appId1.getId());
-    SourceControlMeta metaFromPushResult = new SourceControlMeta(expectedPullResponse.getApplicationFileHash());
+    SourceControlMeta metaFromPushResult = new SourceControlMeta(
+        expectedPullResponse.getApplicationFileHash(),
+        "commitId", fixedInstant);
     Assert.assertEquals(appDetail.getSourceControlMeta(), metaFromPushResult);
 
     // Cleanup
@@ -336,14 +386,16 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testPullAndDeployRepoNotFoundException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
     // Deploy app artifact in default namespace
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig",
+        "1.0.0-SNAPSHOT");
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
-    AppRequest<?> mockAppRequest = new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), config);
+    AppRequest<?> mockAppRequest = new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()),
+        config);
 
     // Do not set the repository config
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
-        appId1.getId() + " hash", mockAppRequest);
+        appId1.getId() + " hash", mockAppRequest, "commitId");
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy)
         .pull(Mockito.any(PullAppOperationRequest.class));
 
@@ -414,10 +466,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testPullAndDeployNoChangesToPullException() throws Exception {
     // Deploy one application in default namespace
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig",
+        "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, ConfigTestApp.class);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
-    AppRequest<?> mockAppRequest = new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), config);
+    AppRequest<?> mockAppRequest = new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()),
+        config);
     deploy(appId1, mockAppRequest);
 
     // Set the repository config
@@ -427,13 +481,15 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     // Push the application and update source control metadata
     String mockedFileHash = appId1.getId() + " hash";
-    PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(), mockedFileHash);
+    PushAppsResponse expectedAppResponse = new PushAppsResponse(
+        ImmutableList.of(new PushAppMeta(appId1.getId(), appId1.getVersion(), mockedFileHash)),
+        "commitId");
     Mockito.doReturn(expectedAppResponse).when(sourceControlOperationRunnerSpy).push(Mockito.any());
     sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
 
     // Set up the pullResponse so that the fileHashes are the same
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(), mockedFileHash,
-        mockAppRequest);
+        mockAppRequest, "commitId");
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy)
         .pull(Mockito.any(PullAppOperationRequest.class));
     try {
@@ -454,12 +510,13 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testListAppsSucceed() throws Exception {
     RepositoryApp app1 = new RepositoryApp("app1", "hash1");
     RepositoryApp app2 = new RepositoryApp("app2", "hash2");
-    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(Arrays.asList(app1, app2));
+    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(
+        Arrays.asList(app1, app2));
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doReturn(expectedListResult)
-      .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
+        .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
 
     RepositoryAppsResponse result = sourceControlService.listApps(namespaceId);
     List<RepositoryApp> actualAppsList = result.getApps().stream()
@@ -474,7 +531,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(SourceControlException.class)
-      .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
+        .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
 
     sourceControlService.listApps(namespaceId);
   }
@@ -492,13 +549,13 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       SourceControlOperationRunner {
 
     @Override
-    public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest)
+    public PushAppsResponse push(PushAppOperationRequest pushAppOperationRequest)
         throws NoChangesToPushException, AuthenticationConfigException {
       return null;
     }
 
     @Override
-    public List<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+    public PushAppsResponse multiPush(MultiPushAppOperationRequest pushRequest,
         ApplicationManager appManager)
         throws NoChangesToPushException, AuthenticationConfigException {
       return null;
@@ -511,7 +568,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     }
 
     @Override
-    public void multiPull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+    public void multiPull(MultiPullAppOperationRequest pullRequest,
+        Consumer<PullAppResponse<?>> consumer)
         throws NotFoundException, AuthenticationConfigException {
     }
 

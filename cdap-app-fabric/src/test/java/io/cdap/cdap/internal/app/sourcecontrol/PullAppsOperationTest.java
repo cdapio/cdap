@@ -64,7 +64,7 @@ public class PullAppsOperationTest {
       new ArrayList<>(), new ArrayList<>(), null, null);
 
   private static final ApplicationDetail testAppDetailsWithGitMeta = new ApplicationDetail(
-      "testApp", "v1", "description1", null, new SourceControlMeta("testHash"), "conf1",
+      "testApp", "v1", "description1", null, new SourceControlMeta("testHash", "commitId", null), "conf1",
       new ArrayList<>(),
       new ArrayList<>(), new ArrayList<>(), null, null);
 

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -63,8 +64,9 @@ import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -74,6 +76,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.HashSet;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -95,6 +98,7 @@ public class SourceControlManagementService {
   private final Store store;
   private final OperationLifecycleManager operationLifecycleManager;
   private final MetricsCollectionService metricsCollectionService;
+  private final Clock clock;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -112,6 +116,24 @@ public class SourceControlManagementService {
       Store store,
       OperationLifecycleManager operationLifecycleManager,
       MetricsCollectionService metricsCollectionService) {
+    this (cConf, secureStore, transactionRunner,
+        accessEnforcer, authenticationContext,
+        sourceControlOperationRunner, applicationLifecycleService,
+        store, operationLifecycleManager, metricsCollectionService, Clock.systemUTC());
+  }
+
+  @VisibleForTesting
+  SourceControlManagementService(CConfiguration cConf,
+      SecureStore secureStore,
+      TransactionRunner transactionRunner,
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext,
+      SourceControlOperationRunner sourceControlOperationRunner,
+      ApplicationLifecycleService applicationLifecycleService,
+      Store store,
+      OperationLifecycleManager operationLifecycleManager,
+      MetricsCollectionService metricsCollectionService,
+      Clock clock) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -122,6 +144,7 @@ public class SourceControlManagementService {
     this.store = store;
     this.operationLifecycleManager = operationLifecycleManager;
     this.metricsCollectionService = metricsCollectionService;
+    this.clock = clock;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context)
@@ -213,7 +236,7 @@ public class SourceControlManagementService {
    *
    * @param appRef {@link ApplicationReference}
    * @param commitMessage enforced commit message from user
-   * @return {@link PushAppResponse}
+   * @return {@link PushAppsResponse}
    * @throws NotFoundException if the application is not found or the repository config is not
    *     found
    * @throws IOException if {@link ApplicationLifecycleService} fails to get the adminOwner
@@ -223,7 +246,7 @@ public class SourceControlManagementService {
    * @throws NoChangesToPushException if there's no change of the application between namespace
    *     and linked repository
    */
-  public PushAppResponse pushApp(ApplicationReference appRef, String commitMessage)
+  public PushAppsResponse pushApp(ApplicationReference appRef, String commitMessage)
       throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
     MetricsContext metricsContext = getMetricContext(appRef.getNamespaceId());
     metricsContext.increment(SourceControlManagement.PUSH_OPERATION_COUNT, 1);
@@ -249,7 +272,7 @@ public class SourceControlManagementService {
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.push(
+    PushAppsResponse pushResponse = sourceControlOperationRunner.push(
         new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
     );
 
@@ -258,7 +281,10 @@ public class SourceControlManagementService {
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
 
-    SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
+    // pushResponse should have exactly one element
+    PushAppMeta appMeta = pushResponse.getApps().iterator().next();
+    SourceControlMeta sourceControlMeta = new SourceControlMeta(appMeta.getFileHash(),
+        pushResponse.getCommitId(), clock.instant());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
 
@@ -293,7 +319,7 @@ public class SourceControlManagementService {
 
     AppRequest<?> appRequest = pullResponse.getAppRequest();
     SourceControlMeta sourceControlMeta = new SourceControlMeta(
-        pullResponse.getApplicationFileHash());
+        pullResponse.getApplicationFileHash(), pullResponse.getCommitId(), clock.instant());
 
     LOG.info("Start to deploy app {} in namespace {} by user {}",
         appId.getApplication(),

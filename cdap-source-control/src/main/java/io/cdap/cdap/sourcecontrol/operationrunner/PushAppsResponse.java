@@ -16,33 +16,29 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
- * Encapsulates the information generated from a single application push
+ * Encapsulates the information generated from push operation.
  */
-public class PushAppResponse {
+public class PushAppsResponse {
 
-  private final String name;
-  private final String version;
-  private final String fileHash;
+  private final Collection<PushAppMeta> apps;
+  private final String commitId;
 
-  public PushAppResponse(String name, String version, String fileHash) {
-    this.name = name;
-    this.version = version;
-    this.fileHash = fileHash;
+  public PushAppsResponse(Collection<PushAppMeta> apps, String commitId) {
+    this.apps = Collections.unmodifiableCollection(apps);
+    this.commitId = commitId;
   }
 
-  public String getName() {
-    return name;
+  public Collection<PushAppMeta> getApps() {
+    return apps;
   }
 
-  public String getFileHash() {
-    return fileHash;
-  }
-
-  public String getVersion() {
-    return version;
+  public String getCommitId() {
+    return commitId;
   }
 
   @Override
@@ -53,14 +49,13 @@ public class PushAppResponse {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PushAppResponse that = (PushAppResponse) o;
-    return Objects.equals(name, that.name)
-        && Objects.equals(version, that.version)
-        && Objects.equals(fileHash, that.fileHash);
+    PushAppsResponse that = (PushAppsResponse) o;
+    return Objects.equals(apps, that.apps)
+        && Objects.equals(commitId, that.commitId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version, fileHash);
+    return Objects.hash(apps, commitId);
   }
 }
