@@ -146,9 +146,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * also register all plugins used by the pipeline and create any error datasets used by the
    * pipeline.
    *
-   * A valid pipeline has the following properties:
+   * <p>A valid pipeline has the following properties:
    *
-   * All stages in the pipeline have a unique name. Source stages have at least one output and no
+   * <p>All stages in the pipeline have a unique name. Source stages have at least one output and no
    * inputs. Sink stages have at least one input and no outputs. There are no cycles in the
    * pipeline. All inputs into a stage have the same schema.
    *
@@ -525,9 +525,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     if (plugin == null) {
       String errorMessage = String.format("Plugin named '%s' of type '%s' not found.", pluginName,
           type);
-      String correctiveAction = String.format(
-          "Make sure plugin '%s' of type '%s' is already deployed.",
-          pluginName, type);
+      String correctiveAction = "Please make sure plugin is deployed in the namespace and try again";
       ArtifactSelectorConfig requested = etlPlugin.getArtifactConfig();
       ArtifactId requestedArtifactId = requested == null ? null :
           new ArtifactId(requested.getName(), new ArtifactVersion(requested.getVersion()),
@@ -557,7 +555,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   /**
    * Validate that this is a valid pipeline. A valid pipeline has the following properties:
    *
-   * All stages in the pipeline have a unique name. Source stages have at least one output and no
+   * <p>All stages in the pipeline have a unique name. Source stages have at least one output and no
    * inputs. Sink stages have at least one input and no outputs. There are no cycles in the
    * pipeline. All inputs into a stage have the same schema. ErrorTransforms only have BatchSource,
    * Transform, or BatchAggregator as input stages. AlertPublishers have at least one input and no
@@ -565,7 +563,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * or end of the pipeline. Condition stages have at most 2 outputs. Each stage on a condition's
    * output branch has at most a single input.
    *
-   * Returns the stages in the order they should be configured to ensure that all input stages are
+   * <p>Returns the stages in the order they should be configured to ensure that all input stages are
    * configured before their output.
    *
    * @param config the user provided configuration
@@ -751,7 +749,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   }
 
   /**
-   * Just a container for StageSpec and pipeline properties set by the stage
+   * Just a container for StageSpec and pipeline properties set by the stage.
    */
   protected static class ConfiguredStage {
 
@@ -770,7 +768,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
   /**
    * Make sure that the stages on the condition branches do not have more than one incoming
-   * connections
+   * connections.
    *
    * @param conditionStages the set of condition stages in the pipeline
    * @param dag the dag of connections
