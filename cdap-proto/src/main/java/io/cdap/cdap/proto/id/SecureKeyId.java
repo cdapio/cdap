@@ -42,7 +42,7 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
     if (!isValidSecureKey(name)) {
       throw new IllegalArgumentException(
           String.format("Improperly formatted secure key name '%s'."
-              + " The name can contain lower case alphabets,"
+              + " The name can contain lower case english or latin alphabets,"
               + " numbers, _, and -", name));
     }
     this.name = name;
