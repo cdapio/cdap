@@ -217,20 +217,20 @@ public class RepositoryManager implements AutoCloseable {
    * Processes the hashes to a list of given type S
    *
    * @param <T> Type of elements of the output collection
-   * @param <S> Type of elements of the input collection, must implement {@link Supplier<Path>}
+   * @param <S> Type of elements of the input collection, must implement {@link Supplier Supplier&gt;Path&lt;}
    * @param commitMeta Details for the commit including author, committer and commit message
    * @param filesChanged Supplies relative paths to repository root of the updated files
    * @param hashConsumer a {@link BiFunction} that takes a value of the input collection element type (S),
    *                     a filehash and returns a value of the output collection element type (T)
-   * @return a {@link Collection} of elements of type T
+   * @return a pair of commitId and {@link Collection} of elements of type T
    * @throws GitAPIException when the underlying git commands fail
    * @throws NoChangesToPushException when there's no file changes for the commit
    * @throws GitOperationException when failed to get filehash due to IOException or the
    *     {@link PushResult} status is not OK
    * @throws SourceControlException when failed to get the fileHash before push
    */
-  public <T, S extends Supplier<Path>> Collection<T> commitAndPush(CommitMeta commitMeta, Collection<S> filesChanged,
-      BiFunction<S, String, T> hashConsumer)
+  public <T, S extends Supplier<Path>> CommitResult<T> commitAndPush(
+      CommitMeta commitMeta, Collection<S> filesChanged, BiFunction<S, String, T> hashConsumer)
       throws NoChangesToPushException, GitAPIException {
     validateInitialized();
     final Stopwatch stopwatch = new Stopwatch().start();
@@ -256,7 +256,7 @@ public class RepositoryManager implements AutoCloseable {
       output.add(hashConsumer.apply(fileChanged, entry.getObjectId().name()));
     }
 
-    getCommitCommand(commitMeta).call();
+    RevCommit commit = getCommitCommand(commitMeta).call();
 
     PushCommand pushCommand = createCommand(git::push, sourceControlConfig,
         credentialsProvider);
@@ -276,7 +276,7 @@ public class RepositoryManager implements AutoCloseable {
     metricsContext.event(
         SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS,
         stopwatch.stop().elapsedTime(TimeUnit.MILLISECONDS));
-    return output;
+    return new CommitResult<>(commit.getName(), output);
   }
 
   private CommitCommand getCommitCommand(final CommitMeta commitMeta) {
@@ -611,6 +611,29 @@ public class RepositoryManager implements AutoCloseable {
       } catch (UncheckedIOException e) {
         throw e.getCause();
       }
+    }
+  }
+
+  /**
+   * A container class to represent push result for a commit operation.
+   *
+   * @param <T> refers to a metadata class containing file level metadata like hashes
+   */
+  public static class CommitResult<T> {
+      private final String commitId;
+      private final Collection<T> fileMetas;
+
+    public CommitResult(String commitId, Collection<T> fileMetas) {
+      this.commitId = commitId;
+      this.fileMetas = fileMetas;
+    }
+
+    public String getCommitId() {
+      return commitId;
+    }
+
+    public Collection<T> getFileMetas() {
+      return fileMetas;
     }
   }
 }

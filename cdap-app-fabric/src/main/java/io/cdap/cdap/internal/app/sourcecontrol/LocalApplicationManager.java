@@ -37,6 +37,7 @@ import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import java.io.IOException;
+import java.time.Clock;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,7 @@ public class LocalApplicationManager implements ApplicationManager {
 
   private final ApplicationLifecycleService appLifeCycleService;
   private final LocalApplicationDetailFetcher appDetailsFetcher;
+  private final Clock clock;
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalApplicationManager.class);
 
@@ -56,8 +58,14 @@ public class LocalApplicationManager implements ApplicationManager {
   @Inject
   LocalApplicationManager(ApplicationLifecycleService appLifeCycleService,
       LocalApplicationDetailFetcher fetcher) {
+    this(appLifeCycleService, fetcher, Clock.systemUTC());
+  }
+
+  LocalApplicationManager(ApplicationLifecycleService appLifeCycleService,
+      LocalApplicationDetailFetcher fetcher, Clock clock) {
     this.appLifeCycleService = appLifeCycleService;
     this.appDetailsFetcher = fetcher;
+    this.clock = clock;
   }
 
 
@@ -69,7 +77,7 @@ public class LocalApplicationManager implements ApplicationManager {
 
     AppRequest<?> appRequest = pullDetails.getAppRequest();
     SourceControlMeta sourceControlMeta = new SourceControlMeta(
-        pullDetails.getApplicationFileHash());
+        pullDetails.getApplicationFileHash(), pullDetails.getCommitId(), clock.instant());
 
     LOG.info("Start to deploy app {} in namespace {} without marking latest",
         appId.getApplication(), appId.getParent());

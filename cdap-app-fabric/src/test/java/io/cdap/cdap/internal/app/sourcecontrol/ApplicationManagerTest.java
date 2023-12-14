@@ -95,7 +95,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Deploy the application
     ApplicationId deployedAppId = manager.deployApp(
         appRef,
-        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request)
+        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, "commitId")
     );
 
     // fetch and validate the application version is created
@@ -125,14 +125,13 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Deploy the application
     ApplicationId deployedAppId = manager.deployApp(
         appRef,
-        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request)
+        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, "commitId")
     );
 
     // mark the application as latest
     manager.markAppVersionsLatest(new NamespaceId(namespace), Collections.singletonList(
         new AppVersion(deployedAppId.getApplication(), deployedAppId.getVersion())));
 
-    // fetch and validate the application version is created
     // fetch and validate the application version is created
     HttpResponse response = doGet(getVersionedApiPath(
         String.format("apps/%s/versions/%s", deployedAppId.getApplication(),
@@ -160,7 +159,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Deploy the application
     ApplicationId deployedAppId = manager.deployApp(
         appRef,
-        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request)
+        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, "originalCommit")
     );
 
     UpdateMultiSourceControlMetaReqeust request = new UpdateMultiSourceControlMetaReqeust(
@@ -168,13 +167,12 @@ public class ApplicationManagerTest extends AppFabricTestBase {
             deployedAppId.getApplication(),
             deployedAppId.getVersion(),
             "updatedHash"
-        ))
+        )), "updatedCommit"
     );
 
     // update the source control meta
     manager.updateSourceControlMeta(new NamespaceId(namespace), request);
 
-    // fetch and validate the application version is created
     // fetch and validate the application version is created
     HttpResponse response = doGet(getVersionedApiPath(
         String.format("apps/%s/versions/%s", deployedAppId.getApplication(),
@@ -186,6 +184,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     ApplicationDetail detail = GSON.fromJson(response.getResponseBodyAsString(),
         ApplicationDetail.class);
     Assert.assertEquals("updatedHash", detail.getSourceControlMeta().getFileHash());
+    Assert.assertEquals("updatedCommit", detail.getSourceControlMeta().getCommitId());
 
     // Delete the application
     Assert.assertEquals(

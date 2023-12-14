@@ -34,6 +34,7 @@ import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
+import io.cdap.cdap.sourcecontrol.RepositoryManager.CommitResult;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -376,12 +377,13 @@ public class RepositoryManagerTest extends SourceControlTestBase {
           new PathSupplier(manager.getBasePath().relativize(filePath2))
       );
 
-      Collection<PathSupplier> suppliers = manager.commitAndPush(commitMeta, filePaths,
+      CommitResult<PathSupplier> pushDetails = manager.commitAndPush(
+          commitMeta, filePaths,
           (path, hash) -> {
             path.setHash(hash);
             return path;
           });
-      verifyCommit(suppliers, fileContent, commitMeta);
+      verifyCommit(pushDetails.getCommitId(), pushDetails.getFileMetas(), fileContent, commitMeta);
       // Verify metrics.
       Mockito.verify(mockMetricsContext).event(
           Mockito.eq(SourceControlManagement.CLONE_REPOSITORY_SIZE_BYTES),
@@ -521,9 +523,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     Assert.assertEquals(count, commits.size());
   }
 
-  private void verifyCommit(Collection<PathSupplier> pathSuppliers, String expectedContent, CommitMeta commitMeta)
-      throws
-      GitAPIException, IOException {
+  private void verifyCommit(String commitId, Collection<PathSupplier> pathSuppliers, String expectedContent,
+      CommitMeta commitMeta) throws GitAPIException, IOException {
     Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify")
         .toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
@@ -535,6 +536,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     Assert.assertEquals(2, commits.size());
     RevCommit latestCommit = commits.get(0);
 
+    Assert.assertEquals(commitId, latestCommit.getName());
     Assert.assertEquals(latestCommit.getFullMessage(), commitMeta.getMessage());
     Assert.assertEquals(commitMeta.getAuthor(),
         latestCommit.getAuthorIdent().getName());

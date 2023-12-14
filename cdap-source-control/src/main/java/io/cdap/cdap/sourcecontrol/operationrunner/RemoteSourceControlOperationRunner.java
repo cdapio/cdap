@@ -39,7 +39,6 @@ import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import org.slf4j.Logger;
@@ -81,7 +80,7 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
+  public PushAppsResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
@@ -91,7 +90,7 @@ public class RemoteSourceControlOperationRunner extends
 
       LOG.trace("Pushing application {} to linked repository", pushRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
-      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppResponse.class);
+      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppsResponse.class);
     } catch (RemoteExecutionException e) {
       throw propagateRemoteException(e, noChangeToPushExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
@@ -100,7 +99,7 @@ public class RemoteSourceControlOperationRunner extends
   }
 
   @Override
-  public Collection<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+  public PushAppsResponse multiPush(MultiPushAppOperationRequest pushRequest,
       ApplicationManager appManager)
       throws NoChangesToPushException, AuthenticationConfigException {
     throw new UnsupportedOperationException("multi push not supported for RemoteSourceControlOperationRunner");

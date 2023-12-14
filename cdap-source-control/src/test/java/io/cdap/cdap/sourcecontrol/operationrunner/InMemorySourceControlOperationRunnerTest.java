@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -35,6 +36,7 @@ import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.GitOperationException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.sourcecontrol.RepositoryManager.CommitResult;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
@@ -45,10 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -114,16 +113,18 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
-    Mockito.doReturn(
-        ImmutableSet.of(
-                new PushAppResponse(pushContext.getApp().getName(),
-                    pushContext.getApp().getAppVersion(), "file-hash")
-            ))
+    Set<PushAppMeta> metas = ImmutableSet.of(
+        new PushAppMeta(pushContext.getApp().getName(),
+            pushContext.getApp().getAppVersion(), "file-hash")
+    );
+    Mockito.doReturn(new CommitResult<>("commitId", metas))
             .when(mockRepositoryManager).commitAndPush(Mockito.anyObject(),
-                Mockito.any(), Mockito.any());
+            Mockito.any(), Mockito.any());
 
-    operationRunner.push(pushContext);
+    PushAppsResponse response = operationRunner.push(pushContext);
 
+    Assert.assertEquals("commitId", response.getCommitId());
+    Assert.assertEquals(metas, ImmutableSet.copyOf(response.getApps()));
     Assert.assertTrue(verifyConfigFileContent(baseRepoDirPath, testAppDetails));
   }
 
@@ -141,13 +142,12 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
-    Set<PushAppResponse> expectedResponses = ImmutableSet.of(
-        new PushAppResponse(testAppDetails.getName(), testAppDetails.getAppVersion(), "file-hash1"),
-        new PushAppResponse(testApp2Details.getName(), testApp2Details.getAppVersion(),
-            "file-hash2")
+    Set<PushAppMeta> pushAppMetas = ImmutableSet.of(
+        new PushAppMeta(testAppDetails.getName(), testAppDetails.getAppVersion(), "file-hash1"),
+        new PushAppMeta(testApp2Details.getName(), testApp2Details.getAppVersion(), "file-hash2")
     );
 
-    Mockito.doReturn(expectedResponses)
+    Mockito.doReturn(new CommitResult<>("commitId", pushAppMetas))
         .when(mockRepositoryManager)
         .commitAndPush(Mockito.anyObject(), Mockito.any(), Mockito.any());
 
@@ -155,9 +155,10 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
         new MultiPushAppOperationRequest(NAMESPACE, testRepoConfig,
             ImmutableSet.of(TEST_APP_NAME, TEST_APP2_NAME), testCommit);
 
-    Collection<PushAppResponse> gotResponses = operationRunner.multiPush(request, mockManager);
+    PushAppsResponse gotResponse = operationRunner.multiPush(request, mockManager);
 
-    Assert.assertEquals(expectedResponses, new HashSet<>(gotResponses));
+    Assert.assertEquals("commitId", gotResponse.getCommitId());
+    Assert.assertEquals(pushAppMetas, ImmutableSet.copyOf(gotResponse.getApps()));
 
     Assert.assertTrue(verifyConfigFileContent(baseRepoDirPath, testAppDetails));
     Assert.assertTrue(verifyConfigFileContent(baseRepoDirPath, testApp2Details));
@@ -198,7 +199,8 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
     Mockito.doReturn(baseRepoDirPath).when(mockRepositoryManager).getBasePath();
-    Mockito.doReturn(Collections.emptyList())
+    Mockito.doReturn(new CommitResult<>("commitId", ImmutableList.of(
+            new PushAppMeta(testAppDetails.getName(), testAppDetails.getAppVersion(), "file-hash"))))
         .when(mockRepositoryManager).commitAndPush(Mockito.anyObject(),
             Mockito.any(), Mockito.any());
 
