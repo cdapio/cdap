@@ -267,6 +267,7 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
               accessControllerClassName, classLoader.getExtensionJar()), e);
     }
     if (!Authorizer.class.isAssignableFrom(accessControllerClass)
+        && !AccessController.class.isAssignableFrom(accessControllerClass)
         && !AccessControllerSpi.class.isAssignableFrom(accessControllerClass)) {
       throw new InvalidAccessControllerException(
           String.format(
