@@ -183,13 +183,15 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
 
-    PushAppResponse pushResponse = operationRunner.push(mockPushContext);
+    PushAppsResponse pushResponse = operationRunner.push(mockPushContext);
     // Verify SecureSystemReader is being used.
     Assert.assertTrue(SystemReader.getInstance() instanceof SecureSystemReader);
 
+    PushAppMeta meta = pushResponse.getApps().iterator().next();
+
     // Assert the pushed app in response
-    Assert.assertEquals(pushResponse.getName(), mockAppDetails.getName());
-    Assert.assertEquals(pushResponse.getVersion(), mockAppDetails.getAppVersion());
+    Assert.assertEquals(meta.getName(), mockAppDetails.getName());
+    Assert.assertEquals(meta.getVersion(), mockAppDetails.getAppVersion());
   }
 
   @Test(expected = SourceControlException.class)

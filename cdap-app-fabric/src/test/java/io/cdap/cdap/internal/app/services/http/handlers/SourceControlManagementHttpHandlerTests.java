@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services.http.handlers;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -62,7 +63,8 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
@@ -71,6 +73,7 @@ import io.cdap.common.http.HttpResponse;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
@@ -95,6 +98,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final AuthConfig AUTH_CONFIG = new AuthConfig(
       AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME));
+
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
@@ -308,16 +312,18 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
 
     // Push one application to linked repository
     String commitMessage = "push one app";
-    PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
-                                                              appId1.getId() + " hash");
+    Set<PushAppMeta> expectedApps = ImmutableSet.of(new PushAppMeta(appId1.getId(), appId1.getVersion(),
+        appId1.getId() + " hash"));
+    PushAppsResponse expectedAppResponse = new PushAppsResponse(expectedApps, "commitId");
     Mockito.doReturn(expectedAppResponse).when(sourceControlService)
       .pushApp(Mockito.any(), Mockito.eq(commitMessage));
     HttpResponse response = pushApplication(NamespaceId.DEFAULT.appReference(appId1.getId()), commitMessage);
 
     // Assert the app is pushed
     assertResponseCode(200, response);
-    PushAppResponse result = readResponse(response, PushAppResponse.class);
-    Assert.assertEquals(result, expectedAppResponse);
+    PushAppsResponse result = readResponse(response, PushAppsResponse.class);
+    Assert.assertEquals("commitId", result.getCommitId());
+    Assert.assertEquals(expectedApps, ImmutableSet.copyOf(result.getApps()));
   }
 
   @Test
@@ -398,7 +404,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp", "version1");
 
     // Pull one application from linked repository
-    SourceControlMeta meta = new SourceControlMeta("fileHash");
+    SourceControlMeta meta = new SourceControlMeta("fileHash", "commitId", null);
     ApplicationRecord expectedAppResponse = new ApplicationRecord(new ArtifactSummary("name", "version"),
                                                                   appId1.getId(), appId1.getVersion(), "",
                                                                   null, null, meta);
@@ -522,7 +528,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         Arrays.asList("appToPush1", "appToPush2"), commitMessage);
 
     assertResponseCode(200, response);
-    OperationMeta result = readResponse(response, OperationRun.class);
+    OperationRun result = readResponse(response, OperationRun.class);
     Assert.assertEquals(result, expectedResponse);
   }
 
@@ -588,7 +594,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         Arrays.asList("appToPush1", "appToPush2"));
 
     assertResponseCode(200, response);
-    OperationMeta result = readResponse(response, OperationRun.class);
+    OperationRun result = readResponse(response, OperationRun.class);
     Assert.assertEquals(result, expectedResponse);
   }
 

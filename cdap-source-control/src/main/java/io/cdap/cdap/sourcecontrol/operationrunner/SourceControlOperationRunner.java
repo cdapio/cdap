@@ -22,7 +22,6 @@ import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
-import java.util.Collection;
 import java.util.function.Consumer;
 
 /**
@@ -39,7 +38,7 @@ public interface SourceControlOperationRunner extends Service {
    *                                       call remote Git.
    * @throws SourceControlException when the push operation fails for any other reason.
    */
-  PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
+  PushAppsResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
     AuthenticationConfigException;
 
   /**
@@ -52,7 +51,7 @@ public interface SourceControlOperationRunner extends Service {
    *                                       call remote Git.
    * @throws SourceControlException when the push operation fails for any other reason.
    */
-  Collection<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+  PushAppsResponse multiPush(MultiPushAppOperationRequest pushRequest,
       ApplicationManager appManager)
       throws NoChangesToPushException, AuthenticationConfigException;
 

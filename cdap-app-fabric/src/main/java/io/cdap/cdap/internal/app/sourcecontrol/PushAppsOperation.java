@@ -35,9 +35,8 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -84,40 +83,39 @@ public class PushAppsOperation implements LongRunningOperation {
         request.getCommitDetails()
     );
 
-    Collection<PushAppResponse> responses;
+    PushAppsResponse response;
 
     try {
-      responses = scmOpRunner.multiPush(pushReq, applicationManager);
-      context.updateOperationResources(getResources(namespaceId, responses));
+      response = scmOpRunner.multiPush(pushReq, applicationManager);
+      context.updateOperationResources(getResources(namespaceId, response));
     } catch (SourceControlException | NoChangesToPushException e) {
       throw new OperationException("Failed to push applications.", Collections.emptyList(), e);
     }
 
     try {
       // update git metadata for the pushed application
-      applicationManager.updateSourceControlMeta(namespaceId, getUpdateMetaRequest(responses));
+      applicationManager.updateSourceControlMeta(namespaceId, getUpdateMetaRequest(response));
     } catch (NotFoundException | BadRequestException | IOException | SourceControlException e) {
       throw new OperationException("Failed to update git metadata.", Collections.emptySet(), e);
     }
 
     // TODO(samik) Update this after along with the runner implementation
-    return Futures.immediateFuture(getResources(namespaceId, responses));
+    return Futures.immediateFuture(getResources(namespaceId, response));
   }
 
-  private UpdateMultiSourceControlMetaReqeust getUpdateMetaRequest(
-      Collection<PushAppResponse> responses) {
-    List<UpdateSourceControlMetaRequest> reqs = responses.stream()
-        .map(response -> new UpdateSourceControlMetaRequest(
-            response.getName(), response.getVersion(), response.getFileHash()))
+  private UpdateMultiSourceControlMetaReqeust getUpdateMetaRequest(PushAppsResponse response) {
+    List<UpdateSourceControlMetaRequest> reqs = response.getApps().stream()
+        .map(appMeta -> new UpdateSourceControlMetaRequest(
+            appMeta.getName(), appMeta.getVersion(), appMeta.getFileHash()))
         .collect(Collectors.toList());
-    return new UpdateMultiSourceControlMetaReqeust(reqs);
+    return new UpdateMultiSourceControlMetaReqeust(reqs, response.getCommitId());
   }
 
   private Set<OperationResource> getResources(NamespaceId namespaceId,
-      Collection<PushAppResponse> responses) {
-    return responses.stream()
-        .map(response -> new OperationResource(
-            namespaceId.app(response.getName(), response.getVersion()).toString()))
+      PushAppsResponse responses) {
+    return responses.getApps().stream()
+        .map(appMeta -> new OperationResource(
+            namespaceId.app(appMeta.getName(), appMeta.getVersion()).toString()))
         .collect(Collectors.toSet());
   }
 }

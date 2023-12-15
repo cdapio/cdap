@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.proto.sourcecontrol;
 
+import java.time.Instant;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * The source control metadata for an application.
@@ -24,9 +26,21 @@ import java.util.Objects;
 public class SourceControlMeta {
 
   private final String fileHash;
+  private final String commitId;
+  // The last time the application was synced(push/pull) with git.
+  private final Instant lastSyncedAt;
 
-  public SourceControlMeta(String fileHash) {
+  /**
+   * Default constructor for SourceControlMeta.
+   *
+   * @param fileHash the git-hash of the config in git after push
+   * @param commitId the commit in git form/to application was pulled/pushed
+   * @param lastSyncedAt last time the application was pulled/pushed
+   */
+  public SourceControlMeta(String fileHash, @Nullable String commitId, @Nullable Instant lastSyncedAt) {
     this.fileHash = fileHash;
+    this.commitId = commitId;
+    this.lastSyncedAt = lastSyncedAt;
   }
 
   public String getFileHash() {
@@ -44,18 +58,32 @@ public class SourceControlMeta {
 
     SourceControlMeta that = (SourceControlMeta) o;
 
-    return Objects.equals(fileHash, that.fileHash);
+    return Objects.equals(fileHash, that.fileHash)
+        && Objects.equals(commitId, that.commitId)
+        && Objects.equals(lastSyncedAt, that.lastSyncedAt);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fileHash);
+    return Objects.hash(fileHash, lastSyncedAt, commitId);
   }
 
   @Override
   public String toString() {
     return "SourceControlMeta{"
         + "fileHash='" + fileHash + '\''
+        + "commitId='" + commitId + '\''
+        + "lastSyncedAt='" + lastSyncedAt + '\''
         + '}';
+  }
+
+  @Nullable
+  public String getCommitId() {
+    return commitId;
+  }
+
+  @Nullable
+  public Instant getLastSyncedAt() {
+    return lastSyncedAt;
   }
 }

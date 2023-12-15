@@ -24,7 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.apache.twill.discovery.DiscoveryService;
@@ -55,7 +55,7 @@ public class PushAppTask extends SourceControlTask {
     PushAppOperationRequest pushAppOperationRequest = GSON.fromJson(context.getParam(), PushAppOperationRequest.class);
 
     LOG.info("Pushing application {} in worker.", pushAppOperationRequest.getApp().getName());
-    PushAppResponse result = inMemoryOperationRunner.push(pushAppOperationRequest);
+    PushAppsResponse result = inMemoryOperationRunner.push(pushAppOperationRequest);
     context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));
   }
 }

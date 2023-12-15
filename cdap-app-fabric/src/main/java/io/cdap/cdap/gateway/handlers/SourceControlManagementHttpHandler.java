@@ -46,7 +46,7 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -166,8 +166,8 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
    * }
    *
    * </pre>
-   * The response will a {@link PushAppResponse} object, which encapsulates the application name,
-   * version and fileHash.
+   * The response will a {@link PushAppsResponse} object, which encapsulates the application name,
+   * version and fileHash and commitId.
    */
   @POST
   @Path("/apps/{app-id}/push")
@@ -179,7 +179,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     PushAppRequest appsRequest = validateAndGetAppsRequest(request);
 
     try {
-      PushAppResponse pushResponse = sourceControlService.pushApp(appRef, appsRequest.getCommitMessage());
+      PushAppsResponse pushResponse = sourceControlService.pushApp(appRef, appsRequest.getCommitMessage());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pushResponse));
     } catch (NoChangesToPushException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());

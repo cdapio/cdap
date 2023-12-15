@@ -39,6 +39,7 @@ import io.cdap.cdap.sourcecontrol.GitOperationException;
 import io.cdap.cdap.sourcecontrol.InvalidApplicationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
+import io.cdap.cdap.sourcecontrol.RepositoryManager.CommitResult;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
 import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
@@ -52,7 +53,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -83,7 +83,7 @@ public class InMemorySourceControlOperationRunner extends
   }
 
   @Override
-  public PushAppResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
+  public PushAppsResponse push(PushAppOperationRequest pushRequest) throws NoChangesToPushException,
       AuthenticationConfigException {
     try (
         RepositoryManager repositoryManager = repoManagerFactory.create(
@@ -94,7 +94,7 @@ public class InMemorySourceControlOperationRunner extends
       ApplicationDetail app = pushRequest.getApp();
       writeAppDetail(repositoryManager, app);
 
-      List<PushAppResponse> responses = new ArrayList<>(commitAndPush(repositoryManager,
+      return commitAndPush(repositoryManager,
           pushRequest.getCommitDetails(),
           ImmutableList.of(new PushFile(
                   app.getName(),
@@ -102,15 +102,12 @@ public class InMemorySourceControlOperationRunner extends
                   repositoryManager.getFileRelativePath(generateConfigFileName(app.getName()))
               )
           )
-      ));
-
-      // it should never be empty as in case of any error we will get an exception
-      return responses.get(0);
+      );
     }
   }
 
   @Override
-  public Collection<PushAppResponse> multiPush(MultiPushAppOperationRequest pushRequest,
+  public PushAppsResponse multiPush(MultiPushAppOperationRequest pushRequest,
       ApplicationManager appManager)
       throws NoChangesToPushException, AuthenticationConfigException {
     try (
@@ -160,7 +157,8 @@ public class InMemorySourceControlOperationRunner extends
   }
 
   @Override
-  public void multiPull(MultiPullAppOperationRequest pullRequest, Consumer<PullAppResponse<?>> consumer)
+  public void multiPull(MultiPullAppOperationRequest pullRequest,
+      Consumer<PullAppResponse<?>> consumer)
       throws SourceControlAppConfigNotFoundException, AuthenticationConfigException {
     LOG.info("Cloning remote to pull applications {}", pullRequest.getApps());
 
@@ -193,7 +191,7 @@ public class InMemorySourceControlOperationRunner extends
       String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
 
-      return new PullAppResponse<>(applicationName, fileHash, appRequest);
+      return new PullAppResponse<>(applicationName, fileHash, appRequest, commitId);
     } catch (GitAPIException e) {
       throw new GitOperationException(String.format("Failed to pull application %s: %s",
           applicationName, e.getMessage()), e);
@@ -268,18 +266,20 @@ public class InMemorySourceControlOperationRunner extends
    *     operations
    */
   //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
-  private Collection<PushAppResponse> commitAndPush(RepositoryManager repositoryManager,
+  private PushAppsResponse commitAndPush(RepositoryManager repositoryManager,
       CommitMeta commitMeta, List<PushFile> filesToPush) throws NoChangesToPushException {
 
     // TODO: CDAP-20383, handle NoChangesToPushException
     //  Define the case that the application to push does not have any changes
     try {
-      return repositoryManager.commitAndPush(commitMeta, filesToPush,
-          (PushFile pushFile, String hash) -> new PushAppResponse(
+      CommitResult<PushAppMeta> commitResult = repositoryManager.commitAndPush(
+          commitMeta, filesToPush,
+          (PushFile pushFile, String hash) -> new PushAppMeta(
               pushFile.getAppName(),
               pushFile.getAppVersion(),
               hash
           ));
+      return new PushAppsResponse(commitResult.getFileMetas(), commitResult.getCommitId());
     } catch (GitAPIException e) {
       throw new GitOperationException(
           String.format("Failed to push configs to git: %s", e.getMessage()), e);
@@ -301,27 +301,31 @@ public class InMemorySourceControlOperationRunner extends
    * Validates if the resolved path is not a symbolic link and not a directory.
    *
    * @param repositoryManager the RepositoryManager
-   * @param appRelativePath   the relative {@link Path} of the application to write to
+   * @param appRelativePath the relative {@link Path} of the application to write to
    * @return A valid application config file relative path
    */
-  private Path validateAppConfigRelativePath(RepositoryManager repositoryManager, Path appRelativePath) throws
-    IllegalArgumentException {
+  private Path validateAppConfigRelativePath(RepositoryManager repositoryManager,
+      Path appRelativePath) throws
+      IllegalArgumentException {
     Path filePath = repositoryManager.getRepositoryRoot().resolve(appRelativePath);
     if (Files.isSymbolicLink(filePath)) {
       throw new IllegalArgumentException(String.format(
-        "%s exists but refers to a symbolic link. Symbolic links are " + "not allowed.", appRelativePath));
+          "%s exists but refers to a symbolic link. Symbolic links are " + "not allowed.",
+          appRelativePath));
     }
     if (Files.isDirectory(filePath)) {
-      throw new IllegalArgumentException(String.format("%s refers to a directory not a file.", appRelativePath));
+      throw new IllegalArgumentException(
+          String.format("%s refers to a directory not a file.", appRelativePath));
     }
     return filePath;
   }
 
   @Override
   public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository) throws
-    AuthenticationConfigException, NotFoundException {
-    try (RepositoryManager repositoryManager = repoManagerFactory.create(nameSpaceRepository.getNamespaceId(),
-                                                                         nameSpaceRepository.getRepositoryConfig())) {
+      AuthenticationConfigException, NotFoundException {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(
+        nameSpaceRepository.getNamespaceId(),
+        nameSpaceRepository.getRepositoryConfig())) {
       String currentCommit = repositoryManager.cloneRemote();
       Path basePath = repositoryManager.getBasePath();
 
@@ -347,17 +351,17 @@ public class InMemorySourceControlOperationRunner extends
       }
       return new RepositoryAppsResponse(responses);
     } catch (IOException | GitAPIException e) {
-      throw new GitOperationException(String.format("Failed to list application configs in directory %s: %s",
-                                                     nameSpaceRepository.getRepositoryConfig().getPathPrefix(),
-                                                     e.getMessage()), e);
+      throw new GitOperationException(
+          String.format("Failed to list application configs in directory %s: %s",
+              nameSpaceRepository.getRepositoryConfig().getPathPrefix(),
+              e.getMessage()), e);
     }
   }
 
 
   /**
-   * A helper function to get a {@link java.io.FileFilter} for application config files with following rules
-   *    1. Filter non-symbolic link files
-   *    2. Filter files with extension json
+   * A helper function to get a {@link java.io.FileFilter} for application config files with
+   * following rules 1. Filter non-symbolic link files 2. Filter files with extension json
    */
   private FileFilter getConfigFileFilter() {
     return file -> {
@@ -387,6 +391,7 @@ public class InMemorySourceControlOperationRunner extends
 
     /**
      * Constructs an object encapsulating information for a file to push.
+     *
      * @param appName name of the application to push
      * @param appVersion version of the application to push
      * @param path filepath of the application json to push
