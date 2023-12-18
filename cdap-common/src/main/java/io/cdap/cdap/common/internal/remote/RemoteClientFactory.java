@@ -117,15 +117,8 @@ public class RemoteClientFactory {
    */
   public RemoteClient createRemoteClient(String discoverableServiceName,
       HttpRequestConfig httpRequestConfig, String basePath) {
-    basePath = basePath.startsWith("/") ? pathPrefix + basePath
-        : pathPrefix + "/" + basePath;
-    if (this.internalRouterEnabled) {
-      return getClientForInternalRouter(discoverableServiceName,
-          httpRequestConfig, basePath);
-    }
-    return new RemoteClient(internalAuthenticator, discoveryClient,
-        discoverableServiceName, httpRequestConfig, basePath,
-        remoteAuthenticator);
+    return createRemoteClient(discoverableServiceName, httpRequestConfig,
+        basePath, internalAuthenticator);
   }
 
   /**
@@ -143,12 +136,18 @@ public class RemoteClientFactory {
       HttpRequestConfig httpRequestConfig, String basePath,
       InternalAuthenticator internalAuthenticator) {
     basePath = basePath.startsWith("/") ? pathPrefix + basePath : pathPrefix + "/" + basePath;
-    return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
+    if (this.internalRouterEnabled) {
+      return getClientForInternalRouter(discoverableServiceName,
+          httpRequestConfig, basePath, internalAuthenticator);
+    }
+    return new RemoteClient(internalAuthenticator, discoveryClient,
+        discoverableServiceName,
         httpRequestConfig, basePath, remoteAuthenticator);
   }
 
   private RemoteClient getClientForInternalRouter(String destinationServiceName,
-      HttpRequestConfig httpRequestConfig, String basePath) {
+      HttpRequestConfig httpRequestConfig, String basePath,
+      InternalAuthenticator internalAuthenticator) {
     LOG.trace(
         "Creating client for service '{}' which routes through service '{}'.",
         destinationServiceName, Service.INTERNAL_ROUTER);
