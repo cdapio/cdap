@@ -16,13 +16,16 @@
 
 package io.cdap.cdap.common.http;
 
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
@@ -32,11 +35,13 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Queue;
+
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
  * SecurityRequestContext}.
  */
-public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
+public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
@@ -47,9 +52,11 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
 
   private final boolean internalAuthEnabled;
+  private final AuditLogPublisherService auditLogPublisherService;
 
-  public AuthenticationChannelHandler(boolean internalAuthEnabled) {
+  public AuthenticationChannelHandler(boolean internalAuthEnabled, AuditLogPublisherService auditLogPublisherService) {
     this.internalAuthEnabled = internalAuthEnabled;
+    this.auditLogPublisherService = auditLogPublisherService;
   }
 
   /**
@@ -118,11 +125,20 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       SecurityRequestContext.setUserIp(currentUserIp);
     }
 
+
     try {
       ctx.fireChannelRead(msg);
     } finally {
       SecurityRequestContext.reset();
     }
+  }
+
+  @Override
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    LOG.warn("SANKETLOG 2 :: msg instanceof HttpResponse = " + (msg instanceof HttpResponse));
+    Queue<AuditLogContext> q = SecurityRequestContext.getAuditLogContextQueue();
+    auditLogPublisherService.addAuditContexts(q);
+    LOG.warn("SANKETLOG 3 :: done");
   }
 
   @Override
@@ -136,3 +152,6 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
   }
 }
+
+//TODO :: check "Object msg" ? (msg instanceof HttpRequest)
+//TODO :: streaming vs non-streaming ? inputsteam..

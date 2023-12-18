@@ -174,7 +174,7 @@
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-security</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
+<!--      <scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
