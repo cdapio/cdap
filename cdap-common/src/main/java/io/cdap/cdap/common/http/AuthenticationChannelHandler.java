@@ -25,6 +25,7 @@ import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
@@ -41,7 +42,7 @@ import java.util.Queue;
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
  * SecurityRequestContext}.
  */
-public class AuthenticationChannelHandler extends ChannelDuplexHandler {
+public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
@@ -132,14 +133,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.reset();
     }
   }
-
-  @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    LOG.warn("SANKETLOG 2 :: msg instanceof HttpResponse = " + (msg instanceof HttpResponse));
-    Queue<AuditLogContext> q = SecurityRequestContext.getAuditLogContextQueue();
-    auditLogPublisherService.addAuditContexts(q);
-    LOG.warn("SANKETLOG 3 :: done");
-  }
+//
+//  @Override
+//  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+//    LOG.warn("SANKETLOG 2 :: msg instanceof HttpResponse = " + (msg instanceof HttpResponse));
+//    Queue<AuditLogContext> q = SecurityRequestContext.getAuditLogContextQueue();
+//    auditLogPublisherService.addAuditContexts(q);
+//    LOG.warn("SANKETLOG 3 :: done");
+//  }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
