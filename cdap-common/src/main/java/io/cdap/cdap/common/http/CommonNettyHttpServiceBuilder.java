@@ -38,9 +38,38 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier pipelineModifier;
   private ChannelPipelineModifier additionalModifier;
 
+//  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
+//      MetricsCollectionService metricsCollectionService,
+//      AuditLogPublisherService auditLogPublisherService) {
+//    super(serviceName);
+//    if (cConf.getBoolean(Constants.Security.ENABLED)) {
+//      pipelineModifier = new ChannelPipelineModifier() {
+//        @Override
+//        public void modify(ChannelPipeline pipeline) {
+//          // Adds the AuthenticationChannelHandler before the dispatcher, using the same
+//          // EventExecutor to make sure they get invoked from the same thread
+//          // This is needed before we use a InheritableThreadLocal in SecurityRequestContext
+//          // to remember the user id.
+//          EventExecutor executor = pipeline.context("dispatcher").executor();
+//          pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
+//              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
+//                  .INTERNAL_AUTH_ENABLED), auditLogPublisherService));
+//        }
+//      };
+//    }
+//    this.setExceptionHandler(new HttpExceptionHandler());
+//    this.setHandlerHooks(Collections.singleton(
+//        new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
+//  }
+//
+//  //TODO : hack for tests --- remove | IGNORE THIS CONSTRUCTER FOR NOW
+//  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
+//                                       MetricsCollectionService metricsCollectionService) {
+//    this(cConf, serviceName, metricsCollectionService, null);
+//  }
+
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-      MetricsCollectionService metricsCollectionService,
-      AuditLogPublisherService auditLogPublisherService) {
+                                       MetricsCollectionService metricsCollectionService) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       pipelineModifier = new ChannelPipelineModifier() {
@@ -52,20 +81,14 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           // to remember the user id.
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
-              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                  .INTERNAL_AUTH_ENABLED), auditLogPublisherService));
+                             new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
+                              .INTERNAL_AUTH_ENABLED), null));
         }
       };
     }
     this.setExceptionHandler(new HttpExceptionHandler());
     this.setHandlerHooks(Collections.singleton(
-        new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
-  }
-
-  //TODO : hack for tests --- remove | IGNORE THIS CONSTRUCTER FOR NOW
-  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-                                       MetricsCollectionService metricsCollectionService) {
-    this(cConf, serviceName, metricsCollectionService, null);
+      new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
   }
 
   /**

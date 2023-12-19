@@ -168,7 +168,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
+//        bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
       }
     });
     modules.add(new ConfigModule(cConf, hConf, sConf));

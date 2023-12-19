@@ -454,9 +454,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     MetricsCollectionService metricsCollectionService = injector.getInstance(
         MetricsCollectionService.class);
     services.add(metricsCollectionService);
-    AuditLogPublisherService auditLogPublisherService = injector.getInstance(
-      AuditLogPublisherService.class);
-    services.add(auditLogPublisherService);
+//    AuditLogPublisherService auditLogPublisherService = injector.getInstance(
+//      AuditLogPublisherService.class);
+//    services.add(auditLogPublisherService);
 
     if (ProgramRunners.getClusterMode(programOptions) != ClusterMode.ON_PREMISE) {
       services.add(injector.getInstance(LogAppenderLoaderService.class));

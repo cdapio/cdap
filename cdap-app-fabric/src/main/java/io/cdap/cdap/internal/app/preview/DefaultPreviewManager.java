@@ -390,7 +390,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             bind(LevelDBTableService.class).toInstance(previewLevelDBTableService);
             bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class)
                 .in(Scopes.SINGLETON);
-            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
+//            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
           }
 
           @Provides

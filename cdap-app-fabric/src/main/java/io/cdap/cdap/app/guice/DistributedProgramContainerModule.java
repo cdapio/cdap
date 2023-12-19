@@ -195,7 +195,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
         bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class)
             .in(Scopes.SINGLETON);
-        bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
+//        bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
       }
     });
 

@@ -31,16 +31,17 @@ public class CommonNettyHttpServiceFactory {
   private final MetricsCollectionService metricsCollectionService;
   private final AuditLogPublisherService auditLogPublisherService;
 
+//  @Inject
+//  public CommonNettyHttpServiceFactory(CConfiguration cConf,
+//      MetricsCollectionService metricsCollectionService,
+//      AuditLogPublisherService auditLogPublisherService) {
+//    this.cConf = cConf;
+//    this.metricsCollectionService = metricsCollectionService;
+//    this.auditLogPublisherService = auditLogPublisherService;
+//  }
+//
+//  //TODO : hack for tests --- remove | IGNORE THIS CONSTRUCTER FOR NOW
   @Inject
-  public CommonNettyHttpServiceFactory(CConfiguration cConf,
-      MetricsCollectionService metricsCollectionService,
-      AuditLogPublisherService auditLogPublisherService) {
-    this.cConf = cConf;
-    this.metricsCollectionService = metricsCollectionService;
-    this.auditLogPublisherService = auditLogPublisherService;
-  }
-
-  //TODO : hack for tests --- remove | IGNORE THIS CONSTRUCTER FOR NOW
   public CommonNettyHttpServiceFactory(CConfiguration cConf,
                                        MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
