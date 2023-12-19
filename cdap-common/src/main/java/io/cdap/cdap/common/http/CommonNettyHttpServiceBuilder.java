@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.common.http;
 
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -38,7 +39,8 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier additionalModifier;
 
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      AuditLogPublisherService auditLogPublisherService) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       pipelineModifier = new ChannelPipelineModifier() {
@@ -51,7 +53,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
               new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                  .INTERNAL_AUTH_ENABLED)));
+                  .INTERNAL_AUTH_ENABLED), auditLogPublisherService));
         }
       };
     }
