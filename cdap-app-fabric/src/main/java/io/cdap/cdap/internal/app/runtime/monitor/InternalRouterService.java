@@ -66,7 +66,7 @@ public class InternalRouterService extends AbstractIdleService {
         .setHost(cConf.get(Constants.InternalRouter.BIND_ADDRESS))
         .setPort(cConf.getInt(Constants.InternalRouter.BIND_PORT));
 
-    if (cConf.getBoolean(Constants.InternalRouter.SSL_ENABLED)) {
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
 
