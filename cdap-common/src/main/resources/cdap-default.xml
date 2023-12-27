@@ -6064,15 +6064,6 @@
   </property>
 
   <property>
-    <name>internal.router.service.ssl.enabled</name>
-    <value>${ssl.internal.enabled}</value>
-    <description>
-      Enable usage of SSL for the internal router service. By default, it is
-      disabled.
-    </description>
-  </property>
-
-  <property>
     <name>internal.router.client.enabled</name>
     <value>false</value>
     <description>
