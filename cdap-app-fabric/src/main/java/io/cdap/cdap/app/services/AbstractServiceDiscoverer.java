@@ -24,7 +24,6 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.common.http.HttpRequestConfig;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -85,6 +84,8 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   }
 
   /**
+   * Gets a factory for creating clients for CDAP services.
+   *
    * @return the {@link RemoteClientFactory}
    */
   protected abstract RemoteClientFactory getRemoteClientFactory();
@@ -103,7 +104,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
         ProgramType.SERVICE, serviceId);
     String basePath = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
         Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId);
-    return getRemoteClientFactory().createRemoteClient(discoveryName, HttpRequestConfig.DEFAULT,
-        basePath);
+    return getRemoteClientFactory().createRemoteClient(discoveryName,
+        RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG, basePath);
   }
 }
