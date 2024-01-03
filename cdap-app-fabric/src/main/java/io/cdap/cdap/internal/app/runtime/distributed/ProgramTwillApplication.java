@@ -140,4 +140,9 @@ public final class ProgramTwillApplication implements ExtendedTwillApplication {
   public String getRunId() {
     return programRunId.getRun();
   }
+
+  @Override
+  public String getApplicationVersion() {
+    return programRunId.getVersion();
+  }
 }

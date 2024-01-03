@@ -68,6 +68,22 @@ public final class TwillAppNames {
    */
   @Nullable
   public static ProgramId fromTwillAppName(String twillAppName, boolean mustMatch) {
+    return fromTwillAppName(twillAppName, mustMatch, null);
+  }
+
+  /**
+   * Given a Twill app name and version, returns the id of the program that was used to construct
+   * this Twill app name.
+   *
+   * @return {@code null} if mustMatch is false, and if the specified Twill app name does not match
+   *     the {@link #APP_NAME_PATTERN}. For instance, for the Constants.Service.MASTER_SERVICES
+   *     Twill app, it will return null.
+   * @throws IllegalArgumentException if the given app name does not match the {@link
+   *     #APP_NAME_PATTERN} and mustMatch is true.
+   */
+  @Nullable
+  public static ProgramId fromTwillAppName(String twillAppName, boolean mustMatch,
+      @Nullable String version) {
     Matcher matcher = APP_NAME_PATTERN.matcher(twillAppName);
     if (!matcher.matches()) {
       Preconditions.checkArgument(!mustMatch,
@@ -79,6 +95,8 @@ public final class TwillAppNames {
         "Expected matcher for '%s' to have 4 groups, but it had %s groups.",
         twillAppName, matcher.groupCount());
     ProgramType type = ProgramType.valueOf(matcher.group(1).toUpperCase());
-    return new ProgramId(matcher.group(2), matcher.group(3), type, matcher.group(4));
+    return version != null ?
+        new ProgramId(matcher.group(2), matcher.group(3), version, type, matcher.group(4)) :
+        new ProgramId(matcher.group(2), matcher.group(3), type, matcher.group(4));
   }
 }

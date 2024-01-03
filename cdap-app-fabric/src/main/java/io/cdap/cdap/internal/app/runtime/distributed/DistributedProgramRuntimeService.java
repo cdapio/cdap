@@ -165,8 +165,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
-      String appName = liveInfo.getApplicationName();
-      ProgramId programId = TwillAppNames.fromTwillAppName(appName, false);
+      ProgramId programId = TwillAppNames.fromTwillAppName(liveInfo.getApplicationName(),
+          false, liveInfo.getApplicationVersion());
       if (programId == null) {
         continue;
       }
