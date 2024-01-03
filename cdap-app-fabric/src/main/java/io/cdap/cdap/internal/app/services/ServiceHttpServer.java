@@ -39,6 +39,8 @@ import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.AuthenticationChannelHandler;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -46,6 +48,7 @@ import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -93,6 +96,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private final Program program;
+  private final SConfiguration sConf;
 
   private Service service;
 
@@ -110,10 +114,11 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
       TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
       RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      AppStateStoreProvider appStateStoreProvider) {
+      AppStateStoreProvider appStateStoreProvider, SConfiguration sConf) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
+    this.sConf = sConf;
     this.serviceSpecification = spec;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
@@ -222,7 +227,11 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
    */
   @Override
   protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
-    return commonNettyHttpServiceFactory.builder(serviceName);
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(serviceName);
+    if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+    return builder;
   }
 
   private BasicHttpServiceContextFactory createContextFactory(Program program,
