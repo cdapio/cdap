@@ -29,6 +29,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
 import io.cdap.cdap.master.spi.namespace.NamespaceListener;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillApplication;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.kubernetes.client.common.KubernetesObject;
 import io.kubernetes.client.custom.Quantity;
@@ -64,9 +65,7 @@ import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -121,6 +120,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillRunnerService.class);
 
   static final String APP_LABEL = "cdap.twill.app";
+  static final String APP_VERSION = "cdap.twill.app.version";
   private static final String CDAP_NAMESPACE_LABEL = "cdap.namespace";
   private static final String NAMESPACE_CPU_LIMIT_PROPERTY = "k8s.namespace.cpu.limits";
   private static final String NAMESPACE_MEMORY_LIMIT_PROPERTY = "k8s.namespace.memory.limits";
@@ -209,15 +209,22 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   public TwillPreparer prepare(TwillApplication application) {
     TwillSpecification spec = application.configure();
     RunId runId;
+    String appVersion;
     if (application instanceof ExtendedTwillApplication) {
       runId = RunIds.fromString(((ExtendedTwillApplication) application).getRunId());
+      appVersion = ((ExtendedTwillApplication) application).getApplicationVersion();
     } else {
+      // Version is not set for system apps
+      appVersion = null;
       runId = RunIds.generate();
     }
     Location appLocation = getApplicationLocation(spec.getName(), runId);
     Map<String, String> labels = new HashMap<>(extraLabels);
     labels.put(RUNNER_LABEL, RUNNER_LABEL_VAL);
     labels.put(APP_LABEL, spec.getName());
+    if (appVersion != null && !appVersion.equals(ApplicationId.DEFAULT_VERSION)) {
+      labels.put(APP_VERSION, appVersion);
+    }
     labels.put(RUN_ID_LABEL, runId.getId());
 
     return new KubeTwillPreparer(masterEnvContext, apiClient, kubeNamespace, podInfo,
@@ -232,8 +239,9 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
               //since monitor is disabled, we fire and forget
               return controller;
             }
+
             KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(),
-                n -> new KubeLiveInfo(resourceType, n));
+                n -> new KubeLiveInfo(resourceType, n, appVersion));
             return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
           } finally {
             liveInfoLock.unlock();
@@ -923,6 +931,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     public void resourceAdded(T resource) {
       V1ObjectMeta metadata = resource.getMetadata();
       String appName = metadata.getAnnotations().get(APP_LABEL);
+      String appVersion = metadata.getLabels().getOrDefault(APP_VERSION, null);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
         return;
@@ -946,7 +955,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       liveInfoLock.lock();
       try {
         KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(appName,
-            k -> new KubeLiveInfo(resource.getClass(), appName));
+            k -> new KubeLiveInfo(resource.getClass(), appName, appVersion));
         KubeTwillController controller = createKubeTwillController(appName, runId,
             resource.getClass(), metadata);
         liveInfo.addControllerIfAbsent(runId, startTimeoutMillis, TimeUnit.MILLISECONDS, controller,
@@ -1084,12 +1093,15 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
     private final Type resourceType;
     private final String applicationName;
+    @Nullable
+    private final String applicationVersion;
     private final Map<String, KubeTwillController> controllers;
 
-    KubeLiveInfo(Type resourceType, String applicationName) {
+    KubeLiveInfo(Type resourceType, String applicationName, @Nullable String appVersion) {
       this.resourceType = resourceType;
       this.applicationName = applicationName;
       this.controllers = new ConcurrentSkipListMap<>();
+      this.applicationVersion = appVersion;
     }
 
     KubeTwillController addControllerIfAbsent(RunId runId, long timeout, TimeUnit timeoutUnit,
@@ -1122,6 +1134,12 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     @Override
     public String getApplicationName() {
       return applicationName;
+    }
+
+    @Override
+    @Nullable
+    public String getApplicationVersion() {
+      return applicationVersion;
     }
 
     @Override
