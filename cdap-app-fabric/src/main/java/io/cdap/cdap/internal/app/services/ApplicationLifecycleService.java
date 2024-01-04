@@ -1459,6 +1459,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public String decodeUserId(AuthenticationContext authenticationContext) {
     String decodedUserId = "emptyUserId";
+    if (authenticationContext.getPrincipal().getName().equals("cdap")) {
+      return "cdap";
+    }
     try {
       byte[] decodedBytes = Base64.getDecoder()
           .decode(authenticationContext.getPrincipal().getName());

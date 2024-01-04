@@ -262,7 +262,7 @@ public class SourceControlManagementService {
     // AppLifecycleService already enforces ApplicationDetail Access
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
-    String committer = authenticationContext.getPrincipal().getName();
+    String committer = appLifecycleService.decodeUserId(authenticationContext);
     // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
     CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(),
         commitMessage);
@@ -409,7 +409,7 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
-    String principal = authenticationContext.getPrincipal().getName();
+    String principal = appLifecycleService.decodeUserId(authenticationContext);
     CommitMeta commitMeta = new CommitMeta(principal, principal, System.currentTimeMillis(),
         request.getCommitMessage());
     PushAppsRequest pushOpRequest = new PushAppsRequest(new HashSet<>(request.getApps()),
