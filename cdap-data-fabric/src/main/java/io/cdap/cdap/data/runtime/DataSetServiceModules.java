@@ -27,6 +27,7 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.Constants;
@@ -99,9 +100,9 @@ public class DataSetServiceModules extends RuntimeModule {
 
             bind(DatasetTypeService.class).to(AuthorizationDatasetTypeService.class);
             expose(DatasetTypeService.class);
-
-            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
-            expose(AuditLogPublisherService.class);
+//TODO : add this module at a parent level. ( preview runner error ) but below cause conflict with abstractservice
+//            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
+//            expose(AuditLogPublisherService.class);
           }
         });
       }
@@ -151,9 +152,9 @@ public class DataSetServiceModules extends RuntimeModule {
 
             bind(DatasetTypeService.class).to(AuthorizationDatasetTypeService.class);
             expose(DatasetTypeService.class);
-
-            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
-            expose(AuditLogPublisherService.class);
+      //TODO : add this module at a parent level. ( preview runner error ) but below cause conflict with abstractservice
+//            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
+//            expose(AuditLogPublisherService.class);
           }
         });
       }

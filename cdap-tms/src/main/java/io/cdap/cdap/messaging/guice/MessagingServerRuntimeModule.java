@@ -136,9 +136,9 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
       bind(MessagingHttpService.class).in(Scopes.SINGLETON);
       expose(MessagingHttpService.class);
       // End workaround for CDAP-7688
-
-      bind(AuditLogPublisherService.class).in(Scopes.SINGLETON);
-      expose(AuditLogPublisherService.class);
+//TODO : add this module at a parent level. ( preview runner error ) but below cause conflict with abstractservice
+//      bind(AuditLogPublisherService.class).in(Scopes.SINGLETON);
+//      expose(AuditLogPublisherService.class);
     }
   }
 

@@ -100,8 +100,9 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
 
-    bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class).in(Scopes.SINGLETON);
-    expose(AuditLogPublisherService.class);
+    //TODO : add this module at a parent level. ( preview runner error ) but below cause conflict with abstractservice
+//    bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class).in(Scopes.SINGLETON);
+//    expose(AuditLogPublisherService.class);
   }
 
   @Singleton
