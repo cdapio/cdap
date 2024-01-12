@@ -303,13 +303,14 @@ public final class DataprocUtils {
    * Emit a dataproc metric.
    **/
   public static void emitMetric(ProvisionerContext context, String region,
-      String metricName, @Nullable Exception e) {
+      String metricName, @Nullable String imageVersion, @Nullable Exception e) {
     emitMetric(context,
-        DataprocMetric.builder(metricName).setRegion(region).setException(e).build());
+        DataprocMetric.builder(metricName).setRegion(region).setException(e).setImageVersion(imageVersion).build());
   }
 
-  public static void emitMetric(ProvisionerContext context, String region, String metricName) {
-    emitMetric(context, region, metricName, null);
+  public static void emitMetric(ProvisionerContext context, String region,
+      @Nullable String imageVersion, String metricName) {
+    emitMetric(context, region, metricName, imageVersion, null);
   }
 
   /**
@@ -334,6 +335,9 @@ public final class DataprocUtils {
         .put("sc", statusCode.toString());
     if (dataprocMetric.getLaunchMode() != null) {
       tags.put("lchmode", dataprocMetric.getLaunchMode().name());
+    }
+    if (!Strings.isNullOrEmpty(dataprocMetric.getImageVersion())) {
+      tags.put("imgVer", dataprocMetric.getImageVersion());
     }
     ProvisionerMetrics metrics = context.getMetrics(tags.build());
     metrics.count(dataprocMetric.getMetricName(), 1);
