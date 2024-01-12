@@ -17,12 +17,16 @@
 package io.cdap.cdap.etl.common.plugin;
 
 import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.exception.WrappedException;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import java.util.concurrent.Callable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Wrapper around {@link BatchSource} that makes sure logging, classloading, and other pipeline
@@ -39,6 +43,7 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT>
   private final BatchSource<KEY_IN, VAL_IN, OUT> batchSource;
   private final Caller caller;
   private final OperationTimer operationTimer;
+  private static final Logger LOG = LoggerFactory.getLogger(WrappedBatchSource.class);
 
   public WrappedBatchSource(BatchSource<KEY_IN, VAL_IN, OUT> batchSource,
       Caller caller, OperationTimer operationTimer) {
@@ -71,6 +76,14 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT>
         batchSource.transform(input, new UntimedEmitter<>(emitter, operationTimer));
         return null;
       });
+    } catch(Exception e) {
+      if (caller instanceof StageLoggingCaller) {
+        String stageName = ((StageLoggingCaller) caller).getStageName();
+        MDC.put("Failed_Stage", stageName);
+        LOG.error("Stage: {}", stageName);
+        throw new WrappedException(e, stageName);
+      }
+      throw e;
     } finally {
       operationTimer.reset();
     }

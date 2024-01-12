@@ -16,12 +16,16 @@
 
 package io.cdap.cdap.etl.common.plugin;
 
+import io.cdap.cdap.api.exception.WrappedException;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
 import java.util.concurrent.Callable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Wrapper around a {@link Transform} that makes sure logging, classloading, and other pipeline
@@ -36,6 +40,7 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> implements
   private final Transform<IN, OUT> transform;
   private final Caller caller;
   private final OperationTimer operationTimer;
+  private static final Logger LOG = LoggerFactory.getLogger(WrappedTransform.class);
 
   public WrappedTransform(Transform<IN, OUT> transform, Caller caller,
       OperationTimer operationTimer) {
@@ -92,6 +97,14 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> implements
         transform.transform(input, new UntimedEmitter<>(emitter, operationTimer));
         return null;
       });
+    } catch(Exception e) {
+      if (caller instanceof StageLoggingCaller) {
+        String stageName = ((StageLoggingCaller) caller).getStageName();
+        MDC.put("Failed_Stage", stageName);
+        LOG.error("Stage: {}", stageName);
+        throw new WrappedException(e, stageName);
+      }
+      throw e;
     } finally {
       operationTimer.reset();
     }
