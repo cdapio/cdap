@@ -172,7 +172,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     try (DataprocClient client = clientFactory.create(conf, sshPublicKey != null)) {
       Cluster reused = tryReuseCluster(client, context, conf);
       if (reused != null) {
-        DataprocUtils.emitMetric(context, conf.getRegion(),
+        DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
             "provisioner.createCluster.reuse.count");
         return reused;
       }
@@ -224,12 +224,12 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
             numWarnings, numWarnings > 1 ? "s" : "",
             String.join("\n", createOperationMeta.getWarningsList()));
       }
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.createCluster.response.count");
       return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(),
           Collections.emptyMap());
     } catch (Exception e) {
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.createCluster.response.count", e);
       throw e;
     }
@@ -448,11 +448,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
     try (DataprocClient client = clientFactory.create(conf)) {
       status = client.getClusterStatus(clusterName);
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterStatus.response.count");
       return status;
     } catch (Exception e) {
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterStatus.response.count", e);
       throw e;
     }
@@ -474,11 +474,11 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     String clusterName = cluster.getName();
     try (DataprocClient client = clientFactory.create(conf, shouldUseSsh(context, conf))) {
       Optional<Cluster> existing = client.getCluster(clusterName);
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterDetail.response.count");
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
     } catch (Exception e) {
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterDetail.response.count", e);
       throw e;
     }
@@ -507,10 +507,10 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       } else {
         client.deleteCluster(clusterName);
       }
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.deleteCluster.response.count");
     } catch (Exception e) {
-      DataprocUtils.emitMetric(context, conf.getRegion(),
+      DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.deleteCluster.response.count", e);
       throw e;
     }
