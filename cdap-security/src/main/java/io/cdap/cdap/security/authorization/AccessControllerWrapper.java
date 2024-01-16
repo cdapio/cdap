@@ -32,7 +32,11 @@ import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,6 +46,7 @@ import java.util.stream.Collectors;
  */
 public class AccessControllerWrapper implements AccessControllerSpi {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AccessControllerWrapper.class);
   private final AccessController accessControllerV1;
 
   public AccessControllerWrapper(AccessController accessControllerV1) {
@@ -258,5 +263,12 @@ public class AccessControllerWrapper implements AccessControllerSpi {
       .setIncludePrincipal(e.includePrincipal())
       .setAddendum(e.getAddendum())
       .build();
+  }
+
+  @Override
+  public PublishStatus publish(List<String> auditLogList) {
+    LOG.warn("SANKET_LOG , not yet supported");
+    // TODO : throw exception ? or log unsupported ?
+    return PublishStatus.PUBLISHED;
   }
 }

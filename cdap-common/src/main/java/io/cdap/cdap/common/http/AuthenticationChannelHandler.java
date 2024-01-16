@@ -24,7 +24,6 @@ import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
@@ -136,6 +135,15 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
     LOG.warn("SANKET_LOG : write1");
+    if (msg instanceof HttpRequest) {
+      LOG.warn("SANKET_LOG : HttpRequest");
+    }
+
+    if (msg instanceof HttpResponse) {
+      LOG.warn("SANKET_LOG : HttpResponse " + (HttpResponse) msg);
+    }
+
+
     auditLogPublisherService.addAuditContexts(new LinkedBlockingDeque<>());
     auditLogPublisherService.publish();
     super.write(ctx, msg, promise);
