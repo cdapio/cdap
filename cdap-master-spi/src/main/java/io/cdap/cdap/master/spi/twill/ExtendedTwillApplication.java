@@ -25,4 +25,6 @@ public interface ExtendedTwillApplication extends TwillApplication {
 
   String getRunId();
 
+  String getApplicationVersion();
+
 }
