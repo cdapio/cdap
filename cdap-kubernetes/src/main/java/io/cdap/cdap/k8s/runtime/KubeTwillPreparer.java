@@ -104,6 +104,7 @@ import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
@@ -780,11 +781,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   /**
    * Kubernetes names must be lowercase alphanumeric, or '-'. Some are less restrictive, but those
-   * characters should always be ok.
+   * characters should always be ok. They should also start and end with an alphanumeric.
    */
-  private String cleanse(String val, int maxLength) {
+  @VisibleForTesting
+  static String cleanse(String val, int maxLength) {
+    // Replace characters that are not alphanumeric or '=' with '-'
     String cleansed = val.replaceAll("[^A-Za-z0-9\\-]", "-").toLowerCase();
-    return cleansed.length() > maxLength ? cleansed.substring(0, maxLength) : cleansed;
+    // Truncate to maxLength if needed
+    cleansed = cleansed.length() > maxLength ? cleansed.substring(0, maxLength) : cleansed;
+    // Remove leading and trailing '-'
+    cleansed = StringUtils.stripEnd(cleansed, "-");
+    return StringUtils.stripStart(cleansed, "-");
   }
 
   /**
