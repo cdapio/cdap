@@ -303,8 +303,22 @@ public final class DataprocUtils {
    * Emit a dataproc metric.
    **/
   public static void emitMetric(ProvisionerContext context, String region,
-      String metricName, @Nullable Exception e) {
+      String metricName, @Nullable String imageVersion, @Nullable Exception e) {
+    emitMetric(context,
+        DataprocMetric.builder(metricName).setRegion(region).setException(e).setImageVersion(imageVersion).build());
+  }
+
+  public static void emitMetric(ProvisionerContext context, String region,
+      @Nullable String imageVersion, String metricName) {
+    emitMetric(context, region, metricName, imageVersion, null);
+  }
+
+  /**
+   * Emit a dataproc metric.
+   **/
+  public static void emitMetric(ProvisionerContext context, DataprocMetric dataprocMetric) {
     StatusCode.Code statusCode;
+    Exception e = dataprocMetric.getException();
     if (e == null) {
       statusCode = StatusCode.Code.OK;
     } else {
@@ -316,16 +330,17 @@ public final class DataprocUtils {
         statusCode = StatusCode.Code.INTERNAL;
       }
     }
-    Map<String, String> tags = ImmutableMap.<String, String>builder()
-        .put("reg", region)
-        .put("sc", statusCode.toString())
-        .build();
-    ProvisionerMetrics metrics = context.getMetrics(tags);
-    metrics.count(metricName, 1);
-  }
-
-  public static void emitMetric(ProvisionerContext context, String region, String metricName) {
-    emitMetric(context, region, metricName, null);
+    ImmutableMap.Builder<String, String> tags = ImmutableMap.<String, String>builder()
+        .put("reg", dataprocMetric.getRegion())
+        .put("sc", statusCode.toString());
+    if (dataprocMetric.getLaunchMode() != null) {
+      tags.put("lchmode", dataprocMetric.getLaunchMode().name());
+    }
+    if (!Strings.isNullOrEmpty(dataprocMetric.getImageVersion())) {
+      tags.put("imgVer", dataprocMetric.getImageVersion());
+    }
+    ProvisionerMetrics metrics = context.getMetrics(tags.build());
+    metrics.count(dataprocMetric.getMetricName(), 1);
   }
 
   /**
