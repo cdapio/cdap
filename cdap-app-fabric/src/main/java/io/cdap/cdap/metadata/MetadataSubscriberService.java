@@ -75,10 +75,6 @@ import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.cdap.store.NamespaceStore;
-import org.apache.tephra.TxConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,6 +88,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.tephra.TxConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service responsible for consuming metadata messages from TMS and persist it to metadata store. This is a wrapping
@@ -138,7 +137,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         Constants.Metrics.Tag.INSTANCE_ID, "0",
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
         Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
-        Constants.Metrics.Tag.CONSUMER, "metadata.writer"
+        Constants.Metrics.Tag.CONSUMER, Constants.Metadata.METADATA_WRITER_SUBSCRIBER
       )));
 
     this.cConf = cConf;
@@ -168,14 +167,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   @Override
   protected String loadMessageId(StructuredTableContext context) throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
+    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(),
+        Constants.Metadata.METADATA_WRITER_SUBSCRIBER);
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId)
     throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
+    appMetadataStore.persistSubscriberState(getTopicId().getTopic(),
+        Constants.Metadata.METADATA_WRITER_SUBSCRIBER, messageId);
   }
 
   @Override

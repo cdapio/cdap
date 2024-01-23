@@ -1743,6 +1743,7 @@ public final class Constants {
     public static final String STORAGE_PROVIDER_ELASTICSEARCH = "elastic";
 
     public static final String METADATA_WRITER_SUBSCRIBER = "metadata.writer";
+    public static final String METADATA_CONSUMER_WRITER_SUBSCRIBER = "metadata.consumer.writer";
   }
 
   /**
