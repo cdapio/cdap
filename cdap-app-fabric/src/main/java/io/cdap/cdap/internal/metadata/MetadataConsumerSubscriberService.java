@@ -38,8 +38,8 @@ import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import io.cdap.cdap.metadata.MetadataMessageProcessor;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -112,7 +112,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
         Constants.Metrics.Tag.INSTANCE_ID, "0",
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
         Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
-        Constants.Metrics.Tag.CONSUMER, Constants.Metadata.METADATA_WRITER_SUBSCRIBER
+        Constants.Metrics.Tag.CONSUMER, Constants.Metadata.METADATA_CONSUMER_WRITER_SUBSCRIBER
       )));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.transactionRunner = transactionRunner;
@@ -141,8 +141,14 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
   @Override
   protected String loadMessageId(StructuredTableContext context) throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(),
-                                                    Constants.Metadata.METADATA_WRITER_SUBSCRIBER);
+    String messageId = appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(),
+        Constants.Metadata.METADATA_CONSUMER_WRITER_SUBSCRIBER);
+    if (messageId == null) {
+      // for backward compatibility in case of upgrade
+      messageId = appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(),
+          Constants.Metadata.METADATA_WRITER_SUBSCRIBER);
+    }
+    return messageId;
   }
 
   @Override
@@ -150,7 +156,7 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     appMetadataStore.persistSubscriberState(getTopicId().getTopic(),
-                                            Constants.Metadata.METADATA_WRITER_SUBSCRIBER, messageId);
+                                            Constants.Metadata.METADATA_CONSUMER_WRITER_SUBSCRIBER, messageId);
   }
 
   @Override
