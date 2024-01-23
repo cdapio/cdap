@@ -47,8 +47,8 @@ import io.cdap.cdap.data2.registry.DatasetUsage;
 import io.cdap.cdap.data2.registry.UsageTable;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import io.cdap.cdap.metadata.profile.ProfileMetadataMessageProcessor;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -138,7 +138,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             Constants.Metrics.Tag.INSTANCE_ID, "0",
             Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
             Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
-            Constants.Metrics.Tag.CONSUMER, "metadata.writer"
+            Constants.Metrics.Tag.CONSUMER, Constants.Metadata.METADATA_WRITER_SUBSCRIBER
         )));
 
     this.cConf = cConf;
@@ -169,14 +169,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   protected String loadMessageId(StructuredTableContext context)
       throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
+    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(),
+        Constants.Metadata.METADATA_WRITER_SUBSCRIBER);
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId)
       throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
+    appMetadataStore.persistSubscriberState(getTopicId().getTopic(),
+        Constants.Metadata.METADATA_WRITER_SUBSCRIBER, messageId);
   }
 
   @Override
