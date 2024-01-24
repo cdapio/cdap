@@ -31,6 +31,7 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -89,6 +90,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private final AppStateStoreProvider appStateStoreProvider;
+  private final SConfiguration sConf;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf,
@@ -104,7 +106,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
       ContextAccessEnforcer contextAccessEnforcer,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      AppStateStoreProvider appStateStoreProvider) {
+      AppStateStoreProvider appStateStoreProvider, SConfiguration sConf) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -126,6 +128,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.appStateStoreProvider = appStateStoreProvider;
+    this.sConf = sConf;
   }
 
   @Override
@@ -177,7 +180,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
           metadataPublisher, namespaceQueryAdmin, pluginFinder,
           fieldLineageWriter, transactionRunner, preferencesFetcher,
           remoteClientFactory, contextAccessEnforcer,
-          commonNettyHttpServiceFactory, appStateStoreProvider);
+          commonNettyHttpServiceFactory, appStateStoreProvider, sConf);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
