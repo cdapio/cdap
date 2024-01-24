@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.PipelinePhase;
@@ -382,10 +383,47 @@ public class PipelinePlanner {
 
       // add other plugin types
       StageSpec spec = specs.get(stageName);
-      phaseBuilder.addStage(spec);
+      phaseBuilder.addStage(fixConditionConnectorNames(spec, conditionConnectors));
     }
 
     return phaseBuilder.build();
+  }
+
+  private StageSpec fixConditionConnectorNames(StageSpec spec, Map<String, String> conditionConnectors) {
+    //Modify input schema with new name
+    Map<String, Schema> originalSchemas = spec.getInputSchemas();
+    Map<String, Schema> newSchemas = new HashMap<>();
+    for (Map.Entry<String, Schema> entry : originalSchemas.entrySet()) {
+      if (conditionConnectors.keySet().contains(entry.getKey())) {
+        newSchemas.put(conditionConnectors.get(entry.getKey()), originalSchemas.get(entry.getKey()));
+      } else {
+        newSchemas.put(entry.getKey(), originalSchemas.get(entry.getKey()));
+      }
+    }
+
+    StageSpec.Builder builder = StageSpec.builder(spec.getName(), spec.getPlugin())
+      .addInputSchemas(newSchemas)
+      .setErrorSchema(spec.getErrorSchema())
+      .setMaxPreviewRecords(spec.getMaxPreviewRecords())
+      .setOutputSchema(spec.getOutputSchema())
+      .setPluginProperties(spec.getPlugin().getProperties())
+      .setStageLoggingEnabled(spec.isStageLoggingEnabled())
+      .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+      .setMaxPreviewRecords(spec.getMaxPreviewRecords());
+
+    Map<String, StageSpec.Port>  outputPorts = spec.getOutputPorts();
+
+    //Modify out put stage name new name
+    for (String outputStageName : outputPorts.keySet()) {
+      String newOutputName = outputStageName;
+      if (conditionConnectors.keySet().contains(outputStageName)) {
+        newOutputName = conditionConnectors.get(outputStageName);
+      }
+      builder.addOutput(newOutputName, outputPorts.get(outputStageName).getPort(),
+                        outputPorts.get(outputStageName).getSchema());
+    }
+
+    return builder.build();
   }
 
   @VisibleForTesting
