@@ -155,17 +155,25 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
       Executors.newSingleThreadScheduledExecutor(
               Threads.createDaemonThreadFactory("task-worker-restart"))
-          .schedule(
+          .scheduleWithFixedDelay(
               () -> {
+                if (mustRestart.get()) {
+                  // We force pod restart as the ongoing request has not finished since last
+                  // periodic restart check.
+                  stopper.accept("");
+                  return;
+                }
+                // we restart once ongoing request (which has set hasInflightRequest to true)
+                // finishes.
+                mustRestart.set(true);
                 if (hasInflightRequest.compareAndSet(false, true)) {
                   // there is no ongoing request. pod gets restarted.
                   stopper.accept("");
                 }
-                // we restart once a request finishes.
-                // TODO: this might delay the pod restart to after executing a new request if the
-                // ongoing request is already in the stopper.
-                mustRestart.set(true);
-              }, waitTime, TimeUnit.SECONDS);
+              },
+              waitTime,
+              waitTime,
+              TimeUnit.SECONDS);
     }
   }
 
