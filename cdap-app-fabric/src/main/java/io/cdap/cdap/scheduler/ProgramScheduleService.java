@@ -44,6 +44,7 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -130,6 +131,16 @@ public class ProgramScheduleService {
     accessEnforcer.enforce(schedule.getProgramId().getParent(),
         authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
     scheduler.addSchedule(schedule);
+  }
+
+  public void addSchedulesWithoutTransaction(
+      List<ProgramSchedule> schedules, StructuredTableContext context
+  ) throws Exception {
+    for (ProgramSchedule schedule : schedules) {
+      accessEnforcer.enforce(schedule.getProgramId().getParent(),
+          authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
+  }
+    scheduler.addSchedulesWithoutTransaction(schedules, context);
   }
 
   /**
@@ -335,6 +346,12 @@ public class ProgramScheduleService {
     accessEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(),
         ApplicationPermission.EXECUTE);
     scheduler.deleteSchedule(scheduleId);
+  }
+
+  public void deleteAllSchedules(ApplicationId appId, StructuredTableContext context) throws Exception {
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(),
+        ApplicationPermission.EXECUTE);
+    scheduler.deleteSchedulesWithoutTransaction(appId, context);
   }
 
   /**

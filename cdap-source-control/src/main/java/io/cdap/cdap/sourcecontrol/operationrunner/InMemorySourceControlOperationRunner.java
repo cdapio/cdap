@@ -191,7 +191,12 @@ public class InMemorySourceControlOperationRunner extends
       String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
 
-      return new PullAppResponse<>(applicationName, fileHash, appRequest, commitId);
+      String scheduleStr = new String(Files.readAllBytes(
+          filePathToRead.resolveSibling(filePathToRead.getFileName() + ".schedule")), StandardCharsets.UTF_8);
+      String preferenceStr = new String(Files.readAllBytes(
+          filePathToRead.resolveSibling(filePathToRead.getFileName() + ".preferences")), StandardCharsets.UTF_8);
+
+      return new PullAppResponse<>(applicationName, fileHash, appRequest, preferenceStr, scheduleStr, commitId);
     } catch (GitAPIException e) {
       throw new GitOperationException(String.format("Failed to pull application %s: %s",
           applicationName, e.getMessage()), e);

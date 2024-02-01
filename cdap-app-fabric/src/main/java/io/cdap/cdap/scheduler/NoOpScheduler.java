@@ -17,8 +17,10 @@
 package io.cdap.cdap.scheduler;
 
 import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -26,6 +28,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +48,13 @@ public class NoOpScheduler implements Scheduler {
   @Override
   public void addSchedules(Iterable<? extends ProgramSchedule> schedules)
       throws AlreadyExistsException {
+
+  }
+
+  @Override
+  public void addSchedulesWithoutTransaction(Iterable<? extends ProgramSchedule> schedules,
+      StructuredTableContext context)
+      throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
 
   }
 
@@ -74,6 +85,12 @@ public class NoOpScheduler implements Scheduler {
 
   @Override
   public void deleteSchedules(ApplicationId appId) {
+
+  }
+
+  @Override
+  public void deleteSchedulesWithoutTransaction(ApplicationId appId, StructuredTableContext context)
+      throws IOException {
 
   }
 

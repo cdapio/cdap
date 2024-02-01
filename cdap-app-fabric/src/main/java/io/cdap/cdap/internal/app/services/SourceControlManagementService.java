@@ -17,12 +17,19 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -32,17 +39,30 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.Metrics.SourceControlManagement;
 import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -52,6 +72,8 @@ import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
+import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -77,8 +99,12 @@ import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
 import java.time.Clock;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,11 +121,25 @@ public class SourceControlManagementService {
   private final SecureStore secureStore;
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
+  private final PreferencesService preferencesService;
+  private final ProgramScheduleService programScheduleService;
   private final Store store;
+  private final Scheduler scheduler;
   private final OperationLifecycleManager operationLifecycleManager;
   private final MetricsCollectionService metricsCollectionService;
   private final Clock clock;
+
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
+  private static final List<Constraint> NO_CONSTRAINTS = Collections.emptyList();
+  private static final Gson GSON = new GsonBuilder().create();
+
+  private static final Gson DECODE_GSON = ApplicationSpecificationAdapter
+      .addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+      .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
+      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+      .create();
 
 
   /**
@@ -115,11 +155,15 @@ public class SourceControlManagementService {
       ApplicationLifecycleService applicationLifecycleService,
       Store store,
       OperationLifecycleManager operationLifecycleManager,
-      MetricsCollectionService metricsCollectionService) {
-    this (cConf, secureStore, transactionRunner,
+      MetricsCollectionService metricsCollectionService,
+      ProgramScheduleService programScheduleService,
+      PreferencesService preferencesService,
+      Scheduler scheduler) {
+    this(cConf, secureStore, transactionRunner,
         accessEnforcer, authenticationContext,
         sourceControlOperationRunner, applicationLifecycleService,
-        store, operationLifecycleManager, metricsCollectionService, Clock.systemUTC());
+        store, operationLifecycleManager, metricsCollectionService, programScheduleService,
+        preferencesService, scheduler, Clock.systemUTC());
   }
 
   @VisibleForTesting
@@ -133,6 +177,9 @@ public class SourceControlManagementService {
       Store store,
       OperationLifecycleManager operationLifecycleManager,
       MetricsCollectionService metricsCollectionService,
+      ProgramScheduleService programScheduleService,
+      PreferencesService preferencesService,
+      Scheduler scheduler,
       Clock clock) {
     this.cConf = cConf;
     this.secureStore = secureStore;
@@ -144,6 +191,9 @@ public class SourceControlManagementService {
     this.store = store;
     this.operationLifecycleManager = operationLifecycleManager;
     this.metricsCollectionService = metricsCollectionService;
+    this.programScheduleService = programScheduleService;
+    this.preferencesService = preferencesService;
+    this.scheduler = scheduler;
     this.clock = clock;
   }
 
@@ -320,6 +370,12 @@ public class SourceControlManagementService {
     AppRequest<?> appRequest = pullResponse.getAppRequest();
     SourceControlMeta sourceControlMeta = new SourceControlMeta(
         pullResponse.getApplicationFileHash(), pullResponse.getCommitId(), clock.instant());
+    Map<String, String> properties = DECODE_GSON.fromJson(pullResponse.getPreferencesString(),
+        new TypeToken<Map<String, String>>() {
+        }.getType());
+    List<ScheduleDetail> schedules = DECODE_GSON.fromJson(pullResponse.getSchedulesString(),
+        new TypeToken<List<ScheduleDetail>>() {
+        }.getType());
 
     LOG.info("Start to deploy app {} in namespace {} by user {}",
         appId.getApplication(),
@@ -328,14 +384,46 @@ public class SourceControlManagementService {
 
     ApplicationWithPrograms app = appLifecycleService.deployApp(appId, appRequest,
         sourceControlMeta, x -> {
-        }, false);
+        }, true);
 
     LOG.info(
         "Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
             + "principal {}", app.getApplicationId().getApplication(),
         app.getApplicationId().getNamespace(),
-        app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal()
-    );
+        app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal());
+
+    ApplicationSpecification currSpec = store.getApplication(appId);
+
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        if (schedules != null) {
+          LOG.info("Updating schedules {} for app {} in namespace {} by user {}",
+              schedules, app.getApplicationId(),
+              appId.getParent(), appLifecycleService.decodeUserId(authenticationContext));
+          List<ProgramSchedule> updatedSchedules = schedules.stream()
+              .map(x -> convertSchedule(x, appId))
+              .collect(Collectors.toList());
+          programScheduleService.deleteAllSchedules(appId, context);
+          if (currSpec != null) {
+            for (WorkflowSpecification workflowSpec : currSpec.getWorkflows().values()) {
+              scheduler.modifySchedulesTriggeredByDeletedProgram(
+                  appId.workflow(workflowSpec.getName()));
+            }
+          }
+          programScheduleService.addSchedulesWithoutTransaction(updatedSchedules, context);
+        }
+        if (properties != null) {
+          LOG.info("Updating configuration {} for app {} in namespace {} by user {}",
+              properties, app.getApplicationId(),
+              appId.getParent(), appLifecycleService.decodeUserId(authenticationContext));
+
+          preferencesService.setProperties(app.getApplicationId(), properties);
+        }
+        AppMetadataStore.create(context).markAsLatest(appId);
+      });
+    } catch (Exception e) {
+      LOG.warn("Failed to update schedules: {} \n {}", e.getMessage(), e.getStackTrace());
+    }
 
     return new ApplicationRecord(
         ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
@@ -345,6 +433,24 @@ public class SourceControlManagementService {
         Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal)
             .orElse(null),
         app.getChangeDetail(), app.getSourceControlMeta());
+  }
+
+
+  private ProgramSchedule convertSchedule(ScheduleDetail scheduleDetail, ApplicationId appId) {
+    ProgramType programType = ProgramType.valueOfSchedulableType(
+        scheduleDetail.getProgram().getProgramType());
+    String programName = scheduleDetail.getProgram().getProgramName();
+    ProgramId programId = appId.program(programType, programName);
+    String description = Objects.firstNonNull(scheduleDetail.getDescription(), "");
+    Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(),
+        Collections.emptyMap());
+    List<? extends Constraint> constraints = Objects.firstNonNull(
+        scheduleDetail.getConstraints(), NO_CONSTRAINTS);
+    long timeoutMillis =
+        Objects.firstNonNull(scheduleDetail.getTimeoutMillis(),
+            Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+    return new ProgramSchedule(scheduleDetail.getName(), description,
+        programId, properties, scheduleDetail.getTrigger(), constraints, timeoutMillis);
   }
 
   /**

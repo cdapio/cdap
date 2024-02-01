@@ -17,6 +17,7 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.proto.artifact.AppRequest;
+import javax.annotation.Nullable;
 
 /**
  * Encapsulates the information generated from pull operation.
@@ -25,16 +26,26 @@ public class PullAppResponse<T> {
 
   private final String applicationName;
   private final String applicationFileHash;
+
+  @Nullable
   private final AppRequest<T> appRequest;
+
+  @Nullable
+  private final String preferencesString;
+  @Nullable
+  private final String schedulesString;
   private final String commitId;
 
   /**
    * Default contrictor for PullAppResponse.
    */
   public PullAppResponse(String applicationName, String applicationFileHash,
-      AppRequest<T> appRequest, String commitId) {
+      AppRequest<T> appRequest, String preferencesString, String schedulesString,
+      String commitId) {
     this.applicationName = applicationName;
     this.applicationFileHash = applicationFileHash;
+    this.preferencesString = preferencesString;
+    this.schedulesString = schedulesString;
     this.appRequest = appRequest;
     this.commitId = commitId;
   }
@@ -53,5 +64,15 @@ public class PullAppResponse<T> {
 
   public String getCommitId() {
     return commitId;
+  }
+
+  @Nullable
+  public String getPreferencesString() {
+    return preferencesString;
+  }
+
+  @Nullable
+  public String getSchedulesString() {
+    return schedulesString;
   }
 }

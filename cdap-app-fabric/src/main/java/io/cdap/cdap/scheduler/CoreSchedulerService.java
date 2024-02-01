@@ -25,6 +25,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.AlreadyExistsException;
@@ -32,7 +33,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
-import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -48,8 +48,8 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreData
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -58,6 +58,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -220,6 +221,40 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void addSchedules(Iterable<? extends ProgramSchedule> schedules)
       throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
+    validateAddSchedules(schedules);
+    try {
+      execute((StoreAndProfileTxRunnable<Void, Exception>) (store, profileDataset) -> {
+        addSchedulesInternal(schedules, store, profileDataset);
+        return null;
+      }, Exception.class);
+    } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void addSchedulesWithoutTransaction(
+      Iterable<? extends ProgramSchedule> schedules, StructuredTableContext context
+  ) throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException {
+    validateAddSchedules(schedules);
+    try {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+      ProfileStore profileStore = ProfileStore.get(context);
+      addSchedulesInternal(schedules, store, profileStore);
+      for (ProgramSchedule schedule : schedules) {
+        enableScheduleInternal(store, schedule.getScheduleId());
+      }
+    } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
+    throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private void validateAddSchedules(Iterable<? extends ProgramSchedule> schedules)
+      throws BadRequestException {
     checkStarted();
     for (ProgramSchedule schedule : schedules) {
       if (!schedule.getProgramId().getType().equals(ProgramType.WORKFLOW)) {
@@ -228,55 +263,51 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
       }
     }
-    try {
-      execute((StoreAndProfileTxRunnable<Void, Exception>) (store, profileDataset) -> {
-        long updatedTime = store.addSchedules(schedules);
-        for (ProgramSchedule schedule : schedules) {
-          if (schedule.getProperties() != null) {
-            Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(
-                schedule.getProgramId().getNamespaceId(), schedule.getProperties());
-            if (profile.isPresent()) {
-              ProfileId profileId = profile.get();
-              if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
-                throw new ProfileConflictException(
-                    String.format("Profile %s in namespace %s is disabled. It cannot "
-                            + "be assigned to schedule %s",
-                        profileId.getProfile(), profileId.getNamespace(),
-                        schedule.getName()), profileId);
-              }
-            }
-          }
-          try {
-            // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
-            timeSchedulerService.addProgramSchedule(schedule);
-          } catch (SchedulerException e) {
-            // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
-            // Need better error handling
-            LOG.error("Exception occurs when adding schedule {}", schedule, e);
-            throw new RuntimeException(e);
-          }
-        }
-        for (ProgramSchedule schedule : schedules) {
-          ScheduleId scheduleId = schedule.getScheduleId();
+  }
 
-          // if the added properties contains profile assignment, add the assignment
-          Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(
-              scheduleId.getNamespaceId(),
-              schedule.getProperties());
-          if (profileId.isPresent()) {
-            profileDataset.addProfileAssignment(profileId.get(), scheduleId);
+  private void addSchedulesInternal(
+      Iterable<? extends ProgramSchedule> schedules, ProgramScheduleStoreDataset store, ProfileStore profileDataset
+  ) throws ProfileConflictException, NotFoundException, IOException, AlreadyExistsException {
+    long updatedTime = store.addSchedules(schedules);
+    for (ProgramSchedule schedule : schedules) {
+      if (schedule.getProperties() != null) {
+        Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(
+            schedule.getProgramId().getNamespaceId(), schedule.getProperties());
+        if (profile.isPresent()) {
+          ProfileId profileId = profile.get();
+          if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
+            throw new ProfileConflictException(
+                String.format("Profile %s in namespace %s is disabled. It cannot "
+                        + "be assigned to schedule %s",
+                    profileId.getProfile(), profileId.getNamespace(),
+                    schedule.getName()), profileId);
           }
         }
-        // publish the messages at the end of transaction
-        for (ProgramSchedule schedule : schedules) {
-          adminEventPublisher.publishScheduleCreation(schedule.getScheduleId(), updatedTime);
-        }
-        return null;
-      }, Exception.class);
-    } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
-      throw e;
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+      }
+      try {
+        // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
+        timeSchedulerService.addProgramSchedule(schedule);
+      } catch (SchedulerException | AlreadyExistsException e) {
+        // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
+        // Need better error handling
+        LOG.error("Exception occurs when adding schedule {}", schedule, e);
+        throw new RuntimeException(e);
+      }
+    }
+    for (ProgramSchedule schedule : schedules) {
+      ScheduleId scheduleId = schedule.getScheduleId();
+
+      // if the added properties contains profile assignment, add the assignment
+      Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(
+          scheduleId.getNamespaceId(),
+          schedule.getProperties());
+      if (profileId.isPresent()) {
+        profileDataset.addProfileAssignment(profileId.get(), scheduleId);
+      }
+    }
+    // publish the messages at the end of transaction
+    for (ProgramSchedule schedule : schedules) {
+      adminEventPublisher.publishScheduleCreation(schedule.getScheduleId(), updatedTime);
     }
   }
 
@@ -440,6 +471,40 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       schedules.forEach(adminEventPublisher::publishScheduleDeletion);
       return null;
     }, RuntimeException.class);
+  }
+
+
+  @Override
+  public void deleteSchedulesWithoutTransaction(ApplicationId appId, StructuredTableContext context)
+      throws IOException {
+    checkStarted();
+    ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+    ProfileStore profileStore = ProfileStore.get(context);
+    JobQueueTable queue = JobQueueTable.getJobQueue(context, cConf);
+    long deleteTime = System.currentTimeMillis();
+    List<ProgramSchedule> schedules = store.listSchedules(appId);
+    deleteSchedulesInScheduler(schedules);
+    List<ScheduleId> deleted = store.deleteSchedules(appId, deleteTime);
+    for (ScheduleId scheduleId : deleted) {
+      queue.markJobsForDeletion(scheduleId, deleteTime);
+    }
+    for (ProgramSchedule programSchedule : schedules) {
+      ScheduleId scheduleId = programSchedule.getScheduleId();
+      // if the deleted schedule has properties with profile assignment, remove the assignment
+      Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(
+          scheduleId.getNamespaceId(),
+          programSchedule.getProperties());
+      if (profileId.isPresent()) {
+        try {
+          profileStore.removeProfileAssignment(profileId.get(), scheduleId);
+        } catch (NotFoundException e) {
+          // this should not happen since the profile cannot be deleted if there is a schedule who is using it
+          LOG.warn("Unable to find the profile {} when deleting schedule {}, "
+              + "skipping assignment deletion.", profileId.get(), scheduleId);
+        }
+      }
+    }
+    schedules.forEach(adminEventPublisher::publishScheduleDeletion);
   }
 
   @Override

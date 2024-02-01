@@ -137,7 +137,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
         return new SourceControlManagementService(cConf, secureStore, transactionRunner,
             accessEnforcer, authenticationContext,
             sourceControlRunner, applicationLifecycleService,
-            store, manager, metricsCollectionService,
+            store, manager, metricsCollectionService, null, null, null,
             Clock.fixed(fixedInstant, ZoneId.systemDefault()));
       }
     });
@@ -356,7 +356,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
-        appId1.getId() + " " + "hash", mockAppRequest, "commitId");
+        appId1.getId() + " " + "hash", mockAppRequest, null, null, "commitId");
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy)
         .pull(Mockito.any(PullAppOperationRequest.class));
 
@@ -395,7 +395,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Do not set the repository config
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
-        appId1.getId() + " hash", mockAppRequest, "commitId");
+        appId1.getId() + " hash", mockAppRequest,null, null, "commitId");
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy)
         .pull(Mockito.any(PullAppOperationRequest.class));
 
@@ -489,7 +489,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     // Set up the pullResponse so that the fileHashes are the same
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(), mockedFileHash,
-        mockAppRequest, "commitId");
+        mockAppRequest, null, null,"commitId");
     Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy)
         .pull(Mockito.any(PullAppOperationRequest.class));
     try {

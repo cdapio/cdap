@@ -28,6 +28,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
@@ -62,6 +64,11 @@ public interface Scheduler {
    */
   void addSchedules(Iterable<? extends ProgramSchedule> schedules)
       throws AlreadyExistsException, BadRequestException, NotFoundException, ProfileConflictException;
+
+
+  void addSchedulesWithoutTransaction(
+      Iterable<? extends ProgramSchedule> schedules, StructuredTableContext context
+  ) throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException;
 
   /**
    * Updates a schedule in the store. The schedule with the same {@link ScheduleId} as the given
@@ -117,6 +124,9 @@ public interface Scheduler {
    * @param appId the application id for which to delete the schedules
    */
   void deleteSchedules(ApplicationId appId);
+
+  void deleteSchedulesWithoutTransaction(ApplicationId appId, StructuredTableContext context)
+      throws IOException;
 
   /**
    * Removes all schedules for a specific program from the store.

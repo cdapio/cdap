@@ -95,7 +95,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Deploy the application
     ApplicationId deployedAppId = manager.deployApp(
         appRef,
-        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, "commitId")
+        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, null, null, "commitId")
     );
 
     // fetch and validate the application version is created
@@ -125,7 +125,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Deploy the application
     ApplicationId deployedAppId = manager.deployApp(
         appRef,
-        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, "commitId")
+        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, null, null,"commitId")
     );
 
     // mark the application as latest
@@ -159,7 +159,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
     // Deploy the application
     ApplicationId deployedAppId = manager.deployApp(
         appRef,
-        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, "originalCommit")
+        new PullAppResponse<>(AllProgramsApp.NAME, "originalHash", request, null, null, "originalCommit")
     );
 
     UpdateMultiSourceControlMetaReqeust request = new UpdateMultiSourceControlMetaReqeust(

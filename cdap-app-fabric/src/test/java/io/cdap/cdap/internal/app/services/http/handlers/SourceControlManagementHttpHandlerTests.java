@@ -136,7 +136,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         return Mockito.spy(new SourceControlManagementService(cConf, secureStore, transactionRunner,
                                                               accessEnforcer, authenticationContext,
                                                               sourceControlRunner, applicationLifecycleService,
-                                                              store, manager, metricsService));
+                                                              store, manager, metricsService, null, null, null));
       }
     });
   }
