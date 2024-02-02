@@ -191,10 +191,19 @@ public class InMemorySourceControlOperationRunner extends
       String contents = new String(Files.readAllBytes(filePathToRead), StandardCharsets.UTF_8);
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
 
-      String scheduleStr = new String(Files.readAllBytes(
-          filePathToRead.resolveSibling(filePathToRead.getFileName() + ".schedule")), StandardCharsets.UTF_8);
-      String preferenceStr = new String(Files.readAllBytes(
-          filePathToRead.resolveSibling(filePathToRead.getFileName() + ".preferences")), StandardCharsets.UTF_8);
+      Path schedulePath = filePathToRead.resolveSibling(filePathToRead.getFileName() + ".schedule");
+      Path preferencePath = filePathToRead.resolveSibling(filePathToRead.getFileName() + ".preferences");
+
+
+      String scheduleStr = null;
+      if (Files.exists(schedulePath)) {
+        scheduleStr = new String(Files.readAllBytes(schedulePath), StandardCharsets.UTF_8);
+      }
+      String preferenceStr = null;
+      if (Files.exists(preferencePath)) {
+        new String(Files.readAllBytes(preferencePath), StandardCharsets.UTF_8);
+      }
+
 
       return new PullAppResponse<>(applicationName, fileHash, appRequest, preferenceStr, scheduleStr, commitId);
     } catch (GitAPIException e) {

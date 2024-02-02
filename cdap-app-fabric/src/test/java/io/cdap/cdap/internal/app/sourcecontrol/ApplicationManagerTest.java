@@ -130,7 +130,7 @@ public class ApplicationManagerTest extends AppFabricTestBase {
 
     // mark the application as latest
     manager.markAppVersionsLatest(new NamespaceId(namespace), Collections.singletonList(
-        new AppVersion(deployedAppId.getApplication(), deployedAppId.getVersion())));
+        new AppVersion(deployedAppId.getApplication(), deployedAppId.getVersion(), null, null)));
 
     // fetch and validate the application version is created
     HttpResponse response = doGet(getVersionedApiPath(

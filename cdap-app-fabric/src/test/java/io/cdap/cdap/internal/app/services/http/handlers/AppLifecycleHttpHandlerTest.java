@@ -147,7 +147,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(), null, null));
       }
     });
   }

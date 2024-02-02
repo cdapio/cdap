@@ -25,11 +25,20 @@ public class AppVersion {
 
   private final String name;
   private final String appVersion;
+  private final String schedulesStr;
+  private final String preferenceStr;
 
-  public AppVersion(String name, String appVersion) {
+
+  /**
+   * Default constructor.
+   */
+  public AppVersion(String name, String appVersion, String schedulesStr, String preferenceStr) {
     this.name = name;
     this.appVersion = appVersion;
+    this.schedulesStr = schedulesStr;
+    this.preferenceStr = preferenceStr;
   }
+
 
   public String getName() {
     return name;
@@ -37,6 +46,14 @@ public class AppVersion {
 
   public String getAppVersion() {
     return appVersion;
+  }
+
+  public String getSchedulesStr() {
+    return schedulesStr;
+  }
+
+  public String getPreferenceStr() {
+    return preferenceStr;
   }
 
   @Override
@@ -48,13 +65,14 @@ public class AppVersion {
       return false;
     }
     AppVersion that = (AppVersion) o;
-    return Objects.equals(name, that.name) && Objects.equals(appVersion,
-        that.appVersion);
+    return Objects.equals(name, that.name) && Objects.equals(appVersion, that.appVersion)
+        && Objects.equals(schedulesStr, that.schedulesStr) && Objects.equals(preferenceStr,
+        that.preferenceStr);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, appVersion);
+    return Objects.hash(name, appVersion, schedulesStr, preferenceStr);
   }
 
   @Override

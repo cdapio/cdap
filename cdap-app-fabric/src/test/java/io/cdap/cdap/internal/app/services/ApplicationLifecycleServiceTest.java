@@ -541,7 +541,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Collections.singletonList(new AppVersion(appName, deployedVersion))));
+            Collections.singletonList(new AppVersion(appName, deployedVersion, null, null))));
 
     // now that the deployed application has been marked latest, trying to get the
     // latest version of the application by ApplicationReference should succeed. And
@@ -562,8 +562,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Arrays.asList(new AppVersion("app1", "v1"),
-                new AppVersion("app1", "v2"))
+            Arrays.asList(new AppVersion("app1", "v1", null, null),
+                new AppVersion("app1", "v2", null, null))
         ));
   }
 
@@ -578,7 +578,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Collections.singletonList(new AppVersion("invalid app id", "v1"))
+            Collections.singletonList(new AppVersion("invalid app id", "v1", null, null))
         ));
   }
 
@@ -593,7 +593,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Collections.singletonList(new AppVersion(null, "v1"))
+            Collections.singletonList(new AppVersion(null, "v1", null, null))
         ));
   }
 
@@ -608,7 +608,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Collections.singletonList(new AppVersion("app", null))
+            Collections.singletonList(new AppVersion("app", null, null, null))
         ));
   }
 
@@ -639,8 +639,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Arrays.asList(new AppVersion("non_existing_app", "v1"),
-                new AppVersion(appName, deployedVersion))
+            Arrays.asList(new AppVersion("non_existing_app", "v1", null, null),
+                new AppVersion(appName, deployedVersion, null, null))
         ));
   }
 
@@ -696,7 +696,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.markAppsAsLatest(
         Namespace.DEFAULT.toEntityId(),
         new MarkLatestAppsRequest(
-            Collections.singletonList(new AppVersion(appName, secondVersion))
+            Collections.singletonList(new AppVersion(appName, secondVersion, null, null))
         ));
 
     // get the latest version of the app. It should be the second version at this point.

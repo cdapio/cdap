@@ -27,6 +27,7 @@ import io.cdap.cdap.internal.operation.LongRunningOperation;
 import io.cdap.cdap.internal.operation.LongRunningOperationContext;
 import io.cdap.cdap.internal.operation.OperationException;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.operation.OperationResource;
@@ -38,7 +39,8 @@ import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperation
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPullAppOperationRequest;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -55,7 +57,7 @@ public class PullAppsOperation implements LongRunningOperation {
   private final InMemorySourceControlOperationRunner scmOpRunner;
   private final ApplicationManager applicationManager;
 
-  private final Set<ApplicationId> deployed;
+  private final List<AppVersion> deployed;
 
   private static final Logger LOG = LoggerFactory.getLogger(PullAppsOperation.class);
 
@@ -76,7 +78,7 @@ public class PullAppsOperation implements LongRunningOperation {
     this.request = request;
     this.applicationManager = applicationManager;
     this.scmOpRunner = runner;
-    this.deployed = new HashSet<>();
+    this.deployed = new LinkedList<>();
   }
 
   @Override
@@ -117,7 +119,8 @@ public class PullAppsOperation implements LongRunningOperation {
           ApplicationId deployedVersion = applicationManager.deployApp(
               appTobeDeployed.get(), response
           );
-          deployed.add(deployedVersion);
+          deployed.add(new AppVersion(deployedVersion.getApplication(), deployedVersion.getVersion(),
+              response.getSchedulesString(), response.getPreferencesString()));
           context.updateOperationResources(getResources());
         } catch (Exception e) {
           throw new SourceControlException(e);
@@ -137,7 +140,7 @@ public class PullAppsOperation implements LongRunningOperation {
       // all deployed versions are marked latest atomically
       applicationManager.markAppVersionsLatest(
           context.getRunId().getNamespaceId(),
-          deployed.stream().map(ApplicationId::getAppVersion).collect(Collectors.toList())
+          deployed
       );
     } catch (BadRequestException | NotFoundException | IOException e) {
       throw new OperationException(

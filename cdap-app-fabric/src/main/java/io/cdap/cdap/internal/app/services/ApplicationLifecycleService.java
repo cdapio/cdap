@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -25,6 +26,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
@@ -45,6 +47,7 @@ import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.deploy.Manager;
@@ -71,6 +74,7 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -79,6 +83,12 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -86,11 +96,13 @@ import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
+import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
 import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
@@ -112,6 +124,7 @@ import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -119,6 +132,8 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import java.io.File;
 import java.io.IOException;
@@ -182,6 +197,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int batchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final TransactionRunner transactionRunner;
+  private final ProgramScheduleService programScheduleService;
+
+  private static final Gson DECODE_GSON = ApplicationSpecificationAdapter
+      .addTypeAdapters(new GsonBuilder())
+      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+      .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
+      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+      .create();
+
+  private static final List<Constraint> NO_CONSTRAINTS = Collections.emptyList();
+
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -197,7 +225,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      TransactionRunner transactionRunner,
+      ProgramScheduleService programScheduleService) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -219,6 +249,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.transactionRunner = transactionRunner;
+    this.programScheduleService = programScheduleService;
   }
 
   @Override
@@ -1553,28 +1585,81 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void markAppsAsLatest(NamespaceId namespace, MarkLatestAppsRequest appsRequest)
       throws BadRequestException, IOException, ApplicationNotFoundException {
 
-    List<ApplicationId> appIds = new ArrayList<>();
-    Set<String> seenApps = new HashSet<>();
 
-    for (AppVersion appRequest : appsRequest.getApps()) {
-      // Validate the appIds do not contain duplicates, i.e. we are not trying to mark
-      // multiple versions of the same application as latest
-      if (!seenApps.add(appRequest.getName())) {
-        throw new BadRequestException(String.format(
-            "Marking multiple versions of an application (%s) as latest is not supported.",
-            appRequest.getName()
-        ));
-      }
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+        List<ApplicationId> appIds = new ArrayList<>();
+        Set<String> seenApps = new HashSet<>();
 
-      try {
-        appIds.add(namespace.app(appRequest.getName(), appRequest.getAppVersion()));
-      } catch (IllegalArgumentException | NullPointerException e) {
-        throw new BadRequestException(String.format("Invalid application name (%s) or version (%s)",
-            appRequest.getName(), appRequest.getAppVersion()), e);
-      }
+        for (AppVersion appRequest : appsRequest.getApps()) {
+          // Validate the appIds do not contain duplicates, i.e. we are not trying to mark
+          // multiple versions of the same application as latest
+          if (!seenApps.add(appRequest.getName())) {
+            throw new BadRequestException(String.format(
+                "Marking multiple versions of an application (%s) as latest is not supported.",
+                appRequest.getName()
+            ));
+          }
+
+          ApplicationId appId = namespace.app(appRequest.getName(), appRequest.getAppVersion());
+
+          Map<String, String> properties = DECODE_GSON.fromJson(appRequest.getPreferenceStr(),
+              new TypeToken<Map<String, String>>() {
+              }.getType());
+          List<ScheduleDetail> schedules = DECODE_GSON.fromJson(appRequest.getSchedulesStr(),
+              new TypeToken<List<ScheduleDetail>>() {
+              }.getType());
+
+
+          ApplicationSpecification currSpec = appMetadataStore.getApplication(appId).getSpec();
+
+          if (schedules != null) {
+            LOG.info("Updating schedules {} for app {} in namespace {} by user {}",
+                schedules, appId,
+                appId.getParent(), decodeUserId(authenticationContext));
+            List<ProgramSchedule> updatedSchedules = schedules.stream()
+                .map(x -> convertSchedule(x, appId))
+                .collect(Collectors.toList());
+            programScheduleService.deleteAllSchedules(appId, context);
+            if (currSpec != null) {
+              for (WorkflowSpecification workflowSpec : currSpec.getWorkflows().values()) {
+                scheduler.modifySchedulesTriggeredByDeletedProgram(
+                    appId.workflow(workflowSpec.getName()));
+              }
+            }
+            programScheduleService.addSchedulesWithoutTransaction(updatedSchedules, context);
+          }
+          if (properties != null) {
+            LOG.info("Updating configuration {} for app {} in namespace {} by user {}",
+                properties, appId.getApplication(),
+                appId.getParent(), decodeUserId(authenticationContext));
+
+            preferencesService.setProperties(appId, properties);
+          }
+          AppMetadataStore.create(context).markAsLatest(appId);
+        }
+      }, Exception.class);
+    } catch (Exception e) {
+      LOG.warn("Failed to update schedules: {} \n {}", e.getMessage(), e.getStackTrace());
     }
+  }
 
-    store.markApplicationsLatest(appIds);
+  private ProgramSchedule convertSchedule(ScheduleDetail scheduleDetail, ApplicationId appId) {
+    ProgramType programType = ProgramType.valueOfSchedulableType(
+        scheduleDetail.getProgram().getProgramType());
+    String programName = scheduleDetail.getProgram().getProgramName();
+    ProgramId programId = appId.program(programType, programName);
+    String description = Objects.firstNonNull(scheduleDetail.getDescription(), "");
+    Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(),
+        Collections.emptyMap());
+    List<? extends Constraint> constraints = Objects.firstNonNull(
+        scheduleDetail.getConstraints(), NO_CONSTRAINTS);
+    long timeoutMillis =
+        Objects.firstNonNull(scheduleDetail.getTimeoutMillis(),
+            Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+    return new ProgramSchedule(scheduleDetail.getName(), description,
+        programId, properties, scheduleDetail.getTrigger(), constraints, timeoutMillis);
   }
 
   /**
