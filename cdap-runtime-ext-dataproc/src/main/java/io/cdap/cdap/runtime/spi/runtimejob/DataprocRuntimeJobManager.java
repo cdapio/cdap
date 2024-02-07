@@ -162,7 +162,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns a {@link Storage} object for interacting with GCS.
    */
-  private Storage getStorageClient() {
+  @VisibleForTesting
+  public Storage getStorageClient() {
     Storage client = storageClient;
     if (client != null) {
       return client;
@@ -573,7 +574,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads files to gcs.
    */
-  private LocalFile uploadFile(String bucket, String targetFilePath,
+  @VisibleForTesting
+  public LocalFile uploadFile(String bucket, String targetFilePath,
       LocalFile localFile, boolean cacheable)
       throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
@@ -612,9 +614,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         // https://cloud.google.com/storage/docs/request-preconditions#special-case
         // Overwrite the file
         Blob existingBlob = storage.get(blobId);
-        BlobInfo newBlobInfo = existingBlob.toBuilder().setContentType(contentType).build();
-        uploadToGcsUtil(localFile, storage, targetFilePath, newBlobInfo,
-            Storage.BlobWriteOption.generationNotMatch());
+        BlobInfo newBlobInfo =
+            BlobInfo.newBuilder(existingBlob.getBlobId()).setContentType(contentType).build();
+        uploadToGcsUtil(localFile, storage, targetFilePath, newBlobInfo);
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
             localFile.getURI(), bucket, targetFilePath);
@@ -637,7 +639,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads the file to GCS Bucket.
    */
-  private void uploadToGcsUtil(LocalFile localFile, Storage storage, String targetFilePath,
+  @VisibleForTesting
+  public void uploadToGcsUtil(LocalFile localFile, Storage storage, String targetFilePath,
       BlobInfo blobInfo,
       Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     long start = System.nanoTime();
