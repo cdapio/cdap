@@ -47,10 +47,12 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -76,7 +78,8 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   private final GcpWorkloadIdentityInternalAuthenticator gcpWorkloadIdentityInternalAuthenticator;
   private GcpMetadataTaskContext gcpMetadataTaskContext;
   private final LoadingCache<ProvisionedCredentialCacheKey,
-        ProvisionedCredential> credentialLoadingCache;
+      GcpTokenResponse> credentialLoadingCache;
+  private boolean credentialIdentityPresent;
 
   /**
    * Constructs the {@link GcpMetadataHttpHandlerInternal}.
@@ -91,12 +94,13 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
         new GcpWorkloadIdentityInternalAuthenticator(gcpMetadataTaskContext);
     this.credentialProvider = new RemoteNamespaceCredentialProvider(remoteClientFactory,
         this.gcpWorkloadIdentityInternalAuthenticator);
+    this.credentialIdentityPresent = true;
     this.credentialLoadingCache = CacheBuilder.newBuilder()
         // Provisioned credential expire after 60mins, assuming 20% buffer in cache exp (0.8*60).
         .expireAfterWrite(48, TimeUnit.MINUTES)
-        .build(new CacheLoader<ProvisionedCredentialCacheKey, ProvisionedCredential>() {
+        .build(new CacheLoader<ProvisionedCredentialCacheKey, GcpTokenResponse>() {
           @Override
-          public ProvisionedCredential load(ProvisionedCredentialCacheKey
+          public GcpTokenResponse load(ProvisionedCredentialCacheKey
               provisionedCredentialCacheKey) throws Exception {
             return fetchTokenFromCredentialProvider(
                 provisionedCredentialCacheKey.getGcpMetadataTaskContext(),
@@ -159,47 +163,62 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       return;
     }
 
-    try {
-      // fetch token from credential provider
-      ProvisionedCredential provisionedCredential =
-          credentialLoadingCache.get(
-              new ProvisionedCredentialCacheKey(this.gcpMetadataTaskContext, scopes));
-      GcpTokenResponse gcpTokenResponse = new GcpTokenResponse("Bearer",
-          provisionedCredential.get(),
-          Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
-      return;
-    } catch (ExecutionException e) {
-      if (!(e.getCause() instanceof NotFoundException)) {
-        LOG.error("Failed to fetch token from credential provider", e.getCause());
-        throw e;
+    if (credentialIdentityPresent) {
+      try {
+        GcpTokenResponse gcpTokenResponse =
+            credentialLoadingCache.get(
+                new ProvisionedCredentialCacheKey(gcpMetadataTaskContext, scopes));
+        responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
+        return;
+      } catch (ExecutionException e) {
+        if (!(e.getCause() instanceof NotFoundException)) {
+          LOG.error("Failed to fetch token from credential provider", e.getCause());
+          throw e;
+        }
+        // if credential identity not found,
+        // fallback to gcp metadata server for backward compatibility.
+        credentialIdentityPresent = false;
       }
-      // if credential identity not found,
-      // fallback to gcp metadata server for backward compatibility.
     }
 
     try {
-      Credential credential = remoteAuthenticator.getCredentials();
-      if (credential == null || Strings.isNullOrEmpty(credential.getValue())) {
-        responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-            "Failed to fetch token from metadata server");
-        return;
+      GcpTokenResponse gcpTokenResponse;
+      if (Strings.isNullOrEmpty(scopes)) {
+        gcpTokenResponse = convert(remoteAuthenticator.getCredentials());
+      } else {
+        gcpTokenResponse = credentialLoadingCache.get(
+            new ProvisionedCredentialCacheKey(null, scopes));
       }
-      GcpTokenResponse gcpTokenResponse =
-          new GcpTokenResponse(credential.getType().getQualifiedName(), credential.getValue(),
-              credential.getExpirationTimeSecs());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
-    } catch (Exception ex) {
-      LOG.error("Failed to fetch token from metadata server", ex);
+    } catch (ExecutionException ex) {
+      LOG.error("Failed to fetch token from metadata server", ex.getCause());
       responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
     }
   }
 
-  private ProvisionedCredential fetchTokenFromCredentialProvider(
-      GcpMetadataTaskContext gcpMetadataTaskContext, String scopes) throws Exception {
-    return Retries.callWithRetries(() ->
+  private GcpTokenResponse fetchTokenFromCredentialProvider(
+      @Nullable GcpMetadataTaskContext gcpMetadataTaskContext, String scopes) throws Exception {
+    if (gcpMetadataTaskContext == null) {
+      return convert(remoteAuthenticator.getCredentials(scopes));
+    }
+
+    ProvisionedCredential provisionedCredential = Retries.callWithRetries(() ->
             this.credentialProvider.provision(gcpMetadataTaskContext.getNamespace(), scopes),
         RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+    return convert(provisionedCredential);
+  }
+
+  private GcpTokenResponse convert(ProvisionedCredential provisionedCredential) {
+    return new GcpTokenResponse("Bearer", provisionedCredential.get(),
+        Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
+  }
+
+  private GcpTokenResponse convert(@Nullable Credential credential) throws IOException {
+    if (credential == null || Strings.isNullOrEmpty(credential.getValue())) {
+      throw new IOException("Unable to fetch credential");
+    }
+    return new GcpTokenResponse(credential.getType().getQualifiedName(), credential.getValue(),
+        credential.getExpirationTimeSecs());
   }
 
   /**
@@ -231,6 +250,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     this.gcpMetadataTaskContext = null;
     this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
     this.credentialLoadingCache.invalidateAll();
+    this.credentialIdentityPresent = true;
     LOG.trace("Context cleared.");
     responder.sendStatus(HttpResponseStatus.OK);
   }
