@@ -39,4 +39,10 @@ public interface RemoteAuthenticator {
    */
   @Nullable
   Credential getCredentials() throws IOException;
+
+  /**
+   * Returns the credentials for the authentication with scopes.
+   */
+  @Nullable
+  Credential getCredentials(String scopes) throws IOException;
 }
