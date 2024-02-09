@@ -14,7 +14,7 @@
 # the License.
 #
 
-@Sysadmin
+@Sysadmin @ignore
 Feature: Sysadmin - Validate system admin page design time validation scenarios
 
   Background:

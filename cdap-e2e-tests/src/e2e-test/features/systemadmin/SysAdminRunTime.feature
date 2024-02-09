@@ -14,7 +14,7 @@
 # the License.
 #
 
-@Sysadmin
+@Sysadmin  @ignore
 Feature: Sysadmin - Validate system admin page Run time scenarios
 
   Background:

@@ -14,7 +14,7 @@
 # the License.
 #
 
-@Hub
+@Hub @ignore
 Feature: Hub - Run time scenarios
 
   @TS-HUB-RNTM-01

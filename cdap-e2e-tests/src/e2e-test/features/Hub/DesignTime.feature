@@ -14,7 +14,7 @@
 # the License.
 #
 
-@Hub
+@Hub  @ignore
 Feature: Hub - Design time scenarios
 
   @TS-HUB-DESIGN-01

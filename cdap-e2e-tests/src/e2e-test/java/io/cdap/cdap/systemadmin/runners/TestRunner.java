@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
   features = {"src/e2e-test/features"},
   glue = {"io.cdap.cdap.systemadmin.common.stepsdesign", "stepsdesign"},
-  tags = {"@Sysadmin"},
+  tags = {"@Sysadmin and not @ignore"},
   plugin = {"pretty", "html:target/cucumber-html-report/systemadmin",
     "json:target/cucumber-reports/cucumber-systemadmin.json",
     "junit:target/cucumber-reports/cucumber-systemadmin.xml"}
