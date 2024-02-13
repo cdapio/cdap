@@ -38,4 +38,13 @@ public class NoOpRemoteAuthenticator implements RemoteAuthenticator {
   public Credential getCredentials() throws IOException {
     return null;
   }
+
+  /**
+   * Returns the credentials for the authentication with scopes.
+   */
+  @Nullable
+  @Override
+  public Credential getCredentials(String scopes) throws IOException {
+    return null;
+  }
 }
