@@ -350,19 +350,46 @@ public final class DataprocUtils {
   private static String getMetadata(String resource) throws IOException {
     URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
     HttpURLConnection connection = null;
-    try {
-      connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestProperty("Metadata-Flavor", "Google");
-      connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(),
-          StandardCharsets.UTF_8)) {
-        return CharStreams.toString(reader);
+    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
+      .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
+      .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
+
+    int counter = 0, statusCode = -1;
+    Exception exception = null;
+    while (counter < NUMBER_OF_RETRIES) {
+      counter++;
+
+      try {
+        connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestProperty("Metadata-Flavor", "Google");
+        connection.connect();
+        statusCode = connection.getResponseCode();
+        try (Reader reader = new InputStreamReader(connection.getInputStream(),
+                                                   StandardCharsets.UTF_8)) {
+          return CharStreams.toString(reader);
+        }
+      } catch (Exception e) {
+        // Update the last exception caught
+        exception = e;
+        // Retry only if the error code is 5xx
+        if (statusCode < 500) {
+          break;
+        }
+      } finally {
+        if (connection != null) {
+          connection.disconnect();
+        }
       }
-    } finally {
-      if (connection != null) {
-        connection.disconnect();
+
+      try {
+        Thread.sleep(backOff.nextBackOffMillis());
+      } catch (InterruptedException | IOException e) {
+        // Update the exception caught and throw this exception immediately
+        exception = e;
+        break;
       }
     }
+    throw new RuntimeException("Error connecting to metadata sever", exception);
   }
 
   /**
