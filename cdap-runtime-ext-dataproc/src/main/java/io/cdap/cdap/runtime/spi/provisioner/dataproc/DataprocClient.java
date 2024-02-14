@@ -346,7 +346,8 @@ abstract class DataprocClient implements AutoCloseable {
     String network = conf.getNetwork();
     String systemNetwork = null;
     try {
-      systemNetwork = DataprocUtils.getSystemNetwork();
+      systemNetwork = DataprocUtils.getSystemNetwork(
+          (url) -> (HttpURLConnection) url.openConnection());
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP, ignore
     }
@@ -355,7 +356,8 @@ abstract class DataprocClient implements AutoCloseable {
     String networkHostProjectId = conf.getNetworkHostProjectId();
     String systemProjectId = null;
     try {
-      systemProjectId = DataprocUtils.getSystemProjectId();
+      systemProjectId = DataprocUtils.getSystemProjectId(
+          (url) -> (HttpURLConnection) url.openConnection());
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP, ignore
     }
@@ -486,8 +488,10 @@ abstract class DataprocClient implements AutoCloseable {
     String systemProjectId = null;
     String systemNetwork = null;
     try {
-      systemProjectId = DataprocUtils.getSystemProjectId();
-      systemNetwork = DataprocUtils.getSystemNetwork();
+      systemProjectId = DataprocUtils.getSystemProjectId(
+          (url) -> (HttpURLConnection) url.openConnection());
+      systemNetwork = DataprocUtils.getSystemNetwork(
+          (url) -> (HttpURLConnection) url.openConnection());
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP, ignore
     }
