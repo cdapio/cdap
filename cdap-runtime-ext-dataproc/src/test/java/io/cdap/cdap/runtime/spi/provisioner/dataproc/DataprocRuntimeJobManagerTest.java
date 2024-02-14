@@ -16,12 +16,21 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
+import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +41,8 @@ import org.apache.twill.internal.Constants;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
 
 /** Tests for DataprocRuntimeJobManager. */
 public class DataprocRuntimeJobManagerTest {
@@ -162,5 +173,51 @@ public class DataprocRuntimeJobManagerTest {
         runInfo.getProgram(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_PROGRAM));
     Assert.assertEquals(
         runInfo.getRun(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_RUNID));
+  }
+
+  @Test
+  public void uploadFileTest() throws Exception {
+    final String bucketName = "bucket";
+    GoogleCredentials credentials = Mockito.mock(GoogleCredentials.class);
+    Mockito.doReturn(true).when(credentials).createScopedRequired();
+    DataprocRuntimeJobManager dataprocRuntimeJobManager = new DataprocRuntimeJobManager(
+      new DataprocClusterInfo(new MockProvisionerContext(), "test-cluster", credentials,
+          null, "test-project", "test-region", bucketName, Collections.emptyMap()),
+        Collections.emptyMap(), null);
+
+    DataprocRuntimeJobManager mockedDataprocRuntimeJobManager =
+        Mockito.spy(dataprocRuntimeJobManager);
+
+    Storage storage = Mockito.mock(Storage.class);
+    Mockito.doReturn(storage).when(mockedDataprocRuntimeJobManager).getStorageClient();
+
+    Bucket bucket = Mockito.mock(Bucket.class);
+    Mockito.doReturn(bucket).when(storage).get(Matchers.eq(bucketName));
+    Mockito.doReturn("regional").when(bucket).getLocationType();
+    Mockito.doReturn("test-region").when(bucket).getLocation();
+
+    String targetFilePath = "cdap-job/target";
+    BlobId blobId = BlobId.of(bucketName, targetFilePath);
+    BlobId newBlobId = BlobId.of(bucketName, targetFilePath, 1L);
+    Blob blob = Mockito.mock(Blob.class);
+    Mockito.doReturn(blob).when(storage).get(blobId);
+    Mockito.doReturn(newBlobId).when(blob).getBlobId();
+
+    BlobInfo expectedBlobInfo =
+        BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
+    Mockito.doThrow(
+        new StorageException(HttpURLConnection.HTTP_PRECON_FAILED, "blob already exists"))
+        .when(mockedDataprocRuntimeJobManager).uploadToGcsUtil(Mockito.any(),
+            Mockito.any(), Mockito.any(), Matchers.eq(expectedBlobInfo),
+            Matchers.eq(Storage.BlobWriteOption.doesNotExist()));
+
+    expectedBlobInfo =
+        BlobInfo.newBuilder(newBlobId).setContentType("application/octet-stream").build();
+    Mockito.doNothing().when(mockedDataprocRuntimeJobManager).uploadToGcsUtil(Mockito.any(),
+        Mockito.any(), Mockito.any(), Matchers.eq(expectedBlobInfo));
+
+    // call the method
+    LocalFile localFile = Mockito.mock(LocalFile.class);
+    mockedDataprocRuntimeJobManager.uploadFile(bucketName, targetFilePath, localFile, false);
   }
 }

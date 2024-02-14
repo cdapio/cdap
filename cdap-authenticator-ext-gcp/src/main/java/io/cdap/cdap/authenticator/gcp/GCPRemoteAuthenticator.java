@@ -19,6 +19,7 @@ package io.cdap.cdap.authenticator.gcp;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import java.io.IOException;
@@ -64,6 +65,21 @@ public class GCPRemoteAuthenticator implements RemoteAuthenticator {
     if (accessToken == null || accessToken.getExpirationTime().before(Date.from(clock.instant()))) {
       accessToken = googleCredentials.refreshAccessToken();
     }
+    return new Credential(accessToken.getTokenValue(), Credential.CredentialType.EXTERNAL_BEARER,
+        accessToken.getExpirationTime().getTime() / 1000L);
+  }
+
+  /**
+   * Returns the credentials for the authentication with scopes.
+   */
+  @Nullable
+  @Override
+  public Credential getCredentials(@Nullable String scopes) throws IOException {
+    if (Strings.isNullOrEmpty(scopes)) {
+      return getCredentials();
+    }
+    AccessToken accessToken =
+        GoogleCredentials.getApplicationDefault().createScoped(scopes).refreshAccessToken();
     return new Credential(accessToken.getTokenValue(), Credential.CredentialType.EXTERNAL_BEARER,
         accessToken.getExpirationTime().getTime() / 1000L);
   }

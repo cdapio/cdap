@@ -20,11 +20,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.annotation.TransactionControl;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
@@ -33,7 +33,6 @@ import io.cdap.cdap.internal.app.services.ServiceHttpServer;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -41,6 +40,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,7 +155,8 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
   }
 
   /**
-   * Create a netty http service builder. Children classes can customize is as needed
+   * Create a netty http service builder. Child classes can customize this
+   * as needed.
    */
   protected NettyHttpService.Builder createHttpServiceBuilder(String serviceName) {
     return NettyHttpService.builder(serviceName);
@@ -180,13 +181,14 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
     ProgramId programId = program.getId();
     service.start();
 
-    // announce the twill runnable
-    InetSocketAddress bindAddress = service.getBindAddress();
-    int port = bindAddress.getPort();
-    // Announce the service with its version as the payload
-    cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId), port,
-        Bytes.toBytes(programId.getVersion()));
-    LOG.info("Announced HTTP Service for Service {} at {}", programId, bindAddress);
+    // announce the twill runnable.
+    String serviceName = ServiceDiscoverable.getName(programId);
+    // The payload contains the URL scheme (http/https).
+    Discoverable discoverable =  URIScheme.createDiscoverable(serviceName, service);
+    cancelDiscovery = serviceAnnouncer.announce(serviceName,
+        discoverable.getSocketAddress().getPort(), discoverable.getPayload());
+    LOG.info("Announced HTTP Service for Service {} at {}", programId,
+        service.getBindAddress());
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it
     timer = new Timer("http-handler-gc", true);

@@ -59,15 +59,19 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main class to run metadata service. Also, the dataset op executor is running this process as
  * well.
  */
 public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataServiceMain.class);
+  private CConfiguration cConf;
 
   /**
-   * Main entry point
+   * Main entry point.
    */
   public static void main(String[] args) throws Exception {
     main(MetadataServiceMain.class, args);
@@ -76,6 +80,7 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
       EnvironmentOptions options, CConfiguration cConf) {
+    this.cConf = cConf;
     return Arrays.asList(
         new MessagingServiceModule(cConf),
         new NamespaceQueryAdminModule(),
@@ -113,7 +118,15 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
       EnvironmentOptions options) {
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
-    services.add(injector.getInstance(MetadataConsumerSubscriberService.class));
+
+    if (cConf != null && cConf.getStringCollection(
+        Constants.MetadataConsumer.METADATA_CONSUMER_EXTENSIONS_ENABLED_LIST).isEmpty()) {
+      LOG.info("Skipping enabling MetadataConsumerSubscriberService, "
+          + "no metadata consumer extensions are enabled.");
+    } else {
+      services.add(injector.getInstance(MetadataConsumerSubscriberService.class));
+    }
+
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
         Key.get(ZKClientService.class));
     if (zkBinding != null) {

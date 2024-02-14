@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.common;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import javax.annotation.Nullable;
 
@@ -29,17 +30,32 @@ public class DataprocMetric {
   private final Exception exception;
   @Nullable
   private final LaunchMode launchMode;
+  @Nullable
+  private final String imageVersion;
 
   private DataprocMetric(String metricName, String region, @Nullable Exception exception,
-      @Nullable LaunchMode launchMode) {
+      @Nullable LaunchMode launchMode, @Nullable String imageVersion) {
     this.metricName = metricName;
     this.region = region;
     this.exception = exception;
     this.launchMode = launchMode;
+    this.imageVersion = imageVersion;
   }
 
   public String getMetricName() {
     return metricName;
+  }
+
+  @Nullable
+  public String getImageVersion() {
+    if (!Strings.isNullOrEmpty(imageVersion)) {
+      // return major.minor
+      String[] splits = imageVersion.split("\\.", 3);
+      if (splits.length > 2) {
+        return String.format("%s.%s", splits[0], splits[1]);
+      }
+    }
+    return imageVersion;
   }
 
   public String getRegion() {
@@ -72,6 +88,7 @@ public class DataprocMetric {
   public static class Builder {
     private final String metricName;
     private String region;
+    private String imageVersion;
     @Nullable
     private Exception exception;
     @Nullable
@@ -96,6 +113,11 @@ public class DataprocMetric {
       return this;
     }
 
+    public Builder setImageVersion(String imageVersion) {
+      this.imageVersion = imageVersion;
+      return this;
+    }
+
     /**
      * Returns a DataprocMetric.
      *
@@ -106,7 +128,7 @@ public class DataprocMetric {
         // region should always be set unless there is a bug in the code
         throw new IllegalStateException("Dataproc metric is missing the region");
       }
-      return new DataprocMetric(metricName, region, exception, launchMode);
+      return new DataprocMetric(metricName, region, exception, launchMode, imageVersion);
     }
   }
 }
