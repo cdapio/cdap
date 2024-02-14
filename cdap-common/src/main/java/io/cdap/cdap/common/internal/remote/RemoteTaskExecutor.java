@@ -50,6 +50,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -64,6 +65,9 @@ public class RemoteTaskExecutor {
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
+  private static final Predicate<Throwable> RETRYABLE_PREDICATE = throwable -> {
+    return (throwable instanceof RetryableException) || (throwable instanceof ServiceException);
+  };
   private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
   private final boolean compression;
   private final RemoteClient remoteClient;
@@ -141,7 +145,7 @@ public class RemoteTaskExecutor {
               String.format("Received exception %s for %s", e.getMessage(),
                   runnableTaskRequest.getClassName()));
         }
-      }, retryStrategy, Retries.DEFAULT_PREDICATE);
+      }, retryStrategy, RETRYABLE_PREDICATE);
     } catch (ServiceException se) {
       Exception ex = getTaskException(se);
       //emit metrics with failed result
