@@ -48,6 +48,15 @@ public final class ProvisionedCredentialCacheKey {
       return  false;
     }
     ProvisionedCredentialCacheKey that = (ProvisionedCredentialCacheKey) o;
+
+    if (gcpMetadataTaskContext == null && that.gcpMetadataTaskContext == null) {
+      return Objects.equals(scopes, that.scopes);
+    }
+
+    if (gcpMetadataTaskContext == null || that.gcpMetadataTaskContext == null) {
+      return false;
+    }
+
     return Objects.equals(gcpMetadataTaskContext.getNamespace(),
         that.gcpMetadataTaskContext.getNamespace())
         && Objects.equals(gcpMetadataTaskContext.getUserCredential().toString(),
@@ -63,9 +72,14 @@ public final class ProvisionedCredentialCacheKey {
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(gcpMetadataTaskContext.getNamespace(),
-          gcpMetadataTaskContext.getUserCredential().toString(),
-          gcpMetadataTaskContext.getUserId(), gcpMetadataTaskContext.getUserIp(), scopes);
+
+      if (gcpMetadataTaskContext == null) {
+        this.hashCode = hashCode = Objects.hash(scopes);
+      } else {
+        this.hashCode = hashCode = Objects.hash(gcpMetadataTaskContext.getNamespace(),
+            gcpMetadataTaskContext.getUserCredential().toString(),
+            gcpMetadataTaskContext.getUserId(), gcpMetadataTaskContext.getUserIp(), scopes);
+      }
     }
     return hashCode;
   }

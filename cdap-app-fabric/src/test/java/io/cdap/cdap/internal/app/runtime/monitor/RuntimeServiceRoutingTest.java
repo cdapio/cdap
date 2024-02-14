@@ -62,6 +62,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.EnumSet;
+import javax.annotation.Nullable;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.junit.After;
@@ -267,6 +268,15 @@ public class RuntimeServiceRoutingTest {
       String credentialValue = Base64.getEncoder().encodeToString(Hashing.md5().hashString(programRunId.toString())
                                                                     .asBytes());
       return new Credential(credentialValue, Credential.CredentialType.EXTERNAL_BEARER);
+    }
+
+    /**
+     * Returns the credentials for the authentication with scopes.
+     */
+    @Nullable
+    @Override
+    public Credential getCredentials(String scopes) throws IOException {
+      return getCredentials();
     }
   }
 

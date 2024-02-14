@@ -16,16 +16,20 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link RemoteAuthenticator} that authenticate remote calls using Google Cloud token acquired
@@ -46,22 +50,45 @@ public class GceRemoteAuthenticator implements RemoteAuthenticator {
 
   @Override
   public Credential getCredentials() throws IOException {
-    return new Credential(getAccessToken().getToken(), Credential.CredentialType.EXTERNAL_BEARER);
+    return new Credential(getAccessToken(null).getToken(),
+        Credential.CredentialType.EXTERNAL_BEARER);
+  }
+
+  /**
+   * Returns the credentials for the authentication with scopes.
+   */
+  @Nullable
+  @Override
+  public Credential getCredentials(String scopes) throws IOException {
+    return new Credential(getAccessToken(scopes).getToken(),
+        Credential.CredentialType.EXTERNAL_BEARER);
   }
 
   /**
    * Returns an unexpired access token for authentication.
    */
-  private AccessToken getAccessToken() throws IOException {
+  private AccessToken getAccessToken(@Nullable String scopes) throws IOException {
     AccessToken accessToken = this.accessToken;
     if (accessToken != null && !accessToken.isExpired()) {
       return accessToken;
     }
 
-    URL url = new URL(
-        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
+    URI uri;
+    try {
+      uri = new URI(URIScheme.HTTP.getScheme(), "metadata.google.internal",
+          "/computeMetadata/v1/instance/service-accounts/default/token",
+          null, null);
+      if (!Strings.isNullOrEmpty(scopes)) {
+        uri = new URI(URIScheme.HTTP.getScheme(), "metadata.google.internal",
+            "/computeMetadata/v1/instance/service-accounts/default/token",
+            String.format("scopes=%s", scopes), null);
+      }
+    } catch (URISyntaxException e) {
+      throw new IOException(e);
+    }
+
     HttpResponse response = HttpRequests.execute(
-        HttpRequest.get(url).addHeader("Metadata-Flavor", "Google").build());
+        HttpRequest.get(uri.toURL()).addHeader("Metadata-Flavor", "Google").build());
     if (response.getResponseCode() != 200) {
       throw new IOException("Failed to default service account token");
     }
