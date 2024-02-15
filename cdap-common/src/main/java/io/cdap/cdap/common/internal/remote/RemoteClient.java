@@ -174,12 +174,12 @@ public class RemoteClient {
         String message;
         String jsonDetails = null;
         if ("application/json".equals(contentType)) {
-          message = String.format("Service %s is not available (%d)", discoverableServiceName,
-              responseCode);
+          message = String.format("Service %s is not available with response code (%d)",
+              discoverableServiceName, responseCode);
           jsonDetails = response.getResponseBodyAsString();
         } else {
-          message = String.format("Service %s is not available: %s", discoverableServiceName,
-              response.getResponseBodyAsString());
+          message = String.format("Service %s is not available with response code (%d): %s",
+              discoverableServiceName, responseCode, response.getResponseBodyAsString());
         }
         throw new ServiceException(message, null,
             jsonDetails, HttpResponseStatus.valueOf(responseCode));

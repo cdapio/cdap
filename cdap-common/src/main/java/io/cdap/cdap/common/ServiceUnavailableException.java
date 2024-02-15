@@ -26,33 +26,50 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class ServiceUnavailableException extends RetryableException implements
     HttpErrorStatusProvider {
 
+  private static final String MESSAGE_FORMAT =
+      "Service %s is not available. Please wait until it is up and running.";
   private final String serviceName;
 
+  /**
+   * Constructs the {@link ServiceUnavailableException} with the provided service name.
+   */
   public ServiceUnavailableException(String serviceName) {
-    this(serviceName,
-        "Service '" + serviceName + "' is not available. Please wait until it is up and running.");
+    this(serviceName, String.format(MESSAGE_FORMAT, serviceName));
   }
 
+  /**
+   * Constructs the {@link ServiceUnavailableException} with the provided service name and message.
+   */
   public ServiceUnavailableException(String serviceName, String message) {
     super(message);
     this.serviceName = serviceName;
   }
 
+  /**
+   * Constructs the {@link ServiceUnavailableException} with the provided params.
+   */
   public ServiceUnavailableException(String serviceName, Throwable cause) {
-    this(serviceName,
-        "Service '" + serviceName + "' is not available. Please wait until it is up and running.",
-        cause);
+    this(serviceName, String.format(MESSAGE_FORMAT, serviceName), cause);
   }
 
+  /**
+   * Constructs the {@link ServiceUnavailableException} with the provided params.
+   */
   public ServiceUnavailableException(String serviceName, String message, Throwable cause) {
     super(message, cause);
     this.serviceName = serviceName;
   }
 
+  /**
+   * Returns the service name.
+   */
   public String getServiceName() {
     return serviceName;
   }
 
+  /**
+   * Returns the http status code.
+   */
   @Override
   public int getStatusCode() {
     return HttpResponseStatus.SERVICE_UNAVAILABLE.code();
