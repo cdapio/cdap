@@ -22,8 +22,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
-import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -174,12 +174,12 @@ public class RemoteClient {
         String message;
         String jsonDetails = null;
         if ("application/json".equals(contentType)) {
-          message = String.format("Service %s is not available (%d)", discoverableServiceName,
-              responseCode);
+          message = String.format("Service %s is not available with response code (%d)",
+              discoverableServiceName, responseCode);
           jsonDetails = response.getResponseBodyAsString();
         } else {
-          message = String.format("Service %s is not available: %s", discoverableServiceName,
-              response.getResponseBodyAsString());
+          message = String.format("Service %s is not available with response code (%d): %s",
+              discoverableServiceName, responseCode, response.getResponseBodyAsString());
         }
         throw new ServiceException(message, null,
             jsonDetails, HttpResponseStatus.valueOf(responseCode));
