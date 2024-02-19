@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,10 +39,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-/**
- * Tests {@link AppMetadataStore} using SQL.
- */
-public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
+public class SqlSourceControlMetadataStoreTest extends SourceControlMetadataStoreTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -54,21 +51,22 @@ public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
     CConfiguration cConf = CConfiguration.create();
     pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new LocalLocationModule(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new StorageModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
-              .in(Scopes.SINGLETON);
+        new ConfigModule(cConf),
+        new LocalLocationModule(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new StorageModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
+                .in(Scopes.SINGLETON);
+          }
         }
-      }
     );
 
     transactionRunner = injector.getInstance(TransactionRunner.class);
-    StoreDefinition.AppMetadataStore.create(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.NamespaceSourceControlMetadataStore.create(
+        injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
