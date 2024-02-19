@@ -660,6 +660,21 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
+  @POST
+  @Path("/appscmstatus")
+  public void getAllAppsSCMStatus(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespace) throws Exception {
+    // TODO(adrikagupta): Implement the API handler
+  }
+
+  @GET
+  @Path("/apps/{app-id}/scmstatus")
+  public void getAppSCMStatus(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appName) throws Exception {
+    // TODO(adrikagupta): Implement the API handler
+  }
+
   /**
    * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder,
    * String)} call.
