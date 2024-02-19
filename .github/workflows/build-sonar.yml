@@ -37,7 +37,7 @@ jobs:
       - name: Cache
         uses: actions/cache@v3
         with:
-          path: ~/.m2/repository11
+          path: ~/.m2/repository17
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-${{ github.workflow }}
@@ -50,7 +50,7 @@ jobs:
       - name: Build with Maven
         run: >-
           mvn clean verify -fae -T 2 -B -V -Dmaven.test.failure.ignore
-          -Dmaven.repo.local=$HOME/.m2/repository11
+          -Dmaven.repo.local=$HOME/.m2/repository17
           -DcloudBuild
           -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
@@ -74,10 +74,10 @@ jobs:
       - name: Sonar report
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: >-
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
-          -Dmaven.repo.local=$HOME/.m2/repository11
+          -Dmaven.repo.local=$HOME/.m2/repository17
           -DcloudBuild
           -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
