@@ -74,7 +74,7 @@ jobs:
       - name: Sonar report
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: >-
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
           -Dmaven.repo.local=$HOME/.m2/repository11
