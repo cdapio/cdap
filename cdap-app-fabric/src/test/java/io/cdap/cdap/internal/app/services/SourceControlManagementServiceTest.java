@@ -255,7 +255,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     PushAppMeta appMeta = result.getApps().iterator().next();
     SourceControlMeta metaFromPushResult = new SourceControlMeta(appMeta.getFileHash(),
         result.getCommitId(),
-        fixedInstant);
+        fixedInstant, true);
     Assert.assertEquals(appDetail.getSourceControlMeta(), metaFromPushResult);
 
     // Cleanup
@@ -373,7 +373,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     ApplicationDetail appDetail = getAppDetails(Id.Namespace.DEFAULT.getId(), appId1.getId());
     SourceControlMeta metaFromPushResult = new SourceControlMeta(
         expectedPullResponse.getApplicationFileHash(),
-        "commitId", fixedInstant);
+        "commitId", fixedInstant, true);
     Assert.assertEquals(appDetail.getSourceControlMeta(), metaFromPushResult);
 
     // Cleanup
