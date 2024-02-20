@@ -79,45 +79,6 @@ public class SourceControlMetadataStore {
     scmTable.upsert(getSourceControlMetaFields(appId, sourceControlMeta, sourceControlMeta == null ? false: true));
   }
 
-
-//  public SyncStatusInfo getSyncStatusInfo(String namespace, String name) throws IOException{
-//    List<Field<?>> primaryKey = getPrimaryKey(namespace, "APPLICATION", name);
-//    Optional<StructuredRow> row = getSourceControlMetadataTable().read(primaryKey);
-//    if (row.isPresent()) {
-//      StructuredRow nonNullRow = row.get();
-//      Boolean statusSync = nonNullRow.getBoolean(StoreDefinition.SourceControlMetadataStore.IS_SYNCED_FIELD);
-//      Long lastStatusSynced = nonNullRow.getLong(StoreDefinition.SourceControlMetadataStore.LAST_STATUS_SYNCED_FIELD);
-//      return new SyncStatusInfo(statusSync, lastStatusSynced);
-//    }
-//    return null;
-//  }
-
-
-//  public Pair<Boolean, Instant> updateSyncStatus(String namespace, String name, String pulledFileHash) throws IOException{
-//    List<Field<?>> primaryKey = getPrimaryKey(namespace, "APPLICATION", name);
-//    Optional<StructuredRow> row = getSourceControlMetadataTable().read(primaryKey);
-//    if (row.isPresent()) {
-//      StructuredRow nonNullRow = row.get();
-//      SourceControlMeta sourceControl = GSON.fromJson(
-//          nonNullRow.getString(StoreDefinition.SourceControlMetadataStore.METADATA_FIELD),
-//          SourceControlMeta.class);
-//      Boolean is_synced = sourceControl.getFileHash().equals(pulledFileHash) ? true: false;
-//      Instant last_status_synced = Instant.now();
-//      setAppSourceControlMetaRow(new ApplicationId(namespace,name), null, is_synced, last_status_synced);
-//      return new Pair<>(is_synced, last_status_synced);
-//    }
-//    return null;
-//  }
-
-
-//  public void setAppSourceControlMetaRow(ApplicationId appId, SourceControlMeta sourceControlMeta, Boolean isSynced,
-//      Instant lastStatusSynced )
-//      throws IOException {
-//    StructuredTable scmMetaTable = getSourceControlMetadataTable();
-//    scmMetaTable.upsert(getSourceControlMetaFields(appId, sourceControlMeta, isSynced, lastStatusSynced));
-//  }
-
-
   @Nullable
   public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) throws IOException {
     List<Field<?>> primaryKey = getPrimaryKey(
@@ -132,53 +93,6 @@ public class SourceControlMetadataStore {
     }
     return null;
   }
-
-
-//  @Nullable
-//  public SourceControlMetaDetail getAppSourceControlMetaDetail(ApplicationReference appRef) throws IOException {
-//    List<Field<?>> primaryKey = getPrimaryKey(
-//        appRef.getNamespace(), appRef.getEntityType().toString(), appRef.getEntityName());
-//    Optional<StructuredRow> row = getSourceControlMetadataTable().read(primaryKey);
-//    if (row.isPresent()) {
-//      StructuredRow nonNullRow = row.get();
-//      SourceControlMeta sourceControlMeta = GSON.fromJson(
-//          nonNullRow.getString(StoreDefinition.SourceControlMetadataStore.METADATA_FIELD),
-//          SourceControlMeta.class);
-//      Boolean isSynced = nonNullRow.getBoolean(StoreDefinition.SourceControlMetadataStore.IS_SYNCED_FIELD);
-//      Long lastStatusSynced = nonNullRow.getLong(StoreDefinition.SourceControlMetadataStore.LAST_STATUS_SYNCED_FIELD);
-//      return new SourceControlMetaDetail(appRef.getEntityName(), sourceControlMeta, new SyncStatusInfo(isSynced, lastStatusSynced));
-//    }
-//    return null;
-//  }
-
-
-//  @Nullable
-//  public SourceControlMeta getAppSourceControlMeta(String namespace, String type, String name) throws IOException {
-//    List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
-//    Optional<StructuredRow> row = getSourceControlMetadataTable().read(primaryKey);
-//    if (row.isPresent()) {
-//      StructuredRow nonNullRow = row.get();
-//      return GSON.fromJson(
-//          nonNullRow.getString(StoreDefinition.SourceControlMetadataStore.METADATA_FIELD),
-//          SourceControlMeta.class);
-//    }
-//    return null;
-//  }
-
-
-//  private Collection<Field<?>> getSourceControlMetaFields(ApplicationId appId,
-//      SourceControlMeta sourceControlMeta, Boolean isSynced, Instant lastStatusSynced) {
-//    List<Field<?>> fields = getApplicationPrimaryKeys(appId);
-//    if(sourceControlMeta != null) {
-//      fields.add(Fields.stringField(StoreDefinition.SourceControlMetadataStore.METADATA_FIELD,
-//          GSON.toJson(sourceControlMeta)));
-//    }
-//    fields.add(Fields.booleanField(StoreDefinition.SourceControlMetadataStore.IS_SYNCED_FIELD,
-//        isSynced));
-//    fields.add(Fields.longField(StoreDefinition.SourceControlMetadataStore.LAST_STATUS_SYNCED_FIELD,
-//        lastStatusSynced.toEpochMilli()));
-//    return fields;
-//  }
 
   private Collection<Field<?>> getSourceControlMetaFields(ApplicationId appId,
       SourceControlMeta scmMeta, Boolean isSynced) {
