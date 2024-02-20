@@ -143,6 +143,10 @@ public class DefaultStore implements Store {
     return AppMetadataStore.create(context);
   }
 
+  private SourceControlMetadataStore getSourceControlMetadataStore(StructuredTableContext context) {
+    return SourceControlMetadataStore.create(context);
+  }
+
   private WorkflowTable getWorkflowTable(StructuredTableContext context)
       throws TableNotFoundException {
     return new WorkflowTable(context.getTable(StoreDefinition.WorkflowStore.WORKFLOW_STATISTICS));
@@ -611,7 +615,7 @@ public class DefaultStore implements Store {
   public void updateApplicationSourceControlMeta(Map<ApplicationId, SourceControlMeta> updateRequests)
       throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      AppMetadataStore mds = getAppMetadataStore(context);
+      SourceControlMetadataStore mds = getSourceControlMetadataStore(context);
       for (Map.Entry<ApplicationId, SourceControlMeta> updateRequest : updateRequests.entrySet()) {
         try {
           mds.updateAppScmMeta(updateRequest.getKey(), updateRequest.getValue());
@@ -904,7 +908,7 @@ public class DefaultStore implements Store {
   @Override
   public void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta) {
     TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).setAppSourceControlMeta(appId, sourceControlMeta);
+      getSourceControlMetadataStore(context).setAppSourceControlMeta(appId, sourceControlMeta);
     });
   }
 
@@ -912,7 +916,7 @@ public class DefaultStore implements Store {
   @Nullable
   public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAppSourceControlMeta(appRef);
+      return getSourceControlMetadataStore(context).getAppSourceControlMeta(appRef);
     });
   }
 
