@@ -90,13 +90,15 @@ public class RemoteTaskExecutor {
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
-        Constants.Service.TASK_WORKER + ".");
     this.metricsCollectionService = metricsCollectionService;
     if (workerType == Type.TASK_WORKER) {
       this.workerUrl = TASK_WORKER_URL;
+      this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
+          Constants.Service.TASK_WORKER + ".");
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;
+      this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
+          Constants.Service.SYSTEM_WORKER + ".");
     }
   }
 
