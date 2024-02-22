@@ -186,7 +186,8 @@ public final class StoreDefinition {
    */
   public static final class SourceControlMetadataStore {
 
-    public static final StructuredTableId SOURCE_CONTROL_METADATA = new StructuredTableId("source_control_metadata");
+    public static final StructuredTableId SOURCE_CONTROL_METADATA = new StructuredTableId(
+        "source_control_metadata");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String TYPE_FIELD = "type";
@@ -196,7 +197,8 @@ public final class StoreDefinition {
     public static final String LAST_MODIFIED_FIELD = "last_modified";
     public static final String IS_SYNCED_FIELD = "is_synced";
 
-    public static final StructuredTableSpecification SOURCE_CONTROL_METADATA_TABLE_SPEC = new StructuredTableSpecification.Builder()
+    public static final StructuredTableSpecification SOURCE_CONTROL_METADATA_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
         .withId(SOURCE_CONTROL_METADATA)
         .withFields(Fields.stringType(NAMESPACE_FIELD),
             Fields.stringType(TYPE_FIELD),
@@ -219,7 +221,8 @@ public final class StoreDefinition {
    */
   public static final class RepositoryMetadataStore {
 
-    public static final StructuredTableId REPOSITORY_METADATA = new StructuredTableId("repository_metadata");
+    public static final StructuredTableId REPOSITORY_METADATA = new StructuredTableId(
+        "repository_metadata");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String TYPE_FIELD = "type";
@@ -228,7 +231,8 @@ public final class StoreDefinition {
     public static final String LAST_MODIFIED_FIELD = "last_modified";
     public static final String IS_SYNCED_FIELD = "is_synced";
 
-    public static final StructuredTableSpecification REPOSITORY_METADATA_TABLE_SPEC = new StructuredTableSpecification.Builder()
+    public static final StructuredTableSpecification REPOSITORY_METADATA_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
         .withId(REPOSITORY_METADATA)
         .withFields(Fields.stringType(NAMESPACE_FIELD),
             Fields.stringType(TYPE_FIELD),
@@ -1347,6 +1351,7 @@ public final class StoreDefinition {
    * Schemas for credential providers.
    */
   public static final class CredentialProviderStore {
+
     public static final StructuredTableId CREDENTIAL_PROFILES =
         new StructuredTableId("credential_profiles");
     public static final StructuredTableId CREDENTIAL_IDENTITIES =
@@ -1395,6 +1400,7 @@ public final class StoreDefinition {
    * Schemas for operation runs.
    */
   public static final class OperationRunsStore {
+
     public static final StructuredTableId OPERATION_RUNS =
         new StructuredTableId("operation_runs");
 
@@ -1417,7 +1423,7 @@ public final class StoreDefinition {
                 Fields.longType(START_TIME_FIELD),
                 Fields.longType(UPDATE_TIME_FIELD),
                 Fields.stringType(DETAILS_FIELD)
-                )
+            )
             .withPrimaryKeys(NAMESPACE_FIELD, ID_FIELD)
             .withIndexes(TYPE_FIELD, STATUS_FIELD, START_TIME_FIELD)
             .build();
