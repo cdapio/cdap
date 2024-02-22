@@ -4237,6 +4237,51 @@
     </description>
   </property>
 
+  <!-- Retry configuration for system worker -->
+  <!-- Use an exponential delay that cap at 2 seconds interval -->
+  <property>
+    <name>system.worker.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.retry.policy.max.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <!-- Set to Integer max value, so the retry attempts end based on task.worker.retry.policy.max.time.secs -->
+  <property>
+    <name>system.worker.retry.policy.max.retries</name>
+    <value>2147483647</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <!-- Set to 300s to match the default http request timeout -->
+  <property>
+    <name>system.worker.retry.policy.max.time.secs</name>
+    <value>300</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.worker.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for programs. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
   <!-- Retry configuration for artifact cache -->
   <!-- Use an exponential delay that cap at 2 seconds interval -->
   <property>
