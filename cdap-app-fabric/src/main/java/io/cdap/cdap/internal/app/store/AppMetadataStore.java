@@ -159,6 +159,7 @@ public class AppMetadataStore {
   private StructuredTable workflowsTable;
   private StructuredTable programCountsTable;
   private StructuredTable subscriberStateTable;
+  private StructuredTable sourceControlMetadataTable;
 
   /**
    * Static method for creating an instance of {@link AppMetadataStore}.
@@ -354,7 +355,7 @@ public class AppMetadataStore {
       while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
         SourceControlMeta sourceControlMeta = getSourceControlMetadataStore().getAppSourceControlMeta(
-            new ApplicationReference(
+            new ApplicationId(
                 row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
                 row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD)));
         AppScanEntry scanEntry = new AppScanEntry(row, sourceControlMeta);
@@ -2676,7 +2677,7 @@ public class AppMetadataStore {
     SourceControlMeta sourceControl = null;
     try {
       sourceControl = getSourceControlMetadataStore().getAppSourceControlMeta(
-          new ApplicationReference(
+          new ApplicationId(
               row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
               row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD)));
     } catch (Exception e) {

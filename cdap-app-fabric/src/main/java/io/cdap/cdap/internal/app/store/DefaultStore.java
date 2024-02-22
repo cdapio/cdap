@@ -916,7 +916,7 @@ public class DefaultStore implements Store {
   @Nullable
   public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getSourceControlMetadataStore(context).getAppSourceControlMeta(appRef);
+      return getSourceControlMetadataStore(context).getAppSourceControlMeta(new ApplicationId(appRef.getNamespace(), appRef.getApplication()));
     });
   }
 

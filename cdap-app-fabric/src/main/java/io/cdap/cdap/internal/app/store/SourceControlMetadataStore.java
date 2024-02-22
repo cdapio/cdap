@@ -76,13 +76,13 @@ public class SourceControlMetadataStore {
   public void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta)
       throws IOException {
     StructuredTable scmTable = getSourceControlMetadataTable();
-    scmTable.upsert(getSourceControlMetaFields(appId, sourceControlMeta, sourceControlMeta == null ? false: true));
+    scmTable.upsert(getSourceControlMetaFields(appId, sourceControlMeta));
   }
 
   @Nullable
-  public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) throws IOException {
+  public SourceControlMeta getAppSourceControlMeta(ApplicationId appId) throws IOException {
     List<Field<?>> primaryKey = getPrimaryKey(
-        appRef.getNamespace(), appRef.getEntityType().toString(), appRef.getEntityName());
+        appId.getNamespace(), appId.getEntityType().toString(), appId.getEntityName());
     Optional<StructuredRow> row = getSourceControlMetadataTable().read(primaryKey);
     if (row.isPresent()) {
       StructuredRow nonNullRow = row.get();
@@ -95,12 +95,12 @@ public class SourceControlMetadataStore {
   }
 
   private Collection<Field<?>> getSourceControlMetaFields(ApplicationId appId,
-      SourceControlMeta scmMeta, Boolean isSynced) {
+      SourceControlMeta scmMeta) {
     List<Field<?>> fields = getPrimaryKey(appId);
-    fields.add(Fields.stringField(StoreDefinition.SourceControlMetadataStore.SPECIFICATION_HASH_FIELD, scmMeta.getFileHash()));
-    fields.add(Fields.stringField(StoreDefinition.SourceControlMetadataStore.COMMIT_ID_FIELD, scmMeta.getCommitId()));
-    fields.add(Fields.longField(StoreDefinition.SourceControlMetadataStore.LAST_MODIFIED_FIELD, scmMeta.getLastSyncedAt().toEpochMilli()));
-    fields.add(Fields.booleanField(StoreDefinition.SourceControlMetadataStore.IS_SYNCED_FIELD, isSynced));
+    fields.add(Fields.stringField(StoreDefinition.SourceControlMetadataStore.SPECIFICATION_HASH_FIELD, scmMeta == null ? "" : scmMeta.getFileHash()));
+    fields.add(Fields.stringField(StoreDefinition.SourceControlMetadataStore.COMMIT_ID_FIELD, scmMeta == null ? "" : scmMeta.getCommitId()));
+    fields.add(Fields.longField(StoreDefinition.SourceControlMetadataStore.LAST_MODIFIED_FIELD, scmMeta == null ? 0L : scmMeta.getLastSyncedAt().toEpochMilli()));
+    fields.add(Fields.booleanField(StoreDefinition.SourceControlMetadataStore.IS_SYNCED_FIELD, scmMeta == null ? false: true));
     return fields;
   }
 
