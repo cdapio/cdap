@@ -16,15 +16,36 @@
 
 package io.cdap.cdap.runtime.spi.common;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-/**
+
+/*
  * Unit tests for {@link DataprocUtils}.
  */
 public class DataprocUtilsTest {
+
+  private DataprocUtils.ConnectionProvider mockConnectionProvider;
+
+  @Before
+  public void setUp() {
+    mockConnectionProvider = mock(DataprocUtils.ConnectionProvider.class);
+  }
 
   @Test
   public void testParseSingleLabel() {
@@ -83,5 +104,79 @@ public class DataprocUtilsTest {
       longStr.append('a');
     }
     Assert.assertEquals(expected, DataprocUtils.parseLabels(String.format("a=%s", longStr.toString()), ",", "="));
+  }
+
+  @Test
+  public void testGetMetadataSuccessOnFirstAttempt() throws Exception {
+    String expectedMetadata = "Sample metadata";
+    HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+    when(mockConnectionProvider.getConnection(any(URL.class))).thenReturn(mockConnection);
+    when(mockConnection.getInputStream()).thenReturn(
+        new ByteArrayInputStream(expectedMetadata.getBytes()));
+
+    String zone = DataprocUtils.getSystemZone(mockConnectionProvider);
+    assertEquals(expectedMetadata, zone);
+
+    verify(mockConnection).setRequestProperty("Metadata-Flavor", "Google");
+    verify(mockConnection).connect();
+    verify(mockConnection).disconnect();
+  }
+
+  @Test
+  public void testGetMetadataFailureOnFirstAttempt() throws Exception {
+    HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+    when(mockConnectionProvider.getConnection(any(URL.class))).thenReturn(mockConnection);
+    when(mockConnection.getResponseCode()).thenReturn(403);
+    when(mockConnection.getInputStream()).thenThrow(new IOException("Test Exception"));
+
+    Exception exception = null;
+    try {
+      DataprocUtils.getSystemZone(mockConnectionProvider);
+    } catch (Exception e) {
+      exception = e;
+    }
+
+    verify(mockConnection, times(1)).setRequestProperty("Metadata-Flavor", "Google");
+    verify(mockConnection, times(1)).connect();
+    verify(mockConnection, times(1)).disconnect();
+    Assert.assertNotNull(exception);
+  }
+
+  @Test
+  public void testGetMetadataSuccessAfterRetries() throws Exception {
+    String expectedMetadata = "Sample metadata";
+    HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+    when(mockConnectionProvider.getConnection(any(URL.class))).thenReturn(mockConnection);
+    when(mockConnection.getResponseCode()).thenReturn(500).thenReturn(200);
+    when(mockConnection.getInputStream()).thenThrow(new IOException("Test Exception")).
+        thenThrow(new SocketTimeoutException("Test Exception")).
+        thenReturn(new ByteArrayInputStream(expectedMetadata.getBytes()));
+
+    String zone = DataprocUtils.getSystemZone(mockConnectionProvider);
+    assertEquals(expectedMetadata, zone);
+
+    verify(mockConnection, times(3)).setRequestProperty("Metadata-Flavor", "Google");
+    verify(mockConnection, times(3)).connect();
+    verify(mockConnection, times(3)).disconnect();
+  }
+
+  @Test
+  public void testGetMetadataMaxRetriesExceeded() throws Exception {
+    HttpURLConnection mockConnection = mock(HttpURLConnection.class);
+    when(mockConnectionProvider.getConnection(any(URL.class))).thenReturn(mockConnection);
+    when(mockConnection.getResponseCode()).thenReturn(500);
+    when(mockConnection.getInputStream()).thenThrow(new IOException("Test Exception"));
+
+    Exception exception = null;
+    try {
+      DataprocUtils.getSystemZone(mockConnectionProvider);
+    } catch (Exception e) {
+      exception = e;
+    }
+
+    verify(mockConnection, times(5)).setRequestProperty("Metadata-Flavor", "Google");
+    verify(mockConnection, times(5)).connect();
+    verify(mockConnection, times(5)).disconnect();
+    Assert.assertNotNull(exception);
   }
 }

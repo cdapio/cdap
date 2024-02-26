@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -585,7 +586,8 @@ final class DataprocConf {
     }
     String projectId = getString(properties, PROJECT_ID_KEY);
     if (projectId == null || AUTO_DETECT.equals(projectId)) {
-      projectId = DataprocUtils.getSystemProjectId();
+      projectId = DataprocUtils.getSystemProjectId(
+          (url -> (HttpURLConnection) url.openConnection()));
     }
 
     String zone = getString(properties, "zone");
@@ -594,7 +596,8 @@ final class DataprocConf {
       // See if the user specified a zone.
       // If it does, derived region from the provided zone; otherwise, use the system zone.
       if (zone == null || AUTO_DETECT.equals(zone)) {
-        region = DataprocUtils.getRegionFromZone(DataprocUtils.getSystemZone());
+        region = DataprocUtils.getRegionFromZone(DataprocUtils.getSystemZone(
+            (url) -> (HttpURLConnection) url.openConnection()));
       } else {
         region = DataprocUtils.getRegionFromZone(zone);
       }

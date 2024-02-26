@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -117,6 +118,10 @@ public final class DataprocUtils {
   // keys cannot be empty
   private static final Pattern LABEL_KEY_PATTERN = Pattern.compile("^[a-z][a-z0-9_-]{0,62}$");
   private static final Pattern LABEL_VAL_PATTERN = Pattern.compile("^[a-z0-9_-]{0,63}$");
+
+  public interface ConnectionProvider {
+    HttpURLConnection getConnection(URL url) throws IOException;
+  }
 
   /**
    * Deletes provided directory path on GCS.
@@ -250,9 +255,9 @@ public final class DataprocUtils {
   /**
    * Get network from the metadata server.
    */
-  public static String getSystemNetwork() {
+  public static String getSystemNetwork(ConnectionProvider connectionProvider) {
     try {
-      String network = getMetadata("instance/network-interfaces/0/network");
+      String network = getMetadata(connectionProvider, "instance/network-interfaces/0/network");
       // will be something like projects/<project-number>/networks/default
       return network.substring(network.lastIndexOf('/') + 1);
     } catch (IOException e) {
@@ -264,9 +269,9 @@ public final class DataprocUtils {
   /**
    * Get zone from the metadata server.
    */
-  public static String getSystemZone() {
+  public static String getSystemZone(ConnectionProvider connectionProvider) {
     try {
-      String zone = getMetadata("instance/zone");
+      String zone = getMetadata(connectionProvider, "instance/zone");
       // will be something like projects/<project-number>/zones/us-east1-b
       return zone.substring(zone.lastIndexOf('/') + 1);
     } catch (IOException e) {
@@ -290,9 +295,9 @@ public final class DataprocUtils {
   /**
    * Get project id from the metadata server.
    */
-  public static String getSystemProjectId() {
+  public static String getSystemProjectId(ConnectionProvider connectionProvider) {
     try {
-      return getMetadata("project/project-id");
+      return getMetadata(connectionProvider, "project/project-id");
     } catch (IOException e) {
       throw new IllegalArgumentException("Unable to get project id from the environment. "
           + "Please explicitly set the project id and account key.", e);
@@ -347,22 +352,57 @@ public final class DataprocUtils {
    * Makes a request to the metadata server that lives on the VM, as described at
    * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
    */
-  private static String getMetadata(String resource) throws IOException {
-    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
+  private static String getMetadata(ConnectionProvider connectionProvider, String resource)
+      throws IOException {
+    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
+        .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
+        .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
+    String metadataUrlPrefix = "http://metadata.google.internal/computeMetadata/v1/";
+    String metadataFlavorHeader = "Metadata-Flavor";
+    String metadataFlavorValue = "Google";
+    String metadataUrl = metadataUrlPrefix + resource;
     HttpURLConnection connection = null;
-    try {
-      connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestProperty("Metadata-Flavor", "Google");
-      connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(),
-          StandardCharsets.UTF_8)) {
-        return CharStreams.toString(reader);
+    int statusCode = -1;
+    int retryCounter = 0;
+    Exception exception = null;
+    while (retryCounter < NUMBER_OF_RETRIES) {
+      retryCounter++;
+      try {
+        URL url = new URL(metadataUrl);
+        connection = connectionProvider.getConnection(url);
+        connection.setRequestProperty(metadataFlavorHeader, metadataFlavorValue);
+        connection.connect();
+        statusCode = connection.getResponseCode();
+        try (Reader reader = new InputStreamReader(connection.getInputStream(),
+            StandardCharsets.UTF_8)) {
+          return CharStreams.toString(reader);
+        }
+      } catch (Exception e) {
+        // Update the caught exception
+        exception = e;
+        if (statusCode / 100 == 5 || e instanceof SocketTimeoutException) {
+          LOG.warn("Retry attempt {} for caught exception", retryCounter, exception);
+        } else {
+          // Unwanted exception encountered
+          break;
+        }
+      } finally {
+        if (connection != null) {
+          connection.disconnect();
+        }
       }
-    } finally {
-      if (connection != null) {
-        connection.disconnect();
+      try {
+        Thread.sleep(backOff.nextBackOffMillis());
+      } catch (InterruptedException | IOException e) {
+        // Update the exception caught and throw this exception immediately
+        exception = e;
+        break;
       }
     }
+    if (exception instanceof IOException) {
+      throw (IOException) exception;
+    }
+    throw new RuntimeException("Error fetching metadata from server", exception);
   }
 
   /**
