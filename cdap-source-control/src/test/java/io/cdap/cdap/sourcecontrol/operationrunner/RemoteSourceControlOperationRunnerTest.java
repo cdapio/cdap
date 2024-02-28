@@ -84,7 +84,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     new ArrayList<>(), new ArrayList<>(), null, null);
   private static final CommitMeta mockCommit = new CommitMeta("author", "commiter", System.currentTimeMillis(),
                                                               "commit");
-  private static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, null));
+  private static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT,
+      new PatConfig(PASSWORD_NAME, GIT_SERVER_USERNAME));
   private static final AuthConfig NON_EXISTS_AUTH_CONFIG = new AuthConfig(
       AuthType.PAT, new PatConfig(PASSWORD_NAME + "not_exist", null));
   @ClassRule
