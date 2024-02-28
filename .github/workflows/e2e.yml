@@ -40,7 +40,7 @@ jobs:
           )
     strategy:
       matrix:
-        tests: [ cdap-e2e-tests ]
+        tests: [""]
       fail-fast: false
     steps:
       # Pinned 1.0.0 version
