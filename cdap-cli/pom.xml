@@ -312,6 +312,7 @@
                   <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
+                  <retryFailedDeploymentCount>3</retryFailedDeploymentCount>
                 </configuration>
               </execution>
             </executions>
@@ -352,6 +353,7 @@
                   <file>${project.build.directory}/${project.artifactId}_${package.version}-1_all.deb</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
+                  <retryFailedDeploymentCount>3</retryFailedDeploymentCount>
                 </configuration>
               </execution>
             </executions>
@@ -392,6 +394,7 @@
                   <file>${project.build.directory}/${project.artifactId}-${package.version}.tar.gz</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
+                  <retryFailedDeploymentCount>3</retryFailedDeploymentCount>
                 </configuration>
               </execution>
             </executions>

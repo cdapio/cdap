@@ -879,6 +879,7 @@
                   <file>${project.build.directory}/cdap-sandbox-${project.version}.zip</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
+                  <retryFailedDeploymentCount>3</retryFailedDeploymentCount>
                 </configuration>
               </execution>
             </executions>
