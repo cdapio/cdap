@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
   features = {"src/e2e-test/features"},
   glue = {"stepsdesign", "io.cdap.cdap.hub.stepsdesign"},
-  tags = {"@Hub"},
+  tags = {"@Hub and not @Ignore"},
   plugin = {"pretty", "html:target/cucumber-html-report/hub",
     "json:target/cucumber-reports/cucumber-hub.json",
     "junit:target/cucumber-reports/cucumber-hub.xml"}
