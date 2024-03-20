@@ -26,6 +26,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.FinallyAdapter;
 import io.cdap.cdap.internal.asm.Signatures;
+import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.Authorizer;
 import java.io.File;
@@ -149,8 +150,8 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
     }
 
     // Rewrite the AccessController class to wrap every methods call with context classloader change
-    Set<java.lang.reflect.Method> accessControlMethods = Stream.of(Authorizer.class,
-            AccessControllerSpi.class)
+    Set<java.lang.reflect.Method> accessControlMethods = Stream.of(Authorizer.class, AccessController.class,
+                                                                   AccessControllerSpi.class)
         .flatMap(c -> Stream.of(c.getMethods())).collect(Collectors.toSet());
 
     ClassReader cr = new ClassReader(input);
