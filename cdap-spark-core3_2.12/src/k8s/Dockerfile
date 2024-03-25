@@ -33,8 +33,8 @@ ENV DIR /cdap/build
 COPY . $DIR/
 
 RUN tar -zcvf /tmp/cdap-build-sources.tar.gz --exclude='.git*' --exclude='node_modules' --exclude='target' $DIR && \
-  apt-get update && \
-  apt-get -y install curl && \
+  sudo apt-get update && \
+  sudo apt-get -y install curl && \
   mkdir -p /tmp/connectors && \
   curl -L -o /tmp/connectors/gcs-connector-hadoop2-2.2.5.jar https://storage.googleapis.com/hadoop-lib/gcs/gcs-connector-hadoop2-2.2.5.jar && \
   # start aws dependency
