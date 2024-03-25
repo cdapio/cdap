@@ -149,6 +149,16 @@
       <artifactId>cdap-features</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-calcite</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.janino</groupId>
+      <artifactId>janino</artifactId>
+      <version>3.0.16</version>
+    </dependency>
   </dependencies>
 
   <build>
