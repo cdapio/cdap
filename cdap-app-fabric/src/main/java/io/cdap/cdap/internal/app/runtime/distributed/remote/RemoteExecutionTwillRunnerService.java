@@ -632,6 +632,10 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
           // If the startup task failed, publish failure state and delete the program running state
           startupTaskCompletion.whenComplete((res, throwable) -> {
+            Map<String, String> systemArgs = programOpts.getArguments().asMap();
+            LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(
+              programRunId, systemArgs);
+            Cancellable restoreContext = LoggingContextAccessor.setLoggingContext(loggingContext);
             if (throwable == null) {
               LOG.debug("Startup task completed for program run {}", programRunId);
             } else {
@@ -649,6 +653,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
               }
               programStateWriter.error(programRunId, throwable);
             }
+            restoreContext.cancel();
           });
         } else {
           // Otherwise, complete the startup task immediately
