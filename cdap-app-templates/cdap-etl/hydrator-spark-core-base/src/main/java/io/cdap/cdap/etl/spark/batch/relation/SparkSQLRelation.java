@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.batch.relation;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.relational.Expression;
 import io.cdap.cdap.etl.api.relational.InvalidRelation;
 import io.cdap.cdap.etl.api.relational.Relation;
@@ -39,6 +40,7 @@ public class SparkSQLRelation implements Relation {
   private String sqlStatement;
   private String datasetName;
   private List<String> columns;
+  private final Schema schema;
 
   // SQL KEY WORDS
   private static final String SELECT = "SELECT";
@@ -48,13 +50,18 @@ public class SparkSQLRelation implements Relation {
   private static final String COMMA = " , ";
 
   public SparkSQLRelation(String datasetName, List<String> columns) {
-    this(datasetName, columns, null);
+    this(datasetName, columns, null, null);
   }
 
-  SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement) {
+  public SparkSQLRelation(String datasetName, List<String> columns, Schema schema) {
+    this(datasetName, columns, null, schema);
+  }
+
+  SparkSQLRelation(String datasetName, List<String> columns, @Nullable String sqlStatement, @Nullable Schema schema) {
     this.datasetName = datasetName;
     this.columns = columns;
     this.sqlStatement = sqlStatement;
+    this.schema = schema;
   }
 
   @Override
@@ -77,7 +84,7 @@ public class SparkSQLRelation implements Relation {
     Map<String, Expression> columnExpMap = generateColumnExpMap(this.columns);
     columnExpMap.put(column, value);
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap));
+    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
   }
 
   @Override
@@ -88,7 +95,7 @@ public class SparkSQLRelation implements Relation {
     }
     this.columns.remove(column);
 
-    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(null));
+    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(null), schema);
   }
 
   @Override
@@ -99,18 +106,28 @@ public class SparkSQLRelation implements Relation {
     }
 
     List<String> columnList = columnExpMap.keySet().stream().collect(Collectors.toList());
-    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap));
+    return new SparkSQLRelation(this.datasetName, columnList, generateSelectQuery(null, columnExpMap), schema);
   }
 
   @Override
   public Relation filter(Expression filter) {
     // Get filter conditions
     String filterCondition = filter != null ? ((SparkSQLExpression) filter).extract() : null;
-    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(filterCondition));
+    return new SparkSQLRelation(this.datasetName, columns, generateSelectQuery(filterCondition), schema);
   }
 
   public String getSqlStatement() {
     return sqlStatement;
+  }
+
+  /**
+   * Get the {@link Schema} of the relation if available, null otherwise.
+   *
+   * @return the schema of the relation.
+   */
+  @Nullable
+  public Schema getSchema() {
+    return schema;
   }
 
   @VisibleForTesting
