@@ -10,6 +10,12 @@ Schema Registry provides a serving layer for all types of metadata. It
 provides a RESTful interface for storing and retrieving schemas (AVRO,
 Protobuf, etc). It stores a versioned history of all schemas,
 
+The base URL for the service:
+
+::
+
+    http://localhost:11015/v3/namespaces/system/apps/dataprep/services/service/methods/contexts/{context}/schemas
+
 Schema Information
 ------------------
 
@@ -98,3 +104,10 @@ RESTful APIs
 | for schema    |                  | /versions     | - Error       | versions of   |
 | available     |                  |               |               | schema.       |
 +---------------+------------------+---------------+---------------+---------------+
+
+
+Here is an example of a request for creating a schema:
+
+::
+
+    http://localhost:11015/v3/namespaces/system/apps/dataprep/services/service/methods/contexts/default/schemas?id=test&description=desc&type=avro
