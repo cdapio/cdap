@@ -68,6 +68,16 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * Get the queue of audit log context that needs to be published.
+   *
+   * @return the auditLogContextQueue
+   */
+  @Nullable
+  public static Queue<AuditLogContext> getAuditLogContextQueue() {
+    return auditLogContextQueue.get();
+  }
+
+  /**
    * Set the userId on the current thread.
    *
    * @param userIdParam userId to be set
