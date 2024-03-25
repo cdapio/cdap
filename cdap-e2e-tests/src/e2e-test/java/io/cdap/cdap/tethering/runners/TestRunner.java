@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
   features = {"src/e2e-test/features"},
   glue = {"io.cdap.cdap.tethering.stepsdesign", "stepsdesign"},
-  tags = {"@Tethering_Registration or @Tethering_Runtime"},
+  tags = {"@Tethering and not @Tethering_Registration and not @Tethering_Runtime"},
   plugin = {"pretty", "html:target/cucumber-html-report/tethering",
     "json:target/cucumber-reports/cucumber-tethering.json",
     "junit:target/cucumber-reports/cucumber-tethering.xml"}

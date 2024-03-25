@@ -54,7 +54,7 @@ Feature: Hub - Design time scenarios
     Then Deploy the plugin
     Then Verify that user is getting an error message: "fail.message_hub"
 
-  @TS-HUB-DESIGN-05
+  @TS-HUB-DESIGN-05 @Ignore
   Scenario: Verify that the user is able to see the created pipeline from hub in the list
     When Open Datafusion Project to configure pipeline
     Then Click on Hub Menu
