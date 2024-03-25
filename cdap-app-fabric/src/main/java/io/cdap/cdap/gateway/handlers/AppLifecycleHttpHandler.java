@@ -73,6 +73,7 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.SortOrder;
+import io.cdap.cdap.spi.data.SortOrderOptions;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
@@ -658,6 +659,33 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+  /**
+   * Returns the source control metadata and sync status of all applications
+   * filter query format - "name=<name-filter>ANDsyncStatus=<SYNCED/UNSYNCED>"
+   */
+  @GET
+  @Path("/appscmstatus")
+  public void getAllAppsSCMStatus(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespace,
+      @QueryParam("pageToken") String pageToken,
+      @QueryParam("pageSize") Integer pageSize,
+      @QueryParam("orderBy") SortOrder orderBy,
+      @QueryParam("orderByOption") SortOrderOptions orderByOption,
+      @QueryParam("filter") String filter
+     ) throws Exception {
+    // TODO(adrikagupta): Implement the API handler
+  }
+
+  /**
+   * Returns the source control metadata and sync status of a specific application
+   */
+  @GET
+  @Path("/apps/{app-id}/scmstatus")
+  public void getAppSCMStatus(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appName) throws Exception {
+    // TODO(adrikagupta): Implement the API handler
   }
 
   /**

@@ -158,12 +158,17 @@ public class AppMetadataStore {
   private StructuredTable workflowsTable;
   private StructuredTable programCountsTable;
   private StructuredTable subscriberStateTable;
+  private StructuredTable sourceControlMetadataTable;
 
   /**
    * Static method for creating an instance of {@link AppMetadataStore}.
    */
   public static AppMetadataStore create(StructuredTableContext context) {
     return new AppMetadataStore(context);
+  }
+
+  private SourceControlMetadataStore getSourceControlMetadataStore() {
+    return SourceControlMetadataStore.create(context);
   }
 
   private AppMetadataStore(StructuredTableContext context) {
@@ -348,7 +353,11 @@ public class AppMetadataStore {
       boolean keepScanning = true;
       while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
-        AppScanEntry scanEntry = new AppScanEntry(row);
+        SourceControlMeta sourceControlMeta = getSourceControlMetadataStore().getAppSourceControlMeta(
+            new ApplicationId(
+                row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
+                row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD)));
+        AppScanEntry scanEntry = new AppScanEntry(row, sourceControlMeta);
         if (scanEntryPredicate.test(scanEntry)) {
           keepScanning = func.apply(scanEntry);
           limit--;
@@ -2567,12 +2576,10 @@ public class AppMetadataStore {
           change.getDescription()));
     }
     fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, markAsLatest));
-
-    if (sourceControlMeta != null) {
-      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META,
-          GSON.toJson(sourceControlMeta)));
-    }
     getApplicationSpecificationTable().upsert(fields);
+    getSourceControlMetadataStore().setAppSourceControlMeta(
+        new ApplicationId(namespaceId, appId, versionId),
+        sourceControlMeta);
   }
 
   private void updateApplicationEdit(String namespaceId, String appId)
@@ -2649,9 +2656,15 @@ public class AppMetadataStore {
     ApplicationMeta meta = GSON.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
         ApplicationMeta.class);
-    SourceControlMeta sourceControl = GSON.fromJson(
-        row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
-        SourceControlMeta.class);
+    SourceControlMeta sourceControl = null;
+    try {
+      sourceControl = getSourceControlMetadataStore().getAppSourceControlMeta(
+          new ApplicationId(
+              row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
+              row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD)));
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
     ApplicationSpecification spec = meta.getSpec();
     String id = meta.getId();
@@ -2885,7 +2898,7 @@ public class AppMetadataStore {
     @Nullable
     private final SourceControlMeta sourceControlMeta;
 
-    private AppScanEntry(StructuredRow row) {
+    private AppScanEntry(StructuredRow row, SourceControlMeta sourceControlMeta) {
       this.appId = getApplicationIdFromRow(row);
       this.rawAppMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
       String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
@@ -2898,9 +2911,7 @@ public class AppMetadataStore {
         this.changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis,
             latest);
       }
-      this.sourceControlMeta = GSON.fromJson(
-          row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
-          SourceControlMeta.class);
+      this.sourceControlMeta = sourceControlMeta;
     }
 
     @Override

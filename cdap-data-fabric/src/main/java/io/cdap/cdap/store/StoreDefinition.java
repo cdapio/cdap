@@ -72,6 +72,8 @@ public final class StoreDefinition {
     AppStateStore.create(tableAdmin);
     CredentialProviderStore.create(tableAdmin);
     OperationRunsStore.create(tableAdmin);
+    SourceControlMetadataStore.create(tableAdmin);
+    RepositoryMetadataStore.create(tableAdmin);
   }
 
   /**
@@ -176,6 +178,74 @@ public final class StoreDefinition {
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PREFERENCES_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for SourceControlMetadata table.
+   */
+  public static final class SourceControlMetadataStore {
+
+    public static final StructuredTableId SOURCE_CONTROL_METADATA = new StructuredTableId(
+        "source_control_metadata");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String SPECIFICATION_HASH_FIELD = "specification_hash";
+    public static final String COMMIT_ID_FIELD = "commit_id";
+    public static final String LAST_MODIFIED_FIELD = "last_modified";
+    public static final String IS_SYNCED_FIELD = "is_synced";
+
+    public static final StructuredTableSpecification SOURCE_CONTROL_METADATA_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+        .withId(SOURCE_CONTROL_METADATA)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+            Fields.stringType(TYPE_FIELD),
+            Fields.stringType(NAME_FIELD),
+            Fields.stringType(SPECIFICATION_HASH_FIELD),
+            Fields.stringType(COMMIT_ID_FIELD),
+            Fields.longType(LAST_MODIFIED_FIELD),
+            Fields.booleanType(IS_SYNCED_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
+        .withIndexes(IS_SYNCED_FIELD, LAST_MODIFIED_FIELD)
+        .build();
+
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, SOURCE_CONTROL_METADATA_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for Repository Metadata table.
+   */
+  public static final class RepositoryMetadataStore {
+
+    public static final StructuredTableId REPOSITORY_METADATA = new StructuredTableId(
+        "repository_metadata");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String SPECIFICATION_HASH_FIELD = "specification_hash";
+    public static final String LAST_MODIFIED_FIELD = "last_modified";
+    public static final String IS_SYNCED_FIELD = "is_synced";
+
+    public static final StructuredTableSpecification REPOSITORY_METADATA_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+        .withId(REPOSITORY_METADATA)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+            Fields.stringType(TYPE_FIELD),
+            Fields.stringType(NAME_FIELD),
+            Fields.stringType(SPECIFICATION_HASH_FIELD),
+            Fields.longType(LAST_MODIFIED_FIELD),
+            Fields.booleanType(IS_SYNCED_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
+        .withIndexes(IS_SYNCED_FIELD, LAST_MODIFIED_FIELD)
+        .build();
+
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, REPOSITORY_METADATA_TABLE_SPEC);
     }
   }
 
@@ -1281,6 +1351,7 @@ public final class StoreDefinition {
    * Schemas for credential providers.
    */
   public static final class CredentialProviderStore {
+
     public static final StructuredTableId CREDENTIAL_PROFILES =
         new StructuredTableId("credential_profiles");
     public static final StructuredTableId CREDENTIAL_IDENTITIES =
@@ -1329,6 +1400,7 @@ public final class StoreDefinition {
    * Schemas for operation runs.
    */
   public static final class OperationRunsStore {
+
     public static final StructuredTableId OPERATION_RUNS =
         new StructuredTableId("operation_runs");
 
@@ -1351,7 +1423,7 @@ public final class StoreDefinition {
                 Fields.longType(START_TIME_FIELD),
                 Fields.longType(UPDATE_TIME_FIELD),
                 Fields.stringType(DETAILS_FIELD)
-                )
+            )
             .withPrimaryKeys(NAMESPACE_FIELD, ID_FIELD)
             .withIndexes(TYPE_FIELD, STATUS_FIELD, START_TIME_FIELD)
             .build();
