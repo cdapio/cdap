@@ -118,7 +118,7 @@ public class RemoteConfiguratorTest {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), null)
       .setHttpHandlers(
           new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> { },
                                           new NoOpMetricsCollectionService()),

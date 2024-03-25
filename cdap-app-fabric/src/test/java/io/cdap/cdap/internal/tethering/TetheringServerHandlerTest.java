@@ -212,7 +212,7 @@ public class TetheringServerHandlerTest {
         new CommonNettyHttpServiceBuilder(
                 CConfiguration.create(),
                 getClass().getSimpleName(),
-                new NoOpMetricsCollectionService())
+                new NoOpMetricsCollectionService(), null)
             .setHttpHandlers(
                 new TetheringServerHandler(
                     cConf,

@@ -38,6 +38,7 @@ import io.cdap.cdap.security.spi.authorization.NotFoundException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -284,6 +285,11 @@ public class InMemoryAccessControllerV2 implements AccessControllerSpi {
       }
     }
     return true;
+  }
+
+  @Override
+  public PublishStatus publish(List<String> auditLogList) {
+    return PublishStatus.PUBLISHED;
   }
 
   public final class AuthorizableEntityId {

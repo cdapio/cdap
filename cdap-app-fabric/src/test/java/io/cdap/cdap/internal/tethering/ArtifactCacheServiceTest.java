@@ -79,7 +79,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     DiscoveryService discoveryService = getInjector().getInstance(DiscoveryService.class);
     artifactCacheService = new ArtifactCacheService(
       cConf, artifactCache, tetheringStore, null, discoveryService,
-      new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService()));
+      new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), null));
     artifactCacheService.startAndWait();
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);

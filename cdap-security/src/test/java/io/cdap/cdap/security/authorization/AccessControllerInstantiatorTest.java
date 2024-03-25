@@ -596,5 +596,10 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
       throws AccessException {
       return null;
     }
+
+    @Override
+    public PublishStatus publish(List<String> auditLogList) {
+      return null;
+    }
   }
 }
