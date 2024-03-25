@@ -137,12 +137,14 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     long delay = RETRY_BASE_DELAY_MILLIS;
     double minMultiplier = RETRY_DELAY_MULTIPLIER - RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
     double maxMultiplier = RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
+    Exception ex = null;
     Stopwatch stopWatch = new Stopwatch().start();
     try {
       while (stopWatch.elapsedTime(TimeUnit.MILLISECONDS) < TIMEOUT_MILLIS) {
         try {
           return evaluateMacroMap(macroFunction, args);
         } catch (RetryableException e) {
+          ex = e;
           TimeUnit.MILLISECONDS.sleep(delay);
           delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier
               + 1)));
@@ -159,7 +161,8 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     }
     throw new IllegalStateException(
         "Timed out when trying to evaluate the value for '" + functionName
-            + "' with args " + Arrays.asList(args));
+            + "' with args " + Arrays.asList(args) + " with exception: ",
+        ex == null ? ex : ex.getCause());
   }
 
   protected String validateAndRetrieveContent(String serviceName,
