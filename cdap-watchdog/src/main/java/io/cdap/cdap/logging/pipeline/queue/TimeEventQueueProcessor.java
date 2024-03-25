@@ -132,6 +132,13 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
       minDelay = delay < minDelay ? delay : minDelay;
       maxDelay = delay > maxDelay ? delay : maxDelay;
 
+      // Skip entry if the logger name is null. This avoids an NPE when appending to the effectiveLogger below.
+      if (event.getLoggerName() == null) {
+        LOG.warn("Invalid logging event found: {}", event);
+        iterator.remove();
+        continue;
+      }
+
       try {
         // Otherwise, append the event
         ch.qos.logback.classic.Logger effectiveLogger = context.getEffectiveLogger(
