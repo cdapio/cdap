@@ -43,6 +43,7 @@ import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.batch.SparkSource;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
@@ -112,7 +113,7 @@ public abstract class SparkPipelineRunner {
   private static final Logger LOG = LoggerFactory.getLogger(SparkPipelineRunner.class);
   private static final Set<String> UNCOMBINABLE_PLUGIN_TYPES = ImmutableSet.of(
     BatchJoiner.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, Constants.Connector.PLUGIN_TYPE,
-    SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
+    SparkSource.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                                    FunctionCache.Factory functionCacheFactory,
