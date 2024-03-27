@@ -382,6 +382,19 @@ public class KubeTwillPreparerTest {
         .anyMatch(v -> v.getName().equals("cdap-config-abc-123") && v.getMountPath().equals("/config")));
   }
 
+  @Test
+  public void testResourceNameCleanse() {
+    // Trailing '-' is stripped
+    Assert.assertEquals("name", KubeTwillPreparer.cleanse("name-1",
+        5));
+    // Leading '-' removed
+    Assert.assertEquals("name", KubeTwillPreparer.cleanse("--name",
+        6));
+    // '_' is replaced with '-'
+    Assert.assertEquals("name-1", KubeTwillPreparer.cleanse("name_1",
+        6));
+  }
+
   private static Map<String, String> getTwillConfigs() {
     HashMap<String, String> cConf = new HashMap<>();
     cConf.put(Configs.Keys.JAVA_RESERVED_MEMORY_MB, "1024");
