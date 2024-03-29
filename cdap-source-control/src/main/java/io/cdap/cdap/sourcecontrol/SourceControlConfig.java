@@ -31,7 +31,7 @@ public class SourceControlConfig {
 
   private final String namespaceId;
   // Path where local git repositories are stored.
-  private final Path localReposClonePath;
+  private final String gitCloneDirectory;
   private final int gitCommandTimeoutSeconds;
   private final RepositoryConfig repositoryConfig;
 
@@ -50,9 +50,8 @@ public class SourceControlConfig {
     // for task workers it would use emptydir volume
     String defaultCloneDir = cConf.get(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH);
     String workDir = cConf.get(Constants.TaskWorker.WORK_DIR);
-    String gitCloneDirectory = workDir == null
+    this.gitCloneDirectory = workDir == null
         ? defaultCloneDir : String.format("%s/source-control", workDir);
-    this.localReposClonePath = Paths.get(gitCloneDirectory, cloneDirectoryPrefix, this.namespaceId);
   }
 
   public String getNamespaceId() {
@@ -60,7 +59,7 @@ public class SourceControlConfig {
   }
 
   public Path getLocalReposClonePath() {
-    return localReposClonePath;
+    return  Paths.get(this.gitCloneDirectory, cloneDirectoryPrefix, this.namespaceId);
   }
 
   public int getGitCommandTimeoutSeconds() {
@@ -82,13 +81,13 @@ public class SourceControlConfig {
     SourceControlConfig that = (SourceControlConfig) o;
     return gitCommandTimeoutSeconds == that.gitCommandTimeoutSeconds && namespaceId.equals(
         that.namespaceId)
-        && localReposClonePath.equals(that.localReposClonePath) && repositoryConfig.equals(
+        && this.getLocalReposClonePath().equals(that.getLocalReposClonePath()) && repositoryConfig.equals(
         that.repositoryConfig);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceId, localReposClonePath, gitCommandTimeoutSeconds,
+    return Objects.hash(namespaceId, getLocalReposClonePath(), gitCommandTimeoutSeconds,
         repositoryConfig);
   }
 }

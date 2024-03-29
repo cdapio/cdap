@@ -58,7 +58,6 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
-import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
@@ -227,8 +226,7 @@ public class SourceControlManagementService {
       throws RemoteRepositoryValidationException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.UPDATE_REPOSITORY_METADATA);
-    RepositoryManager.validateConfig(secureStore,
-        new SourceControlConfig(namespace, repoConfig, cConf));
+    sourceControlOperationRunner.validateConfig(new SourceControlConfig(namespace, repoConfig, cConf));
   }
 
   /**

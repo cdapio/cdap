@@ -92,7 +92,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     Mockito.doReturn(mockRepositoryManager).when(mockRepositoryManagerFactory)
         .create(Mockito.any(), Mockito.any());
     Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
-    this.operationRunner = new InMemorySourceControlOperationRunner(mockRepositoryManagerFactory);
+    this.operationRunner = new InMemorySourceControlOperationRunner(mockRepositoryManagerFactory, null);
     Path appRelativePath = Paths.get(PATH_PREFIX, testAppDetails.getName() + ".json");
     Mockito.doReturn(appRelativePath).when(mockRepositoryManager)
         .getFileRelativePath(Mockito.any());

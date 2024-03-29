@@ -24,6 +24,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -31,6 +32,7 @@ import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
@@ -43,6 +45,7 @@ import io.cdap.cdap.sourcecontrol.RepositoryManager.CommitResult;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
 import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
+import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import java.io.File;
 import java.io.FileFilter;
@@ -77,9 +80,12 @@ public class InMemorySourceControlOperationRunner extends
   private static final Logger LOG = LoggerFactory.getLogger(InMemorySourceControlOperationRunner.class);
   private final RepositoryManagerFactory repoManagerFactory;
 
+  private final SecureStore secureStore;
+
   @Inject
-  InMemorySourceControlOperationRunner(RepositoryManagerFactory repoManagerFactory) {
+  InMemorySourceControlOperationRunner(RepositoryManagerFactory repoManagerFactory, SecureStore secureStore) {
     this.repoManagerFactory = repoManagerFactory;
+    this.secureStore = secureStore;
   }
 
   @Override
@@ -356,6 +362,11 @@ public class InMemorySourceControlOperationRunner extends
               nameSpaceRepository.getRepositoryConfig().getPathPrefix(),
               e.getMessage()), e);
     }
+  }
+
+  @Override
+  public void validateConfig(SourceControlConfig config) throws RemoteRepositoryValidationException {
+    RepositoryManager.validateConfig(secureStore, config);
   }
 
 

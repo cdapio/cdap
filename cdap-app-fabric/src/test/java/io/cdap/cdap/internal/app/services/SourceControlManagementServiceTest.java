@@ -47,6 +47,7 @@ import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
@@ -58,6 +59,7 @@ import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.MultiPushAppOperationRequest;
@@ -577,6 +579,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository)
         throws AuthenticationConfigException, NotFoundException {
       return null;
+    }
+
+    @Override
+    public void validateConfig(SourceControlConfig config)
+        throws RemoteRepositoryValidationException {
+
     }
 
     @Override

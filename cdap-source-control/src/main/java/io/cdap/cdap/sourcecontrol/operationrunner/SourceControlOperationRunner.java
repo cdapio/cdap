@@ -18,9 +18,11 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import java.util.function.Consumer;
 
@@ -96,4 +98,6 @@ public interface SourceControlOperationRunner extends Service {
    */
   RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository) throws AuthenticationConfigException,
     NotFoundException;
+
+  void validateConfig(SourceControlConfig config) throws RemoteRepositoryValidationException;
 }

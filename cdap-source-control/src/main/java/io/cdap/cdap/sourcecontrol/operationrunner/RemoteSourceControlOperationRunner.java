@@ -29,14 +29,17 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlAppConfigNotFoundException;
+import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
+import io.cdap.cdap.sourcecontrol.worker.ValidateRepositoryTask;
 import io.cdap.common.http.HttpRequestConfig;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
@@ -145,6 +148,21 @@ public class RemoteSourceControlOperationRunner extends
       throw propagateRemoteException(e, notFoundExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
+    }
+  }
+
+  @Override
+  public void validateConfig(SourceControlConfig config)
+      throws RemoteRepositoryValidationException {
+    try {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ValidateRepositoryTask.class.getName())
+          .withParam(GSON.toJson(config))
+          .withNamespace(config.getNamespaceId())
+          .build();
+      LOG.trace("Validating config for namespace {} in linked repository", config.getNamespaceId());
+      remoteTaskExecutor.runTask(request);
+    } catch (Exception ex) {
+      throw new RemoteRepositoryValidationException(ex.getMessage(), ex);
     }
   }
 
