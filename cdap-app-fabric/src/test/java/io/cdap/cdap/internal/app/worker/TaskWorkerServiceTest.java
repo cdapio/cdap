@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -36,6 +37,7 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -44,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +55,6 @@ import java.util.concurrent.TimeoutException;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -69,7 +72,7 @@ public class TaskWorkerServiceTest {
   private TaskWorkerService taskWorkerService;
   private CompletableFuture<Service.State> serviceCompletionFuture;
 
-  private CConfiguration createCConf() {
+  private CConfiguration createCconf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.TaskWorker.PORT, 0);
@@ -80,20 +83,20 @@ public class TaskWorkerServiceTest {
     return cConf;
   }
 
-  private SConfiguration createSConf() {
+  private SConfiguration createSconf() {
     return SConfiguration.create();
   }
 
-  @Before
-  public void beforeTest() {
-    CConfiguration cConf = createCConf();
-    SConfiguration sConf = createSConf();
+  private void startServiceForTest() {
+    CConfiguration cConf = createCconf();
+    SConfiguration sConf = createSconf();
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    TaskWorkerService taskWorkerService = new TaskWorkerService(
-      cConf, sConf, discoveryService, discoveryService, metricsCollectionService,
-      new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
-    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf, sConf,
+        discoveryService, discoveryService, metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
+        taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();
     this.taskWorkerService = taskWorkerService;
@@ -109,8 +112,8 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testPeriodicRestart() {
-    CConfiguration cConf = createCConf();
-    SConfiguration sConf = createSConf();
+    CConfiguration cConf = createCconf();
+    SConfiguration sConf = createSconf();
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 5);
 
@@ -128,8 +131,8 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testPeriodicRestartWithInflightRequest() throws IOException {
-    CConfiguration cConf = createCConf();
-    SConfiguration sConf = createSConf();
+    CConfiguration cConf = createCconf();
+    SConfiguration sConf = createSconf();
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 4);
 
@@ -162,8 +165,8 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testPeriodicRestartWithNeverEndingInflightRequest() throws IOException {
-    CConfiguration cConf = createCConf();
-    SConfiguration sConf = createSConf();
+    CConfiguration cConf = createCconf();
+    SConfiguration sConf = createSconf();
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 2);
 
@@ -205,10 +208,11 @@ public class TaskWorkerServiceTest {
     TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
+
   @Test
   public void testRestartAfterMultipleExecutions() throws IOException {
-    CConfiguration cConf = createCConf();
-    SConfiguration sConf = createSConf();
+    CConfiguration cConf = createCconf();
+    SConfiguration sConf = createSconf();
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 2);
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
 
@@ -228,12 +232,12 @@ public class TaskWorkerServiceTest {
     RunnableTaskRequest req = RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
         .withParam(want).withNamespace("testNamespace").build();
     String reqBody = GSON.toJson(req);
-    HttpResponse response = HttpRequests.execute(
+    HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
 
-    response = HttpRequests.execute(
+    HttpRequests.execute(
       HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
         .withBody(reqBody).build(),
       new DefaultHttpRequestConfig(false));
@@ -244,6 +248,7 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testStartAndStopWithValidRequest() throws IOException {
+    startServiceForTest();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -264,6 +269,7 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testStartAndStopWithInvalidRequest() throws Exception {
+    startServiceForTest();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
@@ -286,6 +292,7 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testConcurrentRequestsWithIsolationEnabled() throws Exception {
+    startServiceForTest();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
@@ -326,12 +333,12 @@ public class TaskWorkerServiceTest {
 
   @Test
   public void testConcurrentRequestsWithIsolationDisabled() throws Exception {
-    CConfiguration cConf = createCConf();
+    CConfiguration cConf = createCconf();
     cConf.setInt(TaskWorker.REQUEST_LIMIT, 2);
     cConf.setBoolean(TaskWorker.USER_CODE_ISOLATION_ENABLED, false);
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
-        createSConf(), discoveryService, discoveryService,
+        createSconf(), discoveryService, discoveryService,
         metricsCollectionService,
         new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
     taskWorkerService.startAndWait();
@@ -371,7 +378,7 @@ public class TaskWorkerServiceTest {
     }
     // Verify that the task worker service doesn't stop automatically.
     try {
-      Tasks.waitFor(false, () -> taskWorkerService.isRunning(), 1,
+      Tasks.waitFor(false, taskWorkerService::isRunning, 1,
           TimeUnit.SECONDS);
       Assert.fail();
     } catch (TimeoutException e) {
@@ -383,11 +390,196 @@ public class TaskWorkerServiceTest {
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
   }
 
+  @Test
+  public void testTaskExceededDeadlineAndStopped() throws Exception {
+    CConfiguration cConf = createCconf();
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 2);
+    cConf.setBoolean(TaskWorker.USER_CODE_ISOLATION_ENABLED, false);
+    cConf.setInt(TaskWorker.TASK_EXECUTION_DEADLINE_SECOND, 1);
+
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
+        createSconf(), discoveryService, discoveryService,
+        metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+    taskWorkerService.startAndWait();
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    RunnableTaskRequest request1 = RunnableTaskRequest.getBuilder(
+            TestRunnableClass.class.getName()).withParam("500")
+        .withNamespace("testNamespace").build();
+
+    RunnableTaskRequest request2 = RunnableTaskRequest.getBuilder(
+            TestRunnableClass.class.getName()).withParam("30000")
+        .withNamespace("testNamespace").build();
+
+    List<Callable<HttpResponse>> calls = new ArrayList<>();
+    calls.add(() -> HttpRequests.execute(
+        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+            .withBody(GSON.toJson(request1)).build(),
+        new DefaultHttpRequestConfig(false)));
+
+    calls.add(() -> HttpRequests.execute(
+        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+            .withBody(GSON.toJson(request2)).build(),
+        new DefaultHttpRequestConfig(false)));
+
+    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(2)
+        .invokeAll(calls);
+    int okResponse = 0;
+    int connectionRefusedCount = 0;
+    for (int i = 0; i < 2; i++) {
+      try {
+        final int responseCode = responses.get(i).get().getResponseCode();
+        if (responseCode == HttpResponseStatus.OK.code()) {
+          okResponse++;
+        }
+      } catch (ExecutionException ex) {
+        if (ex.getCause() instanceof ConnectException) {
+          connectionRefusedCount++;
+        } else {
+          throw ex;
+        }
+      }
+    }
+
+    Tasks.waitFor(false, taskWorkerService::isRunning, 3,
+        TimeUnit.SECONDS);
+    // The task that completes within the deadline should be successful.
+    Assert.assertEquals(1, okResponse);
+    // The task that exceeds the deadline should have the connection broken due
+    // to the task worker service stopping.
+    Assert.assertEquals(1, connectionRefusedCount);
+  }
+
+  @Test
+  public void testStopAfterLameDuckMode() throws Exception {
+    CConfiguration cConf = createCconf();
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 5);
+    cConf.setBoolean(TaskWorker.USER_CODE_ISOLATION_ENABLED, false);
+    cConf.setInt(TaskWorker.TASK_EXECUTION_DEADLINE_SECOND, 1);
+
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
+        createSconf(), discoveryService, discoveryService,
+        metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+    taskWorkerService.startAndWait();
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    RunnableTaskRequest slowTaskRequest = RunnableTaskRequest.getBuilder(
+            TestRunnableClass.class.getName()).withParam("30000")
+        .withNamespace("testNamespace").build();
+
+    ExecutorService executorService = Executors.newFixedThreadPool(2);
+
+    // Submit a task that exceeds the deadline.
+    executorService.submit(() -> {
+      String reqBody = GSON.toJson(slowTaskRequest);
+      try {
+        HttpRequests.execute(
+            HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                .withBody(reqBody).build(),
+            new DefaultHttpRequestConfig(false));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    // Verify that lame duck mode gets enabled.
+    Tasks.waitFor(HttpResponseStatus.TOO_MANY_REQUESTS.code(), () -> {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+              TestRunnableClass.class.getName()).withNamespace("testNamespace")
+          .withParam("").build();
+      String reqBody = GSON.toJson(request);
+      return executorService.submit(() -> HttpRequests.execute(
+              HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                  .withBody(reqBody).build(), new DefaultHttpRequestConfig(false))
+          .getResponseCode()).get();
+    }, 3, TimeUnit.SECONDS, 500, TimeUnit.MILLISECONDS);
+
+    // Wait for task worker to stop after entering lame duck mode.
+    Tasks.waitFor(false, taskWorkerService::isRunning, 3,
+        TimeUnit.SECONDS);
+  }
+
+
+  @Test
+  public void recoverFromLameDuckMode() throws Exception {
+    CConfiguration cConf = createCconf();
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 5);
+    cConf.setBoolean(TaskWorker.USER_CODE_ISOLATION_ENABLED, false);
+    cConf.setInt(TaskWorker.TASK_EXECUTION_DEADLINE_SECOND, 1);
+
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
+        createSconf(), discoveryService, discoveryService,
+        metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+    taskWorkerService.startAndWait();
+    InetSocketAddress addr = taskWorkerService.getBindAddress();
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+
+    // Submit a task that runs for 2.5 seconds.
+    // At t=1 second, the task will have run for < 1s, so it will not get flagged.
+    // At t=2s, the task will get flagged and the task worker will wait for an additional
+    // 1s before stopping.
+    // Before t=3s, the task will end and call off the shutdown.
+    RunnableTaskRequest initialRequest = RunnableTaskRequest.getBuilder(
+            TestRunnableClass.class.getName()).withParam("2500")
+        .withNamespace("testNamespace").build();
+
+    ExecutorService executorService = Executors.newFixedThreadPool(2);
+
+    executorService.submit(() -> {
+      String reqBody = GSON.toJson(initialRequest);
+      try {
+        HttpRequests.execute(
+            HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                .withBody(reqBody).build(),
+            new DefaultHttpRequestConfig(false));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    // Verify that lame duck mode gets enabled before stopping.
+    Tasks.waitFor(HttpResponseStatus.TOO_MANY_REQUESTS.code(), () -> {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+              TestRunnableClass.class.getName()).withNamespace("testNamespace")
+          .withParam("").build();
+      String reqBody = GSON.toJson(request);
+      return executorService.submit(() -> HttpRequests.execute(
+              HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                  .withBody(reqBody).build(), new DefaultHttpRequestConfig(false))
+          .getResponseCode()).get();
+    }, 3, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+
+    // Verify that lame duck mode gets disabled.
+    Tasks.waitFor(HttpResponseStatus.OK.code(), () -> {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+              TestRunnableClass.class.getName()).withNamespace("testNamespace")
+          .withParam("").build();
+      String reqBody = GSON.toJson(request);
+      return executorService.submit(() -> HttpRequests.execute(
+              HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+                  .withBody(reqBody).build(), new DefaultHttpRequestConfig(false))
+          .getResponseCode()).get();
+    }, 3, TimeUnit.SECONDS, 500, TimeUnit.MILLISECONDS);
+
+    taskWorkerService.stopAndWait();
+  }
+
   public static class TestRunnableClass implements RunnableTask {
 
     @Override
     public void run(RunnableTaskContext context) throws Exception {
-      if (!context.getParam().equals("")) {
+      if (!Strings.isNullOrEmpty(context.getParam())) {
         Thread.sleep(Integer.parseInt(context.getParam()));
       }
       context.writeResult(context.getParam().getBytes(StandardCharsets.UTF_8));
