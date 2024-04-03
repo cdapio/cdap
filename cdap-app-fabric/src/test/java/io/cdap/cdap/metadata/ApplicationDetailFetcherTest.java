@@ -19,13 +19,16 @@ package io.cdap.cdap.metadata;
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +38,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 
 /**
  * Tests for {@link RemoteApplicationDetailFetcher} {@link LocalApplicationDetailFetcher} and
@@ -113,9 +118,30 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
 
     // Deploy the application
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+
     // Get and validate the application
+    RemoteClient mockRemoteClient = null;
+    if (fetcherType == ApplicationDetailFetcherType.REMOTE) {
+      // test remote application detail fetcher retries
+      RemoteClient remoteClient = ((RemoteApplicationDetailFetcher) fetcher).getRemoteClient();
+
+      mockRemoteClient = Mockito.spy(remoteClient);
+      fetcher = Mockito.spy((RemoteApplicationDetailFetcher) fetcher);
+      Mockito
+          .doReturn(mockRemoteClient)
+          .when((RemoteApplicationDetailFetcher) fetcher).getRemoteClient();
+
+      Mockito
+          .doThrow(new RetryableException(new SocketTimeoutException()))
+          .doAnswer(InvocationOnMock::callRealMethod)
+          .when(mockRemoteClient).execute(Mockito.any());
+    }
+
     ApplicationDetail appDetail = fetcher.get(new ApplicationReference(namespace, appName));
     assertAllProgramAppDetail(appDetail);
+    if (mockRemoteClient != null) {
+      Mockito.verify(mockRemoteClient, Mockito.times(2)).execute(Mockito.any());
+    }
 
     // Delete the application
     Assert.assertEquals(
