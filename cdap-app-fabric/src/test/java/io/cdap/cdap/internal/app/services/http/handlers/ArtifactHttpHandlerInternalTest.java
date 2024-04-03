@@ -20,17 +20,22 @@ import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 
 public class ArtifactHttpHandlerInternalTest extends ArtifactHttpHandlerTestBase {
   @Test
@@ -106,15 +111,51 @@ public class ArtifactHttpHandlerInternalTest extends ArtifactHttpHandlerTestBase
     // Add a system artifact
     String systemArtfiactName = "sysApp";
     String systemArtifactVeresion = "1.0.0";
-    ArtifactId systemArtifactId = NamespaceId.SYSTEM.artifact(systemArtfiactName, systemArtifactVeresion);
+    ArtifactId systemArtifactId =
+        NamespaceId.SYSTEM.artifact(systemArtfiactName, systemArtifactVeresion);
     addAppAsSystemArtifacts(systemArtifactId);
 
     // Fetch ArtifactDetail using RemoteArtifactRepositoryReader and verify
-    ArtifactRepositoryReader remoteReader = getInjector().getInstance(RemoteArtifactRepositoryReader.class);
+    ArtifactRepositoryReader remoteReader =
+        getInjector().getInstance(RemoteArtifactRepositoryReader.class);
     ArtifactDetail detail = remoteReader.getArtifact(Id.Artifact.fromEntityId(systemArtifactId));
     Assert.assertNotNull(detail);
-    ArtifactDetail expectedDetail = getArtifactDetailFromRepository(Id.Artifact.fromEntityId(systemArtifactId));
-    Assert.assertTrue(detail.equals(expectedDetail));
+    ArtifactDetail expectedDetail =
+        getArtifactDetailFromRepository(Id.Artifact.fromEntityId(systemArtifactId));
+    Assert.assertEquals(detail, expectedDetail);
+
+    wipeData();
+  }
+
+  @Test
+  public void testRemoteArtifactRepositoryReaderGetArtifactWithRetries() throws Exception {
+    // Add a system artifact
+    String systemArtfiactName = "sysApp";
+    String systemArtifactVeresion = "1.0.0";
+    ArtifactId systemArtifactId =
+        NamespaceId.SYSTEM.artifact(systemArtfiactName, systemArtifactVeresion);
+    addAppAsSystemArtifacts(systemArtifactId);
+    // Fetch ArtifactDetail using RemoteArtifactRepositoryReader and verify
+    RemoteArtifactRepositoryReader remoteReader =
+        getInjector().getInstance(RemoteArtifactRepositoryReader.class);
+    RemoteClient remoteClient = remoteReader.getRemoteClient();
+
+    RemoteClient mockRemoteClient = Mockito.spy(remoteClient);
+    RemoteArtifactRepositoryReader mockRemoteReader = Mockito.spy(remoteReader);
+    Mockito.doReturn(mockRemoteClient).when(mockRemoteReader).getRemoteClient();
+
+    Mockito
+        .doThrow(new RetryableException(new SocketTimeoutException()))
+        .doAnswer(InvocationOnMock::callRealMethod)
+        .when(mockRemoteClient).execute(Mockito.any());
+
+    ArtifactDetail detail =
+        mockRemoteReader.getArtifact(Id.Artifact.fromEntityId(systemArtifactId));
+    Assert.assertNotNull(detail);
+    ArtifactDetail expectedDetail =
+        getArtifactDetailFromRepository(Id.Artifact.fromEntityId(systemArtifactId));
+    Assert.assertEquals(detail, expectedDetail);
+    Mockito.verify(mockRemoteClient, Mockito.times(2)).execute(Mockito.any());
 
     wipeData();
   }

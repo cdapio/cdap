@@ -16,17 +16,23 @@
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.retry.Idempotency;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationReference;
@@ -40,7 +46,9 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Fetch application detail via internal REST API calls.
@@ -57,6 +65,11 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   private static final String APPLICATIONS_KEY = "applications";
   private static final String NEXT_PAGE_TOKEN_KEY = "nextPageToken";
 
+  private static final Predicate<Throwable> RETRYABLE_PREDICATE =
+      throwable -> (throwable instanceof RetryableException);
+  private static final int RETRY_BASE_DELAY_MILLIS = 100;
+  private static final int RETRY_MAX_DELAY_MILLIS = 5000;
+  private static final int RETRY_TIMEOUT_SECS = 300;
   private final RemoteClient remoteClient;
 
   /**
@@ -79,7 +92,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
       throws IOException, NotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/app/%s",
         appRef.getNamespace(), appRef.getApplication());
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+    HttpRequest.Builder requestBuilder = getRemoteClient().requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());
     return GSON.fromJson(httpResponse.getResponseBodyAsString(), ApplicationDetail.class);
@@ -95,7 +108,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
     String token;
 
     do {
-      HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+      HttpRequest.Builder requestBuilder = getRemoteClient().requestBuilder(HttpMethod.GET, url);
       HttpResponse httpResponse;
       try {
         httpResponse = execute(requestBuilder.build());
@@ -126,7 +139,12 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
 
   private HttpResponse execute(HttpRequest request)
       throws IOException, NotFoundException, UnauthorizedException {
-    HttpResponse httpResponse = remoteClient.execute(request);
+    RetryStrategy baseRetryStrategy = RetryStrategies.exponentialDelay(
+        RETRY_BASE_DELAY_MILLIS, RETRY_MAX_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+    HttpResponse httpResponse =
+        Retries.callWithRetries(() -> getRemoteClient().execute(request),
+            RetryStrategies.timeLimit(RETRY_TIMEOUT_SECS, TimeUnit.SECONDS, baseRetryStrategy),
+            RETRYABLE_PREDICATE);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
@@ -134,5 +152,10 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
       throw new IOException(httpResponse.getResponseBodyAsString());
     }
     return httpResponse;
+  }
+
+  @VisibleForTesting
+  public RemoteClient getRemoteClient() {
+    return remoteClient;
   }
 }
