@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -24,6 +25,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -32,6 +34,9 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -49,6 +54,8 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -65,6 +72,11 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   }.getType();
   private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() {
   }.getType();
+  private static final Predicate<Throwable> RETRYABLE_PREDICATE =
+      throwable -> (throwable instanceof RetryableException);
+  private static final int RETRY_BASE_DELAY_MILLIS = 100;
+  private static final int RETRY_MAX_DELAY_MILLIS = 5000;
+  private static final int RETRY_TIMEOUT_SECS = 300;
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
@@ -98,7 +110,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
         artifactId.getNamespace().getId(),
         artifactId.getName(),
         artifactId.getVersion());
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+    HttpRequest.Builder requestBuilder = getRemoteClient().requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
     ArtifactDetail detail = GSON.fromJson(httpResponse.getResponseBodyAsString(),
         ARTIFACT_DETAIL_TYPE);
@@ -133,7 +145,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
         artifactId.getName(),
         artifactId.getVersion(),
         scope);
-    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.GET, url);
+    HttpURLConnection urlConn = getRemoteClient().openConnection(HttpMethod.GET, url);
     throwIfError(artifactId, urlConn);
 
     // Use FilterInputStream and override close to ensure the connection is closed once the input stream is closed
@@ -161,7 +173,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
         range.getUpper().toString(),
         limit,
         order.name());
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+    HttpRequest.Builder requestBuilder = getRemoteClient().requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse = execute(requestBuilder.build());
     List<ArtifactDetail> details = GSON.fromJson(httpResponse.getResponseBodyAsString(),
         ARTIFACT_DETAIL_LIST_TYPE);
@@ -187,7 +199,13 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
   private HttpResponse execute(HttpRequest request)
       throws IOException, NotFoundException, UnauthorizedException {
-    HttpResponse httpResponse = remoteClient.execute(request);
+
+    RetryStrategy baseRetryStrategy = RetryStrategies.exponentialDelay(
+        RETRY_BASE_DELAY_MILLIS, RETRY_MAX_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+    HttpResponse httpResponse =
+        Retries.callWithRetries(() -> getRemoteClient().execute(request),
+        RetryStrategies.timeLimit(RETRY_TIMEOUT_SECS, TimeUnit.SECONDS, baseRetryStrategy),
+        RETRYABLE_PREDICATE);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
@@ -225,5 +243,10 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
               artifactId.getName(), artifactId.getVersion(), urlConn.getURL(), responseCode,
               errorMsg));
     }
+  }
+
+  @VisibleForTesting
+  public RemoteClient getRemoteClient() {
+    return remoteClient;
   }
 }
