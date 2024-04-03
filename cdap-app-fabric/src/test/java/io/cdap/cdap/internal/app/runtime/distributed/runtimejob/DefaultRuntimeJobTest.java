@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.runtime.Arguments;
-import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,14 +28,18 @@ import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.monitor.ProgramRunCompletionDetails;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
+import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunFailureException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import java.io.IOException;
 import java.util.Collections;
@@ -66,26 +69,60 @@ public class DefaultRuntimeJobTest {
     testInjector(LaunchMode.CLIENT);
   }
 
+  @Test
+  public void testVerifySuccessfulProgramCompletion() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    runtimeJob.verifySuccessfulProgramCompletion(
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> new ProgramRunCompletionDetails(1234,
+            ProgramRunStatus.COMPLETED));
+  }
+
+  @Test(expected = ProgramRunFailureException.class)
+  public void testVerifyKilledProgramCompletion() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    runtimeJob.verifySuccessfulProgramCompletion(
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.KILLED));
+  }
+
+  @Test
+  public void testVerifyNullProgramCompletion() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    runtimeJob.verifySuccessfulProgramCompletion(
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> null);
+  }
+
+  @Test(expected = ProgramRunFailureException.class)
+  public void testVerifyFailedProgramCompletion() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    runtimeJob.verifySuccessfulProgramCompletion(
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.FAILED));
+  }
+
   private void testInjector(LaunchMode launchMode) throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().toString());
 
-    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFile());
+    LocationFactory locationFactory = new LocalLocationFactory(
+        TEMP_FOLDER.newFile());
 
     DefaultRuntimeJob defaultRuntimeJob = new DefaultRuntimeJob();
-    Arguments systemArgs =
-        new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_NAME, "test"));
-    Node node = new Node("test", Node.Type.MASTER, "127.0.0.1", System.currentTimeMillis(),
-        Collections.emptyMap());
-    Cluster cluster = new Cluster("test", ClusterStatus.RUNNING, Collections.singleton(node),
-        Collections.emptyMap());
-    ProgramRunId programRunId =
-        NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
-    SimpleProgramOptions programOpts = new SimpleProgramOptions(programRunId.getParent(),
-        systemArgs, new BasicArguments());
+    Arguments systemArgs = new BasicArguments(
+        Collections.singletonMap(SystemArguments.PROFILE_NAME, "test"));
+    Node node = new Node("test", Node.Type.MASTER, "127.0.0.1",
+        System.currentTimeMillis(), Collections.emptyMap());
+    Cluster cluster = new Cluster("test", ClusterStatus.RUNNING,
+        Collections.singleton(node), Collections.emptyMap());
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app")
+        .workflow("workflow").run(RunIds.generate());
+    SimpleProgramOptions programOpts = new SimpleProgramOptions(
+        programRunId.getParent(), systemArgs, new BasicArguments());
 
-    Injector injector = Guice.createInjector(defaultRuntimeJob.createModules(
-        new RuntimeJobEnvironment() {
+    Injector injector = Guice.createInjector(
+        defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
 
           @Override
           public LocationFactory getLocationFactory() {
@@ -111,7 +148,8 @@ public class DefaultRuntimeJobTest {
     injector.getInstance(LogAppenderInitializer.class);
     defaultRuntimeJob.createCoreServices(injector, systemArgs, cluster);
     injector.getInstance(ConfiguratorFactory.class);
-    ProgramRunnerFactory programRunnerFactory = injector.getInstance(ProgramRunnerFactory.class);
+    ProgramRunnerFactory programRunnerFactory = injector.getInstance(
+        ProgramRunnerFactory.class);
     programRunnerFactory.create(ProgramType.WORKFLOW);
   }
 }
