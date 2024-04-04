@@ -56,9 +56,9 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -440,7 +440,8 @@ public class RuntimeClientServiceTest {
     // Send a terminate program state first, wait for the service sees the state change,
     // then publish messages to other topics.
     programStateWriter.completed(PROGRAM_RUN_ID);
-    Tasks.waitFor(true, () -> runtimeClientService.getProgramFinishTime() >= 0,
+    Tasks.waitFor(true, () ->
+            runtimeClientService.getProgramCompletionDetails() != null,
         2, TimeUnit.SECONDS);
 
     for (String topic : nonStatusTopicNames) {

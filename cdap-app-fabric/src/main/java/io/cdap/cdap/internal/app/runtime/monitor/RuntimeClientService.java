@@ -42,9 +42,9 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -61,7 +61,7 @@ import java.util.Map;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -90,7 +90,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   private final ProgramRunId programRunId;
   private final RuntimeClient runtimeClient;
   private final int fetchLimit;
-  private final AtomicLong programFinishTime;
+  private final AtomicReference<ProgramRunCompletionDetails> completionDetails;
 
   @Inject
   RuntimeClientService(CConfiguration cConf,
@@ -109,7 +109,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     this.programRunId = programRunId;
     this.runtimeClient = runtimeClient;
     this.fetchLimit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
-    this.programFinishTime = new AtomicLong(-1L);
+    this.completionDetails = new AtomicReference<>(null);
     this.topicRelayers = RuntimeMonitors.createTopicNameList(cConf)
         .stream()
         .map(name -> createTopicRelayer(cConf, name, schemaGenerator,
@@ -124,8 +124,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       nextPollDelay = Math.min(nextPollDelay, topicRelayer.publishMessages());
     }
 
-    // If we got the program finished state, determine when to shutdown
-    if (getProgramFinishTime() > 0) {
+    // If we got the program finished state, determine when to shut down.
+    if (getProgramCompletionDetails() != null) {
       // Gives half the time of the graceful shutdown time to allow empty fetches
       // Essentially is the wait time for any unpublished events on the remote runtime to publish
       // E.g. Metrics from the remote runtime process might have some delay after the program state changed,
@@ -134,8 +134,10 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       // that means all of them fetched till the end of the corresponding topic in the latest fetch.
       long now = System.currentTimeMillis();
       if ((nextPollDelay == pollTimeMillis
-          && now - (gracefulShutdownMillis >> 1) > getProgramFinishTime())
-          || (now - gracefulShutdownMillis > getProgramFinishTime())) {
+           && now - (gracefulShutdownMillis >> 1)
+              > getProgramCompletionDetails().getEndTimestamp())
+          || (now - gracefulShutdownMillis
+              > getProgramCompletionDetails().getEndTimestamp())) {
         LOG.debug(
             "Program {} terminated. Shutting down runtime client service.",
             programRunId);
@@ -163,7 +165,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           for (TopicRelayer topicRelayer : topicRelayers) {
             topicRelayer.prepareClose();
           }
-          if (getProgramFinishTime() < 0) {
+          if (getProgramCompletionDetails() == null) {
             throw new RetryableException("Program completion is not yet observed");
           }
         }, retryStrategy,
@@ -179,9 +181,15 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
   }
 
-  @VisibleForTesting
-  long getProgramFinishTime() {
-    return programFinishTime.get();
+  /**
+   * Returns information about the program completion.
+   *
+   * @return {@link ProgramRunCompletionDetails} if the program run completion is
+   *     observed, null otherwise.
+   */
+  @Nullable
+  public ProgramRunCompletionDetails getProgramCompletionDetails() {
+    return completionDetails.get();
   }
 
   @VisibleForTesting
@@ -192,7 +200,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   }
 
   /**
-   * Accepts a Runnable and passes it to RuntimeClient
+   * Accepts a Runnable and passes it to RuntimeClient.
    *
    * @param stopper a {@link LongConsumer} with the termination timestamp in
    *                seconds as the argument
@@ -327,7 +335,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     /**
-     * Processes the give list of {@link Message}. By default it sends them
+     * Processes the give list of {@link Message}. By default, it sends them
      * through the {@link RuntimeClient}.
      */
     protected void processMessages(Iterator<Message> iterator)
@@ -411,15 +419,15 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
               false)
           .collect(Collectors.toList());
 
-      if (programFinishTime.get() == -1L) {
-        long finishTime = findProgramFinishTime(message);
-        if (finishTime >= 0) {
+      if (completionDetails.get() == null) {
+        ProgramRunCompletionDetails finishInfo = findProgramFinishInfo(message);
+        if (finishInfo != null) {
           detectedProgramFinish = true;
           LOG.trace("Detected program {} finish time {} in topic {}",
-              programRunId, finishTime,
+              programRunId, finishInfo.getEndTimestamp(),
               topicId.getTopic());
         }
-        programFinishTime.compareAndSet(-1L, finishTime);
+        completionDetails.compareAndSet(null, finishInfo);
       }
       if (detectedProgramFinish) {
         // Buffer the program state messages and don't publish them until the end
@@ -474,11 +482,13 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     /**
-     * Returns the time where the program finished, meaning it reaches one of
-     * the terminal states. If the given list of {@link Message} doesn't contain
-     * such information, {@code -1L} is returned.
+     * Returns the completion status and time when the program finished, meaning
+     * it reaches one of the terminal states. If the given list of
+     * {@link Message} doesn't contain such information, {@code null} is
+     * returned.
      */
-    private long findProgramFinishTime(List<Message> messages) {
+    @Nullable
+    private ProgramRunCompletionDetails findProgramFinishInfo(List<Message> messages) {
       for (Message message : messages) {
         Notification notification = message.decodePayload(
             r -> GSON.fromJson(r, Notification.class));
@@ -506,18 +516,21 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         }
 
         if (ProgramRunStatus.isEndState(programStatus)) {
+          long endTimeStamp;
           try {
-            return Long.parseLong(
+            endTimeStamp = Long.parseLong(
                 properties.get(ProgramOptionConstants.END_TIME));
           } catch (Exception e) {
             // END_TIME should be a valid long. In case there is any problem, use the timestamp in the message ID
-            return new MessageId(
+            endTimeStamp = new MessageId(
                 Bytes.fromHexString(message.getId())).getPublishTimestamp();
           }
+          return new ProgramRunCompletionDetails(endTimeStamp,
+              ProgramRunStatus.valueOf(programStatus));
         }
       }
 
-      return -1L;
+      return null;
     }
   }
 }
