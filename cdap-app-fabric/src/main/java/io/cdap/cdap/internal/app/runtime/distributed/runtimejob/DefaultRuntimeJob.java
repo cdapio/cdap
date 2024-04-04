@@ -47,6 +47,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramController.State;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -64,6 +65,7 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
@@ -90,6 +92,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgram
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.internal.app.runtime.monitor.ProgramRunCompletionDetails;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
@@ -99,9 +102,9 @@ import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -109,6 +112,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
+import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunFailureException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import java.io.BufferedReader;
@@ -137,6 +141,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -203,7 +208,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         LoggingContextHelper.getLoggingContextWithRunId(programRunId,
             systemArgs.asMap()));
     // Get the cluster launch type
-    Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER),
+    final Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER),
         Cluster.class);
 
     // Get App spec
@@ -214,7 +219,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     // Create injector and get program runner
     Injector injector = Guice.createInjector(
-        createModules(runtimeJobEnv, createCConf(runtimeJobEnv, programOpts),
+        createModules(runtimeJobEnv, createCconf(runtimeJobEnv, programOpts),
             programRunId, programOpts));
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
@@ -230,55 +235,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
     Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
     startCoreServices(coreServices);
 
-    // regenerate app spec
-    ConfiguratorFactory configuratorFactory = injector.getInstance(ConfiguratorFactory.class);
-
     try {
-      Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
-      File pluginDir = new File(
-          programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
-              ProgramRunners.PLUGIN_DIR));
-      // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
-      DirUtils.mkdirs(pluginDir);
-
-      if (!programOpts.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
-        systemArguments.put(ProgramOptionConstants.PLUGIN_DIR, ProgramRunners.PLUGIN_DIR);
-      }
-
-      // remember the file names in the artifact folder before app regeneration
-      List<String> pluginFiles = DirUtils.listFiles(pluginDir, File::isFile).stream()
-          .map(File::getName)
-          .collect(Collectors.toList());
-
-      ApplicationSpecification generatedAppSpec =
-          regenerateAppSpec(systemArguments, programOpts.getUserArguments().asMap(), programId,
-              appSpec,
-              programDescriptor, configuratorFactory);
-      appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
-      programDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
-
-      List<String> pluginFilesAfter = DirUtils.listFiles(pluginDir, File::isFile).stream()
-          .map(File::getName)
-          .collect(Collectors.toList());
-
-      if (pluginFilesAfter.isEmpty()) {
-        systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
-      }
-
-      // if different, create an updated plugin archive
-      if (!pluginFiles.equals(pluginFilesAfter)) {
-        File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-        File tempArchiveDir = DirUtils.createTempDir(tempDir);
-        File rebuiltPluginArchive = ProgramRunners.createPluginArchive(programOpts, tempArchiveDir);
-        systemArguments.put(ProgramOptionConstants.PLUGIN_ARCHIVE,
-            rebuiltPluginArchive.getAbsolutePath());
-      }
-
-      // update program options
-      programOpts = new SimpleProgramOptions(programOpts.getProgramId(),
-          new BasicArguments(systemArguments),
-          programOpts.getUserArguments(), programOpts.isDebug());
+      ImmutablePair<ApplicationSpecification, ProgramOptions> regeneratedValues = regeneratePluginArtifacts(
+          programOpts, programDescriptor, injector);
+      programOpts = regeneratedValues.getSecond();
+      appSpec = regeneratedValues.getFirst();
+      programDescriptor = new ProgramDescriptor(
+          programDescriptor.getProgramId(), appSpec);
     } catch (Exception e) {
       LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
           programId, e);
@@ -295,70 +258,30 @@ public class DefaultRuntimeJob implements RuntimeJob {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
 
-        // Failure of any core service can leave the program in an orphaned state
-        // One example is RuntimeClientService failure when CDAP instance is deleted
-        // In such situations runtime job should be stopped to free up resources (CDAP-20216)
-        for (Service service : coreServices) {
-          service.addListener(new ServiceListenerAdapter() {
-            @Override
-            public void failed(Service.State from, Throwable failure) {
-              LOG.error("Core service {} failed, prev state {}, terminating program run",
-                        service, from, failure);
-              try {
-                LOG.error("Forcefully terminating program run {}", programRunId);
-                controller.kill();
-              } catch (Exception e) {
-                LOG.error("Error in terminating program run", e);
-                // Fallback in case controller could not be stopped
-                try {
-                  programStateWriter.error(programRunId, failure);
-                } catch (Exception ex) {
-                  LOG.error("Error in updating program state to error", ex);
-                }
-                programCompletion.completeExceptionally(failure);
-              }
-            }
-          }, Threads.SAME_THREAD_EXECUTOR);
-        }
+        monitorServicesHealth(programRunId, coreServices, programStateWriter,
+            programCompletion, controller);
 
         runtimeClientService.onProgramStopRequested(terminateTs -> {
-          long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
-              - System.currentTimeMillis();
+          long timeout = TimeUnit.SECONDS.toMillis(
+              terminateTs - STOP_PROPAGATION_DELAY_SECS)
+                         - System.currentTimeMillis();
 
           if (timeout < 0) {
             // If the timeout is smaller than the propagation delay, use the propagation delay as timeout
-            // to give the remote process some time to shutdown
-            LOG.debug("Terminating program run {} short timeout {} seconds", programRunId,
-                STOP_PROPAGATION_DELAY_SECS);
+            // to give the remote process some time to shut down.
+            LOG.debug("Terminating program run {} short timeout {} seconds",
+                programRunId, STOP_PROPAGATION_DELAY_SECS);
             controller.stop(STOP_PROPAGATION_DELAY_SECS, TimeUnit.SECONDS);
           } else {
-            LOG.debug("Terminating program run {} with timeout {} ms", programRunId, timeout);
+            LOG.debug("Terminating program run {} with timeout {} ms",
+                programRunId, timeout);
             controller.stop(timeout, TimeUnit.MILLISECONDS);
           }
         });
 
-        controller.addListener(new AbstractListener() {
-          @Override
-          public void completed() {
-            programCompletion.complete(ProgramController.State.COMPLETED);
-          }
-
-          @Override
-          public void killed() {
-            // Write an extra state to make sure there is always a terminal state even
-            // if the program application run failed to write out the state.
-            programStateWriter.killed(programRunId);
-            programCompletion.complete(ProgramController.State.KILLED);
-          }
-
-          @Override
-          public void error(Throwable cause) {
-            // Write an extra state to make sure there is always a terminal state even
-            // if the program application run failed to write out the state.
-            programStateWriter.error(programRunId, cause);
-            programCompletion.completeExceptionally(cause);
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
+        controller.addListener(
+            new ProgramStateListener(programCompletion, programStateWriter,
+                programRunId), Threads.SAME_THREAD_EXECUTOR);
 
         if (stopRequested) {
           controller.stop();
@@ -377,7 +300,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       if (!programCompletion.isDone()) {
         // We log here so that the logs would still send back to the program logs collection.
         // Only log if the program completion is not done.
-        // Otherwise the program runner itself should have logged the error.
+        // Otherwise, the program runner itself should have logged the error.
         LOG.error("Failed to execute program {}", programRunId, t);
         // If the program completion is not done, then this exception
         // is due to systematic failure in which fail to run the program.
@@ -391,46 +314,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
       Authenticator.setDefault(null);
       runCompletedLatch.countDown();
     }
-  }
 
-  @Nullable
-  private ApplicationSpecification regenerateAppSpec(
-      Map<String, String> systemArguments, Map<String, String> userArguments, ProgramId programId,
-      ApplicationSpecification existingAppSpec, ProgramDescriptor programDescriptor,
-      ConfiguratorFactory configuratorFactory)
-      throws InterruptedException, ExecutionException, TimeoutException {
-
-    String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
-    Location programJarLocation = Locations.toLocation(
-        new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
-
-    userArguments = SystemArguments.skipNormalMacroEvaluation(userArguments)
-        ? Collections.emptyMap() : userArguments;
-
-    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
-        .setArtifactId(programDescriptor.getArtifactId())
-        .setArtifactLocation(programJarLocation)
-        .setApplicationClass(new ApplicationClass(appClassName, "", null))
-        .setApplicationId(programId.getParent())
-        .setConfigString(existingAppSpec.getConfiguration())
-        .setOwnerPrincipal(null)
-        .setUpdateSchedules(false)
-        .setRuntimeInfo(
-            new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments))
-        .setDeployedApplicationSpec(existingAppSpec)
-        .build();
-
-    Configurator configurator = configuratorFactory.create(deploymentInfo);
-    ListenableFuture<ConfigResponse> future = configurator.config();
-    ConfigResponse response = future.get(120, TimeUnit.SECONDS);
-
-    if (response.getExitCode() == 0) {
-      AppSpecInfo appSpecInfo = response.getAppSpecInfo();
-      if (appSpecInfo != null && appSpecInfo.getAppSpec() != null) {
-        return appSpecInfo.getAppSpec();
-      }
-    }
-    return null;
+    verifySuccessfulProgramCompletion(programId, runtimeClientService::getProgramCompletionDetails);
   }
 
   @Override
@@ -454,7 +339,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * by the {@link RuntimeJobEnvironment#getProperties()} will be set into the returned {@link
    * CConfiguration} instance.
    */
-  private CConfiguration createCConf(RuntimeJobEnvironment runtimeJobEnv,
+  private CConfiguration createCconf(RuntimeJobEnvironment runtimeJobEnv,
       ProgramOptions programOpts) throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
@@ -657,15 +542,168 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try {
         service.stopAndWait();
       } catch (Exception e) {
-        LOG.warn("Exception raised when stopping service {} during program termination.", service,
-            e);
+        LOG.warn(
+            "Exception raised when stopping service {} during program termination.",
+            service, e);
       }
     }
   }
 
   /**
-   * A service wrapper around {@link TrafficRelayServer} for setting address configurations after
-   * starting the relay server.
+   * Regenerates the plugin artifacts and returns the new
+   * {@link ApplicationSpecification} and {@link ProgramOptions}.
+   */
+  private ImmutablePair<ApplicationSpecification, ProgramOptions> regeneratePluginArtifacts(
+      final ProgramOptions originalProgramOpts,
+      final ProgramDescriptor programDescriptor, final Injector injector)
+      throws Exception {
+    ConfiguratorFactory configuratorFactory = injector.getInstance(
+        ConfiguratorFactory.class);
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+
+    ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
+    ProgramId programId = programDescriptor.getProgramId();
+    Map<String, String> systemArguments = new HashMap<>(
+        originalProgramOpts.getArguments().asMap());
+    File pluginDir = new File(originalProgramOpts.getArguments()
+        .getOption(ProgramOptionConstants.PLUGIN_DIR,
+            ProgramRunners.PLUGIN_DIR));
+    // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
+    DirUtils.mkdirs(pluginDir);
+
+    if (!originalProgramOpts.getArguments()
+        .hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      systemArguments.put(ProgramOptionConstants.PLUGIN_DIR,
+          ProgramRunners.PLUGIN_DIR);
+    }
+
+    // remember the file names in the artifact folder before app regeneration
+    final List<String> pluginFiles = DirUtils.listFiles(pluginDir, File::isFile)
+        .stream().map(File::getName).collect(Collectors.toList());
+
+    ApplicationSpecification newAppSpec = regenerateAppSpec(systemArguments,
+        originalProgramOpts.getUserArguments().asMap(), programId, appSpec,
+        programDescriptor, configuratorFactory);
+    appSpec = newAppSpec != null ? newAppSpec : appSpec;
+
+    List<String> pluginFilesAfter = DirUtils.listFiles(pluginDir, File::isFile)
+        .stream().map(File::getName).collect(Collectors.toList());
+
+    if (pluginFilesAfter.isEmpty()) {
+      systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
+    }
+
+    // if different, create an updated plugin archive
+    if (!pluginFiles.equals(pluginFilesAfter)) {
+      File tempDir = DirUtils.createTempDir(
+          new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+              cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+      File tempArchiveDir = DirUtils.createTempDir(tempDir);
+      File rebuiltPluginArchive = ProgramRunners.createPluginArchive(
+          originalProgramOpts, tempArchiveDir);
+      systemArguments.put(ProgramOptionConstants.PLUGIN_ARCHIVE,
+          rebuiltPluginArchive.getAbsolutePath());
+    }
+
+    // regenerate program options
+    ProgramOptions newProgramOpts = new SimpleProgramOptions(
+        originalProgramOpts.getProgramId(), new BasicArguments(systemArguments),
+        originalProgramOpts.getUserArguments(), originalProgramOpts.isDebug());
+    return ImmutablePair.of(appSpec, newProgramOpts);
+  }
+
+  /**
+   * Failure of any core service can leave the program in an orphaned state One
+   * example is RuntimeClientService failure when CDAP instance is deleted In
+   * such situations runtime job should be stopped to free up resources
+   * (CDAP-20216)
+   */
+  private void monitorServicesHealth(ProgramRunId programRunId,
+      Deque<Service> services, ProgramStateWriter programStateWriter,
+      CompletableFuture<State> programCompletion,
+      ProgramController controller) {
+
+    for (Service service : services) {
+      service.addListener(new ServiceListenerAdapter() {
+        @Override
+        public void failed(Service.State from, Throwable failure) {
+          LOG.error(
+              "Core service {} failed, prev state {}, terminating program run",
+              service, from, failure);
+          try {
+            LOG.error("Forcefully terminating program run {}", programRunId);
+            controller.kill();
+          } catch (Exception e) {
+            LOG.error("Error in terminating program run", e);
+            // Fallback in case controller could not be stopped
+            try {
+              programStateWriter.error(programRunId, failure);
+            } catch (Exception ex) {
+              LOG.error("Error in updating program state to error", ex);
+            }
+            programCompletion.completeExceptionally(failure);
+          }
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+    }
+  }
+
+  @Nullable
+  private ApplicationSpecification regenerateAppSpec(
+      Map<String, String> systemArguments, Map<String, String> userArguments,
+      ProgramId programId, ApplicationSpecification existingAppSpec,
+      ProgramDescriptor programDescriptor,
+      ConfiguratorFactory configuratorFactory)
+      throws InterruptedException, ExecutionException, TimeoutException {
+
+    String appClassName = systemArguments.get(
+        ProgramOptionConstants.APPLICATION_CLASS);
+    Location programJarLocation = Locations.toLocation(
+        new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
+
+    userArguments = SystemArguments.skipNormalMacroEvaluation(userArguments)
+        ? Collections.emptyMap() : userArguments;
+
+    AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
+        .setArtifactId(programDescriptor.getArtifactId())
+        .setArtifactLocation(programJarLocation)
+        .setApplicationClass(new ApplicationClass(appClassName, "", null))
+        .setApplicationId(programId.getParent())
+        .setConfigString(existingAppSpec.getConfiguration())
+        .setOwnerPrincipal(null).setUpdateSchedules(false).setRuntimeInfo(
+            new AppDeploymentRuntimeInfo(existingAppSpec, userArguments,
+                systemArguments)).setDeployedApplicationSpec(existingAppSpec)
+        .build();
+
+    Configurator configurator = configuratorFactory.create(deploymentInfo);
+    ListenableFuture<ConfigResponse> future = configurator.config();
+    ConfigResponse response = future.get(120, TimeUnit.SECONDS);
+
+    if (response.getExitCode() == 0) {
+      AppSpecInfo appSpecInfo = response.getAppSpecInfo();
+      if (appSpecInfo != null && appSpecInfo.getAppSpec() != null) {
+        return appSpecInfo.getAppSpec();
+      }
+    }
+    return null;
+  }
+
+  void verifySuccessfulProgramCompletion(ProgramId programId,
+      Supplier<ProgramRunCompletionDetails> completionDetailsSupplier) {
+    final ProgramRunCompletionDetails completionInfo = completionDetailsSupplier.get();
+    if (completionInfo == null) {
+      LOG.warn(
+          "RuntimeClientService returned null ProgramRunCompletionDetails even after program completion.");
+    } else if (completionInfo.getEndStatus().isUnsuccessful()) {
+      throw new ProgramRunFailureException(
+          String.format("Program %s finished with unsuccessful status %s",
+              programId, completionInfo.getEndStatus().name()));
+    }
+  }
+
+  /**
+   * A service wrapper around {@link TrafficRelayServer} for setting address
+   * configurations after starting the relay server.
    */
   private static final class TrafficRelayService extends AbstractIdleService {
 
@@ -706,14 +744,50 @@ public class DefaultRuntimeJob implements RuntimeJob {
         int port = GSON.fromJson(reader, ServiceSocksProxyInfo.class).getPort();
         return port == 0 ? null : new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
       } catch (Exception e) {
-        OUTAGE_LOG.warn("Failed to open service proxy file {}", serviceProxyFile, e);
+        OUTAGE_LOG.warn("Failed to open service proxy file {}",
+            serviceProxyFile, e);
         return null;
       }
     }
 
     private File getServiceProxyFile() {
-      return new File("/tmp",
-          Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json");
+      return new File("/tmp", Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-"
+                              + programRunId.getRun() + ".json");
+    }
+  }
+
+  private static class ProgramStateListener extends AbstractListener {
+
+    private final CompletableFuture<State> programCompletion;
+    private final ProgramStateWriter programStateWriter;
+    private final ProgramRunId programRunId;
+
+    public ProgramStateListener(CompletableFuture<State> programCompletion,
+        ProgramStateWriter programStateWriter, ProgramRunId programRunId) {
+      this.programCompletion = programCompletion;
+      this.programStateWriter = programStateWriter;
+      this.programRunId = programRunId;
+    }
+
+    @Override
+    public void completed() {
+      programCompletion.complete(State.COMPLETED);
+    }
+
+    @Override
+    public void killed() {
+      // Write an extra state to make sure there is always a terminal state even
+      // if the program application run failed to write out the state.
+      programStateWriter.killed(programRunId);
+      programCompletion.complete(State.KILLED);
+    }
+
+    @Override
+    public void error(Throwable cause) {
+      // Write an extra state to make sure there is always a terminal state even
+      // if the program application run failed to write out the state.
+      programStateWriter.error(programRunId, cause);
+      programCompletion.completeExceptionally(cause);
     }
   }
 }
