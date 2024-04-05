@@ -51,11 +51,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OAuth handler.
  */
 public class OAuthHandler extends AbstractSystemHttpServiceHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(OAuthHandler.class);
   private static final String API_VERSION = "v1";
   private static final Gson GSON = new GsonBuilder()
     .setPrettyPrinting()
@@ -362,7 +365,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
     void respond(HttpServiceResponder responder) {
       if (status == HttpURLConnection.HTTP_INTERNAL_ERROR) {
-        printStackTrace();
+        LOG.error("An internal error has occurred", this);
         responder.sendError(status, "Internal error");
       } else {
         responder.sendError(status, getMessage());
