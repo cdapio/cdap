@@ -546,6 +546,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public int getProgramActiveRunsCount(ProgramReference programRef, int limit) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getAppMetadataStore(context).getProgramActiveRunsCount(programRef, limit);
+    });
+  }
+
+  @Override
   public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(
       Collection<ProgramReference> programRefs) {
     return TransactionRunners.run(transactionRunner, context -> {

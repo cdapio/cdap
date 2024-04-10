@@ -740,6 +740,118 @@ public abstract class AppMetadataStoreTest {
   }
 
   @Test
+  public void testGetNumberOfActiveRunsAcrossVersions() throws Exception {
+    // write a run record for each state for 2 programs in 1 app (with 2 versions) in 2 namespaces
+    String app1 = "app1";
+    String program1 = "prog1";
+    String program2 = "prog2";
+    String v1 = "test-version-1";
+    String v2 = "test-version-2";
+
+    Collection<NamespaceId> namespaces = Arrays.asList(new NamespaceId("ns1"), new NamespaceId("ns2"));
+    Collection<ApplicationId> apps = namespaces.stream()
+        .flatMap(ns -> Stream.of(ns.app(app1, v1), ns.app(app1, v2)))
+        .collect(Collectors.toList());
+    Collection<ProgramId> programs = apps.stream()
+        .flatMap(app -> Stream.of(app.mr(program1), app.mr(program2)))
+        .collect(Collectors.toList());
+
+    // collect the program references to a set, the size of this set should be 4 (2 namespaces * 2 programs)
+    Collection<ProgramReference> programRefs = programs.stream()
+        .map(ProgramId::getProgramReference)
+        .collect(Collectors.toSet());
+    Assert.assertEquals(4, programRefs.size());
+
+    for (ProgramId programId : programs) {
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        // one in REJECTED state
+        ProgramRunId runId = programId.run(RunIds.generate());
+        store.recordProgramRejected(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+
+        // one run in pending state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+
+        // one run in starting state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStart(runId, UUID.randomUUID().toString(), Collections.emptyMap(),
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+        // one run in running state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        String twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+
+        // one in suspended state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramSuspend(runId, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+            System.currentTimeMillis());
+
+        // one run in stopping state
+        runId = programId.run(RunIds.generate());
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+            AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStopping(runId, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+            System.currentTimeMillis(), System.currentTimeMillis() + 1000);
+
+        // one run in each stopped state
+        for (ProgramRunStatus runStatus : ProgramRunStatus.values()) {
+          if (!runStatus.isEndState() || runStatus == ProgramRunStatus.REJECTED) {
+            continue;
+          }
+          runId = programId.run(RunIds.generate());
+          store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+          store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+          twillRunId = UUID.randomUUID().toString();
+          store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+          store.recordProgramStop(runId, System.currentTimeMillis(), runStatus, null,
+              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        }
+      });
+    }
+
+    // test get number of active runs. It checks if the number of active runs per program, per namespace
+    // is equal to 10. (2 versions each * 5 active states)
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+
+      // check active runs per program reference
+      for (ProgramReference programRef: programRefs) {
+        int numActiveRuns = store.getProgramActiveRunsCount(programRef);
+        Assert.assertEquals(10, numActiveRuns);
+      }
+    });
+  }
+
+  @Test
   public void testDuplicateWritesIgnored() throws Exception {
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     ProgramId program = application.program(ProgramType.values()[ProgramType.values().length - 1],
