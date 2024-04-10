@@ -25,6 +25,7 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -135,6 +136,9 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
       bind(MessagingHttpService.class).in(Scopes.SINGLETON);
       expose(MessagingHttpService.class);
       // End workaround for CDAP-7688
+//TODO : add this module at a parent level. ( preview runner error ) but below cause conflict with abstractservice
+//      bind(AuditLogPublisherService.class).in(Scopes.SINGLETON);
+//      expose(AuditLogPublisherService.class);
     }
   }
 

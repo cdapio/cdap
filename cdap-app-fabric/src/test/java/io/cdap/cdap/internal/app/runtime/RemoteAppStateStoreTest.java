@@ -91,7 +91,7 @@ public class RemoteAppStateStoreTest {
     namespaceAdmin.create(testNameSpace);
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "appfabric", new NoOpMetricsCollectionService())
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "appfabric", new NoOpMetricsCollectionService(), null)
       .setHttpHandlers(new AppStateHandler(applicationLifecycleService, namespaceAdmin)).build();
     httpService.start();
     cancellable = discoveryService
