@@ -321,6 +321,30 @@ public interface Store {
   Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId);
 
   /**
+   * Fetches the number of active (i.e PENDING or STARTING or RUNNING or SUSPENDED or STOPPING)
+   * run records against a given {@link ProgramReference} across versions of the program.
+   * If the number of active runs is higher than limit, then the limit value is returned.
+   *
+   * @param programRef the {@link ProgramReference} to match against
+   * @param limit int value acting as an upper bound for the active runs count, useful when we
+   *     only want to check if the number of active runs is lower than the limit. It ensures
+   *     that we do not scan more than limit number of active run records.
+   * @return int number of logged runs
+   */
+  int getProgramActiveRunsCount(ProgramReference programRef, int limit);
+
+  /**
+   * Fetches the number of active (i.e PENDING or STARTING or RUNNING or SUSPENDED or STOPPING)
+   * run records against a given {@link ProgramReference} across versions of the program.
+   *
+   * @param programRef the {@link ProgramReference} to match against
+   * @return int number of logged runs
+   */
+  default int getProgramActiveRunsCount(ProgramReference programRef) {
+    return getProgramActiveRunsCount(programRef, Integer.MAX_VALUE);
+  }
+
+  /**
    * Fetches the latest active runs for a set of programs.
    *
    * @param programRefs collection of program ids for fetching active run records.
