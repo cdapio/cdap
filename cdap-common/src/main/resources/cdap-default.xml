@@ -5297,19 +5297,6 @@
   </property>
 
   <property>
-    <name>task.worker.taskExecutionDeadline.second</name>
-    <value>1200</value>
-    <description>
-      Duration (in seconds) to wait for a task executing before stopping the task worker service.
-      Actual duration varies randomly within a defined range. The task worker can wait for double the
-      deadline for remaining tasks to finish before stopping. This property is applicable only when
-      userCodeIsolation is disabled, i.e. task worker is running concurrent requests.
-      Zero or negative values result in no deadline.
-    </description>
-  </property>
-
-
-  <property>
     <name>task.worker.request.limit</name>
     <value>10</value>
     <description>

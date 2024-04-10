@@ -44,11 +44,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -85,7 +81,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       new BasicThrowableCodec()).create();
 
   private final RunnableTaskLauncher runnableTaskLauncher;
-  private final BiConsumer<Boolean, RunningTaskDetails> taskCompletionConsumer;
+  private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
 
   /**
    * Holds the total number of requests that have been executed by this handler
@@ -103,11 +99,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int requestLimit;
-  private final ConcurrentMap<RunningTaskDetails, Long> runningTasks;
-  /**
-   * If true, the task worker will not accept new tasks as it is about to shut down.
-   */
-  private final AtomicBoolean isInLameDuckMode = new AtomicBoolean(false);
 
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
@@ -124,7 +115,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
-    this.runningTasks = new ConcurrentHashMap<>();
     boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
     if (enableUserCodeIsolationEnabled) {
@@ -132,12 +122,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       this.requestLimit = 1;
       // Restart the service to clean up and re-claim resources after user code
       // execution.
-      this.taskCompletionConsumer = (succeeded, runningTaskDetails) -> {
-        TaskDetails taskDetails = runningTaskDetails.getTaskDetails();
+      this.taskCompletionConsumer = (succeeded, taskDetails) -> {
         taskDetails.emitMetrics(succeeded);
         runningRequestCount.decrementAndGet();
         requestProcessedCount.incrementAndGet();
-        runningTasks.remove(runningTaskDetails);
 
         String className = taskDetails.getClassName();
 
@@ -160,20 +148,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       enablePeriodicRestart(cConf, stopper);
     } else {
       this.requestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
-      this.taskCompletionConsumer = (succeeded, runningTaskDetails) -> {
-        runningTaskDetails.getTaskDetails().emitMetrics(succeeded);
-        int remainingTasks = runningRequestCount.decrementAndGet();
-        runningTasks.remove(runningTaskDetails);
-        // If the stuck task has completed while waiting, we can call off the pending shutdown.
-        if (remainingTasks > 0 || !isInLameDuckMode.get()) {
-          return;
-        }
-        if (isInLameDuckMode.compareAndSet(true, false)) {
-          LOG.debug(
-              "All pending tasks are completed, task worker can accept new requests");
-        }
+      this.taskCompletionConsumer = (succeeded, taskDetails) -> {
+        taskDetails.emitMetrics(succeeded);
+        runningRequestCount.decrementAndGet();
       };
-      monitorStuckTasks(cConf, stopper);
     }
   }
 
@@ -188,94 +166,34 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private void enablePeriodicRestart(CConfiguration cConf,
       Consumer<String> stopper) {
     int duration = cConf.getInt(
-        TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
+        Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
     int lowerBound = (int) (duration - duration * DURATION_FRACTION);
     int upperBound = (int) (duration + duration * DURATION_FRACTION);
-    if (lowerBound <= 0) {
-      return;
+    if (lowerBound > 0) {
+      int waitTime =
+          (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
+      Executors.newSingleThreadScheduledExecutor(
+              Threads.createDaemonThreadFactory("task-worker-restart"))
+          .scheduleWithFixedDelay(
+              () -> {
+                if (mustRestart.get()) {
+                  // We force pod restart as the ongoing request has not finished since last
+                  // periodic restart check.
+                  stopper.accept("");
+                  return;
+                }
+                // we restart once ongoing request (which has set runningRequestCount to 1)
+                // finishes.
+                mustRestart.set(true);
+                if (runningRequestCount.compareAndSet(0, 1)) {
+                  // there is no ongoing request. pod gets restarted.
+                  stopper.accept("");
+                }
+              },
+              waitTime,
+              waitTime,
+              TimeUnit.SECONDS);
     }
-    int waitTime = (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
-    Executors.newSingleThreadScheduledExecutor(
-            Threads.createDaemonThreadFactory("task-worker-restart"))
-        .scheduleWithFixedDelay(() -> {
-          if (mustRestart.get()) {
-            // We force pod restart as the ongoing request has not finished since last
-            // periodic restart check.
-            stopper.accept("");
-            return;
-          }
-          // we restart once ongoing request (which has set runningRequestCount to 1)
-          // finishes.
-          mustRestart.set(true);
-          if (runningRequestCount.compareAndSet(0, 1)) {
-            // there is no ongoing request. pod gets restarted.
-            stopper.accept("");
-          }
-        }, waitTime, waitTime, TimeUnit.SECONDS);
-  }
-
-  /**
-   * Each task needs to complete withing a configured deadline. There can be
-   * multiple tasks running concurrently when user code isolation is disabled.
-   * If any task doesn't complete within the deadline, this method will try to
-   * restart the service to kill it while ensuring healthy tasks get time to
-   * complete gracefully. By randomizing the deadline, it is guaranteed that
-   * pods do not get restarted at the same time.
-   */
-  private void monitorStuckTasks(CConfiguration cConf,
-      Consumer<String> stopper) {
-    int duration = cConf.getInt(
-        TaskWorker.TASK_EXECUTION_DEADLINE_SECOND, 0);
-    if (duration <= 0) {
-      return;
-    }
-    int lowerBound = duration;
-    int upperBound = (int) (duration + duration * DURATION_FRACTION);
-    int executionDeadlineSeconds =
-        lowerBound + (upperBound > lowerBound ? (new Random()).nextInt(
-            upperBound - lowerBound) : 0);
-    LOG.debug("Deadline for tasks is {} seconds", executionDeadlineSeconds);
-
-    Executors.newSingleThreadScheduledExecutor(
-            Threads.createDaemonThreadFactory("task-worker-stuck-tasks-monitor"))
-        .scheduleWithFixedDelay(() -> {
-          // Check if all the running tasks are withing deadline.
-          boolean deadlineExceeded = isAnyTaskExceedingDeadline(
-              executionDeadlineSeconds);
-          if (!deadlineExceeded) {
-            isInLameDuckMode.set(false);
-            return;
-          }
-
-          // If no task was exceeding the deadline last time, stop accepting any new
-          // tasks and wait for "deadline" seconds to elapse before stopping.
-          // By not accepting new tasks and waiting, we ensure that only tasks
-          // that have exceeded the deadline are terminated by the shutdown.
-          if (isInLameDuckMode.compareAndSet(false, true)) {
-            LOG.debug(
-                "Task worker will not accept new tasks in preparation for a shutdown.");
-            return;
-          }
-
-          // If we have already waited for the running task to complete, force the
-          // service to restart. This will cause all the executing tasks to fail.
-          if (isInLameDuckMode.get()) {
-            LOG.debug(
-                "Requesting task worker to be stopped to kill stuck task(s).");
-            stopper.accept("");
-          }
-        }, executionDeadlineSeconds, executionDeadlineSeconds, TimeUnit.SECONDS);
-  }
-
-  private boolean isAnyTaskExceedingDeadline(long deadlineSeconds) {
-    final long currentTimeMillis = System.currentTimeMillis();
-    final long deadlineMillis = TimeUnit.SECONDS.toMillis(deadlineSeconds);
-    for (Long startTimeMillis : runningTasks.values()) {
-      if (currentTimeMillis - startTimeMillis > deadlineMillis) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
@@ -287,17 +205,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    if (isInLameDuckMode.get()
-        || runningRequestCount.incrementAndGet() > requestLimit) {
+    if (runningRequestCount.incrementAndGet() > requestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       runningRequestCount.decrementAndGet();
       return;
     }
 
-    long startTimeMillis = System.currentTimeMillis();
-    // As tasks don't have a unique ID, assign an ephemeral ID to each task for
-    // tracking its execution and completion status.
-    String taskId = UUID.randomUUID().toString();
+    long startTime = System.currentTimeMillis();
     try {
       RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
           request.content().toString(StandardCharsets.UTF_8),
@@ -309,24 +223,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
           // For system app tasks
           namespaceId = new NamespaceId(
-              runnableTaskRequest.getParam().getEmbeddedTaskRequest()
-                  .getNamespace());
+              runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace());
         } else {
           namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
         }
         // set the GcpMetadataTaskContext before running the task.
-        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId,
-            cConf);
-        TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
-            startTimeMillis, runnableTaskContext.isTerminateOnComplete(),
-            runnableTaskRequest);
-        final RunningTaskDetails runningTaskDetails = new RunningTaskDetails(
-            startTimeMillis, taskId, taskDetails);
-        runningTasks.put(runningTaskDetails, startTimeMillis);
+        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
         runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+        TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
+            startTime,
+            runnableTaskContext.isTerminateOnComplete(), runnableTaskRequest);
         responder.sendContent(HttpResponseStatus.OK,
             new RunnableTaskBodyProducer(runnableTaskContext,
-                taskCompletionConsumer, runningTaskDetails),
+                taskCompletionConsumer, taskDetails),
             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_OCTET_STREAM));
       } catch (ClassNotFoundException | ClassCastException ex) {
@@ -335,11 +244,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
             new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
                 "application/json"));
         // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
-        final TaskDetails taskDetails = new TaskDetails(
-            metricsCollectionService, startTimeMillis, false,
-            runnableTaskRequest);
         taskCompletionConsumer.accept(false,
-            new RunningTaskDetails(startTimeMillis, taskId, taskDetails));
+            new TaskDetails(metricsCollectionService,
+                startTime, false, runnableTaskRequest));
       } finally {
         // clear the GcpMetadataTaskContext after the task is completed.
         GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
@@ -352,10 +259,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
               "application/json"));
       // Potentially ran user code, hence terminate the runner.
-      final TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
-          startTimeMillis, true, null);
       taskCompletionConsumer.accept(false,
-          new RunningTaskDetails(startTimeMillis, taskId, taskDetails));
+          new TaskDetails(metricsCollectionService, startTime, true, null));
     }
   }
 
@@ -410,13 +315,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static class RunnableTaskBodyProducer extends BodyProducer {
 
     private final RunnableTaskContext context;
-    private final BiConsumer<Boolean, RunningTaskDetails> taskCompletionConsumer;
-    private final RunningTaskDetails taskDetails;
+    private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
+    private final TaskDetails taskDetails;
     private boolean done;
 
     RunnableTaskBodyProducer(RunnableTaskContext context,
-        BiConsumer<Boolean, RunningTaskDetails> taskCompletionConsumer,
-        RunningTaskDetails taskDetails) {
+        BiConsumer<Boolean, TaskDetails> taskCompletionConsumer,
+        TaskDetails taskDetails) {
       this.context = context;
       this.taskCompletionConsumer = taskCompletionConsumer;
       this.taskDetails = taskDetails;
@@ -443,45 +348,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       LOG.error("Error when sending chunks", cause);
       context.executeCleanupTask();
       taskCompletionConsumer.accept(false, taskDetails);
-    }
-  }
-
-  /**
-   * Details for tracking presently running tasks.
-   */
-  private class RunningTaskDetails {
-
-    private final long executionStartTimeMillis;
-    private final String taskId;
-    private final TaskDetails taskDetails;
-
-    RunningTaskDetails(long executionStartTimeMillis, String taskId,
-        TaskDetails taskDetails) {
-      this.executionStartTimeMillis = executionStartTimeMillis;
-      this.taskId = taskId;
-      this.taskDetails = taskDetails;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (!(o instanceof RunningTaskDetails)) {
-        return false;
-      }
-      RunningTaskDetails that = (RunningTaskDetails) o;
-      return executionStartTimeMillis == that.executionStartTimeMillis
-             && taskId.equals(that.taskId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(taskId);
-    }
-
-    public TaskDetails getTaskDetails() {
-      return taskDetails;
     }
   }
 }
