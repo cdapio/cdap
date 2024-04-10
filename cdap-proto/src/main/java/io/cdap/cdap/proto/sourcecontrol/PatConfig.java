@@ -28,6 +28,8 @@ public class PatConfig {
   private final String passwordName;
   private final String username;
 
+  private static final String BITBUCKET_USERNAME = "x-token-auth";
+
   /**
    * Construct a PAT config.
    *
@@ -43,21 +45,35 @@ public class PatConfig {
     return passwordName;
   }
 
-  @Nullable
+  /**
+   * Returns the username to use for authentication.
+   */
   public String getUsername() {
-    return username;
+    // If username is not specified, use X_TOKEN_AUTH as username as for Bitbucket it should be
+    // BITBUCKET_USERNAME and GitHub/gitlab it can be any string.
+    return username == null || username.isEmpty() ? BITBUCKET_USERNAME : username;
   }
 
   /**
    * Validate PatConfig.
-
+   *
    * @return a collection of {@link RepositoryValidationFailure}.
    */
-  public Collection<RepositoryValidationFailure> validate() {
+  public Collection<RepositoryValidationFailure> validate(Provider provider) {
     Collection<RepositoryValidationFailure> failures = new ArrayList<>();
     if (passwordName == null || passwordName.equals("")) {
-      failures.add(new RepositoryValidationFailure("'passwordName' must be specified in 'patConfig'."));
+      failures.add(
+          new RepositoryValidationFailure("'passwordName' must be specified in 'patConfig'."));
     }
+
+    if (provider == Provider.BITBUCKET_CLOUD || provider == Provider.BITBUCKET_SERVER) {
+      if (!BITBUCKET_USERNAME.equals(getUsername())) {
+        failures.add(
+            new RepositoryValidationFailure(
+                String.format("'username' must be '%s' for Bitbucket", BITBUCKET_USERNAME)));
+      }
+    }
+
     return failures;
   }
 
