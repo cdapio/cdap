@@ -110,7 +110,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             .setLink(serverUrl + "ignored")
             .setDefaultBranch("develop")
             .setAuth(new AuthConfig(AuthType.PAT,
-                new PatConfig(PASSWORD_NAME + "invalid", null)))
+                new PatConfig(PASSWORD_NAME + "invalid", GIT_SERVER_USERNAME)))
             .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(
         new NamespaceId(NAMESPACE),
