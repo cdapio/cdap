@@ -247,7 +247,10 @@
 
   <property>
     <name>twill.jvm.gc.opts</name>
-    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails
+      -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10
+      -XX:GCLogFileSize=1M
+    </value>
     <activation>
       <jdk>(,9)</jdk>
     </activation>
@@ -2611,7 +2614,9 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.event.topic}:${program.status.event.topic.num.partitions},${operation.status.event.topic}:${operation.status.event.topic.num.partitions},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0</value>
+    <value>
+      ${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.event.topic}:${program.status.event.topic.num.partitions},${operation.status.event.topic}:${operation.status.event.topic.num.partitions},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions},${preview.messaging.topic},previewlog0
+    </value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -3268,7 +3273,9 @@
 
   <property>
     <name>app.program.runtime.monitor.topics.configs</name>
-    <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,program.status.event.topic:${program.status.event.topic.num.partitions},log.tms.topic.prefix:${log.publish.num.partitions}</value>
+    <value>
+      audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,program.status.event.topic:${program.status.event.topic.num.partitions},log.tms.topic.prefix:${log.publish.num.partitions}
+    </value>
     <description>
       A comma-separated list of topic config to be monitored by runtime monitor
     </description>
@@ -3420,7 +3427,8 @@
     <name>app.program.runtime.monitor.metrics.aggregation.window.secs</name>
     <value>5</value>
     <description>
-      When metrics aggregation in runtime client service is enabled, this property controls the max time difference
+      When metrics aggregation in runtime client service is enabled, this property controls the max
+      time difference
       between two metrics which can be aggregated.
     </description>
   </property>
@@ -3429,7 +3437,8 @@
     <name>app.program.runtime.monitor.metrics.aggregation.polltime.ms</name>
     <value>5000</value>
     <description>
-      Polling time in milliseconds to poll updates from a runtime when metrics aggregation is enabled.
+      Polling time in milliseconds to poll updates from a runtime when metrics aggregation is
+      enabled.
       This enables setting longer poll intervals to have better aggregation of metrics.
     </description>
   </property>
@@ -3752,7 +3761,7 @@
     <name>preview.runner.internal.router.enabled</name>
     <value>false</value>
     <description>
-     Whether to route requests from preview runners through the internal router service. This
+      Whether to route requests from preview runners through the internal router service. This
       is only applicable for k8s environment presently. By default, it is disabled.
     </description>
   </property>
@@ -5305,6 +5314,16 @@
   </property>
 
   <property>
+    <name>task.worker.taskExecutionDeadline.second</name>
+    <value>1200</value>
+    <description>
+      Duration (in seconds) to wait for a task executing before stopping the task worker service.
+      If the value is less than or equal 0, ${task.worker.container.kill.after.duration.second} is
+      used instead.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.request.userCodeIsolation.enabled</name>
     <value>true</value>
     <description>
@@ -5357,7 +5376,7 @@
     <name>task.worker.internal.router.enabled</name>
     <value>false</value>
     <description>
-     Whether to route requests from task workers through the internal router service. This
+      Whether to route requests from task workers through the internal router service. This
       is only applicable for k8s environment presently. By default, it is disabled.
     </description>
   </property>
@@ -5548,7 +5567,7 @@
     <name>system.worker.internal.router.enabled</name>
     <value>false</value>
     <description>
-     Whether to route requests from system workers through the internal router service. This
+      Whether to route requests from system workers through the internal router service. This
       is only applicable for k8s environment presently. By default, it is disabled.
     </description>
   </property>
@@ -6164,7 +6183,7 @@
     </description>
   </property>
 
-<!--  Artifact localizer settings -->
+  <!--  Artifact localizer settings -->
   <property>
     <name>artifact.localizer.preload.list</name>
     <value></value>
@@ -6208,7 +6227,9 @@
 
   <property>
     <name>artifact.localizer.metadata.service.token.endpoint</name>
-    <value>http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token</value>
+    <value>
+      http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
+    </value>
     <description>
       The GCE metadata server token endpoint.
     </description>
@@ -6284,7 +6305,8 @@
     <name>hsts.include.sub.domains</name>
     <value>true</value>
     <description>
-      Whether to include the includeSubDomains directive, which makes this policy extend to subdomains.
+      Whether to include the includeSubDomains directive, which makes this policy extend to
+      subdomains.
     </description>
   </property>
 
@@ -6296,7 +6318,7 @@
     </description>
   </property>
 
-<!--  Operation configurations -->
+  <!--  Operation configurations -->
 
   <property>
     <name>operation.status.retry.policy.base.delay.ms</name>
@@ -6346,7 +6368,7 @@
       Topic prefix for publishing status transitioning events of operation runs to
       the messaging system.
     </description>
-  </property>f
+  </property>
 
   <property>
     <name>operation.status.event.topic.num.partitions</name>
