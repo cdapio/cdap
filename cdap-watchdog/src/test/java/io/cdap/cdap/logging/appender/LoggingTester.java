@@ -64,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.junit.Assert;
@@ -78,7 +77,7 @@ import org.slf4j.LoggerFactory;
 public class LoggingTester {
 
   public static Injector createInjector(TemporaryFolder temporaryFolder) throws IOException {
-    Configuration hConf = HBaseConfiguration.create();
+    Configuration hConf = new Configuration();
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);

@@ -55,7 +55,6 @@ import java.util.concurrent.TimeUnit;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -81,7 +80,7 @@ public class LogCleanerTest {
 
   @BeforeClass
   public static void setUpContext() throws Exception {
-    Configuration hConf = HBaseConfiguration.create();
+    Configuration hConf = new Configuration();
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + CDAPLogAppender.class.getSimpleName();

@@ -34,9 +34,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
+
+import org.apache.curator.test.TestingCluster;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -53,29 +53,28 @@ public class SharedResourceCacheTest {
 
   private static final String ZK_NAMESPACE = "/SharedResourceCacheTest";
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCacheTest.class);
-  private static MiniZooKeeperCluster zkCluster;
+  private static TestingCluster zkCluster;
   private static String zkConnectString;
   private static Injector injector1;
   private static Injector injector2;
 
   @BeforeClass
   public static void startUp() throws Exception {
-    HBaseTestingUtility testUtil = new HBaseTestingUtility();
-    zkCluster = testUtil.startMiniZKCluster();
-    zkConnectString = testUtil.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM) + ":"
-        + zkCluster.getClientPort();
+    zkCluster = new TestingCluster(1);
+    zkCluster.start();
+    zkConnectString = zkCluster.getConnectString();
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkConnectString);
-    injector1 = Guice.createInjector(new ConfigModule(cConf, testUtil.getConfiguration()),
+    injector1 = Guice.createInjector(new ConfigModule(cConf, new Configuration()),
         new ZkClientModule());
-    injector2 = Guice.createInjector(new ConfigModule(cConf, testUtil.getConfiguration()),
+    injector2 = Guice.createInjector(new ConfigModule(cConf, new Configuration()),
         new ZkClientModule());
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    zkCluster.shutdown();
+    zkCluster.stop();
   }
 
   @Test

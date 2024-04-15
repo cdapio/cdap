@@ -18,6 +18,7 @@ package io.cdap.cdap.messaging;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.messaging.MessagingUtils;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import java.util.LinkedHashSet;

@@ -40,7 +40,7 @@ import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.MessagingServiceUtils;
-import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.common.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.spi.TopicMetadata;

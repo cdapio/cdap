@@ -174,26 +174,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-client</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-server</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-protocol</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.tez</groupId>
       <artifactId>tez-api</artifactId>
     </dependency>
@@ -226,12 +206,6 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-hbase-compat-1.0</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-data-fabric</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
@@ -259,12 +233,6 @@
     <profile>
       <id>dist</id>
       <properties>
-        <package.deb.depends>--depends cdap --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh
-        --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0
-        --depends cdap-hbase-compat-1.2-cdh5.7.0</package.deb.depends>
-        <package.rpm.depends>--depends cdap --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh
-        --depends cdap-hbase-compat-1.1 --depends cdap-hbase-compat-1.0-cdh5.5.0
-        --depends cdap-hbase-compat-1.2-cdh5.7.0</package.rpm.depends>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>

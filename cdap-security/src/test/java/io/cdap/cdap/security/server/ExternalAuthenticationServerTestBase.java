@@ -57,7 +57,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.security.auth.login.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
@@ -116,7 +116,8 @@ public abstract class ExternalAuthenticationServerTestBase {
     Injector injector = Guice.createInjector(new IOModule(), externalAuthenticationModule,
                                              new CoreSecurityRuntimeModule().getInMemoryModules(),
                                              new ConfigModule(getConfiguration(configuration),
-                                                              HBaseConfiguration.create(), sConfiguration),
+                                                              new org.apache.hadoop.conf.Configuration(),
+                                                              sConfiguration),
                                              new InMemoryDiscoveryModule());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);

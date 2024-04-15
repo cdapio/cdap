@@ -24,7 +24,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.common.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.MetadataTable;
 import io.cdap.cdap.proto.id.NamespaceId;
