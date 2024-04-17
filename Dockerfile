@@ -52,6 +52,7 @@ COPY --from=build /cdap/build/cdap-build-sources.tar.gz /opt/cdap/cdap-build-sou
 RUN apt-get update && \
   apt-get -y install libxml2-utils && \
   apt-get upgrade -y && \
+  apt-get autoremove -y && \
   mkdir -p /opt/spark && \
   mkdir -p /opt/hadoop && \
   mkdir -p /opt/cdap/master/ext/jdbc/postgresql && \
