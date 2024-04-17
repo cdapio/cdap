@@ -1458,6 +1458,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return the User Id
    */
   public String decodeUserId(AuthenticationContext authenticationContext) {
+    // If internal auth is not enabled the principal name is not base64 encoded
+    if (!SecurityUtil.isInternalAuthEnabled(cConf)) {
+      return authenticationContext.getPrincipal().getName();
+    }
     String decodedUserId = "emptyUserId";
     try {
       byte[] decodedBytes = Base64.getDecoder()
