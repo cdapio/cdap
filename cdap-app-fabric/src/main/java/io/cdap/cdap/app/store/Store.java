@@ -495,8 +495,6 @@ public interface Store {
   int scanRepositorySourceControlMetadata(ScanSourceControlMetadataRequest request,
       Consumer<SourceControlMetadataRecord> consumer);
 
-  void updateSourceControlMeta(ApplicationReference appRef, String repoFileHash);
-
   /**
    * Returns a Map of {@link ApplicationMeta} for the given set of {@link ApplicationId}.
    *

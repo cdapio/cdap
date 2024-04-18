@@ -33,8 +33,10 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ListSourceControlMetadataResponse;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
+import io.cdap.cdap.app.store.SingleSourceControlMetadataResponse;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
@@ -129,7 +131,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    * Key in json paginated applications list response.
    */
   public static final String APP_LIST_PAGINATED_KEY = "applications";
-  public static final String APP_LIST_PAGINATED_KEY_SHORT = "apps";
 
   /**
    * Runtime program service for running and managing programs.
@@ -319,27 +320,29 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @QueryParam("filter") String filter
   ) throws Exception {
     validateNamespace(namespaceId);
-
-    JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY_SHORT,
-        jsonListResponder -> {
-          AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
-          ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
-              namespaceId,
-              pageToken, pageSize, sortOrder, sortOn, filter);
-          boolean pageLimitReached = false;
-          try {
-            pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
-                scanRequest, batchSize,
-                scmMetaRecord -> {
-                  jsonListResponder.send(scmMetaRecord);
-                  lastRecord.set(scmMetaRecord);
-                });
-          } catch (IOException e) {
-            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-          }
-          SourceControlMetadataRecord record = lastRecord.get();
-          return !pageLimitReached || record == null ? null : record.getName();
-        });
+    List<SourceControlMetadataRecord> apps = new ArrayList<>();
+    AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
+    ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
+        namespaceId,
+        pageToken, pageSize, sortOrder, sortOn, filter);
+    boolean pageLimitReached = false;
+    try {
+      pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
+          scanRequest, batchSize,
+          scmMetaRecord -> {
+            apps.add(scmMetaRecord);
+            lastRecord.set(scmMetaRecord);
+          });
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+    SourceControlMetadataRecord record = lastRecord.get();
+    String nextPageToken = !pageLimitReached || record == null ? null :
+        record.getName();
+    Long lastRefreshTime = applicationLifecycleService.getLastRefreshTime(namespaceId);
+    ListSourceControlMetadataResponse response = new ListSourceControlMetadataResponse(apps,
+        nextPageToken, lastRefreshTime);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   /**
@@ -357,10 +360,11 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
-
-    responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(applicationLifecycleService.getSourceControlMetadataRecord(
-            new ApplicationReference(namespaceId, appName))));
+    SourceControlMetadataRecord app = applicationLifecycleService.getSourceControlMetadataRecord(
+        new ApplicationReference(namespaceId, appName));
+    Long lastRefreshTime = applicationLifecycleService.getLastRefreshTime(namespaceId);
+    SingleSourceControlMetadataResponse response = new SingleSourceControlMetadataResponse(app, lastRefreshTime);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion,

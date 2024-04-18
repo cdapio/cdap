@@ -306,9 +306,9 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       RepositorySourceControlMetadataStore store = RepositorySourceControlMetadataStore.create(
           context);
       store.write(APP_REF, IS_SYNCED, LAST_MODIFIED.toEpochMilli());
-      ImmutablePair pair = store.get(APP_REF);
-      assertEquals(IS_SYNCED, pair.getSecond());
-      assertEquals(LAST_MODIFIED.toEpochMilli(), pair.getFirst());
+      SourceControlMetadataRecord record = store.get(APP_REF);
+      assertEquals(IS_SYNCED, record.getIsSynced());
+      assertEquals(LAST_MODIFIED.toEpochMilli(), record.getLastModified().longValue());
       store.deleteAll(NAMESPACE);
     });
   }
@@ -319,11 +319,12 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       RepositorySourceControlMetadataStore store = RepositorySourceControlMetadataStore.create(
           context);
       store.write(APP_REF, IS_SYNCED, LAST_MODIFIED.toEpochMilli());
-      ImmutablePair pair = store.get(APP_REF);
-      assertEquals(pair, new ImmutablePair<>(LAST_MODIFIED.toEpochMilli(), IS_SYNCED));
+      SourceControlMetadataRecord record = store.get(APP_REF);
+      assertEquals(record, new SourceControlMetadataRecord(NAMESPACE, TYPE, NAME, null, null,
+          LAST_MODIFIED.toEpochMilli(), IS_SYNCED));
       store.delete(APP_REF);
-      pair = store.get(APP_REF);
-      assertEquals(null, pair);
+      record = store.get(APP_REF);
+      assertEquals(null, record);
     });
   }
 
