@@ -29,6 +29,8 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.test.XSlowTests;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -36,6 +38,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,16 +47,30 @@ import org.slf4j.LoggerFactory;
  * Tests for {@link io.cdap.cdap.client.ServiceClient}.
  */
 @Category(XSlowTests.class)
+@RunWith(Parameterized.class)
 public class ScheduleClientTestRun extends ClientTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleClientTestRun.class);
 
   private final NamespaceId namespace = NamespaceId.DEFAULT;
   private final ApplicationId app = namespace.app(FakeApp.NAME);
   private final WorkflowId workflow = app.workflow(FakeWorkflow.NAME);
-  private final ScheduleId schedule = app.schedule(FakeApp.TIME_SCHEDULE_NAME);
+  private final ScheduleId schedule;
 
   private ScheduleClient scheduleClient;
   private ApplicationClient appClient;
+
+  public ScheduleClientTestRun(String scheduleName) {
+    this.schedule = app.schedule(scheduleName);
+  }
+
+  @Parameterized.Parameters(name = "{index}: scheduleName = {0}")
+  public static Collection<String[]> data() {
+    Collection<String[]> params = new ArrayList<>();
+    params.add(new String[] { "someSchedule" });
+    params.add(new String[] { "some +-:?'` Schedule" });
+    params.add(new String[] { "No.10 - 0014002 AND No.16 0015006" });
+    return params;
+  }
 
   @Before
   public void setUp() throws Throwable {
@@ -73,13 +91,17 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
+    File appJar = createAppJarFile(FakeApp.class);
+    // deploy the app with time schedule
+    FakeApp.AppConfig config = new FakeApp.AppConfig(true, schedule.getSchedule(), null);
+    appClient.deploy(namespace, appJar, config);
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());
 
     ScheduleDetail timeSchedule = list.get(0);
     ProtoTrigger.TimeTrigger timeTrigger = (ProtoTrigger.TimeTrigger) timeSchedule.getTrigger();
 
-    Assert.assertEquals(FakeApp.TIME_SCHEDULE_NAME, timeSchedule.getName());
+    Assert.assertEquals(schedule.getSchedule(), timeSchedule.getName());
 
     Assert.assertEquals(FakeApp.SCHEDULE_CRON, timeTrigger.getCronExpression());
 
@@ -135,14 +157,14 @@ public class ScheduleClientTestRun extends ClientTestBase {
     File appJar = createAppJarFile(FakeApp.class);
 
     // deploy the app with time schedule
-    FakeApp.AppConfig config = new FakeApp.AppConfig(true, null, null);
+    FakeApp.AppConfig config = new FakeApp.AppConfig(true, schedule.getSchedule(), null);
     appClient.deploy(namespace, appJar, config);
     // now there should be one schedule
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());
 
     // test updating the schedule cron
-    config = new FakeApp.AppConfig(true, FakeApp.TIME_SCHEDULE_NAME, "0 2 1 1 *");
+    config = new FakeApp.AppConfig(true, schedule.getSchedule(), "0 2 1 1 *");
     appClient.deploy(namespace, appJar, config);
     list = scheduleClient.listSchedules(workflow);
     Assert.assertEquals(1, list.size());
