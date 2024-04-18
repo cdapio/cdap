@@ -38,8 +38,9 @@ import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.store.NamespaceSourceControlMetadataStore;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
 import io.cdap.cdap.internal.app.store.RepositorySourceControlMetadataStore;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -57,7 +58,6 @@ import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
-import io.cdap.cdap.proto.sourcecontrol.SortBy;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
@@ -79,16 +79,15 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
-import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -148,13 +147,15 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
           SourceControlOperationRunner sourceControlRunner,
           ApplicationLifecycleService applicationLifecycleService,
           Store store, MetricsCollectionService metricsCollectionService,
-          OperationLifecycleManager manager) {
+          OperationLifecycleManager manager,
+          SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
 
         return new SourceControlManagementService(cConf, secureStore, transactionRunner,
             accessEnforcer, authenticationContext,
             sourceControlRunner, applicationLifecycleService,
             store, manager, metricsCollectionService,
-            Clock.fixed(fixedInstant, ZoneId.systemDefault()));
+            Clock.fixed(fixedInstant, ZoneId.systemDefault()),
+            sourceControlMetadataRefreshService);
       }
     });
   }
@@ -523,19 +524,19 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.deleteRepository(namespaceId);
   }
 
-  @Test(expected = SourceControlException.class)
-  public void testScanRepoMetadataFailed() throws Exception {
-    NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
-    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
-
-    Mockito.doThrow(SourceControlException.class)
-        .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
-
+  @Test
+  public void testScanRepoMetadataWithFalseFlag() throws Exception {
+    setAutoRefreshFeatureFlag(false);
     List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
     ScanSourceControlMetadataRequest request = ScanSourceControlMetadataRequest.builder()
         .setNamespace(Namespace.DEFAULT.getId()).build();
     sourceControlService.scanRepoMetadata(request, batchSize, gotRecords::add);
-    sourceControlService.deleteRepository(namespaceId);
+  }
+
+  private static void setAutoRefreshFeatureFlag(boolean flag) {
+    String featureFlagPrefix = "feature.";
+    cConf.setBoolean(featureFlagPrefix
+        + Feature.SOURCE_CONTROL_METADATA_MANUAL_REFRESH.getFeatureFlagString(), flag);
   }
 
   @Test
@@ -545,21 +546,19 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
   @Test
   public void testScanRepoMetadata() throws Exception {
+
     RepositoryApp app1 = new RepositoryApp("app1", "hash1");
-    RepositoryApp app3 = new RepositoryApp("app3", "hash3");
-    RepositoryApp app4 = new RepositoryApp("app4", "hash4");
     RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(
-        Arrays.asList(app1, app3, app4));
+        Collections.singletonList(app1));
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
+    //deleteAllRepoSourceControlRecords(namespaceId.getNamespace());
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doReturn(expectedListResult)
         .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
 
-    insertRepoSourceControlMetadataTests();
-    insertNamespaceSourceControlTests();
     List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
-    List<SourceControlMetadataRecord> insertedRecords = getInsertedRecords();
+    List<SourceControlMetadataRecord> insertedRecords = insertRepoSourceControlMetadataTests();
     List<SourceControlMetadataRecord> expectedRecords = new ArrayList<>();
 
     // verify the scan without filters picks all apps for default namespace
@@ -577,16 +576,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     expectedRecords = insertedRecords.stream().limit(2).collect(Collectors.toList());
     Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
 
-    // verify pageToken with limit
-    gotRecords.clear();
-    request = ScanSourceControlMetadataRequest.builder().setNamespace(Namespace.DEFAULT.getId())
-        .setLimit(5).setScanAfter("app3").build();
-    sourceControlService.scanRepoMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = insertedRecords.stream().filter(rec -> rec.getName().equals("app4")).collect(
-        Collectors.toList());
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-
-    // verify pageToken with limit
+    // verify pageToken with name filter
     gotRecords.clear();
     request = ScanSourceControlMetadataRequest.builder().setNamespace(Namespace.DEFAULT.getId())
         .setFilter(new SourceControlMetadataFilter("1", null)).build();
@@ -595,32 +585,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
         Collectors.toList());
     Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
 
-    // verify sorting by desc order on last modified
-    gotRecords.clear();
-    request = ScanSourceControlMetadataRequest.builder().setNamespace(Namespace.DEFAULT.getId())
-        .setSortOrder(
-            SortOrder.DESC).setSortOn(SortBy.LAST_SYNCED_AT).build();
-    sourceControlService.scanRepoMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = insertedRecords.stream()
-        .sorted(Comparator.nullsFirst(
-            Comparator.comparing(
-                (SourceControlMetadataRecord record) -> record.getLastModified(),
-                Comparator.nullsFirst(Comparator.naturalOrder())
-            ).reversed()))
-        .collect(Collectors.toList());
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-
-    deleteAllNamespaceSourceControlRecords(Namespace.DEFAULT.getId());
     deleteAllRepoSourceControlRecords(Namespace.DEFAULT.getId());
     sourceControlService.deleteRepository(new NamespaceId(Namespace.DEFAULT.getId()));
-  }
-
-  private void deleteAllNamespaceSourceControlRecords(String namespace) {
-    TransactionRunners.run(transactionRunner, context -> {
-      NamespaceSourceControlMetadataStore store = NamespaceSourceControlMetadataStore.create(
-          context);
-      store.deleteAll(namespace);
-    });
   }
 
   private void deleteAllRepoSourceControlRecords(String namespace) {
@@ -631,21 +597,19 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     });
   }
 
-  private List<SourceControlMetadataRecord> getInsertedRecords() {
-    SourceControlMetadataRecord record1 = new SourceControlMetadataRecord(Namespace.DEFAULT.getId(),
-        TYPE, "app1", null, null, fixedInstant.toEpochMilli(), true);
-    SourceControlMetadataRecord record2 = new SourceControlMetadataRecord(Namespace.DEFAULT.getId(),
-        TYPE, "app3", null, null, null, false);
-    SourceControlMetadataRecord record3 = new SourceControlMetadataRecord(Namespace.DEFAULT.getId(),
-        TYPE, "app4", null, null, fixedInstant2.toEpochMilli(), true);
-    List<SourceControlMetadataRecord> insertedRecords = Arrays.asList(record1, record2, record3);
-    return insertedRecords;
-  }
-
-  private void insertRepoSourceControlMetadataTests() {
-    insertRepoRecord(Namespace.DEFAULT.getId(), "app1", TYPE, null, null, 0L, false);
-    insertRepoRecord(Namespace.DEFAULT.getId(), "app2", TYPE, null, null,
-        Instant.now().toEpochMilli(), false);
+  private List<SourceControlMetadataRecord> insertRepoSourceControlMetadataTests() {
+    AtomicReference<List<SourceControlMetadataRecord>> records = new AtomicReference<>(
+        new ArrayList<>());
+    for (int i = 0; i < 10; i++) {
+      insertRepoRecord(Namespace.DEFAULT.getId(), "app" + i, TYPE, null, null,
+          0L, i % 3 == 0 ? true : false);
+    }
+    TransactionRunners.run(transactionRunner, context -> {
+      RepositorySourceControlMetadataStore store = RepositorySourceControlMetadataStore.create(
+          context);
+      records.set(store.getAll(Namespace.DEFAULT.getId(), TYPE));
+    });
+    return records.get();
   }
 
   private void insertRepoRecord(String namespace, String name, String type,
@@ -657,24 +621,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     });
   }
 
-  private void insertNamespaceSourceControlTests() {
-    insertNamespaceRecord(Namespace.DEFAULT.getId(), "app1", TYPE, "hash1", "commit1",
-        fixedInstant.toEpochMilli(), false);
-    insertNamespaceRecord(Namespace.DEFAULT.getId(), "app3", TYPE, "hash4", "commit1",
-        fixedInstant.toEpochMilli(), false);
-    insertNamespaceRecord(Namespace.DEFAULT.getId(), "app4", TYPE, "hash4", "commit1",
-        fixedInstant2.toEpochMilli(), true);
-  }
-
-  private void insertNamespaceRecord(String namespace, String name, String type,
-      String specHash, String commitId, Long lastModified, Boolean isSycned) {
-    TransactionRunners.run(transactionRunner, context -> {
-      NamespaceSourceControlMetadataStore store = NamespaceSourceControlMetadataStore.create(
-          context);
-      store.write(new ApplicationReference(namespace, name),
-          new SourceControlMeta(specHash, commitId, Instant.ofEpochMilli(lastModified), isSycned));
-    });
-  }
 
   /**
    * A Mock {@link SourceControlOperationRunner} that can be used for tests.

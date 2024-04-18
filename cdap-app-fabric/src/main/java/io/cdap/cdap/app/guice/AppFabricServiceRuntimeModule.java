@@ -117,6 +117,7 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
@@ -214,6 +215,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
             bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
+            bind(SourceControlMetadataRefreshService.class).in(Scopes.SINGLETON);
 
             Multibinder<String> servicesNamesBinder =
                 Multibinder.newSetBinder(binder(), String.class,
@@ -258,6 +260,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
             bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
+            bind(SourceControlMetadataRefreshService.class).in(Scopes.SINGLETON);
 
             Multibinder<String> servicesNamesBinder =
                 Multibinder.newSetBinder(binder(), String.class,
@@ -315,6 +318,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             bind(StorageProviderNamespaceAdmin.class)
                 .to(DistributedStorageProviderNamespaceAdmin.class);
             bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
+            bind(SourceControlMetadataRefreshService.class).in(Scopes.SINGLETON);
 
             bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
                 .in(Scopes.SINGLETON);

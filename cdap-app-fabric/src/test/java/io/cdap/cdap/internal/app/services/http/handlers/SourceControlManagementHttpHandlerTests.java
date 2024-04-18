@@ -37,6 +37,7 @@ import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationRecord;
@@ -124,18 +125,19 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
       @Singleton
       public SourceControlManagementService provideSourceControlManagementService(
         CConfiguration cConf,
-        SecureStore secureStore,
-        TransactionRunner transactionRunner,
-        AccessEnforcer accessEnforcer,
-        AuthenticationContext authenticationContext,
-        SourceControlOperationRunner sourceControlRunner,
-        ApplicationLifecycleService applicationLifecycleService,
-        Store store, OperationLifecycleManager manager, MetricsCollectionService metricsService) {
+          SecureStore secureStore,
+          TransactionRunner transactionRunner,
+          AccessEnforcer accessEnforcer,
+          AuthenticationContext authenticationContext,
+          SourceControlOperationRunner sourceControlRunner,
+          ApplicationLifecycleService applicationLifecycleService,
+          Store store, OperationLifecycleManager manager, MetricsCollectionService metricsService,
+          SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
 
         return Mockito.spy(new SourceControlManagementService(cConf, secureStore, transactionRunner,
-                                                              accessEnforcer, authenticationContext,
-                                                              sourceControlRunner, applicationLifecycleService,
-                                                              store, manager, metricsService));
+            accessEnforcer, authenticationContext,
+            sourceControlRunner, applicationLifecycleService,
+            store, manager, metricsService, sourceControlMetadataRefreshService));
       }
     });
   }
