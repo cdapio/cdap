@@ -704,7 +704,7 @@ public class ApplicationClient {
       UnauthorizedException, BadRequestException {
     String path = String.format("apps/%s/versions/%s/schedules/%s", app.getApplication(),
         app.getVersion(),
-        scheduleDetail.getName());
+        ScheduleClient.getEncodedScheduleName(scheduleDetail.getName()));
     HttpResponse response = restClient.execute(HttpMethod.PUT,
         config.resolveNamespacedURLV3(app.getParent(), path),
         GSON.toJson(scheduleDetail), ImmutableMap.<String, String>of(),
