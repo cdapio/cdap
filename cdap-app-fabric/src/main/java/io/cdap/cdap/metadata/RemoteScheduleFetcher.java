@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -73,7 +74,8 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
       throws IOException, ScheduleNotFoundException, UnauthorizedException {
     String url = String.format(
         "namespaces/%s/apps/%s/schedules/%s",
-        scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule());
+        scheduleId.getNamespace(), scheduleId.getApplication(),
+        ScheduleClient.getEncodedScheduleName(scheduleId.getSchedule()));
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     try {
