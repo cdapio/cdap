@@ -954,9 +954,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta) {
+  public void setAppSourceControlMeta(ApplicationReference appRef, SourceControlMeta sourceControlMeta) {
     TransactionRunners.run(transactionRunner, context -> {
-      getNamespaceSourceControlMetadataStore(context).write(appId.getAppReference(),
+      getNamespaceSourceControlMetadataStore(context).write(appRef,
           SourceControlMeta.builder(sourceControlMeta).setSyncStatus(true).build());
     });
   }

@@ -35,8 +35,8 @@ public class SourceControlMeta {
   /**
    * Default constructor for SourceControlMeta.
    *
-   * @param fileHash     the git-hash of the config in git after push
-   * @param commitId     the commit in git form/to application was pulled/pushed
+   * @param fileHash the git-hash of the config in git after push
+   * @param commitId the commit in git form/to application was pulled/pushed
    * @param lastSyncedAt last time the application was pulled/pushed
    */
   public SourceControlMeta(String fileHash, @Nullable String commitId,
@@ -47,13 +47,13 @@ public class SourceControlMeta {
   /**
    * Constructs a new instance of {@code SourceControlMeta} with the specified parameters.
    *
-   * @param fileHash     The hash value of the file associated with the metadata.
-   * @param commitId     The ID of the commit associated with the metadata, or {@code null} if not
-   *                     available.
+   * @param fileHash The hash value of the file associated with the metadata.
+   * @param commitId The ID of the commit associated with the metadata, or {@code null} if not
+   *     available.
    * @param lastSyncedAt The timestamp when the metadata was last synced, or {@code null} if not
-   *                     available.
-   * @param syncStatus   The synchronization status indicating whether the metadata is synchronized,
-   *                     represented as a boolean value.
+   *     available.
+   * @param syncStatus The synchronization status indicating whether the metadata is
+   *     synchronized, represented as a boolean value.
    */
   public SourceControlMeta(String fileHash, @Nullable String commitId,
       @Nullable Instant lastSyncedAt, @Nullable Boolean syncStatus) {
@@ -88,12 +88,12 @@ public class SourceControlMeta {
 
   @Override
   public String toString() {
-    return "SourceControlMeta{" +
-        "fileHash='" + fileHash + '\'' +
-        ", commitId='" + commitId + '\'' +
-        ", lastSyncedAt=" + lastSyncedAt +
-        ", syncStatus=" + syncStatus +
-        '}';
+    return "SourceControlMeta{"
+        + "fileHash='" + fileHash + '\''
+        + ", commitId='" + commitId + '\''
+        + ", lastSyncedAt=" + lastSyncedAt
+        + ", syncStatus=" + syncStatus
+        + '}';
   }
 
   @Nullable
@@ -128,6 +128,7 @@ public class SourceControlMeta {
    * Builds the SourceControlMeta.
    */
   public static class Builder {
+
     private String fileHash;
     private String commitId;
     private Instant lastSyncedAt;
