@@ -254,6 +254,9 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     for (Map.Entry<String, String> cConfEntry : message.getCConfEntries().entrySet()) {
       cConfCopy.set(cConfEntry.getKey(), cConfEntry.getValue());
     }
+    // Don't upload event logs for tethered runs as it breaks pipelines that read from HDFS.
+    // See https://cdap.atlassian.net/browse/CDAP-20959?focusedCommentId=53167 for details.
+    cConfCopy.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, false);
 
     Map<String, String> files = new HashMap<>();
     for (Map.Entry<String, byte[]> file : message.getFiles().entrySet()) {
