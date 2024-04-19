@@ -55,7 +55,7 @@ public class DataprocJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
 
   /**
-   * Main method to setup classpath and call the RuntimeJob.run() method.
+   * Main method to set up classpath and call the RuntimeJob.run() method.
    *
    * @param args the name of implementation of RuntimeJob class
    * @throws Exception any exception while running the job
@@ -111,14 +111,14 @@ public class DataprocJobMain {
     // Don't close the classloader since this is the main classloader,
     // which can be used for shutdown hook execution.
     // Closing it too early can result in NoClassDefFoundError in shutdown hook execution.
-    ClassLoader newCL = createContainerClassLoader(urls);
+    ClassLoader newCl = createContainerClassLoader(urls);
     CompletableFuture<?> completion = new CompletableFuture<>();
     try {
-      Thread.currentThread().setContextClassLoader(newCL);
+      Thread.currentThread().setContextClassLoader(newCl);
 
       // load environment class and create instance of it
       String dataprocEnvClassName = DataprocRuntimeEnvironment.class.getName();
-      Class<?> dataprocEnvClass = newCL.loadClass(dataprocEnvClassName);
+      Class<?> dataprocEnvClass = newCl.loadClass(dataprocEnvClassName);
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
       try {
@@ -130,15 +130,14 @@ public class DataprocJobMain {
         initializeMethod.invoke(newDataprocEnvInstance, sparkCompat, launchMode);
 
         // call run() method on runtimeJobClass
-        Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
-        Class<?> runnerCls = newCL.loadClass(runtimeJobClassName);
+        Class<?> runEnvCls = newCl.loadClass(RuntimeJobEnvironment.class.getName());
+        Class<?> runnerCls = newCl.loadClass(runtimeJobClassName);
         Method runMethod = runnerCls.getMethod("run", runEnvCls);
         Method stopMethod = runnerCls.getMethod("requestStop");
-
         Object runner = runnerCls.newInstance();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-          // Request the runtime job to stop if it it hasn't been completed
+          // Request the runtime job to stop if it hasn't been completed.
           if (completion.isDone()) {
             return;
           }
@@ -171,7 +170,6 @@ public class DataprocJobMain {
   /**
    * This method will generate class path by adding following to urls to front of default
    * classpath:
-   *
    * expanded.resource.jar expanded.application.jar expanded.application.jar/lib/*.jar
    * expanded.application.jar/classes expanded.twill.jar expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
@@ -185,7 +183,7 @@ public class DataprocJobMain {
       if (file.equals(Constants.Files.RESOURCES_JAR)) {
         continue;
       }
-      urls.addAll(createClassPathURLs(jarDir));
+      urls.addAll(createClassPathUrls(jarDir));
     }
 
     // Add the system class path to the URL list
@@ -200,16 +198,16 @@ public class DataprocJobMain {
     return urls.toArray(new URL[0]);
   }
 
-  private static List<URL> createClassPathURLs(File dir) throws MalformedURLException {
+  private static List<URL> createClassPathUrls(File dir) throws MalformedURLException {
     List<URL> urls = new ArrayList<>();
     // add jar urls from lib under dir
-    addJarURLs(new File(dir, "lib"), urls);
+    addJarUrls(new File(dir, "lib"), urls);
     // add classes under dir
     urls.add(new File(dir, "classes").toURI().toURL());
     return urls;
   }
 
-  private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
+  private static void addJarUrls(File dir, List<URL> result) throws MalformedURLException {
     File[] files = dir.listFiles(f -> f.getName().endsWith(".jar"));
     if (files == null) {
       return;
@@ -285,7 +283,7 @@ public class DataprocJobMain {
   }
 
   /**
-   * Creates a {@link ClassLoader} for the the job execution.
+   * Creates a {@link ClassLoader} for the job execution.
    */
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);

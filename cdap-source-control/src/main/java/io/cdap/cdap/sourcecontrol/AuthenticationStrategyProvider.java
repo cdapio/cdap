@@ -18,7 +18,6 @@ package io.cdap.cdap.sourcecontrol;
 
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
-import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 /**
@@ -38,15 +37,13 @@ public class AuthenticationStrategyProvider {
    * Returns an {@link AuthenticationStrategy} for the given Git repository provider and auth type.
    *
    * @return an instance of {@link  AuthenticationStrategy}.
-   * @throws AuthenticationStrategyNotFoundException when the corresponding {@link
-   *     AuthenticationStrategy} is not found.
+   * @throws AuthenticationStrategyNotFoundException when the corresponding
+   *     {@link AuthenticationStrategy} is not found.
    */
   AuthenticationStrategy get(RepositoryConfig repoConfig) throws
       AuthenticationStrategyNotFoundException {
-    if (repoConfig.getProvider() == Provider.GITHUB) {
-      if (repoConfig.getAuth().getType() == AuthType.PAT) {
-        return new GitPatAuthenticationStrategy(secureStore, repoConfig, namespaceId);
-      }
+    if (repoConfig.getAuth().getType() == AuthType.PAT) {
+      return new PatAuthenticationStrategy(secureStore, repoConfig, namespaceId);
     }
     throw new AuthenticationStrategyNotFoundException(
         String.format("No strategy found for provider %s and type %s.",

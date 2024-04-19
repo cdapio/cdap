@@ -26,6 +26,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -42,6 +43,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.Field;
@@ -963,9 +965,11 @@ public abstract class AppMetadataStoreTest {
     for (int i = 0; i < 30; i++) {
       appIds.add(NamespaceId.DEFAULT.app("test" + i));
     }
+    FunctionWithException<ApplicationId, SourceControlMeta, IOException> sourceControlRetriever
+        = appId -> new SourceControlMeta("fileHash", "commitId", Instant.now());
     Map<ApplicationId, ApplicationMeta> result = TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      return store.getApplicationsForAppIds(appIds);
+      return store.getApplicationsForAppIds(appIds, sourceControlRetriever);
     });
 
     Assert.assertEquals(20, result.size());

@@ -72,6 +72,8 @@ public final class StoreDefinition {
     AppStateStore.create(tableAdmin);
     CredentialProviderStore.create(tableAdmin);
     OperationRunsStore.create(tableAdmin);
+    NamespaceSourceControlMetadataStore.create(tableAdmin);
+    RepositorySourceControlMetadataStore.create(tableAdmin);
   }
 
   /**
@@ -176,6 +178,74 @@ public final class StoreDefinition {
 
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
       createIfNotExists(tableAdmin, PREFERENCES_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for NamespaceSourceControlMetadata table. This table stores the source control metadata,
+   * i.e its file hash, commitID, last modified and sync status, of an entity within a namespace
+   */
+  public static final class NamespaceSourceControlMetadataStore {
+
+    public static final StructuredTableId NAMESPACE_SOURCE_CONTROL_METADATA =
+        new StructuredTableId("namespace_source_control_metadata");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String SPECIFICATION_HASH_FIELD = "specification_hash";
+    public static final String COMMIT_ID_FIELD = "commit_id";
+    public static final String LAST_MODIFIED_FIELD = "last_modified";
+    public static final String IS_SYNCED_FIELD = "is_synced";
+
+    public static final StructuredTableSpecification NAMESPACE_SOURCE_CONTROL_METADATA_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+        .withId(NAMESPACE_SOURCE_CONTROL_METADATA)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+            Fields.stringType(TYPE_FIELD),
+            Fields.stringType(NAME_FIELD),
+            Fields.stringType(SPECIFICATION_HASH_FIELD),
+            Fields.stringType(COMMIT_ID_FIELD),
+            Fields.longType(LAST_MODIFIED_FIELD),
+            Fields.booleanType(IS_SYNCED_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
+        .withIndexes(IS_SYNCED_FIELD, LAST_MODIFIED_FIELD)
+        .build();
+
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, NAMESPACE_SOURCE_CONTROL_METADATA_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for RespositorySourceControlMetadata table. This table stores the source control metadata,
+   * i.e its last modified and sync status, of an entity within the provided repository
+   */
+  public static final class RepositorySourceControlMetadataStore {
+
+    public static final StructuredTableId REPOSITORY_SOURCE_CONTROL_METADATA =
+        new StructuredTableId("repository_source_control_metadata");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String LAST_MODIFIED_FIELD = "last_modified";
+    public static final String IS_SYNCED_FIELD = "is_synced";
+
+    public static final StructuredTableSpecification REPOSITORY_SOURCE_CONTROL_METADATA_TABLE_SPEC =
+        new StructuredTableSpecification.Builder()
+        .withId(REPOSITORY_SOURCE_CONTROL_METADATA)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+            Fields.stringType(TYPE_FIELD),
+            Fields.stringType(NAME_FIELD),
+            Fields.longType(LAST_MODIFIED_FIELD),
+            Fields.booleanType(IS_SYNCED_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
+        .withIndexes(IS_SYNCED_FIELD, LAST_MODIFIED_FIELD)
+        .build();
+
+    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+      createIfNotExists(tableAdmin, REPOSITORY_SOURCE_CONTROL_METADATA_TABLE_SPEC);
     }
   }
 
@@ -1351,7 +1421,7 @@ public final class StoreDefinition {
                 Fields.longType(START_TIME_FIELD),
                 Fields.longType(UPDATE_TIME_FIELD),
                 Fields.stringType(DETAILS_FIELD)
-                )
+            )
             .withPrimaryKeys(NAMESPACE_FIELD, ID_FIELD)
             .withIndexes(TYPE_FIELD, STATUS_FIELD, START_TIME_FIELD)
             .build();

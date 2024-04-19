@@ -84,7 +84,7 @@ public class RepositoryConfig {
     if (auth == null) {
       failures.add(new RepositoryValidationFailure("'auth' field must be specified."));
     } else {
-      failures.addAll(auth.validate());
+      failures.addAll(auth.validate(provider));
     }
 
     if (!failures.isEmpty()) {

@@ -50,7 +50,7 @@ public abstract class SourceControlTestBase {
   protected static final String MOCK_TOKEN = UUID.randomUUID().toString();
   protected static final String NAMESPACE = "namespace1";
   protected static final String PASSWORD_NAME = "github-pat";
-  protected static final PatConfig PAT_CONFIG = new PatConfig(PASSWORD_NAME, null);
+  protected static final PatConfig PAT_CONFIG = new PatConfig(PASSWORD_NAME, GIT_SERVER_USERNAME);
   protected static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT, PAT_CONFIG);
   protected static final String PATH_PREFIX = "pathPrefix";
   protected static final String TEST_APP_NAME = "app1";

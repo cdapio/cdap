@@ -18,6 +18,7 @@ package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,25 +28,24 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 /**
- * An {@link AuthenticationStrategy} to use with GitHub and Personal Access Tokens.
+ * An {@link AuthenticationStrategy} to use with GitHub/GitLab and Personal Access Tokens.
  */
-public class GitPatAuthenticationStrategy implements AuthenticationStrategy {
+public class PatAuthenticationStrategy implements AuthenticationStrategy {
 
-  private static final String GITHUB_PAT_USERNAME = "oauth2";
   private final SecureStorePasswordProvider credentialsProvider;
 
   /**
    * Construct a Git PAT auth strategy.
-
+   *
    * @param secureStore {@link SecureStore} to fetch the secrets with.
    * @param config {@link RepositoryConfig}
    * @param namespaceId the namespaceId
    */
-  public GitPatAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
+  public PatAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
       String namespaceId) {
+    PatConfig patConfig = config.getAuth().getPatConfig();
     this.credentialsProvider =
-        new SecureStorePasswordProvider(secureStore, GITHUB_PAT_USERNAME,
-            config.getAuth().getPatConfig().getPasswordName(), namespaceId);
+        new SecureStorePasswordProvider(secureStore, patConfig.getUsername(), patConfig.getPasswordName(), namespaceId);
   }
 
   @Override
