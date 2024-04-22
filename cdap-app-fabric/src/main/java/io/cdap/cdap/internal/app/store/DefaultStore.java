@@ -144,8 +144,9 @@ public class DefaultStore implements Store {
     return AppMetadataStore.create(context);
   }
 
-  private SourceControlMetadataStore getSourceControlMetadataStore(StructuredTableContext context) {
-    return SourceControlMetadataStore.create(context);
+  private NamespaceSourceControlMetadataStore getNamespaceSourceControlMetadataStore(
+      StructuredTableContext context) {
+    return NamespaceSourceControlMetadataStore.create(context);
   }
 
   private WorkflowTable getWorkflowTable(StructuredTableContext context)
@@ -601,15 +602,20 @@ public class DefaultStore implements Store {
   @Override
   public int addLatestApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
     return TransactionRunners.run(transactionRunner, context -> {
-      getSourceControlMetadataStore(context).write(id, meta.getSourceControlMeta());
+      getNamespaceSourceControlMetadataStore(context).write(id.getAppReference(),
+          meta.getSourceControlMeta() == null ? SourceControlMeta.createDefaultMeta()
+              : SourceControlMeta.builder(meta.getSourceControlMeta()).setSyncStatus(true).build());
       return getAppMetadataStore(context).createLatestApplicationVersion(id, meta);
     }, ConflictException.class);
   }
 
   @Override
-  public int addApplication(ApplicationId id, ApplicationMeta meta, boolean isLatest) throws ConflictException {
+  public int addApplication(ApplicationId id, ApplicationMeta meta, boolean isLatest)
+      throws ConflictException {
     return TransactionRunners.run(transactionRunner, context -> {
-      getSourceControlMetadataStore(context).write(id, meta.getSourceControlMeta());
+      getNamespaceSourceControlMetadataStore(context).write(id.getAppReference(),
+          meta.getSourceControlMeta() == null ? SourceControlMeta.createDefaultMeta()
+              : SourceControlMeta.builder(meta.getSourceControlMeta()).setSyncStatus(true).build());
       return getAppMetadataStore(context).createApplicationVersion(id, meta, isLatest);
     }, ConflictException.class);
   }
@@ -619,12 +625,14 @@ public class DefaultStore implements Store {
       Map<ApplicationId, SourceControlMeta> updateRequests)
       throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      SourceControlMetadataStore sourceControlMetadataStore = getSourceControlMetadataStore(context);
+      NamespaceSourceControlMetadataStore sourceControlMetadataStore = getNamespaceSourceControlMetadataStore(
+          context);
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       for (Map.Entry<ApplicationId, SourceControlMeta> updateRequest : updateRequests.entrySet()) {
         ApplicationId appId = updateRequest.getKey();
         if (appMetadataStore.getApplication(appId) != null) {
-          sourceControlMetadataStore.write(appId, updateRequest.getValue());
+          sourceControlMetadataStore.write(appId.getAppReference(),
+              SourceControlMeta.builder(updateRequest.getValue()).setSyncStatus(true).build());
         }
       }
     }, IOException.class);
@@ -745,9 +753,7 @@ public class DefaultStore implements Store {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(appRef);
       metaStore.deleteProgramHistory(appRef);
-      getSourceControlMetadataStore(context).delete(
-          new ApplicationId(appRef.getNamespace(),
-              appRef.getApplication()));
+      getNamespaceSourceControlMetadataStore(context).delete(appRef);
     });
   }
 
@@ -761,7 +767,7 @@ public class DefaultStore implements Store {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
       metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication(), id.getVersion());
-      getSourceControlMetadataStore(context).delete(id);
+      getNamespaceSourceControlMetadataStore(context).delete(id.getAppReference());
     });
   }
 
@@ -774,8 +780,7 @@ public class DefaultStore implements Store {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplications(id.getNamespace());
       metaStore.deleteProgramHistory(id);
-      getSourceControlMetadataStore(context).deleteAll(
-          id.getNamespace());
+      getNamespaceSourceControlMetadataStore(context).deleteAll(id.getNamespace());
     });
   }
 
@@ -800,8 +805,8 @@ public class DefaultStore implements Store {
       if (meta == null) {
         return null;
       }
-      SourceControlMeta sourceControlMeta = getSourceControlMetadataStore(
-          context).get(id);
+      SourceControlMeta sourceControlMeta = getNamespaceSourceControlMetadataStore(
+          context).get(id.getAppReference());
       return new ApplicationMeta(meta.getId(), meta.getSpec(), meta.getChange(), sourceControlMeta);
     });
   }
@@ -918,8 +923,8 @@ public class DefaultStore implements Store {
   public Map<ApplicationId, ApplicationMeta> getApplications(Collection<ApplicationId> ids) {
     return TransactionRunners.run(transactionRunner, context -> {
       FunctionWithException<ApplicationId, SourceControlMeta, IOException> sourceControlRetriever
-          = appId -> getSourceControlMetadataStore(
-          context).get(appId);
+          = appId -> getNamespaceSourceControlMetadataStore(
+          context).get(appId.getAppReference());
       return getAppMetadataStore(
           context).getApplicationsForAppIds(ids, sourceControlRetriever);
     });
@@ -928,8 +933,8 @@ public class DefaultStore implements Store {
   @Override
   public void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta) {
     TransactionRunners.run(transactionRunner, context -> {
-      getSourceControlMetadataStore(context).write(appId,
-          sourceControlMeta);
+      getNamespaceSourceControlMetadataStore(context).write(appId.getAppReference(),
+          SourceControlMeta.builder(sourceControlMeta).setSyncStatus(true).build());
     });
   }
 
@@ -937,9 +942,8 @@ public class DefaultStore implements Store {
   @Nullable
   public SourceControlMeta getAppSourceControlMeta(ApplicationReference appRef) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getSourceControlMetadataStore(context)
-          .get(new ApplicationId(appRef.getNamespace(),
-              appRef.getApplication()));
+      return getNamespaceSourceControlMetadataStore(context)
+          .get(appRef);
     });
   }
 
@@ -959,9 +963,8 @@ public class DefaultStore implements Store {
       if (meta == null) {
         return meta;
       }
-      SourceControlMeta sourceControlMeta = getSourceControlMetadataStore(context)
-          .get(new ApplicationId(appRef.getNamespace(),
-              appRef.getApplication()));
+      SourceControlMeta sourceControlMeta = getNamespaceSourceControlMetadataStore(context)
+          .get(appRef);
       return new ApplicationMeta(meta.getId(), meta.getSpec(), meta.getChange(), sourceControlMeta);
     });
   }

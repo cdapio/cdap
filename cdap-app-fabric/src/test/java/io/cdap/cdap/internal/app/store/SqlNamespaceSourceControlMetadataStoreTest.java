@@ -39,7 +39,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-public class SqlSourceControlMetadataStoreTest extends SourceControlMetadataStoreTest {
+public class SqlNamespaceSourceControlMetadataStoreTest extends NamespaceSourceControlMetadataStoreTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -66,6 +66,8 @@ public class SqlSourceControlMetadataStoreTest extends SourceControlMetadataStor
 
     transactionRunner = injector.getInstance(TransactionRunner.class);
     StoreDefinition.NamespaceSourceControlMetadataStore.create(
+        injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.RepositorySourceControlMetadataStore.create(
         injector.getInstance(StructuredTableAdmin.class));
   }
 
