@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -37,18 +37,18 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * Store for namespace and repository source control metadata.
+ * Store for namespace source control metadata.
  */
-public class SourceControlMetadataStore {
+public class NamespaceSourceControlMetadataStore {
 
   private StructuredTable namespaceSourceControlMetadataTable;
   private final StructuredTableContext context;
 
-  public static SourceControlMetadataStore create(StructuredTableContext context) {
-    return new SourceControlMetadataStore(context);
+  public static NamespaceSourceControlMetadataStore create(StructuredTableContext context) {
+    return new NamespaceSourceControlMetadataStore(context);
   }
 
-  private SourceControlMetadataStore(StructuredTableContext context) {
+  private NamespaceSourceControlMetadataStore(StructuredTableContext context) {
     this.context = context;
   }
 
@@ -59,7 +59,8 @@ public class SourceControlMetadataStore {
             StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_SOURCE_CONTROL_METADATA);
       }
     } catch (TableNotFoundException e) {
-      throw new RuntimeException(e);
+      throw new TableNotFoundException(
+          StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_SOURCE_CONTROL_METADATA);
     }
     return namespaceSourceControlMetadataTable;
   }
@@ -68,14 +69,15 @@ public class SourceControlMetadataStore {
    * Retrieves the source control metadata for the specified application ID in the namespace from
    * {@code NamespaceSourceControlMetadata} table.
    *
-   * @param appId {@link ApplicationId} for which the source control metadata is being retrieved.
+   * @param appRef {@link ApplicationReference} for which the source control metadata is being
+   *               retrieved.
    * @return The {@link SourceControlMeta} associated with the application ID, or {@code null} if no
    *         metadata is found.
    * @throws IOException If it fails to read the metadata.
    */
   @Nullable
-  public SourceControlMeta get(ApplicationId appId) throws IOException {
-    List<Field<?>> primaryKey = getPrimaryKey(appId);
+  public SourceControlMeta get(ApplicationReference appRef) throws IOException {
+    List<Field<?>> primaryKey = getPrimaryKey(appRef);
     StructuredTable table = getNamespaceSourceControlMetadataTable();
     Optional<StructuredRow> row = table.read(primaryKey);
 
@@ -86,13 +88,16 @@ public class SourceControlMetadataStore {
           StoreDefinition.NamespaceSourceControlMetadataStore.COMMIT_ID_FIELD);
       Long lastSynced = nonNullRow.getLong(
           StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD);
+      Instant lastSyncedInstant = lastSynced == 0L ? null : Instant.ofEpochMilli(lastSynced);
+      Boolean isSynced = nonNullRow.getBoolean(
+          StoreDefinition.NamespaceSourceControlMetadataStore.IS_SYNCED_FIELD);
       if (specificationHash == null && commitId == null && lastSynced == 0L) {
         return null;
       }
-      return new SourceControlMeta(specificationHash, commitId, Instant.ofEpochMilli(lastSynced));
+      return new SourceControlMeta(specificationHash, commitId, lastSyncedInstant,
+          isSynced);
     }).orElse(null);
   }
-
 
   /**
    * Sets the source control metadata for the specified application ID in the namespace.  Source
@@ -100,15 +105,15 @@ public class SourceControlMetadataStore {
    * non-null when the application is pulled from the remote repository and deployed in the
    * namespace.
    *
-   * @param appId             {@link ApplicationId} for which the source control metadata is being
-   *                          set.
+   * @param appRef            {@link ApplicationReference} for which the source control metadata is
+   *                          being set.
    * @param sourceControlMeta The {@link SourceControlMeta} to be set. Can be {@code null} if
    *                          application is just deployed.
    * @throws IOException If failed to write the data.
    */
-  public void write(ApplicationId appId,
-      @Nullable SourceControlMeta sourceControlMeta)
-      throws IOException {
+  public void write(ApplicationReference appRef,
+      SourceControlMeta sourceControlMeta)
+      throws IOException, IllegalArgumentException {
     // In the Namespace Pipelines page, the sync status (SYNCED or UNSYNCED)
     // and last modified of all the applications deployed in the namespace needs to be shown.
     // If source control information is not added when the app is deployed, the data will
@@ -118,18 +123,30 @@ public class SourceControlMetadataStore {
     // Instead of doing filtering, searching, sorting in memory, it will happen at
     // database level.
     StructuredTable scmTable = getNamespaceSourceControlMetadataTable();
-    scmTable.upsert(getNamespaceSourceControlMetaFields(appId, sourceControlMeta));
+    SourceControlMeta existingSourceControlMeta = get(appRef);
+    if (sourceControlMeta.getLastSyncedAt() != null && existingSourceControlMeta != null
+        && sourceControlMeta.getLastSyncedAt()
+        .isBefore(existingSourceControlMeta.getLastSyncedAt())) {
+
+      throw new IllegalArgumentException(String.format(
+          "Trying to write lastSynced as %d for the app name %s in namespace %s but an "
+              + "updated row having a greater last modified is already present",
+          sourceControlMeta.getLastSyncedAt().toEpochMilli(),
+          appRef.getEntityName(),
+          appRef.getNamespaceId()));
+    }
+    scmTable.upsert(getAllFields(appRef, sourceControlMeta, existingSourceControlMeta));
   }
 
   /**
    * Deletes the source control metadata associated with the specified application ID from the
    * namespace.
    *
-   * @param appId {@link ApplicationId} whose source control metadata is to be deleted.
+   * @param appRef {@link ApplicationReference} whose source control metadata is to be deleted.
    * @throws IOException if it failed to read or delete the metadata
    */
-  public void delete(ApplicationId appId) throws IOException {
-    getNamespaceSourceControlMetadataTable().delete(getPrimaryKey(appId));
+  public void delete(ApplicationReference appRef) throws IOException {
+    getNamespaceSourceControlMetadataTable().delete(getPrimaryKey(appRef));
   }
 
   /**
@@ -142,46 +159,47 @@ public class SourceControlMetadataStore {
     getNamespaceSourceControlMetadataTable().deleteAll(getNamespaceRange(namespace));
   }
 
-  private Collection<Field<?>> getNamespaceSourceControlMetaFields(ApplicationId appId,
-      SourceControlMeta scmMeta) throws IOException {
-    List<Field<?>> fields = getPrimaryKey(appId);
+  private Collection<Field<?>> getAllFields(ApplicationReference appRef,
+      SourceControlMeta newSourceControlMeta, SourceControlMeta existingSourceControlMeta) {
+    List<Field<?>> fields = getPrimaryKey(appRef);
     fields.add(Fields.stringField(
         StoreDefinition.NamespaceSourceControlMetadataStore.SPECIFICATION_HASH_FIELD,
-        scmMeta == null ? "" : scmMeta.getFileHash()));
+        newSourceControlMeta.getFileHash()));
     fields.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.COMMIT_ID_FIELD,
-            scmMeta == null ? "" : scmMeta.getCommitId()));
+            newSourceControlMeta.getCommitId()));
     // Whenever an app is deployed, the expected behavior is that the last modified field will be
     // retained and not reset.
-    Long lastModified = 0L;
-    if (scmMeta != null) {
-      lastModified = scmMeta.getLastSyncedAt().toEpochMilli();
-    } else {
-      SourceControlMeta sourceControlMeta = get(appId);
-      if (sourceControlMeta != null) {
-        lastModified = sourceControlMeta.getLastSyncedAt().toEpochMilli();
-      }
-    }
     fields.add(
         Fields.longField(StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD,
-            lastModified));
+            getLastModifiedValue(newSourceControlMeta, existingSourceControlMeta)));
     fields.add(
         Fields.booleanField(StoreDefinition.NamespaceSourceControlMetadataStore.IS_SYNCED_FIELD,
-            scmMeta == null ? false : true));
+            newSourceControlMeta.getSyncStatus()));
     return fields;
   }
 
-  private List<Field<?>> getPrimaryKey(ApplicationId appId) {
+  private long getLastModifiedValue(SourceControlMeta newSourceControlMeta,
+      SourceControlMeta existingSourceControlMeta) {
+    if (newSourceControlMeta.getLastSyncedAt() == null && existingSourceControlMeta == null) {
+      return 0L;
+    }
+    SourceControlMeta metaToUse =
+        newSourceControlMeta.getLastSyncedAt() != null ? newSourceControlMeta : existingSourceControlMeta;
+    return metaToUse.getLastSyncedAt().toEpochMilli();
+  }
+
+  private List<Field<?>> getPrimaryKey(ApplicationReference appRef) {
     List<Field<?>> primaryKey = new ArrayList<>();
     primaryKey.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_FIELD,
-            appId.getNamespace()));
+            appRef.getNamespace()));
     primaryKey.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.TYPE_FIELD,
-            appId.getEntityType().toString()));
+            appRef.getEntityType().toString()));
     primaryKey.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.NAME_FIELD,
-            appId.getEntityName()));
+            appRef.getEntityName()));
     return primaryKey;
   }
 
@@ -204,4 +222,5 @@ public class SourceControlMetadataStore {
                     StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_FIELD, "")),
             Range.Bound.INCLUSIVE));
   }
+
 }
