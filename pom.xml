@@ -124,7 +124,7 @@
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.collections.version>3.2.2</commons.collections.version>
-    <commons.compress.version>1.22</commons.compress.version>
+    <commons.compress.version>1.26.0</commons.compress.version>
     <commons.lang3.version>3.5</commons.lang3.version>
     <dropwizard.version>3.1.2</dropwizard.version>
     <fastutil.version>6.5.6</fastutil.version>
