@@ -52,7 +52,7 @@ public class AuthConfig {
 
    * @return a collection of {@link RepositoryValidationFailure}.
    */
-  public Collection<RepositoryValidationFailure> validate() {
+  public Collection<RepositoryValidationFailure> validate(Provider provider) {
     Collection<RepositoryValidationFailure> failures = new ArrayList<>();
     if (type == null) {
       failures.add(new RepositoryValidationFailure("'type' must be specified in 'auth'."));
@@ -62,7 +62,7 @@ public class AuthConfig {
       if (patConfig == null) {
         failures.add(new RepositoryValidationFailure("'patConfig' must be specified in 'auth'."));
       } else {
-        failures.addAll(patConfig.validate());
+        failures.addAll(patConfig.validate(provider));
       }
     }
 

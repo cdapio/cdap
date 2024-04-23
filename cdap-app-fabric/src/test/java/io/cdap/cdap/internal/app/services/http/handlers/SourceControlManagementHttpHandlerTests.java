@@ -94,7 +94,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   private static final String PASSWORD_NAME = "test_password_name";
   private static final String USERNAME = "test_user";
   private static final String TEST_FIELD = "test";
-  private static final String REPO_FIELD = "repository";
+  private static final String REPO_FIELD = "config";
   private static final Gson GSON = new Gson();
   private static final AuthConfig AUTH_CONFIG = new AuthConfig(
       AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME));
@@ -209,6 +209,29 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   }
 
   @Test
+  public void testRepoConfigMissingUsername() throws Exception {
+    // Create the NS
+    assertResponseCode(200, createNamespace(NAME));
+
+    // verify the repository does not exist at the beginning
+    HttpResponse response = getRepository(NAME);
+    assertResponseCode(404, response);
+
+    for (Provider provider : Provider.values()) {
+      String configMissingUsername = buildRepoRequestString(
+          provider, LINK, DEFAULT_BRANCH,
+          new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, "")),
+          null);
+
+      assertResponseCode(200, setRepository(NAME, configMissingUsername));
+
+      // Delete the repository
+      assertResponseCode(200, deleteRepository(NAME));
+      assertResponseCode(404, getRepository(NAME));
+    }
+  }
+
+  @Test
   public void testInvalidRepoConfig() throws Exception {
     // Create the NS
     assertResponseCode(200, createNamespace(NAME));
@@ -245,6 +268,22 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     assertResponseCode(400, setRepository(NAME, configMissingPasswordName));
     assertResponseCode(404, getRepository(NAME));
 
+    // Set the invalid bitbucket cloud repository that has wrong username
+    String configBitbucketCloudWrongUsername = buildRepoRequestString(
+        Provider.BITBUCKET_CLOUD, LINK, "",
+        new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME)),
+        null);
+    assertResponseCode(400, setRepository(NAME, configBitbucketCloudWrongUsername));
+    assertResponseCode(404, getRepository(NAME));
+
+    // Set the invalid bitbucket server repository that has wrong username
+    String configBitbucketServerWrongUsername = buildRepoRequestString(
+        Provider.BITBUCKET_SERVER, LINK, "",
+        new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME)),
+        null);
+    assertResponseCode(400, setRepository(NAME, configBitbucketServerWrongUsername));
+    assertResponseCode(404, getRepository(NAME));
+
     // cleanup
     response = deleteNamespace(NAME);
     assertResponseCode(200, response);
@@ -269,7 +308,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testValidateRepoConfigSuccess() throws Exception {
+  public void testValidateRepoAuthSuccess() throws Exception {
     RepositoryConfig config = new RepositoryConfig.Builder()
         .setProvider(Provider.GITHUB)
         .setLink(LINK)
@@ -286,7 +325,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testValidateRepoConfigFails() throws Exception {
+  public void testValidateRepoAuthFails() throws Exception {
     RepositoryConfig config = new RepositoryConfig.Builder()
         .setProvider(Provider.GITHUB)
         .setLink(LINK)

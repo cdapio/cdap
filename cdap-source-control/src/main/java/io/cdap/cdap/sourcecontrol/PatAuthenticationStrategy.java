@@ -22,7 +22,6 @@ import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import joptsimple.internal.Strings;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.URIish;
@@ -32,8 +31,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
  * An {@link AuthenticationStrategy} to use with GitHub/GitLab and Personal Access Tokens.
  */
 public class PatAuthenticationStrategy implements AuthenticationStrategy {
-
-  private static final String DEFAULT_USER_NAME = "x-token-auth";
 
   private final SecureStorePasswordProvider credentialsProvider;
 
@@ -47,11 +44,8 @@ public class PatAuthenticationStrategy implements AuthenticationStrategy {
   public PatAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
       String namespaceId) {
     PatConfig patConfig = config.getAuth().getPatConfig();
-    String username =
-        Strings.isNullOrEmpty(patConfig.getUsername()) ? DEFAULT_USER_NAME : patConfig.getUsername();
     this.credentialsProvider =
-        new SecureStorePasswordProvider(secureStore, username,
-            patConfig.getPasswordName(), namespaceId);
+        new SecureStorePasswordProvider(secureStore, patConfig.getUsername(), patConfig.getPasswordName(), namespaceId);
   }
 
   @Override
