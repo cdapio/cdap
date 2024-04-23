@@ -75,7 +75,7 @@ public class OAuthStore {
    * @param oauthProvider {@link OAuthProvider} to write
    * @throws OAuthStoreException if the write fails
    */
-  public void writeProvider(OAuthProvider oauthProvider) throws OAuthStoreException {
+  public void writeProvider(OAuthProvider oauthProvider, boolean reuseClientCredentials) throws OAuthStoreException {
     try {
       TransactionRunners.run(transactionRunner, context -> {
         StructuredTable table = context.getTable(TABLE_ID);
@@ -89,10 +89,26 @@ public class OAuthStore {
     }
 
     String namespace = NamespaceId.SYSTEM.getNamespace();
+    String name = getClientCredsKey(oauthProvider.getName());
+
+    // Check for existence of client credential when reusing them.
+    try {
+      if (reuseClientCredentials) {
+        if (secureStore.getMetadata(namespace, name) == null) {
+          throw new OAuthStoreException("Client credential should be present in the secure store", null);
+        }
+        return;
+      }
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + name + "\" does not exist", e);
+    }
+
     try {
       secureStoreManager.put(
           namespace,
-          getClientCredsKey(oauthProvider.getName()),
+          name,
           GSON.toJson(oauthProvider.getClientCredentials()),
           "OAuth client creds",
           Collections.emptyMap());

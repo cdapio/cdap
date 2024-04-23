@@ -44,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -106,7 +107,9 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   @PUT
   @Path(API_VERSION + "/oauth/provider/{provider}")
   public void putOAuthProvider(HttpServiceRequest request, HttpServiceResponder responder,
-                               @PathParam("provider") String oauthProvider) {
+                               @PathParam("provider") String oauthProvider,
+                               @QueryParam("reuse_client_credentials") @DefaultValue("false")
+                               Boolean reuseClientCredentials) {
     try {
       try {
         PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
@@ -115,16 +118,22 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         // Validate URLs
         URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
         URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
+
+        LOG.info("Received putOAuthProvider request with write_client_credentials = {}", reuseClientCredentials);
+        OAuthClientCredentials clientCredentials = null;
+        if (!reuseClientCredentials) {
+          clientCredentials = OAuthClientCredentials.newBuilder()
+                                                    .withClientId(putOAuthProviderRequest.getClientId())
+                                                    .withClientSecret(putOAuthProviderRequest.getClientSecret())
+                                                    .build();
+        }
         OAuthProvider provider = OAuthProvider.newBuilder()
-            .withName(oauthProvider)
-            .withLoginURL(loginURL.toString())
-            .withTokenRefreshURL(tokenRefreshURL.toString())
-            .withClientCredentials(OAuthClientCredentials.newBuilder()
-              .withClientId(putOAuthProviderRequest.getClientId())
-              .withClientSecret(putOAuthProviderRequest.getClientSecret())
-              .build())
-            .build();
-        oauthStore.writeProvider(provider);
+                                              .withName(oauthProvider)
+                                              .withLoginURL(loginURL.toString())
+                                              .withTokenRefreshURL(tokenRefreshURL.toString())
+                                              .withClientCredentials(clientCredentials)
+                                              .build();
+        oauthStore.writeProvider(provider, reuseClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
       } catch (JsonSyntaxException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid JSON: " + e.getMessage(), e);
