@@ -17,8 +17,10 @@
 package io.cdap.cdap.common.twill;
 
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,5 +47,15 @@ public class TwillAppNamesTest {
       // expected
       Assert.assertTrue(e.getMessage().contains("does not match pattern for programs"));
     }
+  }
+
+  @Test
+  public void testAppWithVersion() {
+    String appVersion = UUID.randomUUID().toString();
+    ProgramId expected = new ProgramId("default", "app", appVersion,
+        ProgramType.SPARK, "DataPipelineWorkflow");
+    ProgramId programId = TwillAppNames.fromTwillAppName("spark.default.app.DataPipelineWorkflow",
+        false, appVersion);
+    Assert.assertEquals(programId, expected);
   }
 }
