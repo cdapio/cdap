@@ -17,10 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProtoConstraint;
-import io.cdap.cdap.proto.id.ProgramRunId;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +36,12 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    Map<ProgramRunId, RunRecordDetail> activeRuns = context.getActiveRuns(schedule.getProgramId());
-    if (activeRuns.size() >= maxConcurrency) {
-      LOG.debug("Skipping run of program {} from schedule {} because there are {} active runs.",
-          schedule.getProgramId(), schedule.getName(), activeRuns.size());
+    int numActiveRuns = context.getProgramActiveRunsCount(
+        schedule.getProgramId().getProgramReference(), maxConcurrency + 1);
+    if (numActiveRuns >= maxConcurrency) {
+      LOG.debug("Skipping run of program {} from schedule {} "
+              + "because there are at least {} active runs.",
+          schedule.getProgramId(), schedule.getName(), numActiveRuns);
       return notSatisfied(context);
     }
     return ConstraintResult.SATISFIED;

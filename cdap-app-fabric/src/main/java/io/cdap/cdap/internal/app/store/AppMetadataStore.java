@@ -1788,6 +1788,36 @@ public class AppMetadataStore {
   }
 
   /**
+   * Get number of active runs of the given program irrespective of the versions of the programs.
+   * Active runs means program run with status PENDING, STARTING, RUNNING, SUSPENDED or STOPPING.
+   *
+   * @param programRef {@link ProgramReference} of the given program
+   * @return int number of active runs
+   */
+  public int getProgramActiveRunsCount(ProgramReference programRef)
+      throws IOException {
+    return getProgramActiveRunsCount(programRef, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Get number of active runs of the given program irrespective of the versions of the programs.
+   * Active runs means program run with status PENDING, STARTING, RUNNING, SUSPENDED or STOPPING.
+   * If the number of active runs is higher than limit, then the limit value is returned.
+   *
+   * @param programRef {@link ProgramReference} of the given program
+   * @param limit int value acting as an upper bound for the active runs count, useful when we
+   *        only want to check if the number of active runs is lower than the limit. It ensures
+   *        that we do not scan more than limit number of active run records.
+   * @return int number of active runs
+   */
+  public int getProgramActiveRunsCount(ProgramReference programRef, int limit)
+      throws IOException {
+    AtomicInteger result = new AtomicInteger();
+    scanProgramActiveRuns(programRef, r -> result.getAndIncrement(), limit);
+    return result.get();
+  }
+
+  /**
    * Get active runs in the given program, active runs means program run with status STARTING,
    * PENDING, RUNNING or SUSPENDED.
    *
@@ -1815,6 +1845,27 @@ public class AppMetadataStore {
 
     try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(Range.singleton(prefix),
         null, null, Integer.MAX_VALUE)) {
+      iterator.forEachRemaining(consumer);
+    }
+  }
+
+  /**
+   * Scans active runs of the given program irrespective of the versions of the programs.
+   * Active runs means program run with status PENDING, STARTING, RUNNING, SUSPENDED or STOPPING.
+   * This method is similar to the {@link #scanActiveRuns(ProgramId, Consumer)},
+   * but takes a {@link ProgramReference} instead.
+   *
+   * @param programRef {@link ProgramReference} given program
+   * @param consumer a {@link Consumer} for processing the {@link RunRecordDetail} of each
+   *     active run.
+   * @param limit int value to limit the number of records scanned
+   */
+  public void scanProgramActiveRuns(ProgramReference programRef,
+      Consumer<RunRecordDetail> consumer, int limit) throws IOException {
+    List<Field<?>> prefix = getRunRecordProgramRefPrefix(TYPE_RUN_RECORD_ACTIVE, programRef);
+
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(Range.singleton(prefix),
+        null, null, limit)) {
       iterator.forEachRemaining(consumer);
     }
   }
@@ -2851,35 +2902,39 @@ public class AppMetadataStore {
     return fields;
   }
 
+  private List<Field<?>> getRunRecordProgramRefPrefix(String status,
+      ProgramReference programReference) {
+    return  getRunRecordProgramPrefix(status, programReference, null);
+  }
+
   private List<Field<?>> getRunRecordProgramPrefix(String status, @Nullable ProgramId programId) {
-    List<Field<?>> fields = getRunRecordStatusPrefix(status);
     if (programId == null) {
+      return getRunRecordStatusPrefix(status);
+    }
+
+    return getRunRecordProgramPrefix(status, programId.getProgramReference(),
+        programId.getVersion());
+  }
+  
+  private List<Field<?>> getRunRecordProgramPrefix(String status,
+      @Nullable ProgramReference programRef, @Nullable String version) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
+    if (programRef == null) {
       return fields;
     }
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
-        programId.getNamespace()));
+        programRef.getNamespace()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD,
-        programId.getApplication()));
-    fields.add(
-        Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, programId.getVersion()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD,
-        programId.getType().name()));
-    fields.add(
-        Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programId.getProgram()));
-    return fields;
-  }
+        programRef.getApplication()));
 
-  private List<Field<?>> getRunRecordProgramRefPrefix(String status,
-      ProgramReference programReference) {
-    List<Field<?>> fields = getRunRecordStatusPrefix(status);
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
-        programReference.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD,
-        programReference.getApplication()));
+    if (version != null) {
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, version));
+    }
+
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD,
-        programReference.getType().name()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD,
-        programReference.getProgram()));
+        programRef.getType().name()));
+    fields.add(
+        Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programRef.getProgram()));
     return fields;
   }
 
