@@ -46,15 +46,15 @@ import org.junit.Test;
  */
 public class ConcurrencyConstraintTest {
   private static final NamespaceId TEST_NS = new NamespaceId("ConcurrencyConstraintTest");
-  private static final ApplicationId APP_ID = TEST_NS.app("app1");
+  private static final ApplicationId APP_ID = TEST_NS.app("app1", "non-default-test-version");
   private static final ArtifactId ARTIFACT_ID = TEST_NS.artifact("test", "1.0").toApiArtifactId();
   private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
-  
+
   private int sourceId;
-  
+
   private void setStartAndRunning(Store store, ProgramRunId id) {
     setStartAndRunning(store, id, EMPTY_MAP, EMPTY_MAP);
 
