@@ -404,7 +404,13 @@ public class AppMetadataStore {
             Range.Bound.EXCLUSIVE),
         Range.create(fields, Range.Bound.EXCLUSIVE, null,
             Range.Bound.INCLUSIVE));
-    return getApplicationSpecificationTable().count(ranges);
+    // Count the latest version of app,
+    // we treat latest=["true",null] as latest for backward compatibility.
+    // Prior to 6.8, all versions of an application were returned in the list apps api, not just the latest version.
+    Collection<Field<?>> filterIndexes =
+        ImmutableList.of(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null),
+            Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+    return getApplicationSpecificationTable().count(ranges, filterIndexes);
   }
 
   /**
