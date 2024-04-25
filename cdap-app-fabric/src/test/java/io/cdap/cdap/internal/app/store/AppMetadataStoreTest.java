@@ -1065,6 +1065,21 @@ public abstract class AppMetadataStoreTest {
                                new ChangeDetail(null, null, null, creationTimeMillis), null);
       });
     }
+
+    // create new version of the application and mark older version as false
+    for (int i = 0; i < 20; i++) {
+      String appName = "test" + i;
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName,
+            ApplicationId.DEFAULT_VERSION, appSpec,
+            new ChangeDetail(null, null, null, creationTimeMillis), null, false);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName,
+            ApplicationId.DEFAULT_VERSION + "1", appSpec,
+            new ChangeDetail(null, null, null, creationTimeMillis), null);
+      });
+    }
+
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
       long count =  store.getApplicationCount();

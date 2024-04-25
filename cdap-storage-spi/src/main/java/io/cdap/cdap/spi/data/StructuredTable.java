@@ -299,4 +299,20 @@ public interface StructuredTable extends Closeable {
    * @throws IOException if there is an error reading from the table
    */
   long count(Collection<Range> keyRanges) throws IOException;
+
+  /**
+   * Get the number of records from the table matching the key range of specified
+   * index field.
+   *
+   * @param keyRanges key ranges of the rows to count
+   * @param filterIndexes the index to filter upon
+   * @return a {@link CloseableIterator} of rows
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
+   *     indexed column, or the type does not match the schema
+   * @throws IOException if there is an error scanning the table
+   */
+  default long count(Collection<Range> keyRanges,
+      Collection<Field<?>> filterIndexes) throws InvalidFieldException, IOException {
+    throw new UnsupportedOperationException("No supported implementation.");
+  }
 }

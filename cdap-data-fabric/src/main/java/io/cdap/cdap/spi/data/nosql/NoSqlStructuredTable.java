@@ -490,6 +490,62 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public long count(Collection<Range> keyRanges,
+      Collection<Field<?>> filterIndexes) throws IOException {
+
+    filterIndexes.forEach(fieldValidator::validateField);
+    if (!schema.isIndexColumns(
+        filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndexes,
+          "are not all indexed columns");
+    }
+
+    LOG.trace("Table {}: count with ranges {}", schema.getTableId(), keyRanges);
+    long count = 0;
+    // Instead of scanning ranges one by one, we call multiScan,
+    // which can deduplicate and sort the result
+    try (CloseableIterator<StructuredRow> iterator = multiScan(keyRanges, Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        for (Field<?> field : filterIndexes) {
+          boolean match = fieldMatch(field, row);
+          if (match) {
+            count++;
+            break;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  private boolean fieldMatch(Field<?> filterField, StructuredRow row) {
+    switch (filterField.getFieldType()) {
+      case INTEGER:
+        return Objects.equals(row.getInteger(filterField.getName()),
+            filterField.getValue());
+      case LONG:
+        return Objects.equals(row.getLong(filterField.getName()), filterField.getValue());
+      case FLOAT:
+        return Objects.equals(row.getFloat(filterField.getName()), filterField.getValue());
+      case DOUBLE:
+        return Objects.equals(row.getDouble(filterField.getName()),
+            filterField.getValue());
+      case STRING:
+        return Objects.equals(row.getString(filterField.getName()),
+            filterField.getValue());
+      case BYTES:
+        return Arrays.equals(row.getBytes(filterField.getName()),
+            (byte[]) filterField.getValue());
+      case BOOLEAN:
+        return Objects.equals(row.getBoolean(filterField.getName()),
+            filterField.getValue());
+      default:
+        throw new InvalidFieldException(schema.getTableId(), filterField.getName());
+    }
+  }
+
+  @Override
   public void close() throws IOException {
     table.close();
   }
