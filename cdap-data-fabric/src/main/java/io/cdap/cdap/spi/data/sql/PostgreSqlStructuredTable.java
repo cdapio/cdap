@@ -583,13 +583,43 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   @Override
   public long count(Collection<Range> keyRanges) throws IOException {
     LOG.trace("Table {}: count with ranges {}", tableSchema.getTableId(), keyRanges);
-    String sql = getCountStatement(keyRanges);
+    String sql = getCountStatement(keyRanges, Collections.emptyList());
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.setFetchSize(fetchSize);
-      setStatementFieldByRange(keyRanges, statement);
+      setStatementFieldByRange(keyRanges, statement, 1);
       LOG.trace("SQL statement: {}", statement);
 
       statement.executeQuery();
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (!resultSet.next()) {
+          LOG.warn("Failed to get count from table {}", tableSchema.getTableId().getName());
+          return 0;
+        }
+        return resultSet.getLong(1);
+      }
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to get count from table %s",
+          tableSchema.getTableId().getName()), e);
+    }
+  }
+
+  @Override
+  public long count(Collection<Range> keyRanges,
+      Collection<Field<?>> filterIndexes) throws IOException {
+    LOG.trace("Table {}: count with ranges {}", tableSchema.getTableId(), keyRanges);
+    String sql = getCountStatement(keyRanges, filterIndexes);
+    // Since in getCountStatement we directly set the NULL checks, we need to skip the null fields
+    filterIndexes = filterIndexes.stream().filter(f -> f.getValue() != null)
+        .collect(Collectors.toList());
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+      statement.setFetchSize(fetchSize);
+      int nextIndex = setStatementFieldByRange(keyRanges, statement, 1);
+      setFields(statement, filterIndexes, nextIndex);
+
+      LOG.trace("SQL statement: {}", statement);
+      statement.executeQuery();
+
       try (ResultSet resultSet = statement.executeQuery()) {
         if (!resultSet.next()) {
           LOG.warn("Failed to get count from table {}", tableSchema.getTableId().getName());
@@ -799,13 +829,15 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   /**
    * Sets the {@link PreparedStatement} arguments by the key
    * {@link Collection}&lt;{@link Range}&gt;}.
+   *
+   * @return the next argument index that have been set up to
    */
-  private void setStatementFieldByRange(Collection<Range> keyRanges,
-      PreparedStatement statement) throws SQLException, InvalidFieldException {
-    int nextIndex = 1;
+  private int setStatementFieldByRange(Collection<Range> keyRanges,
+      PreparedStatement statement, int nextIndex) throws SQLException, InvalidFieldException {
     for (Range keyRange : keyRanges) {
       nextIndex = setStatementFieldByRange(keyRange, statement, nextIndex);
     }
+    return nextIndex;
   }
 
 
@@ -1007,7 +1039,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     return statement.toString();
   }
 
-  private String getCountStatement(Collection<Range> ranges) {
+  private String getCountStatement(Collection<Range> ranges, Collection<Field<?>> filterIndexes) {
     StringBuilder statement = new StringBuilder("SELECT COUNT(*) FROM ").append(
         tableSchema.getTableId().getName());
     boolean whereAdded = false;
@@ -1018,6 +1050,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
         if (!whereAdded) {
           // first WHERE condition
           statement.append(" WHERE ");
+          if (!filterIndexes.isEmpty()) {
+            statement.append("(");
+          }
           whereAdded = true;
         } else {
           // subsequent WHERE conditions
@@ -1026,6 +1061,18 @@ public class PostgreSqlStructuredTable implements StructuredTable {
         appendRange(statement, range);
       }
     }
+
+    if (!filterIndexes.isEmpty()) {
+      // only add AND if there was range clause applied
+      if (!ranges.isEmpty()) {
+        statement.append(") AND ");
+      } else {
+        // first WHERE condition
+        statement.append(" WHERE ");
+      }
+      statement.append(getIndexesFilterClause(filterIndexes));
+    }
+
     return statement.toString();
   }
 
