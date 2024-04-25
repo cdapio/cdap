@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Class which contains common logic about retry logic
+ * Class which contains common logic about retry logic.
  */
 abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator {
 
@@ -148,7 +148,8 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
               + 1)));
           delay = Math.min(delay, RETRY_MAX_DELAY_MILLIS);
         } catch (IOException e) {
-          throw new InvalidMacroException(e);
+          throw new RuntimeException("Failed to evaluate the macro function '" + functionName
+              + "' with args " + Arrays.asList(args), e);
         }
       }
     } catch (InterruptedException e) {
