@@ -98,7 +98,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    * If true, pod will restart once an operation finish its execution.
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
-  private final int requestLimit;
+  private final int concurrentRequestLimit;
 
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
@@ -119,9 +119,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
     if (enableUserCodeIsolationEnabled) {
       // Run only one request at a time in user code isolation mode.
-      this.requestLimit = 1;
+      this.concurrentRequestLimit = 1;
     } else {
-      this.requestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
+      this.concurrentRequestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
     }
 
     // Restart the service to clean up and re-claim resources after user code
@@ -171,19 +171,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       return;
     }
     int waitTime = (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
-
-    int taskDeadlineSeconds = cConf.getInt(
-        TaskWorker.TASK_EXECUTION_DEADLINE_SECOND,
-        0);
-
-    if (taskDeadlineSeconds < 0) {
-      LOG.info(
-          "Task deadline is {}, using {} value {} as the deadline instead.",
-          taskDeadlineSeconds,
-          Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
-      taskDeadlineSeconds = duration;
-    }
-    int finalTaskDeadlineSeconds = taskDeadlineSeconds;
+    int finalTaskDeadlineSeconds = calculateFinalTaskDeadlineSeconds(duration);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
     Threads.createDaemonThreadFactory("task-worker-restart"));
@@ -208,7 +196,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       }
       stopper.accept("");
       executorService.shutdown();
-    }, waitTime, waitTime, TimeUnit.SECONDS);
+    }, waitTime, finalTaskDeadlineSeconds, TimeUnit.SECONDS);
   }
 
   /**
@@ -224,7 +212,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
     }
-    if (runningRequestCount.incrementAndGet() > requestLimit) {
+    if (runningRequestCount.incrementAndGet() > concurrentRequestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       runningRequestCount.decrementAndGet();
       return;
@@ -323,6 +311,28 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
     return GSON.toJson(basicThrowable);
+  }
+
+  /**
+   * Compute the final task Dead line in Seconds where if the config {@TaskWorker.TASK_EXECUTION_DEADLINE_SECOND}
+   * is less than 0 which is not valid then use the duration instead.
+   *
+   * @param duration
+   * @return
+   */
+  private int calculateFinalTaskDeadlineSeconds(int duration) {
+    int taskDeadlineSeconds = cConf.getInt(
+      TaskWorker.TASK_EXECUTION_DEADLINE_SECOND,
+      0);
+
+    if (taskDeadlineSeconds < 0) {
+      LOG.info(
+        "Task deadline is {}, using {} value {} as the deadline instead.",
+        taskDeadlineSeconds,
+        Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
+      taskDeadlineSeconds = duration;
+    }
+    return taskDeadlineSeconds;
   }
 
   /**
