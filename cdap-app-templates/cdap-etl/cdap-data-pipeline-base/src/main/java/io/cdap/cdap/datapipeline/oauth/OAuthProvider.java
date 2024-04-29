@@ -15,6 +15,7 @@
 package io.cdap.cdap.datapipeline.oauth;
 
 import com.google.common.base.Preconditions;
+import javax.annotation.Nullable;
 
 /**
  * OAuth provider POJO.
@@ -23,9 +24,13 @@ public class OAuthProvider {
   private final String name;
   private final String loginURL;
   private final String tokenRefreshURL;
+  @Nullable
   private final OAuthClientCredentials clientCreds;
 
-  public OAuthProvider(String name, String loginURL, String tokenRefreshURL, OAuthClientCredentials clientCreds) {
+  public OAuthProvider(String name,
+                       String loginURL,
+                       String tokenRefreshURL,
+                       @Nullable OAuthClientCredentials clientCreds) {
     this.name = name;
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
@@ -44,6 +49,7 @@ public class OAuthProvider {
     return tokenRefreshURL;
   }
 
+  @Nullable
   public OAuthClientCredentials getClientCredentials() {
     return clientCreds;
   }
@@ -78,7 +84,7 @@ public class OAuthProvider {
       return this;
     }
 
-    public Builder withClientCredentials(OAuthClientCredentials clientCredentials) {
+    public Builder withClientCredentials(@Nullable OAuthClientCredentials clientCredentials) {
       this.clientCreds = clientCredentials;
       return this;
     }
@@ -87,7 +93,6 @@ public class OAuthProvider {
       Preconditions.checkNotNull(name, "OAuth provider name missing");
       Preconditions.checkNotNull(loginURL, "Login URL missing");
       Preconditions.checkNotNull(tokenRefreshURL, "Token refresh URL missing");
-      Preconditions.checkNotNull(clientCreds, "OAuth client credentials missing");
       return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds);
     }
   }

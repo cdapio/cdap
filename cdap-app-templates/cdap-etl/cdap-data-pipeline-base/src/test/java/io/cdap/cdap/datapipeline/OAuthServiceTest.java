@@ -53,6 +53,105 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   @Test
+  public void testCreateProviderWithClientCredentialsMissing() throws IOException {
+    // Attempt to create provider with missing client credentials should fail with 400 status code.
+    String loginURL = "http://www.example.com/login";
+    String tokenRefreshURL = "http://www.example.com/token";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    HttpResponse createResponse = makePutCall("provider/testprovider", request);
+    Assert.assertEquals(400, createResponse.getResponseCode());
+  }
+
+  @Test
+  public void testCreateProviderWithReuseClientCredentialsTrue() throws IOException {
+    // Attempt to create provider with no client credentials and 'reuse_client_credentials' query
+    // param 'true' should succeed with 200 status code.
+    String loginURL = "http://www.example.com/login";
+    String tokenRefreshURL = "http://www.example.com/token";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    HttpResponse createResponse = makePutCall("provider/testprovider10?reuse_client_credentials=true", request);
+    Assert.assertEquals(500, createResponse.getResponseCode());
+  }
+
+  @Test
+  public void testCreateProviderReuseCredentialsWithReuseClientCredentialsTrue() throws IOException {
+    // Attempt to create provider with client credentials.
+    String loginURL = "http://www.example.com/login20";
+    String tokenRefreshURL = "http://www.example.com/token20";
+    String clientId = "clientid";
+    String clientSecret = "clientsecret";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    HttpResponse createResponse = makePutCall("provider/testprovider20", request);
+    Assert.assertEquals(200, createResponse.getResponseCode());
+
+    // Attempt to update provider with no client credentials and 'reuse_client_credentials' query
+    // param 'true' should succeed with 200 status code.
+    loginURL = "http://www.example.com/login21";
+    tokenRefreshURL = "http://www.example.com/token21";
+    request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    createResponse = makePutCall("provider/testprovider20?reuse_client_credentials=true", request);
+    Assert.assertEquals(200, createResponse.getResponseCode());
+  }
+
+  @Test
+  public void testCreateProviderWithReuseClientCredentialsFalse() throws IOException {
+    // Attempt to create provider with missing client credentials and 'reuse_client_credentials'
+    // query param 'false' should fail with 400 status code.
+    String loginURL = "http://www.example.com/login30";
+    String tokenRefreshURL = "http://www.example.com/token30";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    HttpResponse createResponse = makePutCall("provider/testprovider30?reuse_client_credentials=false", request);
+    Assert.assertEquals(400, createResponse.getResponseCode());
+  }
+
+  @Test
+  public void testGetAuthURLForMissingClientCredentials() throws IOException {
+    // Attempt to create provider with missing client credentials and 'reuse_client_credentials'
+    // query param 'true'.
+    String loginURL = "http://www.example.com/login40";
+    String tokenRefreshURL = "http://www.example.com/token40";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    HttpResponse createResponse = makePutCall("provider/testprovider40?reuse_client_credentials=false", request);
+    Assert.assertEquals(400, createResponse.getResponseCode());
+
+    // Get OAuth login URL should fail with 404 as client credentials are not configured.
+    HttpResponse getResponse = makeGetCall("provider/testprovider40/authurl");
+    Assert.assertEquals(404, getResponse.getResponseCode());
+  }
+
+  @Test
+  public void testGetAuthURLForReusedClientCredentials() throws IOException {
+    // Attempt to create provider with client credentials.
+    String loginURL = "http://www.example.com/login50";
+    String tokenRefreshURL = "http://www.example.com/token50";
+    String clientId = "clientid";
+    String clientSecret = "clientsecret";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    HttpResponse createResponse = makePutCall("provider/testprovider50", request);
+    Assert.assertEquals(200, createResponse.getResponseCode());
+
+    // Grab OAuth login URL to verify write succeeded.
+    HttpResponse getResponse = makeGetCall("provider/testprovider50/authurl");
+    Assert.assertEquals(200, getResponse.getResponseCode());
+    String authURL = getResponse.getResponseBodyAsString();
+    Assert.assertEquals("http://www.example.com/login50?client_id=clientid&redirect_uri=null", authURL);
+
+    // Attempt to update provider with with missing credentials and 'reuse_client_credentials' query
+    // param 'true' should succeed with 200 status code.
+    loginURL = "http://www.example.com/login51";
+    tokenRefreshURL = "http://www.example.com/token51";
+    request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    createResponse = makePutCall("provider/testprovider50?reuse_client_credentials=true", request);
+    Assert.assertEquals(200, createResponse.getResponseCode());
+
+    // Grab OAuth login URL to verify write succeeded.
+    getResponse = makeGetCall("provider/testprovider50/authurl");
+    Assert.assertEquals(200, getResponse.getResponseCode());
+    authURL = getResponse.getResponseBodyAsString();
+    Assert.assertEquals("http://www.example.com/login51?client_id=clientid&redirect_uri=null", authURL);
+  }
+
+  @Test
   public void testCreateProviderBadLoginURL() throws IOException {
     // Attempt to create provider
     String loginURL = "badurl";
