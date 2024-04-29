@@ -167,7 +167,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     int lowerBound = (int) (duration - duration * DURATION_FRACTION);
     int upperBound = (int) (duration + duration * DURATION_FRACTION);
 
-    if (lowerBound <= 0) {
+    if (duration <= 0) {
       return;
     }
     int waitTime = (new Random()).nextInt(upperBound - lowerBound) + lowerBound;

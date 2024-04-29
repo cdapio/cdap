@@ -5328,7 +5328,7 @@
     <value>true</value>
     <description>
       Whether user code isolation is enabled in task worker. When enabled, task workers will ensure
-      multiple requests that run user code are not executed concurrently.
+      only 1 request is accepted at max and later after the task worker is restarted it can take next request.
     </description>
   </property>
 
