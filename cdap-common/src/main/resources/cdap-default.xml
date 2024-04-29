@@ -6008,6 +6008,14 @@
   </property>
 
   <property>
+    <name>feature.wrangler.kryo.serialization.enabled</name>
+    <value>false</value>
+    <description>
+      If true, wrangler will serialize rows using kryo.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
