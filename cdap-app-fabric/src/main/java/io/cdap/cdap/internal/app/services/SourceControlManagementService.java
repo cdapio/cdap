@@ -23,6 +23,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -35,9 +36,11 @@ import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
+import io.cdap.cdap.internal.app.store.RepositorySourceControlMetadataStore;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
@@ -67,6 +70,7 @@ import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -79,6 +83,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,6 +160,11 @@ public class SourceControlManagementService {
   private NamespaceTable getNamespaceTable(StructuredTableContext context)
       throws TableNotFoundException {
     return new NamespaceTable(context);
+  }
+
+  private RepositorySourceControlMetadataStore getRepoSourceControlMetadataStore(
+      StructuredTableContext context) {
+    return RepositorySourceControlMetadataStore.create(context);
   }
 
   /**
@@ -376,20 +386,68 @@ public class SourceControlManagementService {
   }
 
   /**
-   * The method to list all applications found in linked repository.
+   * Scans repository source control metadata and processes it in batches.
    *
-   * @return {@link RepositoryAppsResponse}
-   * @throws RepositoryNotFoundException if the repository config is not found
-   * @throws AuthenticationConfigException if git auth config is not found
-   * @throws SourceControlException if {@link SourceControlOperationRunner} fails to list
-   *     applications
+   * @param request     The request specifying the metadata to scan.
+   * @param txBatchSize The transaction batch size for processing metadata in each iteration.
+   * @param consumer    The consumer to process the scanned repository metadata records.
+   * @return True if the page limit has reached, false otherwise.
+   * @throws NotFoundException             If the requested repository metadata is not found.
+   * @throws AuthenticationConfigException If an authentication configuration error occurs.
+   * @throws IOException                   If an I/O error occurs during the scanning process.
    */
-  public RepositoryAppsResponse listApps(NamespaceId namespace) throws NotFoundException,
-      AuthenticationConfigException {
-    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
+  public boolean scanRepoMetadata(ScanSourceControlMetadataRequest request, int txBatchSize,
+      Consumer<SourceControlMetadataRecord> consumer) throws NotFoundException,
+      AuthenticationConfigException, IOException {
+    NamespaceId namespaceId = new NamespaceId(request.getNamespace());
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
-    return sourceControlOperationRunner.list(new NamespaceRepository(namespace, repoConfig));
+    RepositoryConfig repoConfig = getRepositoryMeta(namespaceId).getConfig();
+    // TODO(CDAP-20993): List API is used here for testing. It will be moved to a separate background job in the next PR
+    RepositoryAppsResponse repositoryAppsResponse = sourceControlOperationRunner.list(
+        new NamespaceRepository(namespaceId, repoConfig));
+    LOG.debug("Successfully received apps in namespace {} from repository : response: {}",
+        namespaceId,
+        repositoryAppsResponse);
+    // Cleaning up the repo source control metadata table
+    HashSet<String> repoFileNames = new HashSet<>();
+    for (RepositoryApp repoApp : repositoryAppsResponse.getApps()) {
+      repoFileNames.add(repoApp.getName());
+    }
+    TransactionRunners.run(transactionRunner, context -> {
+      getRepoSourceControlMetadataStore(context).cleanupRepoSourceControlMeta(
+          namespaceId.getNamespace(), repoFileNames);
+    });
+    // Updating the namespace and repo source control metadata table
+    for (RepositoryApp repoApp : repositoryAppsResponse.getApps()) {
+      store.updateSourceControlMeta(
+          new ApplicationReference(request.getNamespace(),
+              repoApp.getName()), repoApp.getFileHash());
+    }
+    // Getting repo files
+    String lastKey = request.getScanAfter();
+    int currentLimit = request.getLimit();
+
+    while (currentLimit > 0) {
+      int maxLimit = Math.min(txBatchSize, currentLimit);
+      ScanSourceControlMetadataRequest batchRequest = ScanSourceControlMetadataRequest
+          .builder(request)
+          .setScanAfter(lastKey)
+          .setLimit(maxLimit)
+          .build();
+
+      request = batchRequest;
+
+      int count = TransactionRunners.run(transactionRunner, context -> {
+        return store.scanRepositorySourceControlMetadata(batchRequest, consumer);
+      }, IOException.class);
+
+      if (count < maxLimit) {
+        return false;
+      }
+      currentLimit -= txBatchSize;
+    }
+    return true;
   }
 
   /**
