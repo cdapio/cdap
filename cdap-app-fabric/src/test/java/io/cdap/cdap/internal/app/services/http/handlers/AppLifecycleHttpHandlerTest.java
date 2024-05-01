@@ -1060,7 +1060,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     apps = getAppList(TEST_NAMESPACE2);
     Assert.assertEquals(2, apps.size());
 
-
     //get and verify app details in testnamespace1
     ApplicationDetail applicationDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());

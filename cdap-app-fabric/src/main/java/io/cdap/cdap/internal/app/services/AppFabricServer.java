@@ -37,6 +37,7 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.features.Feature;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataMigrationService;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
@@ -95,6 +96,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final RepositoryCleanupService repositoryCleanupService;
   private final OperationNotificationSubscriberService operationNotificationSubscriberService;
+  private final SourceControlMetadataMigrationService sourceControlMetadataMigrationService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -134,7 +136,8 @@ public class AppFabricServer extends AbstractIdleService {
       RunRecordTimeToLiveService runRecordTimeToLiveService,
       SourceControlOperationRunner sourceControlOperationRunner,
       RepositoryCleanupService repositoryCleanupService,
-      OperationNotificationSubscriberService operationNotificationSubscriberService) {
+      OperationNotificationSubscriberService operationNotificationSubscriberService,
+      SourceControlMetadataMigrationService sourceControlMetadataMigrationService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -163,6 +166,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.repositoryCleanupService = repositoryCleanupService;
     this.operationNotificationSubscriberService = operationNotificationSubscriberService;
+    this.sourceControlMetadataMigrationService = sourceControlMetadataMigrationService;
   }
 
   /**
@@ -194,7 +198,8 @@ public class AppFabricServer extends AbstractIdleService {
         runRecordTimeToLiveService.start(),
         sourceControlOperationRunner.start(),
         repositoryCleanupService.start(),
-        operationNotificationSubscriberService.start()
+        operationNotificationSubscriberService.start(),
+        sourceControlMetadataMigrationService.start()
     ));
     Futures.allAsList(futuresList).get();
 
@@ -256,6 +261,7 @@ public class AppFabricServer extends AbstractIdleService {
     credentialProviderService.stopAndWait();
     namespaceCredentialProviderService.stopAndWait();
     operationNotificationSubscriberService.stopAndWait();
+    sourceControlMetadataMigrationService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
