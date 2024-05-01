@@ -296,7 +296,7 @@ public class SourceControlManagementService {
     SourceControlMeta sourceControlMeta = new SourceControlMeta(appMeta.getFileHash(),
         pushResponse.getCommitId(), clock.instant());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
-    store.setAppSourceControlMeta(appId, sourceControlMeta);
+    store.setAppSourceControlMeta(appId.getAppReference(), sourceControlMeta);
 
     return pushResponse;
   }

@@ -521,6 +521,37 @@ public class AppMetadataStore {
   }
 
   /**
+   * Gets the {@link SourceControlMeta} for all applications' latest version.
+   * This is different from scanApplications as it returns scm meta stored in ApplicationSpecification table,
+   * instead of NamespaceSourceControlMetadata table.
+   * This is used by {@link io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataMigrationService} to
+   * migrate scm meta from NamespaceSourceControlMetadata table to ApplicationSpecification table.
+   *
+   * @return a {@link Map} from {@link ApplicationReference} to the corresponding {@link SourceControlMeta}.
+   *
+   * @throws IOException if failed to read metadata
+   */
+  public Map<ApplicationReference, SourceControlMeta> getAllSourceControlMeta()
+      throws IOException {
+    Map<ApplicationReference, SourceControlMeta> map = new HashMap<>();
+    Field<?> filter = Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true);
+
+    try (CloseableIterator<StructuredRow> rows =
+        getApplicationSpecificationTable().scan(filter)) {
+      while (rows.hasNext()) {
+        StructuredRow row = rows.next();
+        SourceControlMeta sourceControl = GSON.fromJson(
+            row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
+            SourceControlMeta.class);
+        String appName = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD);
+        String namespace = row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
+        map.put(new ApplicationReference(namespace, appName), sourceControl);
+      }
+    }
+    return map;
+  }
+
+  /**
    * Update an applications with provided application Source Control Metadata.
    *
    * @param appId the applications ID.
