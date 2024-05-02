@@ -41,6 +41,7 @@ import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.operation.OperationMeta;
 import io.cdap.cdap.proto.operation.OperationRun;
+import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
@@ -349,6 +350,14 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       RepositoryConfigRequest repoRequest = parseBody(request, RepositoryConfigRequest.class);
       if (repoRequest == null || repoRequest.getConfig() == null) {
         throw new RepositoryConfigValidationException("Repository configuration must be specified.");
+      }
+      // Only allow gitlab and bitbucket if feature flag is enabled
+      if (!Feature.SOURCE_CONTROL_MANAGEMENT_GITLAB_BITBUCKET.isEnabled(featureFlagsProvider)) {
+        if (repoRequest.getConfig().getProvider() != Provider.GITHUB) {
+          throw new BadRequestException(
+              String.format("Provider %s is not supported", repoRequest.getConfig().getProvider())
+          );
+        }
       }
       repoRequest.getConfig().validate();
       return repoRequest;
