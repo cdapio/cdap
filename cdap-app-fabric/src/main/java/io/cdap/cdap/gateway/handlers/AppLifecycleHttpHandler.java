@@ -303,7 +303,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    * @param pageToken    A token for paginating through results.
    * @param pageSize     The size of each page for pagination.
    * @param sortOrder    The sort order for the metadata.
-   * @param sortOn  The field on which to sort the metadata.
+   * @param sortOn       The field on which to sort the metadata.
    * @param filter       A filter string for filtering the metadata.
    *                     filter query format - "name=&lt;name-filter&gt; AND syncStatus=&lt;SYNCED/UNSYNCED&gt;".
    * @throws Exception If an error occurs during the metadata retrieval process.

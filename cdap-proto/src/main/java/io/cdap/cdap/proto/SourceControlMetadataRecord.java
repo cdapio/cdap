@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.proto;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -32,6 +33,7 @@ public class SourceControlMetadataRecord {
   private final String specificationHash;
   @Nullable
   private final String commitId;
+  @SerializedName("lastSyncedAt")
   @Nullable
   private final Long lastModified;
   private final Boolean isSynced;
