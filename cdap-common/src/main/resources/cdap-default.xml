@@ -6009,7 +6009,7 @@
 
   <property>
     <name>feature.wrangler.kryo.serialization.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       If true, wrangler will serialize rows using kryo.
     </description>
@@ -6087,6 +6087,13 @@
     <description>
       If true, source control management bulk sync operations for multiple
       pipelines will be enabled.
+    </description>
+  </property>
+  <property>
+    <name>feature.source.control.management.gitlab.bitbucket.enabled</name>
+    <value>true</value>
+    <description>
+      Enable gitlab and bitbucket integration
     </description>
   </property>
   <property>
