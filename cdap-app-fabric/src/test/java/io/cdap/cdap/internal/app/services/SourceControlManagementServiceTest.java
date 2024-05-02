@@ -599,7 +599,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     gotRecords.clear();
     request = ScanSourceControlMetadataRequest.builder().setNamespace(Namespace.DEFAULT.getId())
         .setSortOrder(
-            SortOrder.DESC).setSortOn(SortBy.LAST_SYNCED_DATE).build();
+            SortOrder.DESC).setSortOn(SortBy.LAST_SYNCED_AT).build();
     sourceControlService.scanRepoMetadata(request, batchSize, gotRecords::add);
     expectedRecords = insertedRecords.stream()
         .sorted(Comparator.nullsFirst(

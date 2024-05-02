@@ -376,7 +376,7 @@ public class SourceControlManagementService {
     PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(
         new PullAppOperationRequest(appRef, repoConfig));
 
-    if (latestMeta != null
+    if (latestMeta != null && latestMeta.getFileHash() != null
         && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
       throw new NoChangesToPullException(
           String.format("Pipeline deployment was not successful because there is "
