@@ -26,7 +26,6 @@ import io.cdap.cdap.common.twill.AbortOnTimeoutEventHandler;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.logging.LoggingUtil;
-import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -102,8 +101,6 @@ public class MasterTwillApplication implements TwillApplication {
 
     prepareLogSaverResources(tempDir, containerCConf,
         runnableLocalizeResources.get(Constants.Service.LOGSAVER), extraClassPath);
-
-    prepareHBaseDDLExecutorResources(tempDir, containerCConf);
 
     Path cConfPath = saveCConf(containerCConf, Files.createTempFile(tempDir, "cConf", ".xml"));
     Path hConfPath = saveHConf(hConf, Files.createTempFile(tempDir, "hConf", ".xml"));

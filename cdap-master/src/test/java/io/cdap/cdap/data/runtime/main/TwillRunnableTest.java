@@ -34,7 +34,7 @@ public class TwillRunnableTest {
   public void testDatasetOpExecutorTwillRunnableInjector() {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
         new Configuration(), "");
-    Store store = injector.getInstance(Store.class);MapReduceProgramRunnerTest
+    Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     Assert.assertNotNull(namespaceQueryAdmin);

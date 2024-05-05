@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import io.cdap.cdap.logging.appender.kafka.LogPartitionType;
 import io.cdap.cdap.proto.id.EntityId;
 import java.net.InetAddress;
@@ -71,24 +70,12 @@ class ConfigurationCheck extends AbstractMasterCheck {
     checkLogPartitionKey(problemKeys);
     checkProgramConfigurations(problemKeys);
     checkPruningAndReplication(problemKeys);
-    checkHBaseDDLExtension(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException(
           "Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
     }
     LOG.info("  Configuration successfully verified.");
-  }
-
-  // Make sure that HBaseDDLExecutor extension is present if the configurations are provided
-  private void checkHBaseDDLExtension(Set<String> problemKeys) {
-    HBaseDDLExecutorFactory factory = new HBaseDDLExecutorFactory(cConf, hConf);
-    try {
-      factory.get();
-    } catch (Exception e) {
-      LOG.error(e.getMessage());
-      problemKeys.add(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
-    }
   }
 
   // tx invalid list pruning is not allowed with replication
