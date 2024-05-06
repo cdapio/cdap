@@ -247,10 +247,7 @@
 
   <property>
     <name>twill.jvm.gc.opts</name>
-    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails
-      -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10
-      -XX:GCLogFileSize=1M
-    </value>
+    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
     <activation>
       <jdk>(,9)</jdk>
     </activation>
