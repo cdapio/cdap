@@ -21,10 +21,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.app.store.ListSourceControlMetadataResponse;
 import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
@@ -59,6 +59,8 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -156,29 +158,29 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       @QueryParam("filter") String filter) throws Exception {
     checkSourceControlFeatureFlag();
     validateNamespaceId(namespaceId);
-    JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY_SHORT,
-        jsonListResponder -> {
-          AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
-          ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
-              namespaceId,
-              pageToken, pageSize, sortOrder, sortOn, filter);
-          boolean pageLimitReached = false;
-          try {
-            pageLimitReached = sourceControlService.scanRepoMetadata(
-                scanRequest, batchSize,
-                record -> {
-                  jsonListResponder.send(record);
-                  lastRecord.set(record);
-                });
-          } catch (IOException e) {
-            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-          } catch (NotFoundException e) {
-            responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-          }
-          SourceControlMetadataRecord record = lastRecord.get();
-          return !pageLimitReached || record == null ? null :
-              record.getName();
-        });
+    List<SourceControlMetadataRecord> apps = new ArrayList<>();
+    AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
+    ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
+        namespaceId,
+        pageToken, pageSize, sortOrder, sortOn, filter);
+    boolean pageLimitReached = false;
+    try {
+      pageLimitReached = sourceControlService.scanRepoMetadata(
+          scanRequest, batchSize,
+          record -> {
+            apps.add(record);
+            lastRecord.set(record);
+          });
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+    SourceControlMetadataRecord record = lastRecord.get();
+    String nextPageToken = !pageLimitReached || record == null ? null :
+        record.getName();
+    Long lastRefreshTime = sourceControlService.getLastRefreshTime(namespaceId);
+    ListSourceControlMetadataResponse response = new ListSourceControlMetadataResponse(apps,
+        nextPageToken, lastRefreshTime);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   /**

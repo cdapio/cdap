@@ -55,6 +55,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
 import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityReader;
@@ -109,7 +110,6 @@ import org.mockito.Mockito;
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static CConfiguration cConf;
   private static final String FEATURE_FLAG_PREFIX = "feature.";
-
   @BeforeClass
   public static void beforeClass() throws Throwable {
     cConf = createBasicCconf();
@@ -143,12 +143,14 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MetadataServiceClient metadataServiceClient,
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
-          CapabilityReader capabilityReader, TransactionRunner transactionRunner) {
+          CapabilityReader capabilityReader, TransactionRunner transactionRunner,
+          SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(), transactionRunner));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(), transactionRunner,
+            sourceControlMetadataRefreshService));
       }
     });
   }

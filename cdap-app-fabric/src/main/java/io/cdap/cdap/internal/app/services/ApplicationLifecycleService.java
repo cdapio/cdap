@@ -58,6 +58,7 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.CannotBeDeletedException;
+import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
@@ -81,6 +82,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -188,6 +190,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
   private final TransactionRunner transactionRunner;
+  private final SourceControlMetadataRefreshService sourceControlMetadataRefreshService;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -203,7 +206,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService, TransactionRunner transactionRunner) {
+      MetricsCollectionService metricsCollectionService, TransactionRunner transactionRunner,
+      SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -221,6 +225,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
     this.capabilityReader = capabilityReader;
+    this.sourceControlMetadataRefreshService = sourceControlMetadataRefreshService;
     this.adminEventPublisher = new AdminEventPublisher(cConf,
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
@@ -319,6 +324,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public boolean scanSourceControlMetadata(ScanSourceControlMetadataRequest request,
       int txBatchSize,
       Consumer<SourceControlMetadataRecord> consumer) throws IOException {
+    NamespaceId namespaceId = new NamespaceId(request.getNamespace());
+
+    // Triggering source control metadata refresh service
+    if (isSourceControlMetadataManualRefreshFlagEnabled()) {
+      sourceControlMetadataRefreshService.runRefreshService(namespaceId);
+    }
+
     String lastKey = request.getScanAfter();
     int currentLimit = request.getLimit();
 
@@ -342,7 +354,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
       currentLimit -= txBatchSize;
     }
+
     return true;
+  }
+
+  public Long getLastRefreshTime(String namespace) {
+    return sourceControlMetadataRefreshService.getLastRefreshTime(new NamespaceId(namespace));
+  }
+
+  private boolean isSourceControlMetadataManualRefreshFlagEnabled() {
+    return Feature.SOURCE_CONTROL_METADATA_MANUAL_REFRESH.isEnabled(featureFlagsProvider);
   }
 
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,

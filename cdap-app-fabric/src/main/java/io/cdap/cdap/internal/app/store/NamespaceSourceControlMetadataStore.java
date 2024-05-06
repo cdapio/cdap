@@ -371,4 +371,23 @@ public class NamespaceSourceControlMetadataStore {
             Range.Bound.INCLUSIVE));
   }
 
+  /**
+   * Retrieves all source control metadata records for the specified namespace and type.
+   *
+   * @param namespace The namespace to retrieve records from.
+   * @param type      The type of records to retrieve.
+   * @return A list of metadata records.
+   * @throws IOException If an I/O error occurs.
+   */
+  @VisibleForTesting
+  public List<SourceControlMetadataRecord> getAll(String namespace, String type)
+      throws IOException {
+    ScanSourceControlMetadataRequest request = ScanSourceControlMetadataRequest.builder()
+        .setNamespace(namespace).build();
+    List<SourceControlMetadataRecord> records = new ArrayList<>();
+    scan(request, type, records::add);
+    return records;
+  }
+
+
 }

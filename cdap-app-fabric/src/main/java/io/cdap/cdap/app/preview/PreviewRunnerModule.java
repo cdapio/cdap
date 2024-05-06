@@ -75,6 +75,7 @@ import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.sourcecontrol.guice.SourceControlModule;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -185,6 +186,10 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
     expose(MetadataAdmin.class);
 
+    //TODO(adrika): cleanup this dependency later
+    // This is needed because there is a transitive dependency on source control operation
+    // runner which is not actually being used here
+    install(new SourceControlModule());
     bindPreviewRunner(binder());
     expose(PreviewRunner.class);
 
