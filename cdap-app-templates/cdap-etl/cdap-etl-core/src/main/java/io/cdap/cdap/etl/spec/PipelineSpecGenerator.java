@@ -525,7 +525,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     if (plugin == null) {
       String errorMessage = String.format("Plugin named '%s' of type '%s' not found.", pluginName,
           type);
-      String correctiveAction = "Please make sure plugin is deployed in the namespace and try again";
+      StringBuilder correctiveAction = new StringBuilder("Please make sure plugin is deployed in the namespace and " +
+                                                           "compatible with pipeline's data-pipeline version. ");
       ArtifactSelectorConfig requested = etlPlugin.getArtifactConfig();
       ArtifactId requestedArtifactId = requested == null ? null :
           new ArtifactId(requested.getName(), new ArtifactVersion(requested.getVersion()),
@@ -538,9 +539,12 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
             new ArtifactVersion(suggestion.getVersion()),
             ArtifactScope.valueOf(suggestion.getScope()));
 
+        //If there is a suggestion, add it to corrective action
+        correctiveAction.append(String.format("Suggestion : Try to use artifact :  %s or " +
+                                                "try upgrading your pipeline first", suggestedArtifactId));
       }
 
-      collector.addFailure(errorMessage, correctiveAction)
+      collector.addFailure(errorMessage, correctiveAction.toString())
           .withPluginNotFound(stageName, pluginName, type, requestedArtifactId,
               suggestedArtifactId);
       LOG.info("Requested artifact {} cannot be found, suggest to use {}", requestedArtifactId,
