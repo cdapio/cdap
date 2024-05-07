@@ -37,7 +37,6 @@ import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -151,10 +150,22 @@ public class RepositorySourceControlMetadataStore {
    * @param lastSynced The timestamp of the last git pull/push of the entity
    * @throws IOException If an I/O error occurs while writing the source control metadata.
    */
-  public void write(ApplicationReference appRef, Boolean isSynced,
+  public void write(ApplicationReference appRef, boolean isSynced,
       Long lastSynced) throws IOException {
     StructuredTable repoTable = getRepositorySourceControlMetadataTable();
     repoTable.upsert(getAllFields(appRef, isSynced, lastSynced));
+  }
+
+  /**
+   * Writes the sync status for the specified application reference.
+   *
+   * @param appRef   The application reference for which synchronization status is to be written.
+   * @param isSynced A boolean indicating whether the application is synced or not.
+   * @throws IOException If an I/O error occurs while writing the synchronization status.
+   */
+  public void writeSyncStatus(ApplicationReference appRef, boolean isSynced) throws IOException {
+    SourceControlMetadataRecord record = get(appRef);
+    write(appRef, isSynced, record.getLastModified());
   }
 
   /**
@@ -167,32 +178,6 @@ public class RepositorySourceControlMetadataStore {
   public void delete(ApplicationReference appRef) throws IOException {
     getRepositorySourceControlMetadataTable().delete(
         getPrimaryKey(appRef));
-  }
-
-  /**
-   * Cleans up repository source control metadata. This method removes metadata records for
-   * repository files that are no longer present in the repository.
-   *
-   * @param namespace The namespace for which to clean up the repository source control metadata.
-   * @param repoFiles The set of repository files to retain metadata records for.
-   * @throws IOException If an I/O error occurs during the cleanup process.
-   */
-  public void cleanupRepoSourceControlMeta(String namespace, HashSet<String> repoFiles)
-      throws IOException {
-    ScanSourceControlMetadataRequest request = ScanSourceControlMetadataRequest
-        .builder()
-        .setNamespace(namespace)
-        .setLimit(Integer.MAX_VALUE)
-        .build();
-    ArrayList<SourceControlMetadataRecord> records = new ArrayList<>();
-    String type = EntityType.APPLICATION.toString();
-    scan(request, type, records::add);
-    for (SourceControlMetadataRecord record : records) {
-      if (!repoFiles.contains(record.getName())) {
-        delete(
-            new ApplicationReference(record.getNamespace(), record.getName()));
-      }
-    }
   }
 
   private CloseableIterator<StructuredRow> getScanIterator(
@@ -220,8 +205,8 @@ public class RepositorySourceControlMetadataStore {
     }
     Boolean isSynced = row.getBoolean(
         StoreDefinition.RepositorySourceControlMetadataStore.IS_SYNCED_FIELD);
-    return new SourceControlMetadataRecord(namespace, type, name, null, null, lastModified,
-        isSynced);
+    return new SourceControlMetadataRecord(namespace, type, name, null, null,
+        lastModified, isSynced);
   }
 
   private Collection<Field<?>> getAllFields(ApplicationReference appRef,
@@ -229,7 +214,7 @@ public class RepositorySourceControlMetadataStore {
     List<Field<?>> fields = getPrimaryKey(appRef);
     fields.add(
         Fields.longField(StoreDefinition.RepositorySourceControlMetadataStore.LAST_MODIFIED_FIELD,
-            lastSynced));
+            lastSynced == null ? 0L : lastSynced));
     fields.add(
         Fields.booleanField(StoreDefinition.RepositorySourceControlMetadataStore.IS_SYNCED_FIELD,
             isSynced));
@@ -246,11 +231,11 @@ public class RepositorySourceControlMetadataStore {
     fields.add(
         Fields.stringField(StoreDefinition.RepositorySourceControlMetadataStore.TYPE_FIELD, type));
     if (request.getSortOn() == SortBy.LAST_SYNCED_AT) {
-      ImmutablePair<Long, Boolean> lastModifiedAndStatusPair = get(
+      SourceControlMetadataRecord record = get(
           new ApplicationReference(request.getNamespace(), request.getScanAfter()));
       fields.add(Fields.longField(
           StoreDefinition.RepositorySourceControlMetadataStore.LAST_MODIFIED_FIELD,
-          lastModifiedAndStatusPair.getFirst()));
+          record.getLastModified() == null ? 0L : record.getLastModified()));
     }
     fields.add(Fields.stringField(StoreDefinition.RepositorySourceControlMetadataStore.NAME_FIELD,
         request.getScanAfter()));
@@ -271,17 +256,18 @@ public class RepositorySourceControlMetadataStore {
     return primaryKey;
   }
 
-  @VisibleForTesting
-  ImmutablePair get(ApplicationReference appRef) throws IOException {
+  /**
+   * Retrieves sync status and last modified for the specified {@link ApplicationReference}.
+   *
+   * @param appRef The application reference to retrieve metadata for.
+   * @return An {@link ImmutablePair} containing the lastSynced timestamp and sync status,
+   *         or null if metadata is not found.
+   * @throws IOException If an I/O error occurs.
+   */
+  public SourceControlMetadataRecord get(ApplicationReference appRef) throws IOException {
     List<Field<?>> primaryKey = getPrimaryKey(appRef);
     StructuredTable table = getRepositorySourceControlMetadataTable();
-    return table.read(primaryKey).map(row -> {
-      Long lastSynced = row.getLong(
-          StoreDefinition.RepositorySourceControlMetadataStore.LAST_MODIFIED_FIELD);
-      Boolean syncStatus = row.getBoolean(
-          StoreDefinition.RepositorySourceControlMetadataStore.IS_SYNCED_FIELD);
-      return new ImmutablePair(lastSynced, syncStatus);
-    }).orElse(null);
+    return table.read(primaryKey).map(this::decodeRow).orElse(null);
   }
 
   /**
@@ -296,5 +282,23 @@ public class RepositorySourceControlMetadataStore {
     getRepositorySourceControlMetadataTable().deleteAll(Range.singleton(
         ImmutableList.of(
             Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace))));
+  }
+
+  /**
+   * Retrieves all source control metadata records for the specified namespace and type.
+   *
+   * @param namespace The namespace to retrieve records from.
+   * @param type      The type of records to retrieve.
+   * @return A list of metadata records.
+   * @throws IOException If an I/O error occurs.
+   */
+  @VisibleForTesting
+  public List<SourceControlMetadataRecord> getAll(String namespace, String type)
+      throws IOException {
+    ScanSourceControlMetadataRequest request = ScanSourceControlMetadataRequest.builder()
+        .setNamespace(namespace).build();
+    List<SourceControlMetadataRecord> records = new ArrayList<>();
+    scan(request, type, records::add);
+    return records;
   }
 }

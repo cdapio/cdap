@@ -38,6 +38,7 @@ import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataMigrationService;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefresher;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
@@ -97,6 +98,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final RepositoryCleanupService repositoryCleanupService;
   private final OperationNotificationSubscriberService operationNotificationSubscriberService;
   private final SourceControlMetadataMigrationService sourceControlMetadataMigrationService;
+  private final SourceControlMetadataRefresher sourceControlMetadataRefresher;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -137,7 +139,8 @@ public class AppFabricServer extends AbstractIdleService {
       SourceControlOperationRunner sourceControlOperationRunner,
       RepositoryCleanupService repositoryCleanupService,
       OperationNotificationSubscriberService operationNotificationSubscriberService,
-      SourceControlMetadataMigrationService sourceControlMetadataMigrationService) {
+      SourceControlMetadataMigrationService sourceControlMetadataMigrationService,
+      SourceControlMetadataRefresher sourceControlMetadataRefresher) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -167,6 +170,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.repositoryCleanupService = repositoryCleanupService;
     this.operationNotificationSubscriberService = operationNotificationSubscriberService;
     this.sourceControlMetadataMigrationService = sourceControlMetadataMigrationService;
+    this.sourceControlMetadataRefresher = sourceControlMetadataRefresher;
   }
 
   /**

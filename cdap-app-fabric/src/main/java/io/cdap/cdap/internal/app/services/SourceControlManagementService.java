@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
@@ -33,9 +34,12 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.Metrics.SourceControlManagement;
 import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefresher;
 import io.cdap.cdap.internal.app.store.RepositorySourceControlMetadataStore;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.proto.ApplicationDetail;
@@ -64,14 +68,11 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
-import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
-import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
@@ -104,10 +105,13 @@ public class SourceControlManagementService {
   private final OperationLifecycleManager operationLifecycleManager;
   private final MetricsCollectionService metricsCollectionService;
   private final Clock clock;
+  private final FeatureFlagsProvider featureFlagsProvider;
+  private final SourceControlMetadataRefresher sourceControlMetadataRefresher;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
   /**
+   /**
    * Constructor for SourceControlManagementService with all params injected via guice.
    */
   @Inject
@@ -120,11 +124,13 @@ public class SourceControlManagementService {
       ApplicationLifecycleService applicationLifecycleService,
       Store store,
       OperationLifecycleManager operationLifecycleManager,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      SourceControlMetadataRefresher sourceControlMetadataRefresher) {
     this (cConf, secureStore, transactionRunner,
         accessEnforcer, authenticationContext,
         sourceControlOperationRunner, applicationLifecycleService,
-        store, operationLifecycleManager, metricsCollectionService, Clock.systemUTC());
+        store, operationLifecycleManager, metricsCollectionService, Clock.systemUTC(),
+        sourceControlMetadataRefresher);
   }
 
   @VisibleForTesting
@@ -138,7 +144,8 @@ public class SourceControlManagementService {
       Store store,
       OperationLifecycleManager operationLifecycleManager,
       MetricsCollectionService metricsCollectionService,
-      Clock clock) {
+      Clock clock,
+      SourceControlMetadataRefresher sourceControlMetadataRefresher) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -150,6 +157,8 @@ public class SourceControlManagementService {
     this.operationLifecycleManager = operationLifecycleManager;
     this.metricsCollectionService = metricsCollectionService;
     this.clock = clock;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.sourceControlMetadataRefresher = sourceControlMetadataRefresher;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context)
@@ -205,6 +214,7 @@ public class SourceControlManagementService {
       RepositoryTable repoTable = getRepositoryTable(context);
       repoTable.delete(namespace);
     });
+
   }
 
   /**
@@ -392,38 +402,17 @@ public class SourceControlManagementService {
    * @param txBatchSize The transaction batch size for processing metadata in each iteration.
    * @param consumer    The consumer to process the scanned repository metadata records.
    * @return True if the page limit has reached, false otherwise.
-   * @throws NotFoundException             If the requested repository metadata is not found.
-   * @throws AuthenticationConfigException If an authentication configuration error occurs.
-   * @throws IOException                   If an I/O error occurs during the scanning process.
+   * @throws IOException If an I/O error occurs during the scanning process.
    */
   public boolean scanRepoMetadata(ScanSourceControlMetadataRequest request, int txBatchSize,
-      Consumer<SourceControlMetadataRecord> consumer) throws NotFoundException,
-      AuthenticationConfigException, IOException {
+      Consumer<SourceControlMetadataRecord> consumer)
+      throws IOException, NotFoundException {
     NamespaceId namespaceId = new NamespaceId(request.getNamespace());
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    RepositoryConfig repoConfig = getRepositoryMeta(namespaceId).getConfig();
-    // TODO(CDAP-20993): List API is used here for testing. It will be moved to a separate background job in the next PR
-    RepositoryAppsResponse repositoryAppsResponse = sourceControlOperationRunner.list(
-        new NamespaceRepository(namespaceId, repoConfig));
-    LOG.debug("Successfully received apps in namespace {} from repository : response: {}",
-        namespaceId,
-        repositoryAppsResponse);
-    // Cleaning up the repo source control metadata table
-    HashSet<String> repoFileNames = new HashSet<>();
-    for (RepositoryApp repoApp : repositoryAppsResponse.getApps()) {
-      repoFileNames.add(repoApp.getName());
-    }
-    TransactionRunners.run(transactionRunner, context -> {
-      getRepoSourceControlMetadataStore(context).cleanupRepoSourceControlMeta(
-          namespaceId.getNamespace(), repoFileNames);
-    });
-    // Updating the namespace and repo source control metadata table
-    for (RepositoryApp repoApp : repositoryAppsResponse.getApps()) {
-      store.updateSourceControlMeta(
-          new ApplicationReference(request.getNamespace(),
-              repoApp.getName()), repoApp.getFileHash());
-    }
+    // Triggering source control metadata refresh service
+    sourceControlMetadataRefresher.runRefreshService(namespaceId);
+
     // Getting repo files
     String lastKey = request.getScanAfter();
     int currentLimit = request.getLimit();
@@ -447,7 +436,12 @@ public class SourceControlManagementService {
       }
       currentLimit -= txBatchSize;
     }
+
     return true;
+  }
+
+  public long getLastRefreshTime(String namespace) {
+    return sourceControlMetadataRefresher.getLastRefreshTime(new NamespaceId(namespace));
   }
 
   /**
@@ -504,4 +498,5 @@ public class SourceControlManagementService {
     return metricsCollectionService.getContext(
         ImmutableMap.of(Tag.NAMESPACE, namespace.getNamespace()));
   }
+
 }

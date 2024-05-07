@@ -37,6 +37,8 @@ import io.cdap.cdap.app.store.SourceControlMetadataFilter;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
@@ -76,12 +78,18 @@ import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
+import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
+import io.cdap.cdap.proto.sourcecontrol.Provider;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.store.RepositoryTable;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
@@ -125,6 +133,13 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static MetadataStorage metadataStorage;
   private static CapabilityWriter capabilityWriter;
   private static int batchSize;
+
+  private static final NamespaceId NAMESPACE_ID = new NamespaceId(NAMESPACE);
+  private static final RepositoryConfig REPO_CONFIG = new RepositoryConfig.Builder().setProvider(
+          Provider.GITHUB)
+      .setLink("testUrl")
+      .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("password", "user")))
+      .build();
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -407,7 +422,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testScanSourceControlMetadata() throws IOException {
+  public void testScanSourceControlMetadata() throws Exception {
+    setRepository();
     ScanSourceControlMetadataRequest request;
     List<SourceControlMetadataRecord> expectedRecords = new ArrayList<>();
     List<SourceControlMetadataRecord> insertedRecords = insertTests();
@@ -464,15 +480,40 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
 
     deleteAllRecords(NAMESPACE);
+    deleteRepository(NAMESPACE);
   }
 
+  @Test (expected = RepositoryNotFoundException.class)
+  public void testScanSourceControlMetadataThrowsException() throws IOException, NotFoundException {
+    ScanSourceControlMetadataRequest request =
+        ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE).build();
+    List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
+    applicationLifecycleService.scanSourceControlMetadata(request, batchSize, gotRecords::add);
+  }
+
+  @Test(expected = RepositoryNotFoundException.class)
+  public void testGetSourceControlMetadataRecordThrowsException()
+      throws Exception {
+    applicationLifecycleService.getSourceControlMetadataRecord(
+        new ApplicationReference(NAMESPACE, "test0"));
+  }
   @Test
-  public void testGetSourceControlMetadataRecord() throws SourceControlMetadataNotFoundException {
+  public void testGetSourceControlMetadataRecordSucceeds()
+      throws Exception {
+    setRepository();
     SourceControlMetadataRecord expectedRecord = insertTests().get(0);
     SourceControlMetadataRecord actualRecord = applicationLifecycleService.getSourceControlMetadataRecord(
         new ApplicationReference(NAMESPACE, "test0"));
     assertEquals(expectedRecord, actualRecord);
     deleteAllRecords(NAMESPACE);
+    deleteRepository(NAMESPACE);
+  }
+
+  private void setRepository() {
+    TransactionRunners.run(transactionRunner, context -> {
+      RepositoryTable store = new RepositoryTable(context);
+      store.create(NAMESPACE_ID, REPO_CONFIG);
+    });
   }
 
   private List<SourceControlMetadataRecord> insertTests() {

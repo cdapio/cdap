@@ -33,8 +33,10 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ListSourceControlMetadataResponse;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
+import io.cdap.cdap.app.store.SingleSourceControlMetadataResponse;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
@@ -43,7 +45,9 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.ServiceException;
+import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -129,7 +133,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    * Key in json paginated applications list response.
    */
   public static final String APP_LIST_PAGINATED_KEY = "applications";
-  public static final String APP_LIST_PAGINATED_KEY_SHORT = "apps";
 
   /**
    * Runtime program service for running and managing programs.
@@ -295,7 +298,8 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   }
 
   /**
-   * Retrieves all namespace source control metadata for applications within the specified namespace.
+   * Retrieves all namespace source control metadata for applications within the specified namespace,
+   * next page token and last refresh time.
    *
    * @param request      The HTTP request containing parameters for retrieving metadata.
    * @param responder    The HTTP responder for sending the response.
@@ -319,31 +323,26 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @QueryParam("filter") String filter
   ) throws Exception {
     validateNamespace(namespaceId);
-
-    JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY_SHORT,
-        jsonListResponder -> {
-          AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
-          ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
-              namespaceId,
-              pageToken, pageSize, sortOrder, sortOn, filter);
-          boolean pageLimitReached = false;
-          try {
-            pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
-                scanRequest, batchSize,
-                scmMetaRecord -> {
-                  jsonListResponder.send(scmMetaRecord);
-                  lastRecord.set(scmMetaRecord);
-                });
-          } catch (IOException e) {
-            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-          }
-          SourceControlMetadataRecord record = lastRecord.get();
-          return !pageLimitReached || record == null ? null : record.getName();
-        });
+    List<SourceControlMetadataRecord> apps = new ArrayList<>();
+    ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
+        namespaceId,
+        pageToken, pageSize, sortOrder, sortOn, filter);
+    boolean pageLimitReached;
+    pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
+        scanRequest, batchSize,
+        apps::add);
+    SourceControlMetadataRecord record = apps.isEmpty() ? null :apps.get(apps.size() - 1);
+    String nextPageToken = !pageLimitReached || record == null ? null :
+        record.getName();
+    long lastRefreshTime = applicationLifecycleService.getLastRefreshTime(namespaceId);
+    ListSourceControlMetadataResponse response = new ListSourceControlMetadataResponse(apps,
+        nextPageToken, lastRefreshTime == 0L ? null : lastRefreshTime);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   /**
-   * Retrieves the source control metadata for the specified application within the specified namespace.
+   * Retrieves the source control metadata for the specified application within the specified namespace
+   * and last refresh time of git pull/push.
    *
    * @param request      The HTTP request containing parameters for retrieving metadata.
    * @param responder    The HTTP responder for sending the response.
@@ -355,12 +354,15 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   @Path("/apps/{app-id}/sourcecontrol")
   public void getNamespaceSourceControlMetadata(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("app-id") final String appName) throws Exception {
+      @PathParam("app-id") final String appName)
+      throws BadRequestException, NamespaceNotFoundException,
+      SourceControlMetadataNotFoundException, RepositoryNotFoundException {
     validateApplicationId(namespaceId, appName);
-
-    responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(applicationLifecycleService.getSourceControlMetadataRecord(
-            new ApplicationReference(namespaceId, appName))));
+    SourceControlMetadataRecord app = applicationLifecycleService.getSourceControlMetadataRecord(
+        new ApplicationReference(namespaceId, appName));
+    Long lastRefreshTime = applicationLifecycleService.getLastRefreshTime(namespaceId);
+    SingleSourceControlMetadataResponse response = new SingleSourceControlMetadataResponse(app, lastRefreshTime);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion,
