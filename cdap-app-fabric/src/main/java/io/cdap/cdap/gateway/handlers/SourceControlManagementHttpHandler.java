@@ -78,7 +78,6 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   private final SourceControlManagementService sourceControlService;
   private final FeatureFlagsProvider featureFlagsProvider;
   private static final Gson GSON = new Gson();
-  public static final String APP_LIST_PAGINATED_KEY_SHORT = "apps";
   private final int batchSize;
 
   @Inject
@@ -159,27 +158,19 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     checkSourceControlFeatureFlag();
     validateNamespaceId(namespaceId);
     List<SourceControlMetadataRecord> apps = new ArrayList<>();
-    AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
     ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
         namespaceId,
         pageToken, pageSize, sortOrder, sortOn, filter);
-    boolean pageLimitReached = false;
-    try {
-      pageLimitReached = sourceControlService.scanRepoMetadata(
-          scanRequest, batchSize,
-          record -> {
-            apps.add(record);
-            lastRecord.set(record);
-          });
-    } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-    SourceControlMetadataRecord record = lastRecord.get();
+    boolean pageLimitReached;
+    pageLimitReached = sourceControlService.scanRepoMetadata(
+        scanRequest, batchSize,
+        apps::add);
+    SourceControlMetadataRecord record = apps.isEmpty() ? null :apps.get(apps.size() - 1);
     String nextPageToken = !pageLimitReached || record == null ? null :
         record.getName();
-    Long lastRefreshTime = sourceControlService.getLastRefreshTime(namespaceId);
+    long lastRefreshTime = sourceControlService.getLastRefreshTime(namespaceId);
     ListSourceControlMetadataResponse response = new ListSourceControlMetadataResponse(apps,
-        nextPageToken, lastRefreshTime);
+        nextPageToken, lastRefreshTime == 0L ? null : lastRefreshTime);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 

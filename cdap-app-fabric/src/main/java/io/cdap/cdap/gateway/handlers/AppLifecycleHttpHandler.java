@@ -45,7 +45,9 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.ServiceException;
+import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -296,7 +298,8 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   }
 
   /**
-   * Retrieves all namespace source control metadata for applications within the specified namespace.
+   * Retrieves all namespace source control metadata for applications within the specified namespace,
+   * next page token and last refresh time.
    *
    * @param request      The HTTP request containing parameters for retrieving metadata.
    * @param responder    The HTTP responder for sending the response.
@@ -321,32 +324,25 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   ) throws Exception {
     validateNamespace(namespaceId);
     List<SourceControlMetadataRecord> apps = new ArrayList<>();
-    AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
     ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
         namespaceId,
         pageToken, pageSize, sortOrder, sortOn, filter);
-    boolean pageLimitReached = false;
-    try {
-      pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
-          scanRequest, batchSize,
-          scmMetaRecord -> {
-            apps.add(scmMetaRecord);
-            lastRecord.set(scmMetaRecord);
-          });
-    } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-    SourceControlMetadataRecord record = lastRecord.get();
+    boolean pageLimitReached;
+    pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
+        scanRequest, batchSize,
+        apps::add);
+    SourceControlMetadataRecord record = apps.isEmpty() ? null :apps.get(apps.size() - 1);
     String nextPageToken = !pageLimitReached || record == null ? null :
         record.getName();
-    Long lastRefreshTime = applicationLifecycleService.getLastRefreshTime(namespaceId);
+    long lastRefreshTime = applicationLifecycleService.getLastRefreshTime(namespaceId);
     ListSourceControlMetadataResponse response = new ListSourceControlMetadataResponse(apps,
-        nextPageToken, lastRefreshTime);
+        nextPageToken, lastRefreshTime == 0L ? null : lastRefreshTime);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
   /**
-   * Retrieves the source control metadata for the specified application within the specified namespace.
+   * Retrieves the source control metadata for the specified application within the specified namespace
+   * and last refresh time of git pull/push.
    *
    * @param request      The HTTP request containing parameters for retrieving metadata.
    * @param responder    The HTTP responder for sending the response.
@@ -358,7 +354,9 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   @Path("/apps/{app-id}/sourcecontrol")
   public void getNamespaceSourceControlMetadata(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("app-id") final String appName) throws Exception {
+      @PathParam("app-id") final String appName)
+      throws BadRequestException, NamespaceNotFoundException,
+      SourceControlMetadataNotFoundException, RepositoryNotFoundException {
     validateApplicationId(namespaceId, appName);
     SourceControlMetadataRecord app = applicationLifecycleService.getSourceControlMetadataRecord(
         new ApplicationReference(namespaceId, appName));

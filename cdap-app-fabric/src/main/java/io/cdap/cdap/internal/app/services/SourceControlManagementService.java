@@ -39,7 +39,7 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsRequest;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefresher;
 import io.cdap.cdap.internal.app.store.RepositorySourceControlMetadataStore;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.proto.ApplicationDetail;
@@ -106,7 +106,7 @@ public class SourceControlManagementService {
   private final MetricsCollectionService metricsCollectionService;
   private final Clock clock;
   private final FeatureFlagsProvider featureFlagsProvider;
-  private final SourceControlMetadataRefreshService sourceControlMetadataRefreshService;
+  private final SourceControlMetadataRefresher sourceControlMetadataRefresher;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -125,12 +125,12 @@ public class SourceControlManagementService {
       Store store,
       OperationLifecycleManager operationLifecycleManager,
       MetricsCollectionService metricsCollectionService,
-      SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
+      SourceControlMetadataRefresher sourceControlMetadataRefresher) {
     this (cConf, secureStore, transactionRunner,
         accessEnforcer, authenticationContext,
         sourceControlOperationRunner, applicationLifecycleService,
         store, operationLifecycleManager, metricsCollectionService, Clock.systemUTC(),
-        sourceControlMetadataRefreshService);
+        sourceControlMetadataRefresher);
   }
 
   @VisibleForTesting
@@ -145,7 +145,7 @@ public class SourceControlManagementService {
       OperationLifecycleManager operationLifecycleManager,
       MetricsCollectionService metricsCollectionService,
       Clock clock,
-      SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
+      SourceControlMetadataRefresher sourceControlMetadataRefresher) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -158,7 +158,7 @@ public class SourceControlManagementService {
     this.metricsCollectionService = metricsCollectionService;
     this.clock = clock;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    this.sourceControlMetadataRefreshService = sourceControlMetadataRefreshService;
+    this.sourceControlMetadataRefresher = sourceControlMetadataRefresher;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context)
@@ -197,7 +197,6 @@ public class SourceControlManagementService {
 
       RepositoryTable repoTable = getRepositoryTable(context);
       repoTable.create(namespace, repository);
-      sourceControlMetadataRefreshService.addRefreshService(namespace);
       return repoTable.get(namespace);
     }, NamespaceNotFoundException.class);
   }
@@ -214,7 +213,6 @@ public class SourceControlManagementService {
     TransactionRunners.run(transactionRunner, context -> {
       RepositoryTable repoTable = getRepositoryTable(context);
       repoTable.delete(namespace);
-      sourceControlMetadataRefreshService.removeRefreshService(namespace);
     });
 
   }
@@ -407,13 +405,13 @@ public class SourceControlManagementService {
    * @throws IOException If an I/O error occurs during the scanning process.
    */
   public boolean scanRepoMetadata(ScanSourceControlMetadataRequest request, int txBatchSize,
-      Consumer<SourceControlMetadataRecord> consumer) throws IOException {
+      Consumer<SourceControlMetadataRecord> consumer)
+      throws IOException, NotFoundException {
     NamespaceId namespaceId = new NamespaceId(request.getNamespace());
-
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
+        NamespacePermission.READ_REPOSITORY);
     // Triggering source control metadata refresh service
-    if (isSourceControlMetadataManualRefreshFlagEnabled()) {
-      sourceControlMetadataRefreshService.runRefreshService(namespaceId);
-    }
+    sourceControlMetadataRefresher.runRefreshService(namespaceId);
 
     // Getting repo files
     String lastKey = request.getScanAfter();
@@ -442,8 +440,8 @@ public class SourceControlManagementService {
     return true;
   }
 
-  public Long getLastRefreshTime(String namespace) {
-    return sourceControlMetadataRefreshService.getLastRefreshTime(new NamespaceId(namespace));
+  public long getLastRefreshTime(String namespace) {
+    return sourceControlMetadataRefresher.getLastRefreshTime(new NamespaceId(namespace));
   }
 
   /**
@@ -501,7 +499,4 @@ public class SourceControlManagementService {
         ImmutableMap.of(Tag.NAMESPACE, namespace.getNamespace()));
   }
 
-  private boolean isSourceControlMetadataManualRefreshFlagEnabled() {
-    return Feature.SOURCE_CONTROL_METADATA_MANUAL_REFRESH.isEnabled(featureFlagsProvider);
-  }
 }

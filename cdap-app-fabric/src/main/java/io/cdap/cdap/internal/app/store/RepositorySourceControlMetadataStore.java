@@ -235,7 +235,7 @@ public class RepositorySourceControlMetadataStore {
           new ApplicationReference(request.getNamespace(), request.getScanAfter()));
       fields.add(Fields.longField(
           StoreDefinition.RepositorySourceControlMetadataStore.LAST_MODIFIED_FIELD,
-          record.getLastModified()));
+          record.getLastModified() == null ? 0L : record.getLastModified()));
     }
     fields.add(Fields.stringField(StoreDefinition.RepositorySourceControlMetadataStore.NAME_FIELD,
         request.getScanAfter()));

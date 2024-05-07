@@ -22,11 +22,8 @@ import static org.mockito.Mockito.spy;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants.SourceControlManagement;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
-import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.store.NamespaceSourceControlMetadataStore;
 import io.cdap.cdap.internal.app.store.RepositorySourceControlMetadataStore;
@@ -67,18 +64,16 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
-public class NamespaceSourceControlMetadataRefreshServiceTest {
+public class NamespaceSourceControlMetadataRefresherTest {
 
   private static TransactionRunner transactionRunner;
-  private static CConfiguration cConf;
-  private static NamespaceAdmin namespaceAdmin;
-  private static NamespaceId NAMESPACE_ID = new NamespaceId(Id.Namespace.DEFAULT.getId());
-  private static RepositoryConfig REPO_CONFIG = new RepositoryConfig.Builder().setProvider(
+  private static final NamespaceId NAMESPACE_ID = new NamespaceId(Id.Namespace.DEFAULT.getId());
+  private static final RepositoryConfig REPO_CONFIG = new RepositoryConfig.Builder().setProvider(
           Provider.GITHUB)
       .setLink("testUrl")
       .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("password", "user")))
       .build();
-  private static NamespaceSourceControlMetadataRefreshService refreshService;
+  private static NamespaceSourceControlMetadataRefresher refreshService;
   private static final String TYPE = EntityType.APPLICATION.toString();
 
   @BeforeClass
@@ -86,13 +81,9 @@ public class NamespaceSourceControlMetadataRefreshServiceTest {
     Injector injector = AppFabricTestHelper.getInjector();
     AppFabricTestHelper.ensureNamespaceExists(NAMESPACE_ID.DEFAULT);
     transactionRunner = injector.getInstance(TransactionRunner.class);
-    cConf = injector.getInstance(CConfiguration.class);
-    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    cConf.set(SourceControlManagement.METADATA_REFRESH_INTERVAL_SECONDS, "300");
-    cConf.set(SourceControlManagement.METADATA_REFRESH_BUFFER_SECONDS, "120");
-    refreshService = new NamespaceSourceControlMetadataRefreshService(
-        cConf, transactionRunner, sourceControlOperationRunnerSpy, NAMESPACE_ID,
-        namespaceAdmin);
+
+    refreshService = new NamespaceSourceControlMetadataRefresher(
+         transactionRunner, sourceControlOperationRunnerSpy, NAMESPACE_ID);
   }
 
   private static final Instant fixedInstant = Instant.ofEpochSecond(1646358109);
@@ -125,7 +116,7 @@ public class NamespaceSourceControlMetadataRefreshServiceTest {
     List<SourceControlMetadataRecord> expectedRecords = new ArrayList<>();
     List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
 
-    refreshService.runOneIteration();
+    refreshService.refreshMetadata();
 
     // Checking the all apps stored in repo source control table
     gotRecords = getRepoRecords(NAMESPACE_ID.getNamespace());

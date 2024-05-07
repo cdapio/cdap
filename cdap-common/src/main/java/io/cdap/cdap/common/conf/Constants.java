@@ -2482,10 +2482,6 @@ public final class Constants {
     public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
     public static final String METADATA_MIGRATION_INTERVAL_SECONDS =
         "source.control.metadata.migration.interval.seconds";
-    public static final String METADATA_REFRESH_INTERVAL_SECONDS =
-        "source.control.metadata.refresh.interval.seconds";
-    public static final String METADATA_REFRESH_BUFFER_SECONDS =
-        "source.control.metadata.refresh.buffer.seconds";
   }
 
   /**

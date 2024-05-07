@@ -6013,24 +6013,6 @@
   </property>
 
   <property>
-    <name>feature.source.control.metadata.manual.refresh.enabled</name>
-    <value>true</value>
-    <description>
-      If true, source control metadata refresh service will be triggered when
-      list API is called for namespace and repository source control metadata.
-    </description>
-  </property>
-
-  <property>
-    <name>feature.source.control.metadata.periodic.refresh.enabled</name>
-    <value>true</value>
-    <description>
-      If true, source control metadata refresh service for a namespace will be
-      triggered periodically.
-    </description>
-  </property>
-
-  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -6145,22 +6127,6 @@
     <description>
       Scheduler interval for scm metadata migration service, by default 5 min
       The service only retries when the migration job fails.
-    </description>
-  </property>
-  <property>
-    <name>source.control.metadata.refresh.interval.seconds</name>
-    <value>10800</value>
-    <description>
-      Scheduler interval for SCM metadata refresh service, by default 3 hrs
-    </description>
-  </property>
-  <property>
-    <name>source.control.metadata.refresh.buffer.seconds</name>
-    <value>600</value>
-    <description>
-      Buffer time interval for SCM metadata refresh service, by default,
-      is set to 10 minutes. If a new refresh request occurs within the
-      buffer time span since the last request, it will be skipped.
     </description>
   </property>
 

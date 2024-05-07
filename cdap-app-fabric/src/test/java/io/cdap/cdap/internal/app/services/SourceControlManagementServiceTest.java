@@ -38,9 +38,8 @@ import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefresher;
 import io.cdap.cdap.internal.app.store.RepositorySourceControlMetadataStore;
 import io.cdap.cdap.internal.operation.OperationLifecycleManager;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -85,7 +84,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -114,7 +112,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       Mockito.spy(new MockSourceControlOperationRunner());
 
   private static final Instant fixedInstant = Instant.ofEpochSecond(1646358109);
-  private static final Instant fixedInstant2 = Instant.ofEpochSecond(1646788109);
   private static int batchSize;
 
   @BeforeClass
@@ -148,14 +145,14 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
           ApplicationLifecycleService applicationLifecycleService,
           Store store, MetricsCollectionService metricsCollectionService,
           OperationLifecycleManager manager,
-          SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
+          SourceControlMetadataRefresher sourceControlMetadataRefresher) {
 
         return new SourceControlManagementService(cConf, secureStore, transactionRunner,
             accessEnforcer, authenticationContext,
             sourceControlRunner, applicationLifecycleService,
             store, manager, metricsCollectionService,
             Clock.fixed(fixedInstant, ZoneId.systemDefault()),
-            sourceControlMetadataRefreshService);
+            sourceControlMetadataRefresher);
       }
     });
   }
@@ -524,19 +521,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.deleteRepository(namespaceId);
   }
 
-  @Test
-  public void testScanRepoMetadataWithFalseFlag() throws Exception {
-    setAutoRefreshFeatureFlag(false);
+  @Test(expected = RepositoryNotFoundException.class)
+  public void testScanRepoMetadataFailed() throws Exception {
     List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
     ScanSourceControlMetadataRequest request = ScanSourceControlMetadataRequest.builder()
         .setNamespace(Namespace.DEFAULT.getId()).build();
     sourceControlService.scanRepoMetadata(request, batchSize, gotRecords::add);
-  }
-
-  private static void setAutoRefreshFeatureFlag(boolean flag) {
-    String featureFlagPrefix = "feature.";
-    cConf.setBoolean(featureFlagPrefix
-        + Feature.SOURCE_CONTROL_METADATA_MANUAL_REFRESH.getFeatureFlagString(), flag);
   }
 
   @Test
@@ -546,25 +536,28 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
   @Test
   public void testScanRepoMetadata() throws Exception {
-
-    RepositoryApp app1 = new RepositoryApp("app1", "hash1");
-    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(
-        Collections.singletonList(app1));
+    List<RepositoryApp> appList = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      String appName = "app" + i;
+      String hash = "hash" + i;
+      RepositoryApp app = new RepositoryApp(appName, hash);
+      appList.add(app);
+    }
+    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(appList);
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
-    //deleteAllRepoSourceControlRecords(namespaceId.getNamespace());
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doReturn(expectedListResult)
         .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
 
     List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
-    List<SourceControlMetadataRecord> insertedRecords = insertRepoSourceControlMetadataTests();
     List<SourceControlMetadataRecord> expectedRecords = new ArrayList<>();
 
     // verify the scan without filters picks all apps for default namespace
     ScanSourceControlMetadataRequest request = ScanSourceControlMetadataRequest.builder()
         .setNamespace(Namespace.DEFAULT.getId()).build();
     sourceControlService.scanRepoMetadata(request, batchSize, gotRecords::add);
+    List<SourceControlMetadataRecord> insertedRecords = insertRepoSourceControlMetadataTests();
     expectedRecords = insertedRecords;
     Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
 
@@ -600,10 +593,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private List<SourceControlMetadataRecord> insertRepoSourceControlMetadataTests() {
     AtomicReference<List<SourceControlMetadataRecord>> records = new AtomicReference<>(
         new ArrayList<>());
-    for (int i = 0; i < 10; i++) {
-      insertRepoRecord(Namespace.DEFAULT.getId(), "app" + i, TYPE, null, null,
-          0L, i % 3 == 0 ? true : false);
-    }
     TransactionRunners.run(transactionRunner, context -> {
       RepositorySourceControlMetadataStore store = RepositorySourceControlMetadataStore.create(
           context);

@@ -55,7 +55,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefresher;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
 import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityReader;
@@ -144,13 +144,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
           CapabilityReader capabilityReader, TransactionRunner transactionRunner,
-          SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
+          SourceControlMetadataRefresher sourceControlMetadataRefresher) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
             messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(), transactionRunner,
-            sourceControlMetadataRefreshService));
+            sourceControlMetadataRefresher));
       }
     });
   }

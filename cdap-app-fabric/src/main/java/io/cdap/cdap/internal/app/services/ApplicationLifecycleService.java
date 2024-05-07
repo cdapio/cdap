@@ -58,9 +58,9 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.CannotBeDeletedException;
-import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -82,7 +82,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
-import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefreshService;
+import io.cdap.cdap.internal.app.sourcecontrol.SourceControlMetadataRefresher;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -190,7 +190,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
   private final TransactionRunner transactionRunner;
-  private final SourceControlMetadataRefreshService sourceControlMetadataRefreshService;
+  private final SourceControlMetadataRefresher sourceControlMetadataRefresher;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -207,7 +207,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
       MetricsCollectionService metricsCollectionService, TransactionRunner transactionRunner,
-      SourceControlMetadataRefreshService sourceControlMetadataRefreshService) {
+      SourceControlMetadataRefresher sourceControlMetadataRefresher) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -225,7 +225,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
     this.capabilityReader = capabilityReader;
-    this.sourceControlMetadataRefreshService = sourceControlMetadataRefreshService;
+    this.sourceControlMetadataRefresher = sourceControlMetadataRefresher;
     this.adminEventPublisher = new AdminEventPublisher(cConf,
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
@@ -323,13 +323,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public boolean scanSourceControlMetadata(ScanSourceControlMetadataRequest request,
       int txBatchSize,
-      Consumer<SourceControlMetadataRecord> consumer) throws IOException {
+      Consumer<SourceControlMetadataRecord> consumer)
+      throws IOException, RepositoryNotFoundException {
     NamespaceId namespaceId = new NamespaceId(request.getNamespace());
-
-    // Triggering source control metadata refresh service
-    if (isSourceControlMetadataManualRefreshFlagEnabled()) {
-      sourceControlMetadataRefreshService.runRefreshService(namespaceId);
-    }
+    // Checking if repository config is present in the namespace
+    sourceControlMetadataRefresher.getRepositoryMeta(namespaceId);
 
     String lastKey = request.getScanAfter();
     int currentLimit = request.getLimit();
@@ -358,13 +356,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return true;
   }
 
-  public Long getLastRefreshTime(String namespace) {
-    return sourceControlMetadataRefreshService.getLastRefreshTime(new NamespaceId(namespace));
+  public long getLastRefreshTime(String namespace) {
+    return sourceControlMetadataRefresher.getLastRefreshTime(new NamespaceId(namespace));
   }
 
-  private boolean isSourceControlMetadataManualRefreshFlagEnabled() {
-    return Feature.SOURCE_CONTROL_METADATA_MANUAL_REFRESH.isEnabled(featureFlagsProvider);
-  }
 
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,
       Consumer<ApplicationDetail> consumer) {
@@ -436,7 +431,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *                                                reference is not found.
    */
   public SourceControlMetadataRecord getSourceControlMetadataRecord(ApplicationReference appRef)
-      throws SourceControlMetadataNotFoundException {
+      throws SourceControlMetadataNotFoundException, RepositoryNotFoundException {
+    // Checking if repository config exists for the namespace
+    sourceControlMetadataRefresher.getRepositoryMeta(new NamespaceId(appRef.getNamespace()));
     SourceControlMetadataRecord record = store.getNamespaceSourceControlMetadataRecord(appRef);
     if (record == null) {
       throw new SourceControlMetadataNotFoundException(appRef);
