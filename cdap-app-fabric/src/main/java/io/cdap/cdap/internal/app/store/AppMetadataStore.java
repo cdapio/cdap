@@ -39,7 +39,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -102,28 +101,23 @@ import org.slf4j.LoggerFactory;
 /**
  * Store for application metadata.
  *
- * <p>This class is mostly responsible for reading and storing run records. Each program run will
- * have
+ * This class is mostly responsible for reading and storing run records. Each program run will have
  * several run records corresponding to state changes that occur during the program run. The rowkeys
- * are of the form:</p>
+ * are of the form:
  *
- * <ul>
- *   <li>runRecordActive|namespace|app|version|programtype|program|inverted start time|runid</li>
- *   <li>runRecordCompleted|namespace|app|version|programtype|program|inverted start time|runid</li>
- *   <li>runRecordCount|namespace|app|version|programtype|program</li>
- * </ul>
+ * runRecordActive|namespace|app|version|programtype|program|inverted start time|runid
+ * runRecordCompleted|namespace|app|version|programtype|program|inverted start time|runid
  *
- * <p>These rows get deleted whenever state changes, with a new record written on top. In addition,
- * workflow node state is stored as:</p>
+ * The run count will have the row key of format: runRecordCount|namespace|app|version|programtype|program
  *
- * <ul>
- *   <li>wns|namespace|app|version|programtype|program|runid|nodeid</li>
- * </ul>
+ * These rows get deleted whenever state changes, with a new record written on top. In addition,
+ * workflow node state is stored as:
  *
- * <p>Workflow node state is updated whenever program state is updated and we notice that the
- * program belongs to a workflow.</p>
+ * wns|namespace|app|version|programtype|program|runid|nodeid
+ *
+ * Workflow node state is updated whenever program state is updated and we notice that the program
+ * belongs to a workflow.
  */
-
 public class AppMetadataStore {
 
   public static final String WORKFLOW_RUNID = "workflowrunid";
@@ -387,13 +381,6 @@ public class AppMetadataStore {
     return table.scan(range, Integer.MAX_VALUE, sortOrder);
   }
 
-  /**
-   * Retrieves the total number of applications, excluding system applications, stored in the
-   * ApplicationSpecification table.
-   *
-   * @return The total number of applications, excluding system applications.
-   * @throws IOException If an error occurs while accessing the application metadata store.
-   */
   public long getApplicationCount() throws IOException {
     // Get number of applications where namespace != SYSTEM (exclude system applications)
     Collection<Field<?>> fields = ImmutableList.of(
@@ -413,19 +400,6 @@ public class AppMetadataStore {
     return getApplicationSpecificationTable().count(ranges, filterIndexes);
   }
 
-  /**
-   * Retrieves the latest version of the specified application.
-   *
-   * <p>This method retrieves the most recently created application version for the specified
-   * application reference. If no latest version is found, it falls back to treating the -SNAPSHOT
-   * version as the latest. If still not found, it sorts the versions by version ID, with the larger
-   * version ID string considered as the latest.</p>
-   *
-   * @param appReference The reference to the application.
-   * @return The latest version of the specified application, or {@code null} if the application
-   *         does not exist.
-   * @throws IOException If an error occurs while accessing the application metadata store.
-   */
   @Nullable
   public ApplicationMeta getLatest(ApplicationReference appReference) throws IOException {
     Range range = getLatestApplicationRange(appReference);
@@ -463,15 +437,6 @@ public class AppMetadataStore {
     return null;
   }
 
-  /**
-   * Retrieves a list of all application IDs corresponding to the specified application reference,
-   * including all versions of the application.
-   *
-   * @param appRef The reference to the application.
-   * @return A list of all application IDs corresponding to the specified application reference,
-   *         including all versions of the application.
-   * @throws IOException If an error occurs while accessing the application metadata store.
-   */
   public List<ApplicationId> getAllAppVersionsAppIds(ApplicationReference appRef)
       throws IOException {
     List<ApplicationId> appIds = new ArrayList<>();
@@ -496,28 +461,16 @@ public class AppMetadataStore {
    * @throws IOException if failed to read metadata
    */
   public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(
-      Collection<ApplicationId> appIds,
-      FunctionWithException<ApplicationId, SourceControlMeta, IOException> getSourceControlMeta)
+      Collection<ApplicationId> appIds)
       throws IOException {
     List<List<Field<?>>> multiKeys = appIds.stream()
         .map(this::getApplicationPrimaryKeys)
         .collect(Collectors.toList());
-    Map<ApplicationId, ApplicationMeta> map = new HashMap<>();
-    Collection<StructuredRow> rows = getApplicationSpecificationTable().multiRead(multiKeys);
-    for (StructuredRow row : rows) {
-      map.put(AppMetadataStore.getApplicationIdFromRow(row),
-          getSourceControlMetaAndDecodeRow(row, getSourceControlMeta));
-    }
-    return map;
-  }
-
-  private ApplicationMeta getSourceControlMetaAndDecodeRow(StructuredRow row,
-      FunctionWithException<ApplicationId, SourceControlMeta, IOException> getSourceControlMeta)
-      throws IOException {
-    ApplicationId appId = AppMetadataStore.getApplicationIdFromRow(row);
-    ApplicationMeta meta = decodeRow(row);
-    SourceControlMeta sourceControlMeta = getSourceControlMeta.apply(appId);
-    return new ApplicationMeta(meta.getId(), meta.getSpec(), meta.getChange(), sourceControlMeta);
+    return getApplicationSpecificationTable().multiRead(multiKeys)
+        .stream()
+        .collect(Collectors.toMap(
+            AppMetadataStore::getApplicationIdFromRow,
+            this::decodeRow));
   }
 
   /**
@@ -708,8 +661,7 @@ public class AppMetadataStore {
    * @throws ConflictException if parent-version provided in the request doesn't match the
    *     latest version, do not allow app to be created
    */
-  public int createApplicationVersion(ApplicationId id,
-      ApplicationMeta appMeta, boolean markAsLatest)
+  public int createApplicationVersion(ApplicationId id, ApplicationMeta appMeta, boolean markAsLatest)
       throws IOException, ConflictException {
     String parentVersion = Optional.ofNullable(appMeta.getChange())
         .map(ChangeDetail::getParentVersion).orElse(null);
@@ -766,7 +718,7 @@ public class AppMetadataStore {
     writeApplicationSerialized(namespaceId, appId, versionId,
         GSON.toJson(
             new ApplicationMeta(appId, spec, null, null)),
-        change, markAsLatest);
+        change, sourceControlMeta, markAsLatest);
     updateApplicationEdit(namespaceId, appId);
   }
 
@@ -828,15 +780,6 @@ public class AppMetadataStore {
     getApplicationSpecificationTable().deleteAll(getNamespaceRange(namespaceId));
   }
 
-  /**
-   * Updates the application specification for the specified application ID in the application
-   * metadata store.
-   *
-   * @param appId The ID of the application to update.
-   * @param spec  The updated application specification.
-   * @throws IOException If failed to upsert
-   * @throws IllegalArgumentException If the application ID does not exist.
-   */
   public void updateAppSpec(ApplicationId appId, ApplicationSpecification spec) throws IOException {
     if (LOG.isTraceEnabled()) {
       LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
@@ -1231,18 +1174,6 @@ public class AppMetadataStore {
     return meta;
   }
 
-  /**
-   * Records the rejected state for the specified program run in the run records.
-   *
-   * @param programRunId The ID of the program run to record the rejected state for.
-   * @param runtimeArgs  The runtime arguments passed to the program run.
-   * @param systemArgs   The system arguments passed to the program run.
-   * @param sourceId     The source ID associated with the program run.
-   * @param artifactId   The artifact ID associated with the program run, if any.
-   * @return The details of the recorded run record for the rejected program run, or {@code null} if
-   *         the rejected state could not be recorded.
-   * @throws IOException If an error occurs while accessing the run records.
-   */
   @Nullable
   public RunRecordDetail recordProgramRejected(ProgramRunId programRunId,
       Map<String, String> runtimeArgs, Map<String, String> systemArgs,
@@ -1947,24 +1878,6 @@ public class AppMetadataStore {
     }
   }
 
-  /**
-   * Retrieves a filtered collection of {@link RunRecordDetail} objects associated with a program.
-   * The result set is limited in size and can include runs with different statuses, depending on
-   * the provided parameters.
-   *
-   * @param programReference The {@link ProgramReference} object identifying the program.
-   * @param status           The {@link ProgramRunStatus} to filter the runs by. If
-   *                         {@code ProgramRunStatus.ALL} is provided, both active and completed
-   *                         runs might be included in the result.
-   * @param startTime        The start timestamp (inclusive) to filter runs.
-   * @param endTime          The end timestamp (inclusive) to filter runs.
-   * @param limit            The maximum number of desired runs in the result set.
-   * @param filter           An optional {@link Predicate} to apply additional filtering on the
-   *                         {@link RunRecordDetail} objects.
-   * @return A {@link Map} where keys are {@link ProgramRunId} and values are the corresponding
-   * {@link RunRecordDetail} objects.
-   * @throws IOException If an error occurs during data retrieval.
-   */
   public Map<ProgramRunId, RunRecordDetail> getAllProgramRuns(ProgramReference programReference,
       ProgramRunStatus status, long startTime,
       long endTime, int limit,
@@ -2030,14 +1943,6 @@ public class AppMetadataStore {
   // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
-
-  /**
-   * Retrieves details of the program run identified by the specified program run ID.
-   *
-   * @param programRun The ID of the program run to retrieve details for.
-   * @return The details of the program run, or {@code null} if the program run does not exist.
-   * @throws IOException If an error occurs while accessing the run records.
-   */
   @Nullable
   public RunRecordDetail getRun(ProgramRunId programRun) throws IOException {
     // Query active run record first
@@ -2060,15 +1965,6 @@ public class AppMetadataStore {
 
   // Fetching run record ignoring versions
   // We do this for places like LogHandler APIs that does not pass in a version
-
-  /**
-   * Retrieves details of the program run identified by the specified program reference and run ID.
-   *
-   * @param programRef The reference to the program.
-   * @param runId      The ID of the program run to retrieve details for.
-   * @return The details of the program run, or {@code null} if the program run does not exist.
-   * @throws IOException If an error occurs while accessing the run records.
-   */
   @Nullable
   public RunRecordDetail getRun(ProgramReference programRef, String runId) throws IOException {
     // Query active run record first
@@ -2376,14 +2272,6 @@ public class AppMetadataStore {
     return invertedTsKey < Long.MAX_VALUE ? invertedTsKey + 1 : invertedTsKey;
   }
 
-  /**
-   * Deletes the historical run records and counts associated with a specific application.
-   *
-   * @param namespaceId The namespace ID of the application.
-   * @param appId       The application ID.
-   * @param versionId   The version ID of the application.
-   * @throws IOException If an error occurs while deleting the historical data.
-   */
   public void deleteProgramHistory(String namespaceId, String appId, String versionId)
       throws IOException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
@@ -2399,12 +2287,6 @@ public class AppMetadataStore {
         Range.singleton(getCountApplicationPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationId)));
   }
 
-  /**
-   * Deletes the historical run records and counts associated with a specific application.
-   *
-   * @param applicationReference The reference to the application.
-   * @throws IOException If an error occurs while deleting the historical data.
-   */
   public void deleteProgramHistory(ApplicationReference applicationReference)
     throws IOException {
     getRunRecordsTable()
@@ -2419,13 +2301,6 @@ public class AppMetadataStore {
       Range.singleton(getCountApplicationRefPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationReference)));
   }
 
-  /**
-   * Deletes the historical run records and counts associated with all applications within the
-   * specified namespace.
-   *
-   * @param namespaceId The ID of the namespace containing the applications.
-   * @throws IOException If an error occurs while deleting the historical data.
-   */
   public void deleteProgramHistory(NamespaceId namespaceId) throws IOException {
     getRunRecordsTable().deleteAll(
         Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId)));
@@ -2456,15 +2331,6 @@ public class AppMetadataStore {
     getWorkflowsTable().upsert(keys);
   }
 
-  /**
-   * Retrieves the workflow token associated with the specified workflow run.
-   *
-   * @param workflowId    The {@link ProgramId} representing the workflow.
-   * @param workflowRunId The unique ID of the workflow run.
-   * @return The workflow token associated with the specified workflow run.
-   * @throws IOException              If an error occurs while retrieving the workflow token.
-   * @throws IllegalArgumentException If the program ID does not represent a workflow.
-   */
   public WorkflowToken getWorkflowToken(ProgramId workflowId, String workflowRunId)
       throws IOException {
     Preconditions.checkArgument(ProgramType.WORKFLOW == workflowId.getType());
@@ -2483,14 +2349,7 @@ public class AppMetadataStore {
   }
 
   /**
-   * Retrieves the set of program runs that were running between the specified start and end times
-   * and have completed.
-   *
-   * @param startTimeInSecs The start time (in seconds since the epoch) of the time range.
-   * @param endTimeInSecs   The end time (in seconds since the epoch) of the time range.
-   * @return A {@link Set} of {@link RunId} objects representing the completed program runs within
-   *         the specified time range.
-   * @throws IOException If an error occurs while retrieving the program runs.
+   * @return programs that were running between given start and end time and are completed
    */
   public Set<RunId> getRunningInRangeCompleted(long startTimeInSecs, long endTimeInSecs)
       throws IOException {
@@ -2502,14 +2361,7 @@ public class AppMetadataStore {
   }
 
   /**
-   * Retrieves the set of program runs that were running between the specified start and end times
-   * and are active.
-   *
-   * @param startTimeInSecs The start time (in seconds since the epoch) of the time range.
-   * @param endTimeInSecs   The end time (in seconds since the epoch) of the time range.
-   * @return A {@link Set} of {@link RunId} objects representing the active program runs within the
-   *         specified time range.
-   * @throws IOException If an error occurs while retrieving the program runs.
+   * @return programs that were running between given start and end time and are active
    */
   public Set<RunId> getRunningInRangeActive(long startTimeInSecs, long endTimeInSecs)
       throws IOException {
@@ -2598,7 +2450,7 @@ public class AppMetadataStore {
   }
 
   /**
-   * Gets the id of the last fetched message that was set for a subscriber of the given TMS topic.
+   * Gets the id of the last fetched message that was set for a subscriber of the given TMS topic
    *
    * @param topic the topic to lookup the last message id
    * @param subscriber the subscriber name
@@ -2656,12 +2508,6 @@ public class AppMetadataStore {
     return runIds;
   }
 
-  /**
-   * Deletes all metadata tables in the App Metadata Store. This method is intended for use only in
-   * testing environments and will delete all metadata store information.
-   *
-   * @throws IOException If an error occurs while deleting the metadata tables.
-   */
   @VisibleForTesting
   // USE ONLY IN TESTS: WILL DELETE ALL METADATA STORE INFO
   public void deleteAllAppMetadataTables() throws IOException {
@@ -2756,13 +2602,15 @@ public class AppMetadataStore {
   }
 
   private void writeApplicationSerialized(String namespaceId, String appId, String versionId,
-      String serialized, @Nullable ChangeDetail change)
+      String serialized, @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta)
       throws IOException {
-    writeApplicationSerialized(namespaceId, appId, versionId, serialized, change, true);
+    writeApplicationSerialized(namespaceId, appId, versionId, serialized, change, sourceControlMeta, true);
   }
 
   private void writeApplicationSerialized(String namespaceId, String appId, String versionId,
-      String serialized, @Nullable ChangeDetail change, boolean markAsLatest)
+      String serialized, @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest)
       throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
@@ -2776,6 +2624,11 @@ public class AppMetadataStore {
           change.getDescription()));
     }
     fields.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, markAsLatest));
+
+    if (sourceControlMeta != null) {
+      fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META,
+          GSON.toJson(sourceControlMeta)));
+    }
     getApplicationSpecificationTable().upsert(fields);
   }
 
@@ -2853,6 +2706,10 @@ public class AppMetadataStore {
     ApplicationMeta meta = GSON.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
         ApplicationMeta.class);
+    SourceControlMeta sourceControl = GSON.fromJson(
+        row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
+        SourceControlMeta.class);
+
     ApplicationSpecification spec = meta.getSpec();
     String id = meta.getId();
     ChangeDetail changeDetail;
@@ -2862,7 +2719,7 @@ public class AppMetadataStore {
       changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis, latest);
     }
 
-    return new ApplicationMeta(id, spec, changeDetail);
+    return new ApplicationMeta(id, spec, changeDetail, sourceControl);
   }
 
   private void writeToStructuredTableWithPrimaryKeys(
@@ -3102,7 +2959,9 @@ public class AppMetadataStore {
         this.changeDetail = new ChangeDetail(changeSummary, null, author, creationTimeMillis,
             latest);
       }
-      this.sourceControlMeta = null;
+      this.sourceControlMeta = GSON.fromJson(
+          row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
+          SourceControlMeta.class);
     }
 
     @Override
