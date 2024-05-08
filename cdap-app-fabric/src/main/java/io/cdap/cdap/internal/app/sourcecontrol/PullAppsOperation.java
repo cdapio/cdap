@@ -100,9 +100,8 @@ public class PullAppsOperation implements LongRunningOperation {
 
         try {
           ApplicationDetail currentDetail = applicationManager.get(appRef);
-          if (currentDetail.getSourceControlMeta() != null
-              && response.getApplicationFileHash()
-              .equals(currentDetail.getSourceControlMeta().getFileHash())) {
+          if (currentDetail.getSourceControlMeta() != null && currentDetail.getSourceControlMeta()
+              .getFileHash().equals(response.getApplicationFileHash())) {
             LOG.trace("Application {} already have same commit, skipping",
                 response.getApplicationName());
             return;

@@ -21,27 +21,21 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ForbiddenException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.gateway.handlers.util.SourceControlMetadataHelper;
 import io.cdap.cdap.internal.app.services.SourceControlManagementService;
 import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.operation.OperationMeta;
 import io.cdap.cdap.proto.operation.OperationRun;
-import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
@@ -50,23 +44,19 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
-import io.cdap.cdap.proto.sourcecontrol.SortBy;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
-import io.cdap.cdap.spi.data.SortOrder;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * {@link io.cdap.http.HttpHandler} for source control management.
@@ -76,15 +66,12 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   private final SourceControlManagementService sourceControlService;
   private final FeatureFlagsProvider featureFlagsProvider;
   private static final Gson GSON = new Gson();
-  public static final String APP_LIST_PAGINATED_KEY_SHORT = "apps";
-  private final int batchSize;
 
   @Inject
   SourceControlManagementHttpHandler(CConfiguration cConf,
                                      SourceControlManagementService sourceControlService) {
     this.sourceControlService = sourceControlService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
   }
 
   /**
@@ -143,42 +130,27 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   }
 
   /**
-   * Retrieves a list of applications from the provided repository.
+   * Lists applications found in linked repository for the given namespace.
+   * Returns the application name and git-filehash for each application config file found
+   * <pre>
+   * {
+   *  apps:[
+   *    {
+   *      "name": "xyz",
+   *      "fileHash": "abc"
+   *    }
+   *  ]
+   * }
+   * </pre>
    */
   @GET
   @Path("/apps")
-  public void listAllApplications(FullHttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespaceId,
-      @QueryParam("pageToken") String pageToken,
-      @QueryParam("pageSize") Integer pageSize,
-      @QueryParam("sortOrder") SortOrder sortOrder,
-      @QueryParam("sortOn") SortBy sortOn,
-      @QueryParam("filter") String filter) throws Exception {
+  public void listApplications(FullHttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId) throws Exception {
     checkSourceControlFeatureFlag();
-    validateNamespaceId(namespaceId);
-    JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY_SHORT,
-        jsonListResponder -> {
-          AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
-          ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
-              namespaceId,
-              pageToken, pageSize, sortOrder, sortOn, filter);
-          boolean pageLimitReached = false;
-          try {
-            pageLimitReached = sourceControlService.scanRepoMetadata(
-                scanRequest, batchSize,
-                record -> {
-                  jsonListResponder.send(record);
-                  lastRecord.set(record);
-                });
-          } catch (IOException e) {
-            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-          } catch (NotFoundException e) {
-            responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-          }
-          SourceControlMetadataRecord record = lastRecord.get();
-          return !pageLimitReached || record == null ? null :
-              record.getName();
-        });
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    RepositoryAppsResponse listResponse = sourceControlService.listApps(namespace);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(listResponse));
   }
 
   /**
@@ -350,14 +322,6 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       RepositoryConfigRequest repoRequest = parseBody(request, RepositoryConfigRequest.class);
       if (repoRequest == null || repoRequest.getConfig() == null) {
         throw new RepositoryConfigValidationException("Repository configuration must be specified.");
-      }
-      // Only allow gitlab and bitbucket if feature flag is enabled
-      if (!Feature.SOURCE_CONTROL_MANAGEMENT_GITLAB_BITBUCKET.isEnabled(featureFlagsProvider)) {
-        if (repoRequest.getConfig().getProvider() != Provider.GITHUB) {
-          throw new BadRequestException(
-              String.format("Provider %s is not supported", repoRequest.getConfig().getProvider())
-          );
-        }
       }
       repoRequest.getConfig().validate();
       return repoRequest;

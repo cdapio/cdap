@@ -39,7 +39,6 @@ import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunCountResult;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -465,9 +464,6 @@ public interface Store {
   @Nullable
   ApplicationMeta getLatest(ApplicationReference appRef);
 
-  @Nullable
-  SourceControlMetadataRecord getNamespaceSourceControlMetadataRecord(ApplicationReference appRef);
-
   /**
    * Scans for the latest applications across all namespaces.
    *
@@ -489,14 +485,6 @@ public interface Store {
   boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
                            BiConsumer<ApplicationId, ApplicationMeta> consumer);
 
-  int scanAppSourceControlMetadata(ScanSourceControlMetadataRequest request,
-      Consumer<SourceControlMetadataRecord> consumer);
-
-  int scanRepositorySourceControlMetadata(ScanSourceControlMetadataRequest request,
-      Consumer<SourceControlMetadataRecord> consumer);
-
-  void updateSourceControlMeta(ApplicationReference appRef, String repoFileHash);
-
   /**
    * Returns a Map of {@link ApplicationMeta} for the given set of {@link ApplicationId}.
    *
@@ -508,10 +496,10 @@ public interface Store {
   /**
    * Update an applications with provided SourceControlMeta.
    *
-   * @param appRef the application reference
+   * @param appId the application ID
    * @param sourceControlMeta the source control metadata of the application synced with linked repository.
    */
-  void setAppSourceControlMeta(ApplicationReference appRef, SourceControlMeta sourceControlMeta);
+  void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta);
 
   /**
    * Get source control metadata of provided application.
