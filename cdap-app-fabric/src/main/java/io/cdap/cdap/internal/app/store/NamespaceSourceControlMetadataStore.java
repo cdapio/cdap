@@ -259,7 +259,7 @@ public class NamespaceSourceControlMetadataStore {
       Range range,
       SortOrder sortOrder,
       SortBy sortBy) throws IOException {
-    if (sortBy == SortBy.LAST_SYNCED_AT) {
+    if (sortBy == SortBy.LAST_SYNCED_DATE) {
       return table.scan(range, Integer.MAX_VALUE,
           StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD, sortOrder);
     }
@@ -275,7 +275,7 @@ public class NamespaceSourceControlMetadataStore {
             request.getNamespace()));
     fields.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.TYPE_FIELD, type));
-    if (request.getSortOn() == SortBy.LAST_SYNCED_AT) {
+    if (request.getSortOn() == SortBy.LAST_SYNCED_DATE) {
       SourceControlMeta meta = get(
           new ApplicationReference(request.getNamespace(), request.getScanAfter()));
       fields.add(Fields.longField(

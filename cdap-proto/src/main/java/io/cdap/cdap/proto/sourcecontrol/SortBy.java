@@ -20,6 +20,5 @@ package io.cdap.cdap.proto.sourcecontrol;
  * Sort order options for namespace and repository pipelines.
  */
 public enum SortBy {
-  NAME,
-  LAST_SYNCED_AT
+  PIPELINE_NAME, LAST_SYNCED_DATE
 }

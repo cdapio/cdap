@@ -63,7 +63,6 @@ public class SourceControlMeta {
     this.syncStatus = syncStatus;
   }
 
-  @Nullable
   public String getFileHash() {
     return fileHash;
   }

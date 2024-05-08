@@ -129,7 +129,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       // when last modified is in desc order
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
-          .setSortOrder(SortOrder.DESC).setSortOn(SortBy.LAST_SYNCED_AT).build();
+          .setSortOrder(SortOrder.DESC).setSortOn(SortBy.LAST_SYNCED_DATE).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedDesc;
       Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
@@ -138,7 +138,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       // when last modified is in asc order
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
-          .setSortOrder(SortOrder.ASC).setSortOn(SortBy.LAST_SYNCED_AT).build();
+          .setSortOrder(SortOrder.ASC).setSortOn(SortBy.LAST_SYNCED_DATE).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedAsc;
       Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
@@ -146,7 +146,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       // verify limit for testNamespaceRecordsSortedOnNameDesc
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE).setLimit(3)
-          .setSortOrder(SortOrder.DESC).setSortOn(SortBy.NAME).build();
+          .setSortOrder(SortOrder.DESC).setSortOn(SortBy.PIPELINE_NAME).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnNameDesc.stream().limit(3)
           .collect(Collectors.toList());
@@ -199,7 +199,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       // verify SYNCED and name filter with pageToken and limit for testNamespaceRecordsSortedOnLastModifiedDesc
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE).setLimit(1)
-          .setScanAfter("dependent100").setSortOrder(SortOrder.DESC).setSortOn(SortBy.NAME)
+          .setScanAfter("dependent100").setSortOrder(SortOrder.DESC).setSortOn(SortBy.PIPELINE_NAME)
           .setFilter(new SourceControlMetadataFilter("t", true)).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedDesc.stream()
@@ -210,7 +210,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       // verify UNSYNCED and name filter with pageToken and limit for testNamespaceRecordsSortedOnLastModifiedDesc
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE).setLimit(1)
-          .setScanAfter("dependent100").setSortOn(SortBy.LAST_SYNCED_AT)
+          .setScanAfter("dependent100").setSortOn(SortBy.LAST_SYNCED_DATE)
           .setSortOrder(SortOrder.DESC)
           .setFilter(new SourceControlMetadataFilter("t", false)).build();
       store.scan(request, TYPE, gotRecords::add);
@@ -243,7 +243,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
           .setScanAfter("zapapp").setLimit(5).setSortOrder(SortOrder.DESC)
-          .setSortOn(SortBy.LAST_SYNCED_AT).build();
+          .setSortOn(SortBy.LAST_SYNCED_DATE).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedDesc.stream().filter(
           record -> record.getName().equals("newapp") || record.getName().equals("scm-test")
@@ -254,7 +254,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
           .setScanAfter("test").setLimit(3).setSortOrder(SortOrder.DESC)
-          .setSortOn(SortBy.LAST_SYNCED_AT).build();
+          .setSortOn(SortBy.LAST_SYNCED_DATE).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedDesc.stream().filter(
               record -> record.getName().equals("dependent100") || record.getName()
@@ -265,7 +265,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       // verify page token for testNamespaceRecordsSortedOnNameDesc
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
-          .setSortOrder(SortOrder.DESC).setSortOn(SortBy.NAME).setScanAfter("test")
+          .setSortOrder(SortOrder.DESC).setSortOn(SortBy.PIPELINE_NAME).setScanAfter("test")
           .setLimit(3).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnNameDesc.stream().filter(
@@ -277,7 +277,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
           .setScanAfter("scm-test").setLimit(4).setSortOrder(SortOrder.ASC)
-          .setSortOn(SortBy.LAST_SYNCED_AT).build();
+          .setSortOn(SortBy.LAST_SYNCED_DATE).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedAsc.stream().filter(
               record -> record.getName().equals("zapapp") || record.getName().equals("newapp")
@@ -289,7 +289,7 @@ public abstract class RepositorySourceControlMetadataStoreTest {
       gotRecords.clear();
       request = ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE)
           .setScanAfter("datafusionquickstart").setLimit(2).setSortOrder(SortOrder.ASC)
-          .setSortOn(SortBy.LAST_SYNCED_AT).build();
+          .setSortOn(SortBy.LAST_SYNCED_DATE).build();
       store.scan(request, TYPE, gotRecords::add);
       expectedRecords = testNamespaceRecordsSortedOnLastModifiedAsc.stream().filter(
               record -> record.getName().equals("newapp") || record.getName().equals("scm-test"))
