@@ -23,7 +23,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-public class NoSqlNamespaceSourceControlMetadataTest extends NamespaceSourceControlMetadataStoreTest {
+public class NoSqlSourceControlMetadataTest extends SourceControlMetadataStoreTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
