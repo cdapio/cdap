@@ -82,7 +82,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.common.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -143,12 +142,12 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MetadataServiceClient metadataServiceClient,
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
-          CapabilityReader capabilityReader, TransactionRunner transactionRunner) {
+          CapabilityReader capabilityReader) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(), transactionRunner));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
       }
     });
   }

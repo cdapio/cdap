@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -32,14 +30,10 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
-import io.cdap.cdap.app.store.SourceControlMetadataFilter;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.io.Locations;
@@ -54,7 +48,6 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.store.NamespaceSourceControlMetadataStore;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -64,20 +57,15 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
 import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
 import io.cdap.cdap.proto.app.UpdateSourceControlMetaRequest;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
@@ -89,16 +77,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
@@ -117,14 +102,11 @@ import org.junit.Test;
  */
 public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static final String FEATURE_FLAG_PREFIX = "feature.";
-  private static final String NAMESPACE = "testNamespace";
-  private static final String TYPE = EntityType.APPLICATION.toString();
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
   private static MetadataStorage metadataStorage;
   private static CapabilityWriter capabilityWriter;
-  private static int batchSize;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -133,7 +115,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     metadataStorage = getInjector().getInstance(MetadataStorage.class);
     capabilityWriter = getInjector().getInstance(CapabilityWriter.class);
-    batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
   }
 
   @AfterClass
@@ -404,115 +385,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
     startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("fail.in.workflow.initialize", "true"));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
-  }
-
-  @Test
-  public void testScanSourceControlMetadata() throws IOException {
-    ScanSourceControlMetadataRequest request;
-    List<SourceControlMetadataRecord> expectedRecords = new ArrayList<>();
-    List<SourceControlMetadataRecord> insertedRecords = insertTests();
-    // get a filtered list of testNamespace apps
-    List<SourceControlMetadataRecord> testNamespaceRecords = insertedRecords.stream()
-        .filter(record -> record.getNamespace().equals(NAMESPACE))
-        .collect(Collectors.toList());
-    // get a list testNamespace apps sorted on name in asc order which is the default state
-    List<SourceControlMetadataRecord> testNamespaceRecordsDefault = insertedRecords.stream()
-        .filter(record -> record.getNamespace().equals(NAMESPACE))
-        .sorted(Comparator.comparing(SourceControlMetadataRecord::getName))
-        .collect(Collectors.toList());
-    request =  ScanSourceControlMetadataRequest.builder().setNamespace(NAMESPACE).build();
-    List<SourceControlMetadataRecord> gotRecords = new ArrayList<>();
-    applicationLifecycleService.scanSourceControlMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = testNamespaceRecordsDefault;
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-    // verify limit
-    gotRecords.clear();
-    request = ScanSourceControlMetadataRequest.builder()
-        .setNamespace(NAMESPACE).setLimit(2).build();
-    applicationLifecycleService.scanSourceControlMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = testNamespaceRecordsDefault.stream().limit(2).collect(Collectors.toList());
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-    // verify name filter
-    gotRecords.clear();
-    String nameContainsFilter = "1";
-    request = ScanSourceControlMetadataRequest.builder()
-        .setNamespace(NAMESPACE)
-        .setFilter(new SourceControlMetadataFilter(nameContainsFilter, null)).build();
-    applicationLifecycleService.scanSourceControlMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = testNamespaceRecordsDefault.stream()
-        .filter(record -> record.getName().contains(nameContainsFilter))
-        .collect(Collectors.toList());
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-    // verify SYCNED sync status filter
-    gotRecords.clear();
-    request = ScanSourceControlMetadataRequest.builder()
-        .setNamespace(NAMESPACE)
-        .setFilter(new SourceControlMetadataFilter(null, true)).build();
-    applicationLifecycleService.scanSourceControlMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = testNamespaceRecordsDefault.stream()
-        .filter(record -> record.getIsSynced() == true)
-        .collect(Collectors.toList());
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-    // verify page token with limit
-    gotRecords.clear();
-    request = ScanSourceControlMetadataRequest.builder()
-        .setNamespace(NAMESPACE).setScanAfter("test2").setLimit(2).build();
-    applicationLifecycleService.scanSourceControlMetadata(request, batchSize, gotRecords::add);
-    expectedRecords = testNamespaceRecordsDefault.stream()
-        .filter(record -> record.getName().equals("test3") || record.getName().equals("test4"))
-        .collect(Collectors.toList());
-    Assert.assertArrayEquals(expectedRecords.toArray(), gotRecords.toArray());
-
-    deleteAllRecords(NAMESPACE);
-  }
-
-  @Test
-  public void testGetSourceControlMetadataRecord() throws SourceControlMetadataNotFoundException {
-    SourceControlMetadataRecord expectedRecord = insertTests().get(0);
-    SourceControlMetadataRecord actualRecord = applicationLifecycleService.getSourceControlMetadataRecord(
-        new ApplicationReference(NAMESPACE, "test0"));
-    assertEquals(expectedRecord, actualRecord);
-    deleteAllRecords(NAMESPACE);
-  }
-
-  private List<SourceControlMetadataRecord> insertTests() {
-    List<SourceControlMetadataRecord> records = new ArrayList<>();
-    for (int i = 0; i < 5; i++) {
-      records.add(insertRecord(NAMESPACE, "test" + i, TYPE, "fileHash" + i, "commitId" + i,
-          Instant.now(), i % 2 == 0));
-      records.add(
-          insertRecord(Namespace.DEFAULT.getId(), "test" + i, TYPE, "fileHash" + i, "commitId" + i,
-              Instant.now(), i % 2 == 0));
-    }
-    for (int i = 5; i < 10; i++) {
-      records.add(
-          insertRecord(NAMESPACE, "test" + i, TYPE, null, null, null, false));
-      records.add(
-          insertRecord(Namespace.DEFAULT.getId(), "test" + i, TYPE, null, null, null, false));
-    }
-    return records;
-  }
-
-  private SourceControlMetadataRecord insertRecord(String namespace, String name, String type,
-      String specHash, String commitId, Instant lastModified, Boolean isSycned) {
-    AtomicReference<SourceControlMetadataRecord> record = new AtomicReference<>(null);
-    ApplicationReference appRef = new ApplicationReference(namespace, name);
-    SourceControlMeta sourceControlMeta = new SourceControlMeta(specHash, commitId, lastModified, isSycned);
-    TransactionRunners.run(transactionRunner, context -> {
-      NamespaceSourceControlMetadataStore store = NamespaceSourceControlMetadataStore.create(
-          context);
-      store.write(appRef, sourceControlMeta);
-      record.set(store.getRecord(appRef));
-    });
-    return record.get();
-  }
-
-  private void deleteAllRecords(String namespace) {
-    TransactionRunners.run(transactionRunner, context -> {
-      NamespaceSourceControlMetadataStore store = NamespaceSourceControlMetadataStore.create(
-          context);
-      store.deleteAll(namespace);
-    });
   }
 
   @Test

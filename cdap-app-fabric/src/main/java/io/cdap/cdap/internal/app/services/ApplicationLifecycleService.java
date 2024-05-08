@@ -51,7 +51,6 @@ import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
@@ -60,7 +59,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.SourceControlMetadataNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -93,7 +91,6 @@ import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.app.AppVersion;
 import io.cdap.cdap.proto.app.MarkLatestAppsRequest;
 import io.cdap.cdap.proto.app.UpdateMultiSourceControlMetaReqeust;
@@ -122,8 +119,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import java.io.File;
 import java.io.IOException;
@@ -187,7 +182,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int batchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
-  private final TransactionRunner transactionRunner;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -203,7 +197,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService, TransactionRunner transactionRunner) {
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -225,7 +219,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -306,45 +299,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
-  /**
-   * Scans source control metadata based on the provided request and processes it in batches. This
-   * method scans source control metadata based on the specified request parameters.
-   *
-   * @param request     The request specifying the metadata to scan.
-   * @param txBatchSize The transaction batch size for processing metadata in each iteration.
-   * @param consumer    The consumer to process the scanned source control metadata records.
-   * @return True if the page limit has reached, false otherwise.
-   * @throws IOException If an I/O error occurs during the scanning process.
-   */
-  public boolean scanSourceControlMetadata(ScanSourceControlMetadataRequest request,
-      int txBatchSize,
-      Consumer<SourceControlMetadataRecord> consumer) throws IOException {
-    String lastKey = request.getScanAfter();
-    int currentLimit = request.getLimit();
-
-    while (currentLimit > 0) {
-      int maxLimit = Math.min(txBatchSize, currentLimit);
-      ScanSourceControlMetadataRequest batchRequest = ScanSourceControlMetadataRequest
-          .builder(request)
-          .setScanAfter(lastKey)
-          .setLimit(maxLimit)
-          .build();
-
-      request = batchRequest;
-
-      int count = TransactionRunners.run(transactionRunner, context -> {
-        return store.scanAppSourceControlMetadata(batchRequest, consumer);
-      }, IOException.class);
-
-      if (count < maxLimit) {
-        return false;
-      }
-
-      currentLimit -= txBatchSize;
-    }
-    return true;
-  }
-
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,
       Consumer<ApplicationDetail> consumer) {
 
@@ -404,23 +358,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationDetail getLatestAppDetail(ApplicationReference appRef)
       throws IOException, NotFoundException {
     return getLatestAppDetail(appRef, true);
-  }
-
-  /**
-   * Retrieves the source control metadata detail for the specified application reference.
-   *
-   * @param appRef The application reference for which to retrieve the metadata detail.
-   * @return The {@link SourceControlMetadataRecord} for the specified application reference.
-   * @throws SourceControlMetadataNotFoundException If the metadata record for the application
-   *                                                reference is not found.
-   */
-  public SourceControlMetadataRecord getSourceControlMetadataRecord(ApplicationReference appRef)
-      throws SourceControlMetadataNotFoundException {
-    SourceControlMetadataRecord record = store.getNamespaceSourceControlMetadataRecord(appRef);
-    if (record == null) {
-      throw new SourceControlMetadataNotFoundException(appRef);
-    }
-    return record;
   }
 
   /**
