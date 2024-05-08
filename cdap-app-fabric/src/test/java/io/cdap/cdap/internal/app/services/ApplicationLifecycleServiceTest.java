@@ -710,7 +710,12 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     // deploy an app, then update its scm meta
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     ApplicationDetail applicationDetail = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
-    Assert.assertNull(applicationDetail.getSourceControlMeta());
+    // Changed the assertions because source control metadata was updated with a non-null value in
+    // test testUpdateSourceControlMetaWithDuplicateAppIds for a specific appId. In this test,
+    // we have deployed this appId, which makes file hash and commitId null but last synced value is retained
+    Assert.assertNull(applicationDetail.getSourceControlMeta().getFileHash());
+    Assert.assertNull(applicationDetail.getSourceControlMeta().getCommitId());
+    Assert.assertNotNull(applicationDetail.getSourceControlMeta().getLastSyncedAt());
 
     applicationLifecycleService.updateSourceControlMeta(
         new NamespaceId(TEST_NAMESPACE1),
@@ -752,9 +757,6 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertNotNull(updatedDetail.getSourceControlMeta());
     Assert.assertEquals("updated-file-hash", updatedDetail.getSourceControlMeta().getFileHash());
     Assert.assertEquals("updated-commit-id", updatedDetail.getSourceControlMeta().getCommitId());
-
-    deleteAppAndData(new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME,
-        applicationDetail.getAppVersion()));
   }
 
   @Test(expected = BadRequestException.class)
