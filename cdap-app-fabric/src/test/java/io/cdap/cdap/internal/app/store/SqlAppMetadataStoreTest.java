@@ -61,8 +61,7 @@ public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
-              .in(Scopes.SINGLETON);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
     );

@@ -34,7 +34,6 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
@@ -47,7 +46,6 @@ import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.common.id.Id;
@@ -57,7 +55,6 @@ import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.features.Feature;
-import io.cdap.cdap.gateway.handlers.util.SourceControlMetadataHelper;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
@@ -65,7 +62,6 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
@@ -73,7 +69,6 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.proto.sourcecontrol.SortBy;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -129,7 +124,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    * Key in json paginated applications list response.
    */
   public static final String APP_LIST_PAGINATED_KEY = "applications";
-  public static final String APP_LIST_PAGINATED_KEY_SHORT = "apps";
 
   /**
    * Runtime program service for running and managing programs.
@@ -138,7 +132,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final FeatureFlagsProvider featureFlagsProvider;
-  private final int batchSize;
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
@@ -153,7 +146,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
-    this.batchSize = configuration.getInt(AppFabric.STREAMING_BATCH_SIZE);
   }
 
   /**
@@ -292,75 +284,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
               d -> jsonListResponder.send(new ApplicationRecord(d)))
       );
     }
-  }
-
-  /**
-   * Retrieves all namespace source control metadata for applications within the specified namespace.
-   *
-   * @param request      The HTTP request containing parameters for retrieving metadata.
-   * @param responder    The HTTP responder for sending the response.
-   * @param namespaceId  The ID of the namespace for which to retrieve metadata.
-   * @param pageToken    A token for paginating through results.
-   * @param pageSize     The size of each page for pagination.
-   * @param sortOrder    The sort order for the metadata.
-   * @param sortOn       The field on which to sort the metadata.
-   * @param filter       A filter string for filtering the metadata.
-   *                     filter query format - "name=&lt;name-filter&gt; AND syncStatus=&lt;SYNCED/UNSYNCED&gt;".
-   * @throws Exception If an error occurs during the metadata retrieval process.
-   */
-  @GET
-  @Path("/sourcecontrol/apps")
-  public void getAllNamespaceSourceControlMetadata(FullHttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespaceId,
-      @QueryParam("pageToken") String pageToken,
-      @QueryParam("pageSize") Integer pageSize,
-      @QueryParam("sortOrder") SortOrder sortOrder,
-      @QueryParam("sortOn") SortBy sortOn,
-      @QueryParam("filter") String filter
-  ) throws Exception {
-    validateNamespace(namespaceId);
-
-    JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY_SHORT,
-        jsonListResponder -> {
-          AtomicReference<SourceControlMetadataRecord> lastRecord = new AtomicReference<>(null);
-          ScanSourceControlMetadataRequest scanRequest = SourceControlMetadataHelper.getScmStatusScanRequest(
-              namespaceId,
-              pageToken, pageSize, sortOrder, sortOn, filter);
-          boolean pageLimitReached = false;
-          try {
-            pageLimitReached = applicationLifecycleService.scanSourceControlMetadata(
-                scanRequest, batchSize,
-                scmMetaRecord -> {
-                  jsonListResponder.send(scmMetaRecord);
-                  lastRecord.set(scmMetaRecord);
-                });
-          } catch (IOException e) {
-            responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-          }
-          SourceControlMetadataRecord record = lastRecord.get();
-          return !pageLimitReached || record == null ? null : record.getName();
-        });
-  }
-
-  /**
-   * Retrieves the source control metadata for the specified application within the specified namespace.
-   *
-   * @param request      The HTTP request containing parameters for retrieving metadata.
-   * @param responder    The HTTP responder for sending the response.
-   * @param namespaceId  The ID of the namespace containing the application.
-   * @param appName      The ID of the application for which to retrieve metadata.
-   * @throws Exception If an error occurs during the metadata retrieval process.
-   */
-  @GET
-  @Path("/apps/{app-id}/sourcecontrol")
-  public void getNamespaceSourceControlMetadata(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") final String namespaceId,
-      @PathParam("app-id") final String appName) throws Exception {
-    validateApplicationId(namespaceId, appName);
-
-    responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(applicationLifecycleService.getSourceControlMetadataRecord(
-            new ApplicationReference(namespaceId, appName))));
   }
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion,
