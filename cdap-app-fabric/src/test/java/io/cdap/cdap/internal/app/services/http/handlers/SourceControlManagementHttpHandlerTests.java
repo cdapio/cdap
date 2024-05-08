@@ -26,7 +26,6 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -66,6 +65,8 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppMeta;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppsResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.common.http.HttpResponse;
@@ -512,32 +513,42 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testScanRepoMetadataFailed() throws Exception {
-    Mockito.doThrow(SourceControlException.class)
-        .when(sourceControlService)
-        .scanRepoMetadata(Mockito.notNull(ScanSourceControlMetadataRequest.class),
-            Mockito.anyInt(),
-            Mockito.any());
+  public void testListAppsSucceed() throws Exception {
+    RepositoryApp app1 = new RepositoryApp("app1", "hash1");
+    RepositoryApp app2 = new RepositoryApp("app2", "hash2");
+    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(Arrays.asList(app1, app2));
+    Mockito.doReturn(expectedListResult).when(sourceControlService)
+      .listApps(Mockito.any());
+
+    HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
+    assertResponseCode(200, response);
+    RepositoryAppsResponse result = readResponse(response, RepositoryAppsResponse.class);
+
+    Assert.assertEquals(result.getApps(), expectedListResult.getApps());
+  }
+
+  @Test
+  public void testListAppsFailed() throws Exception {
+    Mockito.doThrow(SourceControlException.class).when(sourceControlService)
+      .listApps(Mockito.any());
+
     HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
     assertResponseCode(500, response);
   }
 
   @Test
-  public void testScanRepoMetadataFailedAuth() throws Exception {
+  public void testListAppsFailedAuth() throws Exception {
     Mockito.doThrow(AuthenticationConfigException.class).when(sourceControlService)
-        .scanRepoMetadata(Mockito.notNull(ScanSourceControlMetadataRequest.class),
-            Mockito.anyInt(),
-            Mockito.any());
+      .listApps(Mockito.any());
+
     HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
     assertResponseCode(500, response);
   }
 
   @Test
-  public void testScanRepoMetadataNotFound() throws Exception {
+  public void testListAppsNotFound() throws Exception {
     Mockito.doThrow(new NotFoundException("apps not found")).when(sourceControlService)
-        .scanRepoMetadata(Mockito.notNull(ScanSourceControlMetadataRequest.class),
-            Mockito.anyInt(),
-            Mockito.any());
+      .listApps(Mockito.any());
     HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
     assertResponseCode(404, response);
   }

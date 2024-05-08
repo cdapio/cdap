@@ -18,14 +18,8 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
-import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationReference;
-import io.cdap.cdap.proto.sourcecontrol.SortBy;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -40,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -107,93 +100,7 @@ public class NamespaceSourceControlMetadataStore {
   }
 
   /**
-   * Scans the source control metadata records based on the specified request parameters, and
-   * invokes the provided consumer for each matched record.
-   *
-   * @param request  The {@link ScanSourceControlMetadataRequest} object specifying the criteria for
-   *                 scanning the metadata records.
-   * @param type     The type of metadata records to scan. Currently, it is
-   *                 {@code APPLICATIONREFERENCE} by default.
-   * @param consumer The consumer to be invoked for each matched metadata record.
-   * @return The number of metadata records scanned and processed.
-   * @throws IOException If an I/O error occurs while scanning the metadata records.
-   */
-  public int scan(ScanSourceControlMetadataRequest request,
-      String type, Consumer<SourceControlMetadataRecord> consumer) throws IOException {
-    Range.Bound startBound = Range.Bound.INCLUSIVE;
-    final Range.Bound endBound = Range.Bound.INCLUSIVE;
-    Collection<Field<?>> startFields = new ArrayList<>();
-    StructuredTable table = getNamespaceSourceControlMetadataTable();
-
-    startFields.add(
-        Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_FIELD,
-            request.getNamespace())
-    );
-    startFields.add(
-        Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.TYPE_FIELD, type)
-    );
-
-    if (request.getFilter().getIsSynced() != null) {
-      startFields.add(
-          Fields.booleanField(StoreDefinition.NamespaceSourceControlMetadataStore.IS_SYNCED_FIELD,
-              request.getFilter().getIsSynced()));
-    }
-
-    Collection<Field<?>> endFields = startFields;
-
-    if (request.getScanAfter() != null) {
-      startBound = Range.Bound.EXCLUSIVE;
-      startFields = getRangeFields(request, type);
-    }
-
-    Range range;
-    if (request.getSortOrder() == SortOrder.ASC) {
-      range = Range.create(startFields, startBound, endFields, endBound);
-    } else {
-      range = Range.create(endFields, endBound, startFields, startBound);
-    }
-
-    int limit = request.getLimit();
-    int count = 0;
-    try (CloseableIterator<StructuredRow> iterator = getScanIterator(
-        table, range,
-        request.getSortOrder(), request.getSortOn())
-    ) {
-      while (iterator.hasNext() && limit > 0) {
-        StructuredRow row = iterator.next();
-        SourceControlMetadataRecord record = decodeRow(row);
-        boolean nameContainsFilterMatch = request.getFilter().getNameContains() == null
-            || record.getName().toLowerCase()
-                .contains(request.getFilter().getNameContains().toLowerCase());
-
-        if (nameContainsFilterMatch) {
-          consumer.accept(record);
-          limit--;
-          count++;
-        }
-      }
-    }
-    return count;
-  }
-
-  /**
-   * Retrieves the source control metadata record for the specified application reference.
-   *
-   * @param appRef The {@link ApplicationReference} for which to retrieve the metadata record.
-   * @return The {@link SourceControlMetadataRecord} associated with the specified application
-   *         reference, or {@code null} if no record is found.
-   * @throws IOException If an I/O error occurs while retrieving the record.
-   */
-  public SourceControlMetadataRecord getRecord(ApplicationReference appRef)
-      throws IOException {
-    List<Field<?>> primaryKey = getPrimaryKey(appRef);
-    return getNamespaceSourceControlMetadataTable().read(primaryKey)
-        .map(row -> decodeRow(row)
-        ).orElse(null);
-  }
-
-  /**
-   * Sets the source control metadata for the specified application ID in the namespace. Source
+   * Sets the source control metadata for the specified application ID in the namespace.  Source
    * control metadata will be null when the application is deployed in the namespace. It will be
    * non-null when the application is pulled from the remote repository and deployed in the
    * namespace.
@@ -216,9 +123,6 @@ public class NamespaceSourceControlMetadataStore {
     // Instead of doing filtering, searching, sorting in memory, it will happen at
     // database level.
     StructuredTable scmTable = getNamespaceSourceControlMetadataTable();
-    if (sourceControlMeta == null || sourceControlMeta.getSyncStatus() == null) {
-      throw new IllegalArgumentException("Source control metadata or sync status cannot be null");
-    }
     SourceControlMeta existingSourceControlMeta = get(appRef);
     if (sourceControlMeta.getLastSyncedAt() != null && existingSourceControlMeta != null
         && sourceControlMeta.getLastSyncedAt()
@@ -255,59 +159,6 @@ public class NamespaceSourceControlMetadataStore {
     getNamespaceSourceControlMetadataTable().deleteAll(getNamespaceRange(namespace));
   }
 
-  private CloseableIterator<StructuredRow> getScanIterator(
-      StructuredTable table,
-      Range range,
-      SortOrder sortOrder,
-      SortBy sortBy) throws IOException {
-    if (sortBy == SortBy.LAST_SYNCED_DATE) {
-      return table.scan(range, Integer.MAX_VALUE,
-          StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD, sortOrder);
-    }
-    return table.scan(range, Integer.MAX_VALUE,
-        StoreDefinition.NamespaceSourceControlMetadataStore.NAME_FIELD, sortOrder);
-  }
-
-  private List<Field<?>> getRangeFields(
-      ScanSourceControlMetadataRequest request, String type) throws IOException {
-    List<Field<?>> fields = new ArrayList<>();
-    fields.add(
-        Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_FIELD,
-            request.getNamespace()));
-    fields.add(
-        Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.TYPE_FIELD, type));
-    if (request.getSortOn() == SortBy.LAST_SYNCED_DATE) {
-      SourceControlMeta meta = get(
-          new ApplicationReference(request.getNamespace(), request.getScanAfter()));
-      fields.add(Fields.longField(
-          StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD,
-          meta == null || meta.getLastSyncedAt() == null ? 0L : meta.getLastSyncedAt().toEpochMilli()));
-    }
-    fields.add(Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.NAME_FIELD,
-        request.getScanAfter()));
-    return fields;
-  }
-
-  private SourceControlMetadataRecord decodeRow(StructuredRow row) {
-    String namespace = row.getString(
-        StoreDefinition.NamespaceSourceControlMetadataStore.NAMESPACE_FIELD);
-    String type = row.getString(StoreDefinition.NamespaceSourceControlMetadataStore.TYPE_FIELD);
-    String name = row.getString(StoreDefinition.NamespaceSourceControlMetadataStore.NAME_FIELD);
-    String specificationHash = row.getString(
-        StoreDefinition.NamespaceSourceControlMetadataStore.SPECIFICATION_HASH_FIELD);
-    String commitId = row.getString(
-        StoreDefinition.NamespaceSourceControlMetadataStore.COMMIT_ID_FIELD);
-    Long lastModified = row.getLong(
-        StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD);
-    if (lastModified == 0L) {
-      lastModified = null;
-    }
-    Boolean isSynced = row.getBoolean(
-        StoreDefinition.NamespaceSourceControlMetadataStore.IS_SYNCED_FIELD);
-    return new SourceControlMetadataRecord(namespace, type, name, specificationHash, commitId,
-        lastModified, isSynced);
-  }
-
   private Collection<Field<?>> getAllFields(ApplicationReference appRef,
       SourceControlMeta newSourceControlMeta, SourceControlMeta existingSourceControlMeta) {
     List<Field<?>> fields = getPrimaryKey(appRef);
@@ -330,13 +181,11 @@ public class NamespaceSourceControlMetadataStore {
 
   private long getLastModifiedValue(SourceControlMeta newSourceControlMeta,
       SourceControlMeta existingSourceControlMeta) {
-    if (newSourceControlMeta.getLastSyncedAt() == null && (existingSourceControlMeta == null
-        || existingSourceControlMeta.getLastSyncedAt() == null)) {
+    if (newSourceControlMeta.getLastSyncedAt() == null && existingSourceControlMeta == null) {
       return 0L;
     }
     SourceControlMeta metaToUse =
-        newSourceControlMeta.getLastSyncedAt() != null ? newSourceControlMeta
-            : existingSourceControlMeta;
+        newSourceControlMeta.getLastSyncedAt() != null ? newSourceControlMeta : existingSourceControlMeta;
     return metaToUse.getLastSyncedAt().toEpochMilli();
   }
 
@@ -347,7 +196,7 @@ public class NamespaceSourceControlMetadataStore {
             appRef.getNamespace()));
     primaryKey.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.TYPE_FIELD,
-            EntityType.APPLICATION.toString()));
+            appRef.getEntityType().toString()));
     primaryKey.add(
         Fields.stringField(StoreDefinition.NamespaceSourceControlMetadataStore.NAME_FIELD,
             appRef.getEntityName()));

@@ -37,7 +37,6 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
-import io.cdap.cdap.app.store.ScanSourceControlMetadataRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ConflictException;
@@ -55,10 +54,8 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.RunRecord;
-import io.cdap.cdap.proto.SourceControlMetadataRecord;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.WorkflowStatistics;
-import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -150,11 +147,6 @@ public class DefaultStore implements Store {
   private NamespaceSourceControlMetadataStore getNamespaceSourceControlMetadataStore(
       StructuredTableContext context) {
     return NamespaceSourceControlMetadataStore.create(context);
-  }
-
-  private RepositorySourceControlMetadataStore getRepoSourceControlMetadataStore(
-      StructuredTableContext context) {
-    return RepositorySourceControlMetadataStore.create(context);
   }
 
   private WorkflowTable getWorkflowTable(StructuredTableContext context)
@@ -653,14 +645,6 @@ public class DefaultStore implements Store {
     }, IOException.class);
   }
 
-  @Override
-  public SourceControlMetadataRecord getNamespaceSourceControlMetadataRecord(
-      ApplicationReference appRef) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return getNamespaceSourceControlMetadataStore(context).getRecord(appRef);
-    });
-  }
-
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
   @Override
   public List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationReference appRef,
@@ -783,7 +767,7 @@ public class DefaultStore implements Store {
   @Override
   public void removeApplication(ApplicationId id) {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(),
-        id.getApplication(), id.getVersion());
+              id.getApplication(), id.getVersion());
 
     TransactionRunners.run(transactionRunner, context -> {
       getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
@@ -989,54 +973,6 @@ public class DefaultStore implements Store {
       SourceControlMeta sourceControlMeta = getNamespaceSourceControlMetadataStore(context)
           .get(appRef);
       return new ApplicationMeta(meta.getId(), meta.getSpec(), meta.getChange(), sourceControlMeta);
-    });
-  }
-
-  @Override
-  public void updateSourceControlMeta(ApplicationReference appRef, String repoFileHash) {
-    TransactionRunners.run(transactionRunner, context -> {
-      RepositorySourceControlMetadataStore repoMetadataStore = getRepoSourceControlMetadataStore(
-          context);
-      NamespaceSourceControlMetadataStore namespaceMetadataStore = getNamespaceSourceControlMetadataStore(
-          context);
-      SourceControlMeta namespaceSourceControlMeta = namespaceMetadataStore.get(appRef);
-
-      if (namespaceSourceControlMeta == null || namespaceSourceControlMeta.getFileHash() == null) {
-        repoMetadataStore.write(appRef, false, 0L);
-        return;
-      }
-      Boolean isSynced = namespaceSourceControlMeta.getFileHash().equals(repoFileHash);
-      if (isSynced) {
-        namespaceMetadataStore.write(appRef,
-            new SourceControlMeta(namespaceSourceControlMeta.getFileHash(),
-                namespaceSourceControlMeta.getCommitId(),
-                namespaceSourceControlMeta.getLastSyncedAt(), isSynced));
-        repoMetadataStore.write(appRef,
-            isSynced, namespaceSourceControlMeta.getLastSyncedAt().toEpochMilli());
-      } else {
-        repoMetadataStore.write(appRef, isSynced, 0L);
-      }
-    });
-  }
-
-  @Override
-  public int scanRepositorySourceControlMetadata(ScanSourceControlMetadataRequest request,
-      Consumer<SourceControlMetadataRecord> consumer) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      String type = EntityType.APPLICATION.toString();
-      return getRepoSourceControlMetadataStore(context).scan(request, type,
-          consumer);
-    });
-  }
-
-  @Override
-  public int scanAppSourceControlMetadata(ScanSourceControlMetadataRequest request,
-      Consumer<SourceControlMetadataRecord> consumer) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      String type = EntityType.APPLICATION.toString();
-      return getNamespaceSourceControlMetadataStore(context).scan(request,
-          type,
-          consumer);
     });
   }
 
