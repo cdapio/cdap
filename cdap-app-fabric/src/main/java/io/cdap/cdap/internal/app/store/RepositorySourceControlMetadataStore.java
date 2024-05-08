@@ -200,7 +200,7 @@ public class RepositorySourceControlMetadataStore {
       Range range,
       SortOrder sortOrder,
       SortBy sortBy) throws IOException {
-    if (sortBy == SortBy.LAST_SYNCED_AT) {
+    if (sortBy == SortBy.LAST_SYNCED_DATE) {
       return table.scan(range, Integer.MAX_VALUE,
           StoreDefinition.RepositorySourceControlMetadataStore.LAST_MODIFIED_FIELD, sortOrder);
     }
@@ -245,7 +245,7 @@ public class RepositorySourceControlMetadataStore {
             request.getNamespace()));
     fields.add(
         Fields.stringField(StoreDefinition.RepositorySourceControlMetadataStore.TYPE_FIELD, type));
-    if (request.getSortOn() == SortBy.LAST_SYNCED_AT) {
+    if (request.getSortOn() == SortBy.LAST_SYNCED_DATE) {
       ImmutablePair<Long, Boolean> lastModifiedAndStatusPair = get(
           new ApplicationReference(request.getNamespace(), request.getScanAfter()));
       fields.add(Fields.longField(
