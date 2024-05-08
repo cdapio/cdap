@@ -508,10 +508,10 @@ public interface Store {
   /**
    * Update an applications with provided SourceControlMeta.
    *
-   * @param appRef the application reference
+   * @param appId the application ID
    * @param sourceControlMeta the source control metadata of the application synced with linked repository.
    */
-  void setAppSourceControlMeta(ApplicationReference appRef, SourceControlMeta sourceControlMeta);
+  void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta);
 
   /**
    * Get source control metadata of provided application.

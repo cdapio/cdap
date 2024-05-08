@@ -95,12 +95,14 @@ public class NamespaceSourceControlMetadataStore {
           StoreDefinition.NamespaceSourceControlMetadataStore.COMMIT_ID_FIELD);
       Long lastSynced = nonNullRow.getLong(
           StoreDefinition.NamespaceSourceControlMetadataStore.LAST_MODIFIED_FIELD);
-      Instant lastSyncedInstant = lastSynced == null || lastSynced == 0L ? null
-          : Instant.ofEpochMilli(lastSynced);
+      Instant lastSyncedInstant = lastSynced == 0L ? null : Instant.ofEpochMilli(lastSynced);
       Boolean isSynced = nonNullRow.getBoolean(
           StoreDefinition.NamespaceSourceControlMetadataStore.IS_SYNCED_FIELD);
+      if (specificationHash == null && commitId == null && lastSynced == 0L) {
+        return null;
+      }
       return new SourceControlMeta(specificationHash, commitId, lastSyncedInstant,
-          isSynced != null && isSynced);
+          isSynced);
     }).orElse(null);
   }
 
@@ -219,7 +221,6 @@ public class NamespaceSourceControlMetadataStore {
     }
     SourceControlMeta existingSourceControlMeta = get(appRef);
     if (sourceControlMeta.getLastSyncedAt() != null && existingSourceControlMeta != null
-        && existingSourceControlMeta.getLastSyncedAt() != null
         && sourceControlMeta.getLastSyncedAt()
         .isBefore(existingSourceControlMeta.getLastSyncedAt())) {
 
@@ -329,12 +330,14 @@ public class NamespaceSourceControlMetadataStore {
 
   private long getLastModifiedValue(SourceControlMeta newSourceControlMeta,
       SourceControlMeta existingSourceControlMeta) {
-    if (newSourceControlMeta.getLastSyncedAt() == null) {
-      return
-          existingSourceControlMeta == null || existingSourceControlMeta.getLastSyncedAt() == null
-              ? 0L : existingSourceControlMeta.getLastSyncedAt().toEpochMilli();
+    if (newSourceControlMeta.getLastSyncedAt() == null && (existingSourceControlMeta == null
+        || existingSourceControlMeta.getLastSyncedAt() == null)) {
+      return 0L;
     }
-    return newSourceControlMeta.getLastSyncedAt().toEpochMilli();
+    SourceControlMeta metaToUse =
+        newSourceControlMeta.getLastSyncedAt() != null ? newSourceControlMeta
+            : existingSourceControlMeta;
+    return metaToUse.getLastSyncedAt().toEpochMilli();
   }
 
   private List<Field<?>> getPrimaryKey(ApplicationReference appRef) {
