@@ -6114,14 +6114,6 @@
       Scheduler interval for repository cleanup service, by default 1 hour
     </description>
   </property>
-  <property>
-    <name>source.control.metadata.migration.interval.seconds</name>
-    <value>300</value>
-    <description>
-      Scheduler interval for scm metadata migration service, by default 5 min
-      The service only retries when the migration job fails.
-    </description>
-  </property>
 
   <!--Configuration for the Internal Router service -->
   <property>
