@@ -17,7 +17,7 @@
 package io.cdap.cdap.messaging.store;
 
 import io.cdap.cdap.api.common.Bytes;
-import io.cdap.cdap.common.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.MessagingUtils;
 import io.cdap.cdap.proto.id.TopicId;
 import javax.annotation.Nullable;
 
