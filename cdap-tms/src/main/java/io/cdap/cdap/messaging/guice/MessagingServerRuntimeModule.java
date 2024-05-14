@@ -68,7 +68,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(TableFactory.class)
             .annotatedWith(Names.named(CachingTableFactory.DELEGATE_TABLE_FACTORY))
-            .to(LevelDBTableFactory.class); //TODO SANKET: Check if this correct ?
+            .to(LevelDBTableFactory.class); //TODO : Check if this correct ?
 
         // The cache must be in singleton scope
         bind(MessageTableCacheProvider.class).to(DefaultMessageTableCacheProvider.class)

@@ -77,7 +77,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   private static TransactionStateStorage txStateStorage;
   private static ZKClientService zkClient;
   private static Injector injector;
-  private static MiniDFSCluster miniDFSCluster;
+  private static MiniDFSCluster miniDfsCluster;
 
   @Override
   protected TransactionSystemClient getClient() {
@@ -92,9 +92,9 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Configuration hConf = new Configuration();
-    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR,tmpFolder.newFolder().getAbsolutePath());
-    miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    miniDFSCluster.waitClusterUp();
+    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
+    miniDfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
+    miniDfsCluster.waitClusterUp();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
@@ -161,7 +161,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     try {
       try {
         server.stopAndWait();
-        miniDFSCluster.shutdown();
+        miniDfsCluster.shutdown();
       } finally {
         zkClient.stopAndWait();
         txStateStorage.stopAndWait();
