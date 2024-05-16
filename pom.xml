@@ -151,7 +151,7 @@
     <mockito.version>1.10.19</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.http.version>1.7.0</netty.http.version>
-    <netty.version>4.1.75.Final</netty.version>
+    <netty.version>4.1.108.Final</netty.version>
     <powermock.version>1.7.4</powermock.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
