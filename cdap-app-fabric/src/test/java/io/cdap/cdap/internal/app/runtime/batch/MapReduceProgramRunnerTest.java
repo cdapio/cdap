@@ -561,7 +561,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
           Assert.assertNull(outputKvTable.read("a"));
           Assert.assertNull(outputKvTable.read("the"));
           Assert.assertNull(outputKvTable.read("an"));
-          Assert.assertEquals(2, Bytes.toInt(outputKvTable.read("test")));
+          byte[] a = outputKvTable.read("test");
+          Assert.assertEquals(2, Bytes.toInt(a));
           Assert.assertEquals(2, Bytes.toInt(outputKvTable.read("record")));
           Assert.assertEquals(1, Bytes.toInt(outputKvTable.read("table")));
           Assert.assertEquals(1, Bytes.toInt(outputKvTable.read("end")));

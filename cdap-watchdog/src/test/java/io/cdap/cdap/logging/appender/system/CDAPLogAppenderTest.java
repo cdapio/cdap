@@ -61,7 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
@@ -83,7 +82,7 @@ public class CDAPLogAppenderTest {
 
   @BeforeClass
   public static void setUpContext() throws Exception {
-    Configuration hConf = HBaseConfiguration.create();
+    Configuration hConf = new Configuration();
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + CDAPLogAppender.class.getSimpleName();

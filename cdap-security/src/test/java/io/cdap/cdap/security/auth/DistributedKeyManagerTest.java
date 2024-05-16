@@ -40,9 +40,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
+import org.apache.curator.test.TestingCluster;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.ZooDefs;
 import org.junit.AfterClass;
@@ -55,19 +54,19 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests covering the {@link DistributedKeyManager} implementation.
  */
-public class DistributedKeyManagerTest extends TestTokenManager {
+public class
+DistributedKeyManagerTest extends TestTokenManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
-  private static MiniZooKeeperCluster zkCluster;
+  private static TestingCluster zkCluster;
   private static Injector injector1;
   private static Injector injector2;
 
   @BeforeClass
   public static void setup() throws Exception {
-    HBaseTestingUtility testUtil = new HBaseTestingUtility();
-    zkCluster = testUtil.startMiniZKCluster();
-    String zkConnectString = testUtil.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM) + ":"
-        + zkCluster.getClientPort();
+    zkCluster = new TestingCluster(1);
+    zkCluster.start();
+    String zkConnectString = zkCluster.getConnectString();
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf1 = CConfiguration.create();
     cConf1.setBoolean(Constants.Security.ENABLED, true);
@@ -78,7 +77,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     cConf2.set(Constants.Zookeeper.QUORUM, zkConnectString);
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new ConfigModule(cConf1, testUtil.getConfiguration()));
+    modules.add(new ConfigModule(cConf1, new Configuration()));
     modules.add(new IOModule());
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf1);
@@ -90,7 +89,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     injector1 = Guice.createInjector(modules);
 
     modules.clear();
-    modules.add(new ConfigModule(cConf2, testUtil.getConfiguration()));
+    modules.add(new ConfigModule(cConf2, new Configuration()));
     modules.add(new IOModule());
 
     coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf2);
@@ -105,7 +104,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    zkCluster.shutdown();
+    zkCluster.stop();
   }
 
   @Test

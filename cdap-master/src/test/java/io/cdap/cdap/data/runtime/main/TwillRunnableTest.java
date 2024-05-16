@@ -21,9 +21,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.test.MockTwillContext;
-import io.cdap.cdap.data.tools.HBaseTableExporter;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,16 +33,11 @@ public class TwillRunnableTest {
   @Test
   public void testDatasetOpExecutorTwillRunnableInjector() {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
-        HBaseConfiguration.create(), "");
+        new Configuration(), "");
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     Assert.assertNotNull(namespaceQueryAdmin);
-  }
-
-  @Test
-  public void testHbaseTableExporterInjector() {
-    HBaseTableExporter.createInjector(CConfiguration.create(), new Configuration());
   }
 
   @Test
@@ -55,7 +48,7 @@ public class TwillRunnableTest {
   @Test
   public void testMetricsTwillRunnableInjector() {
     MetricsTwillRunnable
-        .createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
+        .createGuiceInjector(CConfiguration.create(), new Configuration(), "");
   }
 
   @Test

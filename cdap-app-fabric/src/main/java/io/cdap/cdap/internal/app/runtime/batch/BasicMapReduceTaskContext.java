@@ -52,7 +52,6 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -65,9 +64,9 @@ import io.cdap.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import io.cdap.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.context.AbstractMessagePublisher;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Principal;
@@ -364,7 +363,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
       AccessType accessType) throws DatasetInstantiationException {
-    T dataset = super.getDataset(name, adjustRuntimeArguments(arguments), accessType);
+    T dataset = super.getDataset(name, arguments, accessType);
     startDatasetTransaction(dataset);
     return dataset;
   }
@@ -373,21 +372,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   public <T extends Dataset> T getDataset(String namespace, String name,
       Map<String, String> arguments,
       AccessType accessType) throws DatasetInstantiationException {
-    T dataset = super.getDataset(namespace, name, adjustRuntimeArguments(arguments), accessType);
+    T dataset = super.getDataset(namespace, name, arguments, accessType);
     startDatasetTransaction(dataset);
     return dataset;
-  }
-
-  /**
-   * In MapReduce tasks, table datasets must have the runtime argument HBaseTable.SAFE_INCREMENTS as
-   * true.
-   */
-  private Map<String, String> adjustRuntimeArguments(Map<String, String> args) {
-    if (args.containsKey(HBaseTable.SAFE_INCREMENTS)) {
-      return args;
-    }
-    return ImmutableMap.<String, String>builder()
-        .putAll(args).put(HBaseTable.SAFE_INCREMENTS, String.valueOf(true)).build();
   }
 
   /**

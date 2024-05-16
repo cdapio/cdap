@@ -36,7 +36,6 @@ import io.cdap.cdap.messaging.service.CoreMessagingService;
 import io.cdap.cdap.messaging.store.ForwardingTableFactory;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
-import io.cdap.cdap.messaging.store.hbase.HBaseTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -101,7 +100,6 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
           @Override
           public void leader() {
             if (!tableUpgraded) {
-              upgradeTable();
               tableUpgraded = true;
             }
 
@@ -195,36 +193,6 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   public void rollback(TopicId topicId, RollbackDetail rollbackDetail)
       throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().rollback(topicId, rollbackDetail);
-  }
-
-  private void upgradeTable() {
-    HBaseTableFactory tableFactory = getHBaseTableFactory(injector.getInstance(TableFactory.class));
-
-    // Upgrade the TMS Message and Payload Tables
-    if (tableFactory != null) {
-      try {
-        tableFactory.upgradeMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
-      } catch (IOException ex) {
-        LOG.warn("Exception while trying to upgrade TMS MessageTable.", ex);
-      }
-
-      try {
-        tableFactory.upgradePayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
-      } catch (IOException ex) {
-        LOG.warn("Exception while trying to upgrade TMS PayloadTable.", ex);
-      }
-    }
-  }
-
-  @Nullable
-  private HBaseTableFactory getHBaseTableFactory(TableFactory tableFactory) {
-    TableFactory factory = tableFactory;
-
-    while (!(factory instanceof HBaseTableFactory) && factory instanceof ForwardingTableFactory) {
-      factory = ((ForwardingTableFactory) factory).getDelegate();
-    }
-
-    return factory instanceof HBaseTableFactory ? (HBaseTableFactory) factory : null;
   }
 
   /**

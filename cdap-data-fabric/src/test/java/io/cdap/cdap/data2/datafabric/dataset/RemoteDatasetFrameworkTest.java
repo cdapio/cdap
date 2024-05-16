@@ -75,7 +75,6 @@ import io.cdap.http.HttpHandler;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
@@ -101,7 +100,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
-    Configuration txConf = HBaseConfiguration.create();
+    Configuration txConf = new Configuration();
     CConfigurationUtil.copyTxProperties(cConf, txConf);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled

@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.util.List;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,11 +63,9 @@ public class MasterStartupTool {
     ConfigurationLogger.logImportantConfig(cConf);
     LOG.info("Hadoop subsystem versions:");
     LOG.info("  Hadoop version: {}", ClientVersions.getHadoopVersion());
-    LOG.info("  HBase version: {}", ClientVersions.getHBaseVersion());
     LOG.info("  ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
     LOG.info("  Kafka version: {}", ClientVersions.getKafkaVersion());
     LOG.info("CDAP version: {}", ClientVersions.getCdapVersion());
-    LOG.info("CDAP HBase compat version: {}", ClientVersions.getCdapHBaseCompatVersion());
     LOG.info("CDAP Spark compat version: {}", SparkCompatReader.get(cConf));
     LOG.info("Tephra HBase compat version: {}", ClientVersions.getTephraHBaseCompatVersion());
 
@@ -83,7 +80,7 @@ public class MasterStartupTool {
       throw Throwables.propagate(e);
     }
 
-    Configuration hConf = HBaseConfiguration.create();
+    Configuration hConf = new Configuration();
 
     MasterStartupTool masterStartupTool = new MasterStartupTool(createInjector(cConf, hConf));
     if (!masterStartupTool.canStartMaster()) {

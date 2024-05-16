@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.data2.dataset2;
 
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Table;
-import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * A test dataset that reproduces CDAP-3037: If a dataset embeds Table, and also embeds another dataset

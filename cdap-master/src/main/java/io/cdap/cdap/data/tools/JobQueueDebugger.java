@@ -81,7 +81,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**
@@ -337,7 +337,7 @@ public class JobQueueDebugger extends AbstractIdleService {
     SecurityUtil.loginForMasterService(cConf);
 
     return Guice.createInjector(
-        new ConfigModule(cConf, HBaseConfiguration.create()),
+        new ConfigModule(cConf, new Configuration()),
         RemoteAuthenticatorModules.getDefaultModule(),
         new IOModule(),
         new ZkClientModule(),

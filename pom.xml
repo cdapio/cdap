@@ -135,11 +135,6 @@
     <guava.version>13.0.1</guava.version>
     <guice.version>4.0</guice.version>
     <hadoop.version>2.6.5</hadoop.version>
-    <hbase10.version>1.0.1.1</hbase10.version>
-    <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
-    <hbase10cdh550.version>1.0.0-cdh5.5.0</hbase10cdh550.version>
-    <hbase11.version>1.1.1</hbase11.version>
-    <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hsql.version>2.2.4</hsql.version>
     <jackson.version>2.15.1</jackson.version>
     <jsch.version>0.1.54</jsch.version>
@@ -293,39 +288,6 @@
           <exclusion>
             <groupId>org.apache.twill</groupId>
             <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tephra</groupId>
-        <artifactId>tephra-hbase-compat-1.0</artifactId>
-        <version>${tephra.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tephra</groupId>
-        <artifactId>tephra-hbase-compat-1.0-cdh</artifactId>
-        <version>${tephra.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tephra</groupId>
-        <artifactId>tephra-hbase-compat-1.1</artifactId>
-        <version>${tephra.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -963,162 +925,9 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-common</artifactId>
-        <version>${hbase10.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jdk.tools</groupId>
-            <artifactId>jdk.tools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-client</artifactId>
-        <version>${hbase10.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jdk.tools</groupId>
-            <artifactId>jdk.tools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-protocol</artifactId>
-        <version>${hbase10.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-server</artifactId>
-        <version>${hbase10.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-api-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-sslengine</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-hdfs</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>xalan</groupId>
-            <artifactId>xalan</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
+
+
+
       <dependency>
         <groupId>io.thekraken</groupId>
         <artifactId>grok</artifactId>
@@ -1342,26 +1151,6 @@
         <artifactId>apacheds-jdbm1</artifactId>
         <version>${apache.jdbm1.version}</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-testing-util</artifactId>
-        <version>${hbase10.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>jdk.tools</groupId>
-            <artifactId>jdk.tools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
@@ -2039,7 +1828,7 @@
         <package.rpm.arch>all</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
         <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
-        <dependency.groupId.exclusions>org.apache.hadoop,org.apache.hbase,\
+        <dependency.groupId.exclusions>org.apache.hadoop,\
           org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</dependency.groupId.exclusions>
       </properties>
       <build>
@@ -2706,13 +2495,6 @@
         <module>cdap-features</module>
         <module>cdap-elastic</module>
         <module>cdap-error-api</module>
-        <module>cdap-hbase-compat-base</module>
-        <module>cdap-hbase-compat-1.0-cdh5.5.0</module>
-        <module>cdap-hbase-compat-1.0-cdh</module>
-        <module>cdap-hbase-compat-1.0</module>
-        <module>cdap-hbase-compat-1.1</module>
-        <module>cdap-hbase-compat-1.2-cdh5.7.0</module>
-        <module>cdap-hbase-spi</module>
         <module>cdap-kubernetes</module>
         <module>cdap-common</module>
         <module>cdap-docs-gen</module>
