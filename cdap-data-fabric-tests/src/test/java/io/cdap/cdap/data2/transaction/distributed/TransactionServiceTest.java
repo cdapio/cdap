@@ -50,10 +50,12 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hdfs.server.common.HdfsServerConstants;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -79,15 +81,15 @@ public class TransactionServiceTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
   private Configuration hConf;
   private InMemoryZKServer zkServer;
-  private MiniDFSCluster miniDfsCluster;
+  private MiniDFSCluster miniDFSCluster;
 
   @Before
   public void before() throws Exception {
     hConf = new Configuration();
 
-    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
-    miniDfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    miniDfsCluster.waitClusterUp();
+    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR,tmpFolder.newFolder().getAbsolutePath());
+    miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
+    miniDFSCluster.waitClusterUp();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
@@ -97,7 +99,7 @@ public class TransactionServiceTest {
   @After
   public void after() throws Exception {
     try {
-      miniDfsCluster.shutdown();
+      miniDFSCluster.shutdown();
     } finally {
       if (zkServer != null) {
         zkServer.stopAndWait();

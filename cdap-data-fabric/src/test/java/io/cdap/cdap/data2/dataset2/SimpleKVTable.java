@@ -22,6 +22,8 @@ import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Table;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  *
  */
@@ -42,6 +44,6 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
 
   public String get(String key) throws Exception {
     byte[] value = table.get(Bytes.toBytes(key), COL);
-    return value == null ? null : Bytes.toString(value);
+    return value == null ? null :Bytes.toString(value);
   }
 }

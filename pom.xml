@@ -1829,6 +1829,7 @@
         <package.dirs>opt etc</package.dirs>
         <package.config.dirs>--config-files etc/cdap --config-files etc/logrotate.d --config-files etc/security</package.config.dirs>
         <dependency.groupId.exclusions>org.apache.hadoop,\
+<!--          org.apache.hbase,\-->
           org.datanucleus,asm,org.apache.spark,slf4j-log4j12,commons-logging</dependency.groupId.exclusions>
       </properties>
       <build>
