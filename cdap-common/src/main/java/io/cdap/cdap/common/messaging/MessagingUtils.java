@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging;
+package io.cdap.cdap.common.messaging;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.proto.id.NamespaceId;

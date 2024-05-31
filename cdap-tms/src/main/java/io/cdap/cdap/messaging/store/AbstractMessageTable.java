@@ -20,7 +20,7 @@ import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.messaging.MessagingUtils;
+import io.cdap.cdap.common.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.data.MessageId;

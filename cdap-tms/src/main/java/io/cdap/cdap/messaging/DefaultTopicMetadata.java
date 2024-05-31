@@ -17,6 +17,7 @@
 package io.cdap.cdap.messaging;
 
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.common.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.proto.id.TopicId;
 import java.util.HashMap;

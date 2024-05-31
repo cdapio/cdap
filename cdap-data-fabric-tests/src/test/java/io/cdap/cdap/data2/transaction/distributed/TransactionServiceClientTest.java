@@ -92,7 +92,6 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Configuration hConf = new Configuration();
-    hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR,tmpFolder.newFolder().getAbsolutePath());
     miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     miniDFSCluster.waitClusterUp();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
