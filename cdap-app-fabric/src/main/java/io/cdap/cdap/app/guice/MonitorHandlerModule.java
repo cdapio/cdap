@@ -36,8 +36,8 @@ import io.cdap.cdap.data2.datafabric.dataset.MetadataServiceManager;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.InMemoryDatasetFramework;
+import io.cdap.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.kv.InMemoryKVTableDefinition;
-import io.cdap.cdap.data2.dataset2.lib.kv.LevelDBKVTableDefinition;
 import io.cdap.cdap.gateway.handlers.DatasetServiceStore;
 import io.cdap.cdap.gateway.handlers.MonitorHandler;
 import io.cdap.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
@@ -150,7 +150,7 @@ public class MonitorHandlerModule extends AbstractModule {
     mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE).to(MessagingServiceManager.class);
 
     // The ServiceStore uses a special non-TX KV Table.
-    bindDatasetModule(binder, new LevelDBKVTableDefinition.Module());
+    bindDatasetModule(binder, new HBaseKVTableDefinition.Module());
   }
 
   /**

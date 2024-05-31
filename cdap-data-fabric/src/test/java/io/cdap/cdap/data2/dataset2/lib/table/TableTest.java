@@ -41,6 +41,7 @@ import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.TableAssert;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionConflictException;
@@ -125,7 +127,7 @@ public abstract class TableTest<T extends Table> {
 
   @Before
   public void before() {
-    Configuration txConf = new Configuration();
+    Configuration txConf = HBaseConfiguration.create();
     TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
@@ -1956,6 +1958,9 @@ public abstract class TableTest<T extends Table> {
     DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, props);
     admin.create();
     Map<String, String> args = new HashMap<>();
+    if (readless) {
+      args.put(HBaseTable.SAFE_INCREMENTS, "true");
+    }
     try (Table table = getTable(CONTEXT1, tableName, props, args);
          Table table2 = getTable(CONTEXT1, tableName, props, args)) {
       Transaction tx = txClient.startShort();

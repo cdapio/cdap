@@ -28,6 +28,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.transaction.DistributedTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionExecutor;
@@ -63,6 +65,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Override
   public void configure() {
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
+    bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class).in(Scopes.SINGLETON);
 
     // bind transactions
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);

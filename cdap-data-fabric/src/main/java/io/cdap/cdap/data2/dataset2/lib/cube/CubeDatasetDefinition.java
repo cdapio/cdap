@@ -30,6 +30,7 @@ import io.cdap.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.cube.Cube;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
 import java.io.IOException;
 import java.util.Arrays;
@@ -217,6 +218,7 @@ public class CubeDatasetDefinition
     // and combine them
     return DatasetProperties.builder()
         .addAll(props.getProperties())
+        .add(HBaseTableAdmin.PROPERTY_SPLITS, GSON.toJson(splits))
         .build();
   }
 

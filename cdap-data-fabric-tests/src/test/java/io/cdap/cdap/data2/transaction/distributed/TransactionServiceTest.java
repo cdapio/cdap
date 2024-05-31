@@ -53,7 +53,7 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -77,16 +77,17 @@ public class TransactionServiceTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private HBaseTestingUtility hBaseTestingUtility;
   private Configuration hConf;
   private InMemoryZKServer zkServer;
-  private MiniDFSCluster miniDFSCluster;
 
   @Before
   public void before() throws Exception {
-    hConf = new Configuration();
+    hBaseTestingUtility = new HBaseTestingUtility();
+    hBaseTestingUtility.startMiniDFSCluster(1);
 
-    miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    miniDFSCluster.waitClusterUp();
+    hConf = hBaseTestingUtility.getConfiguration();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
@@ -96,7 +97,9 @@ public class TransactionServiceTest {
   @After
   public void after() throws Exception {
     try {
-      miniDFSCluster.shutdown();
+      if (hBaseTestingUtility != null) {
+        hBaseTestingUtility.shutdownMiniDFSCluster();
+      }
     } finally {
       if (zkServer != null) {
         zkServer.stopAndWait();

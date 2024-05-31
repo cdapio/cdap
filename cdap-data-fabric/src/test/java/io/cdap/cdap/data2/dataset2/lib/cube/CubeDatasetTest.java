@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -100,7 +101,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
     Cube cube1 = getCubeInternal("concurrCube", new int[]{resolution}, ImmutableMap.of("agg1", agg1));
     Cube cube2 = getCubeInternal("concurrCube", new int[]{resolution}, ImmutableMap.of("agg1", agg1));
 
-    Configuration txConf = new Configuration();
+    Configuration txConf = HBaseConfiguration.create();
     TransactionManager txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     try {

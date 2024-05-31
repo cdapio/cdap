@@ -45,7 +45,7 @@ import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import java.io.InputStream;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TransactionSystemTest;
@@ -77,7 +77,6 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   private static TransactionStateStorage txStateStorage;
   private static ZKClientService zkClient;
   private static Injector injector;
-  private static MiniDFSCluster miniDFSCluster;
 
   @Override
   protected TransactionSystemClient getClient() {
@@ -91,9 +90,9 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    Configuration hConf = new Configuration();
-    miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    miniDFSCluster.waitClusterUp();
+    HBaseTestingUtility hBaseTestingUtility = new HBaseTestingUtility();
+    hBaseTestingUtility.startMiniDFSCluster(1);
+    Configuration hConf = hBaseTestingUtility.getConfiguration();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
@@ -160,7 +159,6 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     try {
       try {
         server.stopAndWait();
-        miniDFSCluster.shutdown();
       } finally {
         zkClient.stopAndWait();
         txStateStorage.stopAndWait();

@@ -43,6 +43,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.StaticDatasetFramework;
 import io.cdap.cdap.data2.metrics.DatasetMetricsReporter;
+import io.cdap.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import io.cdap.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.http.HttpHandler;
@@ -171,7 +172,7 @@ public class DataSetServiceModules extends RuntimeModule {
             expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
 
             Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
-                .addBinding().to(LevelDBDatasetMetricsReporter.class);
+                .addBinding().to(HBaseDatasetMetricsReporter.class);
 
             // NOTE: this cannot be a singleton, because MasterServiceMain needs to obtain a new instance
             //       every time it becomes leader and starts a dataset service.

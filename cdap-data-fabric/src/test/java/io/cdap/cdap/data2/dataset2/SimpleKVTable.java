@@ -20,8 +20,7 @@ import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Table;
-
-import java.nio.charset.StandardCharsets;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  *
@@ -38,11 +37,11 @@ public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
   }
 
   public void put(String key, String value) throws Exception {
-    table.put(key.getBytes(StandardCharsets.UTF_8), COL, value.getBytes(StandardCharsets.UTF_8));
+    table.put(Bytes.toBytes(key), COL, Bytes.toBytes(value));
   }
 
   public String get(String key) throws Exception {
-    byte[] value = table.get(key.getBytes(StandardCharsets.UTF_8), COL);
-    return value == null ? null : new String(value, StandardCharsets.UTF_8);
+    byte[] value = table.get(Bytes.toBytes(key), COL);
+    return value == null ? null : Bytes.toString(value);
   }
 }

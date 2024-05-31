@@ -45,10 +45,14 @@ import io.cdap.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import io.cdap.cdap.data2.dataset2.lib.table.CubeModule;
 import io.cdap.cdap.data2.dataset2.lib.table.MetricsTable;
 import io.cdap.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTableDefinition;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
+import io.cdap.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
+import io.cdap.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import io.cdap.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
@@ -155,7 +159,7 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
               ex);
         }
       } else {
-        return new LevelDBTableModule();
+        return new HBaseTableModule();
       }
     }
   }
@@ -172,27 +176,27 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class)
             .in(Singleton.class);
-        mapBinder.addBinding("metricsTable-hbase").toInstance(new LevelDBMetricsTableModule());
+        mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
 
         bind(String.class)
             .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
             .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE))
-            .to(LevelDBTableDefinition.class);
+            .to(HBaseTableDefinition.class);
 
         bind(String.class)
             .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
             .toInstance("table-no-tx");
         bind(DatasetDefinition.class)
             .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
-            .to(LevelDBMetricsTableDefinition.class);
+            .to(HBaseMetricsTableDefinition.class);
 
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.
         bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() {
         })
-            .toInstance(new LevelDBMetricsTableDefinition(MetricsTable.class.getName()));
+            .toInstance(new HBaseMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }

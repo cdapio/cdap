@@ -31,12 +31,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -98,7 +98,7 @@ public class AppWithLocalFiles extends AbstractApplication {
 
       @Override
       public void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
-        StringTokenizer itr = new StringTokenizer(new String(value, StandardCharsets.UTF_8));
+        StringTokenizer itr = new StringTokenizer(Bytes.toString(value));
 
         while (itr.hasMoreTokens()) {
           String token = itr.nextToken();
@@ -153,8 +153,7 @@ public class AppWithLocalFiles extends AbstractApplication {
         for (IntWritable val : values) {
           sum += val.get();
         }
-        context.write(key.toString().getBytes(StandardCharsets.UTF_8),
-                      String.valueOf(sum).getBytes(StandardCharsets.UTF_8));
+        context.write(Bytes.toBytes(key.toString()), Bytes.toBytes(sum));
       }
     }
   }

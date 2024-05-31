@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
@@ -80,7 +81,7 @@ public class RollingLocationLogAppenderTest {
 
   @BeforeClass
   public static void setUpContext() throws Exception {
-    Configuration hConf = new Configuration();
+    Configuration hConf = HBaseConfiguration.create();
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/"

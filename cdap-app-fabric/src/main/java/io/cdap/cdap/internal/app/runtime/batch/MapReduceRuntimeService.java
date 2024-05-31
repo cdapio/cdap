@@ -52,6 +52,7 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.transaction.Transactions;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -68,6 +69,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.store.SecureStoreUtils;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -332,6 +334,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           classpath.add(LocalizationUtils.getLocalizedName(jarURI));
         }
 
+        hbaseDDLExecutorDirectory = getLocalizedHBaseDDLExecutorDir(tempDir, cConf, job,
+            tempLocation);
         // Add the mapreduce application classpath, followed by the javax.ws.rs-api at last.
         MapReduceContainerHelper.addMapReduceClassPath(mapredConf, classpath);
         if (jaxrsClassPath != null) {
@@ -839,6 +843,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       classes.add(SecureStoreUtils.getKMSSecureStore());
     }
 
+    if (clusterMode == ClusterMode.ON_PREMISE) {
+      try {
+        Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
+        classes.add(hbaseTableUtilClass);
+      } catch (ProvisionException e) {
+        LOG.warn(
+            "Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
+      }
+    }
+
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
 
     try {
@@ -1237,5 +1251,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       localizedResources.put(name, localizedFilePath);
     }
     return localizedResources;
+  }
+
+  /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  @Nullable
+  private String getLocalizedHBaseDDLExecutorDir(File tempDir, CConfiguration cConf, Job job,
+      Location tempLocation) throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    if (ddlExecutorExtensionDir == null) {
+      // Nothing to localize
+      return null;
+    }
+
+    String hbaseDDLExtensionJarName = "hbaseddlext.jar";
+    final File target = new File(tempDir, hbaseDDLExtensionJarName);
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    Location targetLocation = tempLocation.append(hbaseDDLExtensionJarName);
+    Files.copy(target, Locations.newOutputSupplier(targetLocation));
+    job.addCacheArchive(targetLocation.toURI());
+    return target.getName();
   }
 }

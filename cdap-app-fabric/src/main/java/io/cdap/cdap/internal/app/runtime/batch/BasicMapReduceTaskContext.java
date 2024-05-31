@@ -52,6 +52,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -382,12 +383,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * true.
    */
   private Map<String, String> adjustRuntimeArguments(Map<String, String> args) {
-    String SAFE_INCREMENTS = "dataset.table.safe.readless.increments";
-    if (args.containsKey(SAFE_INCREMENTS)) {
+    if (args.containsKey(HBaseTable.SAFE_INCREMENTS)) {
       return args;
     }
     return ImmutableMap.<String, String>builder()
-        .putAll(args).put(SAFE_INCREMENTS, String.valueOf(true)).build();
+        .putAll(args).put(HBaseTable.SAFE_INCREMENTS, String.valueOf(true)).build();
   }
 
   /**

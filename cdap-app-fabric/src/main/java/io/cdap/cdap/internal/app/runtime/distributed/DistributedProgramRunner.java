@@ -48,6 +48,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.twill.TwillAppLifecycleEventHandler;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.program.LauncherUtils;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -65,6 +66,7 @@ import io.cdap.cdap.master.spi.twill.SecurityContext;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -205,6 +207,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       addContainerJars(cConf, localizeResources, additionalClassPaths);
       addAdditionalLogAppenderJars(cConf, tempDir, localizeResources,
           SystemArguments.getProfileProvisioner(oldOptions.getArguments().asMap()));
+
+      prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       localizeConfigs(createContainerCConf(cConf), createContainerHConf(this.hConf), tempDir,
           localizeResources);
@@ -856,6 +860,25 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   }
 
   /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
+      Map<String, LocalizeResource> localizeResources) throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+
+    // Only support HBase when running on premise
+    if (ddlExecutorExtensionDir == null || clusterMode != ClusterMode.ON_PREMISE) {
+      // Nothing to localize
+      return;
+    }
+
+    final File target = new File(tempDir, "hbaseddlext.jar");
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    localizeResources.put(target.getName(), new LocalizeResource(target, true));
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
+  }
+
+  /**
    * Creates the {@link EventHandler} for handling the application events.
    */
   private EventHandler createEventHandler(CConfiguration cConf) {
@@ -907,8 +930,13 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Adds extra dependency classes based on the given configuration.
    */
   private Set<Class<?>> addExtraDependencies(CConfiguration cConf, Set<Class<?>> dependencies) {
-    // Only support KMS when running on premise
+    // Only support HBase and KMS when running on premise
     if (clusterMode == ClusterMode.ON_PREMISE) {
+      try {
+        dependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
+      } catch (Exception e) {
+        LOG.debug("No HBase dependencies to add.");
+      }
       if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
         dependencies.add(SecureStoreUtils.getKMSSecureStore());
       }

@@ -23,11 +23,13 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.DelegationTokensUpdater;
 import io.cdap.cdap.common.security.YarnTokenUtils;
+import io.cdap.cdap.data.security.HBaseTokenUtils;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -105,6 +107,15 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
 
     if (UserGroupInformation.isSecurityEnabled()) {
       YarnTokenUtils.obtainToken(yarnConf, refreshedCredentials);
+    }
+
+    // Optionally add the hbase token
+    try {
+      if (User.isHBaseSecurityEnabled(yarnConf)) {
+        HBaseTokenUtils.obtainToken(yarnConf, refreshedCredentials);
+      }
+    } catch (Throwable t) {
+      LOG.trace("HBase is not available. Skipping HBase token", t);
     }
 
     try {

@@ -28,7 +28,7 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.common.messaging.MessagingUtils;
+import io.cdap.cdap.messaging.MessagingUtils;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.cache.MessageCache;
 import io.cdap.cdap.messaging.data.MessageId;
