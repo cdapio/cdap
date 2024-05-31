@@ -20,7 +20,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
@@ -32,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +98,7 @@ public class AppWithLocalFiles extends AbstractApplication {
 
       @Override
       public void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
-        StringTokenizer itr = new StringTokenizer(Bytes.toString(value));
+        StringTokenizer itr = new StringTokenizer(new String(value, StandardCharsets.UTF_8));
 
         while (itr.hasMoreTokens()) {
           String token = itr.nextToken();
@@ -153,7 +153,8 @@ public class AppWithLocalFiles extends AbstractApplication {
         for (IntWritable val : values) {
           sum += val.get();
         }
-        context.write(Bytes.toBytes(key.toString()), Bytes.toBytes(sum));
+        context.write(key.toString().getBytes(StandardCharsets.UTF_8),
+                      String.valueOf(sum).getBytes(StandardCharsets.UTF_8));
       }
     }
   }

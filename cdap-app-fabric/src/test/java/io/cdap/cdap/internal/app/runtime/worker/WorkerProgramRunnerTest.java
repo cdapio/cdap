@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import io.cdap.cdap.AppWithMisbehavedDataset;
 import io.cdap.cdap.AppWithWorker;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
@@ -51,6 +50,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.SlowTests;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -184,7 +184,7 @@ public class WorkerProgramRunnerTest {
             @Override
             public String call() throws Exception {
               KeyValueTable kvTable = datasetCache.getDataset(AppWithWorker.DATASET);
-              return Bytes.toString(kvTable.read(AppWithWorker.RUN));
+              return new String(kvTable.read(AppWithWorker.RUN), StandardCharsets.UTF_8);
             }
           });
       }
@@ -197,9 +197,10 @@ public class WorkerProgramRunnerTest {
         @Override
         public void apply() throws Exception {
           KeyValueTable kvTable = datasetCache.getDataset(AppWithWorker.DATASET);
-          Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(kvTable.read(AppWithWorker.RUN)));
-          Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(kvTable.read(AppWithWorker.INITIALIZE)));
-          Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(kvTable.read(AppWithWorker.STOP)));
+          Assert.assertEquals(AppWithWorker.RUN, new String(kvTable.read(AppWithWorker.RUN), StandardCharsets.UTF_8));
+          Assert.assertEquals(AppWithWorker.INITIALIZE,
+                              new String(kvTable.read(AppWithWorker.INITIALIZE), StandardCharsets.UTF_8));
+          Assert.assertEquals(AppWithWorker.STOP, new String(kvTable.read(AppWithWorker.STOP), StandardCharsets.UTF_8));
         }
       });
 
