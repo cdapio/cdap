@@ -17,7 +17,7 @@
 package io.cdap.cdap.master.startup;
 
 import io.cdap.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Test;
 
 /**
@@ -27,7 +27,7 @@ public class MasterStartupToolTest {
 
   @Test
   public void testInjector() throws Exception {
-    MasterStartupTool.createInjector(CConfiguration.create(), new Configuration());
+    MasterStartupTool.createInjector(CConfiguration.create(), HBaseConfiguration.create());
     // should not throw exception
   }
 }

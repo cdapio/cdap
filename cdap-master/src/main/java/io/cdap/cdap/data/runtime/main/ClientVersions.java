@@ -17,6 +17,7 @@
 package io.cdap.cdap.data.runtime.main;
 
 import io.cdap.cdap.common.utils.ProjectInfo;
+import io.cdap.cdap.data2.util.hbase.HBaseVersion;
 import io.cdap.cdap.gateway.handlers.util.VersionHelper;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -32,6 +33,11 @@ public class ClientVersions {
     return ProjectInfo.getVersion().toString();
   }
 
+  public static String getCdapHBaseCompatVersion() {
+    // cdap hbase compat module
+    return HBaseVersion.get().toString();
+  }
+
   public static String getTephraHBaseCompatVersion() {
     // tephra hbase compat module
     return org.apache.tephra.util.HBaseVersion.get().toString();
@@ -40,6 +46,10 @@ public class ClientVersions {
 
   public static String getHadoopVersion() {
     return VersionHelper.getHadoopVersion().getVersion();
+  }
+
+  public static String getHBaseVersion() {
+    return HBaseVersion.getVersionString();
   }
 
   public static String getZooKeeperVersion() {
@@ -63,10 +73,12 @@ public class ClientVersions {
 
   public static void main(String[] args) {
     System.out.println("Hadoop version: " + ClientVersions.getHadoopVersion());
+    System.out.println("HBase version: " + ClientVersions.getHBaseVersion());
     System.out.println("ZooKeeper version: " + ClientVersions.getZooKeeperVersion());
     System.out.println("Kafka version: " + ClientVersions.getKafkaVersion());
 
     System.out.println("CDAP version: " + ClientVersions.getCdapVersion());
+    System.out.println("CDAP HBase compat version: " + ClientVersions.getCdapHBaseCompatVersion());
     System.out.println(
         "Tephra HBase compat version: " + ClientVersions.getTephraHBaseCompatVersion());
   }

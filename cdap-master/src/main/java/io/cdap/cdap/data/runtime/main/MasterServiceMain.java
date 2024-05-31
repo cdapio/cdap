@@ -66,6 +66,11 @@ import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.util.hbase.ConfigurationReader;
+import io.cdap.cdap.data2.util.hbase.ConfigurationWriter;
+import io.cdap.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtil;
+import io.cdap.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -86,6 +91,7 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.support.guice.SupportBundleServiceModule;
@@ -121,6 +127,8 @@ import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -215,7 +223,7 @@ public class MasterServiceMain extends DaemonMain {
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
     login(cConf);
 
-    Configuration hConf = new Configuration();
+    Configuration hConf = HBaseConfiguration.create();
 
     Injector injector = createProcessInjector(cConf, hConf);
     this.cConf = injector.getInstance(CConfiguration.class);
@@ -262,6 +270,8 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
     resetShutdownTime();
     createDirectory("twill");
+    createSystemHbaseNamespace();
+    updateConfigurationTable();
     Services.startAndWait(zkClient,
         cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
         TimeUnit.MILLISECONDS,
@@ -465,6 +475,30 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
+   * Creates HBase namespace for the cdap system namespace.
+   */
+  private void createSystemHbaseNamespace() {
+    HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+    try (HBaseDDLExecutor ddlExecutor = new HBaseDDLExecutorFactory(cConf, hConf).get()) {
+      ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * The transaction coprocessors (0.94 and 0.96 versions of {@code DefaultTransactionProcessor})
+   * need access to CConfiguration values in order to load transaction snapshots for data cleanup.
+   */
+  private void updateConfigurationTable() {
+    try {
+      new ConfigurationWriter(hConf, cConf).write(ConfigurationReader.Type.DEFAULT, cConf);
+    } catch (IOException ioe) {
+      throw Throwables.propagate(ioe);
+    }
+  }
+
+  /**
    * The replication Status tool will use CDAP shutdown time to determine last CDAP related writes
    * to HBase.
    */
@@ -640,7 +674,7 @@ public class MasterServiceMain extends DaemonMain {
           TokenSecureStoreRenewer.class);
 
       // Schedule secure store update.
-      if (UserGroupInformation.isSecurityEnabled()) {
+      if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
         secureStoreUpdateCancellable = twillRunner.setSecureStoreRenewer(secureStoreRenewer, 30000L,
             secureStoreRenewer.getUpdateInterval(),
             30000L,
@@ -934,8 +968,11 @@ public class MasterServiceMain extends DaemonMain {
             preparer.setSchedulerQueue(queueName);
           }
 
+          // Add HBase dependencies
+          preparer.withDependencies(injector.getInstance(HBaseTableUtil.class).getClass());
+
           // Add secure tokens
-          if (UserGroupInformation.isSecurityEnabled()) {
+          if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
             preparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
           }
 
