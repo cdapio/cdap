@@ -40,10 +40,9 @@ jobs:
      - name: Download artifact
        uses: actions/download-artifact@v4
        with:
-        name: reports-${{ github.event.workflow_run.id }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
-        path: ./downloaded-artifact
+        path: artifacts/
 
      - name: Validate PR
        id: validate_pr
