@@ -45,7 +45,7 @@ jobs:
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v2.2.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: reports-${{ github.run_id }}
