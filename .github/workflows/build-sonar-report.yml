@@ -38,9 +38,11 @@ jobs:
         restore-keys: ${{ runner.os }}-sonar
 
      - name: Download artifact
-       uses: actions/download-artifact@v2
+       uses: actions/download-artifact@v4
        with:
         name: reports-${{ github.event.workflow_run.id }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
         path: ./downloaded-artifact
 
      - name: Validate PR
