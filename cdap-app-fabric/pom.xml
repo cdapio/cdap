@@ -32,6 +32,22 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.example.appengine</groupId>
+      <artifactId>simple-jetty-main</artifactId>
+      <version>1</version>
+      <!--      <scope>provided</scope>-->
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-aiplatform</artifactId>
+      <version>3.46.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-vertexai</artifactId>
+      <version>0.4.0</version>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
@@ -282,7 +298,32 @@
           </execution>
         </executions>
       </plugin>
-    </plugins>
-  </build>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>3.4.0</version>
+        </plugin>
+        <!-- [START gae_java11_build] -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.6.1</version>
+          <executions>
+            <execution>
+              <id>copy</id>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>copy-dependencies</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>
+                  ${project.build.directory}/appengine-staging
+                </outputDirectory>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+            </plugins>
+          </build>
 
-</project>
+        </project>

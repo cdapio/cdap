@@ -857,4 +857,28 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
   }
+  @POST
+  @Path("/apps/{app-id}/summarize")
+  public void summarizeApplication(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") final String namespaceId,
+                                   @PathParam("app-id") final String appId) throws Exception {
+
+    // Fetch pipeline JSON from apps table
+//    getPipelineJsonFromAppsTable pipelinejsontableclass= new getPipelineJsonFromAppsTable();
+//    String pipelineJson=pipelinejsontableclass.getPipelineJsonFromAppsTablefunction(namespaceId,appId);
+
+    ApplicationDetail applicationDetail = applicationLifecycleService.getLatestAppDetail(
+            new ApplicationReference(namespaceId, appId));
+
+    String pipelineJson = GSON.toJson(applicationDetail);
+
+    // Summarize pipeline using GenAI
+    generateSummaryFromPipelineJson pipelinesummary=new generateSummaryFromPipelineJson();
+    String summary = pipelinesummary.generateSummaryFromPipelineJsonfunction(pipelineJson);
+
+    // Send the summary response
+    // JsonObject summaryJson = new JsonObject();
+    // summaryJson.addProperty("summary", summary);
+    responder.sendJson(HttpResponseStatus.OK, summary);
+  }
 }
