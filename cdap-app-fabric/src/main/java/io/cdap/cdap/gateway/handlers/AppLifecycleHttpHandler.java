@@ -669,16 +669,22 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   @Path("/apps/{app-id}/summarize")
   public void getAppSummary(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("app-id") final String appName) throws Exception {
+      @PathParam("app-id") final String appName) {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
-    validateApplicationId(namespaceId, appName);
-    VertexAI vertexAI = new VertexAI("vsethi-project", "us-west1");
-    GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
-    String inputText = "How many colors are in the rainbow?";
-    GenerateContentResponse response = model.generateContent(inputText);
-    String summary = ResponseHandler.getText(response);
-    vertexAI.close();
-    responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
+    try {
+      validateApplicationId(namespaceId, appName);
+      VertexAI vertexAI = new VertexAI("vsethi-project", "us-west1");
+      GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
+      String inputText = "How many colors are in the rainbow?";
+      GenerateContentResponse response = null;
+      response = model.generateContent(inputText);
+      String summary = ResponseHandler.getText(response);
+      vertexAI.close();
+      responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
+    } catch (Exception e) {
+      LOG.error("Failed to summarize pipeline", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
   }
 
   /**
