@@ -273,10 +273,10 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-vertexai</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.google.api.grpc</groupId>
-      <artifactId>proto-google-cloud-vertexai-v1</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>com.google.api.grpc</groupId>-->
+<!--      <artifactId>proto-google-cloud-vertexai-v1</artifactId>-->
+<!--    </dependency>-->
   </dependencies>
 
   <build>
