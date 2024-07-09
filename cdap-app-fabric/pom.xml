@@ -30,6 +30,18 @@
   <name>CDAP App-Fabric</name>
   <packaging>jar</packaging>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>libraries-bom</artifactId>
+        <version>26.42.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -266,8 +278,9 @@
           <version>${project.version}</version>
       </dependency>
     <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-core</artifactId>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-ai-spi</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 

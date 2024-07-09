@@ -14,22 +14,27 @@
  * the License.
  */
 
-package io.cdap.cdap.ml.spi;
+package io.cdap.cdap.ai.spi;
 
 import io.cdap.cdap.proto.ApplicationDetail;
 
 /**
- *  This interface defines methods for performing various AI/ML tasks, such as summarization,
- *  analysis, transformation, etc., on different types of data.
+ *  AI Provider interface for AI capabilities.
  */
-public interface AIService {
+public interface AIProvider {
+
+     public String getName();
+
+     default void initialize(AIProviderContext context) throws Exception {
+          // no-op
+     }
 
      /**
       * Summarizes the given application details in mentioned format.
+      *
       * @param applicationDetail The detailed information about the application.
       * @param format The format in which the summary should be returned.
       * @return A summarized representation of the application details, formatted according to the specified format.
       */
      public String summarizeApp(ApplicationDetail applicationDetail, String format);
 }
-
