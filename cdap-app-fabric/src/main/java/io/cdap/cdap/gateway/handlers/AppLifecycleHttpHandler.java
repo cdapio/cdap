@@ -660,6 +660,16 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
+  @POST
+  @Path("/apps/{app-id}/summarize")
+  public void getAppSummary(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appName) throws Exception {
+    // The version of the validated applicationId is ignored. We only use the method to validate the input.
+    validateApplicationId(namespaceId, appName);
+    responder.sendString(HttpResponseStatus.OK, "Hello World!");
+  }
+
   /**
    * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder,
    * String)} call.
