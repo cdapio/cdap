@@ -17,6 +17,11 @@
 package io.cdap.cdap.gateway.handlers;
 
 
+import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.api.GenerateContentRequest;
+import com.google.cloud.vertexai.api.GenerateContentResponse;
+import com.google.cloud.vertexai.generativeai.GenerativeModel;
+import com.google.cloud.vertexai.generativeai.ResponseHandler;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
@@ -667,7 +672,13 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
-    responder.sendString(HttpResponseStatus.OK, "Hello World!");
+    VertexAI vertexAI = new VertexAI("vsethi-project", "us-west1");
+    GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
+    String inputText = "How many colors are in the rainbow?";
+    GenerateContentResponse response = model.generateContent(inputText);
+    String summary = ResponseHandler.getText(response);
+    vertexAI.close();
+    responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
   }
 
   /**
