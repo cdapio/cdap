@@ -17,10 +17,12 @@
 package io.cdap.cdap.gateway.handlers;
 
 
+import com.google.api.gax.rpc.ClientContext;
 import com.google.cloud.vertexai.Transport;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.GenerateContentResponse;
 import com.google.cloud.vertexai.api.PredictionServiceClient;
+import com.google.cloud.vertexai.api.stub.HttpJsonPredictionServiceStub;
 import com.google.cloud.vertexai.api.stub.PredictionServiceStub;
 import com.google.cloud.vertexai.api.stub.PredictionServiceStubSettings;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
@@ -675,12 +677,16 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appName) {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     try {
+      new HttpJsonPredictionServiceStub()
+
       validateApplicationId(namespaceId, appName);
 
       PredictionServiceStubSettings settings = PredictionServiceStubSettings.newHttpJsonBuilder()
           .build();
 
-      PredictionServiceStub stub = settings.createStub();
+      HttpJsonPredictionServiceStub stub = HttpJsonPredictionServiceStub.create(settings);
+
+      // PredictionServiceStub stub = settings.createStub();
 
       PredictionServiceClient client  = PredictionServiceClient.create(stub);
 
