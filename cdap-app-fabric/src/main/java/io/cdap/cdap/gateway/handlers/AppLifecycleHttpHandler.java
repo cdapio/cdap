@@ -692,7 +692,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
           .setLocation("us-west1")
           .setProjectId("vsethi-project")
           .setTransport(Transport.REST)
-          .setPredictionClientSupplier(() -> client)
           .build();
 
       GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
