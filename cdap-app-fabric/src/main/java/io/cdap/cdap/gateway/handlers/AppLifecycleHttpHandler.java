@@ -692,7 +692,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
           .build();
 
       GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
-      
+
       String inputText = "How many colors are in the rainbow?";
       GenerateContentResponse response = null;
       response = model.generateContent(inputText);
