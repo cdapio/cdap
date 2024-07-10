@@ -677,8 +677,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appName) {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     try {
-      new HttpJsonPredictionServiceStub()
-
       validateApplicationId(namespaceId, appName);
 
       PredictionServiceStubSettings settings = PredictionServiceStubSettings.newHttpJsonBuilder()
