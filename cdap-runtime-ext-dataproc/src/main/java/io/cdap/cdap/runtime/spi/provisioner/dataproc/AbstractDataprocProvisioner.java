@@ -121,12 +121,13 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         }
 
         if (jobDetail != null
-            && jobDetail.getStatus() == RuntimeJobStatus.FAILED
+            && jobDetail.getStatus() != RuntimeJobStatus.COMPLETED
             && (jobDetail instanceof DataprocRuntimeJobDetail)) {
           // Status details is specific to dataproc jobs, so it was not added to RuntimeJobDetail spi.
           String statusDetails = ((DataprocRuntimeJobDetail) jobDetail).getJobStatusDetails();
           if (statusDetails != null) {
-            LOG.error("Dataproc job failed with the status details: {}", statusDetails);
+            LOG.error("Dataproc job '{}' with the status details: {}",
+                jobDetail.getStatus().name(), statusDetails);
           }
         }
       } finally {
