@@ -19,14 +19,14 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.cloud.vertexai.Transport;
 import com.google.cloud.vertexai.VertexAI;
-import com.google.cloud.vertexai.api.GenerateContentRequest;
 import com.google.cloud.vertexai.api.GenerateContentResponse;
 import com.google.cloud.vertexai.api.PredictionServiceClient;
+import com.google.cloud.vertexai.api.stub.PredictionServiceStub;
+import com.google.cloud.vertexai.api.stub.PredictionServiceStubSettings;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonArray;
@@ -676,12 +676,23 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     try {
       validateApplicationId(namespaceId, appName);
+
+      PredictionServiceStubSettings settings = PredictionServiceStubSettings.newHttpJsonBuilder()
+          .build();
+
+      PredictionServiceStub stub = settings.createStub();
+
+      PredictionServiceClient client  = PredictionServiceClient.create(stub);
+
       VertexAI vertexAI = new VertexAI.Builder()
           .setLocation("us-west1")
           .setProjectId("vsethi-project")
           .setTransport(Transport.REST)
+          .setPredictionClientSupplier(() -> client)
           .build();
+
       GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
+      
       String inputText = "How many colors are in the rainbow?";
       GenerateContentResponse response = null;
       response = model.generateContent(inputText);
