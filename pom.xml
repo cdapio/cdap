@@ -48,6 +48,9 @@
       <organizationUrl>http://www.cdap.io</organizationUrl>
     </developer>
   </developers>
+  <modules>
+    <module>cdap-ml</module>
+  </modules>
 
   <scm>
     <connection>scm:git:https://github.com/cdapio/cdap.git</connection>
@@ -2562,6 +2565,7 @@
         <module>cdap-authenticator-ext-gcp</module>
         <module>cdap-source-control</module>
         <module>cdap-encryption-ext-tink</module>
+        <module>cdap-ml</module>
       </modules>
     </profile>
     <profile>

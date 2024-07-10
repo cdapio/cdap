@@ -17,16 +17,6 @@
 package io.cdap.cdap.gateway.handlers;
 
 
-import com.google.api.gax.rpc.ClientContext;
-import com.google.cloud.vertexai.Transport;
-import com.google.cloud.vertexai.VertexAI;
-import com.google.cloud.vertexai.api.GenerateContentResponse;
-import com.google.cloud.vertexai.api.PredictionServiceClient;
-import com.google.cloud.vertexai.api.stub.HttpJsonPredictionServiceStub;
-import com.google.cloud.vertexai.api.stub.PredictionServiceStub;
-import com.google.cloud.vertexai.api.stub.PredictionServiceStubSettings;
-import com.google.cloud.vertexai.generativeai.GenerativeModel;
-import com.google.cloud.vertexai.generativeai.ResponseHandler;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
@@ -68,6 +58,7 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.ml.VertexAIService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
@@ -674,35 +665,16 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   @Path("/apps/{app-id}/summarize")
   public void getAppSummary(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("app-id") final String appName) {
+      @PathParam("app-id") final String appName,
+      @QueryParam("project") @DefaultValue("vsethi-project") String project,
+      @QueryParam("model-name") @DefaultValue("gemini-1.5-pro") String modelName) {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     try {
       validateApplicationId(namespaceId, appName);
-
-      PredictionServiceStubSettings settings = PredictionServiceStubSettings.newHttpJsonBuilder()
-          .build();
-
-      HttpJsonPredictionServiceStub stub = HttpJsonPredictionServiceStub.create(settings);
-
-      // PredictionServiceStub stub = settings.createStub();
-
-      PredictionServiceClient client  = PredictionServiceClient.create(stub);
-
-      VertexAI vertexAI = new VertexAI.Builder()
-          .setLocation("us-west1")
-          .setProjectId("vsethi-project")
-          .setTransport(Transport.REST)
-          .build();
-
-      GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
-
-      String inputText = "How many colors are in the rainbow?";
-      GenerateContentResponse response = null;
-      response = model.generateContent(inputText);
-      String summary = ResponseHandler.getText(response);
-      vertexAI.close();
+      String summary = new VertexAIService().summarizePipeline(project, "us-west1", modelName);
       responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       LOG.error("Failed to summarize pipeline", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }

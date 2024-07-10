@@ -278,20 +278,11 @@
           <version>${project.version}</version>
       </dependency>
     <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-aiplatform</artifactId>
-      <version>3.47.0</version>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-ml</artifactId>
+      <version>6.11.0-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-vertexai</artifactId>
-      <version>1.6.0</version>
-    </dependency>
-<!--    <dependency>-->
-<!--      <groupId>com.google.api.grpc</groupId>-->
-<!--      <artifactId>proto-google-cloud-vertexai-v1</artifactId>-->
-<!--      <version>1.6.0</version>-->
-<!--    </dependency>-->
   </dependencies>
 
   <build>
