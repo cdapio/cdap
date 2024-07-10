@@ -13,7 +13,7 @@ public class VertexAIService {
     VertexAI vertexAI = new VertexAI.Builder()
         .setLocation(location)
         .setProjectId(project)
-        .setCredentials(GoogleCredentials.getApplicationDefault())
+        // .setCredentials(GoogleCredentials.getApplicationDefault())
         .build();
 
     GenerativeModel model = new GenerativeModel("gemini-1.5-pro", vertexAI);
