@@ -667,11 +667,12 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName,
       @QueryParam("project") @DefaultValue("vsethi-project") String project,
-      @QueryParam("model-name") @DefaultValue("gemini-1.5-pro") String modelName) {
+      @QueryParam("model-name") @DefaultValue("gemini-1.5-pro") String modelName,
+      @QueryParam("token") @DefaultValue("") String accessTokenString) {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     try {
       validateApplicationId(namespaceId, appName);
-      String summary = new VertexAIService().summarizePipeline(project, "us-west1", modelName);
+      String summary = new VertexAIService().summarizePipeline(project, "us-west1", modelName, accessTokenString);
       responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
     }
     catch (Exception e) {
