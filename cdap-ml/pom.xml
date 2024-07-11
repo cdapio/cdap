@@ -28,11 +28,11 @@
   </dependencyManagement>
 
   <dependencies>
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-aiplatform</artifactId>
-      <version>3.47.0</version>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>com.google.cloud</groupId>-->
+<!--      <artifactId>google-cloud-aiplatform</artifactId>-->
+<!--      <version>3.47.0</version>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-vertexai</artifactId>
