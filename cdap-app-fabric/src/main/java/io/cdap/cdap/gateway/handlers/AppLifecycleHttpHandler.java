@@ -878,4 +878,21 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
   }
+
+  @POST
+  @Path("/apps/summarize")
+  public void getAppSum(HttpRequest request, HttpResponder responder,
+      @QueryParam("project") @DefaultValue("vsethi-project2") String project,
+      @QueryParam("model-name") @DefaultValue("gemini-1.5-pro") String modelName,
+      @QueryParam("token") @DefaultValue("") String accessTokenString) {
+    // The version of the validated applicationId is ignored. We only use the method to validate the input.
+    try {
+      String summary = new VertexAIService().summarizePipeline(project, "us-west1", modelName, accessTokenString);
+      responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
+    }
+    catch (Exception e) {
+      LOG.error("Failed to summarize pipeline", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+  }
 }
