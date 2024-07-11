@@ -2537,7 +2537,6 @@
         <module>cdap-distributions</module>
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
-        <module>cdap-ui</module>
         <module>cdap-event-common-spi</module>
         <module>cdap-event-writer-spi</module>
         <module>cdap-event-reader-spi</module>

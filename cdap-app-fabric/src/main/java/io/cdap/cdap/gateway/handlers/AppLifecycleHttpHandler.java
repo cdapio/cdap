@@ -17,14 +17,12 @@
 package io.cdap.cdap.gateway.handlers;
 
 
+import com.google.api.client.json.JsonObjectParser;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -112,7 +110,10 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+
+import jdk.nashorn.internal.parser.JSONParser;
 import org.apache.twill.filesystem.Location;
+import scala.util.parsing.json.JSONObject;
 
 /**
  * {@link io.cdap.http.HttpHandler} for managing application lifecycle.
@@ -856,5 +857,246 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @Nullable String versionId)
       throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
+  }
+
+
+
+  @POST
+  @Path("/apps/{app-id}/summarize")
+  public void summarizeApplication(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appId) throws Exception {
+
+    // Fetch pipeline JSON from apps table
+//    getPipelineJsonFromAppsTable pipelinejsontableclass= new getPipelineJsonFromAppsTable();
+//    String pipelineJson=pipelinejsontableclass.getPipelineJsonFromAppsTablefunction(namespaceId,appId);
+
+    ApplicationDetail applicationDetail = applicationLifecycleService.getLatestAppDetail(
+        new ApplicationReference(namespaceId, appId));
+
+    String pipelineJson = GSON.toJson(applicationDetail);
+
+    // Summarize pipeline using GenAI
+    generateSummaryFromPipelineJson pipelinesummary=new generateSummaryFromPipelineJson();
+    String summary = pipelinesummary.generateSummaryFromPipelineJsonfunction(pipelineJson);
+
+    // Send the summary response
+    // JsonObject summaryJson = new JsonObject();
+    // summaryJson.addProperty("summary", summary);
+    responder.sendJson(HttpResponseStatus.OK, summary);
+  }
+
+  @POST
+  @Path("/system/apps/pipeline/services/studio/methods/v1/contexts/{namespace_id}/drafts/{draft_id}/summarize")
+  public void summarizeApplicationdraft(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") final String namespaceId,
+                                   @PathParam("app-id") final String appId) throws Exception {
+
+
+    String pipelineJson=request.toString();
+    //JsonParser parser= new JsonParser();
+   // JsonObject reqob= parser.parse(reqbody).getAsJsonObject();
+    //String pipelineJson= reqob.get(pipeline);
+    // Summarize pipeline using GenAI
+    generateSummaryFromPipelineJson pipelinesummary=new generateSummaryFromPipelineJson();
+    String summary = pipelinesummary.generateSummaryFromPipelineJsonfunction(pipelineJson);
+    // Send the summary response
+    // JsonObject summaryJson = new JsonObject();
+    // summaryJson.addProperty("summary", summary);
+    responder.sendJson(HttpResponseStatus.OK, summary);
+  }
+
+  @GET
+  @Path("/apps/hello")
+  public void hell(HttpRequest request, HttpResponder responder) throws Exception {
+    try {
+      String s = "+\n" +
+              "\"drive.web-frontend_20240707.13_p0\n\" +\n" +
+              "\"{\n\" +\n" +
+              "\"    \"name\": \"PORTLAND_SE_DEV_GIT\",\n\" +\n" +
+              "\"    \"description\": \"Data Pipeline Application\",\n\" +\n" +
+              "\"    \"artifact\": {\n\" +\n" +
+              "\"        \"name\": \"cdap-data-pipeline\",\n\" +\n" +
+              "\"        \"version\": \"[6.1.1,7.0.0)\",\n\" +\n" +
+              "\"        \"scope\": \"SYSTEM\"\n\" +\n" +
+              "\"    },\n\" +\n" +
+              "\"    \"config\": {\n\" +\n" +
+              "\"        \"resources\": {\n\" +\n" +
+              "\"            \"memoryMB\": 4096,\n\" +\n" +
+              "\"            \"virtualCores\": 2\n\" +\n" +
+              "\"        },\n\" +\n" +
+              "\"        \"driverResources\": {\n\" +\n" +
+              "\"            \"memoryMB\": 4096,\n\" +\n" +
+              "\"            \"virtualCores\": 2\n\" +\n" +
+              "\"        },\n\" +\n" +
+              "\"        \"connections\": [\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"from\": \"portland_raw\",\n\" +\n" +
+              "\"                \"to\": \"clean_format_raw\"\n\" +\n" +
+              "\"            },\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"from\": \"clean_format_raw\",\n\" +\n" +
+              "\"                \"to\": \"remove \\\"NULL\\\" strings + lowercase with JS\"\n\" +\n" +
+              "\"            },\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"from\": \"remove \\\"NULL\\\" strings + lowercase with JS\",\n\" +\n" +
+              "\"                \"to\": \"se_account_spec_out\"\n\" +\n" +
+              "\"            }\n\" +\n" +
+              "\"        ],\n\" +\n" +
+              "\"        \"comments\": [],\n\" +\n" +
+              "\"        \"postActions\": [],\n\" +\n" +
+              "\"        \"properties\": {},\n\" +\n" +
+              "\"        \"processTimingEnabled\": true,\n\" +\n" +
+              "\"        \"stageLoggingEnabled\": false,\n\" +\n" +
+              "\"        \"stages\": [\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"name\": \"portland_raw\",\n\" +\n" +
+              "\"                \"plugin\": {\n\" +\n" +
+              "\"                    \"name\": \"GCSFile\",\n\" +\n" +
+              "\"                    \"type\": \"batchsource\",\n\" +\n" +
+              "\"                    \"label\": \"portland_raw\",\n\" +\n" +
+              "\"                    \"artifact\": {\n\" +\n" +
+              "\"                        \"name\": \"google-cloud\",\n\" +\n" +
+              "\"                        \"version\": \"[0.13.2,1.0.0)\",\n\" +\n" +
+              "\"                        \"scope\": \"SYSTEM\"\n\" +\n" +
+              "\"                    },\n\" +\n" +
+              "\"                    \"properties\": {\n\" +\n" +
+              "\"                        \"project\": \"${project_id}\",\n\" +\n" +
+              "\"                        \"format\": \"text\",\n\" +\n" +
+              "\"                        \"skipHeader\": \"false\",\n\" +\n" +
+              "\"                        \"serviceFilePath\": \"auto-detect\",\n\" +\n" +
+              "\"                        \"filenameOnly\": \"false\",\n\" +\n" +
+              "\"                        \"recursive\": \"false\",\n\" +\n" +
+              "\"                        \"encrypted\": \"false\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"body\\\",\\\"type\\\":\\\"string\\\"}]}\",\n\" +\n" +
+              "\"                        \"referenceName\": \"portland\",\n\" +\n" +
+              "\"                        \"path\": \"gs://${source_bucket_name}/${source_folder_path}/${raw_file_name_pattern}_*\",\n\" +\n" +
+              "\"                        \"delimiter\": \",\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                },\n\" +\n" +
+              "\"                \"outputSchema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"body\\\",\\\"type\\\":\\\"string\\\"}]}\",\n\" +\n" +
+              "\"                \"id\": \"portland_raw\",\n\" +\n" +
+              "\"                \"type\": \"batchsource\",\n\" +\n" +
+              "\"                \"label\": \"portland_raw\",\n\" +\n" +
+              "\"                \"icon\": \"fa-plug\"\n\" +\n" +
+              "\"            },\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"name\": \"clean_format_raw\",\n\" +\n" +
+              "\"                \"plugin\": {\n\" +\n" +
+              "\"                    \"name\": \"Wrangler\",\n\" +\n" +
+              "\"                    \"type\": \"transform\",\n\" +\n" +
+              "\"                    \"label\": \"clean_format_raw\",\n\" +\n" +
+              "\"                    \"artifact\": {\n\" +\n" +
+              "\"                        \"name\": \"wrangler-transform\",\n\" +\n" +
+              "\"                        \"version\": \"[4.1.4,5.0.0)\",\n\" +\n" +
+              "\"                        \"scope\": \"SYSTEM\"\n\" +\n" +
+              "\"                    },\n\" +\n" +
+              "\"                    \"properties\": {\n\" +\n" +
+              "\"                        \"field\": \"*\",\n\" +\n" +
+              "\"                        \"precondition\": \"false\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\",\n\" +\n" +
+              "\"                        \"workspaceId\": \"6515dfe5-8e3d-4095-a4d5-84b1fe226aa5\",\n\" +\n" +
+              "\"                        \"directives\": \"parse-as-csv :body ',' true\\ndrop body\\nrename ACCOUNT_ID account_number\\nrename ACTIVE_DATE fact_opened_at\\nrename INACTIVE_DATE fact_closed_at\\nrename ADDRESS address1\\nset-column address2 ''\\nrename SERVICE_CITY city\\nrename SERVICE_STATE state\\nset-column zip (string:substring(SERVICE_ZIP_CODE, 0, 5))\\nset-column fact_account_type (IS_RESIDENTIAL == 'Y'  ? 'residential' : 'commercial')\\nrename SECONDARY_ID fact_secondary_id\\nset-column fact_commodity_type (METER_FUEL_TYPE == 'E'  ? 'electric' : METER_FUEL_TYPE)\\nrename PREMISE_ID fact_premise_id\\nrename METER_UNITS fact_commodity_type_units\\nrename CUSTOMER_ID fact_customer_id\\nrename PHONE_1 account_phone\\nrename EMAIL account_email\\nrename EMAIL_OP_OUT_STATUS fact_email_opt_out\\nrename OWNER fact_is_owner\\nrename YEAR_BUILT fact_year_built\\nrename RATE_CODE multifact_rate_codes\\nrename HEAT_TYPE fact_heat_type\\nrename REBATES_USED multifact_rebates_used\\nrename ENROLLED_PROGRAMS multifact_enrolled_programs\\nrename PREMISE_DEVICES multifact_device_types\\nrename METER_QUALITY fact_meter_quality\\nrename TEST_BED_REGION fact_test_bed_region\\nrename MAIL_ADDRESS_LINE1 fact_mail_address_line_1\\nrename MAIL_ADDRESS_LINE2 fact_mail_address_line_2\\nrename MAIL_CITY fact_mail_city\\nrename MAIL_STATE fact_mail_state\\nrename MAIL_ZIP_CODE fact_mail_zip\\nrename LATITUDE fact_latitude\\nrename LONGITUDE fact_longitude\\nrename POOL fact_has_pool\\nrename LOW_INCOME_ASSIST_INCOME_QUAL fact_low_income_assistance_electric\\nrename SQ_FT fact_sq_ft\\nset-column account_status 'opened'\\nfind-and-replace multifact_enrolled_programs s/;/,/g\\nfind-and-replace multifact_rate_codes s/;/,/g\\nfind-and-replace multifact_rebates_used s/;/,/g\\nfind-and-replace multifact_device_types s/;/,/g\\nfilter-rows-on regex-match account_email ^(?i)email$\\nfilter-rows-on regex-match account_number ^(?i)ACCOUNT_ID$\\nfilter-rows-on regex-match fact_opened_at ^(?i)ACTIVE_DATE$\\nfilter-rows-on regex-match fact_closed_at ^(?i)INACTIVE_DATE$\\nfilter-rows-on regex-match city ^(?i)SERVICE_CITY$\\nfilter-rows-on regex-match state ^(?i)SERVICE_STATE$\\nfilter-rows-on regex-match fact_secondary_id ^(?i)SECONDARY_ID$\\nfilter-rows-on regex-match fact_premise_id ^(?i)PREMISE_ID$\\nfilter-rows-on regex-match fact_commodity_type_units ^(?i)METER_UNITS$\\nfilter-rows-on regex-match LAST_NAME ^(?i)LAST_NAME$\\nfilter-rows-on regex-match FIRST_NAME ^(?i)FIRST_NAME$\\nfilter-rows-on regex-match fact_customer_id ^(?i)CUSTOMER_ID$\\nfilter-rows-on regex-match account_phone ^(?i)PHONE_1$\\nfilter-rows-on regex-match account_email ^(?i)EMAIL$\\nfilter-rows-on regex-match fact_is_owner ^(?i)OWNER$\\nfilter-rows-on regex-match multifact_rate_codes ^(?i)\\\"RATE_CODE\\\"$\\nfilter-rows-on regex-match address1 ^(?i)ADDRESS$\\nfilter-rows-on regex-match SERVICE_ZIP_CODE ^(?i)SERVICE_ZIP_CODE$\\nfilter-rows-on regex-match zip ^(?i)SERVICE_ZIP_CODE$\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                },\n\" +\n" +
+              "\"                \"outputSchema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\",\n\" +\n" +
+              "\"                \"inputSchema\": [\n\" +\n" +
+              "\"                    {\n\" +\n" +
+              "\"                        \"name\": \"portland_raw\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"body\\\",\\\"type\\\":\\\"string\\\"}]}\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                ],\n\" +\n" +
+              "\"                \"id\": \"clean_format_raw\",\n\" +\n" +
+              "\"                \"type\": \"transform\",\n\" +\n" +
+              "\"                \"label\": \"clean_format_raw\",\n\" +\n" +
+              "\"                \"icon\": \"icon-DataPreparation\"\n\" +\n" +
+              "\"            },\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"name\": \"remove \\\"NULL\\\" strings + lowercase with JS\",\n\" +\n" +
+              "\"                \"plugin\": {\n\" +\n" +
+              "\"                    \"name\": \"JavaScript\",\n\" +\n" +
+              "\"                    \"type\": \"transform\",\n\" +\n" +
+              "\"                    \"label\": \"remove \\\"NULL\\\" strings + lowercase with JS\",\n\" +\n" +
+              "\"                    \"artifact\": {\n\" +\n" +
+              "\"                        \"name\": \"core-plugins\",\n\" +\n" +
+              "\"                        \"version\": \"[2.3.4,3.0.0)\",\n\" +\n" +
+              "\"                        \"scope\": \"SYSTEM\"\n\" +\n" +
+              "\"                    },\n\" +\n" +
+              "\"                    \"properties\": {\n\" +\n" +
+              "\"                        \"script\": \"/**\\n * @summary Transforms the provided input record into zero or more output records or errors.\\n\\n * Input records are available in JavaScript code as JSON objects. \\n\\n * @param input an object that contains the input record as a JSON.   e.g. to access a field called 'total' from the input record, use input.total.\\n * @param emitter an object that can be used to emit zero or more records (using the emitter.emit() method) or errors (using the emitter.emitError() method) \\n * @param context an object that provides access to:\\n *            1. CDAP Metrics - context.getMetrics().count('output', 1);\\n *            2. CDAP Logs - context.getLogger().debug('Received a record');\\n *            3. Lookups - context.getLookup('blacklist').lookup(input.id); or\\n *            4. Runtime Arguments - context.getArguments().get('priceThreshold') \\n */ \\n\\nfunction yyyymmdd(datestring) {\\n  var cleaned = datestring.replace(/-/g, \\\"\\\").split(\\\" \\\")[0]\\n  return cleaned;\\n}\\n\\nvar dateColumns = ['fact_closed_at', 'fact_opened_at']\\n\\nfunction transform(input, emitter, context) {\\n  var clearNullValuesAndLower = Object.keys(input).reduce(function (acc, k) {\\n    var v = input[k] === \\\"NULL\\\" ? \\\"\\\" : input[k].toLowerCase();\\n    // format date columns\\n    if ((v !== \\\"\\\") && dateColumns.indexOf(k) != -1) {\\n      v = yyyymmdd(v)\\n    }\\n    acc[k] = '\\\"'+v+'\\\"';\\n    return acc;\\n  }, {});\\n  emitter.emit(clearNullValuesAndLower);\\n}\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                },\n\" +\n" +
+              "\"                \"outputSchema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\",\n\" +\n" +
+              "\"                \"inputSchema\": [\n\" +\n" +
+              "\"                    {\n\" +\n" +
+              "\"                        \"name\": \"clean_format_raw\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                ],\n\" +\n" +
+              "\"                \"id\": \"remove-\\\"NULL\\\"-strings-+-lowercase-with-JS\",\n\" +\n" +
+              "\"                \"type\": \"transform\",\n\" +\n" +
+              "\"                \"label\": \"remove \\\"NULL\\\" strings + lowercase with JS\",\n\" +\n" +
+              "\"                \"icon\": \"icon-javascript\"\n\" +\n" +
+              "\"            },\n\" +\n" +
+              "\"            {\n\" +\n" +
+              "\"                \"name\": \"se_account_spec_out\",\n\" +\n" +
+              "\"                \"plugin\": {\n\" +\n" +
+              "\"                    \"name\": \"GCS\",\n\" +\n" +
+              "\"                    \"type\": \"batchsink\",\n\" +\n" +
+              "\"                    \"label\": \"se_account_spec_out\",\n\" +\n" +
+              "\"                    \"artifact\": {\n\" +\n" +
+              "\"                        \"name\": \"google-cloud\",\n\" +\n" +
+              "\"                        \"version\": \"[0.13.2,1.0.0)\",\n\" +\n" +
+              "\"                        \"scope\": \"SYSTEM\"\n\" +\n" +
+              "\"                    },\n\" +\n" +
+              "\"                    \"properties\": {\n\" +\n" +
+              "\"                        \"project\": \"auto-detect\",\n\" +\n" +
+              "\"                        \"suffix\": \"${logicalStartTime(yyyy-MM-dd-HH-mm-ss)}\",\n\" +\n" +
+              "\"                        \"format\": \"csv\",\n\" +\n" +
+              "\"                        \"serviceFilePath\": \"auto-detect\",\n\" +\n" +
+              "\"                        \"location\": \"us\",\n\" +\n" +
+              "\"                        \"path\": \"gs://${destination_bucket_name}/${destination_folder_path}/${cdf_instance_name}/\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\",\n\" +\n" +
+              "\"                        \"referenceName\": \"se_account_spec\",\n\" +\n" +
+              "\"                        \"writeHeader\": \"false\",\n\" +\n" +
+              "\"                        \"serviceAccountType\": \"filePath\",\n\" +\n" +
+              "\"                        \"contentType\": \"application/octet-stream\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                },\n\" +\n" +
+              "\"                \"outputSchema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\",\n\" +\n" +
+              "\"                \"inputSchema\": [\n\" +\n" +
+              "\"                    {\n\" +\n" +
+              "\"                        \"name\": \"remove \\\"NULL\\\" strings + lowercase with JS\",\n\" +\n" +
+              "\"                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"account_number\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_opened_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_closed_at\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"address2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_account_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_secondary_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_premise_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_commodity_type_units\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"first_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"last_name\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_customer_id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_phone\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_email\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_email_opt_out\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_is_owner\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_year_built\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rate_codes\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_heat_type\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_rebates_used\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_enrolled_programs\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"multifact_device_types\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_meter_quality\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_test_bed_region\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_1\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_address_line_2\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_city\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_state\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_mail_zip\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_latitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_longitude\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_has_pool\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_low_income_assistance_electric\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"fact_sq_ft\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"account_status\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]}]}\"\n\" +\n" +
+              "\"                    }\n\" +\n" +
+              "\"                ],\n\" +\n" +
+              "\"                \"id\": \"se_account_spec_out\",\n\" +\n" +
+              "\"                \"type\": \"batchsink\",\n\" +\n" +
+              "\"                \"label\": \"se_account_spec_out\",\n\" +\n" +
+              "\"                \"icon\": \"fa-plug\"\n\" +\n" +
+              "\"            }\n\" +\n" +
+              "\"        ],\n\" +\n" +
+              "\"        \"schedule\": \"0 * * * *\",\n\" +\n" +
+              "\"        \"engine\": \"spark\",\n\" +\n" +
+              "\"        \"numOfRecordsPreview\": 100,\n\" +\n" +
+              "\"        \"description\": \"Data Pipeline Application\",\n\" +\n" +
+              "\"        \"maxConcurrentRuns\": 1\n\" +\n" +
+              "\"    }\n\" +\n" +
+              "\"}\n";
+      generateSummaryFromPipelineJson pipelinesummary = new generateSummaryFromPipelineJson();
+      String summary = pipelinesummary.generateSummaryFromPipelineJsonfunction(s);
+      responder.sendJson(HttpResponseStatus.OK, "hello");
+    } catch (Exception e) {
+      LOG.error("Failed to say hello", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.toString());
+    }
+  }
+
+  @GET
+  @Path("/apps/ram")
+  public void helloram(HttpRequest request, HttpResponder responder) throws Exception {
+
+    responder.sendString(HttpResponseStatus.BAD_REQUEST,"ram");
   }
 }
