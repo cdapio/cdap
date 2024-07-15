@@ -58,7 +58,6 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.ml.VertexAIService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.ApplicationUpdateDetail;
@@ -661,25 +660,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
 
-  @POST
-  @Path("/apps/{app-id}/summarize")
-  public void getAppSummary(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") final String namespaceId,
-      @PathParam("app-id") final String appName,
-      @QueryParam("project") @DefaultValue("vsethi-project") String project,
-      @QueryParam("model-name") @DefaultValue("gemini-1.5-pro") String modelName,
-      @QueryParam("token") @DefaultValue("") String accessTokenString) {
-    // The version of the validated applicationId is ignored. We only use the method to validate the input.
-    try {
-      validateApplicationId(namespaceId, appName);
-      String summary = new VertexAIService().summarizePipeline(project, "us-west1", modelName, accessTokenString);
-      responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
-    }
-    catch (Exception e) {
-      LOG.error("Failed to summarize pipeline", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
-  }
+
 
   /**
    * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder,
@@ -880,19 +861,21 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   }
 
   @POST
+  @Path("/apps/{app-id}/summarize")
+  public void getAppSummaryforDeployedApp(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appName,
+      @PathParam("format") @DefaultValue("JSON") String format)
+      throws NotImplementedException {
+
+
+  }
+  @POST
   @Path("/apps/summarize")
-  public void getAppSum(HttpRequest request, HttpResponder responder,
-      @QueryParam("project") @DefaultValue("vsethi-project2") String project,
-      @QueryParam("model-name") @DefaultValue("gemini-1.5-pro") String modelName,
-      @QueryParam("token") @DefaultValue("") String accessTokenString) {
-    // The version of the validated applicationId is ignored. We only use the method to validate the input.
-    try {
-      String summary = new VertexAIService().summarizePipeline(project, "us-west1", modelName, accessTokenString);
-      responder.sendString(HttpResponseStatus.OK, "Hello World!" + "\n" + summary);
-    }
-    catch (Exception e) {
-      LOG.error("Failed to summarize pipeline", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
+  public void getAppSummaryforDraftedApp(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("format") @DefaultValue("JSON") String format)
+      throws NotImplementedException{
+
   }
 }
