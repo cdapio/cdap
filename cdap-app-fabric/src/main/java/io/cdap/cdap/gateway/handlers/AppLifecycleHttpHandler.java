@@ -858,23 +858,41 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
   }
 
+  /**
+   * Endpoint to summarize deployed applications.
+   *
+   * @param request The HTTP request object.
+   * @param responder The HTTP responder object.
+   * @param namespaceId The namespace ID where the application is deployed.
+   * @param appName The name of the deployed application.
+   * @param format The format in which the summary should be returned (default is JSON).
+   * @throws NotImplementedException Thrown if the method is not implemented yet.
+   */
   @POST
   @Path("/apps/{app-id}/summarize")
-  public void getAppSummaryforDeployedApp(HttpRequest request, HttpResponder responder,
+  public void getAppSummaryDeployedApp(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName,
-      @PathParam("format") @DefaultValue("JSON") String format)
+      @PathParam("format") @DefaultValue("json") String format)
       throws NotImplementedException {
 
 
   }
 
-
+  /**
+   * Endpoint to summarize drafted applications.
+   *
+   * @param request The HTTP request object.
+   * @param responder The HTTP responder object.
+   * @param namespaceId The namespace ID where the application is drafted.
+   * @param format The format in which the summary should be returned (default is JSON).
+   * @throws NotImplementedException Thrown if the method is not implemented yet.
+   */
   @POST
   @Path("/apps/summarize")
-  public void getAppSummaryforDraftedApp(HttpRequest request, HttpResponder responder,
+  public void getAppSummaryDraftedApp(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("format") @DefaultValue("JSON") String format)
+      @PathParam("format") @DefaultValue("json") String format)
       throws NotImplementedException{
 
   }
