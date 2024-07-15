@@ -857,4 +857,25 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throws BadRequestException, NamespaceNotFoundException, AccessException {
     return validateApplicationVersionId(validateNamespace(namespace), appId, versionId);
   }
+
+  @POST
+  @Path("/apps/{app-id}/summarize")
+  public void getAppSummaryforDeployedApp(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("app-id") final String appName,
+      @PathParam("format") @DefaultValue("JSON") String format)
+      throws NotImplementedException {
+
+
+  }
+
+
+  @POST
+  @Path("/apps/summarize")
+  public void getAppSummaryforDraftedApp(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") final String namespaceId,
+      @PathParam("format") @DefaultValue("JSON") String format)
+      throws NotImplementedException{
+
+  }
 }
