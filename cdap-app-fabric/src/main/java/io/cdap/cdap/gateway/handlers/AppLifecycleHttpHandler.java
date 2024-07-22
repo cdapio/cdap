@@ -873,9 +873,18 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getAppSummaryDeployedApp(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName,
-      @PathParam("format") @DefaultValue("markdown") String format)
+      @QueryParam("format") @DefaultValue("markdown") String format)
       throws NotImplementedException {
-      throw  new NotImplementedException("This api request is not implemented.");
+    try {
+      validateApplicationId(namespaceId, appName);
+      responder.sendString(HttpResponseStatus.OK, applicationLifecycleService.ApplicationSummary(
+         new ApplicationReference(namespaceId, appName),format, configuration));
+    }
+    catch (Exception e) {
+      LOG.error("Failed to summarize pipeline", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+
   }
 
   /**
@@ -889,10 +898,20 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    */
   @POST
   @Path("/apps/summarize")
-  public void getAppSummaryDraftedApp(HttpRequest request, HttpResponder responder,
+  public void getAppSummaryDraftedApp(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("format") @DefaultValue("markdown") String format)
-      throws NotImplementedException{
-      throw  new NotImplementedException("This api request is not implemented.");
+      @QueryParam("format") @DefaultValue("markdown") String format)
+      throws NotImplementedException, IOException, BadRequestException {
+
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
+        StandardCharsets.UTF_8)) {
+      AppRequest<?> appRequest = GSON.fromJson(reader, AppRequest.class);
+      responder.sendString(HttpResponseStatus.OK, applicationLifecycleService.DraftApplicationSummary(
+          format, appRequest.getConfig().toString(),configuration));
+    }
+    catch (Exception e) {
+      LOG.error("Failed to summarize pipeline", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
   }
 }
