@@ -149,6 +149,8 @@ import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.cdap.cdap.ml.spi.VertexAIServices;
+import io.cdap.cdap.ml.VertexAIServicesImpl;
 
 /**
  * Service that manage lifecycle of Applications.
@@ -1621,5 +1623,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     store.updateApplicationSourceControlMeta(updateScmMetaRequests);
+  }
+  public String ApplicationSummary(ApplicationReference appRef,String format,CConfiguration configuration)
+      throws IOException, NotFoundException {
+    ApplicationDetail det=getLatestAppDetail(appRef, true);
+    String pipeline= GSON.toJson(det);
+    VertexAIServices service = new VertexAIServicesImpl(configuration);
+    String summary = service.summarizePipeline(pipeline, format);
+    return summary;
+  }
+
+  public String DraftApplicationSummary(String format,String pipeline,CConfiguration configuration)
+      throws IOException, NotFoundException {
+    VertexAIServices service = new VertexAIServicesImpl(configuration);
+    String summary = service.summarizePipeline(pipeline, format);
+    return summary;
   }
 }
