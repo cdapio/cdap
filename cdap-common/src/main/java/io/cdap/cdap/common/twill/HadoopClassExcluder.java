@@ -39,6 +39,14 @@ public class HadoopClassExcluder extends ClassAcceptor {
         return false;
       }
     }
+
+    // We don't use the log4j-api library from org.apache.logging.
+    // However, when ran in distributed mode which contains it,
+    // causes conflicts with it if we include it.
+    if (className.startsWith("org.apache.logging.log4j")) {
+      return false;
+    }
+
     // We don't use the snappy library from org.iq80. We use the one from org.xerial.snappy.
     // This is an optional dependency from org.iq80.leveldb, hence it is not included in CDAP
     // However, the hive-exec contains it, which can mess up other dependency if we include it.
