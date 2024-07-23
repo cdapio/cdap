@@ -2543,6 +2543,7 @@
         <module>cdap-event-reader-spi</module>
         <module>cdap-authenticator-ext-gcp</module>
         <module>cdap-source-control</module>
+        <module>cdap-ml-spi</module>
         <module>cdap-encryption-ext-tink</module>
       </modules>
     </profile>
