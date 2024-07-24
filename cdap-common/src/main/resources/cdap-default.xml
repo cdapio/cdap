@@ -20,6 +20,58 @@
   <!-- General Configuration -->
 
   <property>
+    <name>ai.vertexai.project.id</name>
+    <value></value>
+    <description>
+      Name of the project.
+    </description>
+  </property>
+
+  <property>
+    <name>ai.vertexai.location</name>
+    <value></value>
+    <description>
+      Name of the location.
+    </description>
+  </property>
+
+  <property>
+    <name>ai.vertexai.model</name>
+    <value>gemini-1.5-pro</value>
+    <description>
+      Name of the model to be used for availing AI service through VertexAI.
+    </description>
+  </property>
+  <property>
+    <name>ai.vertexai.prompts.markdown.pipeline.summary</name>
+    <value>
+      Summarize the CDAP data pipeline in Markdown format. The summary should include:
+
+      - A brief overview of the pipeline's purpose.
+
+      - Descriptions of the key stages involved (source, transformation, sink):
+        - Include the stage name and a description of each stage, which can include version and plugin configuration.
+
+      - Description of the execution configuration which may include:
+        - Resources
+        - Connections
+        - Schedule
+        - Engine
+        - Concurrent run
+
+      - Description of additional configuration which may include:
+        - Version
+        - Logging
+        - Preview
+
+      Please present the summary in a clear and concise manner, using proper Markdown formatting.
+    </value>
+    <description>
+      Prompt added with pipeline to get the summary in Markdown format.
+    </description>
+  </property>
+
+  <property>
     <name>cluster.name</name>
     <value></value>
     <description>

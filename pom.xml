@@ -2626,8 +2626,9 @@
         <module>cdap-event-reader-spi</module>
         <module>cdap-authenticator-ext-gcp</module>
         <module>cdap-source-control</module>
-        <module>cdap-ml-spi</module>
         <module>cdap-encryption-ext-tink</module>
+        <module>cdap-ml-spi</module>
+        <module>cdap-ml-ext-vertexai</module>
       </modules>
     </profile>
     <profile>
