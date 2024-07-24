@@ -36,21 +36,21 @@ public class RemoteDatasetFrameworkRetryTest extends RemoteDatasetFrameworkTest 
     cConf.set("system.dataset.remote.retry.policy.base.delay.ms", "0");
     cConf.set("system.dataset.remote.retry.policy.max.retries", "2");
     RemoteClientFactory mockedFactory = Mockito.spy(remoteClientFactory);
-    Map<URL, Integer> failedURIs = new HashMap<>();
+    Map<URL, Integer> failedUris = new HashMap<>();
     Mockito.doAnswer(i -> {
       RemoteClient realClient = (RemoteClient) i.callRealMethod();
       RemoteClient mocked = Mockito.spy(realClient);
       Mockito.doAnswer(i2 -> {
-        HttpRequest request = i2.getArgumentAt(0, HttpRequest.class);
+        HttpRequest request = i2.getArgument(0, HttpRequest.class);
         //Fail the first GET with ServiceUnavailableException, second GET with IOException, allow third.
-        if (request.getMethod() == HttpMethod.GET && !failedURIs.containsKey(request.getURL())) {
-          failedURIs.put(request.getURL(), 1);
+        if (request.getMethod() == HttpMethod.GET && !failedUris.containsKey(request.getURL())) {
+          failedUris.put(request.getURL(), 1);
           throw new ServiceUnavailableException("service");
-        } else if (request.getMethod() == HttpMethod.GET && failedURIs.get(request.getURL()) == 1) {
-          failedURIs.put(request.getURL(), 2);
+        } else if (request.getMethod() == HttpMethod.GET && failedUris.get(request.getURL()) == 1) {
+          failedUris.put(request.getURL(), 2);
           throw new IOException();
         }
-        failedURIs.clear();
+        failedUris.clear();
         return i2.callRealMethod();
       }).when(mocked).execute(Mockito.any());
       return mocked;

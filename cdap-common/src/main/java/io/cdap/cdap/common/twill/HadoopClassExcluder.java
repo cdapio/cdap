@@ -20,7 +20,7 @@ import java.net.URL;
 import org.apache.twill.api.ClassAcceptor;
 
 /**
- * Exclude hadoop classes
+ * Exclude hadoop classes.
  */
 public class HadoopClassExcluder extends ClassAcceptor {
 
@@ -39,11 +39,20 @@ public class HadoopClassExcluder extends ClassAcceptor {
         return false;
       }
     }
-
+    
     // We don't use the log4j-api library from org.apache.logging.
     // However, when ran in distributed mode which contains it,
     // causes conflicts with it if we include it.
     if (className.startsWith("org.apache.logging.log4j")) {
+      return false;
+    }
+
+    // After Hadoop upgrade to 3.3.6 , It has direct dependency on jackson-databind, which cause conflicts when we pick
+    // Hadoop from the runtime environemnt
+    // Removing classes related to `com.fasterxml.jackson.core:jackson-databind`
+    // and `com.fasterxml.jackson.core:jackson-core`
+    if (className.startsWith("com.fasterxml.jackson.databind.")
+      || className.startsWith("com.fasterxml.jackson.core.")) {
       return false;
     }
 

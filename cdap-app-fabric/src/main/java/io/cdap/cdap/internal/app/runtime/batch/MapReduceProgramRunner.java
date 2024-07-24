@@ -64,6 +64,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -81,6 +82,7 @@ import org.slf4j.LoggerFactory;
 public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
+  public static final String MAPREDUCE_CUSTOM_CONFIG_PREFIX = "system.mapreduce.";
 
   private final Injector injector;
   private final CConfiguration cConf;
@@ -100,6 +102,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final RemoteClientFactory remoteClientFactory;
   private final AppStateStoreProvider appStateStoreProvider;
 
+  /**
+   * Constructor for a program runner that launches a Map reduce program.
+   */
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
       NamespacePathLocator locationFactory,
@@ -205,6 +210,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         hConf.set(JobContext.QUEUE_NAME, schedulerQueue);
       }
 
+      hConf = setCustomMapReduceConfig(hConf, options.getArguments());
+      hConf = setCustomMapReduceConfig(hConf, options.getUserArguments());
+
       ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf,
           mapReduce, spec,
@@ -240,5 +248,26 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       return null;
     }
     return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
+  }
+
+  /**
+   * A method to apply any custom map reduce configuration passed in by user. This will override the default config by
+   * hadoop or map reduce.
+   * If a runtime argument is passed by the user prefixed by {@MAPREDUCE_CUSTOM_CONFIG_PREFIX} , then we add it to
+   * hConf. Which later will be taken as hadoop / map reduce configuration.
+   */
+  private Configuration setCustomMapReduceConfig(Configuration hConf, Arguments options) {
+    Map<String, String> systemArgs = options.asMap();
+    for (String name : systemArgs.keySet()) {
+      if (!name.startsWith(MAPREDUCE_CUSTOM_CONFIG_PREFIX)) {
+        continue;
+      }
+      String value = systemArgs.get(name);
+      String key = name.substring(MAPREDUCE_CUSTOM_CONFIG_PREFIX.length());
+      if (key != null && value != null) {
+        hConf.set(key, value);
+      }
+    }
+    return hConf;
   }
 }

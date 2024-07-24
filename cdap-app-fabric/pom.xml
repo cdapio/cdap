@@ -243,7 +243,7 @@
     </dependency>
     <dependency>
       <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito</artifactId>
+      <artifactId>powermock-api-mockito2</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -265,6 +265,10 @@
           <artifactId>cdap-event-reader-spi</artifactId>
           <version>${project.version}</version>
       </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-core</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

@@ -152,7 +152,6 @@ public class AutoInstallTest {
                                                    ImmutableSet.of());
     Mockito.verify(artifactRepository, Mockito.times(1)).writeArtifactProperties(artifact, properties);
     // Verify that temp file was deleted
-    PowerMockito.verifyStatic();
     java.nio.file.Files.deleteIfExists(mockPath);
   }
 

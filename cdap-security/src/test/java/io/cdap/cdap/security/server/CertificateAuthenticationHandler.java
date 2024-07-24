@@ -39,7 +39,7 @@ public class CertificateAuthenticationHandler extends AbstractAuthenticationHand
    * Configure the Jetty {@link ClientCertAuthenticator} by setting the
    * Truststore.
    *
-   * @param clientCertAuthenticator
+   * @param clientCertAuthenticator , the authenticator to be set
    */
   private void setupClientCertAuthenticator(ClientCertAuthenticator clientCertAuthenticator) {
     String trustStorePath = handlerProps.get(AUTH_SSL_CONFIG_BASE.concat("truststore.path"));
@@ -62,7 +62,7 @@ public class CertificateAuthenticationHandler extends AbstractAuthenticationHand
 
   @Override
   protected LoginService getHandlerLoginService() {
-    return new MTLSLoginService(handlerProps.get("realmfile"));
+    return new MtlsLoginService(handlerProps.get("realmfile"));
   }
 
   @Override

@@ -66,7 +66,25 @@ public class AbstractMessagingSubscriberServiceTest {
   private MetricsContext metricsContext;
 
   @Mock
-  private Message message0, message1, message2, message3, message4, message5, message6;
+  private Message message0;
+
+  @Mock
+  private Message message1;
+
+  @Mock
+  private Message message2;
+
+  @Mock
+  private Message message3;
+
+  @Mock
+  private Message message4;
+
+  @Mock
+  private Message message5;
+
+  @Mock
+  private Message message6;
 
   @Mock
   private StructuredTableContext structuredTableContext;
@@ -93,9 +111,9 @@ public class AbstractMessagingSubscriberServiceTest {
       });
     Mockito.doAnswer(c -> {
       //First one
-      c.getArgumentAt(0, TxRunnable.class).run(structuredTableContext);
+      c.getArgument(0, TxRunnable.class).run(structuredTableContext);
       //Retry
-      c.getArgumentAt(0, TxRunnable.class).run(structuredTableContext);
+      c.getArgument(0, TxRunnable.class).run(structuredTableContext);
       return null;
     }).when(transactionRunner).run(Mockito.any());
 
@@ -133,7 +151,7 @@ public class AbstractMessagingSubscriberServiceTest {
         }
       });
     Mockito.doAnswer(c -> {
-      c.getArgumentAt(0, TxRunnable.class).run(structuredTableContext);
+      c.getArgument(0, TxRunnable.class).run(structuredTableContext);
       return null;
     }).when(transactionRunner).run(Mockito.any());
 
@@ -176,7 +194,7 @@ public class AbstractMessagingSubscriberServiceTest {
         }
       });
     Mockito.doAnswer(c -> {
-      c.getArgumentAt(0, TxRunnable.class).run(structuredTableContext);
+      c.getArgument(0, TxRunnable.class).run(structuredTableContext);
       Thread.sleep(3000);
       return null;
     }).when(transactionRunner).run(Mockito.any());

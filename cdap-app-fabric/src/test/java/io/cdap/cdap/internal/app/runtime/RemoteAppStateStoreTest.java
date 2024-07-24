@@ -43,13 +43,13 @@ import java.util.Optional;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.CustomTypeSafeMatcher;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 /**
@@ -103,76 +103,70 @@ public class RemoteAppStateStoreTest {
     //Throw ApplicationNotFoundException when ever NOT_FOUND_APP is used
     Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
       .when(applicationLifecycleService)
-      .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
+      .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher(NOT_FOUND_APP)));
     Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
       .when(applicationLifecycleService)
-      .getState(Mockito.argThat(new AppNameAppStateKeyMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
+      .getState(Mockito.argThat(new AppNameAppStateKeyMatcher(NOT_FOUND_APP)));
     Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
         .when(applicationLifecycleService)
-        .deleteState(Mockito.argThat(new AppNameAppStateKeyMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
+        .deleteState(Mockito.argThat(new AppNameAppStateKeyMatcher(NOT_FOUND_APP)));
 
     //Throw RuntimeException whenever error app is being used
     Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
-      .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher("ERROR_APP", ERROR_APP)));
+      .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher(ERROR_APP)));
     Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
-      .getState(Mockito.argThat(new AppNameAppStateKeyMatcher("ERROR_APP", ERROR_APP)));
+      .getState(Mockito.argThat(new AppNameAppStateKeyMatcher(ERROR_APP)));
     Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
-        .deleteState(Mockito.argThat(new AppNameAppStateKeyMatcher("ERROR_APP", ERROR_APP)));
+        .deleteState(Mockito.argThat(new AppNameAppStateKeyMatcher(ERROR_APP)));
 
     String encodedInvalidKey = Base64.getEncoder().encodeToString(MISSING_KEY.getBytes(StandardCharsets.UTF_8));
     // Different response for valid and invalid keys
     Mockito.when(
-        applicationLifecycleService.getState(
-          Mockito.argThat(new CustomTypeSafeMatcher<AppStateKey>("valid key match") {
-            @Override
-            protected boolean matchesSafely(AppStateKey item) {
-              return item.getAppName().equals(SUCCESS_APP) && !item.getStateKey().equals(encodedInvalidKey);
-            }
-          })))
+      applicationLifecycleService.getState(
+        Mockito.argThat(
+          item -> item == null ? false :
+            item.getAppName().equals(SUCCESS_APP) && !item.getStateKey().equals(encodedInvalidKey)
+        )))
       .thenReturn(Optional.of(TEST_VALUE.getBytes(StandardCharsets.UTF_8)));
 
     Mockito.when(
-        applicationLifecycleService.getState(
-          Mockito.argThat(new CustomTypeSafeMatcher<AppStateKey>("invalid key match") {
-            @Override
-            protected boolean matchesSafely(AppStateKey item) {
-              return item.getAppName().equals(SUCCESS_APP) && item.getStateKey().equals(encodedInvalidKey);
-            }
-          })))
+      applicationLifecycleService.getState(
+        Mockito.argThat(
+          item -> item == null ? false :
+            item.getAppName().equals(SUCCESS_APP) && item.getStateKey().equals(encodedInvalidKey)
+        )))
       .thenReturn(Optional.empty());
   }
 
   /**
    * Simple AppStateKeyValue matcher that matches for appname
    */
-  private static class AppNameAppStateKeyValueMatcher extends CustomTypeSafeMatcher<AppStateKeyValue> {
+  private static class AppNameAppStateKeyValueMatcher implements ArgumentMatcher<AppStateKeyValue> {
     private final String appName;
 
-    public AppNameAppStateKeyValueMatcher(String description, String appName) {
-      super(description);
+    public AppNameAppStateKeyValueMatcher(String appName) {
       this.appName = appName;
     }
 
     @Override
-    protected boolean matchesSafely(AppStateKeyValue item) {
-      return item.getAppName().equals(appName);
+    public boolean matches(AppStateKeyValue item) {
+      return item == null ? false : item.getAppName().equals(appName);
     }
   }
 
   /**
    * Simple AppStateKey matcher that matches for appname
    */
-  private static class AppNameAppStateKeyMatcher extends CustomTypeSafeMatcher<AppStateKey> {
+  private static class AppNameAppStateKeyMatcher implements ArgumentMatcher<AppStateKey> {
     private final String appName;
 
-    public AppNameAppStateKeyMatcher(String description, String appName) {
-      super(description);
+    public AppNameAppStateKeyMatcher(String appName) {
       this.appName = appName;
     }
 
     @Override
-    protected boolean matchesSafely(AppStateKey item) {
-      return item.getAppName().equals(appName);
+    public boolean matches(AppStateKey item) {
+      return item == null ? false : item.getAppName().equals(appName);
     }
   }
 

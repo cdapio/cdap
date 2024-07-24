@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.security.server;
 
 import com.google.common.base.Splitter;
@@ -20,29 +21,28 @@ import java.security.Principal;
 import java.util.Map;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
-import org.eclipse.jetty.security.MappedLoginService.KnownUser;
+import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.security.Credential;
 
 /**
  * An Implementation of User Identity. All Users that provide a client
  * certificate for authentication will have their identity based on the CN of
- * the provided certficate
+ * the provided certficate.
  *
  */
-public class MTLSUserIdentity implements UserIdentity {
+public class MtlsUserIdentity implements UserIdentity {
   private String userName;
   private Object credentials;
 
   private static final String PRINCIPAL_CANONICAL_NAME = "CN";
 
   /**
-   * Extract the Canonical Name from a {@link X500Principal} name
+   * Extract the Canonical Name from a {@link X500Principal} name.
    *
-   * @param principal
-   * @return
+   * @param principal , input principal
    */
-  private String getX509PrincipalCN(String principal) {
+  private String getX509PrincipalCn(String principal) {
     Map<String, String> principalAttributes = Splitter.on(",").withKeyValueSeparator("=")
       .split(principal.replaceAll("\\s", ""));
     if (principalAttributes.containsKey(PRINCIPAL_CANONICAL_NAME)) {
@@ -52,7 +52,7 @@ public class MTLSUserIdentity implements UserIdentity {
     }
   }
 
-  public MTLSUserIdentity(String userName, Object credentials) {
+  public MtlsUserIdentity(String userName, Object credentials) {
     this.userName = userName;
     this.credentials = credentials;
   }
@@ -68,7 +68,7 @@ public class MTLSUserIdentity implements UserIdentity {
   public Principal getUserPrincipal() {
     Credential credential = (credentials instanceof Credential) ? (Credential) credentials
       : Credential.getCredential(credentials.toString());
-    return new KnownUser(getX509PrincipalCN(userName), credential);
+    return new AbstractLoginService.UserPrincipal(getX509PrincipalCn(userName), credential);
   }
 
   // For the test not implementing role checks

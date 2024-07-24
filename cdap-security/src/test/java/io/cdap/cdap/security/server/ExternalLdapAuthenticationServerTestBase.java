@@ -31,7 +31,7 @@ import org.junit.Assert;
 /**
  * Base test class for LDAP Based ExternalAuthenticationServer.
  */
-public abstract class ExternalLDAPAuthenticationServerTestBase extends ExternalAuthenticationServerTestBase {
+public abstract class ExternalLdapAuthenticationServerTestBase extends ExternalAuthenticationServerTestBase {
 
   private static InMemoryDirectoryServer ldapServer;
   protected static int ldapPort = Networks.getRandomPort();
@@ -47,8 +47,8 @@ public abstract class ExternalLDAPAuthenticationServerTestBase extends ExternalA
     cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, 0);
     cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, 0);
 
-    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, LDAPAuthenticationHandler.class.getName());
-    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, LDAPLoginModule.class.getName());
+    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, LdapAuthenticationHandler.class.getName());
+    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, LdapLoginModule.class.getName());
     cConf.set(configBase.concat("debug"), "true");
     cConf.set(configBase.concat("hostname"), InetAddress.getLoopbackAddress().getHostName());
     cConf.set(configBase.concat("port"), Integer.toString(ldapPort));

@@ -19,6 +19,9 @@ package io.cdap.cdap.gateway.router;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
+import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -116,14 +119,14 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
   }
 
   @Override
-  protected HttpURLConnection openURL(URL url) throws Exception {
+  protected HttpURLConnection openUrl(URL url) throws Exception {
     HttpsURLConnection urlConn = (HttpsURLConnection) url.openConnection();
     HttpRequests.disableCertCheck(urlConn);
     return urlConn;
   }
 
   @Override
-  protected DefaultHttpClient getHTTPClient() throws Exception {
+  protected DefaultHttpClient getHttpClient() throws Exception {
     SSLContext sslContext = SSLContext.getInstance("TLS");
 
     // set up a TrustManager that trusts everything
@@ -138,6 +141,22 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     // apache HttpClient version >4.2 should use BasicClientConnectionManager
     ClientConnectionManager cm = new BasicClientConnectionManager(schemeRegistry);
     return new DefaultHttpClient(cm);
+  }
+
+  @Override
+  protected AsyncHttpClient getAsyncHttpClient() throws Exception {
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+
+    // set up a TrustManager that trusts everything
+    SSLContext sslContext = SSLContext.getInstance("SSL");
+    sslContext.init(null, InsecureTrustManagerFactory.INSTANCE.getTrustManagers(), new SecureRandom());
+    configBuilder.setHostnameVerifier((hostname, session) -> true).setSSLContext(sslContext);
+
+    final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+      new NettyAsyncHttpProvider(configBuilder.build()),
+      configBuilder.build());
+
+    return asyncHttpClient;
   }
 
   @Override

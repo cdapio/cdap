@@ -32,9 +32,9 @@ import org.junit.Test;
 /**
  * Tests for {@link ExternalAuthenticationServer}.
  */
-public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthenticationServerTestBase {
+public class ExternalLdapAuthenticationServerTest extends ExternalLdapAuthenticationServerTestBase {
 
-  private static ExternalLDAPAuthenticationServerTest testServer;
+  private static ExternalLdapAuthenticationServerTest testServer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -49,7 +49,7 @@ public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthentica
     ldapListenerConfig = InMemoryListenerConfig.createLDAPConfig("LDAP",
                                                                  InetAddress.getLoopbackAddress(),
                                                                  ldapPort, null);
-    testServer = new ExternalLDAPAuthenticationServerTest();
+    testServer = new ExternalLdapAuthenticationServerTest();
     testServer.setup();
   }
 
@@ -76,12 +76,12 @@ public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthentica
    return "admin";
   }
 
-  /**
+   /**
    * Test request to server with empty password
    */
    @Test
    public void testEmptyPassword() throws Exception {
-     HttpURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN));
+     HttpURLConnection urlConn = openConnection(getUrl(GrantAccessToken.Paths.GET_TOKEN));
      try {
        // base64 encoding of admin: (username=admin, password=empty string)
        urlConn.addRequestProperty("Authorization", "Basic YWRtaW46");
