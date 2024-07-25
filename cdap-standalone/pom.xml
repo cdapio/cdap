@@ -464,6 +464,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-ml-ext-vertexai</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -662,6 +668,13 @@
 		    <resource>
                       <directory>${project.parent.basedir}/cdap-securestore-ext-gcp-secretstore/target/libexec</directory>
                       <targetPath>ext/securestores/gcp-secretstore</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ml-ext-vertexai/target/libexec</directory>
+                      <targetPath>ext/ml/vertexai</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>
