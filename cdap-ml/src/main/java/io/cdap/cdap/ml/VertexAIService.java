@@ -15,8 +15,12 @@ import com.google.cloud.aiplatform.v1.Part;
 import com.google.cloud.aiplatform.v1.PredictionServiceClient;
 import com.google.cloud.aiplatform.v1.PredictionServiceSettings;
 import com.google.common.base.Strings;
+import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 public class VertexAIService {
 
@@ -43,32 +47,43 @@ public class VertexAIService {
   //   return "Hello World!" + "\n" + summary;
   // }
 
+  // public String summarizePipeline(String project,
+  //     String location,
+  //     String modelName,
+  //     String accessTokenString) throws IOException {
+  //   EndpointName endpointName = EndpointName.ofProjectLocationPublisherModelName(project, location, "google", modelName);
+  //   PredictionServiceClient predictionServiceClient = PredictionServiceClient.create(PredictionServiceSettings.newBuilder()
+  //       .setEndpoint(endpointName.getEndpoint())
+  //       .build());
+  //   // 4. Prepare Content for Generation
+  //   Content promptContent = Content.newBuilder()
+  //       .setRole("USER")
+  //       .setParts(0, Part.parseFrom(ByteString.copyFromUtf8("Write a creative story about a time-traveling cat.")))
+  //       .build();
+  //
+  //   GenerateContentRequest request = GenerateContentRequest.newBuilder()
+  //       .addContents(promptContent) // You can add multiple contents
+  //       .build();
+  //
+  //   // 5. Call the GenerateContent API
+  //   String summary = "";
+  //   GenerateContentResponse response = predictionServiceClient.generateContent(request);
+  //   for (Candidate candidate : response.getCandidatesList()) {
+  //     for (Part part : candidate.getContent().getPartsList()) {
+  //       summary += part.getText();
+  //     }
+  //   }
+  //   return "Hello World!" + "\n" + summary;
+  // }
+
   public String summarizePipeline(String project,
       String location,
       String modelName,
       String accessTokenString) throws IOException {
-    EndpointName endpointName = EndpointName.ofProjectLocationPublisherModelName(project, location, "google", modelName);
-    PredictionServiceClient predictionServiceClient = PredictionServiceClient.create(PredictionServiceSettings.newBuilder()
-        .setEndpoint(endpointName.getEndpoint())
-        .build());
-    // 4. Prepare Content for Generation
-    Content promptContent = Content.newBuilder()
-        .setRole("USER")
-        .setParts(0, Part.parseFrom(ByteString.copyFromUtf8("Write a creative story about a time-traveling cat.")))
-        .build();
-
-    GenerateContentRequest request = GenerateContentRequest.newBuilder()
-        .addContents(promptContent) // You can add multiple contents
-        .build();
-
-    // 5. Call the GenerateContent API
-    String summary = "";
-    GenerateContentResponse response = predictionServiceClient.generateContent(request);
-    for (Candidate candidate : response.getCandidatesList()) {
-      for (Part part : candidate.getContent().getPartsList()) {
-        summary += part.getText();
-      }
-    }
-    return "Hello World!" + "\n" + summary;
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+    // TODO
+    HttpPost request = new HttpPost("url");
+    JsonObject payload = new JsonObject();
+    
   }
 }
