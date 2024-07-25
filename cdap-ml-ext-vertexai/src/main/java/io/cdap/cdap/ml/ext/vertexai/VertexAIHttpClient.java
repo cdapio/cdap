@@ -16,9 +16,15 @@
 
 package io.cdap.cdap.ml.ext.vertexai;
 
-import io.cdap.cdap.common.NotImplementedException;
+import java.io.IOException;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.client.HttpClient;
+import org.apache.http.util.EntityUtils;
 
 /**
  * HTTP client for interacting with Vertex AI services.
@@ -26,10 +32,10 @@ import org.apache.http.client.HttpClient;
 public class VertexAIHttpClient {
 
   private HttpClient httpClient;
-  private String requestURI;
+  private String vertexAIEndpoint;
 
   public VertexAIHttpClient(String requestURI) {
-    this.requestURI = requestURI;
+    this.vertexAIEndpoint = requestURI;
     httpClient = HttpClients.createDefault();
   }
 
@@ -40,8 +46,13 @@ public class VertexAIHttpClient {
    * @param payload The payload to be used for generating content.
    * @return This method is not implemented yet and currently returning null string.
    */
-  public String generateContent(String payload) {
-     return null;
+  public String generateContent(String payload) throws IOException {
+    HttpPost httpPost = new HttpPost(vertexAIEndpoint);
+    StringEntity entity = new StringEntity(payload, ContentType.APPLICATION_JSON);
+    httpPost.setEntity(entity);
+    HttpResponse response = httpClient.execute(httpPost);
+    HttpEntity responseEntity = response.getEntity();
+    String responseBody = EntityUtils.toString(responseEntity);
+    return responseBody;
   }
 }
-
