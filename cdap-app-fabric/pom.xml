@@ -265,6 +265,16 @@
           <artifactId>cdap-event-reader-spi</artifactId>
           <version>${project.version}</version>
       </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-ml-spi</artifactId>
+      <version>6.11.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-ml-ext-vertexai</artifactId>
+      <version>6.11.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>

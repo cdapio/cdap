@@ -113,6 +113,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import org.apache.twill.filesystem.Location;
+import io.cdap.cdap.ml.ext.vertexai.VertexAIService;
+import io.cdap.cdap.ml.spi.AIService;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 
 /**
  * {@link io.cdap.http.HttpHandler} for managing application lifecycle.
@@ -873,9 +876,18 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getAppSummaryDeployedApp(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName,
-      @PathParam("format") @DefaultValue("markdown") String format)
-      throws NotImplementedException {
-      throw  new NotImplementedException("This api request is not implemented.");
+      @QueryParam("format") @DefaultValue("markdown") String format)
+      throws BadRequestException, NamespaceNotFoundException {
+    try {
+      validateApplicationId(namespaceId, appName);
+      ApplicationReference appRef = new ApplicationReference(namespaceId, appName);
+      String summary = applicationLifecycleService.ApplicationSummary(appRef, format, configuration);
+      responder.sendString(HttpResponseStatus.OK, summary);
+    }
+    catch (Exception e) {
+      LOG.error("Failed to summarize pipeline", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
   }
 
   /**

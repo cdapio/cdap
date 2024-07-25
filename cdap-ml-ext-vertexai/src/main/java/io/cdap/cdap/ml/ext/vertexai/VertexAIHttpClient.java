@@ -50,6 +50,11 @@ public class VertexAIHttpClient {
     HttpPost httpPost = new HttpPost(vertexAIEndpoint);
     StringEntity entity = new StringEntity(payload, ContentType.APPLICATION_JSON);
     httpPost.setEntity(entity);
+    httpPost.setHeader("Content-Type", "application/json");
+    ComputeEngineCredentials credentials = ComputeEngineCredentials.getOrCreate(null);
+    String accessToken = credentials.getAccessToken().getTokenValue();
+    //String accessToken = "";   // Generation of Access Token need to be implemented.
+    httpPost.setHeader("Authorization", "Bearer " + accessToken);
     HttpResponse response = httpClient.execute(httpPost);
     HttpEntity responseEntity = response.getEntity();
     String responseBody = EntityUtils.toString(responseEntity);

@@ -21,7 +21,7 @@
 
   <property>
     <name>ai.vertexai.project.id</name>
-    <value></value>
+    <value>vsethi-project2</value>
     <description>
       Name of the project.
     </description>
@@ -29,7 +29,7 @@
 
   <property>
     <name>ai.vertexai.location</name>
-    <value></value>
+    <value>us-west1</value>
     <description>
       Name of the location.
     </description>

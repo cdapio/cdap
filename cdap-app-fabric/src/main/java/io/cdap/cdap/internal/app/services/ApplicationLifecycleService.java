@@ -88,6 +88,8 @@ import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.ml.ext.vertexai.VertexAIService;
+import io.cdap.cdap.ml.spi.AIService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
@@ -1621,5 +1623,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     store.updateApplicationSourceControlMeta(updateScmMetaRequests);
+  }
+  public String ApplicationSummary(ApplicationReference appRef,String format,CConfiguration configuration)
+      throws IOException, NotFoundException {
+    ApplicationDetail det=getLatestAppDetail(appRef, true);
+    AIService service = new VertexAIService(configuration);
+    String summary = service.summarizeApp(det,format);
+    return summary;
   }
 }
