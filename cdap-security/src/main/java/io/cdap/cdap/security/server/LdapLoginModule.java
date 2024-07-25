@@ -30,7 +30,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.spi.LoginModule;
-import org.eclipse.jetty.plus.jaas.spi.LdapLoginModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,19 +38,19 @@ import org.slf4j.LoggerFactory;
  * certificate verification for connections between the {@link ExternalAuthenticationServer} and an
  * LDAP instance.
  */
-public class LDAPLoginModule extends LdapLoginModule {
+public class LdapLoginModule extends org.eclipse.jetty.jaas.spi.LdapLoginModule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LDAPLoginModule.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LdapLoginModule.class);
 
   /**
    * A {@link SocketFactory} that trusts all SSL certificates.
    */
-  public static class TrustAllSSLSocketFactory extends SocketFactory {
+  public static class TrustAllSslSocketFactory extends SocketFactory {
 
     private final SocketFactory trustAllFactory;
 
-    private TrustAllSSLSocketFactory() {
-      TrustManager[] trustManagers = new TrustManager[]{new X509TrustManager() {
+    private TrustAllSslSocketFactory() {
+      TrustManager[] trustManagers = new TrustManager[]{ new X509TrustManager() {
         @Override
         public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
             throws CertificateException {
@@ -68,7 +67,8 @@ public class LDAPLoginModule extends LdapLoginModule {
         public X509Certificate[] getAcceptedIssuers() {
           return null;
         }
-      }};
+      }
+      };
 
       try {
         SSLContext sc = SSLContext.getInstance("SSL");
@@ -81,13 +81,17 @@ public class LDAPLoginModule extends LdapLoginModule {
     }
 
     /**
+     * Similar to method mentioned below.
+     *
      * @see SocketFactory#getDefault()
      */
     public static SocketFactory getDefault() {
-      return new TrustAllSSLSocketFactory();
+      return new TrustAllSslSocketFactory();
     }
 
     /**
+     * Overridden method.
+     *
      * @see SocketFactory#createSocket(String, int)
      */
     @Override
@@ -96,6 +100,8 @@ public class LDAPLoginModule extends LdapLoginModule {
     }
 
     /**
+     * Overridden method.
+     *
      * @see SocketFactory#createSocket(InetAddress, int)
      */
     @Override
@@ -104,6 +110,8 @@ public class LDAPLoginModule extends LdapLoginModule {
     }
 
     /**
+     * Overridden method.
+     *
      * @see SocketFactory#createSocket(String, int, InetAddress, int)
      */
     @Override
@@ -113,6 +121,8 @@ public class LDAPLoginModule extends LdapLoginModule {
     }
 
     /**
+     * Overridden method.
+     *
      * @see SocketFactory#createSocket(InetAddress, int, InetAddress, int)
      */
     @Override
@@ -126,8 +136,8 @@ public class LDAPLoginModule extends LdapLoginModule {
   public Hashtable<Object, Object> getEnvironment() {
     Hashtable<Object, Object> table = super.getEnvironment();
 
-    if (!LDAPAuthenticationHandler.getLdapSSLVerifyCertificate()) {
-      table.put("java.naming.ldap.factory.socket", TrustAllSSLSocketFactory.class.getName());
+    if (!LdapAuthenticationHandler.getLdapSslVerifyCertificate()) {
+      table.put("java.naming.ldap.factory.socket", TrustAllSslSocketFactory.class.getName());
     }
     return table;
   }

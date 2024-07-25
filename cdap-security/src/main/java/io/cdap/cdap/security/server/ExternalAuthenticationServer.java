@@ -40,10 +40,9 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -92,6 +91,9 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     public static final String GRANT_TOKEN_HANDLER = "GrantTokenHandler";
   }
 
+  /**
+   * Simple constructor for a jetty server for External Authentication.
+   */
   @Inject
   public ExternalAuthenticationServer(CConfiguration cConfiguration, SConfiguration sConfiguration,
       DiscoveryService discoveryService,
@@ -123,7 +125,8 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
     // assumes we only have one connector
     Connector connector = server.getConnectors()[0];
-    return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+    ServerConnector serverConnector = (ServerConnector) connector;
+    return new InetSocketAddress(serverConnector.getHost(), serverConnector.getLocalPort());
   }
 
   @Override
@@ -134,7 +137,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
     QueuedThreadPool threadPool = new QueuedThreadPool();
     threadPool.setMaxThreads(maxThreads);
-    server.setThreadPool(threadPool);
+    server = new Server(threadPool);
 
     initHandlers();
 
@@ -156,18 +159,16 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
           Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
       String keyStorePassword = sConfiguration.get(
           Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+      Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
+      Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
+      sslContextFactory.setKeyStorePath(keyStorePath);
+      sslContextFactory.setKeyStorePassword(keyStorePassword);
       String keyStoreType = sConfiguration.get(
           Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE,
           Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
+      sslContextFactory.setKeyStoreType(keyStoreType);
       String keyPassword = sConfiguration.get(
           Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
-
-      Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
-      Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
-
-      sslContextFactory.setKeyStorePath(keyStorePath);
-      sslContextFactory.setKeyStorePassword(keyStorePassword);
-      sslContextFactory.setKeyStoreType(keyStoreType);
       if (keyPassword != null && keyPassword.length() != 0) {
         sslContextFactory.setKeyManagerPassword(keyPassword);
       }
@@ -185,22 +186,23 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
         // server continues with the connection but the client is considered to be unauthenticated
         sslContextFactory.setWantClientAuth(true);
 
-        sslContextFactory.setTrustStore(trustStorePath);
+        sslContextFactory.setTrustStorePath(trustStorePath);
         sslContextFactory.setTrustStorePassword(trustStorePassword);
         sslContextFactory.setTrustStoreType(trustStoreType);
         sslContextFactory.setValidateCerts(true);
       }
       // TODO Figure out how to pick a certificate from key store
 
-      SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-      sslConnector.setHost(bindAddress.getCanonicalHostName());
-      sslConnector.setPort(port);
-      server.setConnectors(new Connector[]{sslConnector});
+      ServerConnector serverConnector = new ServerConnector(server, sslContextFactory);
+
+      serverConnector.setHost(bindAddress.getCanonicalHostName());
+      serverConnector.setPort(port);
+      server.setConnectors(new Connector[]{serverConnector});
     } else {
-      SelectChannelConnector connector = new SelectChannelConnector();
-      connector.setHost(bindAddress.getCanonicalHostName());
-      connector.setPort(port);
-      server.setConnectors(new Connector[]{connector});
+      ServerConnector serverConnector = new ServerConnector(server);
+      serverConnector.setHost(bindAddress.getCanonicalHostName());
+      serverConnector.setPort(port);
+      server.setConnectors(new Connector[]{serverConnector});
     }
 
     HandlerCollection handlers = new HandlerCollection();
@@ -223,8 +225,9 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
     // assumes we only have one connector
     Connector connector = server.getConnectors()[0];
-    InetSocketAddress inetSocketAddress = new InetSocketAddress(connector.getHost(),
-        connector.getLocalPort());
+    ServerConnector serverConnector = (ServerConnector) connector;
+    InetSocketAddress inetSocketAddress = new InetSocketAddress(serverConnector.getHost(),
+                                                                serverConnector.getLocalPort());
     serviceCancellable = discoveryService.register(
         ResolvingDiscoverable.of(
             new Discoverable(Constants.Service.EXTERNAL_AUTHENTICATION, inetSocketAddress)));

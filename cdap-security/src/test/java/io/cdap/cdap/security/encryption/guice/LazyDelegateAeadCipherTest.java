@@ -22,8 +22,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import io.cdap.cdap.security.spi.encryption.AeadCipherCryptor;
 import io.cdap.cdap.security.spi.encryption.AeadCipherContext;
+import io.cdap.cdap.security.spi.encryption.AeadCipherCryptor;
 import io.cdap.cdap.security.spi.encryption.CipherInitializationException;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,7 +85,7 @@ public class LazyDelegateAeadCipherTest {
     delegate.decrypt("some-data".getBytes(), "some-associated-data".getBytes());
   }
 
-  private class AeadCipherContextMatcher extends ArgumentMatcher<AeadCipherContext> {
+  private class AeadCipherContextMatcher implements ArgumentMatcher<AeadCipherContext> {
 
     Map<String, String> properties;
     Map<String, String> secureProperties;
@@ -96,13 +96,9 @@ public class LazyDelegateAeadCipherTest {
     }
 
     @Override
-    public boolean matches(Object o) {
-      if (!(o instanceof AeadCipherContext)) {
-        return false;
-      }
-      AeadCipherContext aeadCipherContext = (AeadCipherContext) o;
+    public boolean matches(AeadCipherContext aeadCipherContext) {
       return properties.equals(aeadCipherContext.getProperties()) && secureProperties
-          .equals(aeadCipherContext.getSecureProperties());
+        .equals(aeadCipherContext.getSecureProperties());
     }
   }
 }

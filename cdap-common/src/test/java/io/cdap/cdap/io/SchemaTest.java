@@ -38,9 +38,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
-import org.apache.commons.lang.SerializationUtils;
-import org.codehaus.jackson.node.IntNode;
-import org.codehaus.jackson.node.TextNode;
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -59,6 +57,7 @@ public class SchemaTest {
 
   /**
    * Test parent.
+   *
    * @param <T> Parameter
    */
   public class Parent<T> {
@@ -68,6 +67,7 @@ public class SchemaTest {
 
   /**
    * Test child.
+   *
    * @param <T> Paramter.
    */
   public class Child<T> extends Parent<Map<String, T>> {
@@ -160,8 +160,8 @@ public class SchemaTest {
   public static final class Node5 {
     private static final Schema SCHEMA = Schema.recordOf(
       Node5.class.getName(),
-      Schema.Field.of("x", Schema.nullableOf(Node4.SCHEMA)));
-    private Node4 x;
+      Schema.Field.of("x4", Schema.nullableOf(Node4.SCHEMA)));
+    private Node4 x4;
   }
 
   /**
@@ -170,10 +170,10 @@ public class SchemaTest {
   public static final class Node6 {
     private static final Schema SCHEMA = Schema.recordOf(
       Node6.class.getName(),
-      Schema.Field.of("x", Schema.nullableOf(Node4.SCHEMA)),
-      Schema.Field.of("y", Schema.nullableOf(Node5.SCHEMA)));
-    private Node4 x;
-    private Node5 y;
+      Schema.Field.of("x4", Schema.nullableOf(Node4.SCHEMA)),
+      Schema.Field.of("y5", Schema.nullableOf(Node5.SCHEMA)));
+    private Node4 x4;
+    private Node5 y5;
   }
 
   @Test
@@ -191,21 +191,16 @@ public class SchemaTest {
     org.apache.avro.Schema avroStringSchema = org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING);
     org.apache.avro.Schema avroIntSchema = org.apache.avro.Schema.create(org.apache.avro.Schema.Type.INT);
 
+    List<org.apache.avro.Schema.Field> fields = new ArrayList<>();
+    org.apache.avro.Schema.Field field = new org.apache.avro.Schema.Field("username", avroStringSchema,
+                                                                          "Field represents username", "unknown");
+    fields.add(field);
+
+    field = new org.apache.avro.Schema.Field("age", avroIntSchema, "Field represents age of user", -1);
+    fields.add(field);
 
     org.apache.avro.Schema schema = org.apache.avro.Schema.createRecord("UserInfo", "Describes user information",
                                                                         "org.example.schema", false);
-
-    List<org.apache.avro.Schema.Field> fields = new ArrayList<>();
-
-    org.apache.avro.Schema.Field field = new org.apache.avro.Schema.Field("username", avroStringSchema,
-                                                                          "Field represents username",
-                                                                          new TextNode("unknown"));
-    fields.add(field);
-
-    field = new org.apache.avro.Schema.Field("age", avroIntSchema, "Field represents age of user",
-                                             new IntNode(-1));
-    fields.add(field);
-
     schema.setFields(fields);
     Schema parsedSchema = Schema.parseJson(schema.toString());
     Assert.assertTrue("UserInfo".equals(parsedSchema.getRecordName()));
@@ -260,7 +255,7 @@ public class SchemaTest {
   }
 
   @Test
-  public void testParseFlatSQL() throws IOException {
+  public void testParseFlatSql() throws IOException {
     // simple, non-nested types
     String schemaStr = "bool_field boolean, "
         + "int_field int not null, "
@@ -295,7 +290,7 @@ public class SchemaTest {
   }
 
   @Test
-  public void testNestedSQL() throws IOException {
+  public void testNestedSql() throws IOException {
     Schema expected = Schema.recordOf(
       "rec",
       Schema.Field.of(
@@ -339,7 +334,7 @@ public class SchemaTest {
   }
 
   @Test
-  public void testParseSQLWithWhitespace() throws IOException {
+  public void testParseSqlWithWhitespace() throws IOException {
     String schemaStr = "map_field map< string , int >   not null,\n"
         + "arr_field array< record< x:int , y:double >\t> not null";
     Schema expectedSchema = Schema.recordOf(
@@ -357,7 +352,7 @@ public class SchemaTest {
   }
 
   @Test
-  public void testInvalidSQL() {
+  public void testInvalidSql() {
     verifyThrowsException("int x");
     verifyThrowsException("x map<int, int");
     verifyThrowsException("x array<string");

@@ -78,12 +78,12 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testMultiWriter() throws Exception {
-    runDynamicPartitionerMR(ORDERED_RECORDS, true, true);
+    runDynamicPartitionerMr(ORDERED_RECORDS, true, true);
   }
 
   @Test
   public void testSingleWriter() throws Exception {
-    runDynamicPartitionerMR(ORDERED_RECORDS, false, true);
+    runDynamicPartitionerMr(ORDERED_RECORDS, false, true);
   }
 
   @Test
@@ -95,24 +95,24 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
                        createRecord("john", 84125));
     // the input data is not ordered by output partition and its limiting to a single writer,
     // so we expect this job to fail
-    runDynamicPartitionerMR(records, false, false);
+    runDynamicPartitionerMr(records, false, false);
   }
 
   @Test
   public void testPartitionAppend() throws Exception {
-    runDynamicPartitionerMR(ORDERED_RECORDS, true, true,
+    runDynamicPartitionerMr(ORDERED_RECORDS, true, true,
                             DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND, true);
   }
 
   @Test
   public void testPartitionAppendWhenNotConfigured() throws Exception {
     // partition will exist beforehand, but the append option is not configured; hence the job is expected to fail
-    runDynamicPartitionerMR(ORDERED_RECORDS, true, true, DynamicPartitioner.PartitionWriteOption.CREATE, false);
+    runDynamicPartitionerMr(ORDERED_RECORDS, true, true, DynamicPartitioner.PartitionWriteOption.CREATE, false);
   }
 
   @Test
   public void testPartitionOverwrite() throws Exception {
-    runDynamicPartitionerMR(ORDERED_RECORDS, true, true,
+    runDynamicPartitionerMr(ORDERED_RECORDS, true, true,
                             DynamicPartitioner.PartitionWriteOption.CREATE_OR_OVERWRITE, true);
   }
 
@@ -124,19 +124,19 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     partitionOutput.addPartition();
   }
 
-  private void runDynamicPartitionerMR(final List<? extends GenericRecord> records,
+  private void runDynamicPartitionerMr(final List<? extends GenericRecord> records,
                                        boolean allowConcurrentWriters,
                                        boolean expectedStatus) throws Exception {
-    runDynamicPartitionerMR(records, allowConcurrentWriters, false, null, expectedStatus);
+    runDynamicPartitionerMr(records, allowConcurrentWriters, false, null, expectedStatus);
   }
 
-  private void runDynamicPartitionerMR(final List<? extends GenericRecord> records,
+  private void runDynamicPartitionerMr(final List<? extends GenericRecord> records,
                                        boolean allowConcurrentWriters,
                                        final boolean precreatePartitions,
                                        @Nullable final DynamicPartitioner.PartitionWriteOption partitionWriteOption,
                                        boolean expectedStatus) throws Exception {
     ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingAvroDynamicPartitioner.class);
-
+    
     final long now = System.currentTimeMillis();
     final Multimap<PartitionKey, GenericRecord> keyToRecordsMap = groupByPartitionKey(records, now);
 
@@ -172,6 +172,10 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     // run the partition writer m/r with this output partition time
     Map<String, String> arguments = new HashMap<>();
     arguments.put(OUTPUT_PARTITION_KEY, Long.toString(now));
+    // The test case and the output committer was written in hadoop 2, which followed older file output committer
+    // algorithm ( version 1 ). After upgrading to Hadoop 3, the default algorithm is version 2. So setting it manually
+    // to previous algorithm version to comply with with test.
+    arguments.put("system.mapreduce.mapreduce.fileoutputcommitter.algorithm.version", "1");
     arguments.put(allowConcurrencyKey, Boolean.toString(allowConcurrentWriters));
     if (partitionWriteOption != null) {
       arguments.put("partitionWriteOption", partitionWriteOption.name());

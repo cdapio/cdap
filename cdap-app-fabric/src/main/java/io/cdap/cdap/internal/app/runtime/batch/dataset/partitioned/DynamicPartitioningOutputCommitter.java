@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.mapred.FileAlreadyExistsException;
+import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -74,6 +75,15 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   public DynamicPartitioningOutputCommitter(Path outputPath, TaskAttemptContext context)
       throws IOException {
     super(outputPath, context);
+
+    //This output committer only works with `mapreduce.fileoutputcommitter.algorithm.version` = 1
+    //Since hadoop 3, by default it's 2. Fail early if it's set to 2.
+    if (isCommitJobRepeatable(context)){
+      throw new IllegalArgumentException("DynamicPartitioningOutputCommitter requires the Hadoop conf " +
+                                           "`mapreduce.fileoutputcommitter.algorithm.version` to be set to 1." +
+                                           "But Found 2.");
+    }
+
     this.taskContext = context;
     this.jobSpecificOutputPath = outputPath;
   }

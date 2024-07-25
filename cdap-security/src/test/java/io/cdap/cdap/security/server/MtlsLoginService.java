@@ -1,5 +1,3 @@
-//package com.salesforce.drogon.security;
-package io.cdap.cdap.security.server;
 /*
  * Copyright © 2014 Cask Data, Inc.
  *
@@ -16,11 +14,14 @@ package io.cdap.cdap.security.server;
  * the License.
  */
 
+package io.cdap.cdap.security.server;
+
 import com.google.common.collect.Maps;
 import java.io.FileInputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import javax.servlet.ServletRequest;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.server.UserIdentity;
@@ -33,11 +34,11 @@ import org.slf4j.LoggerFactory;
  * realm.properties file
  *
  */
-public class MTLSLoginService implements LoginService {
+public class MtlsLoginService implements LoginService {
 
   protected IdentityService identitySevice;
   protected String realmFilePath;
-  private static final Logger LOG = LoggerFactory.getLogger(MTLSLoginService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MtlsLoginService.class);
   private Map<String, String> userRolesMap;
 
   private Map<String, String> loadConfiguredIdentities() {
@@ -61,7 +62,7 @@ public class MTLSLoginService implements LoginService {
     return userRolesMap;
   }
 
-  public MTLSLoginService(String realmFilePath) {
+  public MtlsLoginService(String realmFilePath) {
     this.realmFilePath = realmFilePath;
     loadConfiguredIdentities();
   }
@@ -72,12 +73,12 @@ public class MTLSLoginService implements LoginService {
 
   @Override
   public String getName() {
-    return MTLSLoginService.class.getSimpleName();
+    return MtlsLoginService.class.getSimpleName();
   }
 
   @Override
-  public UserIdentity login(String username, Object credentials) {
-    UserIdentity identity = new MTLSUserIdentity(username, credentials);
+  public UserIdentity login(String username, Object credentials, ServletRequest servletRequest) {
+    UserIdentity identity = new MtlsUserIdentity(username, credentials);
     return identity;
   }
 

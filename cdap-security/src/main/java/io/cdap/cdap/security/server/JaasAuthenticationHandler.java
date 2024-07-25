@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.server;
 
+import org.eclipse.jetty.jaas.JAASLoginService;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
@@ -25,7 +26,7 @@ import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 /**
  * An abstract authentication handler that supports the JAAS interface for external authentication.
  */
-public abstract class JAASAuthenticationHandler extends AbstractAuthenticationHandler {
+public abstract class JaasAuthenticationHandler extends AbstractAuthenticationHandler {
 
   @Override
   public IdentityService getHandlerIdentityService() {

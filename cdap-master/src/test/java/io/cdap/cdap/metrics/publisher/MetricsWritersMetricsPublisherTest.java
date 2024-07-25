@@ -88,7 +88,7 @@ public class MetricsWritersMetricsPublisherTest {
 
     // Ensure if one writer throws exception on write(), rest still get metrics
     MetricsWriter faultyWriter = writers.get(getWriterName(2));
-    doThrow(IOException.class).when(faultyWriter).write(metricValues);
+    doThrow(RuntimeException.class).when(faultyWriter).write(metricValues);
     publisher.publish(metricValues);
     for (Map.Entry<String, MetricsWriter> entry : writers.entrySet()) {
       MetricsWriter writer = entry.getValue();

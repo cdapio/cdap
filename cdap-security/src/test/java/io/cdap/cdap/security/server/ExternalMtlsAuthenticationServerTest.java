@@ -31,7 +31,7 @@ import java.security.KeyStore;
 import java.util.Collections;
 import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
-import org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule;
+import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -45,25 +45,51 @@ import org.junit.Test;
  * we will be using self-signed certificates.
  * The Server's trust store contains the client's certificate & and the client's trust store contains the server's
  * certificate
+ *
+ * Steps Followed to create the certs :
+ *
+ * # Create Server Keystore 
+ * keytool -genkeypair -alias mykey -keyalg RSA -keysize 2048 -keystore server-keystore.jks \
+ * -dname "EMAILADDRESS=server@cask.com, CN=client, OU=cask, O=cask, L=SF, ST=CA, C=US" -validity 3650 \
+ * -ext san=ip:127.0.0.1  -storepass secret -noprompt
+ *
+ * # Export the certificate from the Server keystore
+ * keytool -export -alias mykey -keystore server-keystore.jks -file server-cert.cer -storepass secret
+ * 
+ * # Create Client Keystore 
+ * keytool -genkeypair -alias mykey -keyalg RSA -keysize 2048 -keystore client-keystore.jks \
+ * -dname "EMAILADDRESS=client@cask.com, CN=client, OU=cask, O=cask, L=SF, ST=CA, C=US" -validity 3650 \
+ * -ext san=ip:127.0.0.1  -storepass secret -noprompt
+ *
+ * #  Export the certificate from the Client keystore
+ * keytool -export -alias mykey -keystore client-keystore.jks -file client-cert.cer -storepass secret
+ *
+ * #  Create a Server truststore and import the Server certificate
+ * keytool -import -alias mykey -file server-cert.cer -keystore server-truststore.jks -storepass secret -noprompt
+ *
+ * #  In the Server truststore and import the Client certificate
+ * keytool -import -alias myClientkey -file client-cert.cer -keystore server-truststore.jks -storepass secret -noprompt
  */
-public class ExternalMTLSAuthenticationServerTest extends ExternalAuthenticationServerTestBase  {
+
+public class ExternalMtlsAuthenticationServerTest extends ExternalAuthenticationServerTestBase  {
 
   private static final String AUTH_HANDLER_CONFIG_BASE = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
   private static final String VALID_CLIENT_CN = "client";
-  private static ExternalMTLSAuthenticationServerTest testServer;
+  private static ExternalMtlsAuthenticationServerTest testServer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    URL serverTrustoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("server-trust.jks");
-    URL serverKeystoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("server-key.jks");
-    URL realmURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("realm.properties");
+    URL serverTrustoreUrl = ExternalMtlsAuthenticationServerTest.class.getClassLoader()
+      .getResource("server-truststore.jks");
+    URL serverKeystoreUrl = ExternalMtlsAuthenticationServerTest.class.getClassLoader()
+      .getResource("server-keystore.jks");
+    URL realmUrl = ExternalMtlsAuthenticationServerTest.class.getClassLoader().getResource("realm.properties");
 
-    Assert.assertNotNull(serverTrustoreURL);
-    Assert.assertNotNull(serverKeystoreURL);
-    Assert.assertNotNull(realmURL);
+    Assert.assertNotNull(serverTrustoreUrl);
+    Assert.assertNotNull(serverKeystoreUrl);
+    Assert.assertNotNull(realmUrl);
 
     CConfiguration cConf = CConfiguration.create();
-    SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS,
         InetAddress.getLoopbackAddress().getHostName());
 
@@ -79,17 +105,18 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
         + ".CertificateAuthenticationHandler");
 
     // setup the realm file for Identity
-    cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("realmfile"), realmURL.getPath());
+    cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("realmfile"), realmUrl.getPath());
 
     cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH,
-        serverTrustoreURL.getPath());
+        serverTrustoreUrl.getPath());
     cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD, "secret");
     cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE, "JKS");
 
     // Setup the Server's Key Store
     cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH,
-        serverKeystoreURL.getPath());
-    sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, serverKeystoreURL.getPath());
+        serverKeystoreUrl.getPath());
+    SConfiguration sConf = SConfiguration.create();
+    sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, serverKeystoreUrl.getPath());
 
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD, "secret");
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD, "secret");
@@ -98,7 +125,7 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
     configuration = cConf;
     sConfiguration = sConf;
 
-    testServer = new ExternalMTLSAuthenticationServerTest();
+    testServer = new ExternalMtlsAuthenticationServerTest();
     testServer.setup();
   }
 
@@ -129,7 +156,7 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
     cConf.set(configBase.concat("debug"), "true");
     cConf.set(configBase.concat("hostname"), "localhost");
 
-    URL keytabUrl = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource("test.keytab");
+    URL keytabUrl = ExternalMtlsAuthenticationServerTest.class.getClassLoader().getResource("test.keytab");
     Assert.assertNotNull(keytabUrl);
     cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, keytabUrl.getPath());
     cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "test_principal");
@@ -148,17 +175,17 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
 
   @Override
   protected HttpURLConnection openConnection(URL url) throws Exception {
-    return openConnection(url, "client-key.jks");
+    return openConnection(url, "client-keystore.jks");
   }
 
   private HttpsURLConnection openConnection(URL url, String keyStoreResource) throws Exception {
     HttpsURLConnection urlConn = (HttpsURLConnection) super.openConnection(url);
 
-    URL clientKeystoreURL = ExternalMTLSAuthenticationServerTest.class.getClassLoader().getResource(keyStoreResource);
-    Assert.assertNotNull(clientKeystoreURL);
+    URL clientKeystoreUrl = ExternalMtlsAuthenticationServerTest.class.getClassLoader().getResource(keyStoreResource);
+    Assert.assertNotNull(clientKeystoreUrl);
     KeyStore ks = KeyStore.getInstance("JKS");
 
-    try (InputStream is = clientKeystoreURL.openConnection().getInputStream()) {
+    try (InputStream is = clientKeystoreUrl.openConnection().getInputStream()) {
       ks.load(is, "secret".toCharArray());
     }
     return new HttpsEnabler().setKeyStore(ks, () -> configuration.get("security.auth.server.ssl.keystore.password",
@@ -169,13 +196,11 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
 
   /**
    * Test request to server using a client certificate that is not trusted by the server.
-   *
-   * @throws Exception
    */
   @Override
   @Test
   public void testInvalidAuthentication() throws Exception {
-    HttpsURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN), "invalid-client.jks");
+    HttpsURLConnection urlConn = openConnection(getUrl(GrantAccessToken.Paths.GET_TOKEN), "invalid-client.jks");
     try {
       // Request is Unauthorized
       assertEquals(403, urlConn.getResponseCode());
@@ -187,12 +212,10 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
 
   /**
    * Test request to server using a client certificate that is not trusted by the server.
-   *
-   * @throws Exception
    */
   @Test
   public void testInvalidClientCertForStatusEndpoint() throws Exception {
-    HttpsURLConnection urlConn = openConnection(getURL(Constants.EndPoints.STATUS), "invalid-client.jks");
+    HttpsURLConnection urlConn = openConnection(getUrl(Constants.EndPoints.STATUS), "invalid-client.jks");
     try {
       // Request is Authorized
       assertEquals(200, urlConn.getResponseCode());
@@ -203,15 +226,13 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
 
 
   /**
-   * Test request to server without providing a client certificate
-   *
-   * @throws Exception
+   * Test request to server without providing a client certificate.
    */
   @Test
   public void testMissingClientCertAuthentication() throws Exception {
     HttpsURLConnection urlConn = new HttpsEnabler()
       .setTrustAll(true)
-      .enable((HttpsURLConnection) openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN)));
+      .enable((HttpsURLConnection) openConnection(getUrl(GrantAccessToken.Paths.GET_TOKEN)));
 
     try {
       // Status request is authorized without any extra headers

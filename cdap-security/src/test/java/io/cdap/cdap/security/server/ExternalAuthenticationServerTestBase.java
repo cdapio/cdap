@@ -140,7 +140,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   /**
    * Returns the full URL for the given request path
    */
-  protected URL getURL(String path) throws MalformedURLException {
+  protected URL getUrl(String path) throws MalformedURLException {
     InetSocketAddress serverAddr = server.getSocketAddress();
     while (path.startsWith("/")) {
       path = path.substring(1);
@@ -158,12 +158,10 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test an authorized request to server.
-   *
-   * @throws Exception
    */
   @Test
   public void testValidAuthentication() throws Exception {
-    HttpURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN));
+    HttpURLConnection urlConn = openConnection(getUrl(GrantAccessToken.Paths.GET_TOKEN));
     try {
       Optional.ofNullable(getAuthRequestHeader()).ifPresent(m -> m.forEach(urlConn::addRequestProperty));
       Assert.assertEquals(200, urlConn.getResponseCode());
@@ -177,7 +175,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
       Assert.assertEquals("no-store", cacheControlHeader);
       Assert.assertEquals("no-cache", pragmaHeader);
-      Assert.assertEquals("application/json;charset=UTF-8", contentType);
+      Assert.assertEquals("application/json;charset=utf-8", contentType.toLowerCase());
 
       // Test correct response body
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -210,12 +208,10 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test an unauthorized request to server.
-   *
-   * @throws Exception
    */
   @Test
   public void testInvalidAuthentication() throws Exception {
-    HttpURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_TOKEN));
+    HttpURLConnection urlConn = openConnection(getUrl(GrantAccessToken.Paths.GET_TOKEN));
     try {
       Optional.ofNullable(getAuthRequestHeader())
         .ifPresent(m -> m.forEach((k, v) -> urlConn.addRequestProperty(k, "xxxxx")));
@@ -230,12 +226,10 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test an unauthorized status request to server.
-   *
-   * @throws Exception
    */
   @Test
   public void testStatusResponse() throws Exception {
-    HttpURLConnection urlConn = openConnection(getURL(Constants.EndPoints.STATUS));
+    HttpURLConnection urlConn = openConnection(getUrl(Constants.EndPoints.STATUS));
     try {
       // Status request is authorized without any extra headers
       Assert.assertEquals(200, urlConn.getResponseCode());
@@ -246,12 +240,10 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test getting a long lasting Access Token.
-   *
-   * @throws Exception
    */
   @Test
   public void testExtendedToken() throws Exception {
-    HttpURLConnection urlConn = openConnection(getURL(GrantAccessToken.Paths.GET_EXTENDED_TOKEN));
+    HttpURLConnection urlConn = openConnection(getUrl(GrantAccessToken.Paths.GET_EXTENDED_TOKEN));
     try {
       Optional.ofNullable(getAuthRequestHeader()).ifPresent(m -> m.forEach(urlConn::addRequestProperty));
 
@@ -284,12 +276,10 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test that invalid paths return a 404 Not Found.
-   *
-   * @throws Exception
    */
   @Test
   public void testInvalidPath() throws Exception {
-    HttpURLConnection urlConn = openConnection(getURL("invalid"));
+    HttpURLConnection urlConn = openConnection(getUrl("invalid"));
     try {
       Optional.ofNullable(getAuthRequestHeader()).ifPresent(m -> m.forEach(urlConn::addRequestProperty));
       Assert.assertEquals(404, urlConn.getResponseCode());

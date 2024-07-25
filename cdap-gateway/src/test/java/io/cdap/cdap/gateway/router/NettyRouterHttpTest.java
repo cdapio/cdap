@@ -19,6 +19,9 @@ package io.cdap.cdap.gateway.router;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.AsyncHttpClientConfig;
+import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -51,8 +54,19 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
   }
 
   @Override
-  protected DefaultHttpClient getHTTPClient() {
+  protected DefaultHttpClient getHttpClient() {
     return new DefaultHttpClient();
+  }
+
+  @Override
+  protected AsyncHttpClient getAsyncHttpClient() throws Exception {
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+
+    final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+      new NettyAsyncHttpProvider(configBuilder.build()),
+      configBuilder.build());
+
+    return asyncHttpClient;
   }
 
   @Override
@@ -75,18 +89,18 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
     @Override
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
-      SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new CoreSecurityRuntimeModule().getInMemoryModules(),
           new ExternalAuthenticationModule(),
           new InMemoryDiscoveryModule(),
           new AppFabricTestModule(cConf));
-      DiscoveryServiceClient discoveryServiceClient = injector
-          .getInstance(DiscoveryServiceClient.class);
-      UserIdentityExtractor userIdentityExtractor = injector
-          .getInstance(UserIdentityExtractor.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
+      SConfiguration sConfiguration = SConfiguration.create();
+      DiscoveryServiceClient discoveryServiceClient = injector
+        .getInstance(DiscoveryServiceClient.class);
+      UserIdentityExtractor userIdentityExtractor = injector
+        .getInstance(UserIdentityExtractor.class);
       router =
           new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
               new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,

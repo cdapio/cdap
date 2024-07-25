@@ -37,25 +37,25 @@ import org.junit.BeforeClass;
 /**
  * Tests for {@link ExternalAuthenticationServer} with SSL enabled.
  */
-public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthenticationServerTestBase {
+public class ExternalLdapAuthenticationServerSslTest extends ExternalLdapAuthenticationServerTestBase {
 
-  private static ExternalLDAPAuthenticationServerSSLTest testServer;
+  private static ExternalLdapAuthenticationServerSslTest testServer;
   private static final HttpsEnabler HTTPS_ENABLER = new HttpsEnabler().setTrustAll(true);
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    URL certUrl = ExternalLDAPAuthenticationServerSSLTest.class.getClassLoader().getResource("cert.jks");
+    URL certUrl = ExternalLdapAuthenticationServerSslTest.class.getClassLoader().getResource("cert.jks");
     Assert.assertNotNull(certUrl);
 
     String authHandlerConfigBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
 
     CConfiguration cConf = CConfiguration.create();
-    SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostName());
     cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, "true");
     cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, 0);
     cConf.set(authHandlerConfigBase.concat("useLdaps"), "true");
     cConf.set(authHandlerConfigBase.concat("ldapsVerifyCertificate"), "false");
+    SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
     configuration = cConf;
     sConfiguration = sConf;
@@ -67,7 +67,7 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
                                                                   ldapPort, sslUtil.createSSLServerSocketFactory(),
                                                                   sslUtil.createSSLSocketFactory());
 
-    testServer = new ExternalLDAPAuthenticationServerSSLTest();
+    testServer = new ExternalLdapAuthenticationServerSslTest();
     testServer.setup();
   }
 
@@ -75,6 +75,7 @@ public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthent
   public static void afterClass() throws Exception {
     testServer.tearDown();
   }
+
   @Override
   protected String getProtocol() {
     return "https";

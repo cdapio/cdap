@@ -29,7 +29,7 @@ import javax.security.auth.login.Configuration;
  * An Authentication handler that authenticates against a LDAP server instance for External
  * Authentication.
  */
-public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
+public class LdapAuthenticationHandler extends JaasAuthenticationHandler {
 
   private static final List<String> mandatoryConfigurables = ImmutableList.of("debug", "hostname",
       "port", "userBaseDn",
@@ -86,7 +86,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
     }
   }
 
-  static boolean getLdapSSLVerifyCertificate() {
+  static boolean getLdapSslVerifyCertificate() {
     return ldapSSLVerifyCertificate;
   }
 }

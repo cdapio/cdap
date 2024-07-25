@@ -117,8 +117,8 @@
 
     <apache.jdbm1.version>2.0.0-M2</apache.jdbm1.version>
     <asm.version>7.1</asm.version>
-    <async.http.version>1.7.18</async.http.version>
-    <avro.version>1.8.2</avro.version>
+    <async.http.version>1.9.40</async.http.version>
+    <avro.version>1.11.0</avro.version>
     <bouncycastle.version>1.70</bouncycastle.version>
     <cdap.common.version>0.13.1</cdap.common.version>
     <cdap.client.version>1.4.0</cdap.client.version>
@@ -134,31 +134,32 @@
     <gson.version>2.3.1</gson.version>
     <guava.version>13.0.1</guava.version>
     <guice.version>4.0</guice.version>
-    <hadoop.version>2.6.5</hadoop.version>
+    <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
     <jackson.version>2.15.1</jackson.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
-    <jetty8.version>8.1.15.v20140411</jetty8.version>
+    <jetty9.version>9.4.51.v20230217</jetty9.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
+    <hamcrest.version>2.2</hamcrest.version>
     <log4j2.slf4j.version>2.20.0</log4j2.slf4j.version>
     <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.10.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
     <logback.version>1.2.11</logback.version>
     <mockftp.version>2.6</mockftp.version>
-    <mockito.version>1.10.19</mockito.version>
+    <mockito.version>3.9.0</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.http.version>1.7.0</netty.http.version>
     <netty.version>4.1.75.Final</netty.version>
-    <powermock.version>1.7.4</powermock.version>
+    <powermock.version>2.0.9</powermock.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
     <scala2.12.version>2.12.15</scala2.12.version>
-    <servlet.api.version>3.0.1</servlet.api.version>
+    <servlet.api.version>3.1.0</servlet.api.version>
     <slf4j.version>1.7.15</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
     <spark3.artifacts.dir>spark3_2.12</spark3.artifacts.dir>
@@ -359,6 +360,14 @@
           <exclusion>
             <groupId>com.thoughtworks.paranamer</groupId>
             <artifactId>paranamer</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -579,6 +588,14 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-yarn-common</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -684,6 +701,18 @@
             <artifactId>jdk.tools</artifactId>
             <groupId>jdk.tools</groupId>
           </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -706,6 +735,10 @@
           <exclusion>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -792,6 +825,18 @@
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -819,6 +864,14 @@
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -845,6 +898,18 @@
           <exclusion>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -889,6 +954,18 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -911,6 +988,10 @@
           <exclusion>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -994,27 +1075,27 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>${jetty8.version}</version>
+        <version>${jetty9.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-security</artifactId>
-        <version>${jetty8.version}</version>
+        <version>${jetty9.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-util</artifactId>
-        <version>${jetty8.version}</version>
+        <version>${jetty9.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-jaspi</artifactId>
-        <version>${jetty8.version}</version>
+        <version>${jetty9.version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-plus</artifactId>
-        <version>${jetty8.version}</version>
+        <version>${jetty9.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.geronimo.components</groupId>
@@ -1038,6 +1119,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-core</artifactId>
+        <version>${hamcrest.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>pl.pragmatists</groupId>
         <artifactId>JUnitParams</artifactId>
         <version>${pragmatists.version}</version>
@@ -1057,7 +1144,7 @@
       </dependency>
       <dependency>
         <groupId>org.powermock</groupId>
-        <artifactId>powermock-api-mockito</artifactId>
+        <artifactId>powermock-api-mockito2</artifactId>
         <version>${powermock.version}</version>
         <scope>test</scope>
       </dependency>
@@ -1124,6 +1211,10 @@
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-core</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1143,6 +1234,10 @@
           <exclusion>
             <groupId>org.apache.directory.jdbm</groupId>
             <artifactId>apacheds-jdbm1</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1304,6 +1399,10 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-mapreduce-client-shuffle</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1315,22 +1414,6 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons.lang3.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tez</groupId>
-        <artifactId>tez-api</artifactId>
-        <version>${tez.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jdk.tools</groupId>
-            <artifactId>jdk.tools</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>

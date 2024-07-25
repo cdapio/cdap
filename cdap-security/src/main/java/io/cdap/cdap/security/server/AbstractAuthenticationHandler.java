@@ -43,9 +43,9 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     this.handlerProps = handlerProps;
 
     Constraint constraint = new Constraint();
-    constraint.setRoles(new String[]{"*"});
+    constraint.setRoles(new String[]{Constraint.ANY_AUTH});
     constraint.setAuthenticate(true);
-
+    constraint.setDataConstraint(Constraint.DC_NONE);
     if (Boolean.parseBoolean(handlerProps.get(Constants.Security.SSL.EXTERNAL_ENABLED))) {
       constraint.setDataConstraint(Constraint.DC_CONFIDENTIAL);
     }
@@ -55,7 +55,6 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
     constraintMapping.setPathSpec("/*");
 
     this.setConstraintMappings(new ConstraintMapping[]{constraintMapping});
-    this.setStrict(false);
     this.setIdentityService(getHandlerIdentityService());
     this.setAuthenticator(getHandlerAuthenticator());
     this.setLoginService(getHandlerLoginService());

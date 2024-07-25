@@ -369,7 +369,7 @@ public class DataprocProvisionerTest {
         //B.1. When there is no good cluster found, a retry should happen
         .thenAnswer(i -> {
           //Ensure we call the predicate
-          Predicate clusterPredicate = i.getArgumentAt(1, Predicate.class);
+          Predicate clusterPredicate = i.getArgument(1, Predicate.class);
           com.google.cloud.dataproc.v1.Cluster updatingCluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
               .setStatus(com.google.cloud.dataproc.v1.ClusterStatus.newBuilder()
                   .setState(State.UPDATING))

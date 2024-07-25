@@ -124,6 +124,8 @@ public class UGIProviderTest {
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     hConf.setBoolean("ipc.client.fallback-to-simple-auth-allowed", true);
     hConf.setBoolean("ignore.secure.ports.for.testing", true);
+    hConf.setInt("dfs.namenode.metrics.logger.period.seconds", -1);
+    hConf.setInt("dfs.datanode.metrics.logger.period.seconds", -1);
 
     miniDFSCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     miniDFSCluster.waitClusterUp();

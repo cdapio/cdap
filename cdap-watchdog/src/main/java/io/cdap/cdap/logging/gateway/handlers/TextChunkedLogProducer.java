@@ -27,7 +27,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +39,9 @@ public class TextChunkedLogProducer extends AbstractChunkedLogProducer {
   private final PatternLayout patternLayout;
   private final boolean escape;
 
+  /**
+   * Simple Constructor for {@TextChunkedLogProducer}.
+   */
   public TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern,
       boolean escape) {
     super(logEventIter);
@@ -66,7 +69,7 @@ public class TextChunkedLogProducer extends AbstractChunkedLogProducer {
     while (logEventIter.hasNext() && buffer.readableBytes() < BUFFER_BYTES) {
       LogEvent logEvent = logEventIter.next();
       String logLine = patternLayout.doLayout(logEvent.getLoggingEvent());
-      logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
+      logLine = escape ? StringEscapeUtils.escapeHtml4(logLine) : logLine;
       buffer.writeCharSequence(logLine, StandardCharsets.UTF_8);
     }
     return buffer;

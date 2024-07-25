@@ -30,6 +30,7 @@ import org.apache.geronimo.components.jaspi.impl.ServerAuthContextImpl;
 import org.apache.geronimo.components.jaspi.model.AuthModuleType;
 import org.apache.geronimo.components.jaspi.model.ServerAuthConfigType;
 import org.apache.geronimo.components.jaspi.model.ServerAuthContextType;
+import org.eclipse.jetty.jaas.JAASLoginService;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
@@ -42,7 +43,7 @@ import org.eclipse.jetty.security.jaspi.modules.BasicAuthModule;
 /**
  * An Authentication handler that supports JASPI plugins for External Authentication.
  */
-public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
+public class JaspiAuthenticationHandler extends AbstractAuthenticationHandler {
 
   private JAASLoginService loginService;
   private IdentityService identityService;

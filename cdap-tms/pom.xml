@@ -142,6 +142,11 @@
       <artifactId>cdap-messaging-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>

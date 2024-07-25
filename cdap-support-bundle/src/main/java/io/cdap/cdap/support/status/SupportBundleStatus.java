@@ -18,7 +18,7 @@ package io.cdap.cdap.support.status;
 
 import java.util.Collections;
 import java.util.Set;
-import org.jboss.netty.util.internal.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Status when generating Support bundle.
@@ -26,23 +26,23 @@ import org.jboss.netty.util.internal.ConcurrentHashMap;
 public class SupportBundleStatus {
 
   /**
-   * UUID of the bundle status object describes
+   * UUID of the bundle status object describes.
    */
   private final String bundleId;
   /**
-   * status of bundle collection (IN_PROGRESS/FINISHED/FAILED)
+   * status of bundle collection (IN_PROGRESS/FINISHED/FAILED).
    */
   private final CollectionState status;
   /**
-   * Failed bundle describes the failure
+   * Failed bundle describes the failure.
    */
   private final String statusDetails;
   /**
-   * when bundle collection was started
+   * when bundle collection was started.
    */
   private final Long startTimestamp;
   /**
-   * FINISHED/FAILED bundles when bundle collection was completed
+   * FINISHED/FAILED bundles when bundle collection was completed.
    */
   private final Long finishTimestamp;
   // any parameters passed to start collection
@@ -64,6 +64,8 @@ public class SupportBundleStatus {
   }
 
   /**
+   * A builder which takes returns a new builder.
+   *
    * @return Builder to create a SupportBundleStatus
    */
   public static Builder builder() {
@@ -71,6 +73,8 @@ public class SupportBundleStatus {
   }
 
   /**
+   * A builder which takes a previous {@link SupportBundleStatus}.
+   *
    * @param previousStatus outdated status
    * @return Builder to create a SupportBundleStatus, initialized with values from the specified
    *     existing status
@@ -104,7 +108,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle bundle id
+     * Set support bundle bundle id.
      */
     public Builder setBundleId(String bundleId) {
       this.bundleId = bundleId;
@@ -112,7 +116,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle status detail
+     * Set support bundle status detail.
      */
     public Builder setStatusDetails(String statusDetails) {
       this.statusDetails = statusDetails;
@@ -120,7 +124,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle start time
+     * Set support bundle start time.
      */
     public Builder setStartTimestamp(long startTimestamp) {
       this.startTimestamp = startTimestamp;
@@ -128,7 +132,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle generation subtask status
+     * Set support bundle generation subtask status.
      */
     public Builder setParameters(SupportBundleConfiguration parameters) {
       this.parameters = parameters;
@@ -136,7 +140,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle tasks
+     * Set support bundle tasks.
      */
     public Builder setTasks(Set<SupportBundleTaskStatus> tasks) {
       this.tasks = tasks;
@@ -144,7 +148,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle finish time
+     * Set support bundle finish time.
      */
     public Builder setFinishTimestamp(long finishTimestamp) {
       this.finishTimestamp = finishTimestamp;
@@ -152,7 +156,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Set support bundle status
+     * Set support bundle status.
      */
     public Builder setStatus(CollectionState status) {
       this.status = status;
@@ -160,7 +164,7 @@ public class SupportBundleStatus {
     }
 
     /**
-     * Initialize the bundle with new status and add finish time stamp
+     * Initialize the bundle with new status and add finish time stamp.
      */
     public SupportBundleStatus build() {
       if (bundleId == null) {
@@ -176,49 +180,49 @@ public class SupportBundleStatus {
   }
 
   /**
-   * Get support bundle generation status
+   * Get support bundle generation status.
    */
   public CollectionState getStatus() {
     return status;
   }
 
   /**
-   * Get support bundle generation status details
+   * Get support bundle generation status details.
    */
   public String getStatusDetails() {
     return statusDetails;
   }
 
   /**
-   * Get support bundle generation start time
+   * Get support bundle generation start time.
    */
   public Long getStartTimestamp() {
     return startTimestamp;
   }
 
   /**
-   * Get support bundle generation finish time
+   * Get support bundle generation finish time.
    */
   public long getFinishTimestamp() {
     return finishTimestamp;
   }
 
   /**
-   * Get support bundle generation request parameters
+   * Get support bundle generation request parameters.
    */
   public SupportBundleConfiguration getParameters() {
     return parameters;
   }
 
   /**
-   * Get support bundle generation id
+   * Get support bundle generation id.
    */
   public String getBundleId() {
     return bundleId;
   }
 
   /**
-   * Get support bundle generation tasks
+   * Get support bundle generation tasks.
    */
   public Set<SupportBundleTaskStatus> getTasks() {
     return tasks;
