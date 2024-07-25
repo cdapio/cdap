@@ -254,6 +254,7 @@
         <stage.encryption.ext.dir>${stage.opt.dir}/ext/encryption</stage.encryption.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
+        <stage.ai.ext.dir>${stage.opt.dir}/ext/ai</stage.ai.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
@@ -357,6 +358,12 @@
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-encryption-ext-tink</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-ml-ext-vertexai</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -762,6 +769,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-encryption-ext-tink/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy Vertex AI ML extensions -->
+              <execution>
+                <id>copy-ml-ext-vertexai</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.ai.ext.dir}/vertexai</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-ml-ext-vertexai/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>
