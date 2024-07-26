@@ -787,7 +787,11 @@ public class DefaultRuntimeJob implements RuntimeJob {
       // Write an extra state to make sure there is always a terminal state even
       // if the program application run failed to write out the state.
       programStateWriter.error(programRunId, cause);
-      programCompletion.completeExceptionally(cause);
+      if (cause == null) {
+        programCompletion.complete(State.ERROR);
+      } else {
+        programCompletion.completeExceptionally(cause);
+      }
     }
   }
 }
