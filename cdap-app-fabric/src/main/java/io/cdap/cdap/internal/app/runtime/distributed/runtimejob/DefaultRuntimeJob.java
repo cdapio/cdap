@@ -47,6 +47,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.program.Programs;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.runtime.ProgramController.State;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -356,7 +357,11 @@ public class DefaultRuntimeJob implements RuntimeJob {
             // Write an extra state to make sure there is always a terminal state even
             // if the program application run failed to write out the state.
             programStateWriter.error(programRunId, cause);
-            programCompletion.completeExceptionally(cause);
+            if (cause == null) {
+              programCompletion.complete(State.ERROR);
+            } else {
+              programCompletion.completeExceptionally(cause);
+            }
           }
         }, Threads.SAME_THREAD_EXECUTOR);
 
