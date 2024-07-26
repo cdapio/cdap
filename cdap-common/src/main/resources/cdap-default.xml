@@ -2755,6 +2755,15 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.messaging.field.lineage.emission.enabled</name>
+    <value>true</value>
+    <description>
+      Enable or disable publishing of field level lineage,
+      by default set to true.
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
 
   <property>
