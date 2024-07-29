@@ -2175,6 +2175,9 @@ public final class Constants {
       OUTGOING,
       BOTH
     }
+
+    public static final String FIELD_LINEAGE_EMISSION_ENABLED =
+        "metadata.messaging.field.lineage.emission.enabled";
   }
 
   /**

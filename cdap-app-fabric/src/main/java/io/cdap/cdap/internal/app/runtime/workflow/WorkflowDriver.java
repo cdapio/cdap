@@ -57,6 +57,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.FieldLineage;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
@@ -313,7 +314,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.error("Failed to store the final workflow token of Workflow {}", workflowRunId, t);
     }
 
-    if (ProgramStatus.COMPLETED != workflowContext.getState().getStatus()) {
+    if (ProgramStatus.COMPLETED != workflowContext.getState().getStatus()
+        || (!cConf.getBoolean(FieldLineage.FIELD_LINEAGE_EMISSION_ENABLED))) {
       return;
     }
 
