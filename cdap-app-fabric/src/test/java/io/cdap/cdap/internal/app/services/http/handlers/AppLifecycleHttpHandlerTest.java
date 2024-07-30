@@ -29,6 +29,7 @@ import io.cdap.cdap.AppWithDatasetDuplicate;
 import io.cdap.cdap.AppWithNoServices;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.ConfigTestApp;
+import io.cdap.cdap.ai.spi.AIProvider;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -142,12 +143,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MetadataServiceClient metadataServiceClient,
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
-          CapabilityReader capabilityReader) {
+          CapabilityReader capabilityReader, AIProvider aiProvider) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(),
+            aiProvider));
       }
     });
   }

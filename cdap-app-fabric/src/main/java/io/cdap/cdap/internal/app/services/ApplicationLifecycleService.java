@@ -88,6 +88,7 @@ import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.ai.spi.AIProvider;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramType;
@@ -182,6 +183,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int batchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final AIProvider aiProvider;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -197,7 +199,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService, AIProvider aiProvider) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -219,6 +221,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.aiProvider = aiProvider;
   }
 
   @Override
@@ -1621,5 +1624,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     store.updateApplicationSourceControlMeta(updateScmMetaRequests);
+  }
+
+  public String summarizeApp(String namespaceId, String appName, String format) {
+    // TODO: Fetch the application details and summarize it.
+    return aiProvider.summarizeApp(null, format);
   }
 }

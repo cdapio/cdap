@@ -23,6 +23,7 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.ai.spi.AIProvider;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
@@ -33,6 +34,9 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data.security.DefaultSecretStore;
+import io.cdap.cdap.internal.ai.AIProviderExtensionLoader;
+import io.cdap.cdap.internal.ai.AIProviderLoader;
+import io.cdap.cdap.internal.ai.DefaultAIProvider;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
@@ -201,6 +205,10 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerAdmin.class);
 
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
+
+    bind(AIProvider.class).to(DefaultAIProvider.class).in(Scopes.SINGLETON);
+    bind(AIProviderLoader.class).to(AIProviderExtensionLoader.class);
+    expose(AIProvider.class);
   }
 
   /**

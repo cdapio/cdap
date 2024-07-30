@@ -83,6 +83,7 @@ import io.cdap.cdap.gateway.handlers.VersionHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import io.cdap.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
+import io.cdap.cdap.internal.ai.AIProviderModule;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactoryProvider;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -203,6 +204,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
+        new AIProviderModule(),
         BootstrapModules.getInMemoryModule(),
         new AbstractModule() {
           @Override
@@ -247,6 +249,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
+        new AIProviderModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override
@@ -303,6 +306,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
+        new AIProviderModule(),
         BootstrapModules.getFileBasedModule(),
         new AbstractModule() {
           @Override

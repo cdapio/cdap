@@ -673,8 +673,8 @@
                       </includes>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-ml-ext-vertexai/target/libexec</directory>
-                      <targetPath>ext/ml/vertexai</targetPath>
+                      <directory>${project.parent.basedir}/cdap-ai-ext-vertexai/target/libexec</directory>
+                      <targetPath>ext/ai/gcp-vertexai</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>

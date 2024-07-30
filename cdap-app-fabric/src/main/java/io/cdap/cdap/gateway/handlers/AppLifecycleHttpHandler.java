@@ -870,12 +870,15 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    */
   @POST
   @Path("/apps/{app-id}/summarize")
-  public void getAppSummaryDeployedApp(HttpRequest request, HttpResponder responder,
+  public void getDeployedAppSummary(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName,
-      @PathParam("format") @DefaultValue("markdown") String format)
-      throws NotImplementedException {
-      throw  new NotImplementedException("This api request is not implemented.");
+      @QueryParam("format") @DefaultValue("markdown") String format)
+      throws BadRequestException, NotFoundException, IOException {
+    // TODO: Add validation for application
+    // validateApplicationId(namespaceId, appName);
+    String summary = applicationLifecycleService.summarizeApp(namespaceId, appName, format);
+    responder.sendString(HttpResponseStatus.OK, summary);
   }
 
   /**
@@ -889,7 +892,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    */
   @POST
   @Path("/apps/summarize")
-  public void getAppSummaryDraftedApp(HttpRequest request, HttpResponder responder,
+  public void getAppSummary(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("format") @DefaultValue("markdown") String format)
       throws NotImplementedException{
