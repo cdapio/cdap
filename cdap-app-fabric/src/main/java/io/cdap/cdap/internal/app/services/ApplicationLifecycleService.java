@@ -1626,8 +1626,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     store.updateApplicationSourceControlMeta(updateScmMetaRequests);
   }
 
-  public String summarizeApp(String namespaceId, String appName, String format) {
-    // TODO: Fetch the application details and summarize it.
-    return aiProvider.summarizeApp(null, format);
+  /**
+   * Summarizes the details of a specified application in the given namespace and returns the summary
+   * in the desired format.
+   *
+   * @param namespaceId the ID of the namespace where the application is located.
+   * @param appName the name of the application to summarize.
+   * @param format the format in which the summary should be returned.
+   * @return a {@code String} containing the summary of the application details in the specified format.
+   * @throws NotFoundException if the application with the specified name in the given namespace
+   *                            cannot be found.
+   * @throws IOException if there is an error retrieving the application details or processing the summary.
+   */
+  public String summarizeApp(String namespaceId, String appName, String format)
+      throws NotFoundException, IOException {
+    ApplicationReference appRef = new ApplicationReference(namespaceId, appName);
+    ApplicationDetail appDetail = getLatestAppDetail(appRef, true);
+    return aiProvider.summarizeApp(appDetail, format);
   }
 }
