@@ -466,7 +466,7 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-ml-ext-vertexai</artifactId>
+          <artifactId>cdap-ai-ext-vertexai</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
