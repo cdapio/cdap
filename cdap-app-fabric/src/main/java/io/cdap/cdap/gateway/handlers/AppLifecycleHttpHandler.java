@@ -875,8 +875,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appName,
       @QueryParam("format") @DefaultValue("markdown") String format)
       throws BadRequestException, NotFoundException, IOException {
-    // TODO: Add validation for application
-    // validateApplicationId(namespaceId, appName);
+    validateApplicationId(namespaceId, appName);
     String summary = applicationLifecycleService.summarizeApp(namespaceId, appName, format);
     responder.sendString(HttpResponseStatus.OK, summary);
   }

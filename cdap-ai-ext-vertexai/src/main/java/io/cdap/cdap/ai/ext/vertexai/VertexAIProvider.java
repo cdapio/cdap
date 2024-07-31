@@ -17,18 +17,26 @@
 package io.cdap.cdap.ai.ext.vertexai;
 
 import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.api.Content;
+import com.google.cloud.vertexai.api.GenerateContentRequest;
 import com.google.cloud.vertexai.api.GenerateContentResponse;
+import com.google.cloud.vertexai.api.Part;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
+import com.google.gson.Gson;
 import io.cdap.cdap.ai.spi.AIProvider;
 import io.cdap.cdap.ai.spi.AIProviderContext;
 import io.cdap.cdap.proto.ApplicationDetail;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of the AIService interface for interacting with Vertex AI services.
  */
 public class VertexAIProvider implements AIProvider {
+
+  private static final Gson GSON = new Gson();
 
   private VertexAIConfiguration conf;
 
@@ -53,18 +61,27 @@ public class VertexAIProvider implements AIProvider {
     this.model = new GenerativeModel(conf.getModelName(), vertexAI);
   }
 
+  private Content createContent(String text) {
+    return Content.newBuilder()
+        .addParts(Part.newBuilder().setText(text).build())
+        .setRole("USER")
+        .build();
+  }
+
   /**
-   * Summarizes the application details in the specified format using Vertex AI. Currently, this
-   * method is not implemented and returning a null string.
+   * Summarizes the application details in the specified format using Vertex AI.
    *
    * @param applicationDetail Details of the application to be summarized.
    * @param format The format in which the summary should be provided.
-   * @return This method currently returning a null string.
+   * @return This method will be returning a string which is summary in required format.
    */
   @Override
   public String summarizeApp(ApplicationDetail applicationDetail, String format) {
     try {
-      GenerateContentResponse response = model.generateContent(conf.getPrompt().getPipelineMarkdownSummary());
+      String pipelineDetail = GSON.toJson(applicationDetail);
+      String prompt = conf.getPrompt().getPipelineMarkdownSummary();
+      String payload = pipelineDetail + "\n" + prompt;
+      GenerateContentResponse response = model.generateContent(createContent(payload));
       return ResponseHandler.getText(response);
     } catch (IOException ex) {
       ex.printStackTrace();
