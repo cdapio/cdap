@@ -16,7 +16,8 @@
 
 package io.cdap.cdap.ai.spi;
 
-import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import java.io.IOException;
 
 /**
  *  AI Provider interface for AI capabilities.
@@ -32,9 +33,9 @@ public interface AIProvider {
      /**
       * Summarizes the given application details in mentioned format.
       *
-      * @param applicationDetail The detailed information about the application.
+      * @param appRequest Details of the application containing artifact and configuration.
       * @param format The format in which the summary should be returned.
       * @return A summarized representation of the application details, formatted according to the specified format.
       */
-     public String summarizeApp(ApplicationDetail applicationDetail, String format);
+     public String summarizeApp(AppRequest appRequest, String format) throws IOException;
 }

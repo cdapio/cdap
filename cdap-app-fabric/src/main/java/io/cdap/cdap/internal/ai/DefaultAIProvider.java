@@ -4,7 +4,8 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.ai.spi.AIProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import java.io.IOException;
 
 public class DefaultAIProvider implements AIProvider {
 
@@ -32,7 +33,7 @@ public class DefaultAIProvider implements AIProvider {
   }
 
   @Override
-  public String summarizeApp(ApplicationDetail applicationDetail, String format) {
-    return this.delegate.summarizeApp(applicationDetail, format);
+  public String summarizeApp(AppRequest appRequest, String format) throws IOException {
+    return this.delegate.summarizeApp(appRequest, format);
   }
 }
