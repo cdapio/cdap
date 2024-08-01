@@ -902,7 +902,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       String summary = applicationLifecycleService.summarizeApp(appRequest, format);
       responder.sendString(HttpResponseStatus.OK, summary);
     } catch (JsonSyntaxException | IllegalArgumentException ex) {
-      LOG.debug(String.valueOf(ex));
+      LOG.debug("Error while summarizing pipeline: {}" , ex);
       throw new BadRequestException(ex);
     }
   }
