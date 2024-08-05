@@ -49,9 +49,12 @@ jobs:
        # For whatever reason we get PR 69 for develop branch with both head and base as develop.
        if: ${{ github.event.workflow_run.pull_requests[0].head.ref != github.event.workflow_run.pull_requests[0].base.ref }}
        run: |
-         echo "PR_KEY=${{ github.event.workflow_run.pull_requests[0].number }}"
-         echo "PR_BRANCH=${{ github.event.workflow_run.pull_requests[0].head.ref }}"
-         echo "PR_BASE=${{ github.event.workflow_run.pull_requests[0].base.ref }}"
+         PR_KEY=${{ github.event.workflow_run.pull_requests[0].number }}
+         PR_BRANCH=${{ github.event.workflow_run.pull_requests[0].head.ref }}
+         PR_BASE=${{ github.event.workflow_run.pull_requests[0].base.ref }}
+         echo "PR_KEY=$PR_KEY" >> $GITHUB_ENV
+         echo "PR_BRANCH=$PR_BRANCH" >> $GITHUB_ENV
+         echo "PR_BASE=$PR_BASE" >> $GITHUB_ENV
 
      - name: Sonar report
        env:
@@ -65,9 +68,9 @@ jobs:
          -Pcoverage,templates
          -Dmaven.wagon.http.retryHandler.count=3
          -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
-         -Dsonar.pullrequest.key=$PR_KEY
-         -Dsonar.pullrequest.branch=$PR_BRANCH
-         -Dsonar.pullrequest.base=$PR_BASE
+         -Dsonar.pullrequest.key=${{ env.PR_KEY }} \
+         -Dsonar.pullrequest.branch=${{ env.PR_BRANCH }} \
+         -Dsonar.pullrequest.base=${{ env.PR_BASE }} \
          -Dsonar.branch.name=$BRANCH
 
      - name: Surefire Report
