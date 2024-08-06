@@ -866,7 +866,6 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    * @param namespaceId The namespace ID where the application is deployed.
    * @param appName The name of the deployed application.
    * @param format The format in which the summary should be returned (default is markdown).
-   * @throws NotImplementedException Thrown if the method is not implemented yet.
    */
   @POST
   @Path("/apps/{app-id}/summarize")
@@ -876,25 +875,35 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @QueryParam("format") @DefaultValue("markdown") String format)
       throws BadRequestException, NotFoundException, IOException {
     validateApplicationId(namespaceId, appName);
-    String summary = applicationLifecycleService.summarizeApp(namespaceId, appName, format);
+    ApplicationReference appRef = new ApplicationReference(namespaceId, appName);
+    ApplicationDetail appDetail = applicationLifecycleService.getLatestAppDetail(appRef, false);
+    AppRequest appRequest = new AppRequest<>(appDetail.getArtifact(), appDetail.getConfiguration());
+    String summary = applicationLifecycleService.summarizeApp(appRequest, format);
     responder.sendString(HttpResponseStatus.OK, summary);
   }
 
   /**
    * Endpoint to summarize drafted applications.
    *
-   * @param request The HTTP request object.
+   * @param request The FullHTTP request object.
    * @param responder The HTTP responder object.
    * @param namespaceId The namespace ID where the application is drafted.
    * @param format The format in which the summary should be returned (default is markdown).
-   * @throws NotImplementedException Thrown if the method is not implemented yet.
    */
   @POST
   @Path("/apps/summarize")
-  public void getAppSummary(HttpRequest request, HttpResponder responder,
+  public void getAppSummary(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
-      @PathParam("format") @DefaultValue("markdown") String format)
-      throws NotImplementedException{
-      throw  new NotImplementedException("This api request is not implemented.");
+      @QueryParam("format") @DefaultValue("markdown") String format)
+      throws BadRequestException, IOException {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
+        StandardCharsets.UTF_8)) {
+      AppRequest<?> appRequest = GSON.fromJson(reader, AppRequest.class);
+      String summary = applicationLifecycleService.summarizeApp(appRequest, format);
+      responder.sendString(HttpResponseStatus.OK, summary);
+    } catch (JsonSyntaxException | IllegalArgumentException ex) {
+      LOG.debug("Error while summarizing pipeline: {}" , ex);
+      throw new BadRequestException(ex);
+    }
   }
 }
