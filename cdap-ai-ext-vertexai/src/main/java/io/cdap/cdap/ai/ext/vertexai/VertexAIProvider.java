@@ -52,7 +52,7 @@ public class VertexAIProvider implements AIProvider {
 
   @Override
   public void initialize(AIProviderContext context) throws Exception {
-    this.conf = new VertexAIConfiguration(context.getProperties());
+    this.conf = VertexAIConfiguration.create(context.getProperties());
     VertexAI vertexAI = new VertexAI.Builder()
         .setProjectId(conf.getProjectId())
         .setLocation(conf.getLocation())

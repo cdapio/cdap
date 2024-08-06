@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.ai.ext.vertexai;
 
-
 import java.util.Map;
+import com.google.api.client.util.Preconditions;
 
 /**
  * Configuration for Vertex AI provider extension.
@@ -32,19 +32,28 @@ public class VertexAIConfiguration {
   private final String modelName;
   private final Prompts prompts;
 
-
-  /**
-   * Constructs a {@link VertexAIConfiguration} instance using the provided properties.
-   *
-   * @param properties The properties containing Vertex AI configuration parameters.
-   */
-  public VertexAIConfiguration(Map<String, String> properties) {
+  private VertexAIConfiguration(Map<String, String> properties) {
+    Preconditions.checkArgument(properties.containsKey(PROJECT_ID),
+            "Missing required property: " + PROJECT_ID);
+    Preconditions.checkArgument(properties.containsKey(LOCATION_NAME),
+            "Missing required property: " + LOCATION_NAME);
+    Preconditions.checkArgument(properties.containsKey(MODEL_NAME),
+            "Missing required property: " + MODEL_NAME);
     this.projectId = properties.get(PROJECT_ID);
     this.location = properties.get(LOCATION_NAME);
     this.modelName = properties.get(MODEL_NAME);
     this.prompts = new Prompts(properties);
   }
 
+  /**
+   * Constructs a {@link VertexAIConfiguration} instance using the provided properties.
+   *
+   * @param properties The properties containing Vertex AI configuration parameters.
+   * @return VertexAIConfiguration
+   */
+  public static VertexAIConfiguration create(Map<String, String> properties){
+    return new VertexAIConfiguration(properties);
+  }
   /**
    * Gets the project ID for Vertex AI service.
    *
@@ -97,6 +106,8 @@ public class VertexAIConfiguration {
      */
 
     public Prompts(Map<String, String> conf) {
+      Preconditions.checkArgument(conf.containsKey(PIPELINE_MARKDOWN_SUMMARY),
+              "Missing required property: " + PIPELINE_MARKDOWN_SUMMARY);
       this.pipelineMarkdownSummary = conf.get(PIPELINE_MARKDOWN_SUMMARY);
     }
 
