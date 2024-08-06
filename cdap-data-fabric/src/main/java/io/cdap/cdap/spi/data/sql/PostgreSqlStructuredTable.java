@@ -556,6 +556,19 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   public void deleteAll(Range keyRange) throws InvalidFieldException, IOException {
     LOG.trace("Table {}: DeleteAll with range {}", tableSchema.getTableId(), keyRange);
     fieldValidator.validateScanRange(keyRange);
+    executeDeleteAll(keyRange);
+  }
+
+  @Override
+  public void scanDeleteAll(Range keyRange)
+      throws InvalidFieldException, UnsupportedOperationException, IOException {
+    LOG.trace("Table {}: ScanDeleteAll with range {}", tableSchema.getTableId(), keyRange);
+    keyRange.getBegin().forEach(fieldValidator::validateField);
+    keyRange.getEnd().forEach(fieldValidator::validateField);
+    executeDeleteAll(keyRange);
+  }
+
+  private void executeDeleteAll(Range keyRange) throws IOException {
     String sql = getDeleteAllStatement(keyRange);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
       setStatementFieldByRange(keyRange, statement);

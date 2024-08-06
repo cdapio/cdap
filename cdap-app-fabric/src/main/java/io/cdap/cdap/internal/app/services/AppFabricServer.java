@@ -83,7 +83,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
-  private final RunRecordTimeToLiveService runRecordTimeToLiveService;
+  private final RunDataTimeToLiveService runDataTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
@@ -131,7 +131,7 @@ public class AppFabricServer extends AbstractIdleService {
       TransactionRunner transactionRunner,
       RunRecordMonitorService runRecordCounterService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      RunRecordTimeToLiveService runRecordTimeToLiveService,
+      RunDataTimeToLiveService runDataTimeToLiveService,
       SourceControlOperationRunner sourceControlOperationRunner,
       RepositoryCleanupService repositoryCleanupService,
       OperationNotificationSubscriberService operationNotificationSubscriberService) {
@@ -158,7 +158,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
     this.runRecordCounterService = runRecordCounterService;
-    this.runRecordTimeToLiveService = runRecordTimeToLiveService;
+    this.runDataTimeToLiveService = runDataTimeToLiveService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.repositoryCleanupService = repositoryCleanupService;
@@ -191,7 +191,7 @@ public class AppFabricServer extends AbstractIdleService {
         coreSchedulerService.start(),
         credentialProviderService.start(),
         runRecordCounterService.start(),
-        runRecordTimeToLiveService.start(),
+        runDataTimeToLiveService.start(),
         sourceControlOperationRunner.start(),
         repositoryCleanupService.start(),
         operationNotificationSubscriberService.start()
@@ -250,7 +250,7 @@ public class AppFabricServer extends AbstractIdleService {
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
     runRecordCounterService.stopAndWait();
-    runRecordTimeToLiveService.stopAndWait();
+    runDataTimeToLiveService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();
     repositoryCleanupService.stopAndWait();
     credentialProviderService.stopAndWait();
