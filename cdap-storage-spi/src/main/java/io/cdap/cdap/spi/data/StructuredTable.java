@@ -274,10 +274,28 @@ public interface StructuredTable extends Closeable {
    *
    * @param keyRange key range of the rows to delete
    * @throws InvalidFieldException if any of the keys are not part of table schema, or their
-   *     types do not match the schema
+   *     types do not match the schema or the first key in range does not match the first field of
+   *     the primary key.
    * @throws IOException if there is an error reading or deleting from the table
    */
   void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
+
+  /**
+   * Delete a range of rows from the table based on a potentially non indexed column.
+   *
+   * <p>
+   *   This is a potentially slow operation because it may query a non primary key or a non indexed
+   *   column.
+   * </p>
+   *
+   * @param keyRange key range of the rows to delete
+   * @throws InvalidFieldException if any of the keys are not part of table schema, or their
+   *     types do not match the schema
+   * @throws UnsupportedOperationException if this method is not supported in the database
+   *     implementation.
+   * @throws IOException if there is an error reading or deleting from the table
+   */
+  void scanDeleteAll(Range keyRange) throws InvalidFieldException, UnsupportedOperationException, IOException;
 
   /**
    * Updates the specific fields in a range of rows from the table

@@ -457,6 +457,17 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void scanDeleteAll(Range keyRange)
+      throws InvalidFieldException, UnsupportedOperationException, IOException {
+    // For No SQL tables we are not supporting deletes on random columns because of performance
+    // concerns.
+    throw new UnsupportedOperationException(
+        String.format("scanDeleteAll operation not supported for NoSQL Table: %s",
+            schema.getTableId()
+                .getName()));
+  }
+
+  @Override
   public void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException {
     LOG.trace("Table {}: Update fields {} in range {}", schema.getTableId(), fields, keyRange);
     // validate that the range is strictly a primary key prefix

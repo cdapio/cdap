@@ -224,7 +224,7 @@ public abstract class FieldLineageTableTest {
     });
   }
 
-  private List<Operation> generateOperations(boolean addAditionalField) {
+  protected List<Operation> generateOperations(boolean addAditionalField) {
     // read: file -> (offset, body)
     // parse: (body) -> (first_name, last_name)
     // concat: (first_name, last_name) -> (name)

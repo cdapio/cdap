@@ -316,6 +316,25 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void scanDeleteAll(Range keyRange)
+      throws InvalidFieldException, UnsupportedOperationException, IOException {
+    try {
+      if (!emitTimeMetrics) {
+        structuredTable.scanDeleteAll(keyRange);
+      } else {
+        long curTime = System.nanoTime();
+        structuredTable.scanDeleteAll(keyRange);
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + "scanDeleteAll.time", duration);
+      }
+      metricsCollector.increment(metricPrefix + "scanDeleteAll.count", 1L);
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "scanDeleteAll.error", 1L);
+      throw e;
+    }
+  }
+
+  @Override
   public void updateAll(Range keyRange, Collection<Field<?>> fields)
       throws InvalidFieldException, IOException {
     try {

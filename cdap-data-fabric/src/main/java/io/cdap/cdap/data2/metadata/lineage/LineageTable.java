@@ -35,6 +35,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -65,6 +66,41 @@ public class LineageTable {
   public static LineageTable create(StructuredTableContext context) {
     return new LineageTable(context);
   }
+
+  /**
+   * Deletes all completed run lineage records with a start time before {@code timeUpperBound},
+   * throwing {@code IOException} if the delete operation fails.
+   * <p>
+   * Assumption is that lineage records are added only after run is completed, so we don't need to
+   * check completed run statuses.
+   * </p>
+   *
+   * <p>
+   * This function will not work with the in memory no-sql DB and will return
+   * {@code InvalidFieldException}. This is because of the way we need to query and will only be
+   * used in the managed instances controlled by a flag.
+   * </p>
+   *
+   * @param timeUpperBound is the end time before which all records should be deleted.
+   */
+  public void deleteCompletedLineageRecordsStartedBefore(Instant timeUpperBound)
+      throws IOException {
+    // While converting from Run we are using Millis hence we need to get epoch millis.
+    long maxTimeEpoch = timeUpperBound.toEpochMilli();
+    // Data should be deleted from both the lineage tables.
+    getDatasetTable()
+        .scanDeleteAll(createStartTimeEndRange(maxTimeEpoch));
+    getProgramTable()
+        .scanDeleteAll(createStartTimeEndRange(maxTimeEpoch));
+  }
+
+  private Range createStartTimeEndRange(long endTime) {
+    ImmutableList<Field<?>> end = ImmutableList.of(
+        Fields.longField(StoreDefinition.LineageStore.START_TIME_FIELD, invertTime(endTime)));
+    // Since the times are inverted the end time will be the start of the range.
+    return Range.from(end, Range.Bound.EXCLUSIVE);
+  }
+
 
   private LineageTable(StructuredTableContext structuredTableContext) {
     this.structuredTableContext = structuredTableContext;
