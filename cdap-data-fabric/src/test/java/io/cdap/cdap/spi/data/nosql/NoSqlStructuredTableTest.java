@@ -29,6 +29,7 @@ import io.cdap.cdap.spi.data.StructuredTableTest;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -202,6 +203,11 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     Assert.assertEquals(actual.get(2), filterIndex.getValue());
   }
 
+  @Test(expected = TransactionException.class)
+  @Override
+  public void testScanDeleteAll() throws Exception{
+    super.testScanDeleteAll();
+  }
   private static class MockScanner implements Scanner {
     private final Iterator<Integer> iterator;
     private boolean closed;

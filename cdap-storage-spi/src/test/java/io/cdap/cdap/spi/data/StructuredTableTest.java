@@ -1038,6 +1038,70 @@ public abstract class StructuredTableTest {
   }
 
   @Test
+  public void testScanDeleteAll() throws Exception {
+    int max = 10;
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    Assert.assertEquals(max, expected.size());
+    // Delete 7-9 (both inclusive) using a column which is part of PK but not the first PK.
+    expected.subList(7, 10).clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Arrays.asList(Fields.longField(KEY2, 7L)),
+          Range.Bound.INCLUSIVE,
+          Arrays.asList(Fields.longField(KEY2, 9L)),
+          Range.Bound.INCLUSIVE);
+      table.scanDeleteAll(range);
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Delete 6  using a random column
+    expected.subList(6, 7).clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Arrays.asList(Fields.doubleField(DOUBLE_COL, 6.0)),
+          Range.Bound.INCLUSIVE,
+          Arrays.asList(Fields.doubleField(DOUBLE_COL, 6.0)),
+          Range.Bound.INCLUSIVE);
+      table.scanDeleteAll(range);
+    });
+
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Delete 2-5 (end exclusive) using the first key only
+    expected.subList(2, 5).clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Collections.singletonList(Fields.intField(KEY, 2)), Range.Bound.INCLUSIVE,
+          Collections.singletonList(Fields.intField(KEY, 5)), Range.Bound.EXCLUSIVE);
+      table.scanDeleteAll(range);
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Use a range outside the element list, nothing should get deleted
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Collections.singletonList(Fields.intField(KEY, max + 1)), Range.Bound.INCLUSIVE,
+          Collections.singletonList(Fields.intField(KEY, max + 5)), Range.Bound.EXCLUSIVE);
+      table.scanDeleteAll(range);
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Delete all the remaining
+    expected.clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.scanDeleteAll(Range.all());
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+  }
+
+
+  @Test
   public void testIndexScanIndexStringFieldType() throws Exception {
     int num = 5;
     // Write a few records

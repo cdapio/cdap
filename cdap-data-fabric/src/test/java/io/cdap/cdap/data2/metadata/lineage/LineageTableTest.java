@@ -136,7 +136,7 @@ public abstract class LineageTableTest {
   }
 
   @SafeVarargs
-  private static <T> Set<T> toSet(T... elements) {
+  protected static <T> Set<T> toSet(T... elements) {
     return ImmutableSet.copyOf(elements);
   }
 }
