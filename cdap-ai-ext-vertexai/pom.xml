@@ -56,6 +56,10 @@
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-vertexai</artifactId>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
     </dependencies>
 
     <profiles>
