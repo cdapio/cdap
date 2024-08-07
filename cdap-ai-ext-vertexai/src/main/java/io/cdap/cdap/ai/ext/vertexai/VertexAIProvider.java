@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.ai.ext.vertexai;
 
+import com.google.api.client.util.Preconditions;
 import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.Content;
 import com.google.cloud.vertexai.api.GenerateContentResponse;
 import com.google.cloud.vertexai.api.Part;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.cdap.cdap.ai.spi.AIProvider;
 import io.cdap.cdap.ai.spi.AIProviderContext;
@@ -40,6 +42,12 @@ public class VertexAIProvider implements AIProvider {
   private GenerativeModel model;
 
   public VertexAIProvider() {
+  }
+
+  @VisibleForTesting
+  public VertexAIProvider(VertexAIConfiguration conf, GenerativeModel model){
+    this.conf = conf;
+    this.model = model;
   }
 
   @Override
@@ -74,6 +82,7 @@ public class VertexAIProvider implements AIProvider {
    */
   @Override
   public String summarizeApp(AppRequest appRequest, String format) throws IOException {
+    Preconditions.checkNotNull(appRequest, "Missing required property: AppRequest");
     String pipelineDetail = GSON.toJson(appRequest);
     String prompt = conf.getPrompt().getPipelineMarkdownSummary();
     String payload = String.format("%s\n%s", pipelineDetail, prompt);
