@@ -41,6 +41,7 @@ import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -164,6 +165,32 @@ public class FieldLineageTable {
     getSummaryFieldsTable().deleteAll(Range.all());
   }
 
+  /**
+   * Delete the field lineage records that started before the {@param endTime}.
+   *
+   * <p>
+   * This method deletes all field record entries entries from the
+   * {@link StoreDefinition.FieldLineageStore} tables. Currently only records in the parent table
+   * i.e. {@code fields_lineage} is being deleted.
+   * </p>
+   *
+   * @param endTime is the end time before which all records should be deleted.
+   */
+    public void deleteFieldRecordsBefore(Instant endTime) throws IOException {
+    // While converting from Run we are using Millis hence we need to get epoch millis.
+    long maxTimeEpoch = endTime.toEpochMilli();
+    // Start time is only available in the parent Field lineage table and has the maximum amount of
+    // entries. We are only deleting from the parent table. Child tables are essentially nested and
+    // also checksums can be same across runs and pipelines so leaving those tables as is for now.
+    getEndpointChecksumTable().scanDeleteAll(createStartTimeEndRange(maxTimeEpoch));
+  }
+
+  private Range createStartTimeEndRange(long endTime) {
+    ImmutableList<Field<?>> end = ImmutableList.of(
+        Fields.longField(StoreDefinition.FieldLineageStore.START_TIME_FIELD, invertTime(endTime)));
+    // Since the times are inverted the end time will be the start of the range.
+    return Range.from(end, Range.Bound.EXCLUSIVE);
+  }
   @Nullable
   private Set<Operation> readOperations(long checksum) throws IOException {
     List<Field<?>> fields = getOperationsKey(checksum);

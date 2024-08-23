@@ -37,6 +37,7 @@ import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.FieldValidator;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -377,7 +378,21 @@ public class SpannerStructuredTable implements StructuredTable {
   @Override
   public void deleteAll(Range range) throws InvalidFieldException {
     fieldValidator.validateScanRange(range);
+    Statement statement = buildRangeDeleteStatement(range);
+    transactionContext.executeUpdate(statement);
+  }
 
+  @Override
+  public void scanDeleteAll(Range keyRange)
+      throws InvalidFieldException, UnsupportedOperationException, IOException {
+    keyRange.getBegin().forEach(fieldValidator::validateField);
+    keyRange.getEnd().forEach(fieldValidator::validateField);
+    Statement statement = buildRangeDeleteStatement(keyRange);
+    LOG.trace("Executing scanDeleteAll statement: {}", statement);
+    transactionContext.executeUpdate(statement);
+  }
+
+  private Statement buildRangeDeleteStatement(Range range) {
     Map<String, Value> parameters = new HashMap<>();
     String condition = getRangeWhereClause(range, parameters);
 
@@ -385,7 +400,7 @@ public class SpannerStructuredTable implements StructuredTable {
         "DELETE FROM " + escapeName(schema.getTableId().getName())
             + " WHERE " + (condition.isEmpty() ? "true" : condition));
     parameters.forEach((name, value) -> builder.bind(name).to(value));
-    transactionContext.executeUpdate(builder.build());
+    return builder.build();
   }
 
   @Override
