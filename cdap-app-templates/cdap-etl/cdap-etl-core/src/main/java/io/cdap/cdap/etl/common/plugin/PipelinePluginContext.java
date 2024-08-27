@@ -115,7 +115,7 @@ public class PipelinePluginContext implements PluginContext {
   }
 
   public Caller getCaller(String pluginId) {
-    Caller caller = Caller.DEFAULT;
+    Caller caller = new ExceptionWrappingCaller(Caller.DEFAULT, pluginId);
     if (stageLoggingEnabled) {
       caller = StageLoggingCaller.wrap(caller, pluginId);
     }

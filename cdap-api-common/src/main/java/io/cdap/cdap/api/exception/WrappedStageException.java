@@ -49,4 +49,14 @@ public class WrappedStageException extends RuntimeException {
   public String getStageName() {
     return stageName;
   }
+
+  /**
+   * Returns the detail message string of this exception.
+   *
+   * @return the detail message as a {@String}.
+   */
+  @Override
+  public String getMessage() {
+    return String.format("Stage '%s' encountered : %s", stageName, super.getMessage());
+  }
 }
