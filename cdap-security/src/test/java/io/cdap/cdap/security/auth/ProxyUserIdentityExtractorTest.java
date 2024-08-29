@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.auth.UserIdentity.IdentifierType;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -88,6 +89,30 @@ public class ProxyUserIdentityExtractorTest {
 
     Assert.assertEquals(testAuthToken, identity.getUserCredential());
     Assert.assertEquals(testUserId, identity.getUserIdentity().getUsername());
+  }
+
+  @Test
+  public void testValidInternalUserReturnsExpectedInternalIdentity() throws UserIdentityExtractionException {
+    String testUserId = "test-user-id";
+    String testUserIdHeader = "X-User-Id";
+    String testAuthToken = "test-auth-token";
+    CConfiguration config = Mockito.mock(CConfiguration.class);
+    when(config.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
+
+    ProxyUserIdentityExtractor extractor = new ProxyUserIdentityExtractor(config);
+
+    DefaultHttpHeaders headers = new DefaultHttpHeaders();
+    headers.add(HttpHeaderNames.AUTHORIZATION, String.format("CDAP-Internal %s", testAuthToken));
+    headers.add(testUserIdHeader, testUserId);
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+        "http://www.example.com", headers);
+    UserIdentityExtractionResponse response = extractor.extract(request);
+    Assert.assertTrue(response.success());
+    UserIdentityPair identity = response.getIdentityPair();
+
+    Assert.assertEquals(testAuthToken, identity.getUserCredential());
+    Assert.assertEquals(testUserId, identity.getUserIdentity().getUsername());
+    Assert.assertEquals(identity.getUserIdentity().getIdentifierType(), IdentifierType.INTERNAL);
   }
 
   @Test
