@@ -32,19 +32,20 @@ package io.cdap.cdap.api.exception;
  *   <li><b>errorReason:</b> A reason for why the error occurred.</li>
  *   <li><b>errorType:</b> The type of error, represented by the {@ErrorType} enum,
  *   such as SYSTEM, USER, or UNKNOWN.</li>
+ *   <li><b>cause:</b> The cause of this throwable or null if the cause is nonexistent
+ *   or unknown.</li>
  * </ul>
  **/
 public class ProgramFailureException extends RuntimeException {
   private final String errorCategory;
-  private final String errorMessage;
   private final String errorReason;
   private final ErrorType errorType;
 
   // Private constructor to prevent direct instantiation
   private ProgramFailureException(String errorCategory, String errorMessage, String errorReason,
-      ErrorType errorType) {
+      ErrorType errorType, Throwable cause) {
+    super(errorMessage, cause);
     this.errorCategory = errorCategory;
-    this.errorMessage = errorMessage;
     this.errorReason = errorReason;
     this.errorType = errorType;
   }
@@ -60,15 +61,6 @@ public class ProgramFailureException extends RuntimeException {
    */
   public String getErrorCategory() {
     return errorCategory == null ? "Others" : errorCategory;
-  }
-
-  /**
-   * Returns the detailed message associated with the error.
-   *
-   * @return a {@String} representing the error message.
-   */
-  public String getErrorMessage() {
-    return errorMessage;
   }
 
   /**
@@ -103,6 +95,7 @@ public class ProgramFailureException extends RuntimeException {
     private String errorMessage;
     private String errorReason;
     private ErrorType errorType;
+    private Throwable cause;
 
     /**
      * Sets the error category for the ProgramFailureException.
@@ -149,12 +142,24 @@ public class ProgramFailureException extends RuntimeException {
     }
 
     /**
+     * Sets the cause for the ProgramFailureException.
+     *
+     * @param cause the cause (which is saved for later retrieval by the getCause() method).
+     * @return The current Builder instance.
+     */
+    public Builder withCause(Throwable cause) {
+      this.cause = cause;
+      return this;
+    }
+
+    /**
      * Builds and returns a new instance of ProgramFailureException.
      *
      * @return A new ProgramFailureException instance.
      */
     public ProgramFailureException build() {
-      return new ProgramFailureException(errorCategory, errorMessage, errorReason, errorType);
+      return new ProgramFailureException(errorCategory, errorMessage,
+          errorReason, errorType, cause);
     }
   }
 }
