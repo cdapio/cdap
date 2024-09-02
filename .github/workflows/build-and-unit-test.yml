@@ -53,7 +53,7 @@ jobs:
         run: |
           if [ ${{ github.event_name }} != "workflow_dispatch" ];
           then
-            echo 'BRANCH_MATRIX={"include":[{"branch":"develop"}, {"branch":"release/6.8"}, {"branch":"release/6.9"}, {"branch":"release/6.10"}]}' >> $GITHUB_ENV
+            echo 'BRANCH_MATRIX={"include":[{"branch":"develop"}, {"branch":"release/6.9"}, {"branch":"release/6.10"}]}' >> $GITHUB_ENV
           else
             echo 'BRANCH_MATRIX={"include":[{"branch":"${{ github.event.inputs.branch }}"}]}' >> $GITHUB_ENV
             if [ "${{ github.event.inputs.run_tests_with_retries }}" == "false" ]
