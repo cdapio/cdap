@@ -212,6 +212,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
+    services.add(injector.getInstance(AuditLogPublisherService.class));
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       services.add(injector.getInstance(TokenManager.class));
     }

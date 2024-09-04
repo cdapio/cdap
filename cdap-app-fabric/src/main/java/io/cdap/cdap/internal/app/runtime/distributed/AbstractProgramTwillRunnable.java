@@ -30,6 +30,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
@@ -454,6 +455,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         MetricsCollectionService.class);
     services.add(metricsCollectionService);
 
+    AuditLogPublisherService auditLogPublisherService = injector.getInstance(
+      AuditLogPublisherService.class);
+    services.add(auditLogPublisherService);
+
     if (ProgramRunners.getClusterMode(programOptions) != ClusterMode.ON_PREMISE) {
       services.add(injector.getInstance(LogAppenderLoaderService.class));
     }
@@ -483,6 +488,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private void startCoreServices() {
     // Starts the core services
     for (Service service : coreServices) {
+      LOG.warn("SANKET_LOG_1 : STARTING SERVICE : " + service.toString());
+      LOG.warn("SANKET_LOG_1 : STARTING SERVICE : " + service.getClass());
       service.startAndWait();
     }
   }
