@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.http;
 
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -33,6 +34,8 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.LinkedBlockingDeque;
+
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
  * SecurityRequestContext}.
@@ -48,9 +51,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
 
   private final boolean internalAuthEnabled;
+  private final AuditLogPublisherService auditLogPublisherService;
 
-  public AuthenticationChannelHandler(boolean internalAuthEnabled) {
+  public AuthenticationChannelHandler(boolean internalAuthEnabled, AuditLogPublisherService auditLogPublisherService) {
     this.internalAuthEnabled = internalAuthEnabled;
+    this.auditLogPublisherService = auditLogPublisherService;
   }
 
   /**
@@ -140,8 +145,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     }
 
 
-//    auditLogPublisherService.addAuditContexts(new LinkedBlockingDeque<>());
-//    auditLogPublisherService.publish();
+    auditLogPublisherService.addAuditContexts(SecurityRequestContext.getAuditLogQueue());
+    auditLogPublisherService.publish();
     super.write(ctx, msg, promise);
     LOG.warn("SANKET_LOG : write2");
   }
