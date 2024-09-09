@@ -20,9 +20,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
@@ -36,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
  * SecurityRequestContext}.
  */
-public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
+public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
@@ -118,11 +119,31 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       SecurityRequestContext.setUserIp(currentUserIp);
     }
 
+    LOG.warn("SANKET_LOG : read1");
     try {
       ctx.fireChannelRead(msg);
     } finally {
       SecurityRequestContext.reset();
     }
+  }
+
+  @Override
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+    LOG.warn("SANKET_LOG : write1");
+    if (msg instanceof HttpRequest) {
+      LOG.warn("SANKET_LOG : HttpRequest");
+    }
+
+    if (msg instanceof HttpResponse) {
+      LOG.warn("SANKET_LOG : HttpResponse " + (HttpResponse) msg);
+    }
+
+
+//    auditLogPublisherService.addAuditContexts(new LinkedBlockingDeque<>());
+//    auditLogPublisherService.publish();
+    super.write(ctx, msg, promise);
+    LOG.warn("SANKET_LOG : write2");
   }
 
   @Override
