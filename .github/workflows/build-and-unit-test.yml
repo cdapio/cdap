@@ -80,7 +80,7 @@ jobs:
 
       - name: Get Secrets from GCP Secret Manager
         id: 'secrets'
-        uses: 'google-github-actions/get-secretmanager-secrets@v0'
+        uses: 'google-github-actions/get-secretmanager-secrets@v2'
         if: ${{ matrix.branch == 'develop' || startsWith(matrix.branch, 'release/') }}
         with:
           secrets: |-
@@ -90,7 +90,7 @@ jobs:
             CDAP_GPG_PRIVATE_KEY:cdapio-github-builds/CDAP_GPG_PRIVATE_KEY
 
       - name: Recursively Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
@@ -103,7 +103,7 @@ jobs:
           git submodule update --init --recursive --remote
 
       - name: Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -130,7 +130,7 @@ jobs:
             MAVEN_OPTS="-Xmx16G -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/cdap-build/oom.bin" mvn test -fae -T2 -U -V -am -amd -P templates,unit-tests -Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.httpconnectionManager.ttlSeconds=30
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: "${{ github.event.inputs.skip_tests != 'true' || failure() }}"
         with:
           name: Build debug files - ${{ env.ARTIFACT_NAME }}
@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload CDAP Standalone
         if: ${{ matrix.branch == 'develop' || startsWith(matrix.branch, 'release/') }}
-        uses: actions/upload-artifact@v3 # https://github.com/actions/upload-artifact#zipped-artifact-downloads
+        uses: actions/upload-artifact@v4 # https://github.com/actions/upload-artifact#zipped-artifact-downloads
         with:
           name: cdap-sandbox-${{env.CDAP_VERSION}}.zip
           path: cdap-build/cdap/cdap-standalone/target/cdap-sandbox-${{env.CDAP_VERSION}}.zip
