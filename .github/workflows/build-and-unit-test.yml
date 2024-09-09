@@ -41,6 +41,7 @@ env:
   PRE_RELEASE: true
   REPLACE_ARTIFACTS: true
   REMOVE_ARTIFACTS: true
+  SKIP_RELEASE: false
   MAX_ATTEMPTS: 3
 
 jobs:
@@ -173,6 +174,7 @@ jobs:
             echo "PRE_RELEASE=false" >> $GITHUB_ENV
             echo "REPLACE_ARTIFACTS=false" >> $GITHUB_ENV
             echo "REMOVE_ARTIFACTS=false" >> $GITHUB_ENV
+            echo "SKIP_RELEASE=true" >> $GITHUB_ENV
             echo "Release will not be overwritten if exists."
           else
             echo "Release will be overwritten if exists."
@@ -269,13 +271,14 @@ jobs:
           fi
 
       - name: Upload CDAP Standalone and CDAP DEB Bundle
-        # Pinned 1.11.1 version
-        uses: ncipollo/release-action@4c75f0f2e4ae5f3c807cf0904605408e319dcaac
+        # Pinned 1.14.0 version
+        uses: ncipollo/release-action@2c591bcc8ecdcd2db72b97d6147f871fcd833ba5
         with:
           allowUpdates: true
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
           omitPrereleaseDuringUpdate: true
+          skipIfReleaseExists: ${{ env.SKIP_RELEASE }}
           prerelease: ${{ env.PRE_RELEASE }}
           removeArtifacts: ${{ env.REMOVE_ARTIFACTS }}
           replacesArtifacts: ${{ env.REPLACE_ARTIFACTS }}
