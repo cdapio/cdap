@@ -430,7 +430,20 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public long count(Collection<Range> keyRanges) {
-    try (ResultSet resultSet = transactionContext.executeQuery(getCountStatement(keyRanges))) {
+    try (ResultSet resultSet = transactionContext.executeQuery(
+        getCountStatement(keyRanges, Collections.emptyList()))) {
+      if (!resultSet.next()) {
+        return 0L;
+      }
+      return resultSet.getCurrentRowAsStruct().getLong(0);
+    }
+  }
+
+  @Override
+  public long count(Collection<Range> keyRanges, Collection<Field<?>> filterIndexes)
+      throws InvalidFieldException, IOException {
+    try (ResultSet resultSet = transactionContext.executeQuery(
+        getCountStatement(keyRanges, filterIndexes))) {
       if (!resultSet.next()) {
         return 0L;
       }
@@ -443,18 +456,26 @@ public class SpannerStructuredTable implements StructuredTable {
     // No-op
   }
 
-  private Statement getCountStatement(Collection<Range> ranges) {
+  private Statement getCountStatement(Collection<Range> ranges,
+      Collection<Field<?>> filterIndexes) {
     Map<String, Value> parameters = new HashMap<>();
     String whereClause = getRangesWhereClause(ranges, parameters);
-
-    if (whereClause == null) {
-      return Statement.of("SELECT COUNT(*) FROM " + escapeName(schema.getTableId().getName()));
-    }
-
     Statement.Builder builder = Statement.newBuilder(
-        "SELECT COUNT(*) FROM " + escapeName(schema.getTableId().getName())
-            + " WHERE " + whereClause);
+        "SELECT COUNT(*) FROM " + escapeName(schema.getTableId().getName()));
+
+    if (whereClause != null) {
+      builder.append(" WHERE " + whereClause);
+    }
+    if (!filterIndexes.isEmpty()) {
+      if (whereClause != null) {
+        builder.append(" AND ");
+      } else {
+        builder.append(" WHERE ");
+      }
+      builder.append(getIndexesFilterClause(filterIndexes, parameters));
+    }
     parameters.forEach((name, value) -> builder.bind(name).to(value));
+    LOG.trace("SQL statement: {}", builder.build().getSql());
     return builder.build();
   }
 
@@ -529,7 +550,7 @@ public class SpannerStructuredTable implements StructuredTable {
   /**
    * Generates the WHERE clause for a set of ranges.
    *
-   * @param ranges the set of ranges to query for
+   * @param ranges     the set of ranges to query for
    * @param parameters the parameters name and value used in the WHERE clause
    * @return the WHERE clause or {@code null} if the ranges resulted in a full table query.
    */
