@@ -25,6 +25,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -53,6 +54,7 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.auth.service.DefaultAuditLogPublisherService;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import java.io.File;
@@ -137,6 +139,12 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
       });
       modules.add(new RemoteLogAppenderModule());
       modules.add(new LocalLocationModule());
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
+        }
+      });
 
       if (coreSecurityModule.requiresZKClient()) {
         modules.add(new ZkClientModule());
