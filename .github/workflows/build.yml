@@ -30,12 +30,12 @@ jobs:
     steps:
       # Pinned 1.0.0 version
       - uses: marocchino/action-workflow_run-status@54b6e87d6cb552fc5f36dbe9a722a6048725917a
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           submodules: recursive
       - name: Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -44,7 +44,7 @@ jobs:
       - name: Build with Maven
         run: mvn clean test -fae -T 2 -B -V -DcloudBuild -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v2.2.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Build debug files
