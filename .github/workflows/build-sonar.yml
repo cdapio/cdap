@@ -22,7 +22,7 @@ on:
     types: [opened, synchronize, reopened, labeled]
 
 jobs:
-  build:
+  build-sonar:
     runs-on: k8s-runner-build
 
     # We allow builds:
