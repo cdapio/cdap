@@ -37,12 +37,12 @@ package io.cdap.cdap.api.exception;
  * </ul>
  **/
 public class ProgramFailureException extends RuntimeException {
-  private final String errorCategory;
+  private final ErrorCategory errorCategory;
   private final String errorReason;
   private final ErrorType errorType;
 
   // Private constructor to prevent direct instantiation
-  private ProgramFailureException(String errorCategory, String errorMessage, String errorReason,
+  private ProgramFailureException(ErrorCategory errorCategory, String errorMessage, String errorReason,
       ErrorType errorType, Throwable cause) {
     super(errorMessage, cause);
     this.errorCategory = errorCategory;
@@ -60,7 +60,7 @@ public class ProgramFailureException extends RuntimeException {
    * @return a {@String} representing the error category.
    */
   public String getErrorCategory() {
-    return errorCategory == null ? "Others" : errorCategory;
+    return errorCategory.getErrorCategory();
   }
 
   /**
@@ -91,7 +91,7 @@ public class ProgramFailureException extends RuntimeException {
    * Builder class for ProgramFailureException.
    */
   public static class Builder {
-    private String errorCategory;
+    private ErrorCategory errorCategory;
     private String errorMessage;
     private String errorReason;
     private ErrorType errorType;
@@ -103,7 +103,7 @@ public class ProgramFailureException extends RuntimeException {
      * @param errorCategory The category of the error.
      * @return The current Builder instance.
      */
-    public Builder withErrorCategory(String errorCategory) {
+    public Builder withErrorCategory(ErrorCategory errorCategory) {
       this.errorCategory = errorCategory;
       return this;
     }
