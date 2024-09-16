@@ -96,6 +96,11 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   }
 
   @Override
+  public String getStageName() {
+    return stageName;
+  }
+
+  @Override
   public FailureCollector getFailureCollector() {
     if (collector == null) {
       this.collector = new DefaultFailureCollector(stageName, inputSchemas);

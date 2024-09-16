@@ -36,6 +36,13 @@ public interface StageConfigurer {
   Schema getInputSchema();
 
   /**
+   * Returns the name of the stage.
+   *
+   * @return the name of the stage
+   */
+  String getStageName();
+
+  /**
    * set the output schema for this stage, or null if its unknown
    *
    * @param outputSchema output schema for this stage
