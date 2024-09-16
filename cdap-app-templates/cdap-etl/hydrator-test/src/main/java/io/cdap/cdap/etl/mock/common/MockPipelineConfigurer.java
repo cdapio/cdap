@@ -86,6 +86,11 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
         // no-op
       }
 
+      @Override
+      public String getStageName() {
+        return null;
+      }
+
       public FailureCollector getFailureCollector() {
         return collector;
       }
