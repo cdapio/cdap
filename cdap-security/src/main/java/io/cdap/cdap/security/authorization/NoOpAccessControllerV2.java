@@ -27,6 +27,7 @@ import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -118,5 +119,10 @@ public class NoOpAccessControllerV2 implements AccessControllerSpi {
   @Override
   public AuthorizedResult<Set<GrantedPermission>> listGrants(Principal principal, Principal caller) {
     return new AuthorizedResult<>(Collections.emptySet(), AuthorizationResponse.Builder.defaultNotRequired());
+  }
+
+  @Override
+  public PublishStatus publish(List<String> auditLogList) {
+    return PublishStatus.PUBLISHED;
   }
 }

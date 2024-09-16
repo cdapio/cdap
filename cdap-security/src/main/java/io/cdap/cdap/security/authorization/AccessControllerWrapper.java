@@ -33,6 +33,7 @@ import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -240,6 +241,12 @@ public class AccessControllerWrapper implements AccessControllerSpi {
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
+  }
+
+  @Override
+  public PublishStatus publish(List<String> auditLogList) {
+    // TODO : throw exception ? or log unsupported ?
+    return PublishStatus.PUBLISHED;
   }
 
   private AuthorizationResponse getAuthorizedResponse() {
