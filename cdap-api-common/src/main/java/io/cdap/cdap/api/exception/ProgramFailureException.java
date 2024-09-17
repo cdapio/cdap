@@ -34,20 +34,24 @@ package io.cdap.cdap.api.exception;
  *   such as SYSTEM, USER, or UNKNOWN.</li>
  *   <li><b>cause:</b> The cause of this throwable or null if the cause is nonexistent
  *   or unknown.</li>
+ *   <li><b>dependency:</b> A boolean value indicating whether the error is coming from a
+ *   dependent service.</li>
  * </ul>
  **/
 public class ProgramFailureException extends RuntimeException {
   private final ErrorCategory errorCategory;
   private final String errorReason;
   private final ErrorType errorType;
+  private final boolean dependency;
 
   // Private constructor to prevent direct instantiation
-  private ProgramFailureException(ErrorCategory errorCategory, String errorMessage, String errorReason,
-      ErrorType errorType, Throwable cause) {
+  private ProgramFailureException(ErrorCategory errorCategory, String errorMessage,
+      String errorReason, ErrorType errorType, Throwable cause, boolean dependency) {
     super(errorMessage, cause);
     this.errorCategory = errorCategory;
     this.errorReason = errorReason;
     this.errorType = errorType;
+    this.dependency = dependency;
   }
 
   /**
@@ -88,6 +92,15 @@ public class ProgramFailureException extends RuntimeException {
   }
 
   /**
+   * Returns whether the error is coming from a dependent service.
+   *
+   * @return true if the error is a dependency service error, false otherwise.
+   */
+  public boolean isDependency() {
+    return dependency;
+  }
+
+  /**
    * Builder class for ProgramFailureException.
    */
   public static class Builder {
@@ -96,6 +109,7 @@ public class ProgramFailureException extends RuntimeException {
     private String errorReason;
     private ErrorType errorType;
     private Throwable cause;
+    private boolean dependency;
 
     /**
      * Sets the error category for the ProgramFailureException.
@@ -152,6 +166,11 @@ public class ProgramFailureException extends RuntimeException {
       return this;
     }
 
+    public Builder withDependency(boolean dependency) {
+      this.dependency = dependency;
+      return this;
+    }
+
     /**
      * Builds and returns a new instance of ProgramFailureException.
      *
@@ -159,7 +178,7 @@ public class ProgramFailureException extends RuntimeException {
      */
     public ProgramFailureException build() {
       return new ProgramFailureException(errorCategory, errorMessage,
-          errorReason, errorType, cause);
+          errorReason, errorType, cause, dependency);
     }
   }
 }
