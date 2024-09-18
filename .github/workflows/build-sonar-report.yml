@@ -34,6 +34,7 @@ jobs:
      - uses: actions/checkout@v4
        with:
         ref: ${{ github.event.workflow_run.head_sha }}
+        submodules: recursive
 
      - name: Cache SonarCloud packages
        uses: actions/cache@v3
