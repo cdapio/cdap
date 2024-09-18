@@ -30,6 +30,11 @@ jobs:
     steps:
      # Pinned 1.0.0 version
      - uses: marocchino/action-workflow_run-status@54b6e87d6cb552fc5f36dbe9a722a6048725917a
+
+     - uses: actions/checkout@v4
+       with:
+        ref: ${{ github.event.workflow_run.head_sha }}
+
      - name: Cache SonarCloud packages
        uses: actions/cache@v3
        with:
@@ -43,6 +48,12 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
         path: artifacts/
+
+     - name: Copy coverage report
+       run: |
+         mkdir -p cdap-coverage/target/
+         cp -r artifacts/reports-${{ github.event.workflow_run.id }}/cdap-coverage/target/ cdap-coverage/target/
+         ls -R cdap-coverage
 
      - name: Sonar Report on PR
        # For whatever reason we get PR 69 for develop branch with both head and base as develop.
