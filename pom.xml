@@ -2522,6 +2522,13 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
             <version>3.0.5</version>
+            <dependencies>
+              <dependency>
+                <groupId>com.thoughtworks.xstream</groupId>
+                <artifactId>xstream</artifactId>
+                <version>1.4.20</version>
+              </dependency>
+            </dependencies>
             <executions>
               <execution>
                 <id>findbugs-check</id>
