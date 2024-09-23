@@ -63,5 +63,6 @@ jobs:
           name: reports-${{ github.run_id }}
           path: |
             **/target/rat.txt
-            **/target/site/jacoco-aggregate/jacoco.xml
             **/target/surefire-reports/*
+            **/target/generated-sources/*
+            **/target/site/*
