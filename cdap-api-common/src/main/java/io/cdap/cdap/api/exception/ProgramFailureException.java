@@ -166,6 +166,12 @@ public class ProgramFailureException extends RuntimeException {
       return this;
     }
 
+    /**
+     * Sets the dependency flag for the ProgramFailureException.
+     *
+     * @param dependency True if the error is from a dependent service, false otherwise.
+     * @return The current Builder instance.
+     */
     public Builder withDependency(boolean dependency) {
       this.dependency = dependency;
       return this;
