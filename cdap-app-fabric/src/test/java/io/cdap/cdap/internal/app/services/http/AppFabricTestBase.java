@@ -78,6 +78,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
@@ -212,6 +213,7 @@ public abstract class AppFabricTestBase {
   private static MessagingService messagingService;
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessorService;
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
@@ -277,6 +279,8 @@ public abstract class AppFabricTestBase {
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessorService.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
@@ -315,6 +319,7 @@ public abstract class AppFabricTestBase {
   @AfterClass
   public static void afterClass() {
     appFabricServer.stopAndWait();
+    appFabricProcessorService.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
