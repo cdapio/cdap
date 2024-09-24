@@ -40,8 +40,10 @@ import io.cdap.cdap.data2.dataset2.lib.kv.InMemoryKVTableDefinition;
 import io.cdap.cdap.data2.dataset2.lib.kv.LevelDBKVTableDefinition;
 import io.cdap.cdap.gateway.handlers.DatasetServiceStore;
 import io.cdap.cdap.gateway.handlers.MonitorHandler;
+import io.cdap.cdap.internal.app.runtime.distributed.AppFabricProcessorManager;
 import io.cdap.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import io.cdap.cdap.internal.app.runtime.distributed.TransactionServiceManager;
+import io.cdap.cdap.internal.app.runtime.monitor.NonHadoopAppFabricProcessorManager;
 import io.cdap.cdap.internal.app.runtime.monitor.NonHadoopAppFabricServiceManager;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServiceManager;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -92,7 +94,7 @@ public class MonitorHandlerModule extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+        binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
 
     handlerBinder.addBinding().to(MonitorHandler.class);
   }
@@ -117,6 +119,9 @@ public class MonitorHandlerModule extends AbstractModule {
     mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
         .toProvider(
             new NonHadoopMasterServiceManagerProvider(NonHadoopAppFabricServiceManager.class));
+    mapBinder.addBinding(Constants.Service.APP_FABRIC_PROCESSOR)
+        .toProvider(
+            new NonHadoopMasterServiceManagerProvider(NonHadoopAppFabricProcessorManager.class));
     mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
         .toProvider(new NonHadoopMasterServiceManagerProvider(DatasetExecutorServiceManager.class));
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
@@ -144,6 +149,7 @@ public class MonitorHandlerModule extends AbstractModule {
         .to(MetricsProcessorStatusServiceManager.class);
     mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
     mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(AppFabricServiceManager.class);
+    mapBinder.addBinding(Constants.Service.APP_FABRIC_PROCESSOR).to(AppFabricProcessorManager.class);
     mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
         .to(DatasetExecutorServiceManager.class);
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE).to(MetadataServiceManager.class);

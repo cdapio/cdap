@@ -240,7 +240,7 @@ public class HydratorTestBase extends TestBase {
       } catch (ApplicationNotFoundException exception) {
         throw new RetryableException(String.format("App %s not yet deployed", pipeline));
       }
-    }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
+    }, RetryStrategies.limit(20, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
   }
 
 }

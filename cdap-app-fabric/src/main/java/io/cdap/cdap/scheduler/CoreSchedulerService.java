@@ -98,7 +98,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Inject
   CoreSchedulerService(TimeSchedulerService timeSchedulerService,
-      ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
       ConstraintCheckerService constraintCheckerService,
       MessagingService messagingService,
       CConfiguration cConf, Store store, Impersonator impersonator,
@@ -124,14 +123,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         timeSchedulerService.startAndWait();
         cleanupJobs();
         constraintCheckerService.startAndWait();
-        scheduleNotificationSubscriberService.startAndWait();
         startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
       @Override
       protected void shutDown() {
-        scheduleNotificationSubscriberService.stopAndWait();
         constraintCheckerService.stopAndWait();
         timeSchedulerService.stopAndWait();
         LOG.info("Stopped core scheduler service.");

@@ -111,6 +111,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Service for provisioning related operations.
+ *
+ * TODO (CDAP-21111): Split ProvisioningService for Appfabric Server and Appfabric Processor.
  */
 public class ProvisioningService extends AbstractIdleService {
 

@@ -85,7 +85,7 @@ public class SupportBundleSystemLogTaskTest extends SupportBundleTestBase {
     List<File> systemLogFiles = DirUtils.listFiles(systemLogFolder,
                                                    file -> !file.isHidden() && !file.getParentFile().isHidden());
 
-    Assert.assertEquals(9, systemLogFiles.size());
+    Assert.assertEquals(10, systemLogFiles.size());
   }
 
   @Before

@@ -46,6 +46,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -220,6 +221,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                     Names.named("appfabric.services.names"));
             servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
+            Multibinder<String> processorNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.processor.services.names"));
+            processorNamesBinder.addBinding().toInstance(Service.APP_FABRIC_PROCESSOR);
+
             // TODO: Uncomment after CDAP-7688 is resolved
             // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
 
@@ -230,6 +236,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
             // TODO: Uncomment after CDAP-7688 is resolved
             // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+            // TODO (CDAP-21112): Move HTTP handler from Appfabric processor to server after fixing
+            //  ProgramRuntimeService and RunRecordMonitorService.
+            // Remove additional handlers added to server for in-memory module.
+            Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+                binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
+            handlerBinder.addBinding().to(BootstrapHttpHandler.class);
+            handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
+            handlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
+            handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
+            handlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
+            handlerBinder.addBinding().to(WorkflowHttpHandler.class);
           }
         });
   }
@@ -269,6 +287,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
             servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
             servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
+
+            Multibinder<String> processorNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.processor.services.names"));
+            processorNamesBinder.addBinding().toInstance(Service.APP_FABRIC_PROCESSOR);
 
             // TODO: Uncomment after CDAP-7688 is resolved
             // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -330,6 +353,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                     Names.named("appfabric.handler.hooks"));
             handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
             servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
+
+            Multibinder<String> processorNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.processor.services.names"));
+            processorNamesBinder.addBinding().toInstance(Service.APP_FABRIC_PROCESSOR);
           }
         });
   }
@@ -435,7 +463,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+          binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
@@ -444,17 +472,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(InstanceOperationHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(SourceControlManagementHttpHandler.class);
-      handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
-      handlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
-      handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
-      handlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
       // TODO: [CDAP-13355] Move OperationsDashboardHttpHandler into report generation app
       handlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandlerInternal.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
-      handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandlerInternal.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
@@ -464,7 +487,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
       handlerBinder.addBinding().to(ProfileHttpHandler.class);
       handlerBinder.addBinding().to(ProvisionerHttpHandler.class);
-      handlerBinder.addBinding().to(BootstrapHttpHandler.class);
       handlerBinder.addBinding().to(FileFetcherHttpHandlerInternal.class);
       handlerBinder.addBinding().to(TetheringHandler.class);
       handlerBinder.addBinding().to(TetheringServerHandler.class);
@@ -483,6 +505,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
+
+      Multibinder<HttpHandler> processorHandlerBinder = Multibinder.newSetBinder(
+          binder(), HttpHandler.class, Names.named(AppFabric.PROCESSOR_HANDLERS_BINDING));
+      CommonHandlers.add(processorHandlerBinder);
+      // TODO (CDAP-21112): Move HTTP handler from Appfabric processor to server after fixing
+      //  ProgramRuntimeService and RunRecordMonitorService.
+      processorHandlerBinder.addBinding().to(BootstrapHttpHandler.class);
+      processorHandlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
+      processorHandlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
+      processorHandlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
+      processorHandlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
+      processorHandlerBinder.addBinding().to(WorkflowHttpHandler.class);
     }
 
     @Provides

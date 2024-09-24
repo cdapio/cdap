@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2020 Cask Data, Inc.
+ * Copyright © 2025 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -34,32 +34,23 @@ import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.features.Feature;
-import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
-import io.cdap.cdap.internal.credential.CredentialProviderService;
-import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
+import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
-import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
-import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import io.cdap.cdap.spi.data.transaction.TxCallable;
-import io.cdap.cdap.store.DefaultNamespaceStore;
-import io.cdap.http.AbstractHandlerHook;
+import io.cdap.cdap.scheduler.ScheduleNotificationSubscriberService;
+import io.cdap.cdap.security.auth.AuditLogSubscriberService;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -67,118 +58,127 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AppFabric Server.
+ * AppFabric Processor Service which runs messaging subscriber services.
  */
-public class AppFabricServer extends AbstractIdleService {
+public class AppFabricProcessorService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricProcessorService.class);
 
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
+  private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
-  private final Set<String> handlerHookNames;
+  private final ProgramNotificationSubscriberService programNotificationSubscriberService;
+  private final ProgramStopSubscriberService programStopSubscriberService;
+  private final AuditLogSubscriberService auditLogSubscriberService;
+  private final RunRecordCorrectorService runRecordCorrectorService;
+  private final RunDataTimeToLiveService runDataTimeToLiveService;
+  private final ProgramRunStatusMonitorService programRunStatusMonitorService;
+  private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
-  private final CredentialProviderService credentialProviderService;
-  private final NamespaceCredentialProviderService namespaceCredentialProviderService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
-  private final SourceControlOperationRunner sourceControlOperationRunner;
-  private final RepositoryCleanupService repositoryCleanupService;
+  private final SystemAppManagementService systemAppManagementService;
+  private final OperationNotificationSubscriberService operationNotificationSubscriberService;
+  private final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
-  private final TransactionRunner transactionRunner;
+  private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
-  private MetricsCollectionService metricsCollectionService;
-  private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   /**
-   * Construct the AppFabricServer with service factory and cConf coming from guice
-   * injection.
+   * Construct the AppFabricProcessorService with service factory and cConf coming from guice injection.
    */
   @Inject
-  public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
+  public AppFabricProcessorService(CConfiguration cConf,
+      SConfiguration sConf,
       DiscoveryService discoveryService,
       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-      @Named(Constants.AppFabric.SERVER_HANDLERS_BINDING) Set<HttpHandler> handlers,
-      @Nullable MetricsCollectionService metricsCollectionService,
+      @Named(Constants.AppFabric.PROCESSOR_HANDLERS_BINDING) Set<HttpHandler> handlers,
+      ProgramRuntimeService programRuntimeService,
+      RunRecordCorrectorService runRecordCorrectorService,
+      ProgramRunStatusMonitorService programRunStatusMonitorService,
       ApplicationLifecycleService applicationLifecycleService,
-      @Named("appfabric.services.names") Set<String> servicesNames,
-      @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+      @Named("appfabric.processor.services.names") Set<String> servicesNames,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      ProgramNotificationSubscriberService programNotificationSubscriberService,
+      ProgramStopSubscriberService programStopSubscriberService,
+      AuditLogSubscriberService auditLogSubscriberService,
       CoreSchedulerService coreSchedulerService,
-      CredentialProviderService credentialProviderService,
-      NamespaceCredentialProviderService namespaceCredentialProviderService,
       ProvisioningService provisioningService,
       BootstrapService bootstrapService,
-      TransactionRunner transactionRunner,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      SourceControlOperationRunner sourceControlOperationRunner,
-      RepositoryCleanupService repositoryCleanupService) {
+      SystemAppManagementService systemAppManagementService,
+      RunRecordMonitorService runRecordCounterService,
+      RunDataTimeToLiveService runDataTimeToLiveService,
+      OperationNotificationSubscriberService operationNotificationSubscriberService,
+      ScheduleNotificationSubscriberService scheduleNotificationSubscriberService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
     this.cConf = cConf;
     this.sConf = sConf;
-    this.metricsCollectionService = metricsCollectionService;
-    this.servicesNames = servicesNames;
-    this.handlerHookNames = handlerHookNames;
-    this.applicationLifecycleService = applicationLifecycleService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
+    this.servicesNames = servicesNames;
+    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
+    this.programRuntimeService = programRuntimeService;
+    this.applicationLifecycleService = applicationLifecycleService;
+    this.programNotificationSubscriberService = programNotificationSubscriberService;
+    this.programStopSubscriberService = programStopSubscriberService;
+    this.auditLogSubscriberService = auditLogSubscriberService;
+    this.runRecordCorrectorService = runRecordCorrectorService;
+    this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.coreSchedulerService = coreSchedulerService;
-    this.credentialProviderService = credentialProviderService;
-    this.namespaceCredentialProviderService = namespaceCredentialProviderService;
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
-    this.transactionRunner = transactionRunner;
-    this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
-    this.sourceControlOperationRunner = sourceControlOperationRunner;
-    this.repositoryCleanupService = repositoryCleanupService;
+    this.systemAppManagementService = systemAppManagementService;
+    this.runRecordCounterService = runRecordCounterService;
+    this.runDataTimeToLiveService = runDataTimeToLiveService;
+    this.operationNotificationSubscriberService = operationNotificationSubscriberService;
+    this.scheduleNotificationSubscriberService = scheduleNotificationSubscriberService;
   }
 
   /**
-   * Configures the AppFabricService pre-start.
+   * Configures the AppFabricProcessorService pre-start.
    */
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
-            Constants.Service.APP_FABRIC_HTTP));
+            Service.APP_FABRIC_PROCESSOR));
+    LOG.info("Starting AppFabric processor service.");
     List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      futuresList.add(namespaceCredentialProviderService.start());
+    // Only for RBAC instances
+    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
+        && cConf.getBoolean(Constants.Security.ENABLED)) {
+      futuresList.add(auditLogSubscriberService.start());
     }
+
     futuresList.addAll(ImmutableList.of(
         provisioningService.start(),
         applicationLifecycleService.start(),
         bootstrapService.start(),
+        programRuntimeService.start(),
+        programNotificationSubscriberService.start(),
+        programStopSubscriberService.start(),
+        runRecordCorrectorService.start(),
+        programRunStatusMonitorService.start(),
+        scheduleNotificationSubscriberService.start(),
         coreSchedulerService.start(),
-        credentialProviderService.start(),
-        sourceControlOperationRunner.start(),
-        repositoryCleanupService.start()
+        runRecordCounterService.start(),
+        runDataTimeToLiveService.start(),
+        operationNotificationSubscriberService.start()
     ));
     Futures.allAsList(futuresList).get();
-
-    // Create handler hooks
-    List<AbstractHandlerHook> handlerHooks = handlerHookNames.stream()
-        .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
-        .collect(Collectors.toList());
-
-    // Create handler hooks
-    List<AuditLogSetterHook> auditHandlerHooks = handlerHookNames.stream()
-      .map(name -> new AuditLogSetterHook(cConf, name))
-      .collect(Collectors.toList());
-
-    handlerHooks.addAll(auditHandlerHooks);
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
         .builder(Constants.Service.APP_FABRIC_HTTP)
         .setHost(hostname.getCanonicalHostName())
-        .setHandlerHooks(handlerHooks)
         .setHttpHandlers(handlers)
         .setConnectionBacklog(cConf.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
             Constants.AppFabric.DEFAULT_BACKLOG))
@@ -194,30 +194,29 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
-    long applicationCount = TransactionRunners.run(transactionRunner,
-        (TxCallable<Long>) context ->
-            AppMetadataStore.create(context).getApplicationCount());
-    long namespaceCount = new DefaultNamespaceStore(transactionRunner).getNamespaceCount();
-
-    metricsCollectionService.getContext(Collections.emptyMap())
-        .gauge(Constants.Metrics.Program.APPLICATION_COUNT,
-            applicationCount);
-    metricsCollectionService.getContext(Collections.emptyMap())
-        .gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
-            namespaceCount);
+    LOG.info("AppFabric processor service started.");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    coreSchedulerService.stopAndWait();
+    LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    applicationLifecycleService.stopAndWait();
+    scheduleNotificationSubscriberService.stopAndWait();
+    coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
+    systemAppManagementService.stopAndWait();
+    programRuntimeService.stopAndWait();
+    applicationLifecycleService.stopAndWait();
+    programNotificationSubscriberService.stopAndWait();
+    programStopSubscriberService.stopAndWait();
+    runRecordCorrectorService.stopAndWait();
+    programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
-    sourceControlOperationRunner.stopAndWait();
-    repositoryCleanupService.stopAndWait();
-    credentialProviderService.stopAndWait();
-    namespaceCredentialProviderService.stopAndWait();
+    runRecordCounterService.stopAndWait();
+    runDataTimeToLiveService.stopAndWait();
+    operationNotificationSubscriberService.stopAndWait();
+    auditLogSubscriberService.stopAndWait();
+    LOG.info("AppFabric processor service stopped.");
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
@@ -229,12 +228,10 @@ public class AppFabricServer extends AbstractIdleService {
         httpService.getBindAddress().getPort());
 
     final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
-    LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
+    LOG.info("AppFabric Processor HTTP Service announced at {}", socketAddress);
 
     // Tag the discoverable's payload to mark it as supporting ssl.
     URIScheme uriScheme = sslEnabled ? URIScheme.HTTPS : URIScheme.HTTP;
-    // TODO accept a list of services, and start them here
-    // When it is running, register it with service discovery
 
     final List<Cancellable> cancellables = new ArrayList<>();
     for (final String serviceName : servicesNames) {
@@ -243,7 +240,7 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     return () -> {
-      LOG.debug("Stopping AppFabric HTTP service.");
+      LOG.debug("Stopping AppFabric Processor HTTP service.");
       for (Cancellable cancellable : cancellables) {
         if (cancellable != null) {
           cancellable.cancel();
@@ -253,10 +250,10 @@ public class AppFabricServer extends AbstractIdleService {
       try {
         httpService.stop();
       } catch (Exception e) {
-        LOG.warn("Exception raised when stopping AppFabric HTTP service", e);
+        LOG.warn("Exception raised when stopping AppFabric Processor service", e);
       }
 
-      LOG.info("AppFabric HTTP service stopped.");
+      LOG.info("AppFabric Processor HTTP service stopped.");
     };
   }
 }

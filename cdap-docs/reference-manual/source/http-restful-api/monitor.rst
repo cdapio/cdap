@@ -105,6 +105,9 @@ The status of these CDAP system services can be checked:
    * - ``App Fabric``
      - ``appfabric``
      - Service that handles application fabric requests
+   * - ``App Fabric Processor``
+     - ``appfabric.processor``
+     - Service that handles application lifecycle
    * - ``Log Saver``
      - ``log.saver``
      - Service that aggregates all system and application logs

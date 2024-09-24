@@ -18,11 +18,14 @@ package io.cdap.cdap.gateway.router;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
@@ -31,6 +34,25 @@ import javax.annotation.Nullable;
  */
 public final class RouterPathLookup extends AbstractHttpHandler {
 
+  public static final Set<String> APP_FABRIC_PROCESSOR_PATH_PARTS =
+      createAppFabricPathParts();
+
+  private static Set<String> createAppFabricPathParts() {
+    return ImmutableSet.of("previousruntime",
+        "nextruntime",
+        "status",
+        "stop",
+        "start",
+        "instances",
+        "runcount",
+        "runs",
+        "mapreduce",
+        "spark",
+        "workflows",
+        "services",
+        "workers");
+  }
+
   @SuppressWarnings("unused")
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
@@ -38,6 +60,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
 
   public static final RouteDestination APP_FABRIC_HTTP = new RouteDestination(
       Constants.Service.APP_FABRIC_HTTP);
+  public static final RouteDestination APP_FABRIC_PROCESSOR = new RouteDestination(
+      Constants.Service.APP_FABRIC_PROCESSOR);
   public static final RouteDestination METRICS = new RouteDestination(Constants.Service.METRICS);
   public static final RouteDestination DATASET_MANAGER = new RouteDestination(
       Constants.Service.DATASET_MANAGER);
@@ -81,6 +105,12 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
       }
+
+      // TODO (CDAP-21112): Move HTTP handler from Appfabric processor to server after fixing
+      //  ProgramRuntimeService and RunRecordMonitorService.
+      if (uriParts[0].equals(Gateway.INTERNAL_API_VERSION_3_TOKEN)) {
+        return getV3InternalRoutingService(uriParts);
+      }
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
     }
@@ -96,6 +126,15 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     return false;
   }
 
+  private RouteDestination getV3InternalRoutingService(String[] uriParts) {
+    if (beginsWith(uriParts, "v3Internal", "namespaces", null)) {
+      // ProgramLifecycleHttpHandlerInternal and AppLifecycleHttpHandlerInternal paths.
+      // Paths: "/v3Internal/namespaces/{namespace-id}/**"
+      return APP_FABRIC_PROCESSOR;
+    }
+    return APP_FABRIC_HTTP;
+  }
+
   @Nullable
   private RouteDestination getV3RoutingService(String[] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
@@ -103,7 +142,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // This needs to now changed especially metadata since now it can have custom parts
       return null;
     } else if ("bootstrap".equals(uriParts[1])) {
-      return APP_FABRIC_HTTP;
+      return APP_FABRIC_PROCESSOR;
     } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(
         uriParts[7])
         && "methods".equals(uriParts[9])) {
@@ -153,7 +192,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         || beginsWith(uriParts, "v3", "profiles")) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "runs")) {
-      return APP_FABRIC_HTTP;
+      return APP_FABRIC_PROCESSOR;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "previews")) {
       return PREVIEW_HTTP;
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
@@ -185,6 +224,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           return METRICS;
         case Constants.Service.APP_FABRIC_HTTP:
           return APP_FABRIC_HTTP;
+        case Constants.Service.APP_FABRIC_PROCESSOR:
+          return APP_FABRIC_PROCESSOR;
         case Constants.Service.DATASET_EXECUTOR:
           return DATASET_EXECUTOR;
         case Constants.Service.METADATA_SERVICE:
@@ -221,6 +262,25 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}
       return DONT_ROUTE;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "preferences")
+      || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "preferences")) {
+      // App Preferences Paths:
+      // /v3/namespaces/{namespace-id}/apps/{application-id}/preferences
+      // /v3/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences
+      return APP_FABRIC_HTTP;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "datasets")
+      || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "datasets")) {
+      return APP_FABRIC_HTTP;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps")
+        || beginsWith(uriParts, "v3", "namespaces", null, "upgrade")
+        || beginsWith(uriParts, "v3", "namespaces", null, "appdetail")
+        || beginsWith(uriParts, "v3", "namespaces", null, "schedules")) {
+      // Paths for AppLifecycleHttpHandler, ProgramLifecycleHttpHandler, WorkflowHttpHandler.
+      return APP_FABRIC_PROCESSOR;
+    } else if (beginsWith(uriParts, "v3", "namespaces")
+        && APP_FABRIC_PROCESSOR_PATH_PARTS.contains(uriParts[3])) {
+      // Paths for ProgramLifecycleHttpHandler.
+      return APP_FABRIC_PROCESSOR;
     }
     return APP_FABRIC_HTTP;
   }
