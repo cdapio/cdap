@@ -67,6 +67,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.internal.events.EventPublishManager;
@@ -133,6 +134,7 @@ public class StandaloneMain {
   private final MetricsQueryService metricsQueryService;
   private final LogQueryService logQueryService;
   private final AppFabricServer appFabricServer;
+  private final AppFabricProcessorService appFabricProcessorService;
   private final ServiceStore serviceStore;
   private final MetricsCollectionService metricsCollectionService;
   private final LogAppenderInitializer logAppenderInitializer;
@@ -173,6 +175,7 @@ public class StandaloneMain {
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     logQueryService = injector.getInstance(LogQueryService.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
@@ -276,6 +279,11 @@ public class StandaloneMain {
       throw new Exception("Failed to start Application Fabric");
     }
 
+    state = appFabricProcessorService.startAndWait();
+    if (state != Service.State.RUNNING) {
+      throw new Exception("Failed to start Application Fabric Processor");
+    }
+
     artifactLocalizerService.startAndWait();
     // NOTE: As the artifact localizer client does not use service discovery for port discovery,
     // We need to set the port after starting the localizer service.
@@ -346,6 +354,7 @@ public class StandaloneMain {
       eventSubscriberManager.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
+      appFabricProcessorService.stopAndWait();
       runtimeServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();

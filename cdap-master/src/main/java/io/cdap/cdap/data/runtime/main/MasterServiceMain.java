@@ -67,6 +67,7 @@ import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -651,6 +652,7 @@ public class MasterServiceMain extends DaemonMain {
       services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
           RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
       services.add(injector.getInstance(AppFabricServer.class));
+      services.add(injector.getInstance(AppFabricProcessorService.class));
       executor = Executors.newSingleThreadScheduledExecutor(
           Threads.createDaemonThreadFactory("master-runner"));
 
