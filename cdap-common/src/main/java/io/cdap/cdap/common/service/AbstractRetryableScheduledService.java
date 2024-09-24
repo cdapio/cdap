@@ -100,6 +100,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    */
   protected void doStartUp() throws Exception {
     LOG.debug("Starting scheduled service {}", getServiceName());
+    LOG.debug("Starting scheduled service {} with stacktrace", getServiceName(), new Throwable());
   }
 
   /**
