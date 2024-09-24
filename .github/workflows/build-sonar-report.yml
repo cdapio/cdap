@@ -37,7 +37,7 @@ jobs:
         submodules: recursive
 
      - name: Cache SonarCloud packages
-       uses: actions/cache@v3
+       uses: actions/cache@v4
        with:
         path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
@@ -50,9 +50,10 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
         path: artifacts/
 
-     - name: Copy coverage report
+     - name: Copy downloaded artifacts
        run: |
         cp -r artifacts/reports-${{ github.event.workflow_run.id }}/* /tmp/cdap/cdap/
+        rm -rf artifacts/
 
      - name: Sonar Report on PR
        # For whatever reason we get PR 69 for develop branch with both head and base as develop.
