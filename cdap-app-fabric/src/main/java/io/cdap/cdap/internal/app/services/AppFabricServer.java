@@ -41,11 +41,9 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
-import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -68,7 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AppFabric Server.
+ * AppFabric Processor Service.
  */
 public class AppFabricServer extends AbstractIdleService {
 
@@ -80,13 +78,10 @@ public class AppFabricServer extends AbstractIdleService {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
-  private final ProgramNotificationSubscriberService programNotificationSubscriberService;
-  private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final RunDataTimeToLiveService runDataTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
-  private final CoreSchedulerService coreSchedulerService;
   private final CredentialProviderService credentialProviderService;
   private final NamespaceCredentialProviderService namespaceCredentialProviderService;
   private final ProvisioningService provisioningService;
@@ -94,7 +89,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SystemAppManagementService systemAppManagementService;
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final RepositoryCleanupService repositoryCleanupService;
-  private final OperationNotificationSubscriberService operationNotificationSubscriberService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -106,7 +100,8 @@ public class AppFabricServer extends AbstractIdleService {
   private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   /**
-   * Construct the AppFabricServer with service factory and cConf coming from guice injection.
+   * Construct the AppFabricProcessorService with service factory and cConf coming from guice
+   * injection.
    */
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
@@ -118,11 +113,8 @@ public class AppFabricServer extends AbstractIdleService {
       RunRecordCorrectorService runRecordCorrectorService,
       ProgramRunStatusMonitorService programRunStatusMonitorService,
       ApplicationLifecycleService applicationLifecycleService,
-      ProgramNotificationSubscriberService programNotificationSubscriberService,
-      ProgramStopSubscriberService programStopSubscriberService,
       @Named("appfabric.services.names") Set<String> servicesNames,
       @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-      CoreSchedulerService coreSchedulerService,
       CredentialProviderService credentialProviderService,
       NamespaceCredentialProviderService namespaceCredentialProviderService,
       ProvisioningService provisioningService,
@@ -133,8 +125,7 @@ public class AppFabricServer extends AbstractIdleService {
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
       RunDataTimeToLiveService runDataTimeToLiveService,
       SourceControlOperationRunner sourceControlOperationRunner,
-      RepositoryCleanupService repositoryCleanupService,
-      OperationNotificationSubscriberService operationNotificationSubscriberService) {
+      RepositoryCleanupService repositoryCleanupService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -145,12 +136,9 @@ public class AppFabricServer extends AbstractIdleService {
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.programNotificationSubscriberService = programNotificationSubscriberService;
-    this.programStopSubscriberService = programStopSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
-    this.coreSchedulerService = coreSchedulerService;
     this.credentialProviderService = credentialProviderService;
     this.namespaceCredentialProviderService = namespaceCredentialProviderService;
     this.provisioningService = provisioningService;
@@ -162,7 +150,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.repositoryCleanupService = repositoryCleanupService;
-    this.operationNotificationSubscriberService = operationNotificationSubscriberService;
   }
 
   /**
@@ -184,17 +171,13 @@ public class AppFabricServer extends AbstractIdleService {
         applicationLifecycleService.start(),
         bootstrapService.start(),
         programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
         runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
         credentialProviderService.start(),
         runRecordCounterService.start(),
         runDataTimeToLiveService.start(),
         sourceControlOperationRunner.start(),
-        repositoryCleanupService.start(),
-        operationNotificationSubscriberService.start()
+        repositoryCleanupService.start()
     ));
     Futures.allAsList(futuresList).get();
 
@@ -238,14 +221,11 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
     systemAppManagementService.stopAndWait();
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
@@ -255,7 +235,6 @@ public class AppFabricServer extends AbstractIdleService {
     repositoryCleanupService.stopAndWait();
     credentialProviderService.stopAndWait();
     namespaceCredentialProviderService.stopAndWait();
-    operationNotificationSubscriberService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
