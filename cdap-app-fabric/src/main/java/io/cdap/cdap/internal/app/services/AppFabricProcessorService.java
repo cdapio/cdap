@@ -222,6 +222,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(httpServiceBuilder);
     }
 
+    // TODO: Remove this and don't start HTTP Service.
     cancelHttpService = startHttpService(httpServiceBuilder.build());
     long applicationCount = TransactionRunners.run(transactionRunner,
         (TxCallable<Long>) context ->

@@ -44,6 +44,7 @@ import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderSer
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -82,6 +83,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final RunDataTimeToLiveService runDataTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
+  private final CoreSchedulerService coreSchedulerService;
   private final CredentialProviderService credentialProviderService;
   private final NamespaceCredentialProviderService namespaceCredentialProviderService;
   private final ProvisioningService provisioningService;
@@ -115,6 +117,7 @@ public class AppFabricServer extends AbstractIdleService {
       ApplicationLifecycleService applicationLifecycleService,
       @Named("appfabric.services.names") Set<String> servicesNames,
       @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+      CoreSchedulerService coreSchedulerService,
       CredentialProviderService credentialProviderService,
       NamespaceCredentialProviderService namespaceCredentialProviderService,
       ProvisioningService provisioningService,
@@ -139,6 +142,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
+    this.coreSchedulerService = coreSchedulerService;
     this.credentialProviderService = credentialProviderService;
     this.namespaceCredentialProviderService = namespaceCredentialProviderService;
     this.provisioningService = provisioningService;
@@ -173,6 +177,7 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
+        coreSchedulerService.start(),
         credentialProviderService.start(),
         runRecordCounterService.start(),
         runDataTimeToLiveService.start(),
@@ -221,6 +226,7 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
     systemAppManagementService.stopAndWait();
     cancelHttpService.cancel();
