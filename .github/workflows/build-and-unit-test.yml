@@ -284,7 +284,7 @@ jobs:
           replacesArtifacts: ${{ env.REPLACE_ARTIFACTS }}
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ env.TAG_NAME }}
-          body: Cask Data Appplication Platform - Release ${{ env.CDAP_VERSION }}
+          body: Cask Data Application Platform - Release ${{ env.CDAP_VERSION }}
           artifacts: |
             cdap-build/cdap/cdap-standalone/target/cdap-sandbox-${{env.CDAP_VERSION}}.zip,cdap-build/cdap/cdap-distributions/target/cdap-distributed-deb-bundle-${{env.CDAP_VERSION}}.tgz
 
