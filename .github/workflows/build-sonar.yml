@@ -41,6 +41,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
       - name: Cache
         uses: actions/cache@v4
         with:
@@ -48,6 +49,7 @@ jobs:
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-${{ github.workflow }}
+
       - name: Build with Maven
         run: >-
           mvn clean verify -fae -T 2 -B -V -Dmaven.test.failure.ignore
@@ -56,6 +58,7 @@ jobs:
           -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+
       - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -64,8 +67,35 @@ jobs:
           path: |
             **/target/rat.txt
             **/target/surefire-reports/*
-            **/target/generated-test-sources/*
-            **/target/generated-sources/*
-            **/target/classes/*
-            **/target/test-classes/*
-            **/target/site/*
+
+      - name: Sonar Report on PR
+        # For whatever reason we get PR 69 for develop branch with both head and base as develop.
+        if: ${{ github.event.workflow_run.pull_requests[0].head.ref != github.event.workflow_run.pull_requests[0].base.ref }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        run: >-
+          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
+          -Dmaven.repo.local=$HOME/.m2/repository11
+          -DcloudBuild
+          -Pcoverage,templates
+          -Dmaven.wagon.http.retryHandler.count=3
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          -Dsonar.pullrequest.key=${{ github.event.workflow_run.pull_requests[0].number }}
+          -Dsonar.pullrequest.branch=${{ github.event.workflow_run.pull_requests[0].head.ref }}
+          -Dsonar.pullrequest.base=${{ github.event.workflow_run.pull_requests[0].base.ref }}
+
+      - name: Sonar report
+        if: ${{ github.event.workflow_run.pull_requests[0].head.ref == github.event.workflow_run.pull_requests[0].base.ref }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: >-
+          mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
+          -Dmaven.repo.local=$HOME/.m2/repository11
+          -DcloudBuild
+          -Pcoverage,templates
+          -Dmaven.wagon.http.retryHandler.count=3
+          -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          -Dsonar.branch.name=$BRANCH
