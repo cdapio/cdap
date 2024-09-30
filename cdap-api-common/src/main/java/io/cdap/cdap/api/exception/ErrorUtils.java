@@ -89,40 +89,40 @@ public final class ErrorUtils {
   public static ActionErrorPair getActionErrorByStatusCode(Integer statusCode) {
     switch (statusCode) {
       case HttpURLConnection.HTTP_BAD_REQUEST:
-        return new ActionErrorPair("Bad Request. Please check the request parameters and syntax.",
+        return new ActionErrorPair("Please check the request parameters and syntax.",
           ErrorType.USER);
       case HttpURLConnection.HTTP_UNAUTHORIZED:
-        return new ActionErrorPair("Unauthorized. Please ensure valid authentication "
+        return new ActionErrorPair("Please ensure valid authentication "
           + "credentials are provided.", ErrorType.USER);
       case HttpURLConnection.HTTP_FORBIDDEN:
-        return new ActionErrorPair("Forbidden. Please check you have permission to "
+        return new ActionErrorPair("Please check you have permission to "
           + "access this resource.", ErrorType.USER);
       case HttpURLConnection.HTTP_NOT_FOUND:
-        return new ActionErrorPair("Not Found. Please verify the URL or resource you're "
+        return new ActionErrorPair("Please verify the URL or resource you're "
           + "trying to access.", ErrorType.USER);
       case HttpURLConnection.HTTP_BAD_METHOD:
-        return new ActionErrorPair("Method Not Allowed. Please check if the HTTP method "
+        return new ActionErrorPair("Please check if the HTTP method "
           + "(GET, POST, etc.) is correct.", ErrorType.USER);
       case HttpURLConnection.HTTP_CONFLICT:
-        return new ActionErrorPair("Conflict. Please resolve any conflicts, such as resource "
+        return new ActionErrorPair("Please resolve any conflicts, such as resource "
           + "versioning issues.", ErrorType.USER);
       case HttpURLConnection.HTTP_PRECON_FAILED:
-        return new ActionErrorPair("Precondition Failed. Please check the request headers "
+        return new ActionErrorPair("Please check the request headers "
           + "to ensure the conditions are accurate and valid.", ErrorType.USER);
       case HttpURLConnection.HTTP_CLIENT_TIMEOUT:
-        return new ActionErrorPair("Request timed out. The server took too long to respond, "
+        return new ActionErrorPair("The server took too long to respond, "
           + "please try again or check your connection.", ErrorType.USER);
       case 429:
-        return new ActionErrorPair("Too Many Requests: Slow down your requests and "
+        return new ActionErrorPair("Slow down your requests and "
           + "please try again later.", ErrorType.USER);
       case HttpURLConnection.HTTP_INTERNAL_ERROR:
-        return new ActionErrorPair("Internal Server Error. The service is unavailable, "
+        return new ActionErrorPair("The service is unavailable, "
           + "try again later.", ErrorType.SYSTEM);
       case HttpURLConnection.HTTP_UNAVAILABLE:
-        return new ActionErrorPair("Service Unavailable. The service is unavailable, "
-          + "try again later.", ErrorType.SYSTEM);
+        return new ActionErrorPair("The service is unavailable, "
+          + "please try again later.", ErrorType.SYSTEM);
       case HttpURLConnection.HTTP_BAD_GATEWAY:
-        return new ActionErrorPair("Bad Gateway. Please ensure there are no network connectivity "
+        return new ActionErrorPair("Please ensure there are no network connectivity "
           + "issues between the proxy/gateway server and the upstream server or try again later.",
           ErrorType.SYSTEM);
       default:
