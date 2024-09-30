@@ -41,6 +41,7 @@
     <module>cdap-etl-tools</module>
     <module>hydrator-spark-core3_2.12</module>
     <module>hydrator-test</module>
+    <module>cdap-calcite</module>
   </modules>
 
   <properties>
