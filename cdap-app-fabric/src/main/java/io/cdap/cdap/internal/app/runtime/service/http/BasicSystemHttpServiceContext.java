@@ -142,11 +142,15 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
       MacroParserOptions options) throws InvalidMacroException {
     MacroParser macroParser = new MacroParser(evaluator, options);
     Map<String, String> evaluated = new HashMap<>();
-
-    for (Map.Entry<String, String> property : macros.entrySet()) {
-      String key = property.getKey();
-      String val = property.getValue();
-      evaluated.put(key, macroParser.parse(val));
+    try {
+      for (Map.Entry<String, String> property : macros.entrySet()) {
+        String key = property.getKey();
+        String val = property.getValue();
+        evaluated.put(key, macroParser.parse(val));
+      }
+    } catch (Throwable t) {
+      evaluated.clear();
+      evaluated.put("Macro Exception", t.getMessage());
     }
 
     return evaluated;
