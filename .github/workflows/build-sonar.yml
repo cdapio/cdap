@@ -69,8 +69,7 @@ jobs:
             **/target/surefire-reports/*
 
       - name: Sonar Report on PR
-        # For whatever reason we get PR 69 for develop branch with both head and base as develop.
-        if: ${{ github.event.workflow_run.pull_requests[0].head.ref != github.event.workflow_run.pull_requests[0].base.ref }}
+        if: ${{ github.event_name == 'pull_request' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
@@ -81,12 +80,12 @@ jobs:
           -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
-          -Dsonar.pullrequest.key=${{ github.event.workflow_run.pull_requests[0].number }}
-          -Dsonar.pullrequest.branch=${{ github.event.workflow_run.pull_requests[0].head.ref }}
-          -Dsonar.pullrequest.base=${{ github.event.workflow_run.pull_requests[0].base.ref }}
+          -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+          -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+          -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
 
       - name: Sonar report
-        if: ${{ github.event.workflow_run.pull_requests[0].head.ref == github.event.workflow_run.pull_requests[0].base.ref }}
+        if: ${{ github.event_name == 'push' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
