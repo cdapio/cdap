@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.etl.batch;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
 import java.io.IOException;
 import java.util.List;
 import org.apache.hadoop.conf.Configurable;
@@ -55,17 +59,21 @@ public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
    * Returns the delegating {@link InputFormat} based on the current configuration.
    *
    * @param conf the Hadoop {@link Configuration} for this input format
-   * @throws IOException if failed to instantiate the input format class
    */
-  protected final InputFormat<K, V> getDelegate(Configuration conf) throws IOException {
+  protected final InputFormat<K, V> getDelegate(Configuration conf) {
     String delegateClassName = conf.get(getDelegateClassNameKey());
     if (delegateClassName == null) {
-      throw new IllegalArgumentException("Missing configuration " + getDelegateClassNameKey()
-          + " for the InputFormat to use");
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+        String.format("Missing configuration '%s' for the InputFormat to use.",
+          getDelegateClassNameKey()), String.format("Please provide correct configuration for" 
+          + "delegate InputFormat class key '%s'.", getDelegateClassNameKey()),
+        ErrorType.SYSTEM, false, null);
     }
     if (delegateClassName.equals(getClass().getName())) {
-      throw new IllegalArgumentException(
-          "Cannot delegate InputFormat to the same class " + delegateClassName);
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+        String.format("Cannot delegate InputFormat to the same class '%s'.", delegateClassName),
+        String.format("Please provide correct configuration for delegate "
+          + "InputFormat class name '%s'.", delegateClassName), ErrorType.SYSTEM, false, null);
     }
     try {
       //noinspection unchecked
@@ -76,8 +84,10 @@ public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
         ((Configurable) inputFormat).setConf(conf);
       }
       return inputFormat;
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-      throw new IOException("Unable to instantiate delegate input format " + delegateClassName, e);
+    } catch (Exception e) {
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+        String.format("Unable to instantiate delegate input format class '%s'.",
+          delegateClassName), e.getMessage(), ErrorType.SYSTEM, false, e);
     }
   }
 }

@@ -27,7 +27,7 @@ import io.cdap.cdap.etl.batch.BasicOutputFormatProvider;
 import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.spark.io.TrackingOutputFormat;
+import io.cdap.cdap.etl.spark.io.StageTrackingOutputFormat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,8 +62,9 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
     if (actualOutput instanceof Output.OutputFormatProviderOutput) {
       OutputFormatProvider provider = ((Output.OutputFormatProviderOutput) actualOutput).getOutputFormatProvider();
       Map<String, String> conf = new HashMap<>(provider.getOutputFormatConfiguration());
-      conf.put(TrackingOutputFormat.DELEGATE_CLASS_NAME, provider.getOutputFormatClassName());
-      provider = new BasicOutputFormatProvider(TrackingOutputFormat.class.getName(), conf);
+      conf.put(StageTrackingOutputFormat.DELEGATE_CLASS_NAME, provider.getOutputFormatClassName());
+      conf.put(StageTrackingOutputFormat.WRAPPED_STAGE_NAME, getStageName());
+      provider = new BasicOutputFormatProvider(StageTrackingOutputFormat.class.getName(), conf);
       actualOutput = Output.of(actualOutput.getName(), provider).alias(actualOutput.getAlias());
     }
 

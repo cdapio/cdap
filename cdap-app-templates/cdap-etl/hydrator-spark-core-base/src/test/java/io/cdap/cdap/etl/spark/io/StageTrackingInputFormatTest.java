@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.WrappedStageException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -33,9 +34,9 @@ import java.nio.file.Files;
 import java.util.List;
 
 /**
- * Unit tests for {@link TrackingInputFormat} class.
+ * Unit tests for {@link StageTrackingInputFormat} class.
  */
-public class TrackingInputFormatTest {
+public class StageTrackingInputFormatTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -46,31 +47,33 @@ public class TrackingInputFormatTest {
     Files.createFile(inputDir.toPath().resolve("test"));
 
     Configuration hConf = new Configuration();
-    hConf.setClass(TrackingInputFormat.DELEGATE_CLASS_NAME, TextInputFormat.class, InputFormat.class);
+    hConf.setClass(StageTrackingInputFormat.DELEGATE_CLASS_NAME,
+      TextInputFormat.class, InputFormat.class);
 
     Job job = Job.getInstance(hConf);
     TextInputFormat.addInputPath(job, new Path(inputDir.toURI()));
 
-    TrackingInputFormat inputFormat = new TrackingInputFormat();
+    StageTrackingInputFormat inputFormat = new StageTrackingInputFormat();
     List<InputSplit> splits = inputFormat.getSplits(job);
     Assert.assertEquals(1, splits.size());
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test (expected = WrappedStageException.class)
   public void testMissingDelegate() throws IOException, InterruptedException {
     Configuration hConf = new Configuration();
     Job job = Job.getInstance(hConf);
-    TrackingInputFormat inputFormat = new TrackingInputFormat();
+    StageTrackingInputFormat inputFormat = new StageTrackingInputFormat();
     inputFormat.getSplits(job);
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test (expected = WrappedStageException.class)
   public void testSelfDelegate() throws IOException, InterruptedException {
     Configuration hConf = new Configuration();
-    hConf.setClass(TrackingInputFormat.DELEGATE_CLASS_NAME, TrackingInputFormat.class, InputFormat.class);
+    hConf.setClass(StageTrackingInputFormat.DELEGATE_CLASS_NAME, StageTrackingInputFormat.class,
+      InputFormat.class);
 
     Job job = Job.getInstance(hConf);
-    TrackingInputFormat inputFormat = new TrackingInputFormat();
+    StageTrackingInputFormat inputFormat = new StageTrackingInputFormat();
     inputFormat.getSplits(job);
   }
 }

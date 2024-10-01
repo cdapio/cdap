@@ -27,7 +27,7 @@ import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkSubmitterContext;
-import io.cdap.cdap.etl.spark.io.TrackingInputFormat;
+import io.cdap.cdap.etl.spark.io.StageTrackingInputFormat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,8 +58,9 @@ public class SparkBatchSourceContext extends SparkSubmitterContext implements Ba
     if (trackableInput instanceof Input.InputFormatProviderInput) {
       InputFormatProvider provider = ((Input.InputFormatProviderInput) trackableInput).getInputFormatProvider();
       Map<String, String> conf = new HashMap<>(provider.getInputFormatConfiguration());
-      conf.put(TrackingInputFormat.DELEGATE_CLASS_NAME, provider.getInputFormatClassName());
-      provider = new BasicInputFormatProvider(TrackingInputFormat.class.getName(), conf);
+      conf.put(StageTrackingInputFormat.DELEGATE_CLASS_NAME, provider.getInputFormatClassName());
+      conf.put(StageTrackingInputFormat.WRAPPED_STAGE_NAME, getStageName());
+      provider = new BasicInputFormatProvider(StageTrackingInputFormat.class.getName(), conf);
       trackableInput = Input.of(trackableInput.getName(), provider).alias(trackableInput.getAlias());
     }
 
