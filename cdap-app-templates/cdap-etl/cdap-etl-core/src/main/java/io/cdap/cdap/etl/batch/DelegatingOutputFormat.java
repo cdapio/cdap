@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.etl.batch;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -56,10 +60,21 @@ public class DelegatingOutputFormat<K, V> extends OutputFormat<K, V> {
    * Returns the delegating {@link OutputFormat} based on the configuration.
    *
    * @param conf the Hadoop {@link Configuration} for this output format
-   * @throws IOException if failed to instantiate the output format class
    */
-  protected final OutputFormat<K, V> getDelegate(Configuration conf) throws IOException {
+  protected final OutputFormat<K, V> getDelegate(Configuration conf) {
     String delegateClassName = conf.get(DELEGATE_CLASS_NAME);
+    if (delegateClassName == null) {
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+        String.format("Missing configuration '%s' for the OutputFormat to use.",
+          DELEGATE_CLASS_NAME), String.format("Please provide correct configuration for delegate "
+          + "OutputFormat class key '%s'.", DELEGATE_CLASS_NAME), ErrorType.SYSTEM, false, null);
+    }
+    if (delegateClassName.equals(getClass().getName())) {
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+        String.format("Cannot delegate OutputFormat to the same class '%s'.", delegateClassName),
+        String.format("Please provide correct configuration for delegate " 
+          + "OutputFormat class name '%s'.", delegateClassName), ErrorType.SYSTEM, false, null);
+    }
     try {
       //noinspection unchecked
       OutputFormat<K, V> outputFormat = (OutputFormat<K, V>) conf.getClassLoader()
@@ -69,8 +84,10 @@ public class DelegatingOutputFormat<K, V> extends OutputFormat<K, V> {
         ((Configurable) outputFormat).setConf(conf);
       }
       return outputFormat;
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-      throw new IOException("Unable to instantiate delegate output format " + delegateClassName, e);
+    } catch (Exception e) {
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+        String.format("Unable to instantiate delegate output format class '%s'.",
+          delegateClassName), e.getMessage(), ErrorType.SYSTEM, false, e);
     }
   }
 }
