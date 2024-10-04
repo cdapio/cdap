@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Failure collector that logs the failures.
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 public class LoggingFailureCollector extends DefaultFailureCollector {
 
   private static final Logger LOG = LoggerFactory.getLogger(LoggingFailureCollector.class);
+  private String stageName;
 
   /**
    * Failure collector that logs the failures.
@@ -41,6 +43,7 @@ public class LoggingFailureCollector extends DefaultFailureCollector {
    */
   public LoggingFailureCollector(String stageName, Map<String, Schema> inputSchemas) {
     super(stageName, inputSchemas);
+    this.stageName = stageName;
   }
 
   @Override
@@ -57,7 +60,9 @@ public class LoggingFailureCollector extends DefaultFailureCollector {
     }
 
     List<ValidationFailure> failures = validationException.getFailures();
-    LOG.error("Encountered '{}' validation failures: {}{}", failures.size(), System.lineSeparator(),
+    MDC.put("Failed_Stage", stageName);
+    LOG.error("Encountered '{}' validation failures in stage {}: {}{}", stageName, failures.size(),
+        System.lineSeparator(),
         IntStream.range(0, failures.size())
             .mapToObj(
                 index -> String.format("%d. %s", index + 1, failures.get(index).getFullMessage()))

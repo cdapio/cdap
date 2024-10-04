@@ -16,10 +16,14 @@
 
 package io.cdap.cdap.etl.common.plugin;
 
+import io.cdap.cdap.api.exception.WrappedException;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.action.ActionContext;
 import java.util.concurrent.Callable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Wrapper around {@link Action} that makes sure logging, classloading, and other pipeline
@@ -29,6 +33,7 @@ public class WrappedAction extends Action implements PluginWrapper<Action> {
 
   private final Action action;
   private final Caller caller;
+  private static final Logger LOG = LoggerFactory.getLogger(WrappedAction.class);
 
   public WrappedAction(Action action, Caller caller) {
     this.action = action;
@@ -45,10 +50,20 @@ public class WrappedAction extends Action implements PluginWrapper<Action> {
 
   @Override
   public void run(final ActionContext context) throws Exception {
-    caller.call((Callable<Void>) () -> {
-      action.run(context);
-      return null;
-    });
+    try {
+      caller.call((Callable<Void>) () -> {
+        action.run(context);
+        return null;
+      });
+    } catch(Exception e) {
+      if (caller instanceof StageLoggingCaller) {
+        String stageName = ((StageLoggingCaller) caller).getStageName();
+        MDC.put("Failed_Stage", stageName);
+        LOG.error("Stage: {}", stageName);
+        throw new WrappedException(e, stageName);
+      }
+      throw e;
+    }
   }
 
   @Override

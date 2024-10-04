@@ -15,15 +15,19 @@
  */
 package io.cdap.cdap.internal.app.runtime.workflow;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.exception.WrappedException;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import java.util.List;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  *
@@ -87,6 +91,15 @@ final class WorkflowProgramController extends AbstractProgramController {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
+        List<Throwable> causalChain = Throwables.getCausalChain(failure);
+        for(Throwable cause : causalChain) {
+          if (cause instanceof WrappedException) {
+            String stageName = ((WrappedException) cause).getStageName();
+            LOG.error("Stage: {}", stageName);
+            MDC.put("Failed_Stage", stageName);
+            break;
+          }
+        }
         LOG.error("Workflow service '{}' failed.", serviceName, failure);
         error(failure);
       }

@@ -33,6 +33,10 @@ public class StageLoggingCaller extends Caller {
     this.stageName = stageName;
   }
 
+  public String getStageName() {
+    return stageName;
+  }
+
   @Override
   public <T> T call(Callable<T> callable) throws Exception {
     MDC.put(Constants.MDC_STAGE_KEY, stageName);

@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -26,6 +27,7 @@ import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.WrappedException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
@@ -68,6 +70,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SQLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
@@ -149,15 +152,29 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
       new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache());
     this.functionCacheFactory = functionCacheFactory;
-    JavaRDD<RecordInfo<Object>> rdd = sourceFactory
-        .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-        .flatMap(sourceFunction);
-    if (shouldForceDatasets) {
-      return OpaqueDatasetCollection.fromRdd(
-          rdd, sec, jsc, new SQLContext(jsc), datasetContext, sinkFactory, functionCacheFactory);
+    try {
+      JavaRDD<RecordInfo<Object>> rdd = sourceFactory
+          .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+          .flatMap(sourceFunction);
+      if (shouldForceDatasets) {
+        return OpaqueDatasetCollection.fromRdd(
+            rdd, sec, jsc, new SQLContext(jsc), datasetContext, sinkFactory, functionCacheFactory);
+      }
+      return new RDDCollection<>(sec, functionCacheFactory, jsc,
+          new SQLContext(jsc), datasetContext, sinkFactory, rdd);
+    } catch (Exception e) {
+      List<Throwable> causalChain = Throwables.getCausalChain(e);
+      for(Throwable cause : causalChain) {
+        if (cause instanceof WrappedException) {
+          String stageName = ((WrappedException) cause).getStageName();
+          LOG.error("Stage: {}", stageName);
+          MDC.put("Failed_Stage", stageName);
+          throw new WrappedException(e, stageName);
+        }
+      }
+      MDC.put("Failed_Stage", stageSpec.getName());
+      throw new WrappedException(e, stageSpec.getName());
     }
-    return new RDDCollection<>(sec, functionCacheFactory, jsc,
-                               new SQLContext(jsc), datasetContext, sinkFactory, rdd);
   }
 
   @Override

@@ -347,7 +347,7 @@ public class BatchSQLEngineAdapter implements Closeable {
     ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
     JavaPairRDD pairRDD = RDDUtils.readUsingInputFormat(jsc, sqlPullDataset, classLoader, Object.class,
-                                                        Object.class);
+                                                        Object.class, null);
     JavaRDD<T> rdd = pairRDD.flatMap(new TransformFromPairFunction(sqlPullDataset.fromKeyValue()))
       .map(f -> {
         return f;

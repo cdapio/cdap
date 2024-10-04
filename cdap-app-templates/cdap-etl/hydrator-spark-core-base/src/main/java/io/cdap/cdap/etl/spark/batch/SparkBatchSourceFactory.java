@@ -144,24 +144,27 @@ public final class SparkBatchSourceFactory {
     }
 
     Iterator<String> inputsIter = inputNames.iterator();
-    JavaPairRDD<K, V> inputRDD = createInputRDD(sec, jsc, inputsIter.next(), keyClass, valueClass);
+    JavaPairRDD<K, V> inputRDD = createInputRDD(sec, jsc, inputsIter.next(), keyClass, valueClass,
+        sourceName);
     while (inputsIter.hasNext()) {
-      inputRDD = inputRDD.union(createInputRDD(sec, jsc, inputsIter.next(), keyClass, valueClass));
+      inputRDD = inputRDD.union(createInputRDD(sec, jsc, inputsIter.next(), keyClass, valueClass,
+          sourceName));
     }
     return inputRDD;
   }
 
   @SuppressWarnings("unchecked")
-  private <K, V> JavaPairRDD<K, V> createInputRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String inputName,
-                                                  Class<K> keyClass, Class<V> valueClass) {
+  private <K, V> JavaPairRDD<K, V> createInputRDD(JavaSparkExecutionContext sec,
+      JavaSparkContext jsc, String inputName, Class<K> keyClass,
+      Class<V> valueClass, String sourceName) {
     if (inputFormatProviders.containsKey(inputName)) {
       InputFormatProvider inputFormatProvider = inputFormatProviders.get(inputName);
 
       ClassLoader classLoader = Objects.firstNonNull(currentThread().getContextClassLoader(),
-                                                     getClass().getClassLoader());
+          getClass().getClassLoader());
 
       return RDDUtils.readUsingInputFormat(jsc, inputFormatProvider, classLoader, keyClass,
-                                           valueClass);
+          valueClass, sourceName);
     }
 
     if (datasetInfos.containsKey(inputName)) {

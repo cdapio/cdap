@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.exception.WrappedException;
+import io.cdap.cdap.etl.batch.WrappedInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Common RDD operations
@@ -60,21 +61,22 @@ public class RDDUtils {
 
   @SuppressWarnings("unchecked")
   public static <K, V> JavaPairRDD<K, V> readUsingInputFormat(JavaSparkContext jsc,
-                                                              InputFormatProvider inputFormatProvider,
-                                                              ClassLoader classLoader,
-                                                              Class<K> keyClass, Class<V> valueClass) {
+      InputFormatProvider inputFormatProvider, ClassLoader classLoader,
+      Class<K> keyClass, Class<V> valueClass, @Nullable String stageName) {
     Configuration hConf = new Configuration();
     hConf.clear();
     for (Map.Entry<String, String> entry : inputFormatProvider.getInputFormatConfiguration().entrySet()) {
       hConf.set(entry.getKey(), entry.getValue());
     }
     try {
+      // Instantiate the wrapper class, passing the necessary parameters
       @SuppressWarnings("unchecked")
-      Class<InputFormat> inputFormatClass = (Class<InputFormat>) classLoader.loadClass(
-        inputFormatProvider.getInputFormatClassName());
-      return jsc.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
-    } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+      WrappedInputFormat wrappedInputFormat = new WrappedInputFormat<>(classLoader,
+          inputFormatProvider.getInputFormatClassName(), stageName);
+
+      return jsc.newAPIHadoopRDD(hConf, wrappedInputFormat.getClass(), keyClass, valueClass);
+    } catch (IOException e) {
+      throw new WrappedException(e, stageName);
     }
   }
 

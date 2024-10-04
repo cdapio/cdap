@@ -23,6 +23,7 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.exception.WrappedException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.Alert;
@@ -77,8 +78,10 @@ import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import scala.Tuple2;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -270,9 +273,23 @@ public class RDDCollection<T> implements BatchCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
-        for (String outputName : sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName())) {
-          recordLineage(outputName);
+        try {
+          JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
+          for (String outputName : sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName())) {
+            recordLineage(outputName);
+          }
+        } catch (Exception e) {
+          List<Throwable> causalChain = Throwables.getCausalChain(e);
+          for(Throwable cause : causalChain) {
+            if (cause instanceof WrappedException) {
+              String stageName = ((WrappedException) cause).getStageName();
+              LOG.error("Stage: {}", stageName);
+              throw new WrappedException(e, stageName);
+            }
+          }
+          MDC.put("Failed_Stage", stageSpec.getName());
+          LOG.error("Stage: {}", stageSpec.getName());
+          throw new WrappedException(e, stageSpec.getName());
         }
       }
     };
