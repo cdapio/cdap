@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -29,7 +30,8 @@ import java.io.IOException;
  * @param <K> type of key to read
  * @param <V> type of value to read
  */
-public class TrackingRecordReader<K, V> extends RecordReader<K, V> {
+public class TrackingRecordReader<K, V> extends RecordReader<K, V>
+  implements ErrorDetailsProvider<Void> {
 
   private final RecordReader<K, V> delegate;
 
@@ -65,5 +67,13 @@ public class TrackingRecordReader<K, V> extends RecordReader<K, V> {
   @Override
   public void close() throws IOException {
     delegate.close();
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Void conf) {
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      return ((ErrorDetailsProvider<?>) delegate).getExceptionDetails(e, null);
+    }
+    return null;
   }
 }

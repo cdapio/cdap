@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -28,7 +29,8 @@ import java.io.IOException;
  * @param <K> type of key to write
  * @param <V> type of value to write
  */
-public class TrackingRecordWriter<K, V> extends RecordWriter<K, V> {
+public class TrackingRecordWriter<K, V> extends RecordWriter<K, V>
+  implements ErrorDetailsProvider<Void> {
 
   private final RecordWriter<K, V> delegate;
 
@@ -44,5 +46,13 @@ public class TrackingRecordWriter<K, V> extends RecordWriter<K, V> {
   @Override
   public void close(TaskAttemptContext context) throws IOException, InterruptedException {
     delegate.close(new TrackingTaskAttemptContext(context));
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Void conf) {
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      return ((ErrorDetailsProvider<?>) delegate).getExceptionDetails(e, null);
+    }
+    return null;
   }
 }

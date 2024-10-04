@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -27,7 +28,7 @@ import java.io.IOException;
  * A {@link OutputCommitter} that delegate all operations to another {@link OutputCommitter}, with counter metrics
  * sending to Spark metrics.
  */
-public class TrackingOutputCommitter extends OutputCommitter {
+public class TrackingOutputCommitter extends OutputCommitter implements ErrorDetailsProvider<Void> {
 
   private final OutputCommitter delegate;
 
@@ -84,5 +85,13 @@ public class TrackingOutputCommitter extends OutputCommitter {
   @Override
   public void recoverTask(TaskAttemptContext taskContext) throws IOException {
     delegate.recoverTask(new TrackingTaskAttemptContext(taskContext));
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Void conf) {
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      return ((ErrorDetailsProvider<?>) delegate).getExceptionDetails(e, null);
+    }
+    return null;
   }
 }

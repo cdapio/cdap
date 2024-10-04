@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.etl.batch.DelegatingOutputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -33,7 +34,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * @param <K> type of key to write
  * @param <V> type of value to write
  */
-public class StageTrackingOutputFormat<K, V> extends DelegatingOutputFormat<K, V> {
+public class StageTrackingOutputFormat<K, V> extends DelegatingOutputFormat<K, V>
+  implements ErrorDetailsProvider<Configuration> {
   public static final String WRAPPED_STAGE_NAME = "io.cdap.pipeline.wrapped.stage.name";
 
   @Override
@@ -51,16 +53,17 @@ public class StageTrackingOutputFormat<K, V> extends DelegatingOutputFormat<K, V
         new TrackingRecordWriter(delegate.getRecordWriter(new TrackingTaskAttemptContext(context))),
         getStageName(context.getConfiguration()));
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw getExceptionDetails(e, context.getConfiguration());
     }
   }
 
   @Override
   public void checkOutputSpecs(JobContext context) {
+    OutputFormat<K, V> delegate = getDelegate(context.getConfiguration());
     try {
-      getDelegate(context.getConfiguration()).checkOutputSpecs(context);
+      delegate.checkOutputSpecs(context);
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw getExceptionDetails(e, context.getConfiguration());
     }
   }
 
@@ -79,11 +82,21 @@ public class StageTrackingOutputFormat<K, V> extends DelegatingOutputFormat<K, V
         delegate.getOutputCommitter(new TrackingTaskAttemptContext(context))),
         getStageName(context.getConfiguration()));
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw getExceptionDetails(e, context.getConfiguration());
     }
   }
 
   private String getStageName(Configuration conf) {
     return conf.get(WRAPPED_STAGE_NAME);
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Configuration conf) {
+    OutputFormat<K, V> delegate = getDelegate(conf);
+    RuntimeException exception = null;
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      exception = ((ErrorDetailsProvider<Configuration>) delegate).getExceptionDetails(e, conf);
+    }
+    return new WrappedStageException(exception == null ? e : exception, getStageName(conf));
   }
 }

@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
-import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public class StageTrackingOutputFormatTest {
 
-  @Test(expected = WrappedStageException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testMissingDelegate() throws IOException {
     Configuration hConf = new Configuration();
     Job job = Job.getInstance(hConf);
@@ -36,7 +36,7 @@ public class StageTrackingOutputFormatTest {
     outputFormat.checkOutputSpecs(job);
   }
 
-  @Test(expected = WrappedStageException.class)
+  @Test(expected = ProgramFailureException.class)
   public void testSelfDelegate() throws IOException {
     Configuration hConf = new Configuration();
     hConf.setClass(StageTrackingOutputFormat.DELEGATE_CLASS_NAME, StageTrackingOutputFormat.class,

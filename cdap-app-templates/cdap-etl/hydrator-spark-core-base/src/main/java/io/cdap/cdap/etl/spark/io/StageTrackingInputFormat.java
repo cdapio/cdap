@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.etl.batch.DelegatingInputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +36,8 @@ import java.util.List;
  * @param <K> type of key to read
  * @param <V> type of value to read
  */
-public class StageTrackingInputFormat<K, V> extends DelegatingInputFormat<K, V> {
+public class StageTrackingInputFormat<K, V> extends DelegatingInputFormat<K, V> implements
+  ErrorDetailsProvider<Configuration> {
 
   public static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.tracking.input.classname";
   public static final String WRAPPED_STAGE_NAME = "io.cdap.pipeline.wrapped.stage.name";
@@ -50,7 +52,7 @@ public class StageTrackingInputFormat<K, V> extends DelegatingInputFormat<K, V> 
     try {
       return getDelegate(context.getConfiguration()).getSplits(context);
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw getExceptionDetails(e, context.getConfiguration());
     }
   }
 
@@ -68,11 +70,21 @@ public class StageTrackingInputFormat<K, V> extends DelegatingInputFormat<K, V> 
         super.createRecordReader(split, new TrackingTaskAttemptContext(context))),
         getStageName(context.getConfiguration()));
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw getExceptionDetails(e, context.getConfiguration());
     }
   }
 
   private String getStageName(Configuration conf) {
     return conf.get(WRAPPED_STAGE_NAME);
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Configuration conf) {
+    InputFormat<K, V> delegate = getDelegate(conf);
+    RuntimeException exception = null;
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      exception = ((ErrorDetailsProvider<Configuration>) delegate).getExceptionDetails(e, conf);
+    }
+    return new WrappedStageException(exception == null ? e : exception, getStageName(conf));
   }
 }

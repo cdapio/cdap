@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -34,7 +35,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * stage name where the error occurred.
  * </p>
  */
-public class StageTrackingOutputCommitter extends OutputCommitter {
+public class StageTrackingOutputCommitter extends OutputCommitter
+  implements ErrorDetailsProvider<Void> {
 
   private final OutputCommitter delegate;
   private final String stageName;
@@ -49,7 +51,7 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
     try {
       delegate.setupJob(jobContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -58,7 +60,7 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
     try {
       delegate.setupTask(taskAttemptContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -67,7 +69,7 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
     try {
       return delegate.needsTaskCommit(taskAttemptContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -76,7 +78,7 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
     try {
       delegate.commitTask(taskAttemptContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -85,7 +87,7 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
     try {
       delegate.abortTask(taskAttemptContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -99,7 +101,16 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
     try {
       delegate.recoverTask(taskContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Void conf) {
+    RuntimeException exception = null;
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      exception = ((ErrorDetailsProvider<?>) delegate).getExceptionDetails(e, null);
+    }
+    return new WrappedStageException(exception == null ? e : exception, stageName);
   }
 }

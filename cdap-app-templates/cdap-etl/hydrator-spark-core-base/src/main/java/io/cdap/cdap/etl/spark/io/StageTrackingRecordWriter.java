@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -35,7 +36,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * @param <K> type of key to write
  * @param <V> type of value to write
  */
-public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> {
+public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> implements
+  ErrorDetailsProvider<Void> {
   private final RecordWriter<K, V> delegate;
   private final String stageName;
 
@@ -49,7 +51,7 @@ public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> {
     try {
       delegate.write(k, v);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -58,7 +60,16 @@ public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> {
     try {
       delegate.close(taskAttemptContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Void conf) {
+    RuntimeException exception = null;
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      exception = ((ErrorDetailsProvider<?>) delegate).getExceptionDetails(e, null);
+    }
+    return new WrappedStageException(exception == null ? e : exception, stageName);
   }
 }

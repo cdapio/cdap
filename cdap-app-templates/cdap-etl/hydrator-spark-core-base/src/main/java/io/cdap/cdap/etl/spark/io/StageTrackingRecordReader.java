@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.etl.spark.io;
 
+import io.cdap.cdap.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
-import java.io.IOException;
 
 /**
  * A delegating record writer that catches exceptions thrown during execution of a call
@@ -38,7 +37,8 @@ import java.io.IOException;
  * @param <K> type of key to read
  * @param <V> type of value to read
  */
-public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
+public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> implements
+  ErrorDetailsProvider<Void> {
 
   private final RecordReader<K, V> delegate;
   private final String stageName;
@@ -53,7 +53,7 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       delegate.initialize(split, new TrackingTaskAttemptContext(context));
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -62,7 +62,7 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.nextKeyValue();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -71,7 +71,7 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.getCurrentKey();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -80,7 +80,7 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.getCurrentValue();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -89,7 +89,7 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.getProgress();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
   }
 
@@ -98,7 +98,16 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       delegate.close();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw getExceptionDetails(e, null);
     }
+  }
+
+  @Override
+  public RuntimeException getExceptionDetails(Throwable e, Void conf) {
+    RuntimeException exception = null;
+    if (delegate instanceof ErrorDetailsProvider<?>) {
+      exception = ((ErrorDetailsProvider<?>) delegate).getExceptionDetails(e, null);
+    }
+    return new WrappedStageException(exception == null ? e : exception, stageName);
   }
 }
