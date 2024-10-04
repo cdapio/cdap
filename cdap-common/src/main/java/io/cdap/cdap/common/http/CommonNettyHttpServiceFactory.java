@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.http;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 
@@ -28,12 +29,23 @@ public class CommonNettyHttpServiceFactory {
 
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
+  private final AuditLogPublisherService auditLogPublisherService;
 
   @Inject
   public CommonNettyHttpServiceFactory(CConfiguration cConf,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      AuditLogPublisherService auditLogPublisherService) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
+    this.auditLogPublisherService = auditLogPublisherService;
+  }
+
+  //TODO : remove
+  public CommonNettyHttpServiceFactory(CConfiguration cConf,
+                                       MetricsCollectionService metricsCollectionService) {
+    this.cConf = cConf;
+    this.metricsCollectionService = metricsCollectionService;
+    this.auditLogPublisherService = null;
   }
 
   /**
@@ -43,6 +55,6 @@ public class CommonNettyHttpServiceFactory {
    * @return {@link CommonNettyHttpServiceBuilder}
    */
   public CommonNettyHttpServiceBuilder builder(String serviceName) {
-    return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService);
+    return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService, auditLogPublisherService);
   }
 }
