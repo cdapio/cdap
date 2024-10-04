@@ -57,9 +57,17 @@ public class CloudSecretManagerClient {
    */
   private static final String SERVICE_ACCOUNT_FILE = "service.account.file";
 
+  /**
+   * Property that, if set, determines the prefix to the Secrets accessible/created by GCP Secret Manager
+   * The default prefix is "cdap-" and can be set to "" if no prefix is desired to be set
+   */
+  private static final String SECRET_PREFIX = "secret.prefix";
+
   private final SecretManagerServiceClient secretManager;
   // GCP project resource name e.g. "project/my-project-id".
   private final String projectResourceName;
+  private final String secretPrefix;
+
 
   /** Throws IOException if the underlying {@link SecretManagerServiceClient} fails to be created. */
   public CloudSecretManagerClient(Map<String, String> properties) throws IOException {
@@ -69,6 +77,7 @@ public class CloudSecretManagerClient {
         : ServiceOptions.getDefaultProjectId();
     this.secretManager = createClient(properties);
     this.projectResourceName = "projects/" + projectId;
+    this.secretPrefix = properties.getOrDefault(SECRET_PREFIX,"cdap-");
   }
 
   /**
@@ -82,7 +91,7 @@ public class CloudSecretManagerClient {
         .setParent(projectResourceName)
         .setSecretId(
           getSecretId(
-            wrappedSecret.getNamespace(), wrappedSecret.getCdapSecretMetadata().getName()))
+            wrappedSecret.getNamespace(), wrappedSecret.getCdapSecretMetadata().getName(),secretPrefix))
         .setSecret(wrappedSecret.getGcpSecret(getSecretResourceName(wrappedSecret)))
         .build();
 
@@ -190,16 +199,16 @@ public class CloudSecretManagerClient {
   }
 
   private String getSecretResourceName(String namespace, String name) {
-    return String.format("%s/secrets/%s", projectResourceName, getSecretId(namespace, name));
+    return String.format("%s/secrets/%s", projectResourceName, getSecretId(secretPrefix, namespace, name));
   }
 
   /**
    * Computes the secret ID, returning an ID guaranteed to be shorter than 255 characters (the
-   * Secret Manager limit) and guaranteed to be prefixed with "cdap-" to allow the use of IAM
-   * conditionals to widely grant or revoke access to secrets created by this client.
+   * Secret Manager limit) and guaranteed to be prefixed with secretPrefix (default being "cdap-") to allow the use of
+   * IAM conditionals to widely grant or revoke access to secrets created by this client.
    */
-  private static String getSecretId(String namespace, String name) {
-    return String.format("cdap-%s-%s", hashLongName(namespace), hashLongName(name));
+  private static String getSecretId(String prefix, String namespace, String name) {
+    return String.format("%s%s-%s", prefix, hashLongName(namespace), hashLongName(name));
   }
 
   /**
