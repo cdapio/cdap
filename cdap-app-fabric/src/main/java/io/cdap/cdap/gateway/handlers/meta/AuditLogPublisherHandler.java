@@ -61,10 +61,10 @@ public class AuditLogPublisherHandler extends AbstractRemoteSystemOpsHandler {
   @POST
   @Path("/publishbatch")
   public void publishBatch(FullHttpRequest request, HttpResponder responder) throws Exception {
-    AuditLogContext auditLogContext = new Gson().fromJson(
-      request.content().toString(StandardCharsets.UTF_8),
-      AuditLogContext.class);
-    LOG.debug("SANKET in handler publish  for {}", auditLogContext);
+    LOG.debug("SANKET in handler publishbatch  for {}", request.content().toString(StandardCharsets.UTF_8));
+//    AuditLogContext auditLogContext = new Gson().fromJson(
+//      request.content().toString(StandardCharsets.UTF_8),
+//      AuditLogContext.class);
     auditLogPublisherService.addAuditContexts(new ArrayDeque<>());
     responder.sendStatus(HttpResponseStatus.OK);
   }
