@@ -16,8 +16,9 @@
 
 package io.cdap.cdap.etl.spark.io;
 
-import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.etl.api.exception.ErrorPhase;
 import io.cdap.cdap.etl.batch.DelegatingInputFormat;
+import io.cdap.cdap.etl.common.ErrorDetails;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -47,28 +48,32 @@ public class StageTrackingInputFormat<K, V> extends DelegatingInputFormat<K, V> 
 
   @Override
   public List<InputSplit> getSplits(JobContext context) {
+    Configuration conf = context.getConfiguration();
     try {
-      return getDelegate(context.getConfiguration()).getSplits(context);
+      return getDelegate(conf).getSplits(context);
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw ErrorDetails.handleException(e, getStageName(conf),
+        ErrorDetails.getErrorDetailsProvider(conf), ErrorPhase.SPLITTING);
     }
   }
 
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
     TaskAttemptContext context) {
+    Configuration conf = context.getConfiguration();
     try {
       // Spark already tracking metrics for file based input, hence we don't need to track again.
       if (split instanceof FileSplit || split instanceof CombineFileSplit) {
         return new StageTrackingRecordReader<>(super.createRecordReader(split, context),
-          getStageName(context.getConfiguration()));
+          getStageName(conf), ErrorDetails.getErrorDetailsProvider(conf));
       }
 
       return new StageTrackingRecordReader<>(new TrackingRecordReader<>(
         super.createRecordReader(split, new TrackingTaskAttemptContext(context))),
-        getStageName(context.getConfiguration()));
+        getStageName(conf), ErrorDetails.getErrorDetailsProvider(conf));
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw ErrorDetails.handleException(e, getStageName(conf),
+        ErrorDetails.getErrorDetailsProvider(conf), ErrorPhase.READING);
     }
   }
 

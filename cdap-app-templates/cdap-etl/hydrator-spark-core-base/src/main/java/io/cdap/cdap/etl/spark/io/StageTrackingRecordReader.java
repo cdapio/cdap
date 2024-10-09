@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.etl.spark.io;
 
-import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.etl.api.exception.ErrorDetailsProvider;
+import io.cdap.cdap.etl.api.exception.ErrorPhase;
+import io.cdap.cdap.etl.common.ErrorDetails;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -42,10 +44,13 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
 
   private final RecordReader<K, V> delegate;
   private final String stageName;
+  private final ErrorDetailsProvider errorDetailsProvider;
 
-  public StageTrackingRecordReader(RecordReader<K, V> delegate, String stageName) {
+  public StageTrackingRecordReader(RecordReader<K, V> delegate, String stageName,
+    ErrorDetailsProvider errorDetailsProvider) {
     this.delegate = delegate;
     this.stageName = stageName;
+    this.errorDetailsProvider = errorDetailsProvider;
   }
 
   @Override
@@ -53,7 +58,8 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       delegate.initialize(split, new TrackingTaskAttemptContext(context));
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.READING);
     }
   }
 
@@ -62,7 +68,8 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.nextKeyValue();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.READING);
     }
   }
 
@@ -71,7 +78,8 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.getCurrentKey();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.READING);
     }
   }
 
@@ -80,7 +88,8 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.getCurrentValue();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.READING);
     }
   }
 
@@ -89,7 +98,8 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       return delegate.getProgress();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.READING);
     }
   }
 
@@ -98,7 +108,8 @@ public class StageTrackingRecordReader<K, V> extends RecordReader<K, V> {
     try {
       delegate.close();
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.READING);
     }
   }
 }

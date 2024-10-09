@@ -21,8 +21,10 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.exception.ErrorDetailsProviderSpec;
 import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
 import io.cdap.cdap.etl.batch.preview.LimitingInputFormatProvider;
+import io.cdap.cdap.etl.common.ErrorDetails;
 import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -40,14 +42,22 @@ public class SparkBatchSourceContext extends SparkSubmitterContext implements Ba
 
   private final SparkBatchSourceFactory sourceFactory;
   private final boolean isPreviewEnabled;
+  private ErrorDetailsProviderSpec errorDetailsProviderSpec;
 
-  public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
+  public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory,
+      SparkClientContext sparkContext, PipelineRuntime pipelineRuntime,
+      DatasetContext datasetContext, StageSpec stageSpec) {
     super(sparkContext, pipelineRuntime, datasetContext, StageSpec.
-      createCopy(stageSpec, sparkContext.getDataTracer(stageSpec.getName()).getMaximumTracedRecords(),
-          sparkContext.getDataTracer(stageSpec.getName()).isEnabled()));
+        createCopy(stageSpec, sparkContext.getDataTracer(
+            stageSpec.getName()).getMaximumTracedRecords(),
+            sparkContext.getDataTracer(stageSpec.getName()).isEnabled()));
     this.sourceFactory = sourceFactory;
     this.isPreviewEnabled = stageSpec.isPreviewEnabled(sparkContext);
+  }
+
+  @Override
+  public void setErrorDetailsProvider(ErrorDetailsProviderSpec errorDetailsProviderSpec) {
+    this.errorDetailsProviderSpec = errorDetailsProviderSpec;
   }
 
   @Override
@@ -60,6 +70,10 @@ public class SparkBatchSourceContext extends SparkSubmitterContext implements Ba
       Map<String, String> conf = new HashMap<>(provider.getInputFormatConfiguration());
       conf.put(StageTrackingInputFormat.DELEGATE_CLASS_NAME, provider.getInputFormatClassName());
       conf.put(StageTrackingInputFormat.WRAPPED_STAGE_NAME, getStageName());
+      if (errorDetailsProviderSpec != null) {
+        conf.put(ErrorDetails.ERROR_DETAILS_PROVIDER_CLASS_NAME_KEY,
+            errorDetailsProviderSpec.getClassName());
+      }
       provider = new BasicInputFormatProvider(StageTrackingInputFormat.class.getName(), conf);
       trackableInput = Input.of(trackableInput.getName(), provider).alias(trackableInput.getAlias());
     }

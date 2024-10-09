@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.etl.spark.io;
 
-import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.etl.api.exception.ErrorDetailsProvider;
+import io.cdap.cdap.etl.api.exception.ErrorPhase;
+import io.cdap.cdap.etl.common.ErrorDetails;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -38,10 +40,13 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> {
   private final RecordWriter<K, V> delegate;
   private final String stageName;
+  private final ErrorDetailsProvider errorDetailsProvider;
 
-  public StageTrackingRecordWriter(RecordWriter<K, V> delegate, String stageName) {
+  public StageTrackingRecordWriter(RecordWriter<K, V> delegate, String stageName,
+    ErrorDetailsProvider errorDetailsProvider) {
     this.delegate = delegate;
     this.stageName = stageName;
+    this.errorDetailsProvider = errorDetailsProvider;
   }
 
   @Override
@@ -49,7 +54,8 @@ public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> {
     try {
       delegate.write(k, v);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.WRITING);
     }
   }
 
@@ -58,7 +64,8 @@ public class StageTrackingRecordWriter<K, V> extends RecordWriter<K, V> {
     try {
       delegate.close(taskAttemptContext);
     } catch (Exception e) {
-      throw new WrappedStageException(e, stageName);
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.WRITING);
     }
   }
 }
