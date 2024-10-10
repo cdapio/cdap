@@ -31,6 +31,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.OptionalBinder;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
@@ -84,6 +85,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.KeyManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
@@ -181,6 +183,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
             bind(TransactionSystemClientService.class).to(
                 DelegatingTransactionSystemClientService.class);
             bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+            bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
           }
         },
         new DFSLocationModule(),
