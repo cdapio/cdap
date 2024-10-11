@@ -18,24 +18,22 @@ package io.cdap.cdap.messaging.guice;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Binder;
-import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.cache.MessageCache;
+import io.cdap.cdap.messaging.client.SpannerMessagingService;
 import io.cdap.cdap.messaging.distributed.LeaderElectionMessagingService;
 import io.cdap.cdap.messaging.server.FetchHandler;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.messaging.server.MetadataHandler;
 import io.cdap.cdap.messaging.server.StoreHandler;
-import io.cdap.cdap.messaging.service.CoreMessagingService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.store.MessageTable;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.messaging.store.cache.CachingTableFactory;
@@ -116,8 +114,8 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
         }
       });
 
-      bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
-      bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
+//      bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
+      bind(MessagingService.class).to(SpannerMessagingService.class).in(Scopes.SINGLETON);
       expose(MessagingService.class);
 
       // TODO: Because of CDAP-7688, we need to run MessagingHttpService even in local mode so that we
