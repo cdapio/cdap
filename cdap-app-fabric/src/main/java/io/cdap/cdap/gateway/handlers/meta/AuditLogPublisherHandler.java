@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import javax.inject.Inject;
@@ -52,23 +51,13 @@ public class AuditLogPublisherHandler extends AbstractRemoteSystemOpsHandler {
   }
 
   @POST
-  @Path("/publish")
-  public void publish(FullHttpRequest request, HttpResponder responder) throws Exception {
-    AuditLogContext auditLogContext = new Gson().fromJson(
-        request.content().toString(StandardCharsets.UTF_8),
-        AuditLogContext.class);
-    LOG.debug("SANKET in handler publish  for {}", auditLogContext);
-    auditLogPublisherService.addAuditContexts(new ArrayDeque<>());
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @POST
   @Path("/publishbatch")
   public void publishBatch(FullHttpRequest request, HttpResponder responder) throws Exception {
     LOG.debug("SANKET in handler publishbatch  for {}", request.content().toString(StandardCharsets.UTF_8));
     Type queueType = new TypeToken<LinkedBlockingDeque<AuditLogContext>>(){}.getType();
     Queue<AuditLogContext> deserializedQueue =
       new Gson().fromJson(request.content().toString(StandardCharsets.UTF_8), queueType);
+    LOG.debug("SANKET in handler publishbatch , q size {}", deserializedQueue.size());
     auditLogPublisherService.addAuditContexts(deserializedQueue);
     responder.sendStatus(HttpResponseStatus.OK);
   }

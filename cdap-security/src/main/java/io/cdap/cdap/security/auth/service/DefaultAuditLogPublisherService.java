@@ -22,6 +22,8 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -48,11 +50,14 @@ public class DefaultAuditLogPublisherService extends AbstractScheduledService
   private final int publishIntervalSeconds;
   private static AtomicBoolean publishing = new AtomicBoolean(false);
   private ScheduledExecutorService executor;
+  private final AccessControllerInstantiator accessControllerInstantiator;
 
   Queue<AuditLogContext> auditLogContextQueue = new LinkedBlockingDeque<>();
 
   @Inject
-  public DefaultAuditLogPublisherService(CConfiguration conf) {
+  public DefaultAuditLogPublisherService(CConfiguration conf,
+                                         AccessControllerInstantiator accessControllerInstantiator) {
+    this.accessControllerInstantiator = accessControllerInstantiator;
     this.publishIntervalSeconds = conf.getInt(Constants.AuditLogging.AUDIT_LOG_PUBLISH_INTERVAL_SECONDS);
     LOG.warn("SANKET_LOG_1 : in constructor : publishIntervalSeconds : {}", this.publishIntervalSeconds);
   }
@@ -69,6 +74,10 @@ public class DefaultAuditLogPublisherService extends AbstractScheduledService
 
   @Override
   protected final ScheduledExecutorService executor() {
+    if (executor != null) {
+      return executor;
+    }
+
     executor = Executors.newSingleThreadScheduledExecutor(
       Threads.createDaemonThreadFactory("audit-log-publisher"));
     return executor;
@@ -79,6 +88,8 @@ public class DefaultAuditLogPublisherService extends AbstractScheduledService
     publishing.set(true);
     LOG.warn("SANKET_LOG_2 : publish");
     //TESTING
+    AccessControllerSpi accessController = this.accessControllerInstantiator.get();
+    LOG.warn("SANKET_LOG_2 : accessController : {}" , accessController);
     auditLogContextQueue.remove();
     publishing.set(false);
   }
