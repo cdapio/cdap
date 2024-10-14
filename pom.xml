@@ -139,7 +139,7 @@
     <jackson.version>2.15.1</jackson.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
-    <jetty9.version>9.4.51.v20230217</jetty9.version>
+    <jetty9.version>9.4.55.v20240627</jetty9.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
