@@ -99,9 +99,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
-
-    bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
-//    expose(AuditLogPublisher.class);
   }
 
   @Singleton
