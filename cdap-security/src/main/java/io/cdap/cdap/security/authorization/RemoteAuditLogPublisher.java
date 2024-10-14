@@ -50,8 +50,10 @@ public class RemoteAuditLogPublisher extends RemoteOpsClient implements AuditLog
 
   public void publish(Queue<AuditLogContext> auditLogContexts)
       throws UnauthorizedException {
-    LOG.trace("SANKET : Making pushlish to {}", auditLogContexts);
-    executeRequest("publishbatch", auditLogContexts);
-    LOG.trace("SANKET : Success pushlish to {}", auditLogContexts);
+    if (auditLogContexts.size() > 0 ) {
+      LOG.warn("SANKET : Got audit log more than 1");
+      executeRequest("publishbatch", auditLogContexts);
+      LOG.trace("SANKET : Success pushlish to {}", auditLogContexts);
+    }
   }
 }

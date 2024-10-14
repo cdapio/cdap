@@ -135,26 +135,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   }
 
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-
-    LOG.warn("SANKET_LOG : write1");
-    if (msg instanceof HttpRequest) {
-      LOG.warn("SANKET_LOG : HttpRequest");
-    }
-
     if (msg instanceof HttpResponse) {
       LOG.warn("SANKET_LOG : HttpResponse " + (HttpResponse) msg);
-
-      Queue<AuditLogContext> auditLogQueue = SecurityRequestContext.getAuditLogQueue();
-      //If empty add a body for testing
-      if (auditLogQueue.size()==0) {
-        LOG.warn("SANKET_LOG_QUEUE0 : adding empty body");
-        auditLogQueue.add(AuditLogContext.Builder.defaultNotRequired());
-      }
-      auditLogPublisher.publish(auditLogQueue);
-      LOG.warn("SANKET_LOG : write2");
-
-
+      auditLogPublisher.publish(SecurityRequestContext.getAuditLogQueue());
     }
+    super.write(ctx, msg, promise);
   }
 
     @Override
