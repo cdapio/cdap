@@ -55,6 +55,8 @@ import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -264,6 +266,8 @@ public class AppFabricServer extends AbstractIdleService {
       cancellables.add(discoveryService.register(
           ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
     }
+
+    Files.write(Paths.get("/tmp/server.port"), String.valueOf(announcePort).getBytes());
 
     return () -> {
       LOG.debug("Stopping AppFabric HTTP service.");
