@@ -6428,4 +6428,12 @@
     </description>
   </property>
 
+  <property>
+    <name>auditlog.publish.interval.seconds</name>
+    <value>20</value>
+    <description>
+      The interval between Audit log publish calls to external auth in seconds.
+    </description>
+  </property>
+
 </configuration>
