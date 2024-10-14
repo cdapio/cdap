@@ -24,6 +24,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -43,6 +44,8 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.proto.ProgramType;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+
+import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -96,6 +99,9 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
+
+    bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
+//    expose(AuditLogPublisher.class);
   }
 
   @Singleton

@@ -183,7 +183,6 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
             bind(TransactionSystemClientService.class).to(
                 DelegatingTransactionSystemClientService.class);
             bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
-            bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
           }
         },
         new DFSLocationModule(),
@@ -192,6 +191,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
           protected void configure() {
             bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
             bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+            bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
           }
         }
     ));
