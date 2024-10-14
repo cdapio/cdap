@@ -78,6 +78,8 @@ public class DefaultAuditLogPublisherService extends AbstractScheduledService
   public synchronized void publish() {
     publishing.set(true);
     LOG.warn("SANKET_LOG_2 : publish");
+    //TESTING
+    auditLogContextQueue.remove();
     publishing.set(false);
   }
 

@@ -16,16 +16,11 @@
 
 package io.cdap.cdap.security.authorization;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteOpsClient;
-import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
-import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.slf4j.Logger;
@@ -39,10 +34,7 @@ import java.util.Queue;
 public class RemoteAuditLogPublisher extends RemoteOpsClient implements AuditLogPublisher {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteAuditLogPublisher.class);
-  private static final Gson GSON = new GsonBuilder()
-      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-      .registerTypeAdapterFactory(new PermissionAdapterFactory())
-      .create();
+
   @Inject
   RemoteAuditLogPublisher(RemoteClientFactory remoteClientFactory) {
     super(remoteClientFactory, Constants.Service.APP_FABRIC_HTTP);
@@ -50,10 +42,9 @@ public class RemoteAuditLogPublisher extends RemoteOpsClient implements AuditLog
 
   public void publish(Queue<AuditLogContext> auditLogContexts)
       throws UnauthorizedException {
-    if (auditLogContexts.size() > 0 ) {
+    if (!auditLogContexts.isEmpty()) {
       LOG.warn("SANKET : Got audit log more than 1");
       executeRequest("publishbatch", auditLogContexts);
-      LOG.trace("SANKET : Success pushlish to {}", auditLogContexts);
     }
   }
 }

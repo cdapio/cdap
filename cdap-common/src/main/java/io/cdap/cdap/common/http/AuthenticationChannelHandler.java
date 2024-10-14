@@ -125,21 +125,19 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.setUserIp(currentUserIp);
     }
 
-    LOG.warn("SANKET_LOG : read1");
-
-    try {
-      ctx.fireChannelRead(msg);
-    } finally {
-      SecurityRequestContext.reset();
-    }
+    ctx.fireChannelRead(msg);
   }
 
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    if (msg instanceof HttpResponse) {
-      LOG.warn("SANKET_LOG : HttpResponse " + (HttpResponse) msg);
-      auditLogPublisher.publish(SecurityRequestContext.getAuditLogQueue());
+
+    try {
+      if (msg instanceof HttpResponse) {
+        auditLogPublisher.publish(SecurityRequestContext.getAuditLogQueue());
+      }
+      super.write(ctx, msg, promise);
+    } finally {
+      SecurityRequestContext.reset();
     }
-    super.write(ctx, msg, promise);
   }
 
     @Override
