@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,6 +34,8 @@ import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Queue;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
@@ -141,7 +144,13 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     if (msg instanceof HttpResponse) {
       LOG.warn("SANKET_LOG : HttpResponse " + (HttpResponse) msg);
     }
-    auditLogPublisher.publish(SecurityRequestContext.getAuditLogQueue());
+    Queue<AuditLogContext> auditLogQueue = SecurityRequestContext.getAuditLogQueue();
+    //If empty add a body for testing
+    if (auditLogQueue.size()==0) {
+      LOG.warn("SANKET_LOG_QUEUE0 : adding empty body");
+      auditLogQueue.add(AuditLogContext.Builder.defaultNotRequired());
+    }
+    auditLogPublisher.publish(auditLogQueue);
     LOG.warn("SANKET_LOG : write2");
   }
 

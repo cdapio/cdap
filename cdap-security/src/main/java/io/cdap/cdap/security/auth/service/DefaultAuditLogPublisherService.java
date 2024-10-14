@@ -51,8 +51,7 @@ public class DefaultAuditLogPublisherService extends AbstractExecutionThreadServ
   @Override
   public void addAuditContexts(Queue<AuditLogContext> q) {
     LOG.warn("SANKET_LOG_3 : adding : " + q.size());
-    auditLogContextQueue.add(AuditLogContext.Builder.defaultNotRequired());
-    auditLogContextQueue.add(AuditLogContext.Builder.defaultNotRequired());
+    auditLogContextQueue.addAll(q);
   }
 
   @Override

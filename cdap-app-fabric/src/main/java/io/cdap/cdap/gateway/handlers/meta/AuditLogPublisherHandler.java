@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.handlers.meta;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.http.HttpResponder;
@@ -25,8 +26,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingDeque;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -62,10 +66,10 @@ public class AuditLogPublisherHandler extends AbstractRemoteSystemOpsHandler {
   @Path("/publishbatch")
   public void publishBatch(FullHttpRequest request, HttpResponder responder) throws Exception {
     LOG.debug("SANKET in handler publishbatch  for {}", request.content().toString(StandardCharsets.UTF_8));
-//    AuditLogContext auditLogContext = new Gson().fromJson(
-//      request.content().toString(StandardCharsets.UTF_8),
-//      AuditLogContext.class);
-    auditLogPublisherService.addAuditContexts(new ArrayDeque<>());
+    Type queueType = new TypeToken<LinkedBlockingDeque<AuditLogContext>>(){}.getType();
+    Queue<AuditLogContext> deserializedQueue =
+      new Gson().fromJson(request.content().toString(StandardCharsets.UTF_8), queueType);
+    auditLogPublisherService.addAuditContexts(deserializedQueue);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 }
