@@ -143,15 +143,18 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
     if (msg instanceof HttpResponse) {
       LOG.warn("SANKET_LOG : HttpResponse " + (HttpResponse) msg);
+
+      Queue<AuditLogContext> auditLogQueue = SecurityRequestContext.getAuditLogQueue();
+      //If empty add a body for testing
+      if (auditLogQueue.size()==0) {
+        LOG.warn("SANKET_LOG_QUEUE0 : adding empty body");
+        auditLogQueue.add(AuditLogContext.Builder.defaultNotRequired());
+      }
+      auditLogPublisher.publish(auditLogQueue);
+      LOG.warn("SANKET_LOG : write2");
+
+
     }
-    Queue<AuditLogContext> auditLogQueue = SecurityRequestContext.getAuditLogQueue();
-    //If empty add a body for testing
-    if (auditLogQueue.size()==0) {
-      LOG.warn("SANKET_LOG_QUEUE0 : adding empty body");
-      auditLogQueue.add(AuditLogContext.Builder.defaultNotRequired());
-    }
-    auditLogPublisher.publish(auditLogQueue);
-    LOG.warn("SANKET_LOG : write2");
   }
 
     @Override
