@@ -144,7 +144,7 @@ def build_new_line(line, issues):
     else:
         issue_links = []
         for issue in issues:
-            issue_links.append("[%s](https://issues.cask.co/browse/%s" % (issue, issue))
+            issue_links.append("[%s](https://cdap.atlassian.net/browse/%s" % (issue, issue))
         return "%s (%s))\n" % (line, ','.join(issue_links))
     
 def read_lines(input, output, version):

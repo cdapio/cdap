@@ -1942,7 +1942,7 @@ public class AppMetadataStore {
 
   // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
   // Any changes made here will have to be made over there too.
-  // JIRA https://issues.cask.co/browse/CDAP-2172
+  // JIRA https://cdap.atlassian.net/browse/CDAP-2172
   @Nullable
   public RunRecordDetail getRun(ProgramRunId programRun) throws IOException {
     // Query active run record first

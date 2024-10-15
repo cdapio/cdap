@@ -1395,7 +1395,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
-    // See https://issues.cask.co/browse/CDAP-3669
+    // See https://cdap.atlassian.net/browse/CDAP-3669
     for (ProgramId programId : getAllPrograms(appId, appSpec)) {
       metadataServiceClient.drop(new MetadataMutation.Drop(programId.toMetadataEntity()));
     }
