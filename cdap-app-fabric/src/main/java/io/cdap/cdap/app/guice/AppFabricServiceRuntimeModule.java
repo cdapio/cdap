@@ -34,6 +34,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.deploy.Manager;
@@ -153,6 +154,7 @@ import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.security.auth.service.DefaultAuditLogPublisherService;
 import io.cdap.cdap.security.encryption.guice.DataStorageAeadEncryptionModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
@@ -434,6 +436,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(EventSubscriberManager.class).in(Scopes.SINGLETON);
       bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class);
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
+
+      bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
           binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
