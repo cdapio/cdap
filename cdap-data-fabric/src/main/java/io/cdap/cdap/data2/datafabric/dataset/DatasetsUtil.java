@@ -197,7 +197,7 @@ public final class DatasetsUtil {
    * Returns whether or not the dataset defined in the given specification is transactional.
    * Defaults to true. Note that this should be in TableProperties, but because we do not expose
    * this setting through the API currently, keeping it here for now. See
-   * https://issues.cask.co/browse/CDAP-1193 for additional information.
+   * https://cdap.atlassian.net/browse/CDAP-1193 for additional information.
    */
   public static boolean isTransactional(Map<String, String> props) {
     return !"true".equalsIgnoreCase(props.get(Constants.Dataset.TABLE_TX_DISABLED));

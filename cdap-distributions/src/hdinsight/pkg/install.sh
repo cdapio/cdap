@@ -57,7 +57,7 @@ __create_tmpdir
 curl -L -o ${__tmpdir}/install.sh https://www.chef.io/chef/install.sh && sudo bash ${__tmpdir}/install.sh -v ${CHEF_VERSION} || die "Failed to install chef"
 
 # Clone CDAP repo
-git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
+git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/cdapio/cdap.git ${__gitdir}
 
 # Check out to specific tag if specified
 if [ -n "${CDAP_TAG}" ]; then

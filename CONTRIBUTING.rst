@@ -32,7 +32,7 @@ Build Environment
 =================
 
 For instructions on setting up your development environment, please see the
-`BUILD.rst <https://github.com/caskdata/cdap/blob/develop/BUILD.rst>`__ file.
+`BUILD.rst <https://github.com/cdapio/cdap/blob/develop/BUILD.rst>`__ file.
 
 Contribution Guidelines
 =======================

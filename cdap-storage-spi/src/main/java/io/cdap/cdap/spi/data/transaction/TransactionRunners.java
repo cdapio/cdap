@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 
 /**
  * Helper class for interacting with {@link TransactionRunner}.
- * TODO: Figure out better way to propagate the exception: https://issues.cask.co/browse/CDAP-14736
+ * TODO: Figure out better way to propagate the exception: https://cdap.atlassian.net/browse/CDAP-14736
  */
 @Beta
 public class TransactionRunners {

@@ -30,7 +30,7 @@ import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
  * seeks are attempted to the current position. Position equality check logic in {@link
  * FTPInputStream#seek} is the only change from the original class in Hadoop. This change is
  * required since {@link LineRecordReader} calls {@link FTPInputStream#seek} with value of 0. TODO:
- * This file can be removed once https://issues.cask.co/browse/CDAP-5387 is addressed.
+ * This file can be removed once https://cdap.atlassian.net/browse/CDAP-5387 is addressed.
  */
 @InterfaceAudience.Private
 @InterfaceStability.Unstable

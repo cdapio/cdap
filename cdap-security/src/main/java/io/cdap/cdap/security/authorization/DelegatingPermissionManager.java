@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * A {@link PermissionManager} implements that delegates to the authorizer. Having this makes Guice
  * injection for Privilege manager simple. That reason will go away once
- * https://issues.cask.co/browse/CDAP-11561 is fixed.
+ * https://cdap.atlassian.net/browse/CDAP-11561 is fixed.
  */
 public class DelegatingPermissionManager implements PermissionManager {
 

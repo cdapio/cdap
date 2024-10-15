@@ -54,7 +54,7 @@ Build and Run CDAP Sandbox Locally with Maven
 
 The following builds and runs the CDAP sandbox via mvn package. For more details on development
 environments and build options, please see the
-`BUILD.rst <https://github.com/caskdata/cdap/blob/develop/BUILD.rst>`__ file.
+`BUILD.rst <https://github.com/cdapio/cdap/blob/develop/BUILD.rst>`__ file.
 
 - Obtain a fresh copy of the CDAP (GitHub) repo::
 

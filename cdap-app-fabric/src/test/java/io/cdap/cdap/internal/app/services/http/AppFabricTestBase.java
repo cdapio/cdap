@@ -511,7 +511,7 @@ public abstract class AppFabricTestBase {
     }
     // Note: we purposefully do not check for empty string and let it pass as the header because we want to test the
     // behavior where plugin classes header is set to empty string. This is what is passed by the UI. For more
-    // details see: https://issues.cask.co/browse/CDAP-14578
+    // details see: https://cdap.atlassian.net/browse/CDAP-14578
     if (pluginClassesJson != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJson);
     }

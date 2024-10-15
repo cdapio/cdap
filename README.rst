@@ -67,7 +67,7 @@ Build
 
 You can get started with CDAP by building directly from the latest source code::
 
-  git clone https://github.com/caskdata/cdap.git
+  git clone https://github.com/cdapio/cdap.git
   cd cdap
   mvn clean package
 
@@ -106,10 +106,10 @@ For quick guide to getting your system setup to contribute to CDAP, take a look 
 
 Filing Issues: Bug Reports & Feature Requests
 ---------------------------------------------
-Bugs and suggestions should be made by `filing an issue <https://issues.cask.co/browse/cdap>`__.
+Bugs and suggestions should be made by `filing an issue <https://cdap.atlassian.net/browse/cdap>`__.
 
 Existing issues can be browsed at `the CDAP project issues
-<https://issues.cask.co/browse/CDAP-8373?jql=project%20%3D%20CDAP>`__.
+<https://cdap.atlassian.net/browse/CDAP-8373?jql=project%20%3D%20CDAP>`__.
 
 Pull Requests
 -------------
