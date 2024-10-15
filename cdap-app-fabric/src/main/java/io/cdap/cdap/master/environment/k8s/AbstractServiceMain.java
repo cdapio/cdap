@@ -58,7 +58,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.auth.service.DefaultAuditLogPublisherService;
 import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
@@ -187,7 +186,6 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
         bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
       }
     });
@@ -213,7 +211,6 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
-    services.add(injector.getInstance(AuditLogPublisherService.class));
 
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       services.add(injector.getInstance(TokenManager.class));
