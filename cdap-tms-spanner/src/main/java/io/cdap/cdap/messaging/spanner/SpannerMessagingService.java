@@ -26,7 +26,6 @@ import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
 import com.google.cloud.spanner.Statement;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Inject;
 import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
@@ -75,10 +74,6 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
   public static final String PUBLISH_TS_FIELD = "publish_ts";
   public static final String PAYLOAD_SEQUENCE_ID = "payload_sequence_id";
   public static final String SEQUENCE_ID_FIELD = "sequence_id";
-
-  @Inject
-  protected SpannerMessagingService() {
-  }
 
   @Override
   public String getName() {
