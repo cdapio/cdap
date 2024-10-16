@@ -6022,6 +6022,14 @@
   </property>
 
   <property>
+    <name>feature.dataplane.audit.logging.enabled</name>
+    <value>true</value>
+    <description>
+      Enables dataplane audit logging for RBAC instances.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

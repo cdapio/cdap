@@ -41,7 +41,7 @@ public class AuthenticationChannelHandlerTest {
   @Before
   public void initHandler() {
     boolean internalAuthEnabled = true;
-    handler = new AuthenticationChannelHandler(internalAuthEnabled, null);
+    handler = new AuthenticationChannelHandler(internalAuthEnabled, false, null);
     ctx = mock(ChannelHandlerContext.class, RETURNS_DEEP_STUBS);
     req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "foo");
   }

@@ -16,11 +16,14 @@
 package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.features.Feature;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -29,7 +32,7 @@ import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
- * Provides a {@link io.cdap.http.NettyHttpService.Builder} that has common settings built-in.
+ * Provides a {@link NettyHttpService.Builder} that has common settings built-in.
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
 
@@ -42,6 +45,9 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
       MetricsCollectionService metricsCollectionService, AuditLogPublisher auditLogPublisher) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
+
+      FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+      boolean auditLoggingEnabled = Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider) ;
       pipelineModifier = new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
@@ -52,7 +58,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
               new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                  .INTERNAL_AUTH_ENABLED), auditLogPublisher));
+                  .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, auditLogPublisher));
         }
       };
     }

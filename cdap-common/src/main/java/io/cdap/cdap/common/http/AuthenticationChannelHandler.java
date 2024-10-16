@@ -35,8 +35,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Queue;
-
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
  * SecurityRequestContext}.
@@ -52,10 +50,13 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
 
   private final boolean internalAuthEnabled;
+  private final boolean auditLoggingEnabled;
   private final AuditLogPublisher auditLogPublisher;
 
-  public AuthenticationChannelHandler(boolean internalAuthEnabled, AuditLogPublisher auditLogPublisher) {
+  public AuthenticationChannelHandler(boolean internalAuthEnabled, boolean auditLoggingEnabled,
+                                      AuditLogPublisher auditLogPublisher) {
     this.internalAuthEnabled = internalAuthEnabled;
+    this.auditLoggingEnabled = auditLoggingEnabled;
     this.auditLogPublisher = auditLogPublisher;
   }
 
@@ -131,7 +132,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 
     try {
-      if (msg instanceof HttpResponse) {
+      if (auditLoggingEnabled && msg instanceof HttpResponse) {
         auditLogPublisher.publish(SecurityRequestContext.getAuditLogQueue());
       }
       super.write(ctx, msg, promise);
