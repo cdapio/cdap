@@ -25,16 +25,15 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.messaging.service.CoreMessagingService;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
+import io.cdap.cdap.messaging.spi.MessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
-import io.cdap.cdap.messaging.spi.RawMessage;
-import io.cdap.cdap.messaging.server.MessagingHttpService;
-import io.cdap.cdap.messaging.service.CoreMessagingService;
-import io.cdap.cdap.messaging.store.ForwardingTableFactory;
-import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -86,6 +85,11 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   @Override
   public String getName() {
     return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public void initialize(MessagingContext context) throws IOException {
+
   }
 
   @Override
@@ -174,6 +178,11 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
     return getMessagingService().fetch(messageFetchRequest);
+  }
+
+  @Override
+  public void destroy(MessagingContext messagingContext) {
+
   }
 
   @Override

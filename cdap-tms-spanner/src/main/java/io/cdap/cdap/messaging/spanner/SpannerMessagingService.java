@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.client;
+package io.cdap.cdap.messaging.spanner;
 
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.cloud.ByteArray;
@@ -33,9 +33,9 @@ import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.messaging.SpannerUtil;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
+import io.cdap.cdap.messaging.spi.MessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
@@ -62,7 +62,7 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerMessagingService.class);
 
-  private final CConfiguration cConf;
+  private Map<String, String> cConf;
 
   private Spanner spanner;
 
@@ -77,15 +77,18 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
   public static final String SEQUENCE_ID_FIELD = "sequence_id";
 
   @Inject
-  protected SpannerMessagingService(
-      CConfiguration cConf) {
-    this.cConf = cConf;
-
+  protected SpannerMessagingService() {
   }
 
   @Override
   public String getName() {
     return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public void initialize(MessagingContext context) throws IOException {
+    LOG.info("initialising spanner messaging service {}", context.getProperties());
+    this.cConf = context.getProperties();
   }
 
   @Override
@@ -239,6 +242,11 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
       LOG.error("Error when fetching {}", sqlStatement, ex);
       throw ex;
     }
+  }
+
+  @Override
+  public void destroy(MessagingContext messagingContext) {
+
   }
 
   @Override

@@ -42,11 +42,19 @@ public interface MessagingService {
   String getName();
 
   /**
+   * Initializes the messagingService with messagingContext.
+   *
+   * @param context
+   * @throws IOException
+   */
+  void initialize(MessagingContext context) throws IOException;
+
+  /**
    * Creates a topic with the given metadata.
    *
    * @param topicMetadata topic to be created
    * @throws TopicAlreadyExistsException if the topic to be created already exist
-   * @throws IOException if failed to create the topic
+   * @throws IOException                 if failed to create the topic
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   void createTopic(TopicMetadata topicMetadata)
@@ -56,8 +64,8 @@ public interface MessagingService {
    * Updates the metadata of a topic.
    *
    * @param topicMetadata the topic metadata to be updated
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to update the topic metadata
+   * @throws TopicNotFoundException      if the topic doesn't exist
+   * @throws IOException                 if failed to update the topic metadata
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   void updateTopic(TopicMetadata topicMetadata)
@@ -67,8 +75,8 @@ public interface MessagingService {
    * Deletes a topic
    *
    * @param topicId the topic to be deleted
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to delete the topic
+   * @throws TopicNotFoundException      if the topic doesn't exist
+   * @throws IOException                 if failed to delete the topic
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   void deleteTopic(TopicId topicId)
@@ -79,8 +87,8 @@ public interface MessagingService {
    *
    * @param topicId message topic
    * @return the {@link TopicMetadata} of the given topic.
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to retrieve topic metadata.
+   * @throws TopicNotFoundException      if the topic doesn't exist
+   * @throws IOException                 if failed to retrieve topic metadata.
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   Map<String, String> getTopicMetadataProperties(TopicId topicId)
@@ -91,7 +99,7 @@ public interface MessagingService {
    *
    * @param namespaceId the namespace to list topics under it
    * @return a {@link List} of {@link TopicId}.
-   * @throws IOException if failed to retrieve topics.
+   * @throws IOException                 if failed to retrieve topics.
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   List<TopicId> listTopics(NamespaceId namespaceId) throws IOException, UnauthorizedException;
@@ -101,9 +109,9 @@ public interface MessagingService {
    *
    * @param request the {@link StoreRequest} containing messages to be published
    * @return if the store request is transactional, then returns a {@link RollbackDetail} containing
-   *     information for rollback; otherwise {@code null} will be returned.
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to publish messages
+   * information for rollback; otherwise {@code null} will be returned.
+   * @throws TopicNotFoundException      if the topic doesn't exist
+   * @throws IOException                 if failed to publish messages
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   @Nullable
@@ -115,8 +123,8 @@ public interface MessagingService {
    * publishing use case.
    *
    * @param request the {@link StoreRequest} containing messages to be stored
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to store messages
+   * @throws TopicNotFoundException      if the topic doesn't exist
+   * @throws IOException                 if failed to store messages
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   @Deprecated
@@ -126,11 +134,12 @@ public interface MessagingService {
   /**
    * Rollbacks messages published to the given topic with the given transaction.
    *
-   * @param topicId the topic where the messages were published under
-   * @param rollbackDetail the {@link RollbackDetail} as returned by the {@link
-   *     #publish(StoreRequest)} call, which contains information needed for the rollback
-   * @throws TopicNotFoundException if the topic doesn't exist
-   * @throws IOException if failed to rollback changes
+   * @param topicId        the topic where the messages were published under
+   * @param rollbackDetail the {@link RollbackDetail} as returned by the
+   *                       {@link #publish(StoreRequest)} call, which contains information needed
+   *                       for the rollback
+   * @throws TopicNotFoundException      if the topic doesn't exist
+   * @throws IOException                 if failed to rollback changes
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   @Deprecated
@@ -142,10 +151,17 @@ public interface MessagingService {
    * system.
    *
    * @param messageFetchRequest the request for fetching messages
-   * @throws TopicNotFoundException if the topic does not exist
-   * @throws IOException if it fails to create the iterator
+   * @throws TopicNotFoundException      if the topic does not exist
+   * @throws IOException                 if it fails to create the iterator
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException;
+
+  /**
+   * Destroys context.
+   *
+   * @param messagingContext
+   */
+  void destroy(MessagingContext messagingContext);
 }

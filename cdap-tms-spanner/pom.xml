@@ -25,48 +25,40 @@
     <artifactId>cdap</artifactId>
     <version>6.11.0-SNAPSHOT</version>
   </parent>
-  <!--  <properties>-->
-  <!--    <guava.version>30.1.1-jre</guava.version>-->
-  <!--    <spanner.version>6.12.2</spanner.version>-->
-  <!--  </properties>-->
 
   <artifactId>cdap-tms-spanner</artifactId>
   <name>CDAP Google Cloud Spanner TMS Extension</name>
+  <packaging>jar</packaging>
+
+  <properties>
+    <guava.version>30.1.1-jre</guava.version>
+    <spanner.version>6.12.2</spanner.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>libraries-bom</artifactId>
+        <version>22.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-messaging-spi</artifactId>
-      <version>6.11.0-SNAPSHOT</version>
+      <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-spanner</artifactId>
-      <version>6.12.2</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-common</artifactId>
-      <version>6.11.0-SNAPSHOT</version>
-      <scope>compile</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-common</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>30.1.1-jre</version>
     </dependency>
   </dependencies>
-  <packaging>jar</packaging>
-  <!--  <properties>-->
-  <!--    <guava.version>30.1.1-jre</guava.version>-->
-  <!--  </properties>-->
 
   <profiles>
     <profile>

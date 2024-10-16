@@ -21,15 +21,20 @@ import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
-import io.cdap.cdap.common.conf.CConfiguration;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for spanner messaging service.
  */
 public class SpannerUtil {
 
-  public static DatabaseClient getSpannerDbClient(CConfiguration cConf, Spanner spanner) {
-    String projectID = cConf.get("data.storage.properties.gcp-spanner.project");
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerUtil.class);
+
+
+  public static DatabaseClient getSpannerDbClient(Map<String, String> cConf, Spanner spanner) {
+    String projectID = cConf.get("project");
     String instanceID = getInstanceID(cConf);
     String databaseID = getDatabaseID(cConf);
     DatabaseId db = DatabaseId.of(projectID, instanceID, databaseID);
@@ -40,16 +45,17 @@ public class SpannerUtil {
     return spanner.getDatabaseAdminClient();
   }
 
-  public static String getInstanceID(CConfiguration cConf) {
-    return cConf.get("data.storage.properties.gcp-spanner.instance");
+  public static String getInstanceID(Map<String, String> cConf) {
+    return cConf.get("instance");
   }
 
-  public static String getDatabaseID(CConfiguration cConf) {
-    return cConf.get("data.storage.properties.gcp-spanner.database");
+  public static String getDatabaseID(Map<String, String> cConf) {
+    return cConf.get("database");
   }
 
-  public static Spanner getSpannerService(CConfiguration cConf) {
-    String projectID = cConf.get("data.storage.properties.gcp-spanner.project");
+  public static Spanner getSpannerService(Map<String, String> cConf) {
+    String projectID = cConf.get("project");
+    LOG.info("projectID {}", projectID);
     return SpannerOptions.newBuilder().setProjectId(projectID).build().getService();
   }
 }

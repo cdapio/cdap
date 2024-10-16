@@ -37,13 +37,14 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
-import io.cdap.cdap.messaging.spi.MessageFetchRequest;
-import io.cdap.cdap.messaging.spi.MessagingService;
-import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
+import io.cdap.cdap.messaging.spi.MessageFetchRequest;
+import io.cdap.cdap.messaging.spi.MessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.spi.RawMessage;
+import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
-import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -88,7 +89,7 @@ import org.apache.tephra.TransactionCodec;
 /**
  * The client implementation of {@link MessagingService}. This client is intended for internal
  * higher level API implementation only.
- *
+ * <p>
  * NOTE: This class shouldn't expose to end user (e.g. cdap-client module).
  */
 public final class ClientMessagingService implements MessagingService {
@@ -120,6 +121,11 @@ public final class ClientMessagingService implements MessagingService {
   @Override
   public String getName() {
     return this.getClass().getSimpleName();
+  }
+
+  @Override
+  public void initialize(MessagingContext context) throws IOException {
+
   }
 
   @Override
@@ -252,7 +258,7 @@ public final class ClientMessagingService implements MessagingService {
    * @param request contains information about what to write
    * @param publish {@code true} to make publish call, {@code false} to make store call.
    * @return the response from the server
-   * @throws IOException if failed to perform the write operation
+   * @throws IOException            if failed to perform the write operation
    * @throws TopicNotFoundException if the topic to write to does not exist
    */
   private HttpResponse performWriteRequest(StoreRequest request,
@@ -338,8 +344,8 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   /**
-   * Converts the payloads carried by the given {@link StoreRequest} into a {@link List} of {@link
-   * ByteBuffer}, which is needed by the avro record.
+   * Converts the payloads carried by the given {@link StoreRequest} into a {@link List} of
+   * {@link ByteBuffer}, which is needed by the avro record.
    */
   private List<ByteBuffer> convertPayloads(StoreRequest request) {
     return StreamSupport.stream(request.spliterator(), false).map(ByteBuffer::wrap)
@@ -348,9 +354,9 @@ public final class ClientMessagingService implements MessagingService {
 
   /**
    * Encodes the given {@link RollbackDetail} as expected by the rollback call. This method is
-   * rarely used as the call to {@link #rollback(TopicId, RollbackDetail)} expects a {@link
-   * ClientRollbackDetail} which already contains the encoded bytes.
-   *
+   * rarely used as the call to {@link #rollback(TopicId, RollbackDetail)} expects a
+   * {@link ClientRollbackDetail} which already contains the encoded bytes.
+   * <p>
    * This method looks very similar to the {@code StoreHandler.encodeRollbackDetail} method, but is
    * intended to have them separated. This is to allow client side classes be moved to separate
    * module without any dependency on the server side (this can also be done with a util method in a
@@ -515,9 +521,14 @@ public final class ClientMessagingService implements MessagingService {
     };
   }
 
+  @Override
+  public void destroy(MessagingContext messagingContext) {
+
+  }
+
   /**
-   * Based on the given {@link HttpURLConnection} content encoding, optionally wrap the given {@link
-   * InputStream} with either gzip or deflate decompression.
+   * Based on the given {@link HttpURLConnection} content encoding, optionally wrap the given
+   * {@link InputStream} with either gzip or deflate decompression.
    */
   private InputStream decompressIfNeeded(HttpURLConnection urlConn, InputStream is)
       throws IOException {

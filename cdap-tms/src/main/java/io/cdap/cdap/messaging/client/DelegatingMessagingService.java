@@ -21,8 +21,8 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
+import io.cdap.cdap.messaging.spi.MessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
@@ -49,6 +49,7 @@ public class DelegatingMessagingService implements MessagingService {
   @Inject
   public DelegatingMessagingService(
       CConfiguration cConf, MessagingServiceExtensionLoader extensionLoader) {
+    LOG.info("Delegating service is initialised");
     this.cConf = cConf;
     this.extensionLoader = extensionLoader;
   }
@@ -73,7 +74,13 @@ public class DelegatingMessagingService implements MessagingService {
 
   @Override
   public String getName() {
-    return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
+//    return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
+    return "SpannerMessagingService";
+  }
+
+  @Override
+  public void initialize(MessagingContext context) throws IOException {
+
   }
 
   @Override
@@ -96,6 +103,11 @@ public class DelegatingMessagingService implements MessagingService {
   }
 
   @Override
+  public void destroy(MessagingContext messagingContext) {
+
+  }
+
+  @Override
   public List<TopicId> listTopics(NamespaceId namespaceId)
       throws IOException, UnauthorizedException {
     return getDelegate().listTopics(namespaceId);
@@ -113,7 +125,8 @@ public class DelegatingMessagingService implements MessagingService {
     getDelegate().rollback(topicId, rollbackDetail);
   }
 
-  private MessagingService getDelegate() {
+  private MessagingService getDelegate() throws IOException {
+    LOG.info("getDelegate() is called.");
     MessagingService messagingService = this.delegate;
     if (messagingService != null) {
       return messagingService;
@@ -129,7 +142,9 @@ public class DelegatingMessagingService implements MessagingService {
         throw new IllegalArgumentException(
             "Unsupported messaging service implementation " + getName());
       }
-      LOG.info("Messaging service {} is loaded", messagingService.getName());
+      LOG.info("Messaging service {} is loaded, now initializing with conf {}",
+          messagingService.getName(), this.cConf);
+      messagingService.initialize(new DefaultMessagingContext(this.cConf));
 
       this.delegate = messagingService;
       return messagingService;
