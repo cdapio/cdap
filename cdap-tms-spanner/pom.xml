@@ -25,6 +25,10 @@
     <artifactId>cdap</artifactId>
     <version>6.11.0-SNAPSHOT</version>
   </parent>
+  <!--  <properties>-->
+  <!--    <guava.version>30.1.1-jre</guava.version>-->
+  <!--    <spanner.version>6.12.2</spanner.version>-->
+  <!--  </properties>-->
 
   <artifactId>cdap-tms-spanner</artifactId>
   <name>CDAP Google Cloud Spanner TMS Extension</name>
@@ -38,7 +42,7 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-spanner</artifactId>
-      <version>6.12.1</version>
+      <version>6.12.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -50,7 +54,8 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>32.1.3-jre</version>
+      <version>30.1.1-jre</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
   <packaging>jar</packaging>
