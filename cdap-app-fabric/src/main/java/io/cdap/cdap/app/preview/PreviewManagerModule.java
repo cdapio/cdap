@@ -20,7 +20,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -37,7 +36,6 @@ import io.cdap.cdap.internal.app.preview.DistributedPreviewRunStopper;
 import io.cdap.cdap.internal.app.preview.PreviewDataCleanupService;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
-import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.http.HttpHandler;
 
 /**
