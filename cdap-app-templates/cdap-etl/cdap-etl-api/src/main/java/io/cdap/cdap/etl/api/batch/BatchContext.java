@@ -23,6 +23,7 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
+import io.cdap.cdap.etl.api.exception.ErrorDetailsProviderSpec;
 
 /**
  * Context passed to Batch Source and Sink.
@@ -61,4 +62,13 @@ public interface BatchContext extends DatasetContext, TransformContext {
    */
   @Override
   SettableArguments getArguments();
+
+  /**
+   * Overrides the error details provider specified in the stage.
+   *
+   * @param errorDetailsProviderSpec the error details provider spec.
+   */
+  default void setErrorDetailsProvider(ErrorDetailsProviderSpec errorDetailsProviderSpec) {
+    // no-op
+  }
 }

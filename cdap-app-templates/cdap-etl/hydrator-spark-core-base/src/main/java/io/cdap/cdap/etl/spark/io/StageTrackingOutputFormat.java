@@ -16,8 +16,9 @@
 
 package io.cdap.cdap.etl.spark.io;
 
-import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.etl.api.exception.ErrorPhase;
 import io.cdap.cdap.etl.batch.DelegatingOutputFormat;
+import io.cdap.cdap.etl.common.ErrorDetails;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -39,47 +40,53 @@ public class StageTrackingOutputFormat<K, V> extends DelegatingOutputFormat<K, V
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
     OutputFormat<K, V> delegate = getDelegate(context.getConfiguration());
+    Configuration conf = context.getConfiguration();
     try {
       // Spark already emitting bytes written metrics for file base output,
       // hence we don't want to double count
       if (delegate instanceof FileOutputFormat) {
         return new StageTrackingRecordWriter<>(delegate.getRecordWriter(context),
-          getStageName(context.getConfiguration()));
+          getStageName(conf), ErrorDetails.getErrorDetailsProvider(conf));
       }
 
       return new StageTrackingRecordWriter<>(
         new TrackingRecordWriter(delegate.getRecordWriter(new TrackingTaskAttemptContext(context))),
-        getStageName(context.getConfiguration()));
+        getStageName(conf), ErrorDetails.getErrorDetailsProvider(conf));
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw ErrorDetails.handleException(e, getStageName(conf),
+        ErrorDetails.getErrorDetailsProvider(conf), ErrorPhase.WRITING);
     }
   }
 
   @Override
   public void checkOutputSpecs(JobContext context) {
+    Configuration conf = context.getConfiguration();
     try {
-      getDelegate(context.getConfiguration()).checkOutputSpecs(context);
+      getDelegate(conf).checkOutputSpecs(context);
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw ErrorDetails.handleException(e, getStageName(conf),
+        ErrorDetails.getErrorDetailsProvider(conf), ErrorPhase.VALIDATING_OUTPUT_SPECS);
     }
   }
 
   @Override
   public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
     OutputFormat<K, V> delegate = getDelegate(context.getConfiguration());
+    Configuration conf = context.getConfiguration();
     try {
       // Spark already emitting bytes written metrics for file base output,
       // hence we don't want to double count
       if (delegate instanceof FileOutputFormat) {
         return new StageTrackingOutputCommitter(delegate.getOutputCommitter(context),
-          getStageName(context.getConfiguration()));
+          getStageName(conf), ErrorDetails.getErrorDetailsProvider(conf));
       }
 
       return new StageTrackingOutputCommitter(new TrackingOutputCommitter(
         delegate.getOutputCommitter(new TrackingTaskAttemptContext(context))),
-        getStageName(context.getConfiguration()));
+        getStageName(conf), ErrorDetails.getErrorDetailsProvider(conf));
     } catch (Exception e) {
-      throw new WrappedStageException(e, getStageName(context.getConfiguration()));
+      throw ErrorDetails.handleException(e, getStageName(conf),
+        ErrorDetails.getErrorDetailsProvider(conf), ErrorPhase.COMMITTING);
     }
   }
 

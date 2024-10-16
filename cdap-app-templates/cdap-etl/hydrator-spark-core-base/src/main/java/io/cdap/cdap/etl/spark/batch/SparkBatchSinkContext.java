@@ -22,9 +22,11 @@ import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
+import io.cdap.cdap.etl.api.exception.ErrorDetailsProviderSpec;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
 import io.cdap.cdap.etl.batch.BasicOutputFormatProvider;
 import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
+import io.cdap.cdap.etl.common.ErrorDetails;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.io.StageTrackingOutputFormat;
@@ -39,19 +41,25 @@ import java.util.UUID;
 public class SparkBatchSinkContext extends AbstractBatchContext implements BatchSinkContext {
   private final SparkBatchSinkFactory sinkFactory;
   private final boolean isPreviewEnabled;
+  private ErrorDetailsProviderSpec errorDetailsProviderSpec;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
+      PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, datasetContext, sparkContext.getAdmin());
     this.sinkFactory = sinkFactory;
     this.isPreviewEnabled = stageSpec.isPreviewEnabled(sparkContext);
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
-                               DatasetContext datasetContext, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+      DatasetContext datasetContext, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, datasetContext, sec.getAdmin());
     this.sinkFactory = sinkFactory;
     this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
+  }
+
+  @Override
+  public void setErrorDetailsProvider(ErrorDetailsProviderSpec errorDetailsProviderSpec) {
+    this.errorDetailsProviderSpec = errorDetailsProviderSpec;
   }
 
   @Override
@@ -64,6 +72,10 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
       Map<String, String> conf = new HashMap<>(provider.getOutputFormatConfiguration());
       conf.put(StageTrackingOutputFormat.DELEGATE_CLASS_NAME, provider.getOutputFormatClassName());
       conf.put(StageTrackingOutputFormat.WRAPPED_STAGE_NAME, getStageName());
+      if (errorDetailsProviderSpec != null) {
+        conf.put(ErrorDetails.ERROR_DETAILS_PROVIDER_CLASS_NAME_KEY,
+            errorDetailsProviderSpec.getClassName());
+      }
       provider = new BasicOutputFormatProvider(StageTrackingOutputFormat.class.getName(), conf);
       actualOutput = Output.of(actualOutput.getName(), provider).alias(actualOutput.getAlias());
     }
