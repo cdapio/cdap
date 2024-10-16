@@ -25,6 +25,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -53,6 +55,7 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import java.io.File;
@@ -133,6 +136,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
           bind(DiscoveryServiceClient.class)
               .toProvider(
                   new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+          bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
         }
       });
       modules.add(new RemoteLogAppenderModule());

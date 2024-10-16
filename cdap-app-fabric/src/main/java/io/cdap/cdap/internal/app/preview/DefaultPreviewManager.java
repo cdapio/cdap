@@ -31,6 +31,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
@@ -93,6 +94,7 @@ import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
+import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
@@ -388,6 +390,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             bind(LevelDBTableService.class).toInstance(previewLevelDBTableService);
             bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class)
                 .in(Scopes.SINGLETON);
+            bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
           }
 
           @Provides

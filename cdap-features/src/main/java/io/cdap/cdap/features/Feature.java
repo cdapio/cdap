@@ -44,7 +44,8 @@ public enum Feature {
   WRANGLER_SCHEMA_MANAGEMENT("6.10.0"),
   NAMESPACED_SERVICE_ACCOUNTS("6.10.0"),
   WRANGLER_KRYO_SERIALIZATION("6.10.1"),
-  SOURCE_CONTROL_MANAGEMENT_GITLAB_BITBUCKET("6.10.1");
+  SOURCE_CONTROL_MANAGEMENT_GITLAB_BITBUCKET("6.10.1"),
+  DATAPLANE_AUDIT_LOGGING("6.10.1");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;

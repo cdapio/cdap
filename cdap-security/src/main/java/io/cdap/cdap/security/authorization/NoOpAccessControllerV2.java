@@ -24,10 +24,12 @@ import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -118,5 +120,17 @@ public class NoOpAccessControllerV2 implements AccessControllerSpi {
   @Override
   public AuthorizedResult<Set<GrantedPermission>> listGrants(Principal principal, Principal caller) {
     return new AuthorizedResult<>(Collections.emptySet(), AuthorizationResponse.Builder.defaultNotRequired());
+  }
+
+  /**
+   * TODO : THIS IS WIP : Needs to be modified based on how auth extension works.
+   *
+   * @param auditLogContexts
+   * @return {@link PublishStatus}
+   */
+  @Override
+  public PublishStatus publish(Queue<AuditLogContext> auditLogContexts) {
+    //no-op
+    return PublishStatus.PUBLISHED;
   }
 }

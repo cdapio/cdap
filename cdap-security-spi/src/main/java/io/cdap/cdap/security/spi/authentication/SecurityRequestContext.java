@@ -131,4 +131,12 @@ public final class SecurityRequestContext {
   public static void clearAuditLogQueue(AuditLogContext auditLog) {
     auditLogContextQueue.remove();
   }
+
+  public static Queue<AuditLogContext> getAuditLogQueue() {
+    Queue<AuditLogContext> queue = auditLogContextQueue.get();
+    if (queue == null) {
+      return new ArrayDeque<>();
+    }
+    return queue;
+  }
 }

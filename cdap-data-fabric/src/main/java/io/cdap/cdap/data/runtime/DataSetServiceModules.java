@@ -196,6 +196,7 @@ public class DataSetServiceModules extends RuntimeModule {
 
             bind(DatasetTypeService.class).to(AuthorizationDatasetTypeService.class);
             expose(DatasetTypeService.class);
+
           }
         });
       }
