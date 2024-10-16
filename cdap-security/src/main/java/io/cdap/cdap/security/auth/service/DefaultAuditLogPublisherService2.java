@@ -23,15 +23,15 @@ import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
-import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
-import io.cdap.cdap.security.spi.authorization.AuditLoggerSpi;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Queue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -43,10 +43,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * them to an SPI.
  */
 @Singleton
-public class DefaultAuditLogPublisherService extends AbstractRetryableScheduledService
+public class DefaultAuditLogPublisherService2 extends AbstractRetryableScheduledService
   implements AuditLogPublisherService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultAuditLogPublisherService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultAuditLogPublisherService2.class);
+  private static final int MAX_QUEUE_STORAGE_COUNT = 10;
   private final int publishIntervalSeconds;
   private static AtomicBoolean publishing = new AtomicBoolean(false);
   private ScheduledExecutorService executor;
@@ -55,11 +56,33 @@ public class DefaultAuditLogPublisherService extends AbstractRetryableScheduledS
   Queue<AuditLogContext> auditLogContextQueue = new LinkedBlockingDeque<>();
 
   @Inject
-  public DefaultAuditLogPublisherService(CConfiguration conf,
-                                         AccessControllerInstantiator accessControllerInstantiator) {
-    super(RetryStrategies.exponentialDelay(10, 200, TimeUnit.MILLISECONDS));
+  public DefaultAuditLogPublisherService2(CConfiguration conf,
+                                          AccessControllerInstantiator accessControllerInstantiator) {
+    super(null);
     this.accessControllerInstantiator = accessControllerInstantiator;
     this.publishIntervalSeconds = conf.getInt(Constants.AuditLogging.AUDIT_LOG_PUBLISH_INTERVAL_SECONDS);
+  }
+
+  @Override
+  public synchronized void publish() {
+    publishing.set(true);
+
+    //TESTING
+    AccessControllerSpi accessController = this.accessControllerInstantiator.get();
+    accessController.publish(auditLogContextQueue);
+    auditLogContextQueue.clear();
+    publishing.set(false);
+  }
+
+  @Override
+  public void addAuditContexts(Queue<AuditLogContext> q) {
+    LOG.warn("SANKET_LOG_3 : adding : " + q.size());
+    auditLogContextQueue.addAll(q);
+
+    //Trigger a publish call if there is an outburst of events, and it gets accumulated within `publishIntervalSeconds`
+    if (auditLogContextQueue.size() > MAX_QUEUE_STORAGE_COUNT && !publishing.get()) {
+      publish();
+    }
   }
 
   /**
@@ -70,21 +93,6 @@ public class DefaultAuditLogPublisherService extends AbstractRetryableScheduledS
    */
   @Override
   protected long runTask() throws Exception {
-    publish();
-    return publishIntervalSeconds;
-  }
-
-  @Override
-  public synchronized void publish() throws IOException {
-    AuditLoggerSpi.PublishStatus publishStatus =  this.accessControllerInstantiator.get().publish(auditLogContextQueue);
-    if (!publishStatus.equals(AuditLoggerSpi.PublishStatus.PUBLISHED)){
-      throw new IOException();
-    }
-    auditLogContextQueue.clear();
-  }
-
-  @Override
-  public void addAuditContexts(Queue<AuditLogContext> q) {
-    auditLogContextQueue.addAll(q);
+    return 0;
   }
 }

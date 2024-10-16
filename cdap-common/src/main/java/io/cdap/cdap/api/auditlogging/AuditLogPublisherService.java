@@ -20,6 +20,7 @@ package io.cdap.cdap.api.auditlogging;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 
+import java.io.IOException;
 import java.util.Queue;
 
 
@@ -31,7 +32,7 @@ public interface AuditLogPublisherService extends Service {
   /**
    * pushes the log entry to respective external service
    */
-  void publish();
+  void publish() throws IOException;
 
   /**
    * add to service's pending list for publishing
