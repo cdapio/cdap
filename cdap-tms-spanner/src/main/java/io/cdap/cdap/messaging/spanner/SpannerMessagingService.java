@@ -84,6 +84,10 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
   public void initialize(MessagingContext context) throws IOException {
     LOG.info("initialising spanner messaging service {}", context.getProperties());
     this.cConf = context.getProperties();
+    this.spanner = SpannerUtil.getSpannerService(cConf);
+    this.client = SpannerUtil.getSpannerDbClient(cConf, spanner);
+    this.adminClient = SpannerUtil.getSpannerDbAdminClient(spanner);
+    LOG.info("Spanner messaging service started.");
   }
 
   @Override
@@ -241,15 +245,12 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
 
   @Override
   public void destroy(MessagingContext messagingContext) {
-
+    this.spanner.close();
   }
 
   @Override
   protected void startUp() throws Exception {
-    spanner = SpannerUtil.getSpannerService(cConf);
-    client = SpannerUtil.getSpannerDbClient(cConf, spanner);
-    adminClient = SpannerUtil.getSpannerDbAdminClient(spanner);
-    LOG.info("Spanner messaging service started.");
+    LOG.info("Is this needed startup()?");
   }
 
   @Override
