@@ -25,7 +25,6 @@ import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
 import com.google.cloud.spanner.Statement;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
@@ -57,7 +56,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The Spanner implementation of {@link MessagingService}.
  */
-public class SpannerMessagingService extends AbstractIdleService implements MessagingService {
+public class SpannerMessagingService implements MessagingService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerMessagingService.class);
 
@@ -218,6 +217,8 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
+    createTopic(messageFetchRequest.getTopicId());
+
     String sqlStatement =
         String.format(
             "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where (payload_sequence_id>-1"
@@ -246,17 +247,6 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
   @Override
   public void destroy(MessagingContext messagingContext) {
     this.spanner.close();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    LOG.info("Is this needed startup()?");
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    spanner.close();
-    LOG.info("Spanner messaging service stopped.");
   }
 
   public static class SpannerResultSetClosableIterator<RawMessage>
@@ -299,17 +289,6 @@ public class SpannerMessagingService extends AbstractIdleService implements Mess
     offset = Bytes.putLong(result, offset, 0);
     Bytes.putShort(result, offset, (short) messageSequenceId);
     return result;
-
-    // try {
-    //   String messageId= String.format("%s-%s-%s", sequenceId, messageSequenceId, timestamp);
-    //   if (messageId.length()%2!=0){
-    //     messageId = "0" + messageId;
-    //   }
-    //
-    //   return Bytes.fromHexString(messageId);
-    // } catch (Exception e) {
-    //   throw new RuntimeException(e);
-    // }
   }
 
 }
