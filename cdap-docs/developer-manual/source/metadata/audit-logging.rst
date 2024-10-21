@@ -21,7 +21,7 @@ streams), it includes access information used to generate the entity's :ref:`lin
 Please note that audit logs are not published during a CDAP upgrade, as CDAP services are
 not available. Hence, any application which uses CDAP audit logs to sync metadata will go 
 out of sync with respect to changes made during the upgrade. Please see 
-`CDAP-5954 <https://issues.cask.co/browse/CDAP-5954>`__ for details.
+`CDAP-5954 <https://cdap.atlassian.net/browse/CDAP-5954>`__ for details.
 
 .. _audit-logging-supported-audit-events:
 

@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Duplicate store class for application meatadata. JIRA https://issues.cask.co/browse/CDAP-2172
+ * Duplicate store class for application meatadata. JIRA https://cdap.atlassian.net/browse/CDAP-2172
  */
 public class AppMetadataStore {
 
@@ -53,7 +53,7 @@ public class AppMetadataStore {
 
   // TODO: getRun is duplicated from cdap-app-fabric AppMetadataStore class.
   // Any changes made here will have to be made over there too.
-  // JIRA https://issues.cask.co/browse/CDAP-2172
+  // JIRA https://cdap.atlassian.net/browse/CDAP-2172
   public RunRecordDetail getRun(ProgramReference programRef, String runId) throws IOException {
     // Query active run record first
     RunRecordDetail running = getUnfinishedRun(programRef, runId);

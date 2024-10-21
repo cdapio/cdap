@@ -222,7 +222,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Map<String, String> localizedUserResources = localizeUserResources(job, tempDir);
 
       // Override user-defined job name, since we set it and depend on the name.
-      // https://issues.cask.co/browse/CDAP-2441
+      // https://cdap.atlassian.net/browse/CDAP-2441
       String jobName = job.getJobName();
       if (!jobName.isEmpty()) {
         LOG.warn("Job name {} is being overridden.", jobName);

@@ -244,7 +244,7 @@ public class DefaultMetricStore implements MetricStore {
     this.resolutionTTLMap = builder.build();
     FactTableSupplier factTableSupplier = (resolution, ignoredRollTime) -> {
       // roll time will be taken from configuration
-      // TODO: remove roll time from the supplier api, https://issues.cask.co/browse/CDAP-14730
+      // TODO: remove roll time from the supplier api, https://cdap.atlassian.net/browse/CDAP-14730
       return dsFactory.getOrCreateFactTable(resolution);
     };
     this.cube = Suppliers.memoize(new Supplier<Cube>() {

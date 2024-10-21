@@ -237,7 +237,7 @@ public class StandaloneMain {
    * Start the service.
    */
   public void startUp() throws Exception {
-    // Workaround for release of file descriptors opened by URLClassLoader - https://issues.cask.co/browse/CDAP-2841
+    // Workaround for release of file descriptors opened by URLClassLoader - https://cdap.atlassian.net/browse/CDAP-2841
     URLConnections.setDefaultUseCaches(false);
 
     ConfigurationLogger.logImportantConfig(cConf);
