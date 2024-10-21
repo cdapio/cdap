@@ -114,7 +114,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
         }
       });
 
-//      bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
+      bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
       bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
       expose(MessagingService.class);
 
