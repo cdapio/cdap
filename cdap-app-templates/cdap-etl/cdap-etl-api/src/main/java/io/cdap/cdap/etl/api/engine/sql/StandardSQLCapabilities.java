@@ -36,7 +36,7 @@ public enum StandardSQLCapabilities implements Capability {
    */
   POSTGRES,
   /**
-   * Defines that factory implements support for Spark SQL dialect.
+   * Defines that factory implements support for Spark specific language
    */
   SPARK
 }
