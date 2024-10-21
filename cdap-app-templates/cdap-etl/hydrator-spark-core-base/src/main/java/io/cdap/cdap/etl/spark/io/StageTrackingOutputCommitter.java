@@ -20,6 +20,7 @@ import io.cdap.cdap.etl.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.etl.api.exception.ErrorPhase;
 import io.cdap.cdap.etl.common.ErrorDetails;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -53,6 +54,37 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
   public void setupJob(JobContext jobContext) {
     try {
       delegate.setupJob(jobContext);
+    } catch (Exception e) {
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.COMMITTING);
+    }
+  }
+
+  @Override
+  @Deprecated
+  public void cleanupJob(JobContext jobContext) {
+    try {
+      delegate.cleanupJob(jobContext);
+    } catch (Exception e) {
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.COMMITTING);
+    }
+  }
+
+  @Override
+  public void commitJob(JobContext jobContext) {
+    try {
+      delegate.commitJob(jobContext);
+    } catch (Exception e) {
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.COMMITTING);
+    }
+  }
+
+  @Override
+  public void abortJob(JobContext jobContext, State state) {
+    try {
+      delegate.abortJob(jobContext, state);
     } catch (Exception e) {
       throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
         ErrorPhase.COMMITTING);
@@ -100,8 +132,29 @@ public class StageTrackingOutputCommitter extends OutputCommitter {
   }
 
   @Override
+  @Deprecated
   public boolean isRecoverySupported() {
     return delegate.isRecoverySupported();
+  }
+
+  @Override
+  public boolean isCommitJobRepeatable(JobContext jobContext) {
+    try {
+      return delegate.isCommitJobRepeatable(jobContext);
+    } catch (Exception e) {
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.COMMITTING);
+    }
+  }
+
+  @Override
+  public boolean isRecoverySupported(JobContext jobContext) {
+    try {
+      return delegate.isRecoverySupported(jobContext);
+    } catch (Exception e) {
+      throw ErrorDetails.handleException(e, stageName, errorDetailsProvider,
+        ErrorPhase.COMMITTING);
+    }
   }
 
   @Override

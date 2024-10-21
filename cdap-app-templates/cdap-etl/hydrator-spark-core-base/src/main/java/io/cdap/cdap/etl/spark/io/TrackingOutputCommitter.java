@@ -77,8 +77,19 @@ public class TrackingOutputCommitter extends OutputCommitter {
   }
 
   @Override
+  @Deprecated
   public boolean isRecoverySupported() {
     return delegate.isRecoverySupported();
+  }
+
+  @Override
+  public boolean isCommitJobRepeatable(JobContext jobContext) throws IOException {
+    return delegate.isCommitJobRepeatable(jobContext);
+  }
+
+  @Override
+  public boolean isRecoverySupported(JobContext jobContext) throws IOException {
+    return delegate.isRecoverySupported(jobContext);
   }
 
   @Override
