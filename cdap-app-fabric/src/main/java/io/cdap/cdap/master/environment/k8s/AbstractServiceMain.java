@@ -26,6 +26,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.app.MainClassLoader;
@@ -55,6 +58,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -179,7 +183,12 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
       }
     });
     modules.add(getLogAppenderModule());
-
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
+      }
+    });
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     modules.add(coreSecurityModule);
     if (coreSecurityModule.requiresZKClient()) {
@@ -202,6 +211,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
+
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       services.add(injector.getInstance(TokenManager.class));
     }

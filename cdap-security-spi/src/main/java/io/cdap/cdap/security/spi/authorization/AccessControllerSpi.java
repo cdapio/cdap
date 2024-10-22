@@ -50,7 +50,8 @@ import java.util.jar.Attributes;
  * This is newer version of {@link AccessController}
  */
 @Beta
-public interface AccessControllerSpi extends PermissionManagerSpi, RoleControllerSpi, AccessEnforcerSpi {
+public interface AccessControllerSpi extends PermissionManagerSpi, RoleControllerSpi, AccessEnforcerSpi,
+  AuditLoggerSpi {
 
   /**
    * Initialize the {@link AccessControllerSpi}. Authorization extensions can use this method to access

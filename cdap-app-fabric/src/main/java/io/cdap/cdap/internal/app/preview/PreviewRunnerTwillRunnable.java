@@ -30,6 +30,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import io.cdap.cdap.api.auditlogging.AuditLogPublisher;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
@@ -70,6 +71,7 @@ import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.RemoteAuditLogPublisher;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
@@ -267,6 +269,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        bind(AuditLogPublisher.class).to(RemoteAuditLogPublisher.class).in(Scopes.SINGLETON);
       }
     });
 

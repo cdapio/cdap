@@ -6022,6 +6022,14 @@
   </property>
 
   <property>
+    <name>feature.dataplane.audit.logging.enabled</name>
+    <value>true</value>
+    <description>
+      Enables dataplane audit logging for RBAC instances.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -6425,6 +6433,14 @@
     <description>
       The delay in milliseconds to check again for new operation status events
       after it detects there was no event
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.publish.interval.seconds</name>
+    <value>20</value>
+    <description>
+      The interval between Audit log publish calls to external auth in seconds.
     </description>
   </property>
 
