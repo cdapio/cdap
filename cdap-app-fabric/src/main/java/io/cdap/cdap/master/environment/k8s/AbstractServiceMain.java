@@ -26,6 +26,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.app.MainClassLoader;
@@ -53,6 +55,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.security.auth.MessagingAuditLogWriter;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -176,6 +179,12 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         bind(DiscoveryServiceClient.class)
             .toProvider(
                 new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+      }
+    });
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AuditLogWriter.class).to(MessagingAuditLogWriter.class).in(Scopes.SINGLETON);
       }
     });
     modules.add(getLogAppenderModule());

@@ -25,6 +25,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -47,6 +49,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.MessagingAuditLogWriter;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
@@ -115,6 +118,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
           bind(DiscoveryServiceClient.class)
               .toProvider(
                   new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+          bind(AuditLogWriter.class).to(MessagingAuditLogWriter.class).in(Scopes.SINGLETON);
         }
       });
       modules.add(new RemoteLogAppenderModule());

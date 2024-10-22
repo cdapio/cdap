@@ -2547,5 +2547,10 @@ public final class Constants {
    */
   public static final class AuditLogging {
     public static final String AUDIT_LOG_PUBLISH_INTERVAL_SECONDS = "auditlog.publish.interval.seconds";
+
+    /**
+     * Topic prefix for publishing log events  of audited operations to the messaging system.
+     */
+    public static final String AUDIT_LOG_EVENT_TOPIC = "auditlog.event.topic";
   }
 }
