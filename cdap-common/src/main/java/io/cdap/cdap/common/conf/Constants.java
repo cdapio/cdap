@@ -2540,4 +2540,12 @@ public final class Constants {
     public static final String ERROR_NOTIFICATION_KEY = "operation.notification.error";
     public static final String USER_ID_NOTIFICATION_KEY = "userId";
   }
+
+
+  /**
+   * Constants for Data Plane Audit Logging
+   */
+  public static final class AuditLogging {
+    public static final String AUDIT_LOG_PUBLISH_INTERVAL_SECONDS = "auditlog.publish.interval.seconds";
+  }
 }
