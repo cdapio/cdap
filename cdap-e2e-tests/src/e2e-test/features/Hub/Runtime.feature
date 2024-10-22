@@ -21,11 +21,11 @@ Feature: Hub - Run time scenarios
   Scenario: Verify that the user is able to deploy a plugin from Hub and then delete it successfully
     When Open Datafusion Project to configure pipeline
     Then Click on Hub Menu
-    Then Click on "Plugins" option
+    Then Click on "Plugins" option in hub
     Then Enter the text in search tab "Anaplan"
-    Then Click on "Anaplan plugins" plugin
-    Then Deploy the plugin
-    Then Click on "Go to homepage" button
+    Then Click on "Anaplan plugins" plugin in hub
+    Then Deploy the plugin from hub
+    Then Click on "Go to homepage" button in hub
     Then Verify that "Anaplan" plugin is successfully deployed
     Then Enter the text in search tab "anaplan" in control center
     Then Select dropdown : "Filter" with option value: "Artifacts" in control center
@@ -36,11 +36,11 @@ Feature: Hub - Run time scenarios
   Scenario: Verify that the user is able to deploy a plugin from Hub and verify it in studio
     When Open Datafusion Project to configure pipeline
     Then Click on Hub Menu
-    Then Click on "Plugins" option
+    Then Click on "Plugins" option in hub
     Then Enter the text in search tab "Anaplan"
-    Then Click on "Anaplan plugins" plugin
-    Then Deploy the plugin
-    Then Click on "Create a pipeline" button
+    Then Click on "Anaplan plugins" plugin in hub
+    Then Deploy the plugin from hub
+    Then Click on "Create a pipeline" button in hub
     Then Select plugin: "Anaplan" from the plugins list as: "Source"
     Then Verify that "Anaplan" plugin is successfully verified in studio
 
@@ -48,11 +48,11 @@ Feature: Hub - Run time scenarios
   Scenario: Verify required fields missing validation for plugin after deployment from hub
     When Open Datafusion Project to configure pipeline
     Then Click on Hub Menu
-    Then Click on "Plugins" option
+    Then Click on "Plugins" option in hub
     Then Enter the text in search tab "Salesforce"
-    Then Click on "Salesforce Plugins" plugin
-    Then Deploy the plugin
-    Then Click on "Create a pipeline" button
+    Then Click on "Salesforce Plugins" plugin in hub
+    Then Deploy the plugin from hub
+    Then Click on "Create a pipeline" button in hub
     Then Select plugin: "Salesforce Multi Objects" from the plugins list as: "Source"
     Then Navigate to the properties page of plugin: "SalesforceMultiObjects"
     Then Click on the Validate button
