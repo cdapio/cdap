@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -284,6 +285,17 @@ public class InMemoryAccessControllerV2 implements AccessControllerSpi {
       }
     }
     return true;
+  }
+
+  /**
+   * TODO : THIS IS WIP : Needs to be modified based on how auth extension works.
+   *
+   * @param auditLogContexts
+   * @return {@link PublishStatus}
+   */
+  @Override
+  public PublishStatus publish(Queue<AuditLogContext> auditLogContexts) {
+    return PublishStatus.PUBLISHED;
   }
 
   public final class AuthorizableEntityId {
