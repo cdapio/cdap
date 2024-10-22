@@ -42,27 +42,27 @@ Feature: Hub - Design time scenarios
   Scenario: Verify the error message when user is deploying the same plugin multiple times
     When Open Datafusion Project to configure pipeline
     Then Click on Hub Menu
-    Then Click on "Plugins" option
+    Then Click on "Plugins" option in hub
     Then Enter the text in search tab "Anaplan"
-    Then Click on "Anaplan plugins" plugin
-    Then Deploy the plugin
-    Then Click on "Create a pipeline" button
+    Then Click on "Anaplan plugins" plugin in hub
+    Then Deploy the plugin from hub
+    Then Click on "Create a pipeline" button in hub
     Then Click on Hub Menu
-    Then Click on "Plugins" option
+    Then Click on "Plugins" option in hub
     Then Enter the text in search tab "Anaplan"
-    Then Click on "Anaplan plugins" plugin
-    Then Deploy the plugin
+    Then Click on "Anaplan plugins" plugin in hub
+    Then Deploy the plugin from hub
     Then Verify that user is getting an error message: "fail.message_hub"
 
   @TS-HUB-DESIGN-05
   Scenario: Verify that the user is able to see the created pipeline from hub in the list
     When Open Datafusion Project to configure pipeline
     Then Click on Hub Menu
-    Then Click on "Pipelines" option
+    Then Click on "Pipelines" option in hub
     Then Enter the text in search tab "CSV Parsing"
-    Then Click on "CSV Parsing" pipeline
+    Then Click on "CSV Parsing" pipeline in hub
     Then Create the pipeline
-    Then Click on "Go to homepage" button
+    Then Click on "Go to homepage" button in hub
     Then Click on the Hamburger bar on the left panel
     Then Click on the "List" from the left panel
     Then Click on the "Drafts" option from the list panel
