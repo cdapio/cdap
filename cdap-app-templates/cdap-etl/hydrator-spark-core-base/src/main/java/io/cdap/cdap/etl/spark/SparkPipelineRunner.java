@@ -25,6 +25,7 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -194,10 +195,22 @@ public abstract class SparkPipelineRunner {
     //Emitted records and sinkRunnables will be populated as each stage is processed
     SinkRunnableProvider sinkRunnableProvider = new BatchSinkRunnableProvider();
     for (String stageName : groupedDag.getTopologicalOrder()) {
-      processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors,
+      try {
+        processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors,
           pipelinePhase, functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups,
           branchers, shufflers, sinkRunnables, stageName, System.currentTimeMillis(), null,
           sinkRunnableProvider);
+      } catch (Exception e) {
+        List<Throwable> causalChain = Throwables.getCausalChain(e);
+        for (Throwable t : causalChain) {
+          if (t instanceof WrappedStageException) {
+            // avoid double wrapping
+            throw e;
+          }
+        }
+        // this can occur in cases like `joins` where we do `SparkCollection#join`
+        throw new WrappedStageException(e, stageName);
+      }
     }
     //We should have all the sink runnables at this point, execute them
     executeSinkRunnables(sec, sinkRunnables);

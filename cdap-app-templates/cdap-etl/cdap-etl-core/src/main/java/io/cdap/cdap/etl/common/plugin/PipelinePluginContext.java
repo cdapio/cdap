@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -105,6 +106,8 @@ public class PipelinePluginContext implements PluginContext {
       return new WrappedBatchAggregator<>((BatchAggregator) plugin, caller, operationTimer);
     } else if (plugin instanceof BatchJoiner) {
       return new WrappedBatchJoiner<>((BatchJoiner) plugin, caller, operationTimer);
+    } else if (plugin instanceof BatchAutoJoiner) {
+      return new WrappedBatchAutoJoiner((BatchAutoJoiner) plugin, caller);
     } else if (plugin instanceof PostAction) {
       return new WrappedPostAction((PostAction) plugin, caller);
     } else if (plugin instanceof SplitterTransform) {
