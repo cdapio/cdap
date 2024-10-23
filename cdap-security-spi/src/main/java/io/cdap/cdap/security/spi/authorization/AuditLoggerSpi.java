@@ -20,6 +20,8 @@ public interface AuditLoggerSpi {
 
   /**
    * TODO : THIS IS WIP : Needs to be modified based on how auth extension works.
+   * Specially w.r.t to Retry.
+   * IF the auth ext is able to publish a batch all together vs needs to publish one by one.
    * @return {@link PublishStatus}
    */
   PublishStatus publish(Queue<AuditLogContext> auditLogContexts);

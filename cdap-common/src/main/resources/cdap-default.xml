@@ -6452,4 +6452,20 @@
     </description>
   </property>
 
+  <property>
+    <name>auditlog.messaging.fetch.size</name>
+    <value>50</value>
+    <description>
+      Number of messages to fetch from messaging system for each batch to consume by Audit log consumer.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.messaging.poll.delay.millis</name>
+    <value>4000</value>
+    <description>
+      The delay in milliseconds to check again for new audit log events from messaging system.
+    </description>
+  </property>
+
 </configuration>
