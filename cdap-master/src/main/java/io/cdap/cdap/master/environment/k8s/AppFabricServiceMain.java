@@ -24,7 +24,6 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
-import io.cdap.cdap.api.auditlogging.AuditLogPublisherService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
@@ -61,7 +60,6 @@ import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.auth.service.DefaultAuditLogPublisherService;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
@@ -125,7 +123,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
             // TODO (CDAP-14677): find a better way to inject metadata publisher
             bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
             bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-            bind(AuditLogPublisherService.class).to(DefaultAuditLogPublisherService.class);
           }
         }
     );
@@ -160,8 +157,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(new RetryOnStartFailureService(
         () -> injector.getInstance(NamespaceInitializerService.class),
         RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
-
-    services.add(injector.getInstance(AuditLogPublisherService.class));
 
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
