@@ -24,7 +24,6 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
-import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
@@ -40,9 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Queue;
 
-import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import org.apache.hadoop.security.UserGroupInformation;
 
 /**
@@ -179,7 +176,7 @@ public class AuthenticationContextModules {
       protected void configure() {
         bind(AuthenticationContext.class).to(AuthenticationTestContext.class);
         bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
-        bind(AuditLogWriter.class).to(NoOpAuditLogWriter.class);
+//        bind(AuditLogWriter.class).to(NoOpAuditLogWriter.class);
       }
     };
   }
@@ -234,22 +231,6 @@ public class AuthenticationContextModules {
         return injector.getInstance(internalAuthContextClass);
       }
       return injector.getInstance(MasterAuthenticationContext.class);
-    }
-  }
-
-  /**
-   * A NO OP implementation for tests
-   */
-  private static final class NoOpAuditLogWriter implements AuditLogWriter {
-
-    /**
-     * pushes the log entry to respective messaging topic
-     *
-     * @param auditLogContexts
-     */
-    @Override
-    public void publish(Queue<AuditLogContext> auditLogContexts) throws IOException {
-
     }
   }
 }

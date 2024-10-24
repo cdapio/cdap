@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
@@ -265,7 +266,6 @@ public class LeaderElectionMessagingServiceTest {
         new ZkDiscoveryModule(),
         new AuthorizationEnforcementModule().getNoOpModules(),
         new DFSLocationModule(),
-        new AuthenticationContextModules().getNoOpModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -297,6 +297,7 @@ public class LeaderElectionMessagingServiceTest {
             bind(MessagingService.class).to(LeaderElectionMessagingService.class)
                 .in(Scopes.SINGLETON);
             expose(MessagingService.class);
+            bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
           }
         }
     );

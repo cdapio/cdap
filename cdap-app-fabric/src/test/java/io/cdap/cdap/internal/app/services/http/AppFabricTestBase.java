@@ -36,6 +36,7 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metadata.MetadataEntity;
@@ -245,6 +246,7 @@ public abstract class AppFabricTestBase {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+        bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
       }
     });
   }

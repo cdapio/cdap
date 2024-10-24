@@ -20,6 +20,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.Transactional;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
@@ -42,5 +43,7 @@ public class AuthorizationTestModule extends PrivateModule {
     expose(PermissionManager.class);
     bind(RoleController.class).to(DelegatingRoleController.class).in(Scopes.SINGLETON);;
     expose(RoleController.class);
+    bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
+    expose(AuditLogWriter.class);
   }
 }

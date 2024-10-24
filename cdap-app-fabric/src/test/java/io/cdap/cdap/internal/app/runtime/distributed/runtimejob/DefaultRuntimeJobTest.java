@@ -16,8 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.common.app.RunIds;
@@ -43,6 +46,7 @@ import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunFailureException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -121,29 +125,39 @@ public class DefaultRuntimeJobTest {
     SimpleProgramOptions programOpts = new SimpleProgramOptions(
         programRunId.getParent(), systemArgs, new BasicArguments());
 
-    Injector injector = Guice.createInjector(
-        defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
+    List<Module> moduleList = defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
 
-          @Override
-          public LocationFactory getLocationFactory() {
-            return locationFactory;
-          }
+      @Override
+      public LocationFactory getLocationFactory() {
+        return locationFactory;
+      }
 
-          @Override
-          public TwillRunner getTwillRunner() {
-            return new NoopTwillRunnerService();
-          }
+      @Override
+      public TwillRunner getTwillRunner() {
+        return new NoopTwillRunnerService();
+      }
 
-          @Override
-          public Map<String, String> getProperties() {
-            return Collections.emptyMap();
-          }
+      @Override
+      public Map<String, String> getProperties() {
+        return Collections.emptyMap();
+      }
 
-          @Override
-          public LaunchMode getLaunchMode() {
-            return launchMode;
-          }
-        }, cConf, programRunId, programOpts));
+      @Override
+      public LaunchMode getLaunchMode() {
+        return launchMode;
+      }
+    }, cConf, programRunId, programOpts);
+
+    moduleList.add(
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {
+          });
+        }
+      });
+
+    Injector injector = Guice.createInjector(moduleList);
 
     injector.getInstance(LogAppenderInitializer.class);
     defaultRuntimeJob.createCoreServices(injector, systemArgs, cluster);

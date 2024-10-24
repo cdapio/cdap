@@ -21,6 +21,7 @@ import com.google.common.collect.Iterators;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
@@ -121,6 +122,7 @@ public class MessagingHttpServiceTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
         }
       }
     );
