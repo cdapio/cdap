@@ -6022,6 +6022,14 @@
   </property>
 
   <property>
+    <name>feature.dataplane.audit.logging.enabled</name>
+    <value>true</value>
+    <description>
+      Enables dataplane audit logging for RBAC instances.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -6425,6 +6433,38 @@
     <description>
       The delay in milliseconds to check again for new operation status events
       after it detects there was no event
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.publish.interval.seconds</name>
+    <value>20</value>
+    <description>
+      The interval between Audit log publish calls to external auth in seconds.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.event.topic</name>
+    <value>auditlogevent</value>
+    <description>
+      Topic prefix for publishing audit log events.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.messaging.fetch.size</name>
+    <value>50</value>
+    <description>
+      Number of messages to fetch from messaging system for each batch to consume by Audit log consumer.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.messaging.poll.delay.millis</name>
+    <value>4000</value>
+    <description>
+      The delay in milliseconds to check again for new audit log events from messaging system.
     </description>
   </property>
 

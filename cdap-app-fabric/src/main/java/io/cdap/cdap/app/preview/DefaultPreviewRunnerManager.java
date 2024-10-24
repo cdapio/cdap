@@ -27,6 +27,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.NotFoundException;
@@ -54,6 +55,7 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.security.auth.MessagingAuditLogWriter;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
@@ -207,6 +209,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
         new AbstractModule() {
           @Override
           protected void configure() {
+            bind(AuditLogWriter.class).to(MessagingAuditLogWriter.class).in(Scopes.SINGLETON);
           }
 
           @Provides

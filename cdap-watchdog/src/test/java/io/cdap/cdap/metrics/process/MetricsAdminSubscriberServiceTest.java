@@ -21,6 +21,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -103,6 +104,9 @@ public class MetricsAdminSubscriberServiceTest {
           // Bind the admin subscriber
           bind(MetricsAdminSubscriberService.class).in(Scopes.SINGLETON);
           expose(MetricsAdminSubscriberService.class);
+
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
+          expose(AuditLogWriter.class);
         }
       }
     );

@@ -85,7 +85,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
       cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy) -> {
       return new NoOpArtifactManager();
-    }), new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService()),
+    }), new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {}),
         remoteClientFactory, new NoOpRemoteAuthenticator());
     // start the service
     artifactLocalizerService.startAndWait();

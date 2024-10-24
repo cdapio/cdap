@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.tethering.runtime.spi.provisioner;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.runtime.NoOpProgramStateWriter;
@@ -72,6 +73,7 @@ public class TetheringProvisionerTest {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
           bind(SecureStore.class).toInstance(FakeSecureStore.builder().build());
           bind(ProgramStateWriter.class).to(NoOpProgramStateWriter.class);
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
         }
       }
     );

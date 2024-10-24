@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
@@ -28,14 +29,18 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Executor;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -65,7 +70,8 @@ public class RemoteTaskExecutorTest {
     discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator());
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(),
+                                                    auditLogContexts -> {})
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
         }, new NoOpMetricsCollectionService())

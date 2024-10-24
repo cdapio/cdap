@@ -39,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import org.apache.hadoop.security.UserGroupInformation;
 
 /**
@@ -175,6 +176,7 @@ public class AuthenticationContextModules {
       protected void configure() {
         bind(AuthenticationContext.class).to(AuthenticationTestContext.class);
         bind(InternalAuthenticator.class).toProvider(InternalAuthenticatorProvider.class);
+//        bind(AuditLogWriter.class).to(NoOpAuditLogWriter.class);
       }
     };
   }

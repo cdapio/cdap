@@ -136,7 +136,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
                                                                                FileSecureStoreService.CURRENT_CODEC
                                                                                  .newInstance());
 
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(),
+                                                    auditLogContexts -> {})
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
         }, new NoOpMetricsCollectionService()),

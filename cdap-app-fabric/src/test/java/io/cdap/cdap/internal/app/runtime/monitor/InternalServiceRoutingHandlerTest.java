@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -93,6 +94,7 @@ public class InternalServiceRoutingHandlerTest {
             bind(InternalAuthenticator.class).to(
                 NoOpInternalAuthenticator.class);
             bind(RemoteAuthenticator.class).to(NoOpRemoteAuthenticator.class);
+            bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
           }
         }
     );

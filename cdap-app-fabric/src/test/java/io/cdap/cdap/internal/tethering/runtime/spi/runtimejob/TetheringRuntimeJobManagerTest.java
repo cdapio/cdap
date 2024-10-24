@@ -26,6 +26,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessageFetcher;
@@ -127,6 +128,7 @@ public class TetheringRuntimeJobManagerTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
         }
       });
     // Define all StructuredTable before starting any services that need StructuredTable

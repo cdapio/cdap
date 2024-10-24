@@ -20,6 +20,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -98,6 +99,7 @@ public class TestTMSLogging {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
         }
       }
     );

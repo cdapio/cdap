@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
@@ -50,6 +51,7 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
@@ -295,6 +297,7 @@ public class LeaderElectionMessagingServiceTest {
             bind(MessagingService.class).to(LeaderElectionMessagingService.class)
                 .in(Scopes.SINGLETON);
             expose(MessagingService.class);
+            bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
           }
         }
     );

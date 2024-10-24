@@ -30,6 +30,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
@@ -68,6 +69,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.MessagingAuditLogWriter;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
@@ -94,7 +96,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The {@link TwillRunnable} for running {@link PreviewRunner}.
  */
-public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
+public class  PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerTwillRunnable.class);
 
@@ -267,6 +269,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        bind(AuditLogWriter.class).to(MessagingAuditLogWriter.class).in(Scopes.SINGLETON);
       }
     });
 

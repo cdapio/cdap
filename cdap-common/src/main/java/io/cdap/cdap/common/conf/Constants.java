@@ -2540,4 +2540,22 @@ public final class Constants {
     public static final String ERROR_NOTIFICATION_KEY = "operation.notification.error";
     public static final String USER_ID_NOTIFICATION_KEY = "userId";
   }
+
+
+  /**
+   * Constants for Data Plane Audit Logging
+   */
+  public static final class AuditLogging {
+    public static final String AUDIT_LOG_PUBLISH_INTERVAL_SECONDS = "auditlog.publish.interval.seconds";
+
+    /**
+     * Topic prefix for publishing log events  of audited operations to the messaging system.
+     */
+    public static final String AUDIT_LOG_EVENT_TOPIC = "auditlog.event.topic";
+    public static final String AUDIT_LOG_FETCH_SIZE = "auditlog.messaging.fetch.size";
+    public static final String AUDIT_LOG_POLL_DELAY_MILLIS = "auditlog.messaging.poll.delay.millis";
+    public static final String AUDIT_LOG_CONSUMER_WRITER_SUBSCRIBER = "auditlog.consumer.publisher";
+    public static final String AUDIT_LOG_WRITER_SUBSCRIBER = "auditlog.subscriber";
+
+  }
 }

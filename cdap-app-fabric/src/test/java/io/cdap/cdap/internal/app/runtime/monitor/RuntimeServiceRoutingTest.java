@@ -24,6 +24,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.app.RunIds;
@@ -133,6 +134,7 @@ public class RuntimeServiceRoutingTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+          bind(AuditLogWriter.class).toInstance(auditLogContexts -> {});
         }
       }
     );

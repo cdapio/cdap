@@ -31,6 +31,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.OptionalBinder;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
@@ -82,6 +83,7 @@ import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.KeyManager;
+import io.cdap.cdap.security.auth.MessagingAuditLogWriter;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -189,6 +191,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
           protected void configure() {
             bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
             bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+            bind(AuditLogWriter.class).to(MessagingAuditLogWriter.class).in(Scopes.SINGLETON);
           }
         }
     ));

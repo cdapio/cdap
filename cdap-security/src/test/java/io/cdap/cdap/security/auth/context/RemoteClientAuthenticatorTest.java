@@ -83,7 +83,8 @@ public class RemoteClientAuthenticatorTest {
 
     // Setup test HTTP handler and register the service.
     testHttpHandler = new TestHttpHandler();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService())
+    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService(),
+                                                    auditLogContexts -> {})
       .setHttpHandlers(testHttpHandler).build();
     httpService.start();
     discoveryService.register(new Discoverable(TEST_SERVICE, httpService.getBindAddress()));

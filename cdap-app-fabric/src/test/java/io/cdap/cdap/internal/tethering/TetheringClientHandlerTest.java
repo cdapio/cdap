@@ -213,7 +213,7 @@ public class TetheringClientHandlerTest {
     CConfiguration conf = CConfiguration.create();
     serverHandler = new MockTetheringServerHandler();
     serverService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_server",
-                                                      new NoOpMetricsCollectionService())
+                                                      new NoOpMetricsCollectionService(), auditLogContexts -> {})
       .setHttpHandlers(serverHandler).build();
     serverService.start();
     serverConfig = ClientConfig.builder()
@@ -238,7 +238,7 @@ public class TetheringClientHandlerTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client",
-                                                      new NoOpMetricsCollectionService())
+                                                      new NoOpMetricsCollectionService(), auditLogContexts -> {})
       .setHttpHandlers(new TetheringClientHandler(cConf, tetheringStore, contextAccessEnforcer, namespaceAdmin,
                                                   injector.getInstance(RemoteAuthenticator.class), messagingService),
                        new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
