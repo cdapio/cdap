@@ -128,6 +128,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     ctx.fireChannelRead(msg);
   }
 
+  /**
+   * If Audit logging is enabled then it sends the collection of audit events stored in {@link SecurityRequestContext}
+   * to get stored in a messaging system.
+   */
+  @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
     try {
       if (auditLoggingEnabled && msg instanceof HttpResponse) {

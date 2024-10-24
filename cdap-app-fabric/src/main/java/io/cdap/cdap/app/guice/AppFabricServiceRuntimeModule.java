@@ -181,7 +181,7 @@ import org.quartz.spi.JobStore;
 /**
  * AppFabric Service Runtime Module.
  */
-public final class  AppFabricServiceRuntimeModule extends RuntimeModule {
+public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   public static final String NOAUTH_ARTIFACT_REPO = "noAuthArtifactRepo";
 

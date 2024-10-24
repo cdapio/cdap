@@ -40,14 +40,6 @@ public class CommonNettyHttpServiceFactory {
     this.auditLogWriter = auditLogWriter;
   }
 
-  //TODO : remove
-  public CommonNettyHttpServiceFactory(CConfiguration cConf,
-                                       MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
-    this.metricsCollectionService = metricsCollectionService;
-    this.auditLogWriter = null;
-  }
-
   /**
    * Creates a {@link CommonNettyHttpServiceBuilder} with serviceName
    *

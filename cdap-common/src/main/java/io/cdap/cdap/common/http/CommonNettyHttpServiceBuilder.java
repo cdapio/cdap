@@ -67,12 +67,6 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
         new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
   }
 
-  //TODO : Remove , this is for compiling test classes
-  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-                                       MetricsCollectionService metricsCollectionService) {
-    this(cConf, serviceName, metricsCollectionService, null);
-  }
-
   /**
    * Sets pipeline modifier, preserving the security one installed in constructor.
    */

@@ -24,7 +24,6 @@ import java.util.Queue;
 /**
  * An interface to write/ persist a collection of {@link AuditLogContext} to a
  * messaging service / topic  ( ex - tms )
- *
  */
 public interface AuditLogWriter {
 

@@ -50,6 +50,7 @@ import io.cdap.cdap.messaging.store.cache.MessageTableCacheProvider;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
@@ -264,6 +265,7 @@ public class LeaderElectionMessagingServiceTest {
         new ZkDiscoveryModule(),
         new AuthorizationEnforcementModule().getNoOpModules(),
         new DFSLocationModule(),
+        new AuthenticationContextModules().getNoOpModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

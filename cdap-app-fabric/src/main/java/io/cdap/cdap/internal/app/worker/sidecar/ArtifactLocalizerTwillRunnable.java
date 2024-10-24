@@ -142,7 +142,6 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
       modules.add(new RemoteLogAppenderModule());
       modules.add(new LocalLocationModule());
 
-
       if (coreSecurityModule.requiresZKClient()) {
         modules.add(new ZkClientModule());
       }

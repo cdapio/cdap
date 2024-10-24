@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2024 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package io.cdap.cdap.security.auth;
 
 import com.google.common.base.Throwables;
@@ -15,7 +31,6 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.spi.MessagingService;
-import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
@@ -27,7 +42,11 @@ import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
-public class MessagingAuditLogWriter  implements AuditLogWriter {
+/**
+ * This class receives a collection of {@link AuditLogContext} and writes them in order to a
+ * messaging service / topic  ( ex - tms )
+ */
+public class MessagingAuditLogWriter implements AuditLogWriter {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingAuditLogWriter.class);
   private static final Gson GSON = new Gson();
@@ -67,7 +86,6 @@ public class MessagingAuditLogWriter  implements AuditLogWriter {
           messagingService.publish(StoreRequestBuilder.of(topic)
                                      .addPayload(GSON.toJson(auditLogContexts.remove()))
                                      .build());
-          LOG.warn("SANKET_TEST : Published audit log to TMS ");
         }
         done = true;
       } catch (IOException | AccessException e) {
@@ -105,7 +123,7 @@ public class MessagingAuditLogWriter  implements AuditLogWriter {
   private void createTopicIfNeeded() throws IOException {
     try {
       messagingService.createTopic(new DefaultTopicMetadata(topic, Collections.emptyMap()));
-      LOG.warn("Created topic {}", topic.getTopic());
+      LOG.info("Created topic {}", topic.getTopic());
     } catch (TopicAlreadyExistsException ex) {
       // no-op
     }

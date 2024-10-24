@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2024 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package io.cdap.cdap.security.auth;
 
 import com.google.common.collect.ImmutableMap;
@@ -24,15 +40,18 @@ import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
+/**
+ * This class subscribes to the audit log messaging topic, reads and processes the messages into {@link AuditLogContext}
+ * and delegates the batch of AuditLogContexts to External Auth service using {@link AuditLoggerSpi}, which would
+ * further publish as configured.
+ */
 public class AuditLogSubscriberService extends AbstractMessagingSubscriberService<AuditLogContext> {
-
 
   private static final Logger LOG = LoggerFactory.getLogger(AuditLogSubscriberService.class);
   private static final Gson GSON = new Gson();
@@ -40,7 +59,6 @@ public class AuditLogSubscriberService extends AbstractMessagingSubscriberServic
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
   private final AccessControllerInstantiator accessControllerInstantiator;
-
 
   @Inject
   AuditLogSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -77,11 +95,6 @@ public class AuditLogSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * Loads last persisted message id. This method will be called from a transaction. The returned
    * message id will be used as the starting message id (exclusive) for the first fetch.
-   *
-   * @param context the {@link StructuredTableContext} for getting dataset instances.
-   * @return the last persisted message id or {@code null} to have first fetch starts from the first
-   * available message in the topic.
-   * @throws Exception if failed to load the message id
    */
   @Nullable
   @Override
@@ -94,12 +107,6 @@ public class AuditLogSubscriberService extends AbstractMessagingSubscriberServic
   /**
    * Persists the given message id. This method will be called from a transaction, which is the same
    * transaction for the call to {@link #processMessages(StructuredTableContext, Iterator)}.
-   *
-   * @param context   the {@link StructuredTableContext} for getting dataset instances
-   * @param messageId the message id that the
-   *                  {@link #processMessages(StructuredTableContext, Iterator)} has been processed up to.
-   * @throws Exception if failed to persist the message id
-   * @see #processMessages(StructuredTableContext, Iterator)
    */
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId) throws Exception {
@@ -113,15 +120,10 @@ public class AuditLogSubscriberService extends AbstractMessagingSubscriberServic
    * the {@link #storeMessageId(StructuredTableContext, String)} call. If {@link Exception} is
    * raised from this method, the messages as provided through the {@code messages} parameter will
    * be replayed in the next call.
-   *
-   * @throws Exception if failed to process the messages
-   * @see #storeMessageId(StructuredTableContext, String)
    */
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, AuditLogContext>> messages) throws Exception {
-
-    LOG.warn("SANKET_TEST : processMessages ");
 
     Queue<AuditLogContext> auditLogContextQueue = new LinkedBlockingDeque<>();
 
@@ -136,16 +138,16 @@ public class AuditLogSubscriberService extends AbstractMessagingSubscriberServic
     }
 
     if (!auditLogContextQueue.isEmpty()) {
-      LOG.warn("SANKET_TEST : processMessages {}", auditLogContextQueue.size());
+      LOG.debug("Publishing a queue of Audit Log events of size {} events.", auditLogContextQueue.size());
       AuditLoggerSpi.PublishStatus publishStatus =
         this.accessControllerInstantiator.get().publish(auditLogContextQueue);
-
+      // TODO : This logic can change based on how Auth Ext publishes a batch.
       if (publishStatus.equals(AuditLoggerSpi.PublishStatus.UNSUCCESSFUL)) {
-        throw new IOException();
+        throw new Exception("The publishing of audit log events Failed.");
       }
     }
 
-    LOG.warn("SANKET_TEST : processedMessages for {} msgs" , count);
+    LOG.trace("Publishing a queue of Audit Log events of size {} events is successful.", auditLogContextQueue.size());
   }
 
   /**
@@ -157,12 +159,7 @@ public class AuditLogSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   /**
-   * Decodes the raw {@link Message} into an object of type {@code T}.
-   *
-   * @param message the {@link Message} to decode
-   * @return an object of type {@code T}
-   * @throws Exception if the decode failed and the given message will be skipped for
-   *                   processing
+   * Decodes the raw {@link Message} into an object of type {@link AuditLogContext}.
    */
   @Override
   protected AuditLogContext decodeMessage(Message message) throws Exception {
