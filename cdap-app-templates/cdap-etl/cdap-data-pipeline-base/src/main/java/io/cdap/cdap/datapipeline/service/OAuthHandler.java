@@ -28,6 +28,7 @@ import io.cdap.cdap.datapipeline.oauth.CredentialIsValidResponse;
 import io.cdap.cdap.datapipeline.oauth.GetAccessTokenResponse;
 import io.cdap.cdap.datapipeline.oauth.OAuthClientCredentials;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
+import io.cdap.cdap.datapipeline.oauth.OAuthProvider.CredentialEncodingStrategy;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
 import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
@@ -43,6 +44,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -115,6 +117,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
             StandardCharsets.UTF_8.decode(request.getContent()).toString(),
             PutOAuthProviderRequest.class);
+        CredentialEncodingStrategy strategy = putOAuthProviderRequest.getCredentialEncodingStrategy();
         // Validate URLs
         URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
         URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
@@ -132,6 +135,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                               .withLoginURL(loginURL.toString())
                                               .withTokenRefreshURL(tokenRefreshURL.toString())
                                               .withClientCredentials(clientCredentials)
+                                              .withCredentialEncodingStrategy(strategy)
                                               .build();
         oauthStore.writeProvider(provider, reuseClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -190,7 +194,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                 + response.getResponseCode()
                 + " , response message: "
                 + response.getResponseMessage()
-                + " , respone body: "
+                + " , response body: "
                 + response.getResponseBodyAsString());
       }
 
@@ -248,7 +252,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                 + response.getResponseCode()
                 + " , response message: "
                 + response.getResponseMessage()
-                + " , respone body: "
+                + " , response body: "
                 + response.getResponseBodyAsString());
       }
 
@@ -307,35 +311,100 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     return !(refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty());
   }
 
+  /**
+   * Create the request body for refresh token & access token requests
+   * @param strategy which encoding strategy is used to send client ID + secret
+   * @param grantType whether an authorization code used to fetch a refresh token or a refresh token used to fetch an
+   *                  access token is used
+   * @param code used when building a request to get a refresh token
+   * @param redirectURI used when building a request to get an access token
+   * @param refreshToken used when building a request to get an access token
+   * @param clientCreds the client ID + secret
+   * @return request body
+   */
+  private String buildRequestBody(CredentialEncodingStrategy strategy,
+                                  String grantType,
+                                  String code,
+                                  String redirectURI,
+                                  String refreshToken,
+                                  OAuthClientCredentials clientCreds) {
+    switch (strategy) {
+      case BASIC_AUTH:
+        return grantType.equals("authorization_code")
+                ? String.format("code=%s&redirect_uri=%s&grant_type=%s", code, redirectURI, grantType)
+                : String.format("grant_type=%s&refresh_token=%s", grantType, refreshToken);
+      case FORM_BODY: // fall-through
+      default:
+        return grantType.equals("authorization_code")
+                ? String.format("code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=%s",
+                code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret(), grantType)
+                : String.format("grant_type=%s&client_id=%s&client_secret=%s&refresh_token=%s",
+                grantType, clientCreds.getClientId(), clientCreds.getClientSecret(), refreshToken);
+    }
+  }
+
+  /** Build HTTP request for getting tokens */
+  private HttpRequest.Builder buildHttpRequest(String body,
+                                               CredentialEncodingStrategy strategy,
+                                               OAuthClientCredentials clientCreds,
+                                               String refreshTokenURL,
+                                               boolean addContentType) throws MalformedURLException {
+    HttpRequest.Builder requestBuilder = HttpRequest.post(new URL(refreshTokenURL))
+            .withBody(body);
+
+    if (addContentType) {
+      requestBuilder.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+    }
+
+    if (strategy == CredentialEncodingStrategy.BASIC_AUTH) {
+      requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, getBasicAuthHeader(clientCreds));
+    }
+
+    return requestBuilder;
+  }
+
+  /**
+   * Build the HttpRequest to request a refresh token from the OAuth provider
+   * @param provider
+   * @param code the authorization code given after the user accepts OAuth from the provider
+   * @param redirectURI
+   */
   private HttpRequest createGetRefreshTokenRequest(OAuthProvider provider, String code, String redirectURI)
       throws OAuthServiceException {
     OAuthClientCredentials clientCreds = provider.getClientCredentials();
+    CredentialEncodingStrategy strategy = provider.getCredentialEncodingStrategy();
+    String tokenRefreshURL = provider.getTokenRefreshURL();
+    String body = buildRequestBody(strategy, "authorization_code", code, redirectURI, null, clientCreds);
+
     try {
-      return HttpRequest.post(new URL(provider.getTokenRefreshURL()))
-          .withBody(String.format(
-              "code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=authorization_code",
-              code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret()))
-          .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
-          .build();
+      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, false).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
     }
   }
 
+  /**
+   * Build the HttpRequest to request an access token for making data requests from the OAuth provider
+   * @param provider
+   * @param refreshToken the refresh token requested previously from the provider
+   */
   private HttpRequest createGetAccessTokenRequest(OAuthProvider provider, String refreshToken)
       throws OAuthServiceException {
     OAuthClientCredentials clientCreds = provider.getClientCredentials();
+    CredentialEncodingStrategy strategy = provider.getCredentialEncodingStrategy();
+    String tokenRefreshURL = provider.getTokenRefreshURL();
+    String body = buildRequestBody(strategy, "refresh_token", null, null, refreshToken, clientCreds);
+
     try {
-      return HttpRequest.post(new URL(provider.getTokenRefreshURL()))
-          .withBody(
-              String.format("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s",
-                clientCreds.getClientId(),
-                clientCreds.getClientSecret(),
-                refreshToken))
-          .build();
+      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, true).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
     }
+  }
+
+  private String getBasicAuthHeader(OAuthClientCredentials clientCreds) {
+    String authInfo = String.format("%s:%s", clientCreds.getClientId(), clientCreds.getClientSecret());
+    return String.format("Basic %s", Base64.getEncoder().encode(authInfo.getBytes()));
   }
 
   private OAuthProvider getProvider(String provider) throws OAuthServiceException {
