@@ -14,10 +14,13 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
+import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -102,6 +105,29 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider30?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
+  }
+
+  @Test
+  public void testCreateProviderWithBasicAuth() throws IOException {
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login31";
+    String tokenRefreshURL = "http://www.example.com/token31";
+    String clientId = "clientid";
+    String clientSecret = "clientsecret";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH);
+    HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider31", request);
+    Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
+
+    // Grab OAuth login URL to verify write succeeded
+    HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider31/authurl");
+    Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
+    String authURL = getAuthUrlResponse.getResponseBodyAsString();
+    Assert.assertEquals("http://www.example.com/login31?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
