@@ -26,22 +26,21 @@ public class PutOAuthProviderRequest {
   private final String clientId;
   private final String clientSecret;
   private final OAuthProvider.CredentialEncodingStrategy strategy;
-
-  public PutOAuthProviderRequest(String loginURL, String tokenRefreshURL, String clientId, String clientSecret) {
-    this(loginURL, tokenRefreshURL, clientId, clientSecret, OAuthProvider.CredentialEncodingStrategy.FORM_BODY);
-  }
+  private final String userAgent;
 
   public PutOAuthProviderRequest(
           String loginURL,
           String tokenRefreshURL,
           String clientId,
           String clientSecret,
-          OAuthProvider.CredentialEncodingStrategy strategy) {
+          OAuthProvider.CredentialEncodingStrategy strategy,
+          String userAgent) {
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.strategy = strategy;
+    this.userAgent = userAgent;
   }
 
   public String getLoginURL() {
@@ -62,5 +61,9 @@ public class PutOAuthProviderRequest {
 
   public OAuthProvider.CredentialEncodingStrategy getCredentialEncodingStrategy() {
     return strategy;
+  }
+
+  public String getUserAgent() {
+    return userAgent;
   }
 }
