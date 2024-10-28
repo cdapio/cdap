@@ -233,7 +233,7 @@ public class SpannerMessagingService implements MessagingService {
             SpannerMessagingService.getTableName(messageFetchRequest.getTopicId()),
             messageFetchRequest.getStartTime(),
             messageFetchRequest.getStartTime(),
-            0, //this.sequenceId
+            -1, //this.sequenceId
             messageFetchRequest.getLimit());
 
     LOG.info("Fetch sql {}", sqlStatement);
