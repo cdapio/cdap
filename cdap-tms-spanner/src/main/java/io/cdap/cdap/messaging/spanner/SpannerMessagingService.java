@@ -219,6 +219,7 @@ public class SpannerMessagingService implements MessagingService {
       throws TopicNotFoundException, IOException {
     createTopic(messageFetchRequest.getTopicId());
 
+
     String sqlStatement =
         String.format(
             "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where (payload_sequence_id>-1"
@@ -235,8 +236,10 @@ public class SpannerMessagingService implements MessagingService {
             0, //this.sequenceId
             messageFetchRequest.getLimit());
 
+    LOG.info("Fetch sql {}", sqlStatement);
     try {
       ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
+      LOG.info("Fetched {}", resultSet.getCurrentRowAsStruct());
       return new SpannerResultSetClosableIterator<>(resultSet);
     } catch (Exception ex) {
       LOG.error("Error when fetching {}", sqlStatement, ex);
