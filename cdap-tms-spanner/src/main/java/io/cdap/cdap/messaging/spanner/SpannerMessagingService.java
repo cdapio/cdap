@@ -239,7 +239,7 @@ public class SpannerMessagingService implements MessagingService {
     LOG.info("Fetch sql {}", sqlStatement);
     try {
       ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
-      LOG.info("Fetched {}", resultSet.getCurrentRowAsStruct());
+      LOG.info("executeQuery called");
       return new SpannerResultSetClosableIterator<>(resultSet);
     } catch (Exception ex) {
       LOG.error("Error when fetching {}", sqlStatement, ex);
@@ -270,6 +270,7 @@ public class SpannerMessagingService implements MessagingService {
       byte[] id = getMessageId(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
       byte[] payload = resultSet.getBytes(3).toByteArray();
 
+      LOG.info("computeNext called");
       return new io.cdap.cdap.messaging.spi.RawMessage.Builder()
           .setId(id)
           .setPayload(payload)
@@ -283,6 +284,8 @@ public class SpannerMessagingService implements MessagingService {
   }
 
   public static byte[] getMessageId(long sequenceId, long messageSequenceId, long timestamp) {
+    LOG.info("sequenceId {} messageSequenceId {} timestamp {}", sequenceId, messageSequenceId,
+        timestamp);
     byte[] result =
         new byte[Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     int offset = 0;
