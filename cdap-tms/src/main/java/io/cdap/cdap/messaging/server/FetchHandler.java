@@ -128,6 +128,7 @@ public final class FetchHandler extends AbstractHttpHandler {
   /** Creates a {@link CloseableIterator} of {@link RawMessage} based on the given fetch request. */
   private CloseableIterator<RawMessage> fetchMessages(GenericRecord fetchRequest, TopicId topicId)
       throws IOException, TopicNotFoundException {
+    LOG.info("Fetch request {}", fetchRequest);
     DefaultMessageFetchRequest.Builder fetchRequestBuilder =
         new DefaultMessageFetchRequest.Builder();
 

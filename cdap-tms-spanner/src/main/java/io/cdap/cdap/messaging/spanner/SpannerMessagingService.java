@@ -217,8 +217,12 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
+    LOG.info("Message Fetch Request {}", messageFetchRequest);
     createTopic(messageFetchRequest.getTopicId());
-
+    Long startTime = messageFetchRequest.getStartTime();
+    if (messageFetchRequest.getStartTime() == null) {
+      startTime = 0L;
+    }
 
     String sqlStatement =
         String.format(
@@ -231,8 +235,8 @@ public class SpannerMessagingService implements MessagingService {
             SpannerMessagingService.PUBLISH_TS_FIELD,
             SpannerMessagingService.PAYLOAD_FIELD,
             SpannerMessagingService.getTableName(messageFetchRequest.getTopicId()),
-            messageFetchRequest.getStartTime(),
-            messageFetchRequest.getStartTime(),
+            startTime,
+            startTime,
             -1, //this.sequenceId
             messageFetchRequest.getLimit());
 
