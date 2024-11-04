@@ -38,6 +38,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
+import io.cdap.cdap.messaging.spi.MessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.MessagingServiceUtils;
 import io.cdap.cdap.messaging.MessagingUtils;
@@ -128,6 +129,10 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
             cConf.getLong(
                 TxConstants.Manager.CFG_TX_MAX_LIFETIME,
                 TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME));
+  }
+
+  @Override
+  public void initialize(MessagingContext context) throws IOException {
   }
 
   @Override
@@ -455,6 +460,10 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       closeQuietly(messageTable);
       throw t;
     }
+  }
+
+  @Override
+  public void destroy(MessagingContext messagingContext) {
   }
 
   /**

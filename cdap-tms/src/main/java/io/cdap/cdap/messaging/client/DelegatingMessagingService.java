@@ -23,6 +23,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
+import io.cdap.cdap.messaging.spi.MessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
@@ -72,6 +73,10 @@ public class DelegatingMessagingService implements MessagingService {
   }
 
   @Override
+  public void initialize(MessagingContext context) throws IOException {
+  }
+
+  @Override
   public String getName() {
     return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
   }
@@ -93,6 +98,11 @@ public class DelegatingMessagingService implements MessagingService {
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
     return getDelegate().fetch(messageFetchRequest);
+  }
+
+  @Override
+  public void destroy(MessagingContext messagingContext) {
+    getDelegate().destroy(messagingContext);
   }
 
   @Override
@@ -130,6 +140,11 @@ public class DelegatingMessagingService implements MessagingService {
             "Unsupported messaging service implementation " + getName());
       }
       LOG.info("Messaging service {} is loaded", messagingService.getName());
+      try {
+        messagingService.initialize(new DefaultMessagingContext(this.cConf));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
 
       this.delegate = messagingService;
       return messagingService;
