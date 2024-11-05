@@ -93,6 +93,7 @@ public class SpannerMessagingService implements MessagingService {
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     LOG.info("createTopic was invoked");
+    createTopic(topicMetadata.getTopicId());
   }
 
   private void createTopic(TopicId topicId) {
