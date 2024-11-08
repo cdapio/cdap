@@ -93,29 +93,28 @@ public class SpannerMessagingService implements MessagingService {
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     LOG.info("createTopic was invoked");
+    try {
+      createTopic(topicMetadata.getTopicId());
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private void createTopic(TopicId topicId) {
-    String topicSQL =
-        String.format(
-            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
-                + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
-                + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
-                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
-            getTableName(topicId),
-            SEQUENCE_ID_FIELD,
-            PAYLOAD_SEQUENCE_ID,
-            PUBLISH_TS_FIELD,
-            PAYLOAD_FIELD);
+  private void createTopic(TopicId topicId) throws ExecutionException, InterruptedException {
+    String topicSQL = String.format("CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
+            + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
+            + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
+            + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))", getTableName(topicId), SEQUENCE_ID_FIELD,
+        PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD, PAYLOAD_FIELD);
     LOG.info("createTopic sql {}", topicSQL);
-    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
-        adminClient.updateDatabaseDdl(
-            SpannerUtil.getInstanceID(cConf), SpannerUtil.getDatabaseID(cConf),
-            Collections.singletonList(topicSQL), null);
+    OperationFuture<Void, UpdateDatabaseDdlMetadata> future = adminClient.updateDatabaseDdl(
+        SpannerUtil.getInstanceID(cConf), SpannerUtil.getDatabaseID(cConf),
+        Collections.singletonList(topicSQL), null);
     try {
       future.get();
     } catch (InterruptedException | ExecutionException e) {
       LOG.error("Error when executing {}", topicSQL, e);
+      throw e;
     }
   }
 
@@ -152,7 +151,11 @@ public class SpannerMessagingService implements MessagingService {
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
     long start = System.currentTimeMillis();
-    createTopic(request.getTopicId());
+    try {
+      createTopic(request.getTopicId());
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
 
     LOG.info("publish called");
     batch.add(request);
@@ -166,17 +169,10 @@ public class SpannerMessagingService implements MessagingService {
       while (!batch.isEmpty()) {
         StoreRequest headRequest = batch.poll();
         for (byte[] payload : headRequest) {
-          Mutation mutation =
-              Mutation.newInsertBuilder(getTableName(headRequest.getTopicId()))
-                  .set(SEQUENCE_ID_FIELD)
-                  .to(i++)
-                  .set(PAYLOAD_SEQUENCE_ID)
-                  .to(0)
-                  .set(PUBLISH_TS_FIELD)
-                  .to("spanner.commit_timestamp()")
-                  .set(PAYLOAD_FIELD)
-                  .to(ByteArray.copyFrom(payload))
-                  .build();
+          Mutation mutation = Mutation.newInsertBuilder(getTableName(headRequest.getTopicId()))
+              .set(SEQUENCE_ID_FIELD).to(i++).set(PAYLOAD_SEQUENCE_ID).to(0).set(PUBLISH_TS_FIELD)
+              .to("spanner.commit_timestamp()").set(PAYLOAD_FIELD).to(ByteArray.copyFrom(payload))
+              .build();
           LOG.info("mutation to publish {}", mutation);
           batchCopy.add(mutation);
         }
@@ -194,6 +190,7 @@ public class SpannerMessagingService implements MessagingService {
           client.write(batchCopy);
         } catch (SpannerException e) {
           LOG.error("Cannot commit mutations ", e);
+          throw e;
         }
       }
 
@@ -218,27 +215,38 @@ public class SpannerMessagingService implements MessagingService {
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
     LOG.info("Message Fetch Request {}", messageFetchRequest);
-    createTopic(messageFetchRequest.getTopicId());
+    try {
+      createTopic(messageFetchRequest.getTopicId());
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     Long startTime = messageFetchRequest.getStartTime();
-    if (messageFetchRequest.getStartTime() == null) {
-      startTime = 0L;
+    if (messageFetchRequest.getStartTime() != null) {
+      startTime = messageFetchRequest.getStartTime();
+    }
+    short sequenceId = -1;
+    byte[] id = messageFetchRequest.getStartOffset();
+    try {
+      int offset = 0;
+      startTime = Bytes.toLong(id, offset);
+      offset += Bytes.SIZEOF_LONG;
+      sequenceId = Bytes.toShort(id, offset);
+      LOG.info("start time : {} sequenceId : {}", startTime, sequenceId);
+    } catch (Exception e) {
+      LOG.error("extractTimestamp error", e);
+      throw e;
     }
 
-    String sqlStatement =
-        String.format(
-            "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where (payload_sequence_id>-1"
-                + " and publish_ts > TIMESTAMP_MICROS(%s)) or"
-                + " (payload_sequence_id>-1 and publish_ts = TIMESTAMP_MICROS(%s) and sequence_id > %s) order by"
-                + " publish_ts,sequence_id LIMIT %s",
-            SpannerMessagingService.SEQUENCE_ID_FIELD,
-            SpannerMessagingService.PAYLOAD_SEQUENCE_ID,
-            SpannerMessagingService.PUBLISH_TS_FIELD,
-            SpannerMessagingService.PAYLOAD_FIELD,
-            SpannerMessagingService.getTableName(messageFetchRequest.getTopicId()),
-            startTime,
-            startTime,
-            -1, //this.sequenceId
-            messageFetchRequest.getLimit());
+    String sqlStatement = String.format(
+        "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where (payload_sequence_id>-1"
+            + " and publish_ts > TIMESTAMP_MICROS(%s)) or"
+            + " (payload_sequence_id>-1 and publish_ts = TIMESTAMP_MICROS(%s) and sequence_id > %s) order by"
+            + " publish_ts,sequence_id LIMIT %s", SpannerMessagingService.SEQUENCE_ID_FIELD,
+        SpannerMessagingService.PAYLOAD_SEQUENCE_ID, SpannerMessagingService.PUBLISH_TS_FIELD,
+        SpannerMessagingService.PAYLOAD_FIELD,
+        SpannerMessagingService.getTableName(messageFetchRequest.getTopicId()), startTime,
+        startTime, sequenceId, //this.sequenceId
+        messageFetchRequest.getLimit());
 
     LOG.info("Fetch sql {}", sqlStatement);
     try {
@@ -256,8 +264,8 @@ public class SpannerMessagingService implements MessagingService {
     this.spanner.close();
   }
 
-  public static class SpannerResultSetClosableIterator<RawMessage>
-      extends AbstractCloseableIterator<io.cdap.cdap.messaging.spi.RawMessage> {
+  public static class SpannerResultSetClosableIterator<RawMessage> extends
+      AbstractCloseableIterator<io.cdap.cdap.messaging.spi.RawMessage> {
 
     private final ResultSet resultSet;
 
@@ -275,9 +283,7 @@ public class SpannerMessagingService implements MessagingService {
       byte[] payload = resultSet.getBytes(3).toByteArray();
 
       LOG.info("computeNext called");
-      return new io.cdap.cdap.messaging.spi.RawMessage.Builder()
-          .setId(id)
-          .setPayload(payload)
+      return new io.cdap.cdap.messaging.spi.RawMessage.Builder().setId(id).setPayload(payload)
           .build();
     }
 
@@ -290,8 +296,8 @@ public class SpannerMessagingService implements MessagingService {
   public static byte[] getMessageId(long sequenceId, long messageSequenceId, long timestamp) {
     LOG.info("sequenceId {} messageSequenceId {} timestamp {}", sequenceId, messageSequenceId,
         timestamp);
-    byte[] result =
-        new byte[Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
+    byte[] result = new byte[Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG
+        + Bytes.SIZEOF_SHORT];
     int offset = 0;
     // Implementation copied from MessageId
     offset = Bytes.putLong(result, offset, timestamp);
