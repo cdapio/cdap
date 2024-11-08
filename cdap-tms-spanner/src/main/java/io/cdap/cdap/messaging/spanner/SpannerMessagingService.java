@@ -220,21 +220,18 @@ public class SpannerMessagingService implements MessagingService {
     } catch (ExecutionException | InterruptedException e) {
       throw new RuntimeException(e);
     }
-    Long startTime = messageFetchRequest.getStartTime();
+    Long startTime = 0L;
     if (messageFetchRequest.getStartTime() != null) {
       startTime = messageFetchRequest.getStartTime();
     }
     short sequenceId = -1;
     byte[] id = messageFetchRequest.getStartOffset();
-    try {
+    if (id != null) {
       int offset = 0;
       startTime = Bytes.toLong(id, offset);
       offset += Bytes.SIZEOF_LONG;
       sequenceId = Bytes.toShort(id, offset);
       LOG.info("start time : {} sequenceId : {}", startTime, sequenceId);
-    } catch (Exception e) {
-      LOG.error("extractTimestamp error", e);
-      throw e;
     }
 
     String sqlStatement = String.format(
