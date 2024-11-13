@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
@@ -102,6 +103,7 @@ public class SupportBundleTestModule extends AbstractModule {
     install(new MetadataReaderWriterModules().getInMemoryModules());
     install(new MessagingServerRuntimeModule().getInMemoryModules());
     install(new MockProvisionerModule());
+    install(new NoOpAuditLogModule());
     // Needed by MonitorHandlerModuler
     bind(TwillRunner.class).to(NoopTwillRunnerService.class);
   }

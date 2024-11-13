@@ -105,7 +105,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     SystemWorkerService service = new SystemWorkerService(cConf, sConf,
         discoveryService, metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService),
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}),
         injector.getInstance(TokenManager.class), new NoopTwillRunnerService(),
         new NoopTwillRunnerService(),
         getInjector().getInstance(ProvisioningService.class),

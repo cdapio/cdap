@@ -28,6 +28,7 @@ import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.io.BinaryDecoder;
 import io.cdap.cdap.internal.io.ReflectionDatumReader;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
@@ -38,7 +39,7 @@ import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
@@ -136,6 +137,10 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
   @Override
   protected List<Module> getAdditionalModules() {
-    return Collections.singletonList(new AuthorizationEnforcementModule().getNoOpModules());
+    List<Module> modules = new ArrayList<>();
+    modules.add(new AuthorizationEnforcementModule().getNoOpModules());
+    modules.add(new NoOpAuditLogModule());
+
+    return modules;
   }
 }

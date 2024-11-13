@@ -69,6 +69,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -321,6 +322,7 @@ public class TestBase {
         new PreviewManagerModule(false),
         new PreviewRunnerManagerModule().getInMemoryModules(),
         new MockProvisionerModule(),
+        new NoOpAuditLogModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

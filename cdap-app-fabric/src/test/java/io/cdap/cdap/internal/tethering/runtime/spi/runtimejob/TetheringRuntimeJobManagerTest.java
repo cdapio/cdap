@@ -38,6 +38,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -123,6 +124,7 @@ public class TetheringRuntimeJobManagerTest {
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new StorageModule(),
+      new NoOpAuditLogModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -16,27 +16,34 @@
 
 package io.cdap.cdap.common.http;
 
+import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Queue;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
  * SecurityRequestContext}.
  */
-public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
+public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
@@ -45,11 +52,17 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       "CDAP-empty-user-credential",
       Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
+  private static final String AUDIT_LOG_QUEUE_ATTR_NAME = "AUDIT_LOG_QUEUE";
 
   private final boolean internalAuthEnabled;
+  private final boolean auditLoggingEnabled;
+  private final AuditLogWriter auditLogWriter;
 
-  public AuthenticationChannelHandler(boolean internalAuthEnabled) {
+  public AuthenticationChannelHandler(boolean internalAuthEnabled, boolean auditLoggingEnabled,
+                                      AuditLogWriter auditLogWriter) {
     this.internalAuthEnabled = internalAuthEnabled;
+    this.auditLoggingEnabled = auditLoggingEnabled;
+    this.auditLogWriter = auditLogWriter;
   }
 
   /**
@@ -121,8 +134,31 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     try {
       ctx.fireChannelRead(msg);
     } finally {
+      //Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
+      // it independent of Thread local.
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME))
+        .set(SecurityRequestContext.getAuditLogQueue());
       SecurityRequestContext.reset();
     }
+  }
+
+  /**
+   * If Audit logging is enabled then it sends the collection of audit events stored in {@link SecurityRequestContext}
+   * to get stored in a messaging system.
+   */
+  @Override
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    publishAuditLogQueue(ctx);
+    super.write(ctx, msg, promise);
+  }
+
+  /**
+   * Need to handle for the case when "write" is not called in the netty channel.
+   */
+  @Override
+  public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+    publishAuditLogQueue(ctx);
+    super.close(ctx, promise);
   }
 
   @Override
@@ -134,5 +170,17 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
     HttpUtil.setContentLength(response, 0);
     HttpUtil.setKeepAlive(response, false);
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+  }
+
+  /**
+   * Check the audit log attribute attached to a channel.
+   * It's not null, publish it and set it to Null.
+   */
+  private void publishAuditLogQueue(ChannelHandlerContext ctx) throws IOException {
+    Object auditLogContextsQueueObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get();
+    if (auditLoggingEnabled && auditLogContextsQueueObj != null) {
+      auditLogWriter.publish((Queue<AuditLogContext>) auditLogContextsQueueObj);
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).set(null);
+    }
   }
 }

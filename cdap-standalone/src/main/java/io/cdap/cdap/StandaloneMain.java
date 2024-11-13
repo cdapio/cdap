@@ -49,6 +49,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.io.URLConnections;
@@ -548,6 +549,7 @@ public class StandaloneMain {
         new AuditModule(),
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),
+        new NoOpAuditLogModule(),
         new AuthorizationEnforcementModule().getStandaloneModules(),
         new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
         new PreviewManagerModule(false),
