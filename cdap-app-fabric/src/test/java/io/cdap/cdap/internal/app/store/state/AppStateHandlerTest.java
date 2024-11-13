@@ -110,7 +110,8 @@ public class AppStateHandlerTest extends AppFabricTestBase {
   @Before
   public void setUp() throws Exception {
     NettyHttpService service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName(),
-                                                                 new NoOpMetricsCollectionService())
+                                                                 new NoOpMetricsCollectionService(),
+                                                                 auditLogContexts -> {})
       .setHttpHandlers(new AppStateHandler(applicationLifecycleService, namespaceAdmin))
       .build();
     service.start();

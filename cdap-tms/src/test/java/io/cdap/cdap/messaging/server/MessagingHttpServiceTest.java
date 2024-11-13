@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -117,6 +118,7 @@ public class MessagingHttpServiceTest {
       new AuthenticationContextModules().getNoOpModule(),
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new NoOpAuditLogModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

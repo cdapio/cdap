@@ -32,6 +32,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
@@ -133,7 +134,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
   @Override
   protected void configure() {
     List<Module> modules = getCoreModules();
-
     RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
         programOpts);
     modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
@@ -159,6 +159,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     List<Module> modules = new ArrayList<>();
 
+    modules.add(new NoOpAuditLogModule());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());

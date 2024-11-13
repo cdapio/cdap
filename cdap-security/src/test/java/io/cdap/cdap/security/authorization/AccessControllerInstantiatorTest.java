@@ -36,6 +36,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
@@ -48,6 +49,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -522,7 +524,7 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     }
   }
 
-  public static final class AccessControllerSpiImp implements AccessControllerSpi {
+  public static class AccessControllerSpiImp implements AccessControllerSpi {
 
     @Override
     public AuthorizationResponse enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
@@ -594,6 +596,11 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     @Override
     public AuthorizedResult<Set<GrantedPermission>> listGrants(Principal caller, Principal principal)
       throws AccessException {
+      return null;
+    }
+
+    @Override
+    public PublishStatus publishAuditLogs(Queue<AuditLogContext> auditLogContexts) {
       return null;
     }
   }

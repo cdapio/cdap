@@ -26,6 +26,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -114,6 +115,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     modules.add(coreSecurityModule);
     modules.add(new MessagingServiceModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    modules.add(new AuditLogWriterModule(cConf).getInMemoryModules());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();

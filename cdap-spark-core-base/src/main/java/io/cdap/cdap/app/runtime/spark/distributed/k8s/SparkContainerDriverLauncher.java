@@ -37,6 +37,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
@@ -260,6 +261,8 @@ public class SparkContainerDriverLauncher {
     modules.add(coreSecurityModule);
     modules.add(new MessagingClientModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    //Need for guice binding, but No Audit Log action required.
+    modules.add(new NoOpAuditLogModule());
 
     modules.add(new AbstractModule() {
       @Override

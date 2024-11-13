@@ -33,6 +33,7 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
@@ -312,6 +313,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         new PreviewDataModules().getDataFabricModule(transactionSystemClient,
             previewLevelDBTableService),
         new PreviewDataModules().getDataSetsModule(datasetFramework),
+        new AuditLogWriterModule(previewCConf).getInMemoryModules(),
         new AuthenticationContextModules().getMasterModule(),
         new LocalLocationModule(),
         new PreviewDiscoveryRuntimeModule(discoveryServiceClient),

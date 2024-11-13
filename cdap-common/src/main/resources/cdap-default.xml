@@ -4442,6 +4442,47 @@
     </description>
   </property>
 
+  <property>
+    <name>system.auditlog.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.auditlog.retry.policy.max.delay.ms</name>
+    <value>2000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.auditlog.retry.policy.max.retries</name>
+    <value>100</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.auditlog.retry.policy.max.time.secs</name>
+    <value>2147483647</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.auditlog.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for workers. Allowed options: "none",
+      "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
   <!-- Router Configuration -->
 
   <property>
@@ -6022,6 +6063,14 @@
   </property>
 
   <property>
+    <name>feature.dataplane.audit.logging.enabled</name>
+    <value>true</value>
+    <description>
+      Enables dataplane audit logging for RBAC instances.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -6425,6 +6474,47 @@
     <description>
       The delay in milliseconds to check again for new operation status events
       after it detects there was no event
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.publish.interval.seconds</name>
+    <value>20</value>
+    <description>
+      The interval between Audit log publish calls to external auth in seconds.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.event.topic</name>
+    <value>auditlogevent</value>
+    <description>
+      Topic prefix for publishing audit log events.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.event.topic.num.partitions</name>
+    <value>3</value>
+    <description>
+      Number of topics to use for writing and reading audit log events.
+      All events related to same call should always go to same topic.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.messaging.fetch.size</name>
+    <value>50</value>
+    <description>
+      Number of messages to fetch from messaging system for each batch to consume by Audit log consumer.
+    </description>
+  </property>
+
+  <property>
+    <name>auditlog.messaging.poll.delay.millis</name>
+    <value>4000</value>
+    <description>
+      The delay in milliseconds to check again for new audit log events from messaging system.
     </description>
   </property>
 

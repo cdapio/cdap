@@ -46,6 +46,7 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.security.auth.AuditLogSubscriberService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -80,6 +81,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
+  private final AuditLogSubscriberService auditLogSubscriberService;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
@@ -110,31 +112,32 @@ public class AppFabricServer extends AbstractIdleService {
    */
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
-      DiscoveryService discoveryService,
-      @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-      @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
-      @Nullable MetricsCollectionService metricsCollectionService,
-      ProgramRuntimeService programRuntimeService,
-      RunRecordCorrectorService runRecordCorrectorService,
-      ProgramRunStatusMonitorService programRunStatusMonitorService,
-      ApplicationLifecycleService applicationLifecycleService,
-      ProgramNotificationSubscriberService programNotificationSubscriberService,
-      ProgramStopSubscriberService programStopSubscriberService,
-      @Named("appfabric.services.names") Set<String> servicesNames,
-      @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-      CoreSchedulerService coreSchedulerService,
-      CredentialProviderService credentialProviderService,
-      NamespaceCredentialProviderService namespaceCredentialProviderService,
-      ProvisioningService provisioningService,
-      BootstrapService bootstrapService,
-      SystemAppManagementService systemAppManagementService,
-      TransactionRunner transactionRunner,
-      RunRecordMonitorService runRecordCounterService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      RunDataTimeToLiveService runDataTimeToLiveService,
-      SourceControlOperationRunner sourceControlOperationRunner,
-      RepositoryCleanupService repositoryCleanupService,
-      OperationNotificationSubscriberService operationNotificationSubscriberService) {
+                         DiscoveryService discoveryService,
+                         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                         @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+                         @Nullable MetricsCollectionService metricsCollectionService,
+                         ProgramRuntimeService programRuntimeService,
+                         RunRecordCorrectorService runRecordCorrectorService,
+                         ProgramRunStatusMonitorService programRunStatusMonitorService,
+                         ApplicationLifecycleService applicationLifecycleService,
+                         ProgramNotificationSubscriberService programNotificationSubscriberService,
+                         ProgramStopSubscriberService programStopSubscriberService,
+                         @Named("appfabric.services.names") Set<String> servicesNames,
+                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+                         AuditLogSubscriberService auditLogSubscriberService,
+                         CoreSchedulerService coreSchedulerService,
+                         CredentialProviderService credentialProviderService,
+                         NamespaceCredentialProviderService namespaceCredentialProviderService,
+                         ProvisioningService provisioningService,
+                         BootstrapService bootstrapService,
+                         SystemAppManagementService systemAppManagementService,
+                         TransactionRunner transactionRunner,
+                         RunRecordMonitorService runRecordCounterService,
+                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                         RunDataTimeToLiveService runDataTimeToLiveService,
+                         SourceControlOperationRunner sourceControlOperationRunner,
+                         RepositoryCleanupService repositoryCleanupService,
+                         OperationNotificationSubscriberService operationNotificationSubscriberService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -150,6 +153,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
+    this.auditLogSubscriberService = auditLogSubscriberService;
     this.coreSchedulerService = coreSchedulerService;
     this.credentialProviderService = credentialProviderService;
     this.namespaceCredentialProviderService = namespaceCredentialProviderService;
@@ -194,7 +198,8 @@ public class AppFabricServer extends AbstractIdleService {
         runDataTimeToLiveService.start(),
         sourceControlOperationRunner.start(),
         repositoryCleanupService.start(),
-        operationNotificationSubscriberService.start()
+        operationNotificationSubscriberService.start(),
+        auditLogSubscriberService.start()
     ));
     Futures.allAsList(futuresList).get();
 
@@ -256,6 +261,7 @@ public class AppFabricServer extends AbstractIdleService {
     credentialProviderService.stopAndWait();
     namespaceCredentialProviderService.stopAndWait();
     operationNotificationSubscriberService.stopAndWait();
+    auditLogSubscriberService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
