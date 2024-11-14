@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Queue;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
@@ -130,12 +132,15 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     }
 
     try {
+      ctx.fireChannelRead(msg);
+    } finally {
+      LOG.warn("SANKET_LOG : AuthenticationChannelHandler's read : setting attr with q size {} : {}",
+               SecurityRequestContext.getAuditLogQueue().size(),
+               Thread.currentThread().getName());
       //Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
       // it independent of Thread local.
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME))
         .set(SecurityRequestContext.getAuditLogQueue());
-      ctx.fireChannelRead(msg);
-    } finally {
       SecurityRequestContext.reset();
     }
   }
@@ -146,6 +151,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    LOG.warn("SANKET_LOG : AuthenticationChannelHandler's write : {}",
+             Thread.currentThread().getName());
     publishAuditLogQueue(ctx);
     super.write(ctx, msg, promise);
   }
@@ -155,6 +162,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+    LOG.warn("SANKET_LOG : AuthenticationChannelHandler's close : {}",
+             Thread.currentThread().getName());
     publishAuditLogQueue(ctx);
     super.close(ctx, promise);
   }
@@ -171,9 +180,13 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   }
 
   private void publishAuditLogQueue(ChannelHandlerContext ctx) throws IOException {
-    if (auditLoggingEnabled) {
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get();
-      auditLogWriter.publish(SecurityRequestContext.getAuditLogQueue());
+    Object auditLogContextsQueueObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get();
+    if (auditLoggingEnabled && auditLogContextsQueueObj != null) {
+      Queue<AuditLogContext> auditLogContexts = (Queue<AuditLogContext>) auditLogContextsQueueObj;
+      LOG.warn("SANKET_LOG : AuthenticationChannelHandler's publishAuditLogQueue : publish attr with q size {} : {}",
+               auditLogContexts.size(),
+               Thread.currentThread().getName());
+      auditLogWriter.publish(auditLogContexts);
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).set(null);
     }
   }

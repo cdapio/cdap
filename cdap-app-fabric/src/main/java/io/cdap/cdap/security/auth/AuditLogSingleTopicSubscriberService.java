@@ -142,6 +142,10 @@ public class AuditLogSingleTopicSubscriberService extends AbstractMessagingSubsc
       }
     }
 
+    LOG.warn("SANKET_LOG : single topic's processMessages : publish attr with q size {} : {}",
+             auditLogContextQueue.size(),
+             Thread.currentThread().getName());
+
     if (!auditLogContextQueue.isEmpty()) {
       LOG.debug("Publishing a queue of Audit Log events of size {} events.", auditLogContextQueue.size());
       AuditLoggerSpi.PublishStatus publishStatus =

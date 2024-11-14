@@ -91,8 +91,11 @@ public class MessagingAuditLogWriter implements AuditLogWriter {
     if (auditLogContexts != null && auditLogContexts.isEmpty()){
       return;
     }
-
     TopicId topic = generateTopic();
+    LOG.warn("SANKET_LOG : MessagingAuditLogWriter's publish : with q size {} : {} : for topic {}",
+             auditLogContexts.size(),
+             Thread.currentThread().getName(),
+             topic.getTopic());
 
     auditLogContexts.forEach(auditLogContext -> {
       StoreRequest storeRequest = StoreRequestBuilder.of(topic)
