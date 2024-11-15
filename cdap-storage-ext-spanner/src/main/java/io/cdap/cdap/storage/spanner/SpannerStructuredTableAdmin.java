@@ -290,10 +290,10 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
             "CREATE TABLE " + escapeName(spec.getTableId().getName()) + " (", ")"));
 
     if (primaryKeys.isEmpty()) {
-      return statement;
+      return statement + " IF NOT EXISTS";
     }
 
-    return statement + " PRIMARY KEY (" + String.join(", ", primaryKeys) + ")";
+    return statement + " PRIMARY KEY (" + String.join(", ", primaryKeys) + ")" + " IF NOT EXISTS";
   }
 
   private String getCreateIndexStatement(String idxColumn, StructuredTableSchema schema) {
@@ -353,42 +353,65 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     return "`" + name + "`";
   }
 
+  private boolean checkIfTableExists(String tableName) {
+    try {
+      List<String> ddlStatements = adminClient.getDatabaseDdl(
+          databaseId.getInstanceId().getInstance(), databaseId.getDatabase());
+      // Parse the DDL statements to check if the table exists
+      for (String statement : ddlStatements) {
+        if (statement.startsWith("CREATE TABLE " + tableName)) {
+          LOG.debug("{} exists", tableName);
+          return true;
+        }
+      }
+      LOG.debug("{} does not exists", tableName);
+      return false;
+    } catch (SpannerException e) {
+      // Handle potential errors
+      LOG.warn("Error checking for table existence: ", e);
+      return false;
+    }
+  }
+
   private void createTable(StructuredTableSpecification spec) throws IOException {
     List<String> statements = new ArrayList<>();
-    statements.add(getCreateTableStatement(spec));
-
-    StructuredTableSchema schema = new StructuredTableSchema(spec);
-    spec.getIndexes()
-        .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
-
     ExponentialBackOff backOff = new ExponentialBackOff.Builder()
         .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
         .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
     int retryCounter = 0;
     while (retryCounter < NUMBER_OF_RETRIES) {
       retryCounter++;
-      try {
-        Uninterruptibles.getUninterruptibly(
-            adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
-                databaseId.getDatabase(), statements, null));
-        break; // Success, exit the loop
-      } catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof SpannerException
-            && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-          long backoffMillis = backOff.nextBackOffMillis();
-          LOG.debug("Concurrent table creation error, retrying: {} in {}", retryCounter,
-              backoffMillis);
-          try {
-            Thread.sleep(backoffMillis);
-          } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
+      if (!checkIfTableExists(spec.getTableId().getName())) {
+        statements.add(getCreateTableStatement(spec));
+
+        StructuredTableSchema schema = new StructuredTableSchema(spec);
+        spec.getIndexes()
+            .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+        try {
+          Uninterruptibles.getUninterruptibly(
+              adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
+                  databaseId.getDatabase(), statements, null));
+          break; // Success, exit the loop
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof SpannerException
+              && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
+            long backoffMillis = backOff.nextBackOffMillis();
+            LOG.debug("Concurrent table creation error, retrying: {} in {}", retryCounter,
+                backoffMillis);
+            try {
+              Thread.sleep(backoffMillis);
+            } catch (InterruptedException ex) {
+              throw new RuntimeException(ex);
+            }
+          } else {
+            LOG.debug("we are here");
+            throw new IOException("Failed to create table in Spanner", cause);
           }
-        } else {
-          LOG.debug("we are here");
-          throw new IOException("Failed to create table in Spanner", cause);
         }
       }
+
+
     }
   }
 
