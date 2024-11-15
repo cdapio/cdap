@@ -287,13 +287,13 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
               + getSpannerType(f.getType())
               + (primaryKeys.contains(fieldName) ? " NOT NULL" : "");
         }).collect(Collectors.joining(", ",
-            "CREATE TABLE " + escapeName(spec.getTableId().getName()) + " (", ")"));
+            "CREATE TABLE IF NOT EXISTS " + escapeName(spec.getTableId().getName()) + " (", ")"));
 
     if (primaryKeys.isEmpty()) {
-      return statement + " IF NOT EXISTS";
+      return statement;
     }
 
-    return statement + " PRIMARY KEY (" + String.join(", ", primaryKeys) + ")" + " IF NOT EXISTS";
+    return statement + " PRIMARY KEY (" + String.join(", ", primaryKeys) + ")";
   }
 
   private String getCreateIndexStatement(String idxColumn, StructuredTableSchema schema) {
