@@ -376,14 +376,16 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
         Throwable cause = e.getCause();
         if (cause instanceof SpannerException
             && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-          LOG.debug("Concurrent table creation error, retrying: ", e);
           long backoffMillis = backOff.nextBackOffMillis();
+          LOG.debug("Concurrent table creation error, retrying: {} in {}", retryCounter,
+              backoffMillis);
           try {
             Thread.sleep(backoffMillis);
           } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
           }
         } else {
+          LOG.debug("we are here");
           throw new IOException("Failed to create table in Spanner", cause);
         }
       }
