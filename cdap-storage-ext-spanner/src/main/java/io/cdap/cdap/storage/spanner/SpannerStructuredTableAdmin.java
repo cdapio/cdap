@@ -377,6 +377,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       List<String> statements = new ArrayList<>();
       statements.add(getCreateTableStatement(spec));
 
+      LOG.debug("creating table {}", spec.getTableId().getName());
       StructuredTableSchema schema = new StructuredTableSchema(spec);
       spec.getIndexes()
           .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
@@ -389,11 +390,12 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
         Throwable cause = e.getCause();
         if (cause instanceof SpannerException
             && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-          LOG.debug("Concurrent table creation error: ", e);
+          LOG.debug("Concurrent table creation error");
         } else {
           throw new IOException("Failed to create table in Spanner", cause);
         }
       }
+      LOG.debug("create table done {}", spec.getTableId().getName());
     }
   }
 
