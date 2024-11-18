@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.storage.spanner;
 
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
@@ -374,44 +373,27 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   private void createTable(StructuredTableSpecification spec) throws IOException {
-    List<String> statements = new ArrayList<>();
-    ExponentialBackOff backOff = new ExponentialBackOff.Builder()
-        .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
-        .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
-    int retryCounter = 0;
-    while (retryCounter < NUMBER_OF_RETRIES) {
-      retryCounter++;
-      if (!checkIfTableExists(spec.getTableId().getName())) {
-        statements.add(getCreateTableStatement(spec));
+    if (!checkIfTableExists(spec.getTableId().getName())) {
+      List<String> statements = new ArrayList<>();
+      statements.add(getCreateTableStatement(spec));
 
-        StructuredTableSchema schema = new StructuredTableSchema(spec);
-        spec.getIndexes()
-            .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
-        try {
-          Uninterruptibles.getUninterruptibly(
-              adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
-                  databaseId.getDatabase(), statements, null));
-          break; // Success, exit the loop
-        } catch (ExecutionException e) {
-          Throwable cause = e.getCause();
-          if (cause instanceof SpannerException
-              && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-            long backoffMillis = backOff.nextBackOffMillis();
-            LOG.debug("Concurrent table creation error, retrying: {} in {}", retryCounter,
-                backoffMillis);
-            try {
-              Thread.sleep(backoffMillis);
-            } catch (InterruptedException ex) {
-              throw new RuntimeException(ex);
-            }
-          } else {
-            LOG.debug("we are here");
-            throw new IOException("Failed to create table in Spanner", cause);
-          }
+      StructuredTableSchema schema = new StructuredTableSchema(spec);
+      spec.getIndexes()
+          .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+
+      try {
+        Uninterruptibles.getUninterruptibly(
+            adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
+                databaseId.getDatabase(), statements, null));
+      } catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SpannerException
+            && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
+          LOG.debug("Concurrent table creation error: ", e);
+        } else {
+          throw new IOException("Failed to create table in Spanner", cause);
         }
       }
-
-
     }
   }
 

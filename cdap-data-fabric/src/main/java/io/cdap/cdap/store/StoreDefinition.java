@@ -45,6 +45,7 @@ public final class StoreDefinition {
    * @param tableAdmin the table admin to create the table
    */
   public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException {
+    LOG.info("createAllTables started");
     ArtifactStore.create(tableAdmin);
     OwnerStore.create(tableAdmin);
     NamespaceStore.create(tableAdmin);
@@ -72,6 +73,7 @@ public final class StoreDefinition {
     AppStateStore.create(tableAdmin);
     CredentialProviderStore.create(tableAdmin);
     OperationRunsStore.create(tableAdmin);
+    LOG.info("createAllTables done");
   }
 
   /**
