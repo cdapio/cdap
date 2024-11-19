@@ -89,7 +89,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.apache.twill.internal.CompositeService;
@@ -101,6 +100,9 @@ import org.slf4j.LoggerFactory;
  * events topic
  */
 public class ProgramNotificationSubscriberService extends AbstractIdleService {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
   private final MessagingService messagingService;
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
@@ -145,6 +147,8 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
     List<Service> children = new ArrayList<>();
     String topicPrefix = cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     int numPartitions = cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS);
+    // Active runs should be restored only once not for every shard that is created.
+    restoreActiveRuns();
     // Add bare one - we always listen to it
     children.add(createChildService("program.status", topicPrefix));
     // If number of partitions is more than 1 - create partitioned services
@@ -153,133 +157,23 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
           .forEach(i -> children.add(createChildService("program.status." + i, topicPrefix + i)));
     }
     delegate = new CompositeService(children);
-
     delegate.startAndWait();
+    // Explicitly emit both launching and running counts on startup.
+    emitFlowControlMetrics();
   }
 
-  @Override
-  protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+  private void emitFlowControlMetrics() {
+    runRecordMonitorService.emitLaunchingMetrics();
+    runRecordMonitorService.emitRunningMetrics();
   }
 
-  @Inject(optional = true)
-  void setProgramCompletionNotifiers(Set<ProgramCompletionNotifier> notifiers) {
-    this.programCompletionNotifiers = notifiers;
-  }
-
-  private ProgramNotificationSingleTopicSubscriberService createChildService(
-      String name, String topicName) {
-    return new ProgramNotificationSingleTopicSubscriberService(
-        messagingService,
-        cConf,
-        metricsCollectionService,
-        provisionerNotifier,
-        programLifecycleService,
-        provisioningService,
-        programStateWriter,
-        transactionRunner,
-        store,
-        runRecordMonitorService,
-        name,
-        topicName,
-        programCompletionNotifiers);
-  }
-}
-
-/**
- * Service that receives program status notifications from a single topic and persists to the store.
- * No transactions should be started in any of the overrided methods since they are already wrapped
- * in a transaction.
- */
-class ProgramNotificationSingleTopicSubscriberService
-    extends AbstractNotificationSubscriberService {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
-
-  private static final Gson GSON =
-      ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() {}.getType();
-  private static final String CDAP_VERSION = "cdap.version";
-  private static final Map<ProgramRunStatus, String> STATUS_METRICS_NAME =
-      ImmutableMap.of(
-          ProgramRunStatus.COMPLETED, Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS,
-          ProgramRunStatus.KILLED, Constants.Metrics.Program.PROGRAM_KILLED_RUNS,
-          ProgramRunStatus.FAILED, Constants.Metrics.Program.PROGRAM_FAILED_RUNS,
-          ProgramRunStatus.REJECTED, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS);
-  private static final Map<SchedulableProgramType, ProgramType> WORKFLOW_INNER_PROGRAM_TYPES =
-      ImmutableMap.of(
-          SchedulableProgramType.MAPREDUCE, ProgramType.MAPREDUCE,
-          SchedulableProgramType.SPARK, ProgramType.SPARK);
-
-  private final String recordedProgramStatusPublishTopic;
-  private final ProvisionerNotifier provisionerNotifier;
-  private final ProgramLifecycleService programLifecycleService;
-  private final ProvisioningService provisioningService;
-  private final ProgramStateWriter programStateWriter;
-  private final Queue<Runnable> tasks;
-  private final MetricsCollectionService metricsCollectionService;
-  private Set<ProgramCompletionNotifier> programCompletionNotifiers;
-  private final CConfiguration cConf;
-  private final Store store;
-  private final RunRecordMonitorService runRecordMonitorService;
-  private final boolean checkTxSeparation;
-
-  ProgramNotificationSingleTopicSubscriberService(
-      MessagingService messagingService,
-      CConfiguration cConf,
-      MetricsCollectionService metricsCollectionService,
-      ProvisionerNotifier provisionerNotifier,
-      ProgramLifecycleService programLifecycleService,
-      ProvisioningService provisioningService,
-      ProgramStateWriter programStateWriter,
-      TransactionRunner transactionRunner,
-      Store store,
-      RunRecordMonitorService runRecordMonitorService,
-      String name,
-      String topicName,
-      Set<ProgramCompletionNotifier> programCompletionNotifiers) {
-    super(
-        name,
-        cConf,
-        topicName,
-        cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
-        cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
-        messagingService,
-        metricsCollectionService,
-        transactionRunner,
-        cConf.getInt(Constants.AppFabric.STATUS_EVENT_TX_SIZE));
-    this.recordedProgramStatusPublishTopic =
-        cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
-    this.provisionerNotifier = provisionerNotifier;
-    this.programLifecycleService = programLifecycleService;
-    this.provisioningService = provisioningService;
-    this.programStateWriter = programStateWriter;
-    this.tasks = new LinkedList<>();
-    this.metricsCollectionService = metricsCollectionService;
-    this.programCompletionNotifiers = programCompletionNotifiers;
-    this.runRecordMonitorService = runRecordMonitorService;
-    this.cConf = cConf;
-    this.store = store;
-
-    // If number of partitions equals 1, DB deadlock cannot happen as a result of concurrent
-    // modifications to
-    // programCountsTable
-    this.checkTxSeparation =
-        cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS) > 1
-            && cConf.getBoolean(Constants.AppFabric.PROGRAM_STATUS_EVENT_TX_SEPARATION);
-  }
-
-  @Override
-  protected void doStartUp() throws Exception {
-    super.doStartUp();
-
+  private void restoreActiveRuns() {
+    LOG.info("Restoring active runs");
     int batchSize = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
     RetryStrategy retryStrategy =
         RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
     long startTs = System.currentTimeMillis();
 
-    AtomicBoolean launching = new AtomicBoolean(false);
     Retries.runWithRetries(
         () ->
             store.scanActiveRuns(
@@ -289,11 +183,10 @@ class ProgramNotificationSingleTopicSubscriberService
                     return;
                   }
                   try {
+                    LOG.info("Found active run: {}", runRecordDetail.getProgramRunId());
                     if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
-                      launching.set(true);
                       runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
                     } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
-                      launching.set(true);
                       runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
                       // It is unknown what is the state of program runs in STARTING state.
                       // A STARTING message is published again to retry STARTING logic.
@@ -318,10 +211,118 @@ class ProgramNotificationSingleTopicSubscriberService
                 }),
         retryStrategy,
         e -> true);
-    if (!launching.get()) {
-      // there is no launching pipeline
-      runRecordMonitorService.emitLaunchingMetrics(0);
-    }
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    delegate.stopAndWait();
+  }
+
+  @Inject(optional = true)
+  void setProgramCompletionNotifiers(Set<ProgramCompletionNotifier> notifiers) {
+    this.programCompletionNotifiers = notifiers;
+  }
+
+  private ProgramNotificationSingleTopicSubscriberService createChildService(
+      String name, String topicName) {
+    return new ProgramNotificationSingleTopicSubscriberService(
+        messagingService,
+        cConf,
+        metricsCollectionService,
+        provisionerNotifier,
+        programLifecycleService,
+        provisioningService,
+        programStateWriter,
+        transactionRunner,
+        runRecordMonitorService,
+        name,
+        topicName,
+        programCompletionNotifiers);
+  }
+}
+
+/**
+ * Service that receives program status notifications from a single topic and persists to the store.
+ * No transactions should be started in any of the overrided methods since they are already wrapped
+ * in a transaction.
+ */
+class ProgramNotificationSingleTopicSubscriberService
+    extends AbstractNotificationSubscriberService {
+
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ProgramNotificationSingleTopicSubscriberService.class);
+
+  private static final Gson GSON =
+      ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() {}.getType();
+  private static final String CDAP_VERSION = "cdap.version";
+  private static final Map<ProgramRunStatus, String> STATUS_METRICS_NAME =
+      ImmutableMap.of(
+          ProgramRunStatus.COMPLETED, Constants.Metrics.Program.PROGRAM_COMPLETED_RUNS,
+          ProgramRunStatus.KILLED, Constants.Metrics.Program.PROGRAM_KILLED_RUNS,
+          ProgramRunStatus.FAILED, Constants.Metrics.Program.PROGRAM_FAILED_RUNS,
+          ProgramRunStatus.REJECTED, Constants.Metrics.Program.PROGRAM_REJECTED_RUNS);
+  private static final Map<SchedulableProgramType, ProgramType> WORKFLOW_INNER_PROGRAM_TYPES =
+      ImmutableMap.of(
+          SchedulableProgramType.MAPREDUCE, ProgramType.MAPREDUCE,
+          SchedulableProgramType.SPARK, ProgramType.SPARK);
+
+  private final String recordedProgramStatusPublishTopic;
+  private final ProvisionerNotifier provisionerNotifier;
+  private final ProgramLifecycleService programLifecycleService;
+  private final ProvisioningService provisioningService;
+  private final ProgramStateWriter programStateWriter;
+  private final Queue<Runnable> tasks;
+  private final MetricsCollectionService metricsCollectionService;
+  private Set<ProgramCompletionNotifier> programCompletionNotifiers;
+  private final RunRecordMonitorService runRecordMonitorService;
+  private final boolean checkTxSeparation;
+
+  ProgramNotificationSingleTopicSubscriberService(
+      MessagingService messagingService,
+      CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      ProvisionerNotifier provisionerNotifier,
+      ProgramLifecycleService programLifecycleService,
+      ProvisioningService provisioningService,
+      ProgramStateWriter programStateWriter,
+      TransactionRunner transactionRunner,
+      RunRecordMonitorService runRecordMonitorService,
+      String name,
+      String topicName,
+      Set<ProgramCompletionNotifier> programCompletionNotifiers) {
+    super(
+        name,
+        cConf,
+        topicName,
+        cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
+        cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
+        messagingService,
+        metricsCollectionService,
+        transactionRunner,
+        cConf.getInt(Constants.AppFabric.STATUS_EVENT_TX_SIZE));
+    this.recordedProgramStatusPublishTopic =
+        cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
+    this.provisionerNotifier = provisionerNotifier;
+    this.programLifecycleService = programLifecycleService;
+    this.provisioningService = provisioningService;
+    this.programStateWriter = programStateWriter;
+    this.tasks = new LinkedList<>();
+    this.metricsCollectionService = metricsCollectionService;
+    this.programCompletionNotifiers = programCompletionNotifiers;
+    this.runRecordMonitorService = runRecordMonitorService;
+
+    // If number of partitions equals 1, DB deadlock cannot happen as a result of concurrent
+    // modifications to
+    // programCountsTable
+    this.checkTxSeparation =
+        cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS) > 1
+            && cConf.getBoolean(Constants.AppFabric.PROGRAM_STATUS_EVENT_TX_SEPARATION);
+  }
+
+  @Override
+  protected void doStartUp() throws Exception {
+    super.doStartUp();
   }
 
   @Nullable

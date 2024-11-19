@@ -131,6 +131,15 @@ public class AppFabricTestHelper {
     });
   }
 
+  public static <T extends Service> T getService(Class<T> clazz) {
+    for (Service service : services) {
+      if (clazz.isAssignableFrom(service.getClass())) {
+        return (T) service;
+      }
+    }
+    return null;
+  }
+
   public static Injector getInjector(CConfiguration cConf, Module overrides) {
     return getInjector(cConf, null, overrides);
   }

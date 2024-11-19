@@ -33,6 +33,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Metrics.FlowControl;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
@@ -308,6 +309,67 @@ public class ProgramNotificationSubscriberServiceTest {
     metricStore.deleteAll();
   }
 
+  @Test
+  public void testLaunchingCountMetricsOnRestart() throws Exception {
+    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, ProgramStateWorkflowApp.class, null,
+        cConf);
+    ApplicationDetail appDetail = AppFabricTestHelper.getAppInfo(Id.Namespace.DEFAULT,
+        ProgramStateWorkflowApp.class.getSimpleName(), cConf);
+
+    ProgramRunId workflowRunId = NamespaceId.DEFAULT
+        .app(ProgramStateWorkflowApp.class.getSimpleName(), appDetail.getAppVersion())
+        .workflow(ProgramStateWorkflowApp.ProgramStateWorkflow.class.getSimpleName())
+        .run(RunIds.generate());
+
+    ApplicationSpecification appSpec = TransactionRunners.run(transactionRunner, context -> {
+      return AppMetadataStore.create(context).getApplication(workflowRunId.getParent().getParent())
+          .getSpec();
+    });
+
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(workflowRunId.getParent(), appSpec);
+
+    // Start and run the workflow
+    Map<String, String> systemArgs = new HashMap<>();
+    systemArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString());
+    systemArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.start(workflowRunId, new SimpleProgramOptions(workflowRunId.getParent(),
+          new BasicArguments(systemArgs),
+          new BasicArguments()), null, programDescriptor);
+    });
+    checkProgramStatus(appSpec.getArtifactId(), workflowRunId, ProgramRunStatus.STARTING);
+
+    ProgramNotificationSubscriberService notificationService = AppFabricTestHelper.getService(
+        ProgramNotificationSubscriberService.class);
+    // Restart the Notification service. We are not using the stopAndWait() because we don't want to
+    // terminate the main service.
+    notificationService.shutDown();
+    notificationService.startUp();
+
+    MetricStore metricStore = injector.getInstance(MetricStore.class);
+    // Wait for metrics to be written.
+    Tasks.waitFor(1L, () -> queryMetrics(metricStore,
+        SYSTEM_METRIC_PREFIX + FlowControl.LAUNCHING_COUNT, new HashMap<>()), 10, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, queryMetrics(metricStore,
+        SYSTEM_METRIC_PREFIX + FlowControl.RUNNING_COUNT, new HashMap<>()));
+
+    TransactionRunners.run(transactionRunner, context -> {
+      programStateWriter.running(workflowRunId, null);
+    });
+    checkProgramStatus(appSpec.getArtifactId(), workflowRunId, ProgramRunStatus.RUNNING);
+    // Restart the Notification service. We are not using the stopAndWait() because we don't want to
+    // terminate the main service.
+    notificationService.shutDown();
+    notificationService.startUp();
+    // Running counts are not based on metadata store in RunRecordMonitorService so not asserting it
+    // here.
+    Tasks.waitFor(0L, () -> queryMetrics(metricStore,
+        SYSTEM_METRIC_PREFIX + FlowControl.LAUNCHING_COUNT, new HashMap<>()), 10, TimeUnit.SECONDS);
+
+    // Cleanup metrics.
+    metricStore.deleteAll();
+  }
+
   private Map<String, String> getAdditionalTagsForProgramMetrics(ProgramRunStatus existingStatus, String provisioner,
                                                                  ProgramRunClusterStatus clusterStatus) {
     Map<String, String> additionalTags = new HashMap<>();
@@ -460,8 +522,13 @@ public class ProgramNotificationSubscriberServiceTest {
       .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
       .putAll(additionalTags)
       .build();
+    return queryMetrics(metricStore, metricName, tags);
+  }
+
+  private long queryMetrics(MetricStore metricStore, String metricName,
+      Map<String, String> tags) {
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
-                                                tags, new ArrayList<>());
+        tags, new ArrayList<>());
     Collection<MetricTimeSeries> result = metricStore.query(query);
     if (result.isEmpty()) {
       return 0;
