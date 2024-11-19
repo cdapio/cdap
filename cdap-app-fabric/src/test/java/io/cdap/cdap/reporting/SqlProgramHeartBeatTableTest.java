@@ -21,22 +21,35 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class SqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
@@ -70,5 +83,34 @@ public class SqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
   @AfterClass
   public static void teardown() throws IOException {
     pg.close();
+  }
+
+  @Test
+  public void testDeleteRecordsBefore() {
+    RunRecordDetail runRecord = RunRecordDetail.builder()
+      .setProgramRunId(NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate()))
+      .setStartTime(System.currentTimeMillis())
+      .setSourceId(new byte[MessageId.RAW_ID_SIZE])
+      .build();
+    final Instant cutOffTime = Instant.now();
+    final Instant timeBefore5min = cutOffTime.minus(Duration.ofMinutes(5));
+    final Instant timeAfterCutOff = Instant.now().plus(Duration.ofMinutes(5));
+
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      //Insert 4 Records with different times
+      programHeartbeatTable.writeRunRecordMeta(runRecord, timeBefore5min.getEpochSecond());
+      programHeartbeatTable.writeRunRecordMeta(runRecord, timeBefore5min.getEpochSecond());
+      programHeartbeatTable.writeRunRecordMeta(runRecord, cutOffTime.getEpochSecond());
+      programHeartbeatTable.writeRunRecordMeta(runRecord, timeAfterCutOff.getEpochSecond());
+
+      //Now delete all records <= cutOffTime
+      programHeartbeatTable.deleteRecordsBefore(cutOffTime);
+      Collection<RunRecordDetail> result =
+        programHeartbeatTable.scan(0, Long.MAX_VALUE, new HashSet<>(Arrays.asList("default")));
+
+      //This should contain only 1 record i.e. the last with timeAfterCutOff
+      Assert.assertEquals(1, result.size());
+    });
   }
 }

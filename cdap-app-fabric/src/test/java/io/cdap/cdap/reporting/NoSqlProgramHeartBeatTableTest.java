@@ -20,8 +20,12 @@ import com.google.inject.Injector;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.time.Instant;
 
 public class NoSqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
 
@@ -35,5 +39,14 @@ public class NoSqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
   @AfterClass
   public static void tearDown() {
     AppFabricTestHelper.shutdown();
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testDeleteRecordsBeforeThrowsException() {
+    final Instant cutOffTime = Instant.now();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.deleteRecordsBefore(cutOffTime);
+    });
   }
 }
