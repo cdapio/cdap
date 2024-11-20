@@ -17,6 +17,7 @@
 package io.cdap.cdap.reporting;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -33,6 +34,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -224,5 +226,23 @@ public class ProgramHeartbeatTable {
             row.getString(StoreDefinition.ProgramHeartbeatStore.PROGRAM_TYPE_FIELD)),
         row.getString(StoreDefinition.ProgramHeartbeatStore.PROGRAM_FIELD),
         row.getString(StoreDefinition.ProgramHeartbeatStore.RUN_FIELD));
+  }
+
+
+  /**
+   * Delete the program heartbeat records that started before the {@param endTime}.
+   */
+  public void deleteRecordsBefore(Instant endTime) throws IOException {
+    long endTimeEpochSecond = endTime.getEpochSecond();
+    table.scanDeleteAll(createTimestampEndRange(endTimeEpochSecond));
+  }
+
+  /**
+   * Create a range starting from all to the END TIME.
+   */
+  private Range createTimestampEndRange(long endTime) {
+    ImmutableList<Field<?>> end = ImmutableList.of(
+      Fields.longField(StoreDefinition.ProgramHeartbeatStore.TIMESTAMP_SECONDS_FIELD, endTime));
+    return Range.to(end, Range.Bound.EXCLUSIVE);
   }
 }
