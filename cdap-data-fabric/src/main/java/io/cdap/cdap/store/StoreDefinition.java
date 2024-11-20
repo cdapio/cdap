@@ -16,12 +16,20 @@
 
 package io.cdap.cdap.store;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,33 +54,247 @@ public final class StoreDefinition {
    */
   public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException {
     LOG.info("createAllTables started");
-    ArtifactStore.create(tableAdmin);
-    OwnerStore.create(tableAdmin);
-    NamespaceStore.create(tableAdmin);
-    SecretStore.create(tableAdmin);
-    WorkflowStore.create(tableAdmin);
-    ConfigStore.create(tableAdmin);
-    PreferencesStore.create(tableAdmin);
-    ProvisionerStore.create(tableAdmin);
-    AppMetadataStore.create(tableAdmin);
-    ProfileStore.create(tableAdmin);
-    ProgramScheduleStore.create(tableAdmin);
-    DatasetInstanceStore.create(tableAdmin);
-    DatasetTypeStore.create(tableAdmin);
-    LineageStore.create(tableAdmin);
-    JobQueueStore.create(tableAdmin);
-    TimeScheduleStore.create(tableAdmin);
-    RemoteRuntimeStore.create(tableAdmin);
-    ProgramHeartbeatStore.create(tableAdmin);
-    LogCheckpointStore.create(tableAdmin);
-    UsageStore.create(tableAdmin);
-    FieldLineageStore.create(tableAdmin);
-    LogFileMetaStore.create(tableAdmin);
-    CapabilitiesStore.create(tableAdmin);
-    TetheringStore.create(tableAdmin);
-    AppStateStore.create(tableAdmin);
-    CredentialProviderStore.create(tableAdmin);
-    OperationRunsStore.create(tableAdmin);
+    ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
+        "store-table-creator-%d").build();
+    int numThreads = 26;
+    ExecutorService executorService = Executors.newFixedThreadPool(numThreads, threadFactory);
+    List<Future<?>> futures = new ArrayList<>();
+//    for (Id.Artifact remainingArtifact : remainingArtifacts) {
+//      if (!childToParents.containsKey(remainingArtifact)) {
+//        futures.add(executorService.submit(() -> {
+//          addSystemArtifact(systemArtifacts.get(remainingArtifact));
+//          return remainingArtifact;
+//        }));
+//      }
+//    }
+//
+//    Exception failure = null;
+//    for (Future<Id.Artifact> f : futures) {
+//      try {
+//        Id.Artifact addedArtifact = f.get();
+//        addedArtifacts.add(addedArtifact);
+//        for (Id.Artifact child : parentToChildren.get(addedArtifact)) {
+//          childToParents.remove(child, addedArtifact);
+//        }
+//        remainingArtifacts.removeAll(addedArtifacts);
+//      } catch (ExecutionException e) {
+//        Throwable cause = e.getCause();
+//        if (failure != null) {
+//          failure.addSuppressed(cause);
+//        } else if (cause instanceof Exception) {
+//          failure = (Exception) cause;
+//        } else {
+//          throw e;
+//        }
+//      }
+//    }
+//    if (failure != null) {
+//      throw failure;
+//    }
+//    return !futures.isEmpty();
+
+    futures.add(executorService.submit(() -> {
+      try {
+        ArtifactStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        NamespaceStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        SecretStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        WorkflowStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        ConfigStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        PreferencesStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        ProvisionerStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        AppMetadataStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        ProfileStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        ProgramScheduleStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        DatasetInstanceStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        DatasetTypeStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+
+    futures.add(executorService.submit(() -> {
+      try {
+        LineageStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        JobQueueStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        TimeScheduleStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        RemoteRuntimeStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        ProgramHeartbeatStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        LogCheckpointStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        UsageStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        FieldLineageStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        LogFileMetaStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        CapabilitiesStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        TetheringStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        AppStateStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        CredentialProviderStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+    futures.add(executorService.submit(() -> {
+      try {
+        OperationRunsStore.create(tableAdmin);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }));
+
+    Exception failure = null;
+    for (Future<?> f : futures) {
+      try {
+        f.get();
+      } catch (ExecutionException | InterruptedException e) {
+        Throwable cause = e.getCause();
+        if (failure != null) {
+          failure.addSuppressed(cause);
+        } else if (cause instanceof Exception) {
+          failure = (Exception) cause;
+        } else {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    if (failure != null) {
+      throw new RuntimeException(failure);
+    }
     LOG.info("createAllTables done");
   }
 
@@ -303,13 +525,20 @@ public final class StoreDefinition {
      * Creates artifact store tables.
      *
      * @param tableAdmin The table admin to use.
+     * @param futures
      * @throws IOException If table creation fails.
      */
     public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+//      futures.add(executorService.submit(() -> {
+//        try {
       createIfNotExists(tableAdmin, ARTIFACT_DATA_SPEC);
       createIfNotExists(tableAdmin, APP_DATA_SPEC);
       createIfNotExists(tableAdmin, PLUGIN_DATA_SPEC);
       createIfNotExists(tableAdmin, UNIV_PLUGIN_DATA_SPEC);
+//        } catch (IOException e) {
+//          throw new RuntimeException(e);
+//        }
+//      }));
     }
   }
 
@@ -1283,6 +1512,7 @@ public final class StoreDefinition {
    * Schemas for credential providers.
    */
   public static final class CredentialProviderStore {
+
     public static final StructuredTableId CREDENTIAL_PROFILES =
         new StructuredTableId("credential_profiles");
     public static final StructuredTableId CREDENTIAL_IDENTITIES =
@@ -1331,6 +1561,7 @@ public final class StoreDefinition {
    * Schemas for operation runs.
    */
   public static final class OperationRunsStore {
+
     public static final StructuredTableId OPERATION_RUNS =
         new StructuredTableId("operation_runs");
 
@@ -1353,7 +1584,7 @@ public final class StoreDefinition {
                 Fields.longType(START_TIME_FIELD),
                 Fields.longType(UPDATE_TIME_FIELD),
                 Fields.stringType(DETAILS_FIELD)
-                )
+            )
             .withPrimaryKeys(NAMESPACE_FIELD, ID_FIELD)
             .withIndexes(TYPE_FIELD, STATUS_FIELD, START_TIME_FIELD)
             .build();

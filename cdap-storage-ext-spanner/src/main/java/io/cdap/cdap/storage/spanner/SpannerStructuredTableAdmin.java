@@ -159,14 +159,13 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
       Throwable cause = e.getCause();
       if (cause instanceof SpannerException) {
         if (((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-          LOG.debug("Concurrent table update error: ", e);
+          LOG.debug("Concurrent table update error: ");
           throw new TableDuplicateUpdateException(spec.getTableId());
         }
 
         if (((SpannerException) cause).getErrorCode() == ErrorCode.NOT_FOUND) {
           LOG.debug(
-              "Concurrent table update error, table not found while updating the table schema: ",
-              e);
+              "Concurrent table update error, table not found while updating the table schema: ");
           throw new TableNotFoundException(spec.getTableId());
         }
       }
