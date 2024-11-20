@@ -452,6 +452,15 @@
 
 
   <!-- Applications Configuration -->
+
+  <property>
+    <name>app.list.default.page.size</name>
+    <value>0</value>
+    <description>
+      This represents the default value of pageSize during list apps call.
+    </description>
+  </property>
+
   <property>
     <name>app.artifact.compute.hash.time.bucket.days</name>
     <value>15</value>

@@ -651,6 +651,15 @@ public abstract class AppFabricTestBase {
                                      sortCreationTime);
   }
 
+  protected List<JsonObject> getAppListForNegativePaginatedApi(String namespace, int pageSize) throws Exception {
+    String uri = "apps/?pageSize=" + pageSize;
+
+    HttpResponse response = doGet(getVersionedApiPath(uri,
+        Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return readResponse(response, LIST_JSON_OBJECT_TYPE);
+  }
+
   protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
                                                  String orderBy, String filter, String nameFilterType,
                                                  Boolean latestOnly, Boolean sortCreationTime) throws Exception {

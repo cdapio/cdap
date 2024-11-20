@@ -256,12 +256,19 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       }
     }
 
+    if (pageSize == null) {
+      pageSize = configuration.getInt(Constants.GET_APPS_DEFAULT_PAGE_SIZE);
+      LOG.debug("Paginating GET apps call with page size as {}", pageSize);
+    }
+    pageSize = Math.max(pageSize, 0);
+
     if (Optional.ofNullable(pageSize).orElse(0) != 0) {
+      Integer finalPageSize = pageSize;
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY,
           jsonListResponder -> {
             AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
             ScanApplicationsRequest scanRequest = getScanRequest(namespaceId, artifactVersion,
-                pageToken, pageSize,
+                pageToken, finalPageSize,
                 orderBy, nameFilter, names, nameFilterType, latestOnly,
                 sortCreationTime);
             boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest,

@@ -687,6 +687,34 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testListAppsWithNegativePageSize() throws Exception {
+    for (int i = 0; i < 10; i++) {
+      String ns1AppName = AllProgramsApp.NAME + i;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    List<JsonObject> result = getAppListForNegativePaginatedApi(TEST_NAMESPACE1, -3);
+    int resultSize = result.size();
+    Assert.assertEquals(10, resultSize);
+
+    // delete the apps in testnamespace1
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(0, apps.size());
+  }
+
+  @Test
   public void testListAndGetForPaginatedAPIWithEmptyLastPage() throws Exception {
     for (int i = 0; i < 9; i++) {
       //deploy with name to testnamespace1
