@@ -18,17 +18,14 @@ package io.cdap.cdap.security.auth;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
-import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
@@ -36,6 +33,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.security.spi.authorization.AuditLoggerSpi;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -43,11 +41,9 @@ import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Queue;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -55,7 +51,7 @@ import javax.annotation.Nullable;
  * and delegates the batch of AuditLogContexts to External Auth service using {@link AuditLoggerSpi}, which would
  * further publish as configured.
  */
-public class AuditLogSingleTopicSubscriberService extends AbstractMessagingSubscriberService<AuditLogContext> {
+public class AuditLogSingleTopicSubscriberService extends AbstractMessagingSubscriberService<AuditLogRequest> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuditLogSingleTopicSubscriberService.class);
   private static final Gson GSON = new Gson();
@@ -130,29 +126,21 @@ public class AuditLogSingleTopicSubscriberService extends AbstractMessagingSubsc
    */
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, AuditLogContext>> messages) throws Exception {
+                                 Iterator<ImmutablePair<String, AuditLogRequest>> messages) throws Exception {
 
-    Queue<AuditLogContext> auditLogContextQueue = new ArrayDeque<>();
-
+    int count = 0;
     while (messages.hasNext()) {
-      ImmutablePair<String, AuditLogContext> next = messages.next();
-      AuditLogContext auditLogContext = next.getSecond();
-      if (auditLogContext.isAuditLoggingRequired()){
-        auditLogContextQueue.add(auditLogContext);
-      }
-    }
-
-    if (!auditLogContextQueue.isEmpty()) {
-      LOG.debug("Publishing a queue of Audit Log events of size {} events.", auditLogContextQueue.size());
+      ImmutablePair<String, AuditLogRequest> next = messages.next();
+      LOG.trace("Publishing a queue of Audit Log events ");
       AuditLoggerSpi.PublishStatus publishStatus =
-        this.accessControllerInstantiator.get().publishAuditLogs(auditLogContextQueue);
-      // TODO : This logic can change based on how Auth Ext publishes a batch.
-      if (publishStatus.equals(AuditLoggerSpi.PublishStatus.UNSUCCESSFUL)) {
-        throw new Exception("The publishing of audit log events Failed.");
+        this.accessControllerInstantiator.get().publishAuditLogs(next.getSecond());
+      if (publishStatus != AuditLoggerSpi.PublishStatus.PUBLISHED) {
+        throw new Exception("The publishing of audit log events Failed.", publishStatus.getEx());
       }
+      count++;
     }
 
-    LOG.trace("Publishing a queue of Audit Log events of size {} events is successful.", auditLogContextQueue.size());
+    LOG.trace("Publishing a queue of Audit Log events of size {} events is successful.", count);
   }
 
   /**
@@ -167,7 +155,7 @@ public class AuditLogSingleTopicSubscriberService extends AbstractMessagingSubsc
    * Decodes the raw {@link Message} into an object of type {@link AuditLogContext}.
    */
   @Override
-  protected AuditLogContext decodeMessage(Message message) throws Exception {
-    return message.decodePayload(r -> GSON.fromJson(r, AuditLogContext.class));
+  protected AuditLogRequest decodeMessage(Message message) throws Exception {
+    return message.decodePayload(r -> GSON.fromJson(r, AuditLogRequest.class));
   }
 }

@@ -19,6 +19,7 @@ import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
@@ -28,6 +29,8 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
+
+import java.util.Arrays;
 import java.util.Collections;
 import javax.annotation.Nullable;
 
@@ -63,8 +66,9 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
       };
     }
     this.setExceptionHandler(new HttpExceptionHandler());
-    this.setHandlerHooks(Collections.singleton(
-        new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
+    this.setHandlerHooks(Collections.unmodifiableList(
+      Arrays.asList(new MetricsReporterHook(cConf, metricsCollectionService, serviceName),
+                    new AuditLogSetterHook(cConf, serviceName))));
   }
 
   /**

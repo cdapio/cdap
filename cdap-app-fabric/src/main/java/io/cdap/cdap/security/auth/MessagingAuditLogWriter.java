@@ -34,6 +34,7 @@ import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,37 +82,33 @@ public class MessagingAuditLogWriter implements AuditLogWriter {
   }
 
   /**
-   * pushes the collection of log entry to respective messaging topic
-   *
-   * @param auditLogContexts
+   * pushes a log entry to respective messaging topic
    */
   @Override
-  public void publish(@Nullable Queue<AuditLogContext> auditLogContexts) throws IOException {
-
-    if (auditLogContexts != null && auditLogContexts.isEmpty()){
+  public void publish(@Nullable AuditLogRequest auditLogRequest) throws IOException {
+    if (auditLogRequest != null &&
+      (auditLogRequest.getAuditLogContextQueue().isEmpty()
+        || auditLogRequest.getAuditLogContextQueue().stream().noneMatch(AuditLogContext::isAuditLoggingRequired))){
       return;
     }
 
     TopicId topic = generateTopic();
+    StoreRequest storeRequest = StoreRequestBuilder.of(topic)
+      .addPayload(GSON.toJson(auditLogRequest))
+      .build();
 
-    auditLogContexts.forEach(auditLogContext -> {
-      StoreRequest storeRequest = StoreRequestBuilder.of(topic)
-        .addPayload(GSON.toJson(auditLogContext))
-        .build();
-
-      try {
-        Retries.runWithRetries(() -> {
-          try {
-            messagingService.publish(storeRequest);
-          } catch (TopicNotFoundException e) {
-            createTopicIfNeeded(topic);
-            throw new RetryableException(e);
-          }
-        }, retryStrategy, Retries.ALWAYS_TRUE);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to publish audit log event to TMS.", e);
-      }
-    });
+    try {
+      Retries.runWithRetries(() -> {
+        try {
+          messagingService.publish(storeRequest);
+        } catch (TopicNotFoundException e) {
+          createTopicIfNeeded(topic);
+          throw new RetryableException(e);
+        }
+      }, retryStrategy, Retries.ALWAYS_TRUE);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to publish audit log event to TMS.", e);
+    }
   }
 
   private void createTopicIfNeeded(TopicId topic) throws IOException {

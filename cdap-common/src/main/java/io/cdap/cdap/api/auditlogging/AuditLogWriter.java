@@ -17,12 +17,13 @@
 package io.cdap.cdap.api.auditlogging;
 
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 
 import java.io.IOException;
 import java.util.Queue;
 
 /**
- * An interface to write/ persist a collection of {@link AuditLogContext} to a
+ * An interface to write/ persist a {@link AuditLogRequest} to a
  * messaging service / topic  ( ex - tms )
  */
 public interface AuditLogWriter {
@@ -30,5 +31,5 @@ public interface AuditLogWriter {
   /**
    * pushes the log entry to respective messaging topic
    */
-  void publish(Queue<AuditLogContext> auditLogContexts) throws IOException;
+  void publish(AuditLogRequest auditLogRequest) throws IOException;
 }

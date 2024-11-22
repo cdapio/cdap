@@ -28,6 +28,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
@@ -71,6 +73,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+
     if (collectorCache == null) {
       return true;
     }

@@ -16,11 +16,18 @@
 
 package io.cdap.cdap.security.spi.authentication;
 
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
+import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
+
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -33,6 +40,10 @@ public final class SecurityRequestContext {
   private static final ThreadLocal<Credential> userCredential = new InheritableThreadLocal<>();
   private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
   private static final ThreadLocal<Queue<AuditLogContext>> auditLogContextQueue = new InheritableThreadLocal<>();
+  private static final ThreadLocal<Map<? extends EntityId, AuthorizationResponse>> entityToAuthResponseMap =
+    new InheritableThreadLocal<>();
+  // This will be used by AuthenticationChannelHandler to finally write the audit log event to a messaging queue.
+  private static final ThreadLocal<AuditLogRequest> auditLogRequest = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }
@@ -68,6 +79,16 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * Get the {@link AuditLogRequest} for this thread.
+   *
+   * @return {@link AuditLogRequest}
+   */
+  @Nullable
+  public static AuditLogRequest getAuditLogRequest() {
+    return auditLogRequest.get();
+  }
+
+  /**
    * Set the userId on the current thread.
    *
    * @param userIdParam userId to be set
@@ -95,6 +116,15 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * Set the {@link AuditLogRequest} on the current thread.
+   *
+   * @param auditLogReq
+   */
+  public static void setAuditLogRequest(AuditLogRequest auditLogReq) {
+    auditLogRequest.set(auditLogReq);
+  }
+
+  /**
    * Returns a {@link Principal} for the user set on the current thread.
    */
   public static Principal toPrincipal() {
@@ -109,12 +139,18 @@ public final class SecurityRequestContext {
     userIP.remove();
     userCredential.remove();
     auditLogContextQueue.remove();
+    auditLogRequest.remove();
+    entityToAuthResponseMap.remove();
   }
 
   /**
    * Creates a queue if not present and adds the {@link AuditLogContext} to it.
    */
   public static void enqueueAuditLogContext(AuditLogContext auditLog) {
+    if (auditLog != null && !auditLog.isAuditLoggingRequired()){
+      return;
+    }
+
     Queue<AuditLogContext> queue = auditLogContextQueue.get();
     if (queue == null) {
       ArrayDeque<AuditLogContext> newQueue = new ArrayDeque<>();
@@ -126,9 +162,26 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * Creates a queue if not present and adds the collection of {@link AuditLogContext}s to it.
+   */
+  public static void enqueueAuditLogContext(Queue<AuditLogContext> auditLogQueue) {
+
+    Queue<AuditLogContext> filteredAuditLogQueue = auditLogQueue.stream()
+      .filter(AuditLogContext::isAuditLoggingRequired)
+      .collect(Collectors.toCollection(ArrayDeque::new));
+
+    Queue<AuditLogContext> queue = auditLogContextQueue.get();
+    if (queue == null) {
+      auditLogContextQueue.set(filteredAuditLogQueue);
+    } else {
+      queue.addAll(filteredAuditLogQueue);
+    }
+  }
+
+  /**
    * Resets / removes the audit log queue.
    */
-  public static void clearAuditLogQueue(AuditLogContext auditLog) {
+  public static void clearAuditLogQueue() {
     auditLogContextQueue.remove();
   }
 
@@ -144,4 +197,28 @@ public final class SecurityRequestContext {
     return queue;
   }
 
+  /**
+   *  Set the Map of EntityId <> AuthorizationResponse.
+   */
+  public static void setEntityToAuthResponseMap(Map<? extends EntityId, AuthorizationResponse> mapOfEntityResult) {
+    entityToAuthResponseMap.set(mapOfEntityResult);
+  }
+
+  /**
+   *  Get the Map of EntityId <> AuthorizationResponse.
+   */
+  public static Map<? extends EntityId, AuthorizationResponse> getEntityToAuthResponseMap() {
+    Map<? extends EntityId, AuthorizationResponse> map = entityToAuthResponseMap.get();
+    if (map != null) {
+      return map;
+    }
+    return new HashMap<>();
+  }
+
+  /**
+   * Resets / removes the Map of EntityId <> AuthorizationResponse.
+   */
+  public static void clearEntityToAuthResponseMap() {
+    entityToAuthResponseMap.remove();
+  }
 }

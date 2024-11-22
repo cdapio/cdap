@@ -28,11 +28,13 @@ import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -267,7 +269,7 @@ public class AccessControllerWrapper implements AccessControllerSpi {
    * @return {@link PublishStatus}
    */
   @Override
-  public PublishStatus publishAuditLogs(Queue<AuditLogContext> auditLogContexts) {
+  public PublishStatus publishAuditLogs(AuditLogRequest auditLogRequest) {
     return PublishStatus.PUBLISHED;
   }
 }

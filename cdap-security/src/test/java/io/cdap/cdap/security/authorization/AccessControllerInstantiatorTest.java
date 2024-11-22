@@ -37,6 +37,7 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
@@ -600,7 +601,7 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     }
 
     @Override
-    public PublishStatus publishAuditLogs(Queue<AuditLogContext> auditLogContexts) {
+    public PublishStatus publishAuditLogs(AuditLogRequest auditLogRequest) {
       return null;
     }
   }

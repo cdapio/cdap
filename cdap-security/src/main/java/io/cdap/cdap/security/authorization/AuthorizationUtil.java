@@ -171,6 +171,11 @@ public final class AuthorizationUtil {
     authorizationResponseList.stream().forEach(x -> AuthorizationUtil.setAuthorizationDataInContext(x));
   }
 
+  public static void setIsVisibleCheckResultsInContext(
+    Map<? extends EntityId, AuthorizationResponse> mapOfEntityResul) {
+    SecurityRequestContext.setEntityToAuthResponseMap(mapOfEntityResul);
+  }
+
   /**
    * Throw a {@link UnauthorizedException} if the {@link AuthorizationResponse} is having
    * "UNAUTHORIZED" state.

@@ -18,10 +18,12 @@ package io.cdap.cdap.security.spi.authorization;
 
 import io.cdap.cdap.api.annotation.Beta;
 
+import java.lang.reflect.Executable;
+import java.util.List;
 import java.util.Queue;
 
 /**
- * An SPI that delegates the collection of {@link AuditLogContext}s to an extension that will publish the log events
+ * An SPI that delegates the collection of {@link AuditLogRequest}s to an extension that will publish the log events
  * to the respective destination.
  */
 @Beta
@@ -31,7 +33,17 @@ public interface AuditLoggerSpi {
    */
   enum PublishStatus {
     PUBLISHED,
-    UNSUCCESSFUL
+    UNSUCCESSFUL;
+
+    private Exception ex;
+
+    public Exception getEx() {
+      return ex;
+    }
+
+    public void setEx(Exception ex) {
+      this.ex = ex;
+    }
   }
 
   /**
@@ -40,6 +52,6 @@ public interface AuditLoggerSpi {
    * If the auth ext is able to publish a batch all together vs needs to publish one by one.
    * @return {@link PublishStatus}
    */
-  PublishStatus publishAuditLogs(Queue<AuditLogContext> auditLogContexts);
+  PublishStatus publishAuditLogs(AuditLogRequest auditLogRequest);
 
 }

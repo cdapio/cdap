@@ -25,6 +25,7 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -53,6 +54,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
 import io.cdap.cdap.store.DefaultNamespaceStore;
+import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
@@ -208,9 +210,16 @@ public class AppFabricServer extends AbstractIdleService {
     Futures.allAsList(futuresList).get();
 
     // Create handler hooks
-    List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
+    List<AbstractHandlerHook> handlerHooks = handlerHookNames.stream()
         .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
         .collect(Collectors.toList());
+
+    // Create handler hooks
+    List<AuditLogSetterHook> auditHandlerHooks = handlerHookNames.stream()
+      .map(name -> new AuditLogSetterHook(cConf, name))
+      .collect(Collectors.toList());
+
+    handlerHooks.addAll(auditHandlerHooks);
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory

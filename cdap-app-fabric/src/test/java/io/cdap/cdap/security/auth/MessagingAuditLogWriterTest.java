@@ -20,10 +20,12 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
 
 public class MessagingAuditLogWriterTest {
@@ -45,10 +47,20 @@ public class MessagingAuditLogWriterTest {
                               .setAuditLoggingRequired(true)
                               .setAuditLogBody("Test Audit Logs")
                               .build());
-    messagingAuditLogWriter.publish(auditLogContexts);
+    AuditLogRequest auditLogRequest = new AuditLogRequest(
+      200,
+      "testUserIp",
+      "v3/test",
+      "Testhandler",
+      "create",
+      "POST",
+      auditLogContexts,
+      1000000L,
+      1000002L);
+    messagingAuditLogWriter.publish(auditLogRequest);
 
-    //There should be at least 3 invocations. 1st will be a TopicNotFoundException , then 2 audit log events.
-    Mockito.verify(mockMsgService, Mockito.atLeast(3)).publish(Mockito.any());
+    //There should be at least 2 invocations. 1st will be a TopicNotFoundException , then 1 audit log request.
+    Mockito.verify(mockMsgService, Mockito.atLeast(2)).publish(Mockito.any());
     //Single invocation to create a topic.
     Mockito.verify(mockMsgService, Mockito.times(1)).createTopic(Mockito.any());
   }

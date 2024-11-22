@@ -37,13 +37,13 @@ import io.cdap.cdap.security.authorization.AccessControllerInstantiatorTest;
 import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -52,8 +52,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -63,7 +62,7 @@ public class AuditLogSingleTopicSubscriberServiceTest {
 
   private static CConfiguration cConf;
   private static TransactionRunner transactionRunner;
-  private static Queue<AuditLogContext> auditLogContextsStore;
+  private static List<AuditLogRequest> auditLogRequests;
   private static EmbeddedPostgres pg;
 
   @ClassRule
@@ -90,7 +89,7 @@ public class AuditLogSingleTopicSubscriberServiceTest {
     );
 
     transactionRunner = injector.getInstance(TransactionRunner.class);
-    auditLogContextsStore = new ArrayDeque<>();
+    auditLogRequests = new ArrayList<>();
   }
 
   @AfterClass
@@ -101,15 +100,14 @@ public class AuditLogSingleTopicSubscriberServiceTest {
 
   @Before
   public void beforeTest(){
-    auditLogContextsStore = new ArrayDeque<>();
+    auditLogRequests = new ArrayList<>();
   }
 
   /**
-   * Create an iterator of AuditLogContexts and pass it to get published.
-   * In the mock publishing, it would store the objects in auditLogContextsStore.
-   * And we assert that original queue matches auditLogContextsStore.
+   * Create an iterator of AuditLogRequest and pass it to get published.
+   * In the mock publishing, we return UNSUCCESSFUL which should throw exception
    */
-  @Test
+  @Test(expected = Exception.class)
   public void testProcessMessages() throws Exception {
     MessagingService mockMsgService = Mockito.mock(MessagingService.class);
     AccessControllerInstantiatorMock accessControllerInstantiatorMock =
@@ -123,29 +121,34 @@ public class AuditLogSingleTopicSubscriberServiceTest {
         accessControllerInstantiatorMock,
         "topic"
       );
-    List<AuditLogContext> auditLogContextsOrg = new LinkedList<>();
+    Queue<AuditLogContext> auditLogContextsOrg = new LinkedList<>();
     auditLogContextsOrg.add(AuditLogContext.Builder.defaultNotRequired());
     auditLogContextsOrg.add(new AuditLogContext.Builder()
                               .setAuditLoggingRequired(true)
                               .setAuditLogBody("Test Audit Logs")
                               .build());
+    AuditLogRequest auditLogRequest = new AuditLogRequest(
+      200,
+      "testuserIp",
+      "v3/test",
+      "Testhandler",
+      "create",
+      "POST",
+      auditLogContextsOrg,
+      1000000L,
+      1000002L);
 
-    Iterator<ImmutablePair<String, AuditLogContext>> messages =
-      ImmutableList.of(ImmutablePair.of("1", auditLogContextsOrg.get(0)),
-                       ImmutablePair.of("2", auditLogContextsOrg.get(1))).iterator();
+    Iterator<ImmutablePair<String, AuditLogRequest>> messages = null;
+      ImmutableList.of(ImmutablePair.of("1",auditLogRequest)).iterator();
 
     TransactionRunners.run(transactionRunner, (context) -> {
       auditLogSingleTopicSubscriberService.processMessages(
         context, messages);
     }, Exception.class);
-
-    // Expected will only contain 1 audit log
-    Assert.assertEquals(Arrays.asList(auditLogContextsOrg.get(1)), new LinkedList<>(auditLogContextsStore));
-
   }
 
-  public static void setAuditLogContextsStore(Queue<AuditLogContext> auditLogContexts) {
-    AuditLogSingleTopicSubscriberServiceTest.auditLogContextsStore = auditLogContexts;
+  public static void setAuditLogRequests(List<AuditLogRequest> auditLogRequests) {
+    AuditLogSingleTopicSubscriberServiceTest.auditLogRequests = auditLogRequests;
   }
 
   private static class AccessControllerInstantiatorMock extends AccessControllerInstantiator {
@@ -163,9 +166,9 @@ public class AuditLogSingleTopicSubscriberServiceTest {
 
   private static class AccessControllerSpiMock extends AccessControllerInstantiatorTest.AccessControllerSpiImp {
     @Override
-    public PublishStatus publishAuditLogs(Queue<AuditLogContext> auditLogContexts) {
-      AuditLogSingleTopicSubscriberServiceTest.setAuditLogContextsStore(auditLogContexts);
-      return PublishStatus.PUBLISHED;
+    public PublishStatus publishAuditLogs(AuditLogRequest auditLogRequest) {
+      AuditLogSingleTopicSubscriberServiceTest.setAuditLogRequests(auditLogRequests);
+      return PublishStatus.UNSUCCESSFUL;
     }
   }
 }

@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -52,7 +53,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       "CDAP-empty-user-credential",
       Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
-  private static final String AUDIT_LOG_QUEUE_ATTR_NAME = "AUDIT_LOG_QUEUE";
+  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
 
   private final boolean internalAuthEnabled;
   private final boolean auditLoggingEnabled;
@@ -134,10 +135,10 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     try {
       ctx.fireChannelRead(msg);
     } finally {
-      //Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
+      // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
       // it independent of Thread local.
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME))
-        .set(SecurityRequestContext.getAuditLogQueue());
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME))
+        .set(SecurityRequestContext.getAuditLogRequest());
       SecurityRequestContext.reset();
     }
   }
@@ -148,7 +149,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    publishAuditLogQueue(ctx);
+    publishAuditLogRequest(ctx);
     super.write(ctx, msg, promise);
   }
 
@@ -157,7 +158,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-    publishAuditLogQueue(ctx);
+    publishAuditLogRequest(ctx);
     super.close(ctx, promise);
   }
 
@@ -176,11 +177,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * Check the audit log attribute attached to a channel.
    * It's not null, publish it and set it to Null.
    */
-  private void publishAuditLogQueue(ChannelHandlerContext ctx) throws IOException {
-    Object auditLogContextsQueueObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get();
-    if (auditLoggingEnabled && auditLogContextsQueueObj != null) {
-      auditLogWriter.publish((Queue<AuditLogContext>) auditLogContextsQueueObj);
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).set(null);
+  private void publishAuditLogRequest(ChannelHandlerContext ctx) throws IOException {
+    Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get();
+    if (auditLoggingEnabled && auditLogRequestObj != null) {
+      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
     }
   }
 }

@@ -6513,7 +6513,7 @@
 
   <property>
     <name>auditlog.messaging.fetch.size</name>
-    <value>50</value>
+    <value>20</value>
     <description>
       Number of messages to fetch from messaging system for each batch to consume by Audit log consumer.
     </description>

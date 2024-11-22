@@ -27,13 +27,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AttributeKey;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -46,7 +46,7 @@ public class AuthenticationChannelHandlerTest {
   private DefaultHttpRequest req;
   private AuthenticationChannelHandler handler;
   private ChannelHandlerContext ctx;
-  private static final String AUDIT_LOG_QUEUE_ATTR_NAME = "AUDIT_LOG_QUEUE";
+  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
 
 
   @Before
@@ -106,8 +106,8 @@ public class AuthenticationChannelHandlerTest {
   public void testWriteWithAuditLogging() throws Exception {
     boolean internalAuthEnabled = true;
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get())
-      .thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get())
+      .thenReturn(getAuditLogRequest());
     handler = new AuthenticationChannelHandler(internalAuthEnabled, true, auditLogWriterMock);
     handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
 
@@ -118,15 +118,15 @@ public class AuthenticationChannelHandlerTest {
   public void testCloseWithAuditLogging() throws Exception {
     boolean internalAuthEnabled = true;
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get())
-      .thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get())
+      .thenReturn(getAuditLogRequest());
     handler = new AuthenticationChannelHandler(internalAuthEnabled, true, auditLogWriterMock);
     handler.close(ctx, new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
   }
 
-  private Queue<AuditLogContext> getAuditLogContexts() {
+  private AuditLogRequest getAuditLogRequest() {
     Queue<AuditLogContext> auditLogContexts = new ArrayDeque<>();
     auditLogContexts.add(AuditLogContext.Builder.defaultNotRequired());
     auditLogContexts.add(new AuditLogContext.Builder()
@@ -134,6 +134,15 @@ public class AuthenticationChannelHandlerTest {
                            .setAuditLogBody("Test Audit Logs")
                            .build());
 
-    return auditLogContexts;
+    return new AuditLogRequest(
+      200,
+      "testuserIp",
+      "v3/test",
+      "Testhandler",
+      "create",
+      "POST",
+      auditLogContexts,
+      1000000L,
+      1000002L);
   }
 }
