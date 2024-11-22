@@ -65,9 +65,6 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   private final DatabaseAdminClient adminClient;
   private final DatabaseClient databaseClient;
   private final LoadingCache<StructuredTableId, StructuredTableSchema> schemaCache;
-  private static final int NUMBER_OF_RETRIES = 2;
-  private static final int MIN_WAIT_TIME_MILLISECOND = 200;
-  private static final int MAX_WAIT_TIME_MILLISECOND = 2000;
 
   static String getIndexName(StructuredTableId tableId, String column) {
     return String.format("%s_%s_idx", tableId.getName(), column);
