@@ -115,6 +115,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   public boolean exists(StructuredTableId tableId) {
     try {
       getSchema(tableId);
+      LOG.info("Table exists {}", tableId);
       return true;
     } catch (TableNotFoundException e) {
       return false;
@@ -372,30 +373,28 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   private void createTable(StructuredTableSpecification spec) throws IOException {
-    if (!checkIfTableExists(spec.getTableId().getName())) {
-      List<String> statements = new ArrayList<>();
-      statements.add(getCreateTableStatement(spec));
+    List<String> statements = new ArrayList<>();
+    statements.add(getCreateTableStatement(spec));
 
-      LOG.debug("creating table {}", spec.getTableId().getName());
-      StructuredTableSchema schema = new StructuredTableSchema(spec);
-      spec.getIndexes()
-          .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+    LOG.debug("creating table {}", spec.getTableId().getName());
+    StructuredTableSchema schema = new StructuredTableSchema(spec);
+    spec.getIndexes()
+        .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
 
-      try {
-        Uninterruptibles.getUninterruptibly(
-            adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
-                databaseId.getDatabase(), statements, null));
-      } catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof SpannerException
-            && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
-          LOG.debug("Concurrent table creation error");
-        } else {
-          throw new IOException("Failed to create table in Spanner", cause);
-        }
+    try {
+      Uninterruptibles.getUninterruptibly(
+          adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
+              databaseId.getDatabase(), statements, null));
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof SpannerException
+          && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
+        LOG.debug("Concurrent table creation error");
+      } else {
+        throw new IOException("Failed to create table in Spanner", cause);
       }
-      LOG.debug("create table done {}", spec.getTableId().getName());
     }
+    LOG.debug("create table done {}", spec.getTableId().getName());
   }
 
   private void tryUpdatingTable(StructuredTableSpecification spec)

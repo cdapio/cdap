@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,7 +57,8 @@ public final class StoreDefinition {
     LOG.info("createAllTables started");
     ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
         "store-table-creator-%d").build();
-    int numThreads = 26;
+    int numThreads = new Random().nextInt(15 - 10 + 1) + 10;
+    LOG.info("started {} threads", numThreads);
     ExecutorService executorService = Executors.newFixedThreadPool(numThreads, threadFactory);
     List<Future<?>> futures = new ArrayList<>();
 //    for (Id.Artifact remainingArtifact : remainingArtifacts) {
@@ -277,23 +279,23 @@ public final class StoreDefinition {
       }
     }));
 
-    Exception failure = null;
+    List<Throwable> failures = new ArrayList<>();
     for (Future<?> f : futures) {
       try {
         f.get();
       } catch (ExecutionException | InterruptedException e) {
-        Throwable cause = e.getCause();
-        if (failure != null) {
-          failure.addSuppressed(cause);
-        } else if (cause instanceof Exception) {
-          failure = (Exception) cause;
-        } else {
-          throw new RuntimeException(e);
-        }
+        failures.add(e.getCause());
       }
     }
-    if (failure != null) {
-      throw new RuntimeException(failure);
+    // Shutdown the executor service
+    executorService.shutdown();
+    if (!failures.isEmpty()) {
+      // Choose an appropriate exception type based on your needs
+      IOException exception = new IOException("Multiple failures occurred");
+      for (Throwable failure : failures) {
+        exception.addSuppressed(failure);
+      }
+      throw exception;
     }
     LOG.info("createAllTables done");
   }
