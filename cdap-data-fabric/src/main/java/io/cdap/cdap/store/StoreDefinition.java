@@ -57,7 +57,7 @@ public final class StoreDefinition {
     LOG.info("createAllTables started");
     ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
         "store-table-creator-%d").build();
-    int numThreads = new Random().nextInt(15 - 10 + 1) + 10;
+    int numThreads = new Random().nextInt(16 - 10 + 1) + 13;
     LOG.info("started {} threads", numThreads);
     ExecutorService executorService = Executors.newFixedThreadPool(numThreads, threadFactory);
     List<Future<?>> futures = new ArrayList<>();
