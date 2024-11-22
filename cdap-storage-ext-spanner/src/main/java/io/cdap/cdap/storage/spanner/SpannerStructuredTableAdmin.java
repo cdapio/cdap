@@ -352,26 +352,6 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     return "`" + name + "`";
   }
 
-  private boolean checkIfTableExists(String tableName) {
-    try {
-      List<String> ddlStatements = adminClient.getDatabaseDdl(
-          databaseId.getInstanceId().getInstance(), databaseId.getDatabase());
-      // Parse the DDL statements to check if the table exists
-      for (String statement : ddlStatements) {
-        if (statement.startsWith("CREATE TABLE " + tableName)) {
-          LOG.debug("{} exists", tableName);
-          return true;
-        }
-      }
-      LOG.debug("{} does not exists", tableName);
-      return false;
-    } catch (SpannerException e) {
-      // Handle potential errors
-      LOG.warn("Error checking for table existence: ", e);
-      return false;
-    }
-  }
-
   private void createTable(StructuredTableSpecification spec) throws IOException {
     List<String> statements = new ArrayList<>();
     statements.add(getCreateTableStatement(spec));

@@ -60,41 +60,8 @@ public final class StoreDefinition {
     int numThreads = new Random().nextInt(16 - 10 + 1) + 13;
     LOG.info("started {} threads", numThreads);
     ExecutorService executorService = Executors.newFixedThreadPool(numThreads, threadFactory);
-    List<Future<?>> futures = new ArrayList<>();
-//    for (Id.Artifact remainingArtifact : remainingArtifacts) {
-//      if (!childToParents.containsKey(remainingArtifact)) {
-//        futures.add(executorService.submit(() -> {
-//          addSystemArtifact(systemArtifacts.get(remainingArtifact));
-//          return remainingArtifact;
-//        }));
-//      }
-//    }
-//
-//    Exception failure = null;
-//    for (Future<Id.Artifact> f : futures) {
-//      try {
-//        Id.Artifact addedArtifact = f.get();
-//        addedArtifacts.add(addedArtifact);
-//        for (Id.Artifact child : parentToChildren.get(addedArtifact)) {
-//          childToParents.remove(child, addedArtifact);
-//        }
-//        remainingArtifacts.removeAll(addedArtifacts);
-//      } catch (ExecutionException e) {
-//        Throwable cause = e.getCause();
-//        if (failure != null) {
-//          failure.addSuppressed(cause);
-//        } else if (cause instanceof Exception) {
-//          failure = (Exception) cause;
-//        } else {
-//          throw e;
-//        }
-//      }
-//    }
-//    if (failure != null) {
-//      throw failure;
-//    }
-//    return !futures.isEmpty();
 
+    List<Future<?>> futures = new ArrayList<>();
     futures.add(executorService.submit(() -> {
       try {
         ArtifactStore.create(tableAdmin);
@@ -287,10 +254,8 @@ public final class StoreDefinition {
         failures.add(e.getCause());
       }
     }
-    // Shutdown the executor service
     executorService.shutdown();
     if (!failures.isEmpty()) {
-      // Choose an appropriate exception type based on your needs
       IOException exception = new IOException("Multiple failures occurred");
       for (Throwable failure : failures) {
         exception.addSuppressed(failure);
