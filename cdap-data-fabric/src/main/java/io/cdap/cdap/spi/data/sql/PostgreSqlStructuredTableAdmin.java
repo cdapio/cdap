@@ -84,18 +84,24 @@ public class PostgreSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public void createOrUpdate(StructuredTableSpecification spec)
+  public List<String> createOrUpdate(StructuredTableSpecification spec)
       throws IOException, TableSchemaIncompatibleException {
     if (exists(spec.getTableId())) {
       try {
         updateTable(spec);
-        return;
+        return null;
       } catch (TableNotFoundException e) {
         LOG.debug(String.format("Table %s not found while updating it, creating it now.",
             spec.getTableId()));
       }
     }
     createTable(spec);
+    return null;
+  }
+
+  @Override
+  public void execute(List<String> ddlStatements) throws IOException {
+
   }
 
   @Override

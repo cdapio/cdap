@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.store;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
@@ -25,12 +24,6 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,212 +48,37 @@ public final class StoreDefinition {
    */
   public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException {
     LOG.info("createAllTables started");
-    ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(
-        "store-table-creator-%d").build();
-    int numThreads = new Random().nextInt(16 - 10 + 1) + 13;
-    LOG.info("started {} threads", numThreads);
-    ExecutorService executorService = Executors.newFixedThreadPool(numThreads, threadFactory);
-
-    List<Future<?>> futures = new ArrayList<>();
-    futures.add(executorService.submit(() -> {
-      try {
-        ArtifactStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        NamespaceStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        SecretStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        WorkflowStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        ConfigStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        PreferencesStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        ProvisionerStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        AppMetadataStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        ProfileStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        ProgramScheduleStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        DatasetInstanceStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        DatasetTypeStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-
-    futures.add(executorService.submit(() -> {
-      try {
-        LineageStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        JobQueueStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        TimeScheduleStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        RemoteRuntimeStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        ProgramHeartbeatStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        LogCheckpointStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        UsageStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        FieldLineageStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        LogFileMetaStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        CapabilitiesStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        TetheringStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        AppStateStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        CredentialProviderStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-    futures.add(executorService.submit(() -> {
-      try {
-        OperationRunsStore.create(tableAdmin);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }));
-
-    List<Throwable> failures = new ArrayList<>();
-    for (Future<?> f : futures) {
-      try {
-        f.get();
-      } catch (ExecutionException | InterruptedException e) {
-        failures.add(e.getCause());
-      }
-    }
-    executorService.shutdown();
-    if (!failures.isEmpty()) {
-      IOException exception = new IOException("Multiple failures occurred");
-      for (Throwable failure : failures) {
-        exception.addSuppressed(failure);
-      }
-      throw exception;
+    List<String> ddlStatements = new ArrayList<>();
+    ddlStatements.addAll(ArtifactStore.create(tableAdmin));
+    ddlStatements.addAll(OwnerStore.create(tableAdmin));
+    ddlStatements.addAll(NamespaceStore.create(tableAdmin));
+    ddlStatements.addAll(SecretStore.create(tableAdmin));
+    ddlStatements.addAll(WorkflowStore.create(tableAdmin));
+    ddlStatements.addAll(ConfigStore.create(tableAdmin));
+    ddlStatements.addAll(PreferencesStore.create(tableAdmin));
+    ddlStatements.addAll(ProvisionerStore.create(tableAdmin));
+    ddlStatements.addAll(AppMetadataStore.create(tableAdmin));
+    ddlStatements.addAll(ProfileStore.create(tableAdmin));
+    ddlStatements.addAll(ProgramScheduleStore.create(tableAdmin));
+    ddlStatements.addAll(DatasetInstanceStore.create(tableAdmin));
+    ddlStatements.addAll(DatasetTypeStore.create(tableAdmin));
+    ddlStatements.addAll(LineageStore.create(tableAdmin));
+    ddlStatements.addAll(JobQueueStore.create(tableAdmin));
+    ddlStatements.addAll(TimeScheduleStore.create(tableAdmin));
+    ddlStatements.addAll(RemoteRuntimeStore.create(tableAdmin));
+    ddlStatements.addAll(ProgramHeartbeatStore.create(tableAdmin));
+    ddlStatements.addAll(LogCheckpointStore.create(tableAdmin));
+    ddlStatements.addAll(UsageStore.create(tableAdmin));
+    ddlStatements.addAll(FieldLineageStore.create(tableAdmin));
+    ddlStatements.addAll(LogFileMetaStore.create(tableAdmin));
+    ddlStatements.addAll(CapabilitiesStore.create(tableAdmin));
+    ddlStatements.addAll(TetheringStore.create(tableAdmin));
+    ddlStatements.addAll(AppStateStore.create(tableAdmin));
+    ddlStatements.addAll(CredentialProviderStore.create(tableAdmin));
+    ddlStatements.addAll(OperationRunsStore.create(tableAdmin));
+    if (!ddlStatements.isEmpty()) {
+      LOG.info("ddl statements count {}", ddlStatements.size());
+      tableAdmin.execute(ddlStatements);
     }
     LOG.info("createAllTables done");
   }
@@ -268,16 +86,18 @@ public final class StoreDefinition {
   /**
    * Creates a table if it doesn't exists.
    */
-  private static void createIfNotExists(StructuredTableAdmin admin,
+  private static List<String> createIfNotExists(StructuredTableAdmin admin,
       StructuredTableSpecification spec) throws IOException {
 
+    List<String> ddlStatements = null;
     StructuredTableId tableId = spec.getTableId();
     try {
-      admin.createOrUpdate(spec);
+      ddlStatements = admin.createOrUpdate(spec);
     } catch (TableSchemaIncompatibleException e) {
       throw new IllegalStateException(
           "Table " + tableId + " already exists with an incompatible schema", e);
     }
+    return ddlStatements;
   }
 
   /**
@@ -310,9 +130,11 @@ public final class StoreDefinition {
             .withPrimaryKeys(NAMESPACE_FIELD)
             .build();
 
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, NAMESPACE_TABLE_SPEC);
-      createIfNotExists(tableAdmin, REPOSITORY_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, NAMESPACE_TABLE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, REPOSITORY_TABLE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -337,8 +159,9 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
         .build();
 
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, CONFIG_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(
+          createIfNotExists(tableAdmin, CONFIG_TABLE_SPEC));
     }
   }
 
@@ -365,8 +188,8 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
         .build();
 
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, PREFERENCES_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, PREFERENCES_TABLE_SPEC));
     }
   }
 
@@ -401,8 +224,8 @@ public final class StoreDefinition {
             START_TIME_FIELD)
         .build();
 
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, WORKFLOW_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, WORKFLOW_TABLE_SPEC));
     }
   }
 
@@ -495,17 +318,19 @@ public final class StoreDefinition {
      * @param futures
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
 //      futures.add(executorService.submit(() -> {
 //        try {
-      createIfNotExists(tableAdmin, ARTIFACT_DATA_SPEC);
-      createIfNotExists(tableAdmin, APP_DATA_SPEC);
-      createIfNotExists(tableAdmin, PLUGIN_DATA_SPEC);
-      createIfNotExists(tableAdmin, UNIV_PLUGIN_DATA_SPEC);
+      ddlStatements.addAll(createIfNotExists(tableAdmin, ARTIFACT_DATA_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, APP_DATA_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PLUGIN_DATA_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, UNIV_PLUGIN_DATA_SPEC));
 //        } catch (IOException e) {
 //          throw new RuntimeException(e);
 //        }
 //      }));
+      return ddlStatements;
     }
   }
 
@@ -531,8 +356,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, OWNER_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, OWNER_TABLE_SPEC));
     }
   }
 
@@ -561,8 +386,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, SECRET_STORE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, SECRET_STORE_SPEC));
     }
   }
 
@@ -602,8 +427,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, PROVISIONER_STORE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, PROVISIONER_STORE_SPEC));
     }
   }
 
@@ -757,14 +582,16 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, APPLICATION_SPECIFICATIONS_TABLE_SPEC);
-      createIfNotExists(tableAdmin, APPLICATION_EDIT_TABLE_SPEC);
-      createIfNotExists(tableAdmin, WORKFLOW_NODE_STATES_SPEC);
-      createIfNotExists(tableAdmin, RUN_RECORDS_SPEC);
-      createIfNotExists(tableAdmin, WORKFLOWS_SPEC);
-      createIfNotExists(tableAdmin, PROGRAM_COUNTS_SPEC);
-      createIfNotExists(tableAdmin, SUBSCRIBER_STATE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, APPLICATION_SPECIFICATIONS_TABLE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, APPLICATION_EDIT_TABLE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, WORKFLOW_NODE_STATES_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, RUN_RECORDS_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, WORKFLOWS_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROGRAM_COUNTS_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, SUBSCRIBER_STATE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -795,8 +622,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, DATASET_INSTANCES_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, DATASET_INSTANCES_SPEC));
     }
   }
 
@@ -841,9 +668,11 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, PROFILE_STORE_SPEC);
-      createIfNotExists(tableAdmin, PROFILE_ENTITY_STORE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROFILE_STORE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROFILE_ENTITY_STORE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -895,9 +724,11 @@ public final class StoreDefinition {
             .withIndexes(TRIGGER_KEY)
             .build();
 
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, PROGRAM_SCHEDULE_STORE_SPEC);
-      createIfNotExists(tableAdmin, PROGRAM_TRIGGER_STORE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROGRAM_SCHEDULE_STORE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROGRAM_TRIGGER_STORE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -937,9 +768,11 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, DATASET_TYPES_SPEC);
-      createIfNotExists(tableAdmin, MODULE_TYPES_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, DATASET_TYPES_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, MODULE_TYPES_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -1003,9 +836,11 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, DATASET_LINEAGE_SPEC);
-      createIfNotExists(tableAdmin, PROGRAM_LINEAGE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, DATASET_LINEAGE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROGRAM_LINEAGE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -1053,8 +888,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, JOB_QUEUE_STORE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, JOB_QUEUE_STORE_SPEC));
     }
   }
 
@@ -1084,8 +919,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, SCHEDULES_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, SCHEDULES_SPEC));
     }
   }
 
@@ -1123,8 +958,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, RUNTIMES_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, RUNTIMES_SPEC));
     }
   }
 
@@ -1165,8 +1000,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, PROGRAM_HEARTBEATS_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, PROGRAM_HEARTBEATS_SPEC));
     }
   }
 
@@ -1196,8 +1031,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, LOG_CHECKPOINT_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, LOG_CHECKPOINT_TABLE_SPEC));
     }
   }
 
@@ -1234,8 +1069,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, USAGES_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, USAGES_SPEC));
     }
   }
 
@@ -1319,11 +1154,13 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, ENDPOINT_CHECKSUM_SPEC);
-      createIfNotExists(tableAdmin, OPERATIONS_SPEC);
-      createIfNotExists(tableAdmin, DESTINATION_FIELDS_SPEC);
-      createIfNotExists(tableAdmin, SUMMARY_FIELDS_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, ENDPOINT_CHECKSUM_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, OPERATIONS_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, DESTINATION_FIELDS_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, SUMMARY_FIELDS_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -1354,8 +1191,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, LOG_FILE_META_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, LOG_FILE_META_SPEC));
     }
   }
 
@@ -1399,9 +1236,11 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, CAPABILITIES_TABLE_SPEC);
-      createIfNotExists(tableAdmin, CAPABILITY_OPERATIONS_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, CAPABILITIES_TABLE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, CAPABILITY_OPERATIONS_TABLE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -1437,8 +1276,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, TETHERING_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, TETHERING_TABLE_SPEC));
     }
   }
 
@@ -1470,8 +1309,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, STATE_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, STATE_TABLE_SPEC));
     }
   }
 
@@ -1518,9 +1357,11 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, PROFILE_TABLE_SPEC);
-      createIfNotExists(tableAdmin, IDENTITY_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      List<String> ddlStatements = new ArrayList<>();
+      ddlStatements.addAll(createIfNotExists(tableAdmin, PROFILE_TABLE_SPEC));
+      ddlStatements.addAll(createIfNotExists(tableAdmin, IDENTITY_TABLE_SPEC));
+      return ddlStatements;
     }
   }
 
@@ -1562,8 +1403,8 @@ public final class StoreDefinition {
      * @param tableAdmin The table admin to use.
      * @throws IOException If table creation fails.
      */
-    public static void create(StructuredTableAdmin tableAdmin) throws IOException {
-      createIfNotExists(tableAdmin, OPERATION_RUNS_TABLE_SPEC);
+    public static List<String> create(StructuredTableAdmin tableAdmin) throws IOException {
+      return new ArrayList<>(createIfNotExists(tableAdmin, OPERATION_RUNS_TABLE_SPEC));
     }
   }
 }

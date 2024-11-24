@@ -99,13 +99,15 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public void createOrUpdate(StructuredTableSpecification spec)
+  public List<String> createOrUpdate(StructuredTableSpecification spec)
       throws IOException, TableSchemaIncompatibleException {
+    List<String> ddlStatements = null;
     if (exists(spec.getTableId())) {
       tryUpdatingTable(spec);
     } else {
-      createTable(spec);
+      ddlStatements = createTable(spec);
     }
+    return ddlStatements;
   }
 
   @Override
@@ -349,19 +351,39 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     return "`" + name + "`";
   }
 
-  private void createTable(StructuredTableSpecification spec) throws IOException {
+  private List<String> createTable(StructuredTableSpecification spec) throws IOException {
     List<String> statements = new ArrayList<>();
     statements.add(getCreateTableStatement(spec));
+    LOG.info("Returning ddl statement for {}", spec.getTableId().getName());
+    return statements;
 
-    LOG.debug("creating table {}", spec.getTableId().getName());
-    StructuredTableSchema schema = new StructuredTableSchema(spec);
-    spec.getIndexes()
-        .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+//    LOG.debug("creating table {}", spec.getTableId().getName());
+//    StructuredTableSchema schema = new StructuredTableSchema(spec);
+//    spec.getIndexes()
+//        .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+//
+//    try {
+//      Uninterruptibles.getUninterruptibly(
+//          adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
+//              databaseId.getDatabase(), statements, null));
+//    } catch (ExecutionException e) {
+//      Throwable cause = e.getCause();
+//      if (cause instanceof SpannerException
+//          && ((SpannerException) cause).getErrorCode() == ErrorCode.FAILED_PRECONDITION) {
+//        LOG.debug("Concurrent table creation error");
+//      } else {
+//        throw new IOException("Failed to create table in Spanner", cause);
+//      }
+//    }
+//    LOG.debug("create table done {}", spec.getTableId().getName());
+  }
 
+  public void execute(List<String> ddlStatements) throws IOException {
+    LOG.info("execute started");
     try {
       Uninterruptibles.getUninterruptibly(
           adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
-              databaseId.getDatabase(), statements, null));
+              databaseId.getDatabase(), ddlStatements, null));
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof SpannerException
@@ -371,7 +393,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
         throw new IOException("Failed to create table in Spanner", cause);
       }
     }
-    LOG.debug("create table done {}", spec.getTableId().getName());
+    LOG.info("execute done");
   }
 
   private void tryUpdatingTable(StructuredTableSpecification spec)

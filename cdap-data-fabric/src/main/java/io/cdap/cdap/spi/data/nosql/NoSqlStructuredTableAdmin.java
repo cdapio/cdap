@@ -33,6 +33,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,13 +74,19 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public void createOrUpdate(StructuredTableSpecification spec)
+  public List<String> createOrUpdate(StructuredTableSpecification spec)
       throws IOException, TableSchemaIncompatibleException {
     if (exists(spec.getTableId())) {
       updateTable(spec);
-      return;
+      return null;
     }
     createTable(spec);
+    return null;
+  }
+
+  @Override
+  public void execute(List<String> ddlStatements) throws IOException {
+
   }
 
   private void createTable(StructuredTableSpecification spec) throws IOException {
