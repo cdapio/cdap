@@ -354,14 +354,14 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   private List<String> createTable(StructuredTableSpecification spec) throws IOException {
     List<String> statements = new ArrayList<>();
     statements.add(getCreateTableStatement(spec));
+
+    StructuredTableSchema schema = new StructuredTableSchema(spec);
+    spec.getIndexes()
+        .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
+
     LOG.info("Returning ddl statement for {}", spec.getTableId().getName());
     return statements;
 
-//    LOG.debug("creating table {}", spec.getTableId().getName());
-//    StructuredTableSchema schema = new StructuredTableSchema(spec);
-//    spec.getIndexes()
-//        .forEach(idxColumn -> statements.add(getCreateIndexStatement(idxColumn, schema)));
-//
 //    try {
 //      Uninterruptibles.getUninterruptibly(
 //          adminClient.updateDatabaseDdl(databaseId.getInstanceId().getInstance(),
