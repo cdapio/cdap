@@ -23,6 +23,7 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Metrics.FlowControl;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -184,7 +185,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     }
 
     if (emitRunningChange) {
-      emitMetrics(Constants.Metrics.FlowControl.RUNNING_COUNT, getProgramsRunningCount());
+      emitRunningMetrics();
     }
   }
 
@@ -192,7 +193,23 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, value);
   }
 
+  /**
+   * Emit the {@link Constants.Metrics.FlowControl#LAUNCHING_COUNT} metric for runs.
+   */
+  public void emitLaunchingMetrics() {
+    emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
+  }
+
+
+  /**
+   * Emit the {@link Constants.Metrics.FlowControl#RUNNING_COUNT} metric for runs.
+   */
+  public void emitRunningMetrics() {
+    emitMetrics(FlowControl.RUNNING_COUNT, getProgramsRunningCount());
+  }
+
   private void emitMetrics(String metricName, long value) {
+    LOG.debug("Setting metric {} to value {}", metricName, value);
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(metricName, value);
   }
 
@@ -208,11 +225,11 @@ public class RunRecordMonitorService extends AbstractScheduledService {
       // Queue head might have already been removed. So instead of calling poll, we call remove.
       if (launchingQueue.remove(programRunId)) {
         LOG.info("Removing request with runId {} due to expired retention time.", programRunId);
-        emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
       }
     }
-
-    emitMetrics(Constants.Metrics.FlowControl.RUNNING_COUNT, getProgramsRunningCount());
+    // Always emit both metrics after cleanup.
+    emitLaunchingMetrics();
+    emitRunningMetrics();
   }
 
   /**
