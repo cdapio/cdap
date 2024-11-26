@@ -16,8 +16,8 @@
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -106,6 +106,11 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-tms</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-messaging-ext-spanner</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -239,36 +244,50 @@
         <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
-        <stage.metadata.consumer.providers.ext.dir>${stage.opt.dir}/ext/metadataconsumers</stage.metadata.consumer.providers.ext.dir>
-        <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
+        <stage.metadata.consumer.providers.ext.dir>${stage.opt.dir}/ext/metadataconsumers
+        </stage.metadata.consumer.providers.ext.dir>
+        <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders
+        </stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
         <stage.storage.ext.dir>${stage.opt.dir}/ext/storageproviders</stage.storage.ext.dir>
-        <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators</stage.authenticators.ext.dir>
-        <stage.credential.provider.extensions.dir>${stage.opt.dir}/ext/credentialproviders</stage.credential.provider.extensions.dir>
-        <stage.metricswriters.ext.dir>${stage.opt.dir}/ext/metricswriters/google_cloud_monitoring_writer
+        <stage.authenticators.ext.dir>${stage.opt.dir}/ext/authenticators
+        </stage.authenticators.ext.dir>
+        <stage.credential.provider.extensions.dir>${stage.opt.dir}/ext/credentialproviders
+        </stage.credential.provider.extensions.dir>
+        <stage.messaging.ext.dir>${stage.opt.dir}/ext/messagingproviders</stage.messaging.ext.dir>
+        <stage.metricswriters.ext.dir>
+          ${stage.opt.dir}/ext/metricswriters/google_cloud_monitoring_writer
         </stage.metricswriters.ext.dir>
         <stage.eventwriters.ext.dir>${stage.opt.dir}/ext/eventwriters/google_cloud_pubsub_writer
         </stage.eventwriters.ext.dir>
-        <stage.metadataconsumers.ext.dir>${stage.opt.dir}/ext/metadataconsumers/data-catalog-consumer
+        <stage.metadataconsumers.ext.dir>
+          ${stage.opt.dir}/ext/metadataconsumers/data-catalog-consumer
         </stage.metadataconsumers.ext.dir>
         <stage.encryption.ext.dir>${stage.opt.dir}/ext/encryption</stage.encryption.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
-        <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
+        <additional.artifacts.exclude.pattern>**/target/*-tests.jar
+        </additional.artifacts.exclude.pattern>
         <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
         <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
         <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
         <metricswriters.ext.jar.pattern>**/target/libexec/*.jar</metricswriters.ext.jar.pattern>
-        <metricswriters.ext.config.pattern>**/target/libexec/*.json</metricswriters.ext.config.pattern>
-        <metricswriters.ext.exclude.pattern>**/target/libexec/*-tests.jar</metricswriters.ext.exclude.pattern>
+        <metricswriters.ext.config.pattern>**/target/libexec/*.json
+        </metricswriters.ext.config.pattern>
+        <metricswriters.ext.exclude.pattern>**/target/libexec/*-tests.jar
+        </metricswriters.ext.exclude.pattern>
         <eventwriters.ext.jar.pattern>**/target/libexec/*.jar</eventwriters.ext.jar.pattern>
         <eventwriters.ext.config.pattern>**/target/libexec/*.json</eventwriters.ext.config.pattern>
-        <eventwriters.ext.exclude.pattern>**/target/libexec/*-tests.jar</eventwriters.ext.exclude.pattern>
-        <metadataconsumers.ext.jar.pattern>**/target/libexec/*.jar</metadataconsumers.ext.jar.pattern>
-        <metadataconsumers.ext.config.pattern>**/target/libexec/*.json</metadataconsumers.ext.config.pattern>
-        <metadataconsumers.ext.exclude.pattern>**/target/libexec/*-tests.jar</metadataconsumers.ext.exclude.pattern>
+        <eventwriters.ext.exclude.pattern>**/target/libexec/*-tests.jar
+        </eventwriters.ext.exclude.pattern>
+        <metadataconsumers.ext.jar.pattern>**/target/libexec/*.jar
+        </metadataconsumers.ext.jar.pattern>
+        <metadataconsumers.ext.config.pattern>**/target/libexec/*.json
+        </metadataconsumers.ext.config.pattern>
+        <metadataconsumers.ext.exclude.pattern>**/target/libexec/*-tests.jar
+        </metadataconsumers.ext.exclude.pattern>
         <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
@@ -498,7 +517,8 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/${spark3.artifacts.dir}</outputDirectory>
+                  <outputDirectory>${stage.runtime.ext.dir}/${spark3.artifacts.dir}
+                  </outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -529,7 +549,8 @@
                         ${project.parent.basedir}/cdap-operational-stats-core/target/
                       </directory>
                       <includes>
-                        <include>io.cdap.cdap.cdap-operational-stats-core-${project.version}.jar</include>
+                        <include>io.cdap.cdap.cdap-operational-stats-core-${project.version}.jar
+                        </include>
                       </includes>
                     </resource>
                   </resources>
@@ -625,7 +646,8 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.providers.ext.dir}/remote-hadoop</outputDirectory>
+                  <outputDirectory>${stage.runtime.providers.ext.dir}/remote-hadoop
+                  </outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -661,8 +683,29 @@
                   </resources>
                 </configuration>
               </execution>
+              <!-- Copy messaging extensions -->
+              <execution>
+                <id>copy-messaging-ext-spanner</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.messaging.ext.dir}/gcp-spanner</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-tms-spanner/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
 
-	      <execution>
+              <execution>
                 <id>copy-securestore-ext-gcp-secretstore</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -713,7 +756,8 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.authenticators.ext.dir}/gcp-remote-authenticator</outputDirectory>
+                  <outputDirectory>${stage.authenticators.ext.dir}/gcp-remote-authenticator
+                  </outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -735,7 +779,9 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.credential.provider.extensions.dir}/gcp-wi-credential-provider</outputDirectory>
+                  <outputDirectory>
+                    ${stage.credential.provider.extensions.dir}/gcp-wi-credential-provider
+                  </outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -791,7 +837,7 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
-                        <!-- Wrangler excludes --> 
+                        <!-- Wrangler excludes -->
                         <exclude name="**/target/wrangler-core*"/>
                         <exclude name="**/target/wrangler-test*"/>
                         <!--We don't want to package the following plugins with CDAP-->
@@ -896,8 +942,12 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar" />
-                    <move file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar" tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar" />
+                    <move
+                      file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline3_2.12-${project.version}.jar"
+                      tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-pipeline-${project.version}.jar"/>
+                    <move
+                      file="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams3_2.12-${project.version}.jar"
+                      tofile="${stage.artifacts.dir}/${spark3.artifacts.dir}/cdap-data-streams-${project.version}.jar"/>
                   </target>
                 </configuration>
               </execution>
@@ -916,7 +966,8 @@
       <properties>
         <hadoop.version>2.9.2</hadoop.version>
         <stage.hadoop.lib.dir>${stage.opt.dir}/lib/hadoop</stage.hadoop.lib.dir>
-        <stage.master.environments.ext.dir>${stage.opt.dir}/ext/environments</stage.master.environments.ext.dir>
+        <stage.master.environments.ext.dir>${stage.opt.dir}/ext/environments
+        </stage.master.environments.ext.dir>
       </properties>
 
       <dependencies>
@@ -1059,7 +1110,9 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <packaging>noarch.rpm</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}-${package.version}-1.noarch.rpm</file>
+                  <file>
+                    ${project.build.directory}/${project.artifactId}-${package.version}-1.noarch.rpm
+                  </file>
                   <classifier>1</classifier>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
@@ -1100,7 +1153,9 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <packaging>deb</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}_${package.version}-1_all.deb</file>
+                  <file>
+                    ${project.build.directory}/${project.artifactId}_${package.version}-1_all.deb
+                  </file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>
@@ -1140,7 +1195,8 @@
                   <artifactId>${project.artifactId}</artifactId>
                   <packaging>tar.gz</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}-${package.version}.tar.gz</file>
+                  <file>${project.build.directory}/${project.artifactId}-${package.version}.tar.gz
+                  </file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>
@@ -1169,7 +1225,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>@{argLine}  -Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+          <argLine>@{argLine} -Xmx6000m -Djava.awt.headless=true -XX:+UseG1GC
+            -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError
+          </argLine>
           <forkCount>2</forkCount>
         </configuration>
       </plugin>
