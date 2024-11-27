@@ -116,11 +116,18 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppLifecycleHttpHan
       throw new NamespaceNotFoundException(namespaceId);
     }
 
+    if (pageSize == null) {
+      pageSize = configuration.getInt(Constants.GET_APPS_DEFAULT_PAGE_SIZE);
+    }
+    pageSize = Math.max(pageSize, 0);
+
     if (Optional.ofNullable(pageSize).orElse(0) != 0) {
+      Integer finalPageSize = pageSize;
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY,
           jsonListResponder -> {
             AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
-            ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, pageSize,
+            ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken,
+                finalPageSize,
                 orderBy, nameFilter);
             boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest,
                 appDetail -> {

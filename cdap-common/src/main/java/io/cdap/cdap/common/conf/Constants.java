@@ -69,6 +69,10 @@ public final class Constants {
   public static final String LOCATION_CACHE_EXPIRATION_MS = "location.cache.expiration.ms";
 
   public static final String CLUSTER_NAME = "cluster.name";
+
+  /* This represents the default value of pageSize during list apps call. */
+  public static final String GET_APPS_DEFAULT_PAGE_SIZE = "app.list.default.page.size";
+
   /* Used by the user to specify what part of a path should be replaced by the current user's name. */
   public static final String USER_NAME_SPECIFIER = "${name}";
 
