@@ -57,13 +57,15 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
     }
 
     String startTimeStr = request.headers().get(HttpHeaderNames.CDAP_REQ_TIMESTAMP_HDR);
-    Long currTime = System.nanoTime();
-    Long startTime = null;
+    Long endTimeNanos = System.nanoTime();
+    Long startTimeNanos = null;
     if (startTimeStr != null) {
-      startTime = Long.parseLong(startTimeStr);
+      startTimeNanos = Long.parseLong(startTimeStr);
     } else {
-      startTime = currTime;
+      startTimeNanos = endTimeNanos;
     }
+    long endTime = System.currentTimeMillis() * 1000000;
+    long startTime = endTime - (endTimeNanos - startTimeNanos);
 
     LOG.trace("Setting a Audit Log event to published in SecurityRequestContext");
     SecurityRequestContext.setAuditLogRequest(
@@ -76,7 +78,7 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
         request.method().name(),
         SecurityRequestContext.getAuditLogQueue(),
         startTime,
-        currTime
+        endTime
       )
     );
   }
