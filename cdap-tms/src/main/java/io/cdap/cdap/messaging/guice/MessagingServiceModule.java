@@ -36,9 +36,7 @@ public class MessagingServiceModule extends AbstractModule {
   private final String messagingService;
 
   public MessagingServiceModule(CConfiguration cConf) {
-    messagingService =
-        cConf
-            .get(MessagingSystem.MESSAGING_SERVICE_NAME, DEFAULT_MESSAGING_SERVICE_NAME);
+    messagingService = "SpannerMessagingService";
   }
 
   @Override
