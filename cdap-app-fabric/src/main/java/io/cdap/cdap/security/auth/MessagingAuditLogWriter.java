@@ -19,7 +19,6 @@ package io.cdap.cdap.security.auth;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
-import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -27,7 +26,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
-import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.StoreRequest;
@@ -35,12 +33,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Queue;
 import java.util.Random;
 import javax.annotation.Nullable;
 
@@ -50,7 +44,6 @@ import javax.annotation.Nullable;
  */
 public class MessagingAuditLogWriter implements AuditLogWriter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingAuditLogWriter.class);
   private static final Gson GSON = new Gson();
 
   private final String topicPrefix;
@@ -102,21 +95,13 @@ public class MessagingAuditLogWriter implements AuditLogWriter {
         try {
           messagingService.publish(storeRequest);
         } catch (TopicNotFoundException e) {
-          createTopicIfNeeded(topic);
+          // Core Messaging service should create the required topics for audit log.
+          // Refer to property `messaging.system.topics`.
           throw new RetryableException(e);
         }
       }, retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish audit log event to TMS.", e);
-    }
-  }
-
-  private void createTopicIfNeeded(TopicId topic) throws IOException {
-    try {
-      messagingService.createTopic(new DefaultTopicMetadata(topic, Collections.emptyMap()));
-      LOG.info("Created topic {}", topic.getTopic());
-    } catch (TopicAlreadyExistsException ex) {
-      // no-op
     }
   }
 

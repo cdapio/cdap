@@ -20,23 +20,17 @@ package io.cdap.cdap.security.auth;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.spi.MessagingService;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.internal.CompositeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -86,8 +80,6 @@ public class AuditLogSubscriberService extends AbstractIdleService {
 
   private AuditLogSingleTopicSubscriberService createChildService(String topicName) {
 
-    createTopicIfNeeded(NamespaceId.SYSTEM.topic(topicName));
-
     return new AuditLogSingleTopicSubscriberService(
       this.cConf,
       this.messagingService,
@@ -96,17 +88,5 @@ public class AuditLogSubscriberService extends AbstractIdleService {
       this.accessControllerInstantiator,
       topicName
     );
-  }
-
-  private void createTopicIfNeeded(TopicId topicId) {
-    try {
-      messagingService.createTopic(new DefaultTopicMetadata(topicId, Collections.emptyMap()));
-      LOG.info("Created topic {}", topicId.getTopic());
-    } catch (TopicAlreadyExistsException ex) {
-      // no-op
-    } catch (IOException e) {
-      //Converting to unchecked exception
-      throw new RuntimeException(String.format("Failed to create topic %s.", topicId.getTopic(), e));
-    }
   }
 }

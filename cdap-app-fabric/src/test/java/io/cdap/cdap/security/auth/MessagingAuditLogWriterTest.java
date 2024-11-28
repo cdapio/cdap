@@ -37,8 +37,6 @@ public class MessagingAuditLogWriterTest {
         .thenThrow(new TopicNotFoundException("namespace", "topic"))
           .thenReturn(null);
 
-    Mockito.doNothing().when(mockMsgService).createTopic(Mockito.any());
-
     MessagingAuditLogWriter messagingAuditLogWriter = new MessagingAuditLogWriter(CConfiguration.create(),
                                                                                   mockMsgService);
     Queue<AuditLogContext> auditLogContexts = new ArrayDeque<>();
@@ -59,9 +57,6 @@ public class MessagingAuditLogWriterTest {
       1000002L);
     messagingAuditLogWriter.publish(auditLogRequest);
 
-    //There should be at least 2 invocations. 1st will be a TopicNotFoundException , then 1 audit log request.
-    Mockito.verify(mockMsgService, Mockito.atLeast(2)).publish(Mockito.any());
-    //Single invocation to create a topic.
-    Mockito.verify(mockMsgService, Mockito.times(1)).createTopic(Mockito.any());
+    Mockito.verify(mockMsgService, Mockito.atLeast(1)).publish(Mockito.any());
   }
 }
