@@ -695,7 +695,7 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-tms-spanner/target/libexec/
+                        ${project.parent.basedir}/cdap-messaging-ext-spanner/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>

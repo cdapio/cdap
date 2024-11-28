@@ -21,7 +21,6 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingServiceUtils;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
@@ -55,6 +54,7 @@ public class DelegatingMessagingService implements MessagingService {
   @Inject
   public DelegatingMessagingService(
       CConfiguration cConf, MessagingServiceExtensionLoader extensionLoader) {
+    LOG.info("Delegating service is initialised");
     this.cConf = cConf;
     this.extensionLoader = extensionLoader;
   }
@@ -83,7 +83,9 @@ public class DelegatingMessagingService implements MessagingService {
 
   @Override
   public String getName() {
-    return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
+    return "SpannerMessagingService";
+
+//    return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
   }
 
   @Override
