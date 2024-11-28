@@ -51,7 +51,16 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
   }
 
   @Override
+  public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+    LOG.warn("SANKET_TEST :preCall: {} ", request.uri());
+    return super.preCall(request, responder, handlerInfo);
+  }
+
+  @Override
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
+
+    LOG.warn("SANKET_TEST :postCall: {} ", request.uri());
+
     if (!Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)){
       return;
     }

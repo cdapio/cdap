@@ -74,6 +74,8 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
 
+    LOG.warn("SANKET_TEST :preCall: {} ", request.uri());
+
     if (collectorCache == null) {
       return true;
     }
@@ -89,6 +91,9 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   @Override
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
+
+    LOG.warn("SANKET_TEST :postCall: {} ", request.uri());
+
     if (collectorCache == null) {
       return;
     }

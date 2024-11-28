@@ -34,6 +34,9 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.stream.Collectors;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -46,6 +49,8 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 
   private static final Gson GSON = new Gson();
 
@@ -158,6 +163,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.OK,
           String.format("Namespace '%s' already exists.", namespaceId));
     }
+
+    LOG.warn("SANKET_TEST :create name: {} ", request.uri());
   }
 
   /**

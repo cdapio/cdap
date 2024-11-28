@@ -133,8 +133,20 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     }
 
     try {
+
+
+      if (msg instanceof HttpRequest) {
+        HttpRequest request = (HttpRequest) msg;
+        LOG.warn("SANKET_TEST : URI :  {}", request.uri());
+      }
+
       ctx.fireChannelRead(msg);
     } finally {
+      if (msg instanceof HttpRequest) {
+        HttpRequest request = (HttpRequest) msg;
+        LOG.warn("SANKET_TEST : URI :  {} :  and  : Setting ATTR : SecurityRequestContext.getAuditLogRequest() :  {}",
+                 request.uri(), SecurityRequestContext.getAuditLogRequest());
+      }
       // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
       // it independent of Thread local.
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME))
@@ -149,6 +161,20 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+    if (msg instanceof HttpRequest) {
+      HttpRequest request = (HttpRequest) msg;
+      LOG.warn("SANKET_TEST : URI :  {} :  and  : Setting ATTR : SecurityRequestContext.getAuditLogRequest() :  {}",
+               request.uri(), SecurityRequestContext.getAuditLogRequest());
+    }
+
+    if (msg instanceof HttpResponse) {
+      HttpResponse httpResponse = (HttpResponse) msg;
+      LOG.warn("SANKET_TEST :  SecurityRequestContext.getAuditLogRequest() :  {} AND  " +
+                 "SecurityRequestContext.getAuditLogQueue().size() : {}",
+               SecurityRequestContext.getAuditLogRequest(), SecurityRequestContext.getAuditLogQueue().size());
+    }
+
     publishAuditLogRequest(ctx);
     super.write(ctx, msg, promise);
   }
@@ -180,6 +206,10 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   private void publishAuditLogRequest(ChannelHandlerContext ctx) throws IOException {
     Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get();
     if (auditLoggingEnabled && auditLogRequestObj != null) {
+      LOG.warn("SANKET_TEST :  SecurityRequestContext.getAuditLogRequest() :  {} AND " +
+                 "queue size : {}",
+               (AuditLogRequest) auditLogRequestObj,
+               ((AuditLogRequest) auditLogRequestObj).getAuditLogContextQueue().size());
       auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
     }
