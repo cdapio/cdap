@@ -22,9 +22,11 @@ import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.MessagingSystem;
+import io.cdap.cdap.messaging.DefaultTopicMetadata;
+import io.cdap.cdap.messaging.MessagingServiceUtils;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
-import io.cdap.cdap.messaging.spi.MessagingServiceContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingServiceContext;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
@@ -35,6 +37,7 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +142,8 @@ public class DelegatingMessagingService implements MessagingService {
       LOG.info("Messaging service {} is loaded", messagingService.getName());
       try {
         messagingService.initialize(new DefaultMessagingServiceContext(this.cConf));
-      } catch (IOException e) {
+        createTopics(this.cConf, messagingService);
+      } catch (IOException | TopicAlreadyExistsException e) {
         throw new RuntimeException(e);
       }
       LOG.info("Messaging service {} is initialized", messagingService.getName());
@@ -147,5 +151,16 @@ public class DelegatingMessagingService implements MessagingService {
       this.delegate = messagingService;
       return messagingService;
     }
+  }
+
+  private void createTopics(CConfiguration cConf, MessagingService messagingService)
+      throws IOException, TopicAlreadyExistsException {
+    // If we implement this at some other place,
+    // we will need to introduce cdap-tms dependency in that package, which is not recommended.
+    Set<TopicId> systemTopics = MessagingServiceUtils.getSystemTopics(cConf, true);
+    for (TopicId topic : systemTopics) {
+      messagingService.createTopic(new DefaultTopicMetadata(topic));
+    }
+    LOG.info("System topic creation done");
   }
 }
