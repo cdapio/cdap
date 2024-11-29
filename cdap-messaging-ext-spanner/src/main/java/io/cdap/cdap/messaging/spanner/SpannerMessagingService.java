@@ -108,6 +108,7 @@ public class SpannerMessagingService implements MessagingService {
     List<String> ddlStatements = new ArrayList<>();
     ddlStatements.add(getCreateTopicMetadataDDLStatement());
     ddlStatements.add(getCreateTopicDDLStatement(topicMetadata.getTopicId()));
+    LOG.info("Executing {}", ddlStatements);
 
     OperationFuture<Void, UpdateDatabaseDdlMetadata> future = adminClient.updateDatabaseDdl(
         this.instanceId, this.databaseId, ddlStatements, null);
@@ -120,9 +121,11 @@ public class SpannerMessagingService implements MessagingService {
 
     Gson gson = new Gson();
     String jsonString = gson.toJson(topicMetadata.getProperties());
-    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE).set(TOPIC_ID_FIELD)
-        .to(topicMetadata.getTopicId().getTopic()).set(PROPERTIES_FIELD).to(Value.json(jsonString))
+    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE)
+        .set(TOPIC_ID_FIELD).to(getTableName(topicMetadata.getTopicId()))
+        .set(PROPERTIES_FIELD).to(Value.json(jsonString))
         .set(NAMESPACE_FIELD).to(topicMetadata.getTopicId().getNamespace()).build();
+    LOG.info("Insert into table {}", mutation);
     try {
       client.write(Collections.singleton(mutation));
     } catch (SpannerException e) {
@@ -134,8 +137,8 @@ public class SpannerMessagingService implements MessagingService {
 
   private static String getCreateTopicMetadataDDLStatement() {
     return String.format(
-        "CREATE TABLE IF NOT EXISTS %s ( %s STRING(MAX) NOT NULL, %s JSON ) PRIMARY KEY(%s)",
-        TOPIC_METADATA_TABLE, TOPIC_ID_FIELD, PROPERTIES_FIELD, TOPIC_ID_FIELD);
+        "CREATE TABLE IF NOT EXISTS %s ( %s STRING(MAX) NOT NULL, %s STRING(MAX), %s JSON ) PRIMARY KEY(%s)",
+        TOPIC_METADATA_TABLE, TOPIC_ID_FIELD, NAMESPACE_FIELD, PROPERTIES_FIELD, TOPIC_ID_FIELD);
   }
 
   private static String getCreateTopicDDLStatement(TopicId topicId) {
@@ -143,8 +146,9 @@ public class SpannerMessagingService implements MessagingService {
             + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
             + " PRIMARY KEY (%s, %s, %s), ROW DELETION POLICY"
             + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))", getTableName(topicId), SEQUENCE_ID_FIELD,
-        PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD, SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID,
-        PUBLISH_TS_FIELD, PAYLOAD_FIELD);
+        PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD, PAYLOAD_FIELD, SEQUENCE_ID_FIELD,
+        PAYLOAD_SEQUENCE_ID,
+        PUBLISH_TS_FIELD);
   }
 
   public static String getTableName(TopicId topicId) {
