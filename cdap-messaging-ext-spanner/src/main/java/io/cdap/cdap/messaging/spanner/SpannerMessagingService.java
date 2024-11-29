@@ -105,6 +105,27 @@ public class SpannerMessagingService implements MessagingService {
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     LOG.info("Create topic started {}", topicMetadata.getTopicId().getTopic());
+    createTopic(topicMetadata.getTopicId());
+    LOG.info("Now try other one individually");
+    createMetdataTable();
+    LOG.info("second execution done too.");
+
+    LOG.info("Trying insert into table");
+    Gson gson = new Gson();
+    String jsonString = gson.toJson(topicMetadata.getProperties());
+    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE)
+        .set(TOPIC_ID_FIELD).to(getTableName(topicMetadata.getTopicId()))
+        .set(PROPERTIES_FIELD).to(Value.json(jsonString))
+        .set(NAMESPACE_FIELD).to(topicMetadata.getTopicId().getNamespace()).build();
+    LOG.info("Insert into table {}", mutation);
+    try {
+      client.write(Collections.singleton(mutation));
+    } catch (SpannerException e) {
+      LOG.error("Cannot commit mutations ", e);
+      throw new IOException(e);
+    }
+
+    LOG.info("Now trying batching");
     List<String> ddlStatements = new ArrayList<>();
     ddlStatements.add(getCreateTopicMetadataDDLStatement());
     ddlStatements.add(getCreateTopicDDLStatement(topicMetadata.getTopicId()));
@@ -119,20 +140,56 @@ public class SpannerMessagingService implements MessagingService {
       throw new IOException(e);
     }
 
-    Gson gson = new Gson();
-    String jsonString = gson.toJson(topicMetadata.getProperties());
-    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE)
-        .set(TOPIC_ID_FIELD).to(getTableName(topicMetadata.getTopicId()))
-        .set(PROPERTIES_FIELD).to(Value.json(jsonString))
-        .set(NAMESPACE_FIELD).to(topicMetadata.getTopicId().getNamespace()).build();
-    LOG.info("Insert into table {}", mutation);
+//    Gson gson = new Gson();
+//    String jsonString = gson.toJson(topicMetadata.getProperties());
+//    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE)
+//        .set(TOPIC_ID_FIELD).to(getTableName(topicMetadata.getTopicId()))
+//        .set(PROPERTIES_FIELD).to(Value.json(jsonString))
+//        .set(NAMESPACE_FIELD).to(topicMetadata.getTopicId().getNamespace()).build();
+//    LOG.info("Insert into table {}", mutation);
+//    try {
+//      client.write(Collections.singleton(mutation));
+//    } catch (SpannerException e) {
+//      LOG.error("Cannot commit mutations ", e);
+//      throw new IOException(e);
+//    }
+    LOG.info("Create topic done {}", topicMetadata.getTopicId().getTopic());
+  }
+
+  private void createTopic(TopicId topicId) {
+    String topicSQL =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
+                + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
+                + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
+                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
+            getTableName(topicId),
+            SEQUENCE_ID_FIELD,
+            PAYLOAD_SEQUENCE_ID,
+            PUBLISH_TS_FIELD,
+            PAYLOAD_FIELD);
+    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
+        adminClient.updateDatabaseDdl(
+            instanceId, databaseId, Collections.singletonList(topicSQL), null);
     try {
-      client.write(Collections.singleton(mutation));
-    } catch (SpannerException e) {
-      LOG.error("Cannot commit mutations ", e);
-      throw new IOException(e);
+      future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error when executing {}", topicSQL, e);
     }
-    LOG.info("Create topic started {}", topicMetadata.getTopicId().getTopic());
+  }
+
+  private void createMetdataTable() {
+    String sql = String.format(
+        "CREATE TABLE IF NOT EXISTS %s ( %s STRING(MAX) NOT NULL, %s STRING(MAX), %s JSON ) PRIMARY KEY(%s)",
+        TOPIC_METADATA_TABLE, TOPIC_ID_FIELD, NAMESPACE_FIELD, PROPERTIES_FIELD, TOPIC_ID_FIELD);
+    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
+        adminClient.updateDatabaseDdl(
+            instanceId, databaseId, Collections.singletonList(sql), null);
+    try {
+      future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error when executing {}", sql, e);
+    }
   }
 
   private static String getCreateTopicMetadataDDLStatement() {
