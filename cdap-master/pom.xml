@@ -683,27 +683,6 @@
                   </resources>
                 </configuration>
               </execution>
-              <!-- Copy messaging extensions -->
-              <execution>
-                <id>copy-messaging-ext-spanner</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.messaging.ext.dir}/gcp-spanner</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-messaging-ext-spanner/target/libexec/
-                      </directory>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
 
               <execution>
                 <id>copy-securestore-ext-gcp-secretstore</id>
@@ -717,6 +696,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-securestore-ext-gcp-secretstore/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy messaging extensions -->
+              <execution>
+                <id>copy-messaging-ext-spanner</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.messaging.ext.dir}/gcp-spanner</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-messaging-ext-spanner/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>
