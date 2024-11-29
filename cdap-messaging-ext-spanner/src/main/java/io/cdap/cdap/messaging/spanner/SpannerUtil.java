@@ -47,7 +47,7 @@ class SpannerUtil {
   }
 
   static String getProjectID(Map<String, String> cConf) {
-    return cConf.get("database");
+    return cConf.get("project");
   }
 
   public static Spanner getSpannerService(String projectID) {
