@@ -43,10 +43,11 @@ public class MessagingServiceModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    if (messagingService.equals(DEFAULT_MESSAGING_SERVICE_NAME)) {
-      bind(MessagingService.class).to(ClientMessagingService.class).in(Scopes.SINGLETON);
-    } else {
-      bind(MessagingService.class).to(DelegatingMessagingService.class).in(Scopes.SINGLETON);
-    }
+//      bind(MessagingService.class).to(SpannerMessagingService.class).in(Scopes.SINGLETON);
+//    if (messagingService.equals(DEFAULT_MESSAGING_SERVICE_NAME)) {
+//      bind(MessagingService.class).to(ClientMessagingService.class).in(Scopes.SINGLETON);
+//    } else {
+    bind(MessagingService.class).to(DelegatingMessagingService.class).in(Scopes.SINGLETON);
+//    }
   }
 }

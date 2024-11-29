@@ -21,10 +21,9 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
-import io.cdap.cdap.messaging.spi.MessagingServiceContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.spi.MessagingServiceContext;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
@@ -52,6 +51,7 @@ public class DelegatingMessagingService implements MessagingService {
   @Inject
   public DelegatingMessagingService(
       CConfiguration cConf, MessagingServiceExtensionLoader extensionLoader) {
+    LOG.info("Delegating service is initialised");
     this.cConf = cConf;
     this.extensionLoader = extensionLoader;
   }
@@ -80,7 +80,7 @@ public class DelegatingMessagingService implements MessagingService {
 
   @Override
   public String getName() {
-    return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
+    return "SpannerMessagingService";
   }
 
   @Override
@@ -121,6 +121,7 @@ public class DelegatingMessagingService implements MessagingService {
   }
 
   private MessagingService getDelegate() {
+    LOG.info("getDelegate() is called.");
     MessagingService messagingService = this.delegate;
     if (messagingService != null) {
       return messagingService;
@@ -138,6 +139,8 @@ public class DelegatingMessagingService implements MessagingService {
       }
       LOG.info("Messaging service {} is loaded", messagingService.getName());
       try {
+        LOG.info("Messaging service {} is loaded, now initializing with conf {}",
+            messagingService.getName(), this.cConf);
         messagingService.initialize(new DefaultMessagingServiceContext(this.cConf));
       } catch (IOException e) {
         throw new RuntimeException(e);
