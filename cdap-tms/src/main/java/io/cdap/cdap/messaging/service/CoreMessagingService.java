@@ -132,7 +132,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
-  public void initialize(MessagingServiceContext context) throws IOException {
+  public void initialize(MessagingServiceContext context) {
   }
 
   @Override

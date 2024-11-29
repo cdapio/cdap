@@ -119,7 +119,7 @@ public final class ClientMessagingService implements MessagingService {
   }
 
   @Override
-  public void initialize(MessagingServiceContext context) throws IOException {
+  public void initialize(MessagingServiceContext context) {
   }
 
   @Override
