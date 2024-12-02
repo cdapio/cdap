@@ -16,6 +16,7 @@
 package io.cdap.cdap.messaging.spanner;
 
 import com.google.api.gax.longrunning.OperationFuture;
+import com.google.auth.Credentials;
 import com.google.cloud.ByteArray;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
@@ -26,6 +27,7 @@ import com.google.cloud.spanner.Mutation;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
+import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Value;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -46,7 +48,6 @@ import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,10 +60,6 @@ import org.slf4j.LoggerFactory;
 public class SpannerMessagingService implements MessagingService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerMessagingService.class);
-
-  private Map<String, String> cConf;
-
-  private Spanner spanner;
 
   private DatabaseClient client;
 
@@ -84,13 +81,14 @@ public class SpannerMessagingService implements MessagingService {
   public static final String NAMESPACE_FIELD = "namespace";
 
   @Override
-  public void initialize(MessagingServiceContext context) {
-    this.cConf = context.getProperties();
+  public void initialize(MessagingServiceContext context) throws IOException {
+    Map<String, String> cConf = context.getProperties();
     this.databaseId = SpannerUtil.getDatabaseID(cConf);
     this.instanceId = SpannerUtil.getInstanceID(cConf);
-
     String projectID = SpannerUtil.getProjectID(cConf);
-    this.spanner = SpannerUtil.getSpannerService(projectID);
+    Credentials credentials = SpannerUtil.getCredentials(cConf);
+
+    Spanner spanner = SpannerUtil.getSpannerService(projectID, credentials);
     this.client = SpannerUtil.getSpannerDbClient(projectID, instanceId, databaseId, spanner);
     this.adminClient = SpannerUtil.getSpannerDbAdminClient(spanner);
     LOG.info("Spanner messaging service started.");
@@ -104,92 +102,33 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
-    LOG.info("Create topic started {}", topicMetadata.getTopicId().getTopic());
-    createTopic(topicMetadata.getTopicId());
-    LOG.info("Now try other one individually");
-    createMetdataTable();
-    LOG.info("second execution done too.");
-
-    LOG.info("Trying insert into table");
-    Gson gson = new Gson();
-    String jsonString = gson.toJson(topicMetadata.getProperties());
-    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE)
-        .set(TOPIC_ID_FIELD).to(getTableName(topicMetadata.getTopicId()))
-        .set(PROPERTIES_FIELD).to(Value.json(jsonString))
-        .set(NAMESPACE_FIELD).to(topicMetadata.getTopicId().getNamespace()).build();
-    LOG.info("Insert into table {}", mutation);
-    try {
-      client.write(Collections.singleton(mutation));
-    } catch (SpannerException e) {
-      LOG.error("Cannot commit mutations ", e);
-      throw new IOException(e);
-    }
-
-    LOG.info("Now trying batching");
     List<String> ddlStatements = new ArrayList<>();
     ddlStatements.add(getCreateTopicMetadataDDLStatement());
     ddlStatements.add(getCreateTopicDDLStatement(topicMetadata.getTopicId()));
-    LOG.info("Executing {}", ddlStatements);
 
     OperationFuture<Void, UpdateDatabaseDdlMetadata> future = adminClient.updateDatabaseDdl(
         this.instanceId, this.databaseId, ddlStatements, null);
     try {
       future.get();
     } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Error when executing DDL statements", e);
+      LOG.error("Failed to create topic {}", topicMetadata.getTopicId().getTopic(), e);
       throw new IOException(e);
     }
 
-//    Gson gson = new Gson();
-//    String jsonString = gson.toJson(topicMetadata.getProperties());
-//    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE)
-//        .set(TOPIC_ID_FIELD).to(getTableName(topicMetadata.getTopicId()))
-//        .set(PROPERTIES_FIELD).to(Value.json(jsonString))
-//        .set(NAMESPACE_FIELD).to(topicMetadata.getTopicId().getNamespace()).build();
-//    LOG.info("Insert into table {}", mutation);
-//    try {
-//      client.write(Collections.singleton(mutation));
-//    } catch (SpannerException e) {
-//      LOG.error("Cannot commit mutations ", e);
-//      throw new IOException(e);
-//    }
-    LOG.info("Create topic done {}", topicMetadata.getTopicId().getTopic());
-  }
-
-  private void createTopic(TopicId topicId) {
-    String topicSQL =
-        String.format(
-            "CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
-                + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
-                + " PRIMARY KEY (sequence_id, payload_sequence_id, publish_ts), ROW DELETION POLICY"
-                + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))",
-            getTableName(topicId),
-            SEQUENCE_ID_FIELD,
-            PAYLOAD_SEQUENCE_ID,
-            PUBLISH_TS_FIELD,
-            PAYLOAD_FIELD);
-    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
-        adminClient.updateDatabaseDdl(
-            instanceId, databaseId, Collections.singletonList(topicSQL), null);
+    Gson gson = new Gson();
+    String jsonString = gson.toJson(topicMetadata.getProperties());
+    Mutation mutation = Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE).set(TOPIC_ID_FIELD)
+        .to(getTableName(topicMetadata.getTopicId())).set(PROPERTIES_FIELD)
+        .to(Value.json(jsonString)).set(NAMESPACE_FIELD)
+        .to(topicMetadata.getTopicId().getNamespace()).build();
     try {
-      future.get();
-    } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Error when executing {}", topicSQL, e);
+      client.write(Collections.singleton(mutation));
+    } catch (SpannerException e) {
+      LOG.error("Failed to update topic metadata table for {}",
+          topicMetadata.getTopicId().getTopic(), e);
+      throw new IOException(e);
     }
-  }
-
-  private void createMetdataTable() {
-    String sql = String.format(
-        "CREATE TABLE IF NOT EXISTS %s ( %s STRING(MAX) NOT NULL, %s STRING(MAX), %s JSON ) PRIMARY KEY(%s)",
-        TOPIC_METADATA_TABLE, TOPIC_ID_FIELD, NAMESPACE_FIELD, PROPERTIES_FIELD, TOPIC_ID_FIELD);
-    OperationFuture<Void, UpdateDatabaseDdlMetadata> future =
-        adminClient.updateDatabaseDdl(
-            instanceId, databaseId, Collections.singletonList(sql), null);
-    try {
-      future.get();
-    } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Error when executing {}", sql, e);
-    }
+    LOG.info("Created topic : {}", topicMetadata.getTopicId().getTopic());
   }
 
   private static String getCreateTopicMetadataDDLStatement() {
@@ -204,8 +143,7 @@ public class SpannerMessagingService implements MessagingService {
             + " PRIMARY KEY (%s, %s, %s), ROW DELETION POLICY"
             + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))", getTableName(topicId), SEQUENCE_ID_FIELD,
         PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD, PAYLOAD_FIELD, SEQUENCE_ID_FIELD,
-        PAYLOAD_SEQUENCE_ID,
-        PUBLISH_TS_FIELD);
+        PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD);
   }
 
   public static String getTableName(TopicId topicId) {
@@ -265,10 +203,10 @@ public class SpannerMessagingService implements MessagingService {
       throws TopicNotFoundException, IOException, UnauthorizedException {
 
     try (ResultSet resultSet = client.singleUse()
-        .read(TOPIC_METADATA_TABLE, KeySet.singleKey(Key.of(topicId.getTopic())),
+        .read(TOPIC_METADATA_TABLE, KeySet.singleKey(Key.of(getTableName(topicId))),
             Collections.singletonList(PROPERTIES_FIELD))) {
       if (resultSet.next()) {
-        String propertiesJson = resultSet.getString(PROPERTIES_FIELD);
+        String propertiesJson = resultSet.getJson(PROPERTIES_FIELD);
         Gson gson = new Gson();
         return gson.fromJson(propertiesJson, new TypeToken<Map<String, String>>() {
         }.getType());
@@ -283,16 +221,18 @@ public class SpannerMessagingService implements MessagingService {
       throws IOException, UnauthorizedException {
 
     List<TopicId> topics = new ArrayList<>();
+    String namespace = namespaceId.getNamespace();
+    String topicSQL = String.format(
+        "SELECT %s FROM %s WHERE %s = '%s'",
+        TOPIC_ID_FIELD, TOPIC_METADATA_TABLE, NAMESPACE_FIELD, namespace
+    );
 
-    try (ResultSet resultSet = client.singleUse()
-        .read(TOPIC_METADATA_TABLE, KeySet.all(), Arrays.asList(TOPIC_ID_FIELD, NAMESPACE_FIELD))) {
+    try (ResultSet resultSet = client.singleUse().executeQuery(
+        Statement.of(topicSQL))) {
+
       while (resultSet.next()) {
-        String topicIdString = resultSet.getString(TOPIC_ID_FIELD);
-        String namespace = resultSet.getString(NAMESPACE_FIELD);
-
-        if (namespace.equals(namespaceId.getNamespace())) {
-          topics.add(TopicId.fromString(topicIdString));
-        }
+        String topicId = resultSet.getString(TOPIC_ID_FIELD);
+        topics.add(new TopicId(namespace, topicId));
       }
     }
     return ImmutableList.copyOf(topics);
@@ -339,9 +279,7 @@ public class SpannerMessagingService implements MessagingService {
           throw new IOException(e);
         }
       }
-
     }
-
     return null;
   }
 

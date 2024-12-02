@@ -83,7 +83,7 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   }
 
   @Override
-  public void initialize(MessagingServiceContext context) {
+  public void initialize(MessagingServiceContext context) throws IOException {
   }
 
   @Override

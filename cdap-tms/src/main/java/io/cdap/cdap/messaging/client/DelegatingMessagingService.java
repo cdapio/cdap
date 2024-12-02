@@ -21,6 +21,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.MessagingServiceUtils;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
@@ -78,12 +79,12 @@ public class DelegatingMessagingService implements MessagingService {
   }
 
   @Override
-  public void initialize(MessagingServiceContext context) {
+  public void initialize(MessagingServiceContext context) throws IOException {
   }
 
   @Override
   public String getName() {
-    return "SpannerMessagingService";
+    return cConf.get(MessagingSystem.MESSAGING_SERVICE_NAME);
   }
 
   @Override
@@ -141,13 +142,14 @@ public class DelegatingMessagingService implements MessagingService {
             "Unsupported messaging service implementation " + getName());
       }
       LOG.info("Messaging service {} is loaded", messagingService.getName());
-      messagingService.initialize(new DefaultMessagingServiceContext(this.cConf));
-      LOG.info("Messaging service {} is initialized", messagingService.getName());
       try {
+        messagingService.initialize(new DefaultMessagingServiceContext(this.cConf));
         createTopics(cConf, messagingService);
       } catch (IOException | TopicAlreadyExistsException e) {
         throw new RuntimeException(e);
       }
+      LOG.info("Messaging service {} is initialized and system topics are created.",
+          messagingService.getName());
 
       this.delegate = messagingService;
       return messagingService;
@@ -156,13 +158,11 @@ public class DelegatingMessagingService implements MessagingService {
 
   private void createTopics(CConfiguration cConf, MessagingService messagingService)
       throws IOException, TopicAlreadyExistsException {
-    LOG.info("createAllTopics started.");
     // If we implement this at some other place,
     // we will need to introduce cdap-tms dependency in that package, which is not recommended.
     Set<TopicId> systemTopics = MessagingServiceUtils.getSystemTopics(cConf, true);
     for (TopicId topic : systemTopics) {
       messagingService.createTopic(new DefaultTopicMetadata(topic));
     }
-    LOG.info("System topic creation done");
   }
 }

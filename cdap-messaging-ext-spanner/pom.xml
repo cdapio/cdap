@@ -59,6 +59,10 @@
       <groupId>com.google.api</groupId>
       <artifactId>gax</artifactId>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
   </dependencies>
 
   <profiles>

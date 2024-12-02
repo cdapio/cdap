@@ -16,17 +16,28 @@
 
 package io.cdap.cdap.messaging.spanner;
 
+import com.google.auth.Credentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 /**
  * Utility class for spanner messaging service.
  */
 class SpannerUtil {
+
+  static final String PROJECT = "project";
+  static final String INSTANCE = "instance";
+  static final String DATABASE = "database";
+  static final String CREDENTIALS_PATH = "credentials.path";
 
   static DatabaseClient getSpannerDbClient(String projectID, String instanceID,
       String databaseID, Spanner spanner) {
@@ -39,18 +50,45 @@ class SpannerUtil {
   }
 
   static String getInstanceID(Map<String, String> cConf) {
-    return cConf.get("instance");
+    String instance = cConf.get(INSTANCE);
+    if (instance == null) {
+      throw new IllegalArgumentException("Missing configuration " + PROJECT);
+    }
+    return instance;
   }
 
   static String getDatabaseID(Map<String, String> cConf) {
-    return cConf.get("database");
+    String instance = cConf.get(DATABASE);
+    if (instance == null) {
+      throw new IllegalArgumentException("Missing configuration " + DATABASE);
+    }
+    return cConf.get(DATABASE);
   }
 
   static String getProjectID(Map<String, String> cConf) {
-    return cConf.get("project");
+    String instance = cConf.get(PROJECT);
+    if (instance == null) {
+      throw new IllegalArgumentException("Missing configuration " + PROJECT);
+    }
+    return cConf.get(PROJECT);
   }
 
-  public static Spanner getSpannerService(String projectID) {
-    return SpannerOptions.newBuilder().setProjectId(projectID).build().getService();
+  static Credentials getCredentials(Map<String, String> cConf) throws IOException {
+    String credentialsPath = cConf.get(CREDENTIALS_PATH);
+    if (credentialsPath != null) {
+      try (InputStream is = Files.newInputStream(Paths.get(credentialsPath))) {
+        return ServiceAccountCredentials.fromStream(is);
+      }
+    }
+    return null;
+  }
+
+  public static Spanner getSpannerService(String projectID, Credentials credentials) {
+    SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(projectID);
+    if (credentials != null) {
+      builder.setCredentials(credentials);
+    }
+
+    return builder.build().getService();
   }
 }

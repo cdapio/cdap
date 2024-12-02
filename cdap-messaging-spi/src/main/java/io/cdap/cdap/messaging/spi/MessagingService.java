@@ -41,7 +41,7 @@ public interface MessagingService {
    *
    * @param context the context that can be used to initialize the messaging service.
    */
-  void initialize(MessagingServiceContext context);
+  void initialize(MessagingServiceContext context) throws IOException;
 
   /**
    * Returns the name of this MessagingService. The name needs to match with the configuration
