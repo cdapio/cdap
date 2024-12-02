@@ -55,7 +55,6 @@ public class DelegatingMessagingService implements MessagingService {
   @Inject
   public DelegatingMessagingService(
       CConfiguration cConf, MessagingServiceExtensionLoader extensionLoader) {
-    LOG.info("Delegating service is initialised");
     this.cConf = cConf;
     this.extensionLoader = extensionLoader;
   }
@@ -125,7 +124,6 @@ public class DelegatingMessagingService implements MessagingService {
   }
 
   private MessagingService getDelegate() {
-    LOG.info("getDelegate() is called.");
     MessagingService messagingService = this.delegate;
     if (messagingService != null) {
       return messagingService;

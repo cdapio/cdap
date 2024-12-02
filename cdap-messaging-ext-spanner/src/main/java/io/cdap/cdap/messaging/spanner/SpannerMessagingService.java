@@ -275,7 +275,7 @@ public class SpannerMessagingService implements MessagingService {
         try {
           client.write(batchCopy);
         } catch (SpannerException e) {
-          LOG.error("Cannot commit mutations ", e);
+          LOG.error("failed to publish message ", e);
           throw new IOException(e);
         }
       }

@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.messaging.spanner;
 
-
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.messaging.spi.MessagingServiceContext;
@@ -33,6 +32,19 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * Unit tests for Cloud spanner implementation of the
+ * {@link io.cdap.cdap.messaging.spi.MessagingService}. This test needs the following Java
+ * properties to run. If they are not provided, tests will be ignored.
+ *
+ * <ul>
+ *   <li>gcp.project - GCP project name</li>
+ *   <li>gcp.spanner.instance - GCP spanner instance name</li>
+ *   <li>gcp.spanner.database - GCP spanner database name</li>
+ *   <li>(optional) gcp.credentials.path - Local file path to the service account
+ *   json that has the "Cloud Spanner Database User" role</li>
+ * </ul>
+ */
 public class SpannerMessagingServiceTest {
 
   private static SpannerMessagingService service;
