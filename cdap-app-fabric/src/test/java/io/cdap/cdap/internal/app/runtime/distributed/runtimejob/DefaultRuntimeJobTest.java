@@ -73,33 +73,33 @@ public class DefaultRuntimeJobTest {
   public void testVerifySuccessfulProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-        () -> new ProgramRunCompletionDetails(1234,
-            ProgramRunStatus.COMPLETED));
+      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+      () -> new ProgramRunCompletionDetails(1234,
+                                            ProgramRunStatus.COMPLETED));
   }
 
   @Test(expected = ProgramRunFailureException.class)
   public void testVerifyKilledProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.KILLED));
+      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+      () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.KILLED));
   }
 
   @Test
   public void testVerifyNullProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-        () -> null);
+      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+      () -> null);
   }
 
   @Test(expected = ProgramRunFailureException.class)
   public void testVerifyFailedProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.FAILED));
+      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+      () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.FAILED));
   }
 
   private void testInjector(LaunchMode launchMode) throws IOException {
@@ -107,49 +107,49 @@ public class DefaultRuntimeJobTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().toString());
 
     LocationFactory locationFactory = new LocalLocationFactory(
-        TEMP_FOLDER.newFile());
+      TEMP_FOLDER.newFile());
 
     DefaultRuntimeJob defaultRuntimeJob = new DefaultRuntimeJob();
     Arguments systemArgs = new BasicArguments(
-        Collections.singletonMap(SystemArguments.PROFILE_NAME, "test"));
+      Collections.singletonMap(SystemArguments.PROFILE_NAME, "test"));
     Node node = new Node("test", Node.Type.MASTER, "127.0.0.1",
-        System.currentTimeMillis(), Collections.emptyMap());
+                         System.currentTimeMillis(), Collections.emptyMap());
     Cluster cluster = new Cluster("test", ClusterStatus.RUNNING,
-        Collections.singleton(node), Collections.emptyMap());
+                                  Collections.singleton(node), Collections.emptyMap());
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app")
-        .workflow("workflow").run(RunIds.generate());
+      .workflow("workflow").run(RunIds.generate());
     SimpleProgramOptions programOpts = new SimpleProgramOptions(
-        programRunId.getParent(), systemArgs, new BasicArguments());
+      programRunId.getParent(), systemArgs, new BasicArguments());
 
     Injector injector = Guice.createInjector(
-        defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
+      defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
 
-          @Override
-          public LocationFactory getLocationFactory() {
-            return locationFactory;
-          }
+        @Override
+        public LocationFactory getLocationFactory() {
+          return locationFactory;
+        }
 
-          @Override
-          public TwillRunner getTwillRunner() {
-            return new NoopTwillRunnerService();
-          }
+        @Override
+        public TwillRunner getTwillRunner() {
+          return new NoopTwillRunnerService();
+        }
 
-          @Override
-          public Map<String, String> getProperties() {
-            return Collections.emptyMap();
-          }
+        @Override
+        public Map<String, String> getProperties() {
+          return Collections.emptyMap();
+        }
 
-          @Override
-          public LaunchMode getLaunchMode() {
-            return launchMode;
-          }
-        }, cConf, programRunId, programOpts));
+        @Override
+        public LaunchMode getLaunchMode() {
+          return launchMode;
+        }
+      }, cConf, programRunId, programOpts));
 
     injector.getInstance(LogAppenderInitializer.class);
     defaultRuntimeJob.createCoreServices(injector, systemArgs, cluster);
     injector.getInstance(ConfiguratorFactory.class);
     ProgramRunnerFactory programRunnerFactory = injector.getInstance(
-        ProgramRunnerFactory.class);
+      ProgramRunnerFactory.class);
     programRunnerFactory.create(ProgramType.WORKFLOW);
   }
 }

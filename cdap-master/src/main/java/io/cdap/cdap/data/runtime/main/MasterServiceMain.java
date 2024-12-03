@@ -30,6 +30,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -573,6 +574,7 @@ public class MasterServiceMain extends DaemonMain {
         new MetricsStoreModule(),
         new MessagingClientModule(),
         new AuditModule(),
+        new AuditLogWriterModule(cConf).getDistributedModules(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),

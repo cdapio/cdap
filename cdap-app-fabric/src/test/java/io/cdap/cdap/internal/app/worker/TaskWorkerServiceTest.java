@@ -96,7 +96,7 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -123,7 +123,7 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -144,7 +144,7 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -187,7 +187,7 @@ public class TaskWorkerServiceTest {
             discoveryService,
             discoveryService,
             metricsCollectionService,
-            new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+            new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -232,7 +232,7 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -361,7 +361,7 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
         createSConf(), discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     taskWorkerService.startAndWait();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
@@ -422,7 +422,7 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
         createSConf(), discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     taskWorkerService.startAndWait();

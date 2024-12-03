@@ -33,6 +33,7 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -154,6 +155,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         new MessagingServiceModule(cConf),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
+        new AuditLogWriterModule(cConf).getDistributedModules(),
         Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
             .with(new AbstractModule() {
               // To enable localisation of artifacts

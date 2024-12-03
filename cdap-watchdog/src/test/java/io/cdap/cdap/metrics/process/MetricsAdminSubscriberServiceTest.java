@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
@@ -104,7 +105,8 @@ public class MetricsAdminSubscriberServiceTest {
           bind(MetricsAdminSubscriberService.class).in(Scopes.SINGLETON);
           expose(MetricsAdminSubscriberService.class);
         }
-      }
+      },
+      new NoOpAuditLogModule()
     );
 
     messagingService = injector.getInstance(MessagingService.class);

@@ -25,6 +25,7 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -46,12 +47,14 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.security.auth.AuditLogSubscriberService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
 import io.cdap.cdap.store.DefaultNamespaceStore;
+import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
@@ -80,6 +83,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
+  private final AuditLogSubscriberService auditLogSubscriberService;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
@@ -110,31 +114,32 @@ public class AppFabricServer extends AbstractIdleService {
    */
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
-      DiscoveryService discoveryService,
-      @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-      @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
-      @Nullable MetricsCollectionService metricsCollectionService,
-      ProgramRuntimeService programRuntimeService,
-      RunRecordCorrectorService runRecordCorrectorService,
-      ProgramRunStatusMonitorService programRunStatusMonitorService,
-      ApplicationLifecycleService applicationLifecycleService,
-      ProgramNotificationSubscriberService programNotificationSubscriberService,
-      ProgramStopSubscriberService programStopSubscriberService,
-      @Named("appfabric.services.names") Set<String> servicesNames,
-      @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-      CoreSchedulerService coreSchedulerService,
-      CredentialProviderService credentialProviderService,
-      NamespaceCredentialProviderService namespaceCredentialProviderService,
-      ProvisioningService provisioningService,
-      BootstrapService bootstrapService,
-      SystemAppManagementService systemAppManagementService,
-      TransactionRunner transactionRunner,
-      RunRecordMonitorService runRecordCounterService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      RunDataTimeToLiveService runDataTimeToLiveService,
-      SourceControlOperationRunner sourceControlOperationRunner,
-      RepositoryCleanupService repositoryCleanupService,
-      OperationNotificationSubscriberService operationNotificationSubscriberService) {
+                         DiscoveryService discoveryService,
+                         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                         @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+                         @Nullable MetricsCollectionService metricsCollectionService,
+                         ProgramRuntimeService programRuntimeService,
+                         RunRecordCorrectorService runRecordCorrectorService,
+                         ProgramRunStatusMonitorService programRunStatusMonitorService,
+                         ApplicationLifecycleService applicationLifecycleService,
+                         ProgramNotificationSubscriberService programNotificationSubscriberService,
+                         ProgramStopSubscriberService programStopSubscriberService,
+                         @Named("appfabric.services.names") Set<String> servicesNames,
+                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+                         AuditLogSubscriberService auditLogSubscriberService,
+                         CoreSchedulerService coreSchedulerService,
+                         CredentialProviderService credentialProviderService,
+                         NamespaceCredentialProviderService namespaceCredentialProviderService,
+                         ProvisioningService provisioningService,
+                         BootstrapService bootstrapService,
+                         SystemAppManagementService systemAppManagementService,
+                         TransactionRunner transactionRunner,
+                         RunRecordMonitorService runRecordCounterService,
+                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+                         RunDataTimeToLiveService runDataTimeToLiveService,
+                         SourceControlOperationRunner sourceControlOperationRunner,
+                         RepositoryCleanupService repositoryCleanupService,
+                         OperationNotificationSubscriberService operationNotificationSubscriberService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -150,6 +155,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
+    this.auditLogSubscriberService = auditLogSubscriberService;
     this.coreSchedulerService = coreSchedulerService;
     this.credentialProviderService = credentialProviderService;
     this.namespaceCredentialProviderService = namespaceCredentialProviderService;
@@ -179,6 +185,11 @@ public class AppFabricServer extends AbstractIdleService {
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
       futuresList.add(namespaceCredentialProviderService.start());
     }
+    // Only for RBAC instances
+    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
+      && cConf.getBoolean(Constants.Security.ENABLED)) {
+      futuresList.add(auditLogSubscriberService.start());
+    }
     futuresList.addAll(ImmutableList.of(
         provisioningService.start(),
         applicationLifecycleService.start(),
@@ -199,9 +210,16 @@ public class AppFabricServer extends AbstractIdleService {
     Futures.allAsList(futuresList).get();
 
     // Create handler hooks
-    List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
+    List<AbstractHandlerHook> handlerHooks = handlerHookNames.stream()
         .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
         .collect(Collectors.toList());
+
+    // Create handler hooks
+    List<AuditLogSetterHook> auditHandlerHooks = handlerHookNames.stream()
+      .map(name -> new AuditLogSetterHook(cConf, name))
+      .collect(Collectors.toList());
+
+    handlerHooks.addAll(auditHandlerHooks);
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
@@ -256,6 +274,7 @@ public class AppFabricServer extends AbstractIdleService {
     credentialProviderService.stopAndWait();
     namespaceCredentialProviderService.stopAndWait();
     operationNotificationSubscriberService.stopAndWait();
+    auditLogSubscriberService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

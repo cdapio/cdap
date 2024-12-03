@@ -28,6 +28,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -175,6 +176,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
         new IOModule(),
         RemoteAuthenticatorModules.getDefaultModule(),
         new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new AuditLogWriterModule(previewCConf).getInMemoryModules(),
         new AuthenticationContextModules().getMasterWorkerModule(),
         new PreviewSecureStoreModule(secureStore),
         new PreviewDiscoveryRuntimeModule(discoveryServiceClient),

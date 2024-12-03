@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
@@ -112,6 +113,7 @@ public class RuntimeClientServerTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       RemoteAuthenticatorModules.getNoOpModule(),
+      new NoOpAuditLogModule(),
       new InMemoryDiscoveryModule(),
       new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),

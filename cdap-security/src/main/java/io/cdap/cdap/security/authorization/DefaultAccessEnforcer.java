@@ -41,6 +41,7 @@ import io.cdap.cdap.security.encryption.guice.UserCredentialAeadEncryptionModule
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.encryption.CipherException;
@@ -242,9 +243,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements Rol
     try {
       Map<? extends EntityId, AuthorizationResponse> mapOfEntityResult =
         accessControllerInstantiator.get().isVisible(difference, principal);
-      List<AuthorizationResponse> checkResults = mapOfEntityResult.values().stream()
-        .collect(Collectors.toList());
-      AuthorizationUtil.setAuthorizationDataInContext(checkResults);
+      AuthorizationUtil.setIsVisibleCheckResultsInContext(mapOfEntityResult);
       moreVisibleEntities = mapOfEntityResult.entrySet()
           .stream()
           .filter(entry -> entry.getValue().isAuthorized() != AuthorizationResponse.AuthorizationStatus.UNAUTHORIZED)

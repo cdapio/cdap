@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.spi.authorization;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -88,5 +89,18 @@ public class AuditLogContext {
     public AuditLogContext build() {
       return new AuditLogContext(this);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof AuditLogContext)) return false;
+    AuditLogContext that = (AuditLogContext) o;
+    return auditLoggingRequired == that.auditLoggingRequired && Objects.equals(auditLogBody, that.auditLogBody);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(auditLoggingRequired, auditLogBody);
   }
 }

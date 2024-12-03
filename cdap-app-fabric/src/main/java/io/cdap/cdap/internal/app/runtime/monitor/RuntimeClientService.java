@@ -160,7 +160,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     RetryStrategy retryStrategy = RetryStrategies.timeLimit(
         gracefulShutdownMillis,
         TimeUnit.MILLISECONDS,
-        getRetryStrategy());
+        getRetryStrategy()); //we are passing in constru...SUPER  ...exponential
+
     Retries.runWithRetries(() -> {
           for (TopicRelayer topicRelayer : topicRelayers) {
             topicRelayer.prepareClose();

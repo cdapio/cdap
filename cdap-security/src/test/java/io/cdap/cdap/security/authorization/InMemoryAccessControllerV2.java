@@ -31,12 +31,14 @@ import io.cdap.cdap.proto.security.Role;
 import io.cdap.cdap.security.spi.authorization.AccessControllerSpi;
 import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
+import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
 import io.cdap.cdap.security.spi.authorization.AuthorizedResult;
 import io.cdap.cdap.security.spi.authorization.NotFoundException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -58,6 +60,10 @@ public class InMemoryAccessControllerV2 implements AccessControllerSpi {
 
   private final AuthorizationResponse authorizedResult = new AuthorizationResponse.Builder()
     .setAuthorized(AuthorizationResponse.AuthorizationStatus.AUTHORIZED)
+    .setAuditLogContext(AuditLogContext.Builder.defaultNotRequired()).build();
+
+  private final AuthorizationResponse unAuthorizedResult = new AuthorizationResponse.Builder()
+    .setAuthorized(AuthorizationResponse.AuthorizationStatus.UNAUTHORIZED)
     .setAuditLogContext(AuditLogContext.Builder.defaultNotRequired()).build();
 
   @Override
@@ -115,22 +121,23 @@ public class InMemoryAccessControllerV2 implements AccessControllerSpi {
       return entityIds.stream()
         .collect(Collectors.toMap(x -> x, x -> AuthorizationResponse.Builder.defaultNotRequired()));
     }
-    Set<EntityId> results =  new HashSet<>();
+    Map<EntityId, AuthorizationResponse> entityToAuthRes = new HashMap<>();
     for (EntityId entityId : entityIds) {
       for (Authorizable existingEntity : InMemoryPrivilegeHolder.getPrivileges().keySet()) {
         if (isParent(entityId, existingEntity.getEntityParts())) {
           Set<? extends Permission> allowedPermissions = InMemoryPrivilegeHolder.getPrivileges()
             .get(existingEntity).get(principal);
           if (allowedPermissions != null && !allowedPermissions.isEmpty()) {
-            results.add(entityId);
+            entityToAuthRes.put(entityId, authorizedResult);
             break;
           }
         }
+        if (!entityToAuthRes.containsKey(entityId)){
+          entityToAuthRes.put(entityId, unAuthorizedResult);
+        }
       }
     }
-    return results.stream()
-      .collect(Collectors.toMap(x -> x,
-                                x -> authorizedResult));
+    return entityToAuthRes;
   }
 
   @Override
@@ -284,6 +291,17 @@ public class InMemoryAccessControllerV2 implements AccessControllerSpi {
       }
     }
     return true;
+  }
+
+  /**
+   * TODO : THIS IS WIP : Needs to be modified based on how auth extension works.
+   *
+   * @param auditLogRequest
+   * @return {@link PublishStatus}
+   */
+  @Override
+  public PublishStatus publishAuditLogs(AuditLogRequest auditLogRequest) {
+    return PublishStatus.PUBLISHED;
   }
 
   public final class AuthorizableEntityId {

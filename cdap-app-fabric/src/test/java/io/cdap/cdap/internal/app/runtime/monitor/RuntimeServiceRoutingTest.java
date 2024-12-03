@@ -33,6 +33,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -134,7 +135,8 @@ public class RuntimeServiceRoutingTest {
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
-      }
+      },
+      new NoOpAuditLogModule()
     );
 
     messagingService = injector.getInstance(MessagingService.class);
