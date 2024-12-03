@@ -249,8 +249,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   /**
-   * Creates the given topic if it is not yet created. Adds a topic to the
-   * {@code creationFailureTopics} if creation fails.
+   * Creates the given topic if it is not yet created. Adds a topic to the {@code
+   * creationFailureTopics} if creation fails.
    */
   private void createSystemTopic(TopicId topicId, Queue<TopicId> creationFailureTopics) {
     try {
@@ -321,9 +321,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
         unit);
   }
 
-  /**
-   * Creates the given topic if it is not yet created.
-   */
+  /** Creates the given topic if it is not yet created. */
   private void createTopicIfNotExists(TopicId topicId) throws IOException {
     try {
       createTopic(new DefaultTopicMetadata(topicId));
@@ -390,7 +388,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
                 StoreRequestWriter<?> messagesWriter =
                     messageTable
                         ? new MessageTableStoreRequestWriter(
-                        createMessageTable(metadata), timeProvider)
+                            createMessageTable(metadata), timeProvider)
                         : new PayloadTableStoreRequestWriter(
                             createPayloadTable(metadata), timeProvider);
 
