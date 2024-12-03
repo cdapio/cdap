@@ -60,6 +60,15 @@ import org.slf4j.LoggerFactory;
 public class SpannerMessagingService implements MessagingService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerMessagingService.class);
+  public static final String PAYLOAD_FIELD = "payload";
+  public static final String PUBLISH_TS_FIELD = "publish_ts";
+  public static final String PAYLOAD_SEQUENCE_ID = "payload_sequence_id";
+  public static final String SEQUENCE_ID_FIELD = "sequence_id";
+  public static final String TOPIC_METADATA_TABLE = "topic_metadata";
+  public static final String TOPIC_ID_FIELD = "topic_id";
+  public static final String PROPERTIES_FIELD = "properties";
+  public static final String NAMESPACE_FIELD = "namespace";
+  public static final String TOPIC_TABLE_PREFIX = "messaging";
 
   private DatabaseClient client;
 
@@ -69,16 +78,13 @@ public class SpannerMessagingService implements MessagingService {
 
   private String databaseId;
 
-  private final ConcurrentLinkedQueue<StoreRequest> batch = new ConcurrentLinkedQueue<>();
+  private int publishBatchSize;
 
-  public static final String PAYLOAD_FIELD = "payload";
-  public static final String PUBLISH_TS_FIELD = "publish_ts";
-  public static final String PAYLOAD_SEQUENCE_ID = "payload_sequence_id";
-  public static final String SEQUENCE_ID_FIELD = "sequence_id";
-  public static final String TOPIC_METADATA_TABLE = "topic_metadata";
-  public static final String TOPIC_ID_FIELD = "topic_id";
-  public static final String PROPERTIES_FIELD = "properties";
-  public static final String NAMESPACE_FIELD = "namespace";
+  private int publishBatchTimeoutMillis;
+
+  private int publishDelayMillis;
+
+  private final ConcurrentLinkedQueue<StoreRequest> batch = new ConcurrentLinkedQueue<>();
 
   @Override
   public void initialize(MessagingServiceContext context) throws IOException {
@@ -87,6 +93,11 @@ public class SpannerMessagingService implements MessagingService {
     this.instanceId = SpannerUtil.getInstanceID(cConf);
     String projectID = SpannerUtil.getProjectID(cConf);
     Credentials credentials = SpannerUtil.getCredentials(cConf);
+
+    this.publishBatchSize = Integer.parseInt(cConf.get(SpannerUtil.PUBLISH_BATCH_SIZE));
+    this.publishBatchTimeoutMillis = Integer.parseInt(
+        cConf.get(SpannerUtil.PUBLISH_BATCH_TIMEOUT_MILLIS));
+    this.publishDelayMillis = Integer.parseInt(cConf.get(SpannerUtil.PUBLISH_DELAY_MILLIS));
 
     Spanner spanner = SpannerUtil.getSpannerService(projectID, credentials);
     this.client = SpannerUtil.getSpannerDbClient(projectID, instanceId, databaseId, spanner);
@@ -111,7 +122,6 @@ public class SpannerMessagingService implements MessagingService {
     try {
       future.get();
     } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Failed to create topic {}", topicMetadata.getTopicId().getTopic(), e);
       throw new IOException(e);
     }
 
@@ -124,8 +134,6 @@ public class SpannerMessagingService implements MessagingService {
     try {
       client.write(Collections.singleton(mutation));
     } catch (SpannerException e) {
-      LOG.error("Failed to update topic metadata table for {}",
-          topicMetadata.getTopicId().getTopic(), e);
       throw new IOException(e);
     }
     LOG.info("Created topic : {}", topicMetadata.getTopicId().getTopic());
@@ -141,13 +149,13 @@ public class SpannerMessagingService implements MessagingService {
     return String.format("CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
             + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s BYTES(MAX) )"
             + " PRIMARY KEY (%s, %s, %s), ROW DELETION POLICY"
-            + " (OLDER_THAN(publish_ts, INTERVAL 7 DAY))", getTableName(topicId), SEQUENCE_ID_FIELD,
+            + " (OLDER_THAN(%s, INTERVAL 7 DAY))", getTableName(topicId), SEQUENCE_ID_FIELD,
         PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD, PAYLOAD_FIELD, SEQUENCE_ID_FIELD,
-        PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD);
+        PAYLOAD_SEQUENCE_ID, PUBLISH_TS_FIELD, PUBLISH_TS_FIELD);
   }
 
   public static String getTableName(TopicId topicId) {
-    return topicId.getNamespace() + topicId.getTopic();
+    return String.join("-", TOPIC_TABLE_PREFIX, topicId.getNamespace(), topicId.getTopic());
   }
 
   @Override
@@ -169,7 +177,6 @@ public class SpannerMessagingService implements MessagingService {
         throw new TopicNotFoundException(topicMetadata.getTopicId().getNamespace(),
             topicMetadata.getTopicId().getTopic());
       }
-      LOG.error("Failed to update topic {}", topicId, e);
       throw new IOException(e);
     }
   }
@@ -185,7 +192,6 @@ public class SpannerMessagingService implements MessagingService {
     try {
       future.get();
     } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Error when executing DDL statements", e);
       throw new IOException(e);
     }
 
@@ -193,7 +199,6 @@ public class SpannerMessagingService implements MessagingService {
     try {
       client.write(Collections.singletonList(mutation));
     } catch (SpannerException e) {
-      LOG.error("Unable to delete {} from topic metadata table", topicId.getTopic());
       throw new IOException(e);
     }
   }
@@ -222,13 +227,10 @@ public class SpannerMessagingService implements MessagingService {
 
     List<TopicId> topics = new ArrayList<>();
     String namespace = namespaceId.getNamespace();
-    String topicSQL = String.format(
-        "SELECT %s FROM %s WHERE %s = '%s'",
-        TOPIC_ID_FIELD, TOPIC_METADATA_TABLE, NAMESPACE_FIELD, namespace
-    );
+    String topicSQL = String.format("SELECT %s FROM %s WHERE %s = '%s'", TOPIC_ID_FIELD,
+        TOPIC_METADATA_TABLE, NAMESPACE_FIELD, namespace);
 
-    try (ResultSet resultSet = client.singleUse().executeQuery(
-        Statement.of(topicSQL))) {
+    try (ResultSet resultSet = client.singleUse().executeQuery(Statement.of(topicSQL))) {
 
       while (resultSet.next()) {
         String topicId = resultSet.getString(TOPIC_ID_FIELD);
@@ -262,11 +264,11 @@ public class SpannerMessagingService implements MessagingService {
           batchCopy.add(mutation);
         }
 
-        if (batch.isEmpty() && (i < 50 || System.currentTimeMillis() - start < 50)) {
+        if (batch.isEmpty() && (i < publishBatchSize
+            || System.currentTimeMillis() - start < publishBatchTimeoutMillis)) {
           try {
-            Thread.sleep(5);
+            Thread.sleep(publishDelayMillis);
           } catch (InterruptedException e) {
-            LOG.error("error during sleep", e);
             throw new IOException(e);
           }
         }
@@ -275,7 +277,6 @@ public class SpannerMessagingService implements MessagingService {
         try {
           client.write(batchCopy);
         } catch (SpannerException e) {
-          LOG.error("failed to publish message ", e);
           throw new IOException(e);
         }
       }

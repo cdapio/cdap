@@ -247,7 +247,10 @@
 
   <property>
     <name>twill.jvm.gc.opts</name>
-    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+    <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails
+      -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10
+      -XX:GCLogFileSize=1M
+    </value>
     <activation>
       <jdk>(,9)</jdk>
     </activation>
@@ -2658,6 +2661,31 @@
     <value>604800</value>
     <description>
       The default time-to-live in seconds for messages in a topic
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.spanner.properties.publish.batch.size</name>
+    <value>50</value>
+    <description>
+      The default max number of messages in each publish batch for spanner messaging service.
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.spanner.properties.publish.batch.timeout.millis</name>
+    <value>50</value>
+    <description>
+      The default maximum waiting time before a batch is published by spanner messaging service.
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.spanner.properties.publish.delay.millis</name>
+    <value>5</value>
+    <description>
+      The default waiting time for receiving new publish calls that ensures efficient batching and
+      timely publishing of messages.
     </description>
   </property>
 
@@ -5384,7 +5412,8 @@
     <value>true</value>
     <description>
       Whether user code isolation is enabled in task worker. When enabled, task workers will ensure
-      only 1 request is accepted at max and later after the task worker is restarted it can take next request.
+      only 1 request is accepted at max and later after the task worker is restarted it can take
+      next request.
     </description>
   </property>
 
@@ -6515,7 +6544,8 @@
     <name>auditlog.messaging.fetch.size</name>
     <value>20</value>
     <description>
-      Number of messages to fetch from messaging system for each batch to consume by Audit log consumer.
+      Number of messages to fetch from messaging system for each batch to consume by Audit log
+      consumer.
     </description>
   </property>
 

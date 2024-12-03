@@ -2155,6 +2155,8 @@ public final class Constants {
 
     // TMS HBase table attribute that indicates the number of prefix bytes used for the row key
     public static final String HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES = "cdap.messaging.table.prefix.num.bytes";
+
+    public static final String SPANNER_EXTENSION_PROPERTY_PREFIX = "messaging.spanner.properties.";
   }
 
   /**

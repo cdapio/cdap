@@ -38,10 +38,12 @@ public class DefaultMessagingServiceContext implements MessagingServiceContext {
   @Override
   public Map<String, String> getProperties() {
     // TODO: cdap-tms module refactoring will remove this dependency on spanner.
-    String spannerPropertiesPrefix =
+    String spannerStoragePropertiesPrefix =
         Constants.Dataset.STORAGE_EXTENSION_PROPERTY_PREFIX + storageImpl + ".";
-    Map<String, String> propertiesMap = new HashMap<>(
-        cConf.getPropsWithPrefix(spannerPropertiesPrefix));
+    String spannerMessagingPropertiesPrefix = Constants.MessagingSystem.SPANNER_EXTENSION_PROPERTY_PREFIX;
+    Map<String, String> propertiesMap = new HashMap<>();
+    propertiesMap.putAll(cConf.getPropsWithPrefix(spannerStoragePropertiesPrefix));
+    propertiesMap.putAll(cConf.getPropsWithPrefix(spannerMessagingPropertiesPrefix));
     return Collections.unmodifiableMap(propertiesMap);
   }
 }
