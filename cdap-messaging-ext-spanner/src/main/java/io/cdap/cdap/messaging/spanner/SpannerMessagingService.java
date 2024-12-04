@@ -33,6 +33,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
@@ -155,7 +157,7 @@ public class SpannerMessagingService implements MessagingService {
   }
 
   public static String getTableName(TopicId topicId) {
-    return String.join("-", TOPIC_TABLE_PREFIX, topicId.getNamespace(), topicId.getTopic());
+    return String.join("_", TOPIC_TABLE_PREFIX, topicId.getNamespace(), topicId.getTopic());
   }
 
   @Override
@@ -299,6 +301,83 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
-    throw new IOException("NOT IMPLEMENTED");
+    LOG.info("Message Fetch Request {} : {}", messageFetchRequest.getTopicId().getTopic(), messageFetchRequest.getStartOffset());
+    Long startTime = 0L;
+    if (messageFetchRequest.getStartTime() != null) {
+      startTime = messageFetchRequest.getStartTime();
+    }
+    short sequenceId = -1;
+    byte[] id = messageFetchRequest.getStartOffset();
+    if (id != null) {
+      int offset = 0;
+      startTime = Bytes.toLong(id, offset);
+      offset += Bytes.SIZEOF_LONG;
+      sequenceId = Bytes.toShort(id, offset);
+      LOG.info("start time : {} sequenceId : {}", startTime, sequenceId);
+    }
+
+    String sqlStatement = String.format(
+        "SELECT %s, %s, UNIX_MICROS(%s), %s FROM %s where (payload_sequence_id>-1"
+            + " and publish_ts > TIMESTAMP_MICROS(%s)) or"
+            + " (payload_sequence_id>-1 and publish_ts = TIMESTAMP_MICROS(%s) and sequence_id > %s) order by"
+            + " publish_ts,sequence_id LIMIT %s", SpannerMessagingService.SEQUENCE_ID_FIELD,
+        SpannerMessagingService.PAYLOAD_SEQUENCE_ID, SpannerMessagingService.PUBLISH_TS_FIELD,
+        SpannerMessagingService.PAYLOAD_FIELD,
+        SpannerMessagingService.getTableName(messageFetchRequest.getTopicId()), startTime,
+        startTime, sequenceId,
+        messageFetchRequest.getLimit());
+
+    LOG.info("Fetch sql {}", sqlStatement);
+    try {
+      ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
+      LOG.info("executeQuery called");
+      return new SpannerResultSetClosableIterator<>(resultSet);
+    } catch (Exception ex) {
+      LOG.error("Error when fetching {}", sqlStatement, ex);
+      throw new IOException(ex);
+    }
+  }
+
+  public static class SpannerResultSetClosableIterator<RawMessage> extends
+      AbstractCloseableIterator<io.cdap.cdap.messaging.spi.RawMessage> {
+
+    private final ResultSet resultSet;
+
+    public SpannerResultSetClosableIterator(ResultSet resultSet) {
+      this.resultSet = resultSet;
+    }
+
+    @Override
+    protected io.cdap.cdap.messaging.spi.RawMessage computeNext() {
+      if (!resultSet.next()) {
+        return endOfData();
+      }
+
+      byte[] id = getMessageId(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
+      byte[] payload = resultSet.getBytes(3).toByteArray();
+
+      LOG.info("computeNext called");
+      return new io.cdap.cdap.messaging.spi.RawMessage.Builder().setId(id).setPayload(payload)
+          .build();
+    }
+
+    @Override
+    public void close() {
+      resultSet.close();
+    }
+  }
+
+  public static byte[] getMessageId(long sequenceId, long messageSequenceId, long timestamp) {
+    LOG.info("sequenceId {} messageSequenceId {} timestamp {}", sequenceId, messageSequenceId,
+        timestamp);
+    byte[] result = new byte[Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG
+        + Bytes.SIZEOF_SHORT];
+    int offset = 0;
+    // Implementation copied from MessageId
+    offset = Bytes.putLong(result, offset, timestamp);
+    offset = Bytes.putShort(result, offset, (short) sequenceId);
+    offset = Bytes.putLong(result, offset, 0);
+    Bytes.putShort(result, offset, (short) messageSequenceId);
+    return result;
   }
 }
