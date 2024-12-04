@@ -301,7 +301,8 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
-    LOG.info("Message Fetch Request {} : {}", messageFetchRequest.getTopicId().getTopic(), messageFetchRequest.getStartOffset());
+    LOG.info("Message Fetch Request {} : {}", messageFetchRequest.getTopicId().getTopic(),
+        messageFetchRequest.getStartOffset());
     Long startTime = 0L;
     if (messageFetchRequest.getStartTime() != null) {
       startTime = messageFetchRequest.getStartTime();
