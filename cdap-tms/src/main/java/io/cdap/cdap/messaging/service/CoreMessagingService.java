@@ -188,7 +188,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Nullable
   @Override
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
-    LOG.info("Publish called for {}", request.getTopicId().getTopic());
+    LOG.trace("Publish called for {}", request.getTopicId().getTopic());
     try {
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       if (request.isTransactional()) {
@@ -459,7 +459,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
-    LOG.info("fetch called for {} : {} : {}", messageFetchRequest.getTopicId().getTopic(),
+    LOG.trace("fetch called for {} : {} : {}", messageFetchRequest.getTopicId().getTopic(),
         messageFetchRequest.getStartOffset(), messageFetchRequest.getStartTime());
     TopicMetadata metadata = getTopic(messageFetchRequest.getTopicId());
 
