@@ -35,6 +35,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,7 +143,7 @@ public class DelegatingMessagingService implements MessagingService {
       LOG.info("Messaging service {} is loaded", messagingService.getName());
       try {
         messagingService.initialize(new DefaultMessagingServiceContext(this.cConf));
-        createTopics(cConf, messagingService);
+        messagingService.createTopics(topicsToCreate(cConf));
       } catch (IOException | TopicAlreadyExistsException e) {
         throw new RuntimeException(e);
       }
@@ -154,13 +155,14 @@ public class DelegatingMessagingService implements MessagingService {
     }
   }
 
-  private void createTopics(CConfiguration cConf, MessagingService messagingService)
-      throws IOException, TopicAlreadyExistsException {
+  private List<TopicMetadata> topicsToCreate(CConfiguration cConf) {
     // If we implement this at some other place,
     // we will need to introduce cdap-tms dependency in that package, which is not recommended.
     Set<TopicId> systemTopics = MessagingServiceUtils.getSystemTopics(cConf, true);
+    List<TopicMetadata> topics = new ArrayList<>();
     for (TopicId topic : systemTopics) {
-      messagingService.createTopic(new DefaultTopicMetadata(topic));
+      topics.add(new DefaultTopicMetadata(topic));
     }
+    return topics;
   }
 }

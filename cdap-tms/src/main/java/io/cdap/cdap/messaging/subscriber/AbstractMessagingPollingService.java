@@ -85,8 +85,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    *
    * @param message the {@link Message} to decode
    * @return an object of type {@code T}
-   * @throws Exception if the decode failed and the given message will be skipped for
-   *     processing
+   * @throws Exception if the decode failed and the given message will be skipped for processing
    */
   protected abstract T decodeMessage(Message message) throws Exception;
 
@@ -95,7 +94,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    * id (exclusive) for the first fetch.
    *
    * @return the last persisted message id or {@code null} to have first fetch starts from the first
-   *     available message in the topic.
+   * available message in the topic.
    * @throws IOException if failed to load the message id
    */
   @Nullable
@@ -105,12 +104,12 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
    * Processes the give list of messages. If {@link Exception} is raised from this method, all
    * messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
-   * @param messages an {@link Iterable} of {@link ImmutablePair}, with the {@link
-   *     ImmutablePair#first} as the message id, and the {@link ImmutablePair#second} as the decoded
-   *     message
-   * @return the message ID for the next fetch to start from (exclusively). If returning {@code
-   *     null}, the next fetch will start from the same message ID that was used to fetch the
-   *     current batch of messages
+   * @param messages an {@link Iterable} of {@link ImmutablePair}, with the
+   *                 {@link ImmutablePair#first} as the message id, and the
+   *                 {@link ImmutablePair#second} as the decoded message
+   * @return the message ID for the next fetch to start from (exclusively). If returning
+   * {@code null}, the next fetch will start from the same message ID that was used to fetch the
+   * current batch of messages
    * @throws Exception if there is error processing messages.
    */
   @Nullable
@@ -171,7 +170,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   protected List<Message> fetchMessages(@Nullable String messageId)
       throws TopicNotFoundException, IOException {
     List<Message> messages = new ArrayList<>();
-    LOG.trace("Fetching from topic '{}' with messageId '{}'", topicId, messageId);
+    LOG.debug("Fetching from topic '{}' with messageId '{}'", topicId, messageId);
     MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
     try (CloseableIterator<Message> iterator = messageFetcher.fetch(getTopicId().getNamespace(),
         getTopicId().getTopic(), fetchSize, messageId)) {
@@ -206,6 +205,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
       return Math.max(0L, emptyFetchDelayMillis - (System.currentTimeMillis() - startTime));
     }
 
+    LOG.info("Found messages to fetch {} from topic {}", messages.size(), topicId.getTopic());
     startTime = System.currentTimeMillis();
 
     //This will hold number of consumed messages after last iterator was requested
@@ -242,8 +242,8 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   }
 
   /**
-   * An {@link Iterator} that decodes {@link Message} to a given object type through the {@link
-   * #decodeMessage(Message)} method.
+   * An {@link Iterator} that decodes {@link Message} to a given object type through the
+   * {@link #decodeMessage(Message)} method.
    */
   private final class MessageIterator extends AbstractIterator<ImmutablePair<String, T>> {
 

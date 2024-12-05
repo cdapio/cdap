@@ -188,6 +188,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Nullable
   @Override
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
+    LOG.info("Publish called for {}", request.getTopicId().getTopic());
     try {
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       if (request.isTransactional()) {
@@ -249,8 +250,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   /**
-   * Creates the given topic if it is not yet created. Adds a topic to the {@code
-   * creationFailureTopics} if creation fails.
+   * Creates the given topic if it is not yet created. Adds a topic to the
+   * {@code creationFailureTopics} if creation fails.
    */
   private void createSystemTopic(TopicId topicId, Queue<TopicId> creationFailureTopics) {
     try {
@@ -321,7 +322,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
         unit);
   }
 
-  /** Creates the given topic if it is not yet created. */
+  /**
+   * Creates the given topic if it is not yet created.
+   */
   private void createTopicIfNotExists(TopicId topicId) throws IOException {
     try {
       createTopic(new DefaultTopicMetadata(topicId));
@@ -332,7 +335,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     }
   }
 
-  /** Creates a loading cache for {@link TopicMetadata}. */
+  /**
+   * Creates a loading cache for {@link TopicMetadata}.
+   */
   private LoadingCache<TopicId, TopicMetadata> createTopicCache() {
     return CacheBuilder.newBuilder()
         .build(
@@ -347,12 +352,12 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   /**
-   * Creates a {@link LoadingCache} for {@link ConcurrentMessageWriter} for writing to {@link
-   * MessageTable} or {@link PayloadTable}.
+   * Creates a {@link LoadingCache} for {@link ConcurrentMessageWriter} for writing to
+   * {@link MessageTable} or {@link PayloadTable}.
    *
-   * @param messageTable {@code true} for building a cache for the {@link MessageTable}; {@code
-   *     false} for the {@link PayloadTable}
-   * @param cConf the system configuration
+   * @param messageTable {@code true} for building a cache for the {@link MessageTable};
+   *                     {@code false} for the {@link PayloadTable}
+   * @param cConf        the system configuration
    * @return a {@link LoadingCache} for
    */
   private LoadingCache<TopicId, ConcurrentMessageWriter> createTableWriterCache(
@@ -388,7 +393,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
                 StoreRequestWriter<?> messagesWriter =
                     messageTable
                         ? new MessageTableStoreRequestWriter(
-                            createMessageTable(metadata), timeProvider)
+                        createMessageTable(metadata), timeProvider)
                         : new PayloadTableStoreRequestWriter(
                             createPayloadTable(metadata), timeProvider);
 
@@ -409,7 +414,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
             });
   }
 
-  /** Creates a new instance of {@link MetadataTable}. */
+  /**
+   * Creates a new instance of {@link MetadataTable}.
+   */
   private MetadataTable createMetadataTable() throws IOException {
     return tableFactory.createMetadataTable();
   }
@@ -424,7 +431,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     return tableFactory.createPayloadTable(topicMetadata);
   }
 
-  /** Creates default topic properties based on {@link CConfiguration}. */
+  /**
+   * Creates default topic properties based on {@link CConfiguration}.
+   */
   private Map<String, String> createDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
 
@@ -450,6 +459,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
+    LOG.info("fetch called for {} : {} : {}", messageFetchRequest.getTopicId().getTopic(),
+        messageFetchRequest.getStartOffset(), messageFetchRequest.getStartTime());
     TopicMetadata metadata = getTopic(messageFetchRequest.getTopicId());
 
     MessageTable messageTable = createMessageTable(metadata);
@@ -475,12 +486,12 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   /**
-   * Creates a raw message id from the given {@link MessageTable.Entry} and {@link
-   * PayloadTable.Entry}.
+   * Creates a raw message id from the given {@link MessageTable.Entry} and
+   * {@link PayloadTable.Entry}.
    *
    * @param messageEntry entry in the message table representing a message
    * @param payloadEntry an optional entry in the payload table if the message payload is stored in
-   *     the Payload Table
+   *                     the Payload Table
    * @return a byte array representing the raw message id.
    */
   private byte[] createMessageId(
@@ -494,9 +505,10 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    * Creates a raw message id from the given {@link MessageTable.Entry} and the payload write
    * timestamp and sequence id.
    *
-   * @param messageEntry entry in the message table representing a message
+   * @param messageEntry          entry in the message table representing a message
    * @param payloadWriteTimestamp the timestamp that the entry was written to the payload table.
-   * @param payloadSeqId the sequence id generated when the entry was written to the payload table.
+   * @param payloadSeqId          the sequence id generated when the entry was written to the
+   *                              payload table.
    * @return a byte array representing the raw message id.
    */
   private byte[] createMessageId(

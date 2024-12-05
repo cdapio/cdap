@@ -113,6 +113,40 @@ public class SpannerMessagingService implements MessagingService {
   }
 
   @Override
+  public void createTopics(List<TopicMetadata> topics)
+      throws TopicAlreadyExistsException, IOException, UnauthorizedException {
+    LOG.info("Create all topics started.");
+    List<String> ddlStatements = new ArrayList<>();
+    List<Mutation> mutations = new ArrayList<>();
+    ddlStatements.add(getCreateTopicMetadataDDLStatement());
+    for (TopicMetadata topic : topics) {
+      LOG.info("topic creation : {}", topic.getTopicId().getTopic());
+      ddlStatements.add(getCreateTopicDDLStatement(topic.getTopicId()));
+      Gson gson = new Gson();
+      String jsonString = gson.toJson(topic.getProperties());
+      mutations.add(Mutation.newInsertOrUpdateBuilder(TOPIC_METADATA_TABLE).set(TOPIC_ID_FIELD)
+          .to(getTableName(topic.getTopicId())).set(PROPERTIES_FIELD)
+          .to(Value.json(jsonString)).set(NAMESPACE_FIELD)
+          .to(topic.getTopicId().getNamespace()).build());
+    }
+    OperationFuture<Void, UpdateDatabaseDdlMetadata> future = adminClient.updateDatabaseDdl(
+        this.instanceId, this.databaseId, ddlStatements, null);
+    try {
+      future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException(e);
+    }
+    LOG.info("Created all topics");
+
+    try {
+      client.write(mutations);
+    } catch (SpannerException e) {
+      throw new IOException(e);
+    }
+    LOG.info("updated the metadata table");
+  }
+
+  @Override
   public void createTopic(TopicMetadata topicMetadata)
       throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     List<String> ddlStatements = new ArrayList<>();
@@ -248,6 +282,7 @@ public class SpannerMessagingService implements MessagingService {
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
     long start = System.currentTimeMillis();
+    LOG.info("publish called");
 
     batch.add(request);
     if (!batch.isEmpty()) {
@@ -263,6 +298,7 @@ public class SpannerMessagingService implements MessagingService {
               .set(SEQUENCE_ID_FIELD).to(i++).set(PAYLOAD_SEQUENCE_ID).to(0).set(PUBLISH_TS_FIELD)
               .to("spanner.commit_timestamp()").set(PAYLOAD_FIELD).to(ByteArray.copyFrom(payload))
               .build();
+          LOG.info("mutation to publish {}", mutation);
           batchCopy.add(mutation);
         }
 
@@ -278,6 +314,7 @@ public class SpannerMessagingService implements MessagingService {
       if (!batchCopy.isEmpty()) {
         try {
           client.write(batchCopy);
+          LOG.info("publish done");
         } catch (SpannerException e) {
           throw new IOException(e);
         }

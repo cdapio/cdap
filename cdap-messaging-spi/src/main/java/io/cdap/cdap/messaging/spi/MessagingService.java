@@ -61,6 +61,18 @@ public interface MessagingService {
       throws TopicAlreadyExistsException, IOException, UnauthorizedException;
 
   /**
+   *
+   * @param topics
+   * @throws TopicAlreadyExistsException
+   * @throws IOException
+   * @throws UnauthorizedException
+   */
+  default void createTopics(List<TopicMetadata> topics)
+      throws TopicAlreadyExistsException, IOException, UnauthorizedException {
+    throw new UnsupportedOperationException("Messaging SPI does not support createTopics.");
+  }
+
+  /**
    * Updates the metadata of a topic.
    *
    * @param topicMetadata the topic metadata to be updated
