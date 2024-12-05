@@ -282,7 +282,7 @@ public class SpannerMessagingService implements MessagingService {
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
     long start = System.currentTimeMillis();
-    LOG.info("publish called");
+    LOG.trace("publish called");
 
     batch.add(request);
     if (!batch.isEmpty()) {
@@ -298,7 +298,7 @@ public class SpannerMessagingService implements MessagingService {
               .set(SEQUENCE_ID_FIELD).to(i++).set(PAYLOAD_SEQUENCE_ID).to(0).set(PUBLISH_TS_FIELD)
               .to("spanner.commit_timestamp()").set(PAYLOAD_FIELD).to(ByteArray.copyFrom(payload))
               .build();
-          LOG.info("mutation to publish {}", mutation);
+          LOG.trace("mutation to publish {}", mutation);
           batchCopy.add(mutation);
         }
 
@@ -314,7 +314,7 @@ public class SpannerMessagingService implements MessagingService {
       if (!batchCopy.isEmpty()) {
         try {
           client.write(batchCopy);
-          LOG.info("publish done");
+          LOG.trace("publish done");
         } catch (SpannerException e) {
           throw new IOException(e);
         }
@@ -338,7 +338,7 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public CloseableIterator<RawMessage> fetch(MessageFetchRequest messageFetchRequest)
       throws TopicNotFoundException, IOException {
-    LOG.info("Message Fetch Request {} : {}", messageFetchRequest.getTopicId().getTopic(),
+    LOG.trace("Message Fetch Request {} : {}", messageFetchRequest.getTopicId().getTopic(),
         messageFetchRequest.getStartOffset());
     Long startTime = 0L;
     if (messageFetchRequest.getStartTime() != null) {
@@ -351,7 +351,7 @@ public class SpannerMessagingService implements MessagingService {
       startTime = Bytes.toLong(id, offset);
       offset += Bytes.SIZEOF_LONG;
       sequenceId = Bytes.toShort(id, offset);
-      LOG.info("start time : {} sequenceId : {}", startTime, sequenceId);
+      LOG.trace("start time : {} sequenceId : {}", startTime, sequenceId);
     }
 
     String sqlStatement = String.format(
@@ -365,10 +365,10 @@ public class SpannerMessagingService implements MessagingService {
         startTime, sequenceId,
         messageFetchRequest.getLimit());
 
-    LOG.info("Fetch sql {}", sqlStatement);
+    LOG.trace("Fetch sql {}", sqlStatement);
     try {
       ResultSet resultSet = client.singleUse().executeQuery(Statement.of(sqlStatement));
-      LOG.info("executeQuery called");
+      LOG.trace("executeQuery called");
       return new SpannerResultSetClosableIterator<>(resultSet);
     } catch (Exception ex) {
       LOG.error("Error when fetching {}", sqlStatement, ex);
@@ -394,7 +394,7 @@ public class SpannerMessagingService implements MessagingService {
       byte[] id = getMessageId(resultSet.getLong(0), resultSet.getLong(1), resultSet.getLong(2));
       byte[] payload = resultSet.getBytes(3).toByteArray();
 
-      LOG.info("computeNext called");
+      LOG.trace("computeNext called");
       return new io.cdap.cdap.messaging.spi.RawMessage.Builder().setId(id).setPayload(payload)
           .build();
     }
@@ -406,7 +406,7 @@ public class SpannerMessagingService implements MessagingService {
   }
 
   public static byte[] getMessageId(long sequenceId, long messageSequenceId, long timestamp) {
-    LOG.info("sequenceId {} messageSequenceId {} timestamp {}", sequenceId, messageSequenceId,
+    LOG.trace("sequenceId {} messageSequenceId {} timestamp {}", sequenceId, messageSequenceId,
         timestamp);
     byte[] result = new byte[Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG
         + Bytes.SIZEOF_SHORT];

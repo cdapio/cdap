@@ -170,7 +170,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   protected List<Message> fetchMessages(@Nullable String messageId)
       throws TopicNotFoundException, IOException {
     List<Message> messages = new ArrayList<>();
-    LOG.debug("Fetching from topic '{}' with messageId '{}'", topicId, messageId);
+    LOG.trace("Fetching from topic '{}' with messageId '{}'", topicId, messageId);
     MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
     try (CloseableIterator<Message> iterator = messageFetcher.fetch(getTopicId().getNamespace(),
         getTopicId().getTopic(), fetchSize, messageId)) {

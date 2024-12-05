@@ -121,7 +121,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
   public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext)
       throws Exception {
     RunId runId = dispatcherContext.getRunId();
-    LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
+    LOG.info("Dispatching Program Run operation for Run ID: {}", runId.getId());
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
             ProgramRunDispatcherTask.class.getName())
         .withParam(GSON.toJson(dispatcherContext)).build();
