@@ -285,7 +285,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (namespace == null) {
       throw new IllegalStateException("Application scan request without namespace");
     }
-    accessEnforcer.enforceOnParent(EntityType.DATASET, namespace,
+    accessEnforcer.enforceOnParent(EntityType.APPLICATION, namespace,
         authenticationContext.getPrincipal(), StandardPermission.LIST);
 
     try (
