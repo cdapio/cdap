@@ -562,4 +562,28 @@ public class MacroParserTest {
     MacroParser macroParser = new MacroParser(macroEvaluator);
     Assert.assertEquals(expected, macroParser.parse(macro));
   }
+
+  @Test
+  public void testDoNotSkipInvalidMacrosInMacroFunctions() {
+    MacroEvaluator evaluator = new TestMacroEvaluator(Collections.emptyMap(), Collections.emptyMap(), false);
+
+    //TestMacroEvaluator will throw InvalidMacroException if macro function is other than 't' or 'test'
+    // but skip invalid flag will suppress this exception.
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().skipInvalidMacros().build());
+    Assert.assertEquals("${oauthAccessToken(provider,credentials)}",
+                        parser.parse("${oauthAccessToken(provider,credentials)}"));
+    
+    // If doNotSkipInvalidMacroForFunctions set has that macro, it will not skip validation and will throw Exception
+    MacroParser parserWithDoNotSkipInvalidSet = new MacroParser(evaluator,
+                                                                MacroParserOptions.builder().skipInvalidMacros()
+                                                                  .setDoNotSkipInvalidMacroForFunctions(
+                                                                    "oauthAccessToken", "oauth").build());
+    boolean exceptionThrown = false;
+    try {
+      parserWithDoNotSkipInvalidSet.parse("${oauthAccessToken(provider,credentials)}");
+    } catch (InvalidMacroException e) {
+      exceptionThrown = true;
+    }
+    Assert.assertTrue(exceptionThrown);
+  }
 }

@@ -61,6 +61,7 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -169,11 +170,14 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     );
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
                                                               DefaultMacroEvaluator.MAP_FUNCTIONS);
+    Set<String> doNotSkipInvalidMacroForFunctions = validationRequest.getDoNotSkipInvalidMacroForFunctions();
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
-      .skipInvalidMacros()
       .setEscaping(false)
       .setFunctionWhitelist(evaluators.keySet())
+      .skipInvalidMacros()
+      .setDoNotSkipInvalidMacroForFunctions(doNotSkipInvalidMacroForFunctions)
       .build();
+
     Function<Map<String, String>, Map<String, String>> macroFn =
       macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     String validationResponse = GSON.toJson(ValidationUtils.validate(
