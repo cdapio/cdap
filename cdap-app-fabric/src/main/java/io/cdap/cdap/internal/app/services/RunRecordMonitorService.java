@@ -209,7 +209,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   }
 
   private void emitMetrics(String metricName, long value) {
-    LOG.debug("Setting metric {} to value {}", metricName, value);
+    LOG.trace("Setting metric {} to value {}", metricName, value);
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(metricName, value);
   }
 
