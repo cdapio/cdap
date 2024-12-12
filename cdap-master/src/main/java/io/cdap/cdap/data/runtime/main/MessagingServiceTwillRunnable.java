@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -102,6 +103,7 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
         new NamespaceQueryAdminModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
         new AuthenticationContextModules().getMasterModule(),
+        new AuditLogWriterModule(cConf).getDistributedModules(),
         new MessagingServerRuntimeModule().getDistributedModules()
     );
   }
