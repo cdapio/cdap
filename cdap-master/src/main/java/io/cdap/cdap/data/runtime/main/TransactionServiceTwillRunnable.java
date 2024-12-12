@@ -22,6 +22,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -116,6 +117,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
         // needed by RemoteDatasetFramework while making an HTTP call to DatasetService
         new AuthorizationEnforcementModule().getDistributedModules(),
         new AuthenticationContextModules().getMasterModule(),
+        new AuditLogWriterModule(cConf).getDistributedModules(),
         new AbstractModule() {
           @Override
           protected void configure() {
