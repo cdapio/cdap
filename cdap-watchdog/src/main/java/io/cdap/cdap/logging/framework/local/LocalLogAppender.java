@@ -142,6 +142,10 @@ public class LocalLogAppender extends LogAppender {
     pipelines.get().forEach(p -> p.append(logMessage));
   }
 
+  public AtomicReference<Set<Thread>> getPipelineThreads() {
+    return pipelineThreads;
+  }
+
   /**
    * The log processing pipeline for writing logs to configured logger context
    */

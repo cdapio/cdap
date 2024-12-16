@@ -17,9 +17,15 @@
 package io.cdap.cdap.logging.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import io.cdap.cdap.logging.appender.CompositeLogAppender;
 import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.DefaultLogAppender;
 import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A Guice module to provide binding for {@link LogAppender} that pushes log entries to log saver.
@@ -28,6 +34,16 @@ public class RemoteLogAppenderModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(LogAppender.class).to(RemoteLogAppender.class).in(Scopes.SINGLETON);
+    bind(RemoteLogAppender.class).in(Scopes.SINGLETON);
+    bind(DefaultLogAppender.class).in(Scopes.SINGLETON);
+  }
+
+  @Provides
+  @Singleton
+  @SuppressWarnings("unused")
+  LogAppender provideCompositeLogAppender(RemoteLogAppender remoteLogAppender,
+      DefaultLogAppender defaultLogAppender) {
+    List<LogAppender> appenders = Arrays.asList(remoteLogAppender, defaultLogAppender);
+    return new CompositeLogAppender(appenders);
   }
 }
