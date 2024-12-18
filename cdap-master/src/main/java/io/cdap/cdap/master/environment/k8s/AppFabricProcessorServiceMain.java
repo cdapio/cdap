@@ -73,7 +73,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**
- * The main class to run app-fabric and other supporting services.
+ * The main class to run appfabric processor and other supporting services.
  */
 public class AppFabricProcessorServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 

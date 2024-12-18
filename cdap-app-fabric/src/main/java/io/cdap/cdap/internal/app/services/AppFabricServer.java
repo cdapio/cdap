@@ -81,8 +81,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
-  private final RunRecordCorrectorService runRecordCorrectorService;
-  private final RunDataTimeToLiveService runDataTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
@@ -104,7 +102,7 @@ public class AppFabricServer extends AbstractIdleService {
   private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
 
   /**
-   * Construct the AppFabricProcessorService with service factory and cConf coming from guice
+   * Construct the AppFabricServer with service factory and cConf coming from guice
    * injection.
    */
   @Inject
@@ -114,7 +112,6 @@ public class AppFabricServer extends AbstractIdleService {
       @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
       @Nullable MetricsCollectionService metricsCollectionService,
       ProgramRuntimeService programRuntimeService,
-      RunRecordCorrectorService runRecordCorrectorService,
       ProgramRunStatusMonitorService programRunStatusMonitorService,
       ApplicationLifecycleService applicationLifecycleService,
       @Named("appfabric.services.names") Set<String> servicesNames,
@@ -128,7 +125,6 @@ public class AppFabricServer extends AbstractIdleService {
       TransactionRunner transactionRunner,
       RunRecordMonitorService runRecordCounterService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      RunDataTimeToLiveService runDataTimeToLiveService,
       SourceControlOperationRunner sourceControlOperationRunner,
       RepositoryCleanupService repositoryCleanupService) {
     this.hostname = hostname;
@@ -141,7 +137,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
@@ -152,7 +147,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
     this.runRecordCounterService = runRecordCounterService;
-    this.runDataTimeToLiveService = runDataTimeToLiveService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.repositoryCleanupService = repositoryCleanupService;
@@ -177,12 +171,10 @@ public class AppFabricServer extends AbstractIdleService {
         applicationLifecycleService.start(),
         bootstrapService.start(),
         programRuntimeService.start(),
-        runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
         coreSchedulerService.start(),
         credentialProviderService.start(),
         runRecordCounterService.start(),
-        runDataTimeToLiveService.start(),
         sourceControlOperationRunner.start(),
         repositoryCleanupService.start()
     ));
@@ -241,11 +233,9 @@ public class AppFabricServer extends AbstractIdleService {
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
-    runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
     runRecordCounterService.stopAndWait();
-    runDataTimeToLiveService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();
     repositoryCleanupService.stopAndWait();
     credentialProviderService.stopAndWait();

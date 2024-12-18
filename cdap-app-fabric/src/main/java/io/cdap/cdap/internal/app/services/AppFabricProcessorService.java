@@ -26,6 +26,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -40,6 +41,7 @@ import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.ScheduleNotificationSubscriberService;
+import io.cdap.cdap.security.auth.AuditLogSubscriberService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -54,17 +56,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AppFabric Server.
+ * AppFabric Processor Service which runs messaging subscriber services.
  */
 public class AppFabricProcessorService extends AbstractIdleService {
 
-  // TODO: Use Logger
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricProcessorService.class);
 
   private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
+  private final AuditLogSubscriberService auditLogSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final RunDataTimeToLiveService runDataTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
@@ -84,7 +86,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private MetricsCollectionService metricsCollectionService;
 
   /**
-   * Construct the AppFabricServer with service factory and cConf coming from guice injection.
+   * Construct the AppFabricProcessorService with service factory and cConf coming from guice injection.
    */
   @Inject
   public AppFabricProcessorService(CConfiguration cConf,
@@ -95,6 +97,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       ApplicationLifecycleService applicationLifecycleService,
       ProgramNotificationSubscriberService programNotificationSubscriberService,
       ProgramStopSubscriberService programStopSubscriberService,
+      AuditLogSubscriberService auditLogSubscriberService,
       CoreSchedulerService coreSchedulerService,
       CredentialProviderService credentialProviderService,
       NamespaceCredentialProviderService namespaceCredentialProviderService,
@@ -114,6 +117,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.programStopSubscriberService = programStopSubscriberService;
+    this.auditLogSubscriberService = auditLogSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.coreSchedulerService = coreSchedulerService;
@@ -132,18 +136,24 @@ public class AppFabricProcessorService extends AbstractIdleService {
   }
 
   /**
-   * Configures the AppFabricService pre-start.
+   * Configures the AppFabricProcessorService pre-start.
    */
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
-            Constants.Service.APP_FABRIC_HTTP));
+            Service.APP_FABRIC_PROCESSOR));
+    LOG.info("Starting AppFabric processor service.");
     List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
       futuresList.add(namespaceCredentialProviderService.start());
+    }
+    // Only for RBAC instances
+    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
+        && cConf.getBoolean(Constants.Security.ENABLED)) {
+      futuresList.add(auditLogSubscriberService.start());
     }
     futuresList.addAll(ImmutableList.of(
         provisioningService.start(),
@@ -176,10 +186,12 @@ public class AppFabricProcessorService extends AbstractIdleService {
     metricsCollectionService.getContext(Collections.emptyMap())
         .gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
             namespaceCount);
+    LOG.info("AppFabric processor service started.");
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Stopping AppFabric processor service.");
     scheduleNotificationSubscriberService.stopAndWait();
     coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
@@ -198,5 +210,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
     credentialProviderService.stopAndWait();
     namespaceCredentialProviderService.stopAndWait();
     operationNotificationSubscriberService.stopAndWait();
+    auditLogSubscriberService.stopAndWait();
+    LOG.info("AppFabric processor service stopped.");
   }
 }

@@ -38,6 +38,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.gateway.handlers.log.MockLogReader;
 import io.cdap.cdap.gateway.router.NettyRouter;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.logging.read.LogReader;
@@ -106,6 +107,7 @@ public abstract class GatewayTestBase {
 
   private static Injector injector;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessorService;
   private static NettyRouter router;
   private static LogQueryService logQueryService;
   private static MetricsQueryService metricsQueryService;
@@ -194,6 +196,8 @@ public abstract class GatewayTestBase {
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessorService.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -217,6 +221,7 @@ public abstract class GatewayTestBase {
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE2));
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     appFabricServer.stopAndWait();
+    appFabricProcessorService.stopAndWait();
     metricsCollectionService.stopAndWait();
     metricsQueryService.stopAndWait();
     logQueryService.stopAndWait();

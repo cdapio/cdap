@@ -86,6 +86,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
@@ -231,6 +232,7 @@ public class TestBase {
   private static FieldLineageAdmin fieldLineageAdmin;
   private static LineageAdmin lineageAdmin;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessorService;
   private static PreferencesService preferencesService;
   private static ArtifactLocalizerService artifactLocalizerService;
   private static AppStateStoreProvider appStateStoreProvider;
@@ -424,6 +426,8 @@ public class TestBase {
     previewRunnerManager.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessorService.startAndWait();
     preferencesService = injector.getInstance(PreferencesService.class);
 
     scheduler = injector.getInstance(Scheduler.class);
@@ -646,6 +650,7 @@ public class TestBase {
       ((Service) messagingService).stopAndWait();
     }
     appFabricServer.stopAndWait();
+    appFabricProcessorService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {
