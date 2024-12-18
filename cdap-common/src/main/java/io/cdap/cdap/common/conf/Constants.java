@@ -334,7 +334,9 @@ public final class Constants {
      */
     public static final String QUERY_PARAM_LIMIT = "limit";
 
-    public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
+    public static final String SERVICE_DESCRIPTION = "Service for managing HTTP handlers.";
+
+    public static final String PROCESSOR_DESCRIPTION = "Service for managing application lifecycle.";
 
     /**
      * Configuration setting to set the maximum size of a workflow token in MB.

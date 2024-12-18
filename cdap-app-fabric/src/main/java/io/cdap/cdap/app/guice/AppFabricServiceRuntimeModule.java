@@ -46,6 +46,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -220,6 +221,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                     Names.named("appfabric.services.names"));
             servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
+            Multibinder<String> processorNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.processor.services.names"));
+            processorNamesBinder.addBinding().toInstance(Service.APP_FABRIC_PROCESSOR);
+
             // TODO: Uncomment after CDAP-7688 is resolved
             // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
 
@@ -263,6 +269,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                 Multibinder.newSetBinder(binder(), String.class,
                     Names.named("appfabric.services.names"));
             servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+
+            Multibinder<String> processorNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.processor.services.names"));
+            processorNamesBinder.addBinding().toInstance(Service.APP_FABRIC_PROCESSOR);
 
             // for PingHandler
             servicesNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
@@ -324,6 +335,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                     Names.named("appfabric.services.names"));
             servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
             servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
+
+            Multibinder<String> processorNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.processor.services.names"));
+            processorNamesBinder.addBinding().toInstance(Service.APP_FABRIC_PROCESSOR);
 
             Multibinder<String> handlerHookNamesBinder =
                 Multibinder.newSetBinder(binder(), String.class,
