@@ -51,10 +51,19 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
   }
 
   @Override
+  public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+    LOG.warn("SANKET_TEST :AuditLogSetterHook.preCall ");
+    return super.preCall(request, responder, handlerInfo);
+  }
+
+  @Override
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
     if (!Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)){
       return;
     }
+
+    LOG.warn("SANKET_TEST :AuditLogSetterHook.postCall: req : {} , Q size : {}",
+             request.uri(), SecurityRequestContext.getAuditLogQueue().size());
 
     String startTimeStr = request.headers().get(HttpHeaderNames.CDAP_REQ_TIMESTAMP_HDR);
     Long endTimeNanos = System.nanoTime();

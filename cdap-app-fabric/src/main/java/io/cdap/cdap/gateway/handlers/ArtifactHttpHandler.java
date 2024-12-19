@@ -72,6 +72,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
@@ -687,6 +688,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @HeaderParam(PLUGINS_HEADER) String pluginClasses)
       throws NamespaceNotFoundException, BadRequestException {
 
+    LOG.warn("SANKET_TEST : in addArtifact : start");
+
     final NamespaceId namespace = validateAndGetNamespace(namespaceId);
 
     // if version is explicitly given, validate the id now. otherwise version will be derived from the manifest
@@ -722,6 +725,9 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             e);
       }
     }
+
+    LOG.warn("SANKET_TEST : in addArtifact : Audit Q size : {} : return with AbstractBodyConsumer",
+             SecurityRequestContext.getAuditLogQueue().size());
 
     try {
       // copy the artifact contents to local tmp directory

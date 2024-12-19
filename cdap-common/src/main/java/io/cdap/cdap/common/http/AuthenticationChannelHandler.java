@@ -72,6 +72,16 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    if (msg instanceof HttpRequest) {
+      HttpRequest request = (HttpRequest) msg;
+      LOG.warn("SANKET_TEST ACH 1 : ChannelRead START + RESET:  chanelId : {} , pipeline.channelId : {} " +
+                 "and URI : {} and Method {}",
+               ctx.channel().id(),
+               ctx.pipeline().channel().id(),
+               request.uri(),
+               request.method());
+
+    }
     SecurityRequestContext.reset();
 
     // Only set SecurityRequestContext for the HttpRequest but not for subsequence chunks.
@@ -133,8 +143,31 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     }
 
     try {
+      if (msg instanceof HttpRequest) {
+        HttpRequest request = (HttpRequest) msg;
+        LOG.warn("SANKET_TEST ACH 2 : ChannelRead before fireChannelRead :  chanelId : {} , pipeline.channelId : {} " +
+                   "and URI : {} and Method {}",
+                 ctx.channel().id(),
+                 ctx.pipeline().channel().id(),
+                 request.uri(),
+                 request.method());
+
+      }
       ctx.fireChannelRead(msg);
     } finally {
+      if (msg instanceof HttpRequest) {
+        HttpRequest request = (HttpRequest) msg;
+        LOG.warn("SANKET_TEST ACH 3 : ChannelRead - in FINALLY - Setting ATTR :  chanelId : {} , " +
+                   "pipeline.channelId : {} " +
+                   "and URI : {} and Method {}, " +
+                   "and SecurityRequestContext.getAuditLogRequest()'s Q size : {}",
+                 ctx.channel().id(),
+                 ctx.pipeline().channel().id(),
+                 request.uri(),
+                 request.method(),
+                 SecurityRequestContext.getAuditLogRequest().getAuditLogContextQueue().size());
+
+      }
       // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
       // it independent of Thread local.
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME))
@@ -149,6 +182,9 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        LOG.warn("SANKET_TEST3 : WRITE :  chanelId : {} , pipeline.channelId : {} ",
+             ctx.channel().id(),
+             ctx.pipeline().channel().id());
     publishAuditLogRequest(ctx);
     super.write(ctx, msg, promise);
   }
@@ -158,6 +194,9 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+    LOG.warn("SANKET_TEST3 : CLOSE :  chanelId : {} , pipeline.channelId : {} ",
+             ctx.channel().id(),
+             ctx.pipeline().channel().id());
     publishAuditLogRequest(ctx);
     super.close(ctx, promise);
   }
@@ -179,8 +218,13 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   private void publishAuditLogRequest(ChannelHandlerContext ctx) throws IOException {
     Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get();
+    LOG.warn("SANKET_TEST3 : publishAuditLogRequest :  chanelId : {} , pipeline.channelId : {} " +
+               "and modified final AUDIT LOG REQUEST's Q size  : {}",
+             ctx.channel().id(),
+             ctx.pipeline().channel().id(),
+             auditLogRequestObj == null? 0 : ((AuditLogRequest) auditLogRequestObj).getAuditLogContextQueue().size());
     if (auditLoggingEnabled && auditLogRequestObj != null) {
-      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
+//      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
     }
   }
