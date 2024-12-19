@@ -80,7 +80,10 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
                ctx.pipeline().channel().id(),
                request.uri(),
                request.method());
-
+    } else {
+      LOG.warn("SANKET_TEST ACH 1 : ChannelRead START + RESET : NOT req : chanelId : {} , pipeline.channelId : {} ",
+               ctx.channel().id(),
+               ctx.pipeline().channel().id());
     }
     SecurityRequestContext.reset();
 
@@ -157,6 +160,10 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     } finally {
       if (msg instanceof HttpRequest) {
         HttpRequest request = (HttpRequest) msg;
+        AuditLogRequest a = SecurityRequestContext.getAuditLogRequest();
+        int size = a == null ? 0 : (a.getAuditLogContextQueue() == null ? 0 : a.getAuditLogContextQueue().size());
+
+
         LOG.warn("SANKET_TEST ACH 3 : ChannelRead - in FINALLY - Setting ATTR :  chanelId : {} , " +
                    "pipeline.channelId : {} " +
                    "and URI : {} and Method {}, " +
@@ -165,7 +172,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
                  ctx.pipeline().channel().id(),
                  request.uri(),
                  request.method(),
-                 SecurityRequestContext.getAuditLogRequest().getAuditLogContextQueue().size());
+                 size);
 
       }
       // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
@@ -224,7 +231,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
              ctx.pipeline().channel().id(),
              auditLogRequestObj == null? 0 : ((AuditLogRequest) auditLogRequestObj).getAuditLogContextQueue().size());
     if (auditLoggingEnabled && auditLogRequestObj != null) {
-//      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
+      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
     }
   }
