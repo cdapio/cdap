@@ -54,17 +54,6 @@ public class AuditLogWriterModule extends RuntimeModule {
    */
   @Override
   public Module getInMemoryModules() {
-
-    if (auditLoggingEnabled && securityEnabled) {
-      LOG.info("Audit Logging feature is ENABLED. Injecting an audit message writer");
-      return new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(AuditLogWriter.class).to(MessagingAuditLogWriter.class).in(Scopes.SINGLETON);
-        }
-      };
-    }
-
     return new NoOpAuditLogModule();
   }
 
