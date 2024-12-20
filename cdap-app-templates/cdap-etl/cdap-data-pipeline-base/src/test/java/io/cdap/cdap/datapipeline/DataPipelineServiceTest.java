@@ -484,4 +484,34 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), StageValidationResponse.class);
   }
+
+  @Test
+  public void testValidationForInvalidMacrosForFunctions() throws Exception {
+    String stageName = "invalidMacro";
+    Map<String, String> properties =
+      Collections.singletonMap("metadataOperations", "${oauthAccessToken(provider,credential)}");
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(MockSource.NAME, BatchSource.PLUGIN_TYPE, properties));
+
+    // In case doNotSkipInvalidMacroForFunctions is set in StageValidationRequest,
+    // it will not skip invalid macro given in the list and will throw the exact exception
+    HttpResponse withDoNotSkipInvalidMacroForFunctionsResponse = sendRequestForInvalidMacros(
+      new StageValidationRequest(stage, Collections.emptyList(), false, "oauthAccessToken,oauth"));
+    Assert.assertEquals(500, withDoNotSkipInvalidMacroForFunctionsResponse.getResponseCode());
+
+    // In case doNotSkipInvalidMacroForFunctions is not set in StageValidationRequest,
+    // it will skip invalid macro and will not throw any exception
+    HttpResponse withoutDoNotSkipInvalidMacroForFunctionsResponse = sendRequestForInvalidMacros(
+      new StageValidationRequest(stage, Collections.emptyList(), false));
+    Assert.assertEquals(200, withoutDoNotSkipInvalidMacroForFunctionsResponse.getResponseCode());
+  }
+
+  private HttpResponse sendRequestForInvalidMacros(StageValidationRequest requestBody) throws IOException {
+    URL validatePipelineURL = serviceURI
+      .resolve(String.format("v1/contexts/%s/validations/stage", NamespaceId.DEFAULT.getNamespace()))
+      .toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+      .withBody(GSON.toJson(requestBody))
+      .build();
+    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+  }
 }

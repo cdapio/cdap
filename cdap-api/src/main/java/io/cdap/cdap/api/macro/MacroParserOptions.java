@@ -33,16 +33,18 @@ public class MacroParserOptions {
   private final boolean skipInvalid;
   private final int maxRecurseDepth;
   private final Set<String> functionWhitelist;
+  private final Set<String> doNotSkipInvalidMacroForFunctions;
 
   private MacroParserOptions(boolean evaluateLookups, boolean evaluateFunctions,
       boolean escapingEnabled, boolean skipInvalid,
-      int maxRecurseDepth, Set<String> functionWhitelist) {
+      int maxRecurseDepth, Set<String> functionWhitelist, Set<String> doNotSkipInvalidMacroForFunctions) {
     this.evaluateLookups = evaluateLookups;
     this.evaluateFunctions = evaluateFunctions;
     this.escapingEnabled = escapingEnabled;
     this.maxRecurseDepth = maxRecurseDepth;
     this.skipInvalid = skipInvalid;
     this.functionWhitelist = functionWhitelist;
+    this.doNotSkipInvalidMacroForFunctions = doNotSkipInvalidMacroForFunctions;
   }
 
   public boolean shouldEvaluateLookups() {
@@ -69,6 +71,10 @@ public class MacroParserOptions {
     return functionWhitelist;
   }
 
+  public Set<String> getDoNotSkipInvalidMacroForFunctions() {
+    return doNotSkipInvalidMacroForFunctions;
+  }
+
   /**
    * @return Builder to create options
    */
@@ -87,6 +93,7 @@ public class MacroParserOptions {
     private boolean skipInvalid;
     private int maxRecurseDepth = 10;
     private final Set<String> functionWhitelist = new HashSet<>();
+    private final Set<String> doNotSkipInvalidMacroForFunctions = new HashSet<>();
 
     public Builder disableLookups() {
       evaluateLookups = false;
@@ -113,6 +120,16 @@ public class MacroParserOptions {
       return this;
     }
 
+    public Builder setDoNotSkipInvalidMacroForFunctions(Collection<String> whitelist) {
+      doNotSkipInvalidMacroForFunctions.clear();
+      doNotSkipInvalidMacroForFunctions.addAll(whitelist);
+      return this;
+    }
+
+    public Builder setDoNotSkipInvalidMacroForFunctions(String... whitelist) {
+      return setDoNotSkipInvalidMacroForFunctions(Arrays.asList(whitelist));
+    }
+
     public Builder setFunctionWhitelist(Collection<String> whitelist) {
       functionWhitelist.clear();
       functionWhitelist.addAll(whitelist);
@@ -122,10 +139,10 @@ public class MacroParserOptions {
     public Builder setFunctionWhitelist(String... whitelist) {
       return setFunctionWhitelist(Arrays.asList(whitelist));
     }
-
+    
     public MacroParserOptions build() {
       return new MacroParserOptions(evaluateLookups, evaluateFunctions, escapingEnabled,
-          skipInvalid, maxRecurseDepth, functionWhitelist);
+          skipInvalid, maxRecurseDepth, functionWhitelist, doNotSkipInvalidMacroForFunctions);
     }
   }
 }

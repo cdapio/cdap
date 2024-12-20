@@ -185,7 +185,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       if (response.getResponseCode() != 200) {
         throw new OAuthServiceException(
-            HttpURLConnection.HTTP_INTERNAL_ERROR,
+          response.getResponseCode(),
             "Request for refresh token did not return 200. Response code: "
                 + response.getResponseCode()
                 + " , response message: "
@@ -243,7 +243,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       if (response.getResponseCode() != 200) {
         throw new OAuthServiceException(
-            HttpURLConnection.HTTP_INTERNAL_ERROR,
+          response.getResponseCode(),
             "Request for refresh token did not return 200. Response code: "
                 + response.getResponseCode()
                 + " , response message: "

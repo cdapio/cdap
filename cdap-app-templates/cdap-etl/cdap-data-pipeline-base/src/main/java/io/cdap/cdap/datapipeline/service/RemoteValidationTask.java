@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -96,10 +97,12 @@ public class RemoteValidationTask implements RunnableTask {
     );
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
                                                               DefaultMacroEvaluator.MAP_FUNCTIONS);
+    Set<String> doNotSkipInvalidMacroForFunctions = validationRequest.getDoNotSkipInvalidMacroForFunctions();
     MacroParserOptions macroParserOptions = MacroParserOptions.builder()
-      .skipInvalidMacros()
       .setEscaping(false)
       .setFunctionWhitelist(evaluators.keySet())
+      .skipInvalidMacros()
+      .setDoNotSkipInvalidMacroForFunctions(doNotSkipInvalidMacroForFunctions)
       .build();
     Function<Map<String, String>, Map<String, String>> macroFn =
       macroProperties -> systemAppContext

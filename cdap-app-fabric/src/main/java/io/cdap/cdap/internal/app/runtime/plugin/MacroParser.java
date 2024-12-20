@@ -43,6 +43,7 @@ public class MacroParser {
   private final boolean functionsEnabled;
   private final boolean skipInvalid;
   private final Set<String> functionWhitelist;
+  private final Set<String> doNotSkipInvalidMacroForFunctions;
 
   public MacroParser(MacroEvaluator macroEvaluator) {
     this(macroEvaluator, MacroParserOptions.DEFAULT);
@@ -55,6 +56,7 @@ public class MacroParser {
     this.functionsEnabled = options.shouldEvaluateFunctions();
     this.functionWhitelist = options.getFunctionWhitelist();
     this.skipInvalid = options.shouldSkipInvalid();
+    this.doNotSkipInvalidMacroForFunctions = options.getDoNotSkipInvalidMacroForFunctions();
   }
 
   /**
@@ -242,7 +244,7 @@ public class MacroParser {
         }
 
       } catch (InvalidMacroException e) {
-        if (!skipInvalid) {
+        if (!skipInvalid || doNotSkipInvalidMacroForFunctions.contains(macroFunction)) {
           throw e;
         }
       }
