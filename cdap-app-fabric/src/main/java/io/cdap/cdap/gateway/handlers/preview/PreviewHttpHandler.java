@@ -80,7 +80,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() {
   }.getType();
 
-  private final PreviewManager previewManager;
+  protected final PreviewManager previewManager;
 
   @Inject
   PreviewHttpHandler(PreviewManager previewManager, CConfiguration cConf) {
