@@ -49,3 +49,11 @@ jobs:
         commit: ${{ github.event.workflow_run.head_sha }}
         check_name: Build Test Report
 
+    - name: Checkstyle report
+      uses: cdapio/checkstyle-github-action@add_filter
+      if: always()
+      with:
+        path: '**/checkstyle-result.xml'
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit: ${{ github.event.workflow_run.head_sha }}
+        changed-since: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
