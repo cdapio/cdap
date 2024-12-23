@@ -221,4 +221,16 @@ public final class SecurityRequestContext {
   public static void clearEntityToAuthResponseMap() {
     entityToAuthResponseMap.remove();
   }
+
+  /**
+   * This should be only used to make the enforcement call internal.
+   * Used during a call when first ext check is made and later internal check is required.
+   *
+   * userIp is not removed as it could be used later in AuditLog if the 1st ext check has an audit log body.
+   *
+   */
+  public static void clearUserDetail(){
+    userId.remove();
+    userCredential.remove();
+  }
 }

@@ -222,7 +222,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   }
 
   private void switchToInternalUser() {
-    SecurityRequestContext.reset();
+    SecurityRequestContext.clearUserDetail();
   }
 
   private CredentialIdentityId createIdentityIdOrPropagate(String namespace, String name)

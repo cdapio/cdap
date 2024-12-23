@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -70,6 +71,8 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
@@ -87,6 +90,7 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
@@ -106,6 +110,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private final ProgramOptions programOpts;
   @Nullable
   private final ServiceAnnouncer serviceAnnouncer;
+  private final static Set<String> AUDIT_LOG_SERVICES = Sets.newHashSet("studio");
 
   public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf,
       ProgramRunId programRunId, ProgramOptions programOpts) {
@@ -159,7 +164,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     List<Module> modules = new ArrayList<>();
 
-    modules.add(new NoOpAuditLogModule());
+    modules.add(getAuditLogModules());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());
@@ -301,6 +306,19 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private static String generateClientId(ProgramRunId programRunId, String instanceId) {
     return String.format("%s.%s.%s", programRunId.getParent(), programRunId.getRun(), instanceId);
+  }
+
+  /**
+   * Return distributed module only if the program is of SERVICE in SYSTEM namespace and belongs to a defined list.
+   */
+  private Module getAuditLogModules() {
+    if (programRunId.getNamespaceId().equals(NamespaceId.SYSTEM) &&
+        programRunId.getType().equals(ProgramType.SERVICE) &&
+        AUDIT_LOG_SERVICES.contains(programRunId.getProgram())) {
+      return new AuditLogWriterModule(cConf).getDistributedModules();
+    }
+
+    return new NoOpAuditLogModule();
   }
 
   /**

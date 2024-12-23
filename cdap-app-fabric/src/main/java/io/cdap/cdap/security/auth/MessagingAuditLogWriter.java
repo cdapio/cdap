@@ -86,6 +86,7 @@ public class MessagingAuditLogWriter implements AuditLogWriter {
    */
   @Override
   public void publish(@Nullable AuditLogRequest auditLogRequest) throws IOException {
+
     if (auditLogRequest != null &&
       (auditLogRequest.getAuditLogContextQueue().isEmpty()
         || auditLogRequest.getAuditLogContextQueue().stream().noneMatch(AuditLogContext::isAuditLoggingRequired))){

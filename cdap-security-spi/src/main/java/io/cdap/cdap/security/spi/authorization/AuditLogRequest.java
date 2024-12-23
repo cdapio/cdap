@@ -50,6 +50,18 @@ public class AuditLogRequest {
     this.endTimeNanos = endTimeNanos;
   }
 
+  public AuditLogRequest(AuditLogRequest that, String userIp, Queue<AuditLogContext> auditLogContextQueue) {
+    this.operationResponseCode = that.getOperationResponseCode();
+    this.userIp = userIp;
+    this.uri = that.getUri();
+    this.handler = that.getHandler();
+    this.method = that.getMethod();
+    this.methodType = that.getMethodType();
+    this.auditLogContextQueue = auditLogContextQueue;
+    this.startTimeNanos = that.getStartTimeNanos();
+    this.endTimeNanos = that.getEndTimeNanos();
+  }
+
   public int getOperationResponseCode() {
     return operationResponseCode;
   }

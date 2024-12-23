@@ -72,6 +72,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;

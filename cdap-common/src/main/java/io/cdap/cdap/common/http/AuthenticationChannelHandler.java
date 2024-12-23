@@ -53,7 +53,9 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       "CDAP-empty-user-credential",
       Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
-  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
+  private static final String AUDIT_LOG_QUEUE_ATTR_NAME = "AUDIT_LOG_QUEUE_ATTR";
+  private static final String AUDIT_LOG_USERIP_ATTR_NAME = "AUDIT_LOG_USERIP_ATTR";
+  private static final String AUDIT_LOG_REQUEST_ATTR_NAME = "AUDIT_LOG_REQ_ATTR";
 
   private final boolean internalAuthEnabled;
   private final boolean auditLoggingEnabled;
@@ -132,14 +134,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.setUserIp(currentUserIp);
     }
 
+
     try {
       ctx.fireChannelRead(msg);
     } finally {
-      // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
-      // it independent of Thread local.
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME))
-        .set(SecurityRequestContext.getAuditLogRequest());
-      SecurityRequestContext.reset();
+      setAuditLogMetaDataInChanel(ctx);
     }
   }
 
@@ -149,8 +148,13 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    publishAuditLogRequest(ctx);
-    super.write(ctx, msg, promise);
+    try {
+      publishAuditLogRequest(ctx);
+      super.write(ctx, msg, promise);
+    } finally {
+      SecurityRequestContext.reset();
+      clearAttributes(ctx);
+    }
   }
 
   /**
@@ -158,8 +162,13 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-    publishAuditLogRequest(ctx);
-    super.close(ctx, promise);
+    try {
+      publishAuditLogRequest(ctx);
+      super.close(ctx, promise);
+    } finally {
+      SecurityRequestContext.reset();
+      clearAttributes(ctx);
+    }
   }
 
   @Override
@@ -174,14 +183,81 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   }
 
   /**
-   * Check the audit log attribute attached to a channel.
-   * It's not null, publish it and set it to Null.
+   * When write / close is called , it is expected that {@link io.cdap.cdap.common.auditlogging.AuditLogSetterHook}'s
+   * postCall method is triggered, which will set AuditLogRequest in SecurityRequestContext.
+   * TODO :  CDAP-21085
    */
   private void publishAuditLogRequest(ChannelHandlerContext ctx) throws IOException {
-    Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get();
-    if (auditLoggingEnabled && auditLogRequestObj != null) {
-      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
+    AuditLogRequest auditLogRequest = getModifiedAuditLogRequest(ctx);
+    if (auditLoggingEnabled && auditLogRequest != null ) {
+      auditLogWriter.publish(auditLogRequest);
     }
+  }
+
+  private AuditLogRequest getModifiedAuditLogRequest(ChannelHandlerContext ctx) {
+    AuditLogRequest auditLogRequest = SecurityRequestContext.getAuditLogRequest();
+
+    if (auditLogRequest == null){
+      Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQUEST_ATTR_NAME)).get();
+      if (auditLogRequestObj != null) {
+        auditLogRequest = (AuditLogRequest) auditLogRequestObj;
+      } else {
+        return null;
+      }
+    }
+
+    //If SecurityRequestContext has a Non Empty Queue, then auditLogRequest should have it from PostCall in
+    // AuditLogSetterHook.
+    if (!auditLogRequest.getAuditLogContextQueue().isEmpty()){
+      return auditLogRequest;
+    }
+
+    // If auditLogRequest.getAuditLogContextQueue().size() == 0 , then SecurityRequestContext must have been reset.
+    // Get the Queue from Attribute of Channel.
+    Object auditLogContextsQueueAttr = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).get();
+
+    if (auditLogContextsQueueAttr == null) {
+      return auditLogRequest;
+    }
+
+    //Get other Metadata that might have been reset in SRC.
+    Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USERIP_ATTR_NAME)).get();
+
+    return new AuditLogRequest(auditLogRequest, (String) userIpObj, (Queue<AuditLogContext>) auditLogContextsQueueAttr);
+  }
+
+  /**
+   * Stores required metadata from SecurityRequestContext inside channelRead's Finally method.
+   *
+   * This is required to handle 2 cases :
+   * 1. AuditLogSetterHook#postCall is called before channelRead's Finally method
+   * 2. AuditLogSetterHook#postCall is called After channelRead's Finally method
+   *
+   * @param ctx
+   */
+  private void setAuditLogMetaDataInChanel(ChannelHandlerContext ctx) {
+
+git
+    //CASE 1 : If this is called after AuditLogSetterHook#postCall
+    // The auditlogrequest should not be null.
+    AuditLogRequest auditLogRequest = SecurityRequestContext.getAuditLogRequest();
+    if (auditLogRequest != null) {
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQUEST_ATTR_NAME)).set(auditLogRequest);
+      return;
+    }
+
+    Queue<AuditLogContext> auditLogContextQueue = SecurityRequestContext.getAuditLogQueue();
+
+    // In either case, if Queue from SecurityRequestContext is empty, then no Audit Logs.
+    if (auditLogContextQueue.isEmpty()){
+      return;
+    }
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).set(auditLogContextQueue);
+  }
+
+  private void clearAttributes(ChannelHandlerContext ctx){
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_QUEUE_ATTR_NAME)).set(null);
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQUEST_ATTR_NAME)).set(null);
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQUEST_ATTR_NAME)).set(null);
   }
 }
