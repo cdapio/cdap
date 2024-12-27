@@ -70,6 +70,8 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
@@ -159,7 +161,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     List<Module> modules = new ArrayList<>();
 
-    modules.add(new NoOpAuditLogModule());
+    modules.add(getAuditLogModules());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());
@@ -301,6 +303,18 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private static String generateClientId(ProgramRunId programRunId, String instanceId) {
     return String.format("%s.%s.%s", programRunId.getParent(), programRunId.getRun(), instanceId);
+  }
+
+  /**
+   * Return distributed module only if the program is of SERVICE in SYSTEM namespace.
+   */
+  private Module getAuditLogModules() {
+    if (programRunId.getNamespaceId().equals(NamespaceId.SYSTEM)
+      && programRunId.getType().equals(ProgramType.SERVICE)) {
+      return new AuditLogWriterModule(cConf).getDistributedModules();
+    }
+
+    return new NoOpAuditLogModule();
   }
 
   /**

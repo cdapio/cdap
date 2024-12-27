@@ -22,12 +22,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.exception.ProgramFailureException;
+import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.proto.ErrorClassificationResponse;
 import java.lang.reflect.Type;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -47,8 +48,12 @@ public class ErrorLogsClassifierTest {
 
   @Test
   public void testClassifyLogs() {
-    LogEvent logEvent = new LogEvent(getEvent(), LogOffset.LATEST_OFFSET);
-    Iterator<LogEvent> iterator = Collections.singletonList(logEvent).iterator();
+    LogEvent logEvent1 = new LogEvent(getEvent1(), LogOffset.LATEST_OFFSET);
+    LogEvent logEvent2 = new LogEvent(getEvent2(), LogOffset.LATEST_OFFSET);
+    List<LogEvent> events = new ArrayList<>();
+    events.add(logEvent2);
+    events.add(logEvent1);
+    Iterator<LogEvent> iterator = events.iterator();
     CloseableIterator<LogEvent> closeableIterator = new CloseableIterator<LogEvent>() {
       @Override
       public boolean hasNext() {
@@ -82,7 +87,22 @@ public class ErrorLogsClassifierTest {
         responses.get(0).getSupportedDocumentationUrl());
   }
 
-  private ILoggingEvent getEvent() {
+  private ILoggingEvent getEvent1() {
+    Map<String, String> map = new HashMap<>();
+    map.put(Constants.Logging.TAG_FAILED_STAGE, "stageName");
+    map.put(Constants.Logging.TAG_ERROR_CATEGORY, "errorCategory");
+    map.put(Constants.Logging.TAG_ERROR_REASON, "errorReason");
+    map.put(Constants.Logging.TAG_ERROR_TYPE, "errorType");
+    IThrowableProxy throwableProxy = Mockito.mock(IThrowableProxy.class);
+    Mockito.when(throwableProxy.getMessage()).thenReturn("some error occurred");
+    Mockito.when(throwableProxy.getClassName()).thenReturn(WrappedStageException.class.getName());
+    ILoggingEvent event = Mockito.mock(ILoggingEvent.class);
+    Mockito.when(event.getThrowableProxy()).thenReturn(throwableProxy);
+    Mockito.when(event.getMDCPropertyMap()).thenReturn(map);
+    return event;
+  }
+
+  private ILoggingEvent getEvent2() {
     Map<String, String> map = new HashMap<>();
     map.put(Constants.Logging.TAG_FAILED_STAGE, "stageName");
     map.put(Constants.Logging.TAG_ERROR_CATEGORY, "errorCategory");

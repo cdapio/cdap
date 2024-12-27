@@ -106,6 +106,12 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-jaas</artifactId>
       <version>${jetty9.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.mina</groupId>
+          <artifactId>mina-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>

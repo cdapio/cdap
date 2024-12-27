@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2025 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,20 @@
  * the License.
  */
 
-package io.cdap.cdap.logging.guice;
+package io.cdap.cdap.spi.logs;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
-import io.cdap.cdap.logging.appender.LogAppender;
-import io.cdap.cdap.logging.framework.local.LocalLogAppender;
+import java.util.Map;
 
 /**
- * A Guice module to provide bindings for {@link LogAppender} implementations.
+ * Provides context information for {@link LogPublisher} initialization.
  */
-public class LocalLogAppenderModule extends AbstractModule {
+public interface LogPublisherContext {
 
-  @Override
-  protected void configure() {
-    bind(LogAppender.class).to(LocalLogAppender.class).in(Scopes.SINGLETON);
-  }
+  /**
+   * Properties are derived from the CDAP configuration. Configuration file path will be added as an
+   * entry in the  properties.
+   *
+   * @return unmodifiable properties for the log publisher.
+   */
+  Map<String, String> getProperties();
 }

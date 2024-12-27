@@ -1505,6 +1505,12 @@ public final class Constants {
     public static final String LOG_APPENDER_EXT_DIR = "app.program.log.appender.extensions.dir";
     public static final String LOG_APPENDER_PROPERTY_PREFIX = "app.program.log.appender.system.properties.";
 
+    // Log publisher configs.
+    public static final String LOG_PUBLISHER_PROVIDER = "log.publisher.provider";
+    public static final String LOG_PUBLISHER_ENABLED = "log.publisher.enabled";
+    public static final String LOG_PUBLISHER_EXT_DIR = "log.publisher.extensions.dir";
+    public static final String LOG_PUBLISHER_PREFIX = "log.publisher";
+
     // Property key in the logger context to indicate it is performing pipeline validation
     public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
 
@@ -2557,7 +2563,7 @@ public final class Constants {
 
 
   /**
-   * Constants for Data Plane Audit Logging
+   * Constants for Data Plane Audit Logging.
    */
   public static final class AuditLogging {
     public static final String AUDIT_LOG_PUBLISH_INTERVAL_SECONDS = "auditlog.publish.interval.seconds";

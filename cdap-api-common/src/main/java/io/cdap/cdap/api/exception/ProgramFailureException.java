@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api.exception;
 
+import javax.annotation.Nullable;
+
 /**
  * Exception class representing a program failure with detailed error information.
  * <p>
@@ -38,7 +40,7 @@ package io.cdap.cdap.api.exception;
  *   dependent service.</li>
  * </ul>
  **/
-public class ProgramFailureException extends RuntimeException {
+public class ProgramFailureException extends RuntimeException implements FailureDetailsProvider {
   private final ErrorCategory errorCategory;
   private final String errorReason;
   private final ErrorType errorType;
@@ -60,39 +62,18 @@ public class ProgramFailureException extends RuntimeException {
     this.supportedDocumentationUrl = supportedDocumentationUrl;
   }
 
-  /**
-   * Returns the category of the error.
-   *
-   * <p>This typically provides a high-level classification of the error,
-   * such as plugin, provisioning, etc.
-   * If the category or reason is not known - it will be marked as  ‘Others’.
-   *
-   * @return a {@String} representing the error category.
-   */
-  public String getErrorCategory() {
-    return errorCategory.getErrorCategory();
-  }
-
-  /**
-   * Returns the reason for the error.
-   *
-   * <p>The reason usually explains why the error occurred, such as a specific validation failure
-   * or an unexpected condition.
-   *
-   * @return a {@String} representing the error reason.
-   */
+  @Nullable
+  @Override
   public String getErrorReason() {
     return errorReason;
   }
 
-  /**
-   * Returns the type of the error.
-   *
-   * <p>This method provides information on whether the error is classified as a
-   * system-level error, a user-caused error, or an unknown type of error.
-   *
-   * @return an {@ErrorType} enum value representing the type of the error.
-   */
+  @Override
+  public ErrorCategory getErrorCategory() {
+    return errorCategory;
+  }
+
+  @Override
   public ErrorType getErrorType() {
     return errorType == null ? ErrorType.UNKNOWN : errorType;
   }

@@ -17,15 +17,20 @@
 package io.cdap.cdap.etl.api.validation;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Validation exception that carries multiple validation failures.
  */
 @Beta
-public class ValidationException extends RuntimeException {
+public class ValidationException extends RuntimeException implements FailureDetailsProvider {
 
   private final List<ValidationFailure> failures;
 
@@ -49,5 +54,27 @@ public class ValidationException extends RuntimeException {
   private static String generateMessage(List<ValidationFailure> failures) {
     return String.format("Errors were encountered during validation. %s",
         failures.isEmpty() ? "" : failures.iterator().next().getMessage());
+  }
+
+  @Override
+  public String getErrorReason() {
+    return String.format("Stage '%s' encountered %s validation failures.", getFailureStage(),
+        failures.size());
+  }
+
+  @Nullable
+  @Override
+  public String getFailureStage() {
+    return !failures.isEmpty() ? failures.get(0).getStageName() : null;
+  }
+
+  @Override
+  public ErrorCategory getErrorCategory() {
+    return new ErrorCategory(ErrorCategoryEnum.PLUGIN, "Validation");
+  }
+
+  @Override
+  public ErrorType getErrorType() {
+    return ErrorType.USER;
   }
 }

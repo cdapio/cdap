@@ -25,10 +25,9 @@ import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.api.exception.ErrorCodeType;
+import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.api.exception.ProgramFailureException;
-import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.Logging;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.error.api.ErrorTagProvider;
@@ -123,38 +122,41 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     }
   }
 
-  private void addErrorClassificationTags(ILoggingEvent event, Map<String, String> modifiableMDC) {
+  private void addErrorClassificationTags(ILoggingEvent event, Map<String, String> modifiableMdc) {
     if (event.getThrowableProxy() == null
         || !(event.getThrowableProxy() instanceof ThrowableProxy)) {
       return;
     }
     Throwable throwable = ((ThrowableProxy) (event.getThrowableProxy())).getThrowable();
-    while(throwable != null) {
-      if (throwable instanceof WrappedStageException) {
-        modifiableMDC.put(Logging.TAG_FAILED_STAGE,
-            ((WrappedStageException) throwable).getStageName());
+    while (throwable != null) {
+
+      if (throwable instanceof FailureDetailsProvider) {
+        FailureDetailsProvider provider = (FailureDetailsProvider) throwable;
+        boolean stageKeyAbsent = !modifiableMdc.containsKey(Constants.Logging.TAG_FAILED_STAGE);
+        if (stageKeyAbsent) {
+          modifiableMdc.put(Constants.Logging.TAG_FAILED_STAGE, provider.getFailureStage());
+        }
+        modifiableMdc.put(Constants.Logging.TAG_ERROR_CATEGORY,
+            provider.getErrorCategory().getErrorCategory());
+        modifiableMdc.put(Constants.Logging.TAG_ERROR_REASON, provider.getErrorReason());
+        modifiableMdc.put(Constants.Logging.TAG_ERROR_TYPE, provider.getErrorType().name());
       }
+
       if (throwable instanceof ProgramFailureException) {
-        modifiableMDC.put(Constants.Logging.TAG_ERROR_CATEGORY,
-            ((ProgramFailureException) throwable).getErrorCategory());
-        modifiableMDC.put(Constants.Logging.TAG_ERROR_REASON,
-            ((ProgramFailureException) throwable).getErrorReason());
-        modifiableMDC.put(Constants.Logging.TAG_ERROR_TYPE,
-            ((ProgramFailureException) throwable).getErrorType().name());
-        modifiableMDC.put(Constants.Logging.TAG_DEPENDENCY,
+        modifiableMdc.put(Constants.Logging.TAG_DEPENDENCY,
             String.valueOf(((ProgramFailureException) throwable).isDependency()));
         ErrorCodeType errorCodeType = ((ProgramFailureException) throwable).getErrorCodeType();
         String errorCode = ((ProgramFailureException) throwable).getErrorCode();
-        String supportedDocURL =
+        String supportedDocUrl =
             ((ProgramFailureException) throwable).getSupportedDocumentationUrl();
         if (errorCodeType != null) {
-          modifiableMDC.put(Constants.Logging.TAG_ERROR_CODE_TYPE, errorCodeType.name());
+          modifiableMdc.put(Constants.Logging.TAG_ERROR_CODE_TYPE, errorCodeType.name());
         }
         if (!Strings.isNullOrEmpty(errorCode)) {
-          modifiableMDC.put(Constants.Logging.TAG_ERROR_CODE, errorCode);
+          modifiableMdc.put(Constants.Logging.TAG_ERROR_CODE, errorCode);
         }
-        if(!Strings.isNullOrEmpty(supportedDocURL)) {
-          modifiableMDC.put(Constants.Logging.TAG_SUPPORTED_DOC_URL, supportedDocURL);
+        if (!Strings.isNullOrEmpty(supportedDocUrl)) {
+          modifiableMdc.put(Constants.Logging.TAG_SUPPORTED_DOC_URL, supportedDocUrl);
         }
       }
       throwable = throwable.getCause();

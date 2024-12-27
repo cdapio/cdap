@@ -67,6 +67,7 @@ jobs:
           path: |
             **/target/rat.txt
             **/target/surefire-reports/*
+            **/checkstyle-result.xml
 
       - name: Sonar Report on PR
         if: ${{ github.event_name == 'pull_request' }}
@@ -98,3 +99,12 @@ jobs:
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
           -Dsonar.branch.name=$BRANCH
+
+      - name: Checkstyle report
+        uses: cdapio/checkstyle-github-action@add_filter
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          path: '**/checkstyle-result.xml'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit: ${{ github.event.pull_request.head.sha }}
+          changed-since: ${{ github.event.pull_request.base.ref }}

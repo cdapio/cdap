@@ -14,11 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.logging.gateway.handlers;
+package io.cdap.cdap.gateway.handlers.preview;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.app.preview.PreviewStatus.Status;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -28,6 +31,8 @@ import io.cdap.cdap.logging.ErrorLogsClassifier;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.filter.FilterParser;
+import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
@@ -37,11 +42,11 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -53,77 +58,55 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * v3 {@link HttpHandler} to handle /classify requests for program runs
+ * v3 {@link io.cdap.http.HttpHandler} to handle /classify requests for preview runs
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
-public class ErrorClassificationHttpHandler extends AbstractLogHttpHandler {
+public class PreviewErrorClassificationHttpHandler extends PreviewHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ErrorClassificationHttpHandler.class);
-  private final LogReader logReader;
-  private final ProgramRunRecordFetcher programRunRecordFetcher;
-  private final AccessEnforcer accessEnforcer;
-  private final AuthenticationContext authenticationContext;
+  private static final Logger LOG = LoggerFactory.getLogger(
+      PreviewErrorClassificationHttpHandler.class);
   private final ErrorLogsClassifier errorLogsClassifier;
 
   /**
-   * Constructor for ErrorClassificationHttpHandler.
+   * Constructor for PreviewErrorClassificationHttpHandler.
    */
   @Inject
-  public ErrorClassificationHttpHandler(AccessEnforcer accessEnforcer,
-      AuthenticationContext authenticationContext,
-      LogReader logReader,
-      ProgramRunRecordFetcher programRunFetcher,
-      ErrorLogsClassifier errorLogsClassifier,
-      CConfiguration cConf) {
-    super(cConf);
-    this.logReader = logReader;
-    this.programRunRecordFetcher = programRunFetcher;
-    this.accessEnforcer = accessEnforcer;
-    this.authenticationContext = authenticationContext;
+  public PreviewErrorClassificationHttpHandler(PreviewManager previewManager,
+      CConfiguration cConf, ErrorLogsClassifier errorLogsClassifier) {
+    super(previewManager, cConf);
     this.errorLogsClassifier = errorLogsClassifier;
   }
 
-
-  private RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId)
-      throws IOException, NotFoundException, UnauthorizedException {
-    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRef, runId);
-    if (runRecordMeta == null) {
+  private ProgramRunId getProgramRunId(ApplicationId applicationId) throws Exception {
+    ProgramRunId programRunId = previewManager.getRunId(applicationId);
+    if (programRunId == null) {
       throw new NotFoundException(
-          String.format("No run record found for program %s and runID: %s", programRef, runId));
+          String.format("No run record found for previewId: %s in namespace: %s",
+              applicationId.getApplication(), applicationId.getNamespace()));
     }
-    return runRecordMeta;
-  }
-
-  private void ensureVisibilityOnProgram(String namespace, String application, String programType,
-      String program) {
-    ApplicationId appId = new ApplicationId(namespace, application);
-    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
-        program);
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    return programRunId;
   }
 
   @POST
-  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/classify")
+  @Path("/namespaces/{namespace-id}/previews/{preview-id}/classify")
   public void classifyRunIdLogs(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
-      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-      @PathParam("program-id") String programId,
-      @PathParam("run-id") String runId) throws Exception {
-    ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
-    ProgramType type = ProgramType.valueOfCategoryName(programType);
-    ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
-    RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
-    if (runRecord.getStatus() != ProgramRunStatus.FAILED) {
-      throw new IllegalArgumentException("Classification is only supported for failed runs");
+      @PathParam("preview-id") String previewId) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, previewId);
+    ProgramRunId programRunId = getProgramRunId(applicationId);
+    if (previewManager.getStatus(applicationId).getStatus() != Status.RUN_FAILED) {
+      throw new IllegalArgumentException("Classification is only supported "
+          + "for failed preview runs");
     }
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef,
-        runId, runRecord.getSystemArgs());
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+        null);
+    LogReader logReader = previewManager.getLogReader();
 
     Filter filter = FilterParser.parse("loglevel=ERROR");
     ReadRange readRange = new ReadRange(0, System.currentTimeMillis(),
         LogOffset.INVALID_KAFKA_OFFSET);
-    readRange = adjustReadRange(readRange, runRecord, true);
+    readRange = adjustReadRange(readRange, null, true);
     try (CloseableIterator<LogEvent> logIter = logReader.getLog(loggingContext,
         readRange.getFromMillis(), readRange.getToMillis(), filter)) {
       // the iterator is closed by the BodyProducer passed to the HttpResponder

@@ -144,6 +144,16 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * Clears security state related to user details for this thread.
+   * This is useful to switch to internal user within a call.
+   */
+  public static void resetUserDetails() {
+    userId.remove();
+    userIP.remove();
+    userCredential.remove();
+  }
+
+  /**
    * Creates a queue if not present and adds the {@link AuditLogContext} to it.
    */
   public static void enqueueAuditLogContext(AuditLogContext auditLog) {

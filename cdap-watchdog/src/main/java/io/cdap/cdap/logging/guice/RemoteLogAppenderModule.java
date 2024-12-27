@@ -17,17 +17,41 @@
 package io.cdap.cdap.logging.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.appender.CompositeLogAppender;
+import io.cdap.cdap.logging.appender.ExtensionLogAppender;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * A Guice module to provide binding for {@link LogAppender} that pushes log entries to log saver.
+ * A Guice module to provide bindings for {@link LogAppender} implementations. Depending on the
+ * configuration, it either provides a {@link RemoteLogAppender} or a {@link CompositeLogAppender}
+ * that combines {@link RemoteLogAppender} and {@link ExtensionLogAppender}.
  */
 public class RemoteLogAppenderModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(LogAppender.class).to(RemoteLogAppender.class).in(Scopes.SINGLETON);
+    bind(RemoteLogAppender.class).in(Scopes.SINGLETON);
+    bind(ExtensionLogAppender.class).in(Scopes.SINGLETON);
+  }
+
+  @Provides
+  @Singleton
+  @SuppressWarnings("unused")
+  protected LogAppender provideCompositeLogAppender(RemoteLogAppender remoteLogAppender,
+      ExtensionLogAppender extensionLogAppender, CConfiguration cConf) {
+    if (!cConf.getBoolean(Constants.Logging.LOG_PUBLISHER_ENABLED)) {
+      return remoteLogAppender;
+    }
+
+    List<LogAppender> appenders = Arrays.asList(remoteLogAppender, extensionLogAppender);
+    return new CompositeLogAppender(appenders);
   }
 }

@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.capability.PushCapability;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLPushRequest;
+import io.cdap.cdap.etl.api.exception.ErrorDetailsProviderSpec;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.lineage.AccessType;
@@ -177,6 +178,7 @@ public class HydratorTestBase extends TestBase {
         PushCapability.class.getPackage().getName(),
         SparkRecordCollection.class.getPackage().getName(),
         Connector.class.getPackage().getName(),
+        ErrorDetailsProviderSpec.class.getPackage().getName(),
         "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic",
         "org.apache.avro.io");
 
@@ -210,6 +212,7 @@ public class HydratorTestBase extends TestBase {
         SparkCompute.class.getPackage().getName(),
         InvalidStageException.class.getPackage().getName(),
         PipelineConfigurable.class.getPackage().getName(),
+        ErrorDetailsProviderSpec.class.getPackage().getName(),
         // have to export this package, otherwise getting ClassCastException in unit test
         FieldOperation.class.getPackage().getName());
 

@@ -46,6 +46,11 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-log-publisher-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-watchdog-api</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -137,6 +142,14 @@
       <groupId>org.slf4j</groupId>
       <artifactId>log4j-over-slf4j</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
     </dependency>
   </dependencies>
 
