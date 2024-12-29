@@ -2804,6 +2804,16 @@
     </description>
   </property>
 
+  <property>
+    <name>log.publisher.enabled</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>log.publisher.extensions.dir</name>
+    <value>/opt/cdap/master/ext/log-publisher</value>
+  </property>
+
   <!-- Metrics Configuration -->
 
   <property>

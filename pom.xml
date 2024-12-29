@@ -2624,6 +2624,7 @@
         <module>cdap-authenticator-ext-gcp</module>
         <module>cdap-source-control</module>
         <module>cdap-encryption-ext-tink</module>
+        <module>cdap-log-publisher-spi</module>
       </modules>
     </profile>
     <profile>

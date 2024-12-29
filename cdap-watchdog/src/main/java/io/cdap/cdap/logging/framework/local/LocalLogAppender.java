@@ -143,7 +143,7 @@ public class LocalLogAppender extends LogAppender {
   }
 
   /**
-   * The log processing pipeline for writing logs to configured logger context
+   * The log processing pipeline for writing logs to configured logger context.
    */
   private final class LocalLogProcessorPipeline extends AbstractExecutionThreadService {
 
