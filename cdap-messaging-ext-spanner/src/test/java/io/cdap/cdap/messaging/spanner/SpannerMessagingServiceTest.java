@@ -187,7 +187,7 @@ public class SpannerMessagingServiceTest {
             .setPayload(messagesBatch.get(2).getBytes(StandardCharsets.UTF_8)).build());
 
     try (CloseableIterator<RawMessage> messageIterator = service.fetch(
-        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), null))) {
+        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), null, 10))) {
       assertMessages(expectedMessages, messageIterator);
     }
   }
@@ -214,9 +214,86 @@ public class SpannerMessagingServiceTest {
 
     byte[] startOffset = getMessageId(0, 0, firstMsgTimestampMicros);
     try (CloseableIterator<RawMessage> messageIterator = service.fetch(
-        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), startOffset))) {
+        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), startOffset, 10))) {
       assertMessages(expectedMessages, messageIterator);
     }
+  }
+
+  @Test
+  public void testPublishAndFetchLargeMessage() throws Exception {
+    service.createTopic(SIMPLE_TOPIC);
+
+    char[] chars = new char[10 * 1024 * 1024]; // 10 MB
+    Arrays.fill(chars, 'a');
+    String payloadString = new String(chars);
+
+    service.publish(new SpannerStoreRequest(SIMPLE_TOPIC.getTopicId(),
+        Collections.singletonList(payloadString)));
+
+    List<RawMessage> expectedMessages = Collections.singletonList(
+        new Builder().setId(getMessageId(0, 0, 0))
+            .setPayload(payloadString.getBytes(StandardCharsets.UTF_8)).build());
+
+    try (CloseableIterator<RawMessage> messageIterator = service.fetch(
+        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), null, 10))) {
+      assertMessages(expectedMessages, messageIterator);
+    }
+  }
+
+  @Test
+  public void testLargeMessage_WithLesserLimit() throws Exception {
+    service.createTopic(SIMPLE_TOPIC);
+
+    char[] chars = new char[20 * 1024 * 1024]; // 20 MB
+    Arrays.fill(chars, 'a');
+    String payloadString = new String(chars);
+
+    // TXN     sequence_id  payload_sequence_id  publish_ts  payload  payload_parts_remaining
+    // TXN1    0            0                    ts1          m1       0
+    // TXN1    1            0                    ts1          m2       0
+    // TXN1    2            0                    ts1          m3_p1    2
+    // TXN1    2            1                    ts1          m3_p2    1
+    // TXN1    2            2                    ts1          m3_p3    0
+    // TXN1    3            0                    ts1          m4       0
+    List<String> messagesBatch = Arrays.asList("message_0", "message_1", payloadString,
+        "message_3");
+    service.publish(new SpannerStoreRequest(SIMPLE_TOPIC.getTopicId(), messagesBatch));
+    List<RawMessage> expectedMessages = Arrays.asList(new Builder().setId(getMessageId(0, 0, 0))
+            .setPayload(messagesBatch.get(0).getBytes(StandardCharsets.UTF_8)).build(),
+        new RawMessage.Builder().setId(getMessageId(1, 0, 0))
+            .setPayload(messagesBatch.get(1).getBytes(StandardCharsets.UTF_8)).build(),
+        new RawMessage.Builder().setId(getMessageId(2, 0, 0))
+            .setPayload(messagesBatch.get(2).getBytes(StandardCharsets.UTF_8)).build(),
+        new RawMessage.Builder().setId(getMessageId(3, 0, 0))
+            .setPayload(messagesBatch.get(3).getBytes(StandardCharsets.UTF_8)).build());
+
+    byte[] lastMessageId;
+    try (CloseableIterator<RawMessage> messageIterator = service.fetch(
+        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), null, 3))) {
+      lastMessageId = assertMessages(expectedMessages.subList(0, 2), messageIterator);
+    }
+
+    try (CloseableIterator<RawMessage> messageIterator = service.fetch(
+        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), lastMessageId, 3))) {
+      lastMessageId = assertMessages(expectedMessages.subList(2, 3), messageIterator);
+    }
+
+    try (CloseableIterator<RawMessage> messageIterator = service.fetch(
+        new SpannerMessageFetchRequest(SIMPLE_TOPIC.getTopicId(), lastMessageId, 3))) {
+      assertMessages(expectedMessages.subList(3, 4), messageIterator);
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPublish_ExceedMaxSize() throws Exception {
+    service.createTopic(SIMPLE_TOPIC);
+
+    char[] chars = new char[100 * 1024 * 1024]; // 100 MB
+    Arrays.fill(chars, 'a');
+    String payloadString = new String(chars);
+
+    service.publish(new SpannerStoreRequest(SIMPLE_TOPIC.getTopicId(),
+        Collections.singletonList(payloadString)));
   }
 
   /**
@@ -224,16 +301,20 @@ public class SpannerMessagingServiceTest {
    * messages in terms of message count, message ID, and message payload. Since message timestamps
    * cannot be directly compared due to potential clock skew, this method converts timestamps in the
    * message IDs to comparable integers for comparison purposes.
+   *
+   * @return - message ID of the last fetched message so that it could be used as the startOffset.
    */
-  private void assertMessages(List<RawMessage> expectedMessages,
+  private byte[] assertMessages(List<RawMessage> expectedMessages,
       CloseableIterator<RawMessage> messageIterator) {
     List<RawMessage> fetchedMessages = new ArrayList<>();
     long currTimestamp = -1;
     long publishTimestamp = -1;
+    byte[] lastMessageId = new byte[0];
     while (messageIterator.hasNext()) {
       RawMessage message = messageIterator.next();
       byte[] id = message.getId();
       if (id != null) {
+        lastMessageId = id;
         int offset = 0;
         long startTime = Bytes.toLong(id, offset);
         if (currTimestamp != startTime) {
@@ -262,5 +343,6 @@ public class SpannerMessagingServiceTest {
       Assert.assertArrayEquals("Message payloads do not match at index " + i, expected.getPayload(),
           actual.getPayload());
     }
+    return lastMessageId;
   }
 }

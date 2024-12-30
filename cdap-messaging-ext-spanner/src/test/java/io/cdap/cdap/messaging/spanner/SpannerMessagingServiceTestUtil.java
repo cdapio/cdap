@@ -132,10 +132,12 @@ public class SpannerMessagingServiceTestUtil {
 
     private final TopicId topicId;
     private final byte[] startOffset;
+    private final int limit;
 
-    SpannerMessageFetchRequest(TopicId topicId, byte[] startOffset) {
+    SpannerMessageFetchRequest(TopicId topicId, byte[] startOffset, int limit) {
       this.topicId = topicId;
       this.startOffset = startOffset;
+      this.limit = limit;
     }
 
     @Override
@@ -168,7 +170,7 @@ public class SpannerMessagingServiceTestUtil {
 
     @Override
     public int getLimit() {
-      return 10;
+      return limit;
     }
   }
 
