@@ -56,5 +56,4 @@ jobs:
           name: reports-${{ github.run_id }}
           path: |
             **/target/rat.txt
-            **/checkstyle-result.xml
             **/target/surefire-reports/*
