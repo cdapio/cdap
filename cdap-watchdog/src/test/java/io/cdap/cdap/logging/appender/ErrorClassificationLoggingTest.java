@@ -64,7 +64,7 @@ public class ErrorClassificationLoggingTest {
   }
 
   @Test
-  public void testErrorClassificationTagsArePresent() {
+  public void testErrorClassificationTagsArePresentInProgramFailureException() {
     LogAppender appender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(appender).initialize("ErrorClassificationLoggingTest");
     Logger logger = LoggerFactory.getLogger("ErrorClassificationLoggingTest");
@@ -72,6 +72,7 @@ public class ErrorClassificationLoggingTest {
     LoggingContext context = new WorkerLoggingContext("namespace", "app",
         "workerid", "runid", null);
     LoggingContextAccessor.setLoggingContext(context);
+    long fromTimeMillis = System.currentTimeMillis();
     logger.error("Some message", new WrappedStageException(
         new ProgramFailureException.Builder()
             .withErrorCategory(new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PLUGIN))
@@ -86,7 +87,7 @@ public class ErrorClassificationLoggingTest {
 
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     Filter filter = FilterParser.parse("");
-    ReadRange readRange = new ReadRange(0, new DateTime().getMillis(),
+    ReadRange readRange = new ReadRange(fromTimeMillis, new DateTime().getMillis(),
         LogOffset.INVALID_KAFKA_OFFSET);
 
     CloseableIterator<LogEvent> logIter = logReader.getLog(context, readRange.getFromMillis(),
@@ -112,8 +113,40 @@ public class ErrorClassificationLoggingTest {
     Assert.assertEquals("http://www.example.com", supportedDocumentationUrl);
   }
 
+  @Test
+  public void testErrorClassificationTagsArePresentWithWrappedStageException() {
+    LogAppender appender = injector.getInstance(LocalLogAppender.class);
+    new LogAppenderInitializer(appender).initialize("ErrorClassificationLoggingTest");
+    Logger logger = LoggerFactory.getLogger("ErrorClassificationLoggingTest");
+
+    LoggingContext context = new WorkerLoggingContext("namespace", "app",
+        "workerid", "runid", null);
+    LoggingContextAccessor.setLoggingContext(context);
+    long fromTimeMillis = System.currentTimeMillis();
+    logger.error("Some message", new WrappedStageException(null, "stageName"));
+    appender.stop();
+
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
+    Filter filter = FilterParser.parse("");
+    ReadRange readRange = new ReadRange(fromTimeMillis, new DateTime().getMillis(),
+        LogOffset.INVALID_KAFKA_OFFSET);
+
+    CloseableIterator<LogEvent> logIter = logReader.getLog(context, readRange.getFromMillis(),
+        readRange.getToMillis(), filter);
+    LogEvent logEvent = logIter.next();
+    Map<String, String> mdc = logEvent.getLoggingEvent().getMDCPropertyMap();
+    String failedStage = mdc.get(Logging.TAG_FAILED_STAGE);
+    String errorCategory = mdc.get(Logging.TAG_ERROR_CATEGORY);
+    String errorReason = mdc.get(Logging.TAG_ERROR_REASON);
+    String errorType = mdc.get(Logging.TAG_ERROR_TYPE);
+    Assert.assertEquals("stageName", failedStage);
+    Assert.assertEquals("Plugin", errorCategory);
+    Assert.assertEquals("Stage 'stageName' encountered : null", errorReason);
+    Assert.assertEquals("UNKNOWN", errorType);
+  }
+
   @AfterClass
-  public static void cleanUp() throws Exception {
+  public static void cleanUp() {
     txManager.stopAndWait();
   }
 }

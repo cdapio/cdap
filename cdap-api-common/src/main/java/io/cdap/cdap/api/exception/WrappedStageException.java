@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api.exception;
 
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+
 /**
  * Exception class that wraps another exception and includes the name of the stage
  * where the failure occurred.
@@ -26,7 +28,7 @@ package io.cdap.cdap.api.exception;
  * included for better error tracking.
  * </p>
  */
-public class WrappedStageException extends RuntimeException {
+public class WrappedStageException extends RuntimeException implements FailureDetailsProvider {
 
   private final String stageName;
 
@@ -58,5 +60,20 @@ public class WrappedStageException extends RuntimeException {
   @Override
   public String getMessage() {
     return String.format("Stage '%s' encountered : %s", stageName, super.getMessage());
+  }
+
+  @Override
+  public String getErrorReason() {
+    return getMessage();
+  }
+
+  @Override
+  public String getFailureStage() {
+    return stageName;
+  }
+
+  @Override
+  public ErrorCategory getErrorCategory() {
+    return new ErrorCategory(ErrorCategoryEnum.PLUGIN);
   }
 }

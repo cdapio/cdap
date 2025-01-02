@@ -268,6 +268,13 @@ public class ValidationFailure {
     return causes;
   }
 
+  /**
+   * Returns the stageName in which failure occurred.
+   */
+  String getStageName() {
+    return stageName;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

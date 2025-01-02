@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.proto;
 
+import java.util.Objects;
+
 /**
  * Represents the response for classifying error logs.
  */
-public class ErrorClassificationResponse {
+public final class ErrorClassificationResponse {
   private final String stageName;
   private final String errorCategory;
   private final String errorReason;
@@ -29,10 +31,11 @@ public class ErrorClassificationResponse {
   private final String errorCodeType;
   private final String errorCode;
   private final String supportedDocumentationUrl;
+  private transient String throwableClassName;
 
   private ErrorClassificationResponse(String stageName, String errorCategory, String errorReason,
       String errorMessage, String errorType, String dependency, String errorCodeType,
-      String errorCode, String supportedDocumentationUrl) {
+      String errorCode, String supportedDocumentationUrl, String throwableClassName) {
     this.stageName = stageName;
     this.errorCategory = errorCategory;
     this.errorReason = errorReason;
@@ -42,6 +45,7 @@ public class ErrorClassificationResponse {
     this.errorCodeType = errorCodeType;
     this.errorCode = errorCode;
     this.supportedDocumentationUrl = supportedDocumentationUrl;
+    this.throwableClassName = throwableClassName;
   }
 
   /**
@@ -108,6 +112,36 @@ public class ErrorClassificationResponse {
   }
 
   /**
+   * Gets the throwable class name for ErrorClassificationResponse.
+   */
+  public String getThrowableClassName() {
+    return throwableClassName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ErrorClassificationResponse)) {
+      return false;
+    }
+    ErrorClassificationResponse that = (ErrorClassificationResponse) o;
+    return Objects.equals(this.stageName, that.stageName)
+        && Objects.equals(this.errorCategory, that.errorCategory)
+        && Objects.equals(this.errorReason, that.errorReason)
+        && Objects.equals(this.errorMessage, that.errorMessage)
+        && Objects.equals(this.errorType, that.errorType)
+        && Objects.equals(this.dependency, that.dependency)
+        && Objects.equals(this.errorCodeType, that.errorCodeType)
+        && Objects.equals(this.errorCode, that.errorCode)
+        && Objects.equals(this.supportedDocumentationUrl, that.supportedDocumentationUrl);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stageName, errorCategory, errorReason, errorMessage, errorType,
+        dependency, errorCodeType, errorCode, supportedDocumentationUrl);
+  }
+
+  /**
    * Builder for {@link ErrorClassificationResponse}.
    */
   public static class Builder {
@@ -120,6 +154,7 @@ public class ErrorClassificationResponse {
     private String errorCodeType;
     private String errorCode;
     private String supportedDocumentationUrl;
+    private String throwableClassName;
 
     /**
      * Sets the stage name for ErrorClassificationResponse.
@@ -194,11 +229,20 @@ public class ErrorClassificationResponse {
     }
 
     /**
+     * Sets the throwable class name for ErrorClassificationResponse.
+     */
+    public Builder setThrowableClassName(String throwableClassName) {
+      this.throwableClassName = throwableClassName;
+      return this;
+    }
+
+    /**
      * Builds and returns a new instance of ErrorClassificationResponse.
      */
     public ErrorClassificationResponse build() {
       return new ErrorClassificationResponse(stageName, errorCategory, errorReason, errorMessage,
-          errorType, dependency, errorCodeType, errorCode, supportedDocumentationUrl);
+          errorType, dependency, errorCodeType, errorCode, supportedDocumentationUrl,
+          throwableClassName);
     }
   }
 }
