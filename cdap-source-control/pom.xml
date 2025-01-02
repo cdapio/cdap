@@ -27,11 +27,6 @@
   <artifactId>cdap-source-control</artifactId>
   <name>CDAP Source Control Management</name>
 
-  <properties>
-    <!-- Used only for unit tests -->
-    <jetty.version>9.4.50.v20221201</jetty.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.eclipse.jgit</groupId>
@@ -65,25 +60,25 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
-      <version>${jetty.version}</version>
+      <version>${jetty9.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-security</artifactId>
-      <version>${jetty.version}</version>
+      <version>${jetty9.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
-      <version>${jetty.version}</version>
+      <version>${jetty9.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-util</artifactId>
-      <version>${jetty.version}</version>
+      <version>${jetty9.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
