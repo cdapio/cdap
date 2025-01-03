@@ -39,6 +39,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 
 public class AuthenticationChannelHandlerTest {
@@ -46,7 +48,7 @@ public class AuthenticationChannelHandlerTest {
   private DefaultHttpRequest req;
   private AuthenticationChannelHandler handler;
   private ChannelHandlerContext ctx;
-  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
+  private static final String AUDIT_METADATA_MAP_ATTR_NAME = "AUDIT_LOG_METADATA_MAP";
 
 
   @Before
@@ -106,8 +108,12 @@ public class AuthenticationChannelHandlerTest {
   public void testWriteWithAuditLogging() throws Exception {
     boolean internalAuthEnabled = true;
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get())
-      .thenReturn(getAuditLogRequest());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.AUDIT_LOG_CONTEXT_QUEUE)).get())
+      .thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.USER_IP)).get())
+      .thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_METADATA_MAP_ATTR_NAME)).get())
+      .thenReturn(getAuditLogMetaMap());
     handler = new AuthenticationChannelHandler(internalAuthEnabled, true, auditLogWriterMock);
     handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
 
@@ -118,31 +124,38 @@ public class AuthenticationChannelHandlerTest {
   public void testCloseWithAuditLogging() throws Exception {
     boolean internalAuthEnabled = true;
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get())
-      .thenReturn(getAuditLogRequest());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.AUDIT_LOG_CONTEXT_QUEUE)).get())
+      .thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.USER_IP)).get())
+      .thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_METADATA_MAP_ATTR_NAME)).get())
+      .thenReturn(getAuditLogMetaMap());
     handler = new AuthenticationChannelHandler(internalAuthEnabled, true, auditLogWriterMock);
     handler.close(ctx, new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
   }
 
-  private AuditLogRequest getAuditLogRequest() {
+  private Queue<AuditLogContext> getAuditLogContexts(){
     Queue<AuditLogContext> auditLogContexts = new ArrayDeque<>();
     auditLogContexts.add(AuditLogContext.Builder.defaultNotRequired());
     auditLogContexts.add(new AuditLogContext.Builder()
                            .setAuditLoggingRequired(true)
                            .setAuditLogBody("Test Audit Logs")
                            .build());
+    return auditLogContexts;
+  }
+  private Map<String, Object> getAuditLogMetaMap() {
 
-    return new AuditLogRequest(
-      200,
-      "testuserIp",
-      "v3/test",
-      "Testhandler",
-      "create",
-      "POST",
-      auditLogContexts,
-      1000000L,
-      1000002L);
+    Map<String, Object> auditMetadataMap = new HashMap<>();
+    auditMetadataMap.put(AuditLogRequest.PropKey.OP_RESP_CODE, 200);
+    auditMetadataMap.put(AuditLogRequest.PropKey.URI, "v3/test");
+    auditMetadataMap.put(AuditLogRequest.PropKey.HANDLER, "Testhandler");
+    auditMetadataMap.put(AuditLogRequest.PropKey.METHOD, "create");
+    auditMetadataMap.put(AuditLogRequest.PropKey.METHOD_TYPE, "POST");
+    auditMetadataMap.put(AuditLogRequest.PropKey.START_TIME_NANOS, 1000000L);
+    auditMetadataMap.put(AuditLogRequest.PropKey.END_TIME_NANOS, 1000002L);
+
+    return auditMetadataMap;
   }
 }

@@ -38,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Queue;
+import javax.annotation.Nullable;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
@@ -53,7 +55,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       "CDAP-empty-user-credential",
       Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
-  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
+  private static final String AUDIT_METADATA_MAP_ATTR_NAME = "AUDIT_LOG_METADATA_MAP";
 
   private final boolean internalAuthEnabled;
   private final boolean auditLoggingEnabled;
@@ -130,22 +132,21 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIp(currentUserIp);
+      //Also set userIp in ATTR , to be used in audit logging incase it was replaced at a later stage
+      ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.USER_IP)).set(currentUserIp);
     }
 
     try {
       ctx.fireChannelRead(msg);
     } finally {
-      // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
-      // it independent of Thread local.
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME))
-        .set(SecurityRequestContext.getAuditLogRequest());
+      setAuditLogMetaDataInChannel(ctx);
       SecurityRequestContext.reset();
     }
   }
 
   /**
    * If Audit logging is enabled then it sends the collection of audit events stored in {@link SecurityRequestContext}
-   * to get stored in a messaging system.
+   * Or Attribute of channel to get stored in a messaging system.
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -178,10 +179,74 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * It's not null, publish it and set it to Null.
    */
   private void publishAuditLogRequest(ChannelHandlerContext ctx) throws IOException {
-    Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get();
-    if (auditLoggingEnabled && auditLogRequestObj != null) {
-      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
+    AuditLogRequest auditLogRequest = getAuditLogRequest(ctx);
+    if (auditLoggingEnabled && auditLogRequest != null ) {
+      auditLogWriter.publish(auditLogRequest);
     }
+  }
+
+
+  @Nullable
+  private AuditLogRequest getAuditLogRequest(ChannelHandlerContext ctx) {
+
+    Object auditLogContextsQueueAttr =
+      ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.AUDIT_LOG_CONTEXT_QUEUE)).get();
+
+    // If NO audit logs, then return NULL.
+    if (auditLogContextsQueueAttr == null) {
+      return null;
+    }
+
+    Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.USER_IP)).get();
+    String userIp = userIpObj == null ? SecurityRequestContext.getUserIp() : (String) userIpObj;
+
+    // Check Attr for Audit Metadata
+    Object auditMetadataMapObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_METADATA_MAP_ATTR_NAME)).get();
+    Map<String, Object> auditMetadataMap = auditMetadataMapObj == null ? SecurityRequestContext.getAuditMetaDataMap() :
+      (Map<String, Object>) auditMetadataMapObj;
+
+    //Clear Attributes
+    clearAttributes(ctx);
+
+    return new AuditLogRequest(
+      (Integer) auditMetadataMap.get(AuditLogRequest.PropKey.OP_RESP_CODE),
+      userIp,
+      (String) auditMetadataMap.get(AuditLogRequest.PropKey.URI),
+      (String) auditMetadataMap.get(AuditLogRequest.PropKey.HANDLER),
+      (String) auditMetadataMap.get(AuditLogRequest.PropKey.METHOD),
+      (String) auditMetadataMap.get(AuditLogRequest.PropKey.METHOD_TYPE),
+      (Queue<AuditLogContext>) auditLogContextsQueueAttr,
+      (Long) auditMetadataMap.get(AuditLogRequest.PropKey.START_TIME_NANOS),
+      (Long) auditMetadataMap.get(AuditLogRequest.PropKey.END_TIME_NANOS));
+  }
+
+  /**
+   * Stores metadata from SecurityRequestContext inside channelRead's Finally method.
+   *
+   * @param ctx
+   */
+  private void setAuditLogMetaDataInChannel(ChannelHandlerContext ctx) {
+
+    Queue<AuditLogContext> auditLogContextQueue = SecurityRequestContext.getAuditLogQueue();
+
+    // In either case, if Queue from SecurityRequestContext is empty, then no Audit Logs.
+    if (!auditLogContextQueue.isEmpty()){
+      ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.AUDIT_LOG_CONTEXT_QUEUE))
+        .set(auditLogContextQueue);
+    }
+
+    // Store all audit metadata info in ATTR from  AuditLogSetterHook#postCall
+    // This is just to ensure we don't lose metadata information if already populated because of some RESET call on
+    // SecurityRequestContext. This Also ensures that if Thread changes in Close / Write , then this info is preserved.
+    Map<String, Object> auditMetaDataMap = SecurityRequestContext.getAuditMetaDataMap();
+    if (!auditMetaDataMap.isEmpty()) {
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_METADATA_MAP_ATTR_NAME)).set(auditMetaDataMap);
+    }
+  }
+
+  private void clearAttributes(ChannelHandlerContext ctx){
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_METADATA_MAP_ATTR_NAME)).set(null);
+    ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.USER_IP)).set(null);
+    ctx.channel().attr(AttributeKey.valueOf(AuditLogRequest.PropKey.AUDIT_LOG_CONTEXT_QUEUE)).set(null);
   }
 }

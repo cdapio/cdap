@@ -85,4 +85,16 @@ public class AuditLogRequest {
   public long getEndTimeNanos() {
     return endTimeNanos;
   }
+
+  public static final class PropKey {
+    public static final String OP_RESP_CODE = "operationResponseCode";
+    public static final String USER_IP = "userIp";
+    public static final String URI = "uri";
+    public static final String HANDLER = "handler";
+    public static final String METHOD = "method";
+    public static final String METHOD_TYPE = "methodType";
+    public static final String AUDIT_LOG_CONTEXT_QUEUE = "auditLogContextQueue";
+    public static final String START_TIME_NANOS = "startTimeNanos";
+    public static final String END_TIME_NANOS = "endTimeNanos";
+  }
 }

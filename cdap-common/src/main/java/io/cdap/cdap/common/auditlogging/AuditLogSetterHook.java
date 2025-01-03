@@ -24,18 +24,14 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.http.AbstractHandlerHook;
-import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 /**
- * Sets
+ * Sets audit log metadata to {@link SecurityRequestContext}
  */
 public class AuditLogSetterHook extends AbstractHandlerHook {
 
@@ -68,19 +64,14 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
     long startTime = endTime - (endTimeNanos - startTimeNanos);
 
     LOG.trace("Setting a Audit Log event to published in SecurityRequestContext");
-    SecurityRequestContext.setAuditLogRequest(
-      new AuditLogRequest(
-        status.code(),
-        SecurityRequestContext.getUserIp(),
-        request.uri(),
-        getSimpleName(handlerInfo.getHandlerName()),
-        handlerInfo.getMethodName(),
-        request.method().name(),
-        SecurityRequestContext.getAuditLogQueue(),
-        startTime,
-        endTime
-      )
-    );
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.OP_RESP_CODE, status.code());
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.URI, request.uri());
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.HANDLER,
+                                                 getSimpleName(handlerInfo.getHandlerName()));
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.METHOD, handlerInfo.getMethodName());
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.METHOD_TYPE, request.method().name());
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.START_TIME_NANOS, startTime);
+    SecurityRequestContext.setAuditMetaDataInMap(AuditLogRequest.PropKey.END_TIME_NANOS, endTime);
   }
 
   private String getSimpleName(String className) {
