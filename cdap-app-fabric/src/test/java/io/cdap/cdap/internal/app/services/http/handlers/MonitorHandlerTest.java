@@ -66,7 +66,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
     List<SystemServiceMeta> actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), token);
 
-    Assert.assertEquals(9, actual.size());
+    Assert.assertEquals(10, actual.size());
     urlConn.disconnect();
   }
 
@@ -81,7 +81,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
     Map<String, String> result = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                Charsets.UTF_8), token);
-    Assert.assertEquals(9, result.size());
+    Assert.assertEquals(10, result.size());
     urlConn.disconnect();
     Assert.assertEquals("OK", result.get(Constants.Service.APP_FABRIC_HTTP));
   }

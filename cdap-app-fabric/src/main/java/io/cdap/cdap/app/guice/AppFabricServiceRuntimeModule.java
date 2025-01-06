@@ -451,7 +451,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+          binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
@@ -499,6 +499,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
+
+      Multibinder<HttpHandler> procesorHandlerBinder = Multibinder.newSetBinder(
+          binder(), HttpHandler.class, Names.named(AppFabric.PROCESSOR_HANDLERS_BINDING));
+      CommonHandlers.add(procesorHandlerBinder);
     }
 
     @Provides

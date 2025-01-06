@@ -94,7 +94,7 @@ public class MonitorHandlerModule extends AbstractModule {
     });
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+        binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
 
     handlerBinder.addBinding().to(MonitorHandler.class);
   }

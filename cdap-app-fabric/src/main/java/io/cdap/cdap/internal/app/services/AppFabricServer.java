@@ -81,7 +81,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
-  private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
   private final CredentialProviderService credentialProviderService;
@@ -95,7 +94,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
-
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
@@ -109,10 +107,9 @@ public class AppFabricServer extends AbstractIdleService {
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
       DiscoveryService discoveryService,
       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-      @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+      @Named(Constants.AppFabric.SERVER_HANDLERS_BINDING) Set<HttpHandler> handlers,
       @Nullable MetricsCollectionService metricsCollectionService,
       ProgramRuntimeService programRuntimeService,
-      ProgramRunStatusMonitorService programRunStatusMonitorService,
       ApplicationLifecycleService applicationLifecycleService,
       @Named("appfabric.services.names") Set<String> servicesNames,
       @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -137,7 +134,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.programRunStatusMonitorService = programRunStatusMonitorService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
     this.credentialProviderService = credentialProviderService;
@@ -171,7 +167,6 @@ public class AppFabricServer extends AbstractIdleService {
         applicationLifecycleService.start(),
         bootstrapService.start(),
         programRuntimeService.start(),
-        programRunStatusMonitorService.start(),
         coreSchedulerService.start(),
         credentialProviderService.start(),
         runRecordCounterService.start(),
@@ -233,7 +228,6 @@ public class AppFabricServer extends AbstractIdleService {
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
-    programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
     runRecordCounterService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();

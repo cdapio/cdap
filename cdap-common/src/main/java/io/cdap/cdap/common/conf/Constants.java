@@ -303,7 +303,8 @@ public final class Constants {
     /**
      * Guice named bindings.
      */
-    public static final String HANDLERS_BINDING = "appfabric.http.handler";
+    public static final String SERVER_HANDLERS_BINDING = "appfabric.http.handler";
+    public static final String PROCESSOR_HANDLERS_BINDING = "appfabric.processor.http.handler";
 
     /**
      * Defaults.

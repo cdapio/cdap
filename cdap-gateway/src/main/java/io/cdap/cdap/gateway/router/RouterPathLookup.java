@@ -38,6 +38,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
 
   public static final RouteDestination APP_FABRIC_HTTP = new RouteDestination(
       Constants.Service.APP_FABRIC_HTTP);
+  public static final RouteDestination APP_FABRIC_PROCESSOR = new RouteDestination(
+      Constants.Service.APP_FABRIC_PROCESSOR);
   public static final RouteDestination METRICS = new RouteDestination(Constants.Service.METRICS);
   public static final RouteDestination DATASET_MANAGER = new RouteDestination(
       Constants.Service.DATASET_MANAGER);
@@ -185,6 +187,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           return METRICS;
         case Constants.Service.APP_FABRIC_HTTP:
           return APP_FABRIC_HTTP;
+        case Constants.Service.APP_FABRIC_PROCESSOR:
+          return APP_FABRIC_PROCESSOR;
         case Constants.Service.DATASET_EXECUTOR:
           return DATASET_EXECUTOR;
         case Constants.Service.METADATA_SERVICE:

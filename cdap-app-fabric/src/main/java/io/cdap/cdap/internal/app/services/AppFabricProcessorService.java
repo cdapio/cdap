@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2024 Cask Data, Inc.
+ * Copyright © 2025 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,13 +39,11 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.ScheduleNotificationSubscriberService;
 import io.cdap.cdap.security.auth.AuditLogSubscriberService;
-import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
-import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
+import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -79,9 +77,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
-  private final SystemAppManagementService systemAppManagementService;
-  private final SourceControlOperationRunner sourceControlOperationRunner;
-  private final RepositoryCleanupService repositoryCleanupService;
   private final OperationNotificationSubscriberService operationNotificationSubscriberService;
   private final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService;
   private final CConfiguration cConf;
@@ -89,6 +84,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private final boolean sslEnabled;
   private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private Cancellable cancelHttpService;
+  private Set<HttpHandler> handlers;
 
   /**
    * Construct the AppFabricProcessorService with service factory and cConf coming from guice injection.
@@ -98,6 +94,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       SConfiguration sConf,
       DiscoveryService discoveryService,
       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+      @Named(Constants.AppFabric.SERVER_HANDLERS_BINDING) Set<HttpHandler> handlers,
       ProgramRuntimeService programRuntimeService,
       RunRecordCorrectorService runRecordCorrectorService,
       ProgramRunStatusMonitorService programRunStatusMonitorService,
@@ -110,15 +107,13 @@ public class AppFabricProcessorService extends AbstractIdleService {
       CoreSchedulerService coreSchedulerService,
       ProvisioningService provisioningService,
       BootstrapService bootstrapService,
-      SystemAppManagementService systemAppManagementService,
       RunRecordMonitorService runRecordCounterService,
       RunDataTimeToLiveService runDataTimeToLiveService,
-      SourceControlOperationRunner sourceControlOperationRunner,
-      RepositoryCleanupService repositoryCleanupService,
       OperationNotificationSubscriberService operationNotificationSubscriberService,
       ScheduleNotificationSubscriberService scheduleNotificationSubscriberService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
+    this.handlers = handlers;
     this.cConf = cConf;
     this.sConf = sConf;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
@@ -134,11 +129,8 @@ public class AppFabricProcessorService extends AbstractIdleService {
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
-    this.systemAppManagementService = systemAppManagementService;
     this.runRecordCounterService = runRecordCounterService;
     this.runDataTimeToLiveService = runDataTimeToLiveService;
-    this.sourceControlOperationRunner = sourceControlOperationRunner;
-    this.repositoryCleanupService = repositoryCleanupService;
     this.operationNotificationSubscriberService = operationNotificationSubscriberService;
     this.scheduleNotificationSubscriberService = scheduleNotificationSubscriberService;
   }
@@ -160,11 +152,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
         && cConf.getBoolean(Constants.Security.ENABLED)) {
       futuresList.add(auditLogSubscriberService.start());
     }
-    // Only for RBAC instances
-    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
-        && cConf.getBoolean(Constants.Security.ENABLED)) {
-      futuresList.add(auditLogSubscriberService.start());
-    }
+
     futuresList.addAll(ImmutableList.of(
         provisioningService.start(),
         applicationLifecycleService.start(),
@@ -178,8 +166,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
         coreSchedulerService.start(),
         runRecordCounterService.start(),
         runDataTimeToLiveService.start(),
-        sourceControlOperationRunner.start(),
-        repositoryCleanupService.start(),
         operationNotificationSubscriberService.start()
     ));
     Futures.allAsList(futuresList).get();
@@ -188,6 +174,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
         .builder(Constants.Service.APP_FABRIC_HTTP)
         .setHost(hostname.getCanonicalHostName())
+        .setHttpHandlers(handlers)
         .setConnectionBacklog(cConf.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
             Constants.AppFabric.DEFAULT_BACKLOG))
         .setExecThreadPoolSize(cConf.getInt(Constants.AppFabric.EXEC_THREADS,
@@ -212,7 +199,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
     scheduleNotificationSubscriberService.stopAndWait();
     coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
-    systemAppManagementService.stopAndWait();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
@@ -222,8 +208,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
     provisioningService.stopAndWait();
     runRecordCounterService.stopAndWait();
     runDataTimeToLiveService.stopAndWait();
-    sourceControlOperationRunner.stopAndWait();
-    repositoryCleanupService.stopAndWait();
     operationNotificationSubscriberService.stopAndWait();
     auditLogSubscriberService.stopAndWait();
     LOG.info("AppFabric processor service stopped.");
