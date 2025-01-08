@@ -69,6 +69,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
   private static CConfiguration cConf;
   private static PermissionManager permissionManager;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessor;
   private static ProgramLifecycleService programLifecycleService;
 
   @BeforeClass
@@ -78,6 +79,8 @@ public class ProgramLifecycleServiceAuthorizationTest {
     permissionManager = injector.getInstance(PermissionManager.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessor.startAndWait();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
 
     // Wait for the default namespace creation
@@ -159,6 +162,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
+    appFabricProcessor.stopAndWait();
     AppFabricTestHelper.shutdown();
   }
 

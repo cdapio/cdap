@@ -77,6 +77,7 @@ public class DefaultSecureStoreServiceTest {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessor;
   private static RoleController roleController;
   private static PermissionManager permissionManager;
   private static DiscoveryServiceClient discoveryServiceClient;
@@ -93,6 +94,8 @@ public class DefaultSecureStoreServiceTest {
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessor.startAndWait();
     waitForService(Constants.Service.DATASET_MANAGER);
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
@@ -125,6 +128,7 @@ public class DefaultSecureStoreServiceTest {
   @AfterClass
   public static void cleanup() {
     appFabricServer.stopAndWait();
+    appFabricProcessor.stopAndWait();
     AppFabricTestHelper.shutdown();
   }
 

@@ -30,6 +30,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
@@ -105,6 +106,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -547,7 +549,7 @@ public class MasterServiceMain extends DaemonMain {
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
         new TwillModule(),
-        new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
+        new AppFabricServiceRuntimeModule(cConf, EnumSet.allOf(ServiceType.class)).getDistributedModules(),
         new MonitorHandlerModule(true),
         new ProgramRunnerRuntimeModule().getDistributedModules(),
         new SecureStoreServerModule(),

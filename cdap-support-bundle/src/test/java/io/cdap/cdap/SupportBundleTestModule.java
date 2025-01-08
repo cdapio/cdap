@@ -18,6 +18,7 @@ package io.cdap.cdap;
 
 import com.google.inject.AbstractModule;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -49,6 +50,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import java.io.File;
+import java.util.EnumSet;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillRunner;
@@ -85,7 +87,8 @@ public class SupportBundleTestModule extends AbstractModule {
     install(RemoteAuthenticatorModules.getNoOpModule());
     install(new IOModule());
     install(new InMemoryDiscoveryModule());
-    install(new AppFabricServiceRuntimeModule(cConf).getInMemoryModules());
+    install(new AppFabricServiceRuntimeModule(cConf, EnumSet.allOf(ServiceType.class))
+        .getInMemoryModules());
     install(new MonitorHandlerModule(false));
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule());

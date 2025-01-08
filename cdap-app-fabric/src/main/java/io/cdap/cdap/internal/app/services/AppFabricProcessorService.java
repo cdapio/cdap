@@ -39,6 +39,7 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.ScheduleNotificationSubscriberService;
@@ -50,6 +51,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -77,6 +79,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
+  private final SystemAppManagementService systemAppManagementService;
   private final OperationNotificationSubscriberService operationNotificationSubscriberService;
   private final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService;
   private final CConfiguration cConf;
@@ -94,7 +97,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       SConfiguration sConf,
       DiscoveryService discoveryService,
       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-      @Named(Constants.AppFabric.SERVER_HANDLERS_BINDING) Set<HttpHandler> handlers,
+      @Named(Constants.AppFabric.PROCESSOR_HANDLERS_BINDING) Set<HttpHandler> handlers,
       ProgramRuntimeService programRuntimeService,
       RunRecordCorrectorService runRecordCorrectorService,
       ProgramRunStatusMonitorService programRunStatusMonitorService,
@@ -107,6 +110,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       CoreSchedulerService coreSchedulerService,
       ProvisioningService provisioningService,
       BootstrapService bootstrapService,
+      SystemAppManagementService systemAppManagementService,
       RunRecordMonitorService runRecordCounterService,
       RunDataTimeToLiveService runDataTimeToLiveService,
       OperationNotificationSubscriberService operationNotificationSubscriberService,
@@ -129,6 +133,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
+    this.systemAppManagementService = systemAppManagementService;
     this.runRecordCounterService = runRecordCounterService;
     this.runDataTimeToLiveService = runDataTimeToLiveService;
     this.operationNotificationSubscriberService = operationNotificationSubscriberService;
@@ -199,6 +204,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
     scheduleNotificationSubscriberService.stopAndWait();
     coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
+    systemAppManagementService.stopAndWait();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();

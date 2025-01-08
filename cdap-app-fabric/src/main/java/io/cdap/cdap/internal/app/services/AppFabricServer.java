@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -39,11 +38,9 @@ import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
-import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
@@ -77,17 +74,13 @@ public class AppFabricServer extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-  private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
-  private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
   private final CredentialProviderService credentialProviderService;
   private final NamespaceCredentialProviderService namespaceCredentialProviderService;
   private final ProvisioningService provisioningService;
-  private final BootstrapService bootstrapService;
-  private final SystemAppManagementService systemAppManagementService;
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final RepositoryCleanupService repositoryCleanupService;
   private final CConfiguration cConf;
@@ -109,7 +102,6 @@ public class AppFabricServer extends AbstractIdleService {
       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
       @Named(Constants.AppFabric.SERVER_HANDLERS_BINDING) Set<HttpHandler> handlers,
       @Nullable MetricsCollectionService metricsCollectionService,
-      ProgramRuntimeService programRuntimeService,
       ApplicationLifecycleService applicationLifecycleService,
       @Named("appfabric.services.names") Set<String> servicesNames,
       @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -117,10 +109,7 @@ public class AppFabricServer extends AbstractIdleService {
       CredentialProviderService credentialProviderService,
       NamespaceCredentialProviderService namespaceCredentialProviderService,
       ProvisioningService provisioningService,
-      BootstrapService bootstrapService,
-      SystemAppManagementService systemAppManagementService,
       TransactionRunner transactionRunner,
-      RunRecordMonitorService runRecordCounterService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
       SourceControlOperationRunner sourceControlOperationRunner,
       RepositoryCleanupService repositoryCleanupService) {
@@ -130,7 +119,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.cConf = cConf;
     this.sConf = sConf;
     this.metricsCollectionService = metricsCollectionService;
-    this.programRuntimeService = programRuntimeService;
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -139,10 +127,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.credentialProviderService = credentialProviderService;
     this.namespaceCredentialProviderService = namespaceCredentialProviderService;
     this.provisioningService = provisioningService;
-    this.bootstrapService = bootstrapService;
-    this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
-    this.runRecordCounterService = runRecordCounterService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.repositoryCleanupService = repositoryCleanupService;
@@ -165,11 +150,8 @@ public class AppFabricServer extends AbstractIdleService {
     futuresList.addAll(ImmutableList.of(
         provisioningService.start(),
         applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
         coreSchedulerService.start(),
         credentialProviderService.start(),
-        runRecordCounterService.start(),
         sourceControlOperationRunner.start(),
         repositoryCleanupService.start()
     ));
@@ -223,13 +205,9 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     coreSchedulerService.stopAndWait();
-    bootstrapService.stopAndWait();
-    systemAppManagementService.stopAndWait();
     cancelHttpService.cancel();
-    programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     provisioningService.stopAndWait();
-    runRecordCounterService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();
     repositoryCleanupService.stopAndWait();
     credentialProviderService.stopAndWait();

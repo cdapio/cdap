@@ -51,6 +51,7 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.logging.service.LogQueryService;
@@ -129,6 +130,7 @@ public abstract class SupportBundleTestBase {
   private static MessagingService messagingService;
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessor;
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
@@ -200,6 +202,8 @@ public abstract class SupportBundleTestBase {
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessor.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
@@ -231,6 +235,7 @@ public abstract class SupportBundleTestBase {
   @AfterClass
   public static void afterClass() throws IOException {
     appFabricServer.stopAndWait();
+    appFabricProcessor.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
