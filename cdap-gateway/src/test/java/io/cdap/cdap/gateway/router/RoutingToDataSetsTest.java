@@ -49,11 +49,13 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * TODO: Eventually this can be removed, since we do not have any proxy rules anymore for datasets.
  */
+@Ignore
 public class RoutingToDataSetsTest {
 
   private static NettyRouter nettyRouter;

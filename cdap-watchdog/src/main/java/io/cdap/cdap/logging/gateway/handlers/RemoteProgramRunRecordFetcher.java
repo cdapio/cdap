@@ -45,8 +45,11 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
 
   @Inject
   public RemoteProgramRunRecordFetcher(RemoteClientFactory remoteClientFactory) {
+    // TODO (CDAP-21112): Move HTTP handler from Appfabric processor to server after fixing
+    //  ProgramRuntimeService and RunRecordMonitorService.
+    // Use APP_FABRIC_HTTP instead of APP_FABRIC_PROCESSOR after the fix.
     this.remoteClient = remoteClientFactory.createRemoteClient(
-        Constants.Service.APP_FABRIC_HTTP,
+        Constants.Service.APP_FABRIC_PROCESSOR,
         new DefaultHttpRequestConfig(false),
         Constants.Gateway.INTERNAL_API_VERSION_3);
   }
