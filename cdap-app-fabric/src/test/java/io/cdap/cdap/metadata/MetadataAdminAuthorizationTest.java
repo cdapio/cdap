@@ -28,6 +28,7 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -71,6 +72,7 @@ public class MetadataAdminAuthorizationTest {
   private static RoleController roleController;
   private static PermissionManager permissionManager;
   private static AppFabricServer appFabricServer;
+  private static AppFabricProcessorService appFabricProcessor;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -82,6 +84,8 @@ public class MetadataAdminAuthorizationTest {
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
+    appFabricProcessor.startAndWait();
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
@@ -170,6 +174,7 @@ public class MetadataAdminAuthorizationTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
+    appFabricProcessor.stopAndWait();
     AppFabricTestHelper.shutdown();
   }
 
