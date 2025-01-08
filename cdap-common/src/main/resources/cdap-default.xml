@@ -2804,6 +2804,22 @@
     </description>
   </property>
 
+  <!-- Logs Configuration -->
+  <property>
+    <name>i.log.appender.provider.enabled</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>i.log.appender.provider.extensions.dir</name>
+    <value>/opt/cdap/master/ext/cloud-log-appender</value>
+  </property>
+  <property>
+    <name>i.log.appender.provider.stackdriver.project</name>
+    <value>priyanshu-cdf</value>
+  </property>
+
+  <!-- Logs Configuration end -->
+
   <!-- Metrics Configuration -->
 
   <property>

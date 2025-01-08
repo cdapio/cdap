@@ -258,6 +258,7 @@
         <stage.metadataconsumers.ext.dir>${stage.opt.dir}/ext/metadataconsumers/data-catalog-consumer
         </stage.metadataconsumers.ext.dir>
         <stage.encryption.ext.dir>${stage.opt.dir}/ext/encryption</stage.encryption.ext.dir>
+        <stage.cloud.log.appender.ext.dir>${stage.opt.dir}/ext/cloud-log-appender</stage.cloud.log.appender.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
@@ -363,6 +364,12 @@
         <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-encryption-ext-tink</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.cdap.cdap</groupId>
+          <artifactId>cdap-cloud-log-appender-ext-stackdriver</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -791,6 +798,28 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-encryption-ext-tink/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy Cloud Log Appender extensions -->
+              <execution>
+                <id>copy-cdap-cloud-log-appender-ext-stackdriver</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.cloud.log.appender.ext.dir}/stackdriver</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-cloud-log-appender-ext-stackdriver/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>

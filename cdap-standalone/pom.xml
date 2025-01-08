@@ -360,6 +360,12 @@
       <artifactId>cdap-source-control</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-cloud-log-appender-ext-stackdriver</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -649,6 +655,13 @@
                       <includes>
                         <include>*.jar</include>
                         <include>*.json</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cloud-log-appender-ext-stackdriver/target/libexec</directory>
+                      <targetPath>ext/cloud-log-appender/stackdriver</targetPath>
+                      <includes>
+                        <include>*.jar</include>
                       </includes>
                     </resource>
                     <!-- copy secure store extensions -->
