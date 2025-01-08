@@ -155,7 +155,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.OK,
           String.format("Namespace '%s' created successfully.", namespaceId));
     } catch (AlreadyExistsException e) {
-      responder.sendString(HttpResponseStatus.OK,
+      responder.sendString(HttpResponseStatus.CONFLICT,
           String.format("Namespace '%s' already exists.", namespaceId));
     }
   }

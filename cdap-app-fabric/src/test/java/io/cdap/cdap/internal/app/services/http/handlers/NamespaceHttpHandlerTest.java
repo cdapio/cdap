@@ -130,8 +130,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
     // create again with the same name
     response = createNamespace(METADATA_EMPTY_FIELDS, NAME);
-    // create is idempotent, so response code is 200, but no updates should happen
-    assertResponseCode(200, response);
+    assertResponseCode(409, response);
     // check that no updates happened
     response = getNamespace(NAME);
     namespace = readGetResponse(response);
