@@ -175,17 +175,12 @@ final class DataprocConf {
   private final long clusterReuseUpdateMaxMs;
   private final String clusterReuseKey;
   private final boolean enablePredefinedAutoScaling;
+
   private final boolean disableLocalCaching;
+  private final boolean gcsCacheEnabled;
 
   private final int computeReadTimeout;
   private final int computeConnectionTimeout;
-
-  private final boolean gcsCacheEnabled;
-  private final String troubleshootingDocsUrl;
-
-  public String getTroubleshootingDocsUrl() {
-    return troubleshootingDocsUrl;
-  }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
@@ -209,8 +204,7 @@ final class DataprocConf {
       long clusterReuseThresholdMinutes, long clusterReuseRetryDelayMs, long clusterReuseRetryMaxMs,
       long clusterReuseUpdateMaxMs, @Nullable String clusterReuseKey,
       boolean enablePredefinedAutoScaling, int computeReadTimeout, int computeConnectionTimeout,
-      @Nullable String rootUrl, boolean gcsCacheEnabled, boolean disableLocalCaching,
-      String troubleshootingDocsUrl) {
+      @Nullable String rootUrl, boolean gcsCacheEnabled, boolean disableLocalCaching) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -272,7 +266,6 @@ final class DataprocConf {
     this.rootUrl = rootUrl;
     this.gcsCacheEnabled = gcsCacheEnabled;
     this.disableLocalCaching = disableLocalCaching;
-    this.troubleshootingDocsUrl = troubleshootingDocsUrl;
   }
 
   String getRegion() {
@@ -587,7 +580,8 @@ final class DataprocConf {
     String projectId = getString(properties, PROJECT_ID_KEY);
     if (projectId == null || AUTO_DETECT.equals(projectId)) {
       projectId = DataprocUtils.getSystemProjectId(
-          (url -> (HttpURLConnection) url.openConnection()));
+          (url -> (HttpURLConnection) url.openConnection()),
+          DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION);
     }
 
     String zone = getString(properties, "zone");
@@ -776,10 +770,8 @@ final class DataprocConf {
         properties.getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"));
     // If true, artifacts will not be cached locally.
     final boolean disableLocalCaching =
-        Boolean.parseBoolean(properties.getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED, "false"));
-    final String troubleshootingDocsUrl =
-        properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
-            DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
+        Boolean.parseBoolean(properties.getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED,
+            "false"));
 
     final String scopesProperty = String.format("%s,%s",
         Optional.ofNullable(getString(properties, SCOPES)).orElse(""), CLOUD_PLATFORM_SCOPE);
@@ -806,7 +798,7 @@ final class DataprocConf {
         clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseRetryDelayMs,
         clusterReuseRetryMaxMs, clusterReuseUpdateMaxMs, clusterReuseKey,
         enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,
-        gcsCacheEnabled, disableLocalCaching, troubleshootingDocsUrl);
+        gcsCacheEnabled, disableLocalCaching);
   }
 
   // the UI never sends nulls, it only sends empty strings.

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
@@ -41,6 +42,7 @@ public class MockProvisionerContext implements ProvisionerContext {
   private VersionInfo appCDAPVersionInfo;
   private String cdapVersion;
   private String profileName;
+  private ErrorCategory errorCategory;
 
   public MockProvisionerContext() {
     this(null);
@@ -91,6 +93,10 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   public void setSparkCompat(SparkCompat sparkCompat) {
     this.sparkCompat = sparkCompat;
+  }
+
+  public void setErrorCategory(ErrorCategory errorCategory) {
+    this.errorCategory = errorCategory;
   }
 
   @Override
@@ -155,5 +161,11 @@ public class MockProvisionerContext implements ProvisionerContext {
       result.completeExceptionally(e);
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public ErrorCategory getErrorCategory() {
+    return errorCategory;
   }
 }

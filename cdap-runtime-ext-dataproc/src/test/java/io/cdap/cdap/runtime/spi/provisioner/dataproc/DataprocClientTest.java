@@ -45,7 +45,9 @@ import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import io.cdap.cdap.error.api.ErrorTagProvider;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.grpc.Status;
 import java.io.IOException;
@@ -101,10 +103,11 @@ public class DataprocClientTest {
     properties.put("zone", "us-test1-c");
     dataprocConf = DataprocConf.create(properties);
 
-    sshDataprocClientFactory = (conf, requireSsh) ->
-      new SshDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
-    mockDataprocClientFactory = (conf, requireSsh) ->
-      new MockDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock);
+    sshDataprocClientFactory = (conf, requireSsh, errorCategory) ->
+      new SshDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock, errorCategory);
+    mockDataprocClientFactory = (conf, requireSsh, errorCategory) ->
+      new MockDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock,
+          errorCategory);
 
     Compute.Networks networksMock = Mockito.mock(Compute.Networks.class);
     listMock = Mockito.mock(Compute.Networks.List.class);
@@ -115,10 +118,15 @@ public class DataprocClientTest {
   @Test
   public void testReadTimeOutThrowsRetryableException() throws Exception {
     Mockito.when(listMock.execute()).thenThrow(SocketTimeoutException.class);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
-    thrown.expect(RetryableProvisionException.class);
-    thrown.expectCause(IsInstanceOf.instanceOf(SocketTimeoutException.class));
-    client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    try {
+      client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+    } catch (Exception e) {
+      assertTrue(String.format("Got exception: %s, expected: %s", e.getClass().getName(),
+          RetryableProvisionException.class.getName()), e instanceof RetryableProvisionException);
+      assertTrue(e.getCause() instanceof SocketTimeoutException);
+    }
   }
 
   @Test
@@ -139,10 +147,15 @@ public class DataprocClientTest {
     GoogleJsonResponseException gError = new GoogleJsonResponseException(builder, googleJsonError);
 
     Mockito.when(listMock.execute()).thenThrow(gError);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
-    thrown.expect(RetryableProvisionException.class);
-    thrown.expectCause(IsInstanceOf.instanceOf(GoogleJsonResponseException.class));
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    try {
     client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+    } catch (Exception e) {
+      assertTrue(String.format("Got exception: %s, expected: %s", e.getClass().getName(),
+          RetryableProvisionException.class.getName()), e instanceof RetryableProvisionException);
+      assertTrue(e.getCause() instanceof GoogleJsonResponseException);
+    }
   }
 
   @Test
@@ -162,10 +175,15 @@ public class DataprocClientTest {
     GoogleJsonResponseException gError = new GoogleJsonResponseException(builder, googleJsonError);
 
     Mockito.when(listMock.execute()).thenThrow(gError);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
-    thrown.expect(DataprocRuntimeException.class);
-    thrown.expectCause(IsInstanceOf.instanceOf(GoogleJsonResponseException.class));
-    client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    try {
+      client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+    } catch (Exception e) {
+      assertTrue(String.format("Got exception: %s, expected: %s", e.getClass().getName(),
+          DataprocRuntimeException.class.getName()), e instanceof DataprocRuntimeException);
+      assertTrue(e.getCause() instanceof GoogleJsonResponseException);
+    }
   }
 
 
@@ -177,7 +195,8 @@ public class DataprocClientTest {
     PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(RetryableProvisionException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
+    sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).getClusters(new HashMap<>());
   }
 
   @Test
@@ -188,7 +207,8 @@ public class DataprocClientTest {
     PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf).getClusters(new HashMap<>());
+    sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).getClusters(new HashMap<>());
   }
 
   @Test
@@ -210,8 +230,9 @@ public class DataprocClientTest {
     thrown.expect(DataprocRetryableException.class);
     thrown.expectMessage(String.format("Dataproc operation %s failure: %s", operationId, errorMessage));
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    mockDataprocClientFactory.create(dataprocConf).createCluster("name", "2.0",
-                                                                 Collections.emptyMap(), true, null);
+    mockDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).createCluster("name", "2.0",
+        Collections.emptyMap(), true, null);
   }
 
   @Test
@@ -235,11 +256,16 @@ public class DataprocClientTest {
     Mockito.when(clusterControllerClientMock.getCluster(Mockito.any(GetClusterRequest.class)))
       .thenThrow(new NotFoundException(new Exception("Cluster not found!"),
                                        HttpJsonStatusCode.of(404), false));
-    thrown.expect(DataprocRuntimeException.class);
-    thrown.expectMessage(String.format("Dataproc operation %s failure: %s", operationId, errorMessage));
-    thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    mockDataprocClientFactory.create(dataprocConf).createCluster("name", "2.0",
-                                                                 Collections.emptyMap(), true, null);
+    try {
+      mockDataprocClientFactory.create(dataprocConf,
+          new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).createCluster("name", "2.0",
+          Collections.emptyMap(), true, null);
+    } catch (Exception e) {
+      assertTrue(e instanceof DataprocRuntimeException);
+      assertTrue(e.getCause() instanceof ApiException);
+      assertEquals(String.format("Dataproc operation %s failure: java.io.IOException: %s",
+              operationId, errorMessage), e.getMessage());
+    }
   }
 
   @Test
@@ -271,16 +297,16 @@ public class DataprocClientTest {
       .thenThrow(new NotFoundException(new Exception("Cluster not found!"),
                                        HttpJsonStatusCode.of(404), false));
     try {
-      mockDataprocClientFactory.create(conf)
+      mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
         .createCluster("name", "2.0", Collections.emptyMap(), true, null);
       fail("Exception not thrown by createCluster().");
     } catch (DataprocRuntimeException e) {
-      assertTrue("Thrown exception doesn't contain user error tag.",
-                 e.getErrorTags().contains(ErrorTagProvider.ErrorTag.USER));
+      assertEquals("Thrown exception doesn't contain user error.", e.getErrorType(),
+          ErrorType.USER);
       assertEquals("Exception cause is not of type InvalidArgumentException",
-                   e.getCause().getClass(), InvalidArgumentException.class);
-      assertTrue("Error message doesn't contain troubleshooting docs link.",
-                 e.getMessage().contains("https://abc.com/troubleshooting"));
+          e.getCause().getClass(), InvalidArgumentException.class);
+      assertEquals("Error message doesn't contain troubleshooting docs link.",
+          e.getSupportedDocumentationUrl(), DataprocRuntimeException.TROUBLESHOOTING_DOC_URL);
     }
 
     // Ensure help message is absent when troubleshooting docs url is missing.
@@ -288,8 +314,9 @@ public class DataprocClientTest {
     conf = DataprocConf.create(properties);
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectMessage(not(containsString("refer to")));
-    mockDataprocClientFactory.create(conf).createCluster("name", "2.0",
-                                                         Collections.emptyMap(), true, null);
+    mockDataprocClientFactory.create(conf,
+        new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).createCluster("name", "2.0",
+        Collections.emptyMap(), true, null);
   }
 
   @Test
@@ -312,7 +339,8 @@ public class DataprocClientTest {
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectMessage(String.format("Dataproc operation %s failure: %s", operationId, errorMessage));
     thrown.expectCause(IsInstanceOf.instanceOf(IOException.class));
-    mockDataprocClientFactory.create(dataprocConf).deleteCluster(clusterName);
+    mockDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.DEPROVISIONING)).deleteCluster(clusterName);
   }
 
   @Test
@@ -321,7 +349,8 @@ public class DataprocClientTest {
     Cluster cluster = Cluster.newBuilder().setStatus(ClusterStatus.newBuilder()
         .setState(ClusterStatus.State.ERROR)).build();
     // PowerMockito.when(clusterControllerClientMock.getCluster(Mockito.any())).thenReturn(cluster);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
     PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);

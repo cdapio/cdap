@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.provision;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -62,6 +64,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final String profileName;
   private final LoggingContext loggingContext;
   private final Executor executor;
+  private final ErrorCategory errorCategory;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName,
       Map<String, String> properties,
@@ -69,7 +72,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
       @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
       RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
       @Nullable String profileName, Executor executor,
-      LoggingContext loggingContext) {
+      LoggingContext loggingContext, ErrorCategory errorCategory) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
         programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -92,6 +95,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.metricsCollectionService = metricsCollectionService;
     this.provisionerName = provisionerName;
     this.executor = executor;
+    this.errorCategory = errorCategory;
   }
 
   @Override
@@ -144,6 +148,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public String getProfileName() {
     return profileName;
+  }
+
+  @Override
+  public ErrorCategory getErrorCategory() {
+    return errorCategory == null ? new ErrorCategory(ErrorCategoryEnum.OTHERS) : errorCategory;
   }
 
   @Override

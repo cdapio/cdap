@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
+import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import java.util.Collections;
 
@@ -26,8 +27,8 @@ import java.util.Collections;
 class RuntimeMonitorDataprocClient extends DataprocClient {
 
   RuntimeMonitorDataprocClient(DataprocConf conf, ClusterControllerClient client,
-      ComputeFactory computeFactory) {
-    super(conf, client, computeFactory);
+      ComputeFactory computeFactory, ErrorCategory errorCategory) {
+    super(conf, client, computeFactory, errorCategory);
   }
 
   @Override

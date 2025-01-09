@@ -70,46 +70,39 @@ public class ProgramFailureException extends RuntimeException implements Failure
 
   @Override
   public ErrorCategory getErrorCategory() {
+    if (errorCategory == null) {
+      return FailureDetailsProvider.super.getErrorCategory();
+    }
     return errorCategory;
   }
 
   @Override
   public ErrorType getErrorType() {
-    return errorType == null ? ErrorType.UNKNOWN : errorType;
+    if (errorType == null) {
+      return FailureDetailsProvider.super.getErrorType();
+    }
+    return errorType;
   }
 
-  /**
-   * Returns whether the error is coming from a dependent service.
-   *
-   * @return true if the error is a dependency service error, false otherwise.
-   */
+  @Override
   public boolean isDependency() {
     return dependency;
   }
 
-  /**
-   * Returns the type of error code.
-   *
-   * @return the type of error code.
-   */
+  @Nullable
+  @Override
   public ErrorCodeType getErrorCodeType() {
     return errorCodeType;
   }
 
-  /**
-   * Returns the error code.
-   *
-   * @return the error code.
-   */
+  @Nullable
+  @Override
   public String getErrorCode() {
     return errorCode;
   }
 
-  /**
-   * Returns the URL to the documentation.
-   *
-   * @return the URL to the documentation.
-   */
+  @Nullable
+  @Override
   public String getSupportedDocumentationUrl() {
     return supportedDocumentationUrl;
   }

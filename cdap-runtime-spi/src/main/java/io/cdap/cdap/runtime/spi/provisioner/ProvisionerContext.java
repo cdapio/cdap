@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
@@ -118,4 +119,10 @@ public interface ProvisionerContext {
    */
   @Nullable
   String getProfileName();
+
+  /**
+   * @return error category.
+   */
+  @Nullable
+  ErrorCategory getErrorCategory();
 }
