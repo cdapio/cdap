@@ -50,16 +50,13 @@ import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +99,7 @@ public class SpannerMessagingService implements MessagingService {
 
   private int publishDelayMillis;
 
-  private final ConcurrentLinkedQueue<RequestFuture> batch = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<StoreRequest> batch = new ConcurrentLinkedQueue<>();
 
   @Override
   public void initialize(MessagingServiceContext context) throws IOException {
@@ -175,7 +172,7 @@ public class SpannerMessagingService implements MessagingService {
    *             Guaranteed to be monotonically increasing and unique across transactions
    *             that modify the same fields.
    *         </li>
-   *         <li>**`payload_remaining_chunks`:** This field helps reassemble large messages
+   *         <li>**`payload_parts_remaining`:** This field helps reassemble large messages
    *             that are split across multiple rows. It indicates how many more parts are needed
    *             to reconstruct the complete message.
    *             A value of 0 means this is the final part.
@@ -187,12 +184,15 @@ public class SpannerMessagingService implements MessagingService {
    * </p>
    */
   private String getCreateTopicDDLStatement(TopicId topicId) {
-    return String.format("CREATE TABLE IF NOT EXISTS %s ( %s INT64, %s INT64, %s"
-            + " TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true), %s INT64, %s BYTES(MAX) )"
-            + " PRIMARY KEY (%s, %s, %s), ROW DELETION POLICY" + " (OLDER_THAN(%s, INTERVAL 7 DAY))",
-        getTableName(topicId), SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID_FIELD, PUBLISH_TS_FIELD,
-        PAYLOAD_REMAINING_CHUNKS_FIELD, PAYLOAD_FIELD, SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID_FIELD,
-        PUBLISH_TS_FIELD, PUBLISH_TS_FIELD);
+    return String.format(
+        "CREATE TABLE IF NOT EXISTS %s ( %s TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),"
+            + " %s INT64, %s INT64, %s INT64, %s BYTES(MAX) )"
+            + " PRIMARY KEY (%s, %s, %s), ROW DELETION POLICY"
+            + " (OLDER_THAN(%s, INTERVAL 7 DAY))", getTableName(topicId),
+        PUBLISH_TS_FIELD, SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID_FIELD,
+        PAYLOAD_REMAINING_CHUNKS_FIELD, PAYLOAD_FIELD,
+        PUBLISH_TS_FIELD, SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID_FIELD,
+        PUBLISH_TS_FIELD);
   }
 
   private void updateTopicMetadataTable(List<TopicMetadata> topics) throws IOException {
@@ -295,7 +295,7 @@ public class SpannerMessagingService implements MessagingService {
    * shows how messages would be persisted in the topic tables.
    *
    * <pre>
-   * TXN     sequence_id  payload_sequence_id  publish_ts  payload       payload_remaining_chunks
+   * TXN     sequence_id  payload_sequence_id  publish_ts  payload       payload_parts_remaining
    * TXN1    0            0                    ts1          msg1          0
    * TXN1    1            0                    ts1          msg2_p0       2
    * TXN1    1            1                    ts1          msg2_p1       1
@@ -308,119 +308,79 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
-    // All messages within a StoreRequest are published in a single batch to maintain atomicity.
-    // Caller should ensure that the request size does not exceed the max allowed size.
-    long requestSize = StreamSupport.stream(request.spliterator(), false)
-        .mapToLong(payload -> payload.length)
-        .sum();
-    if (requestSize > MAX_BATCH_SIZE_IN_BYTES) {
-      throw new IllegalArgumentException(String.format(
-          "Request size %d bytes exceeds the maximum allowed size of %d bytes for Cloud Spanner.",
-          requestSize, MAX_BATCH_SIZE_IN_BYTES));
-    }
-
-    CompletableFuture<Void> publishFuture = new CompletableFuture<>();
-    batch.add(new RequestFuture(request, publishFuture, requestSize));
     long start = System.currentTimeMillis();
-    writeData(start);
-    // Wait for the corresponding future to finish.
-    publishFuture.join();
 
+    batch.add(request);
+    if (!batch.isEmpty()) {
+      int sequenceId = 0;
+      List<Mutation> batchCopy = new ArrayList<>(batch.size());
+      long estimatedBatchSize = 0;
+      // We need to batch less than fetch limit since we read for publish_ts >= last_message.publish_ts
+      // see fetch for explanation of why we read for publish_ts >= last_message.publish_ts and
+      // not publish_ts > last_message.publish_ts
+      while (!batch.isEmpty()) {
+        StoreRequest headRequest = batch.poll();
+        for (byte[] payload : headRequest) {
+          int payloadSequenceId = 0;
+          List<Mutation> mutationsForCurrentPayload = new ArrayList<>();
+          int remainingChunksCount = (payload.length - 1) / MAX_PAYLOAD_SIZE_IN_BYTES;
+          int length = payload.length;
+          int offset = 0;
+          while (offset < length) {
+            int chunkSize = Math.min(MAX_PAYLOAD_SIZE_IN_BYTES, length - offset);
+            byte[] payloadChunk = Arrays.copyOfRange(payload, offset, offset + chunkSize);
+            Mutation mutation = constructPublishMutation(headRequest.getTopicId(), sequenceId,
+                payloadSequenceId++, remainingChunksCount--, payloadChunk);
+            mutationsForCurrentPayload.add(mutation);
+            offset += chunkSize;
+            estimatedBatchSize += payloadChunk.length;
+          }
+
+          // Check if adding these mutations will exceed the batch size limit.
+          if (estimatedBatchSize > MAX_BATCH_SIZE_IN_BYTES) {
+            // If exceeding limit, publish the current batch and start a new one.
+            publishBatch(batchCopy);
+            batchCopy = new ArrayList<>();
+            estimatedBatchSize = 0;
+          }
+          sequenceId++;
+          batchCopy.addAll(mutationsForCurrentPayload);
+        }
+
+        if (batch.isEmpty() && (sequenceId < publishBatchSize
+            || System.currentTimeMillis() - start < publishBatchTimeoutMillis)) {
+          try {
+            Thread.sleep(publishDelayMillis);
+          } catch (InterruptedException e) {
+            throw new IOException(e);
+          }
+        }
+      }
+      publishBatch(batchCopy);
+    }
     //TODO: Add a RollbackDetail implementation that throws exceptions if any of the methods is called.
     return null;
   }
 
-  /**
-   * This method efficiently batches and publishes messages to Cloud Spanner, ensuring atomicity and
-   * fault tolerance.
-   */
-  private synchronized void writeData(long start) {
-    AtomicInteger sequenceId = new AtomicInteger(0);
-    long estimatedBatchSize = 0;
-    List<Mutation> mutations = new ArrayList<>(batch.size());
-    List<CompletableFuture<Void>> futures = new ArrayList<>(batch.size());
-
-    // Check if adding mutations related to the head will exceed the batch size limit.
-    // If exceeding limit, publish the accumulated mutations and then only pick the next item in queue.
-    while (!batch.isEmpty() && (estimatedBatchSize + batch.peek().getSize()
-        < MAX_BATCH_SIZE_IN_BYTES)) {
-      // Ensure that all messages within a StoreRequest are published in a single batch to maintain atomicity.
-      // If the batch publish succeeds, all messages are persisted, and the corresponding
-      // future is completed successfully.
-      // If the batch publish fails, none of the messages are persisted,
-      // and the future is completed exceptionally, allowing the caller to retry the entire StoreRequest.
-      RequestFuture headRequest = batch.poll();
-      List<Mutation> mutationsForRequest = createMutations(headRequest.getStoreRequest(),
-          sequenceId);
-      mutations.addAll(mutationsForRequest);
-      futures.add(headRequest.getFuture());
-      estimatedBatchSize += headRequest.getSize();
-
-      // For better performance, wait for more messages to accumulate before committing the batch.
-      if (batch.isEmpty() && (sequenceId.get() < publishBatchSize
-          || System.currentTimeMillis() - start < publishBatchTimeoutMillis)) {
-        try {
-          Thread.sleep(publishDelayMillis);
-        } catch (InterruptedException e) {
-          for (CompletableFuture<Void> future : futures) {
-            future.completeExceptionally(e);
-          }
-        }
+  private void publishBatch(List<Mutation> batchCopy) throws IOException {
+    if (!batchCopy.isEmpty()) {
+      try {
+        client.write(batchCopy);
+        LOG.trace("publish done");
+      } catch (SpannerException e) {
+        throw new IOException(e);
       }
     }
-    commitPublishMutations(mutations, futures);
   }
 
-  /**
-   * This method creates mutations for all the messages that are part of the StoreRequest. Messages
-   * with payload larger than 10MB need to be split across multiple rows.
-   */
-  private List<Mutation> createMutations(StoreRequest request, AtomicInteger sequenceId) {
-    List<Mutation> mutations = new ArrayList<>();
-    TopicId topicId = request.getTopicId();
-    for (byte[] payload : request) {
-      int payloadSequenceId = 0;
-      int remainingChunksCount = (payload.length - 1) / MAX_PAYLOAD_SIZE_IN_BYTES;
-      int length = payload.length;
-      int offset = 0;
-      while (offset < length) {
-        int chunkSize = Math.min(MAX_PAYLOAD_SIZE_IN_BYTES, length - offset);
-        ByteBuffer payloadChunk = ByteBuffer.wrap(payload, offset, chunkSize);
-        Mutation mutation = createMutation(topicId, sequenceId.get(), payloadSequenceId++,
-            remainingChunksCount--, payloadChunk);
-        mutations.add(mutation);
-        offset += chunkSize;
-      }
-      sequenceId.set(sequenceId.get() + 1);
-    }
-    return mutations;
-  }
-
-  private Mutation createMutation(TopicId topicId, int sequenceId, int payloadSequenceId,
-      int remainingParts, ByteBuffer payload) {
+  private Mutation constructPublishMutation(TopicId topicId, int sequenceId, int payloadSequenceId,
+      int remainingParts, byte[] payload) {
     Mutation mutation = Mutation.newInsertBuilder(getTableName(topicId)).set(SEQUENCE_ID_FIELD)
         .to(sequenceId).set(PAYLOAD_SEQUENCE_ID_FIELD).to(payloadSequenceId).set(PUBLISH_TS_FIELD)
         .to("spanner.commit_timestamp()").set(PAYLOAD_FIELD).to(ByteArray.copyFrom(payload))
         .set(PAYLOAD_REMAINING_CHUNKS_FIELD).to(remainingParts).build();
     LOG.trace("mutation to publish {}", mutation);
     return mutation;
-  }
-
-  private void commitPublishMutations(List<Mutation> mutations,
-      List<CompletableFuture<Void>> futures) {
-    if (!mutations.isEmpty()) {
-      try {
-        client.write(mutations);
-        LOG.trace("published mutations : {}", mutations.size());
-        for (CompletableFuture<Void> future : futures) {
-          future.complete(null);
-        }
-      } catch (SpannerException e) {
-        for (CompletableFuture<Void> future : futures) {
-          future.completeExceptionally(e);
-        }
-      }
-    }
   }
 
   @Override
@@ -482,9 +442,9 @@ public class SpannerMessagingService implements MessagingService {
     // order by
     // publish_ts, sequence_id, payload_sequence_id
     String sqlStatement = String.format(
-        "SELECT %s, %s, UNIX_MICROS(%s) %s, %s, %s FROM %s where (%s > TIMESTAMP_MICROS(%s)) or"
+        "SELECT UNIX_MICROS(%s) %s, %s, %s, %s, %s FROM %s where (%s > TIMESTAMP_MICROS(%s)) or"
             + " (%s = TIMESTAMP_MICROS(%s) and %s > %s) order by" + " %s, %s, %s LIMIT %s",
-        SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID_FIELD, PUBLISH_TS_FIELD, PUBLISH_TS_MICROS_FIELD,
+        PUBLISH_TS_FIELD, PUBLISH_TS_MICROS_FIELD, SEQUENCE_ID_FIELD, PAYLOAD_SEQUENCE_ID_FIELD,
         PAYLOAD_REMAINING_CHUNKS_FIELD, PAYLOAD_FIELD,
         getTableName(messageFetchRequest.getTopicId()), PUBLISH_TS_FIELD, startTime,
         PUBLISH_TS_FIELD, startTime, SEQUENCE_ID_FIELD, sequenceId, PUBLISH_TS_FIELD,
@@ -557,31 +517,4 @@ public class SpannerMessagingService implements MessagingService {
     Bytes.putShort(result, offset, (short) payloadSequenceId);
     return result;
   }
-
-  // Helper class to hold the publish request and its future.
-  private static class RequestFuture {
-
-    private final StoreRequest storeRequest;
-    private final CompletableFuture<Void> future;
-    private final long size;
-
-    private RequestFuture(StoreRequest storeRequest, CompletableFuture<Void> future, long size) {
-      this.storeRequest = storeRequest;
-      this.future = future;
-      this.size = size;
-    }
-
-    private StoreRequest getStoreRequest() {
-      return storeRequest;
-    }
-
-    private long getSize() {
-      return size;
-    }
-
-    private CompletableFuture<Void> getFuture() {
-      return future;
-    }
-  }
-
 }
