@@ -975,6 +975,45 @@ public class AppMetadataStore {
     return meta;
   }
 
+  /**
+   * Record that the program run is provisioning compute resources for the run. If the current
+   * status has a higher source id, this call will be ignored.
+   *
+   * @param programRunId program run
+   *
+   * @return {@link RunRecordDetail} with status Pending.
+   */
+  @Nullable
+  public RunRecordDetail recordProgramPending(ProgramRunId programRunId)
+      throws IOException {
+    long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+    if (startTs == -1L) {
+      LOG.error(
+          "Ignoring unexpected request to record provisioning state for program run {} that does not have "
+              + "a timestamp in the run id.", programRunId);
+      return null;
+    }
+
+    RunRecordDetail existing = getRun(programRunId);
+    // If for some reason, there is an existing run record then return null.
+    if (existing != null) {
+      LOG.error(
+          "Ignoring unexpected request to record pending state for program run {} that has an "
+              + "existing run record in run state {} and cluster state {}.",
+          programRunId, existing.getStatus());
+      return null;
+    }
+
+    RunRecordDetail meta = RunRecordDetail.builder()
+        .setProgramRunId(programRunId)
+        .setStartTime(startTs)
+        .setStatus(ProgramRunStatus.PENDING)
+        .build();
+    writeNewRunRecord(meta, TYPE_RUN_RECORD_ACTIVE);
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.PENDING, programRunId);
+    return meta;
+  }
+
   // return the property map to set in the RunRecordDetail
   private Map<String, String> getRecordProperties(Map<String, String> systemArgs,
       Map<String, String> runtimeArgs) {
@@ -1638,6 +1677,24 @@ public class AppMetadataStore {
         key -> !NamespaceId.SYSTEM.getNamespace()
             .equals(key.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD)),
         null, limit != null ? limit : Integer.MAX_VALUE)) {
+      iterator.forEachRemaining(m -> count.getAndIncrement());
+    }
+    return count.get();
+  }
+
+  /**
+   * Count all active runs.
+   *
+   * @param limit count at most that many runs, stop if there are more.
+   */
+  public int countLaunchingRuns(@Nullable Integer limit) throws IOException {
+    AtomicInteger count = new AtomicInteger(0);
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(
+        Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null)),
+        key -> !NamespaceId.SYSTEM.getNamespace()
+            .equals(key.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD)),
+        runRecordDetail -> runRecordDetail.getStatus().equals(ProgramRunStatus.PENDING),
+        limit != null ? limit : Integer.MAX_VALUE)) {
       iterator.forEachRemaining(m -> count.getAndIncrement());
     }
     return count.get();

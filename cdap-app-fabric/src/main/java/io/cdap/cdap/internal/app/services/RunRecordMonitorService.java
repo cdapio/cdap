@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -24,18 +24,16 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Metrics.FlowControl;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxCallable;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,23 +42,13 @@ import org.slf4j.LoggerFactory;
  * flow-control mechanism for launch requests. It also has a cleanup mechanism to automatically
  * remove old (i.e., configurable) entries from the counter as a safe-guard mechanism.
  */
-public class RunRecordMonitorService extends AbstractScheduledService {
+public class RunRecordMonitorService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RunRecordMonitorService.class);
-
-  /**
-   * Contains ProgramRunIds of runs that have been accepted, but have not been added to metadata
-   * store plus all run records with {@link ProgramRunStatus#PENDING} or {@link
-   * ProgramRunStatus#STARTING} status.
-   */
-  private final BlockingQueue<ProgramRunId> launchingQueue;
-
   private final ProgramRuntimeService runtimeService;
-  private final long ageThresholdSec;
-  private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final int maxConcurrentRuns;
-  private ScheduledExecutorService executor;
+  private final TransactionRunner transactionRunner;
 
   /**
    * Tracks the program runs.
@@ -73,16 +61,12 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   public RunRecordMonitorService(
       CConfiguration cConf,
       ProgramRuntimeService runtimeService,
-      MetricsCollectionService metricsCollectionService) {
-    this.cConf = cConf;
+      MetricsCollectionService metricsCollectionService,
+      TransactionRunner transactionRunner) {
     this.runtimeService = runtimeService;
     this.metricsCollectionService = metricsCollectionService;
-
-    this.launchingQueue =
-        new PriorityBlockingQueue<>(
-            128, Comparator.comparingLong(o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
-    this.ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -92,29 +76,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
   @Override
   protected void shutDown() throws Exception {
-    if (executor != null) {
-      executor.shutdownNow();
-    }
     LOG.info("RunRecordMonitorService successfully shut down.");
-  }
-
-  @Override
-  protected void runOneIteration() throws Exception {
-    cleanupQueue();
-  }
-
-  @Override
-  protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(
-        0, cConf.getInt(Constants.AppFabric.MONITOR_CLEANUP_INTERVAL_SECONDS), TimeUnit.SECONDS);
-  }
-
-  @Override
-  protected final ScheduledExecutorService executor() {
-    executor =
-        Executors.newSingleThreadScheduledExecutor(
-            Threads.createDaemonThreadFactory("run-record-monitor-service-cleanup-scheduler"));
-    return executor;
   }
 
   /**
@@ -144,26 +106,39 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * @return total number of launching and running program runs.
    */
   public Counter getCount() {
-    int launchingCount = launchingQueue.size();
+    // TODO: Read from DB to return counter.
+    // int launchingCount = launchingQueue.size();
+    long applicationCount = TransactionRunners.run(transactionRunner,
+        (TxCallable<Long>) context ->
+            AppMetadataStore.create(context).getApplicationCount());
     int runningCount = getProgramsRunningCount();
 
     return new Counter(launchingCount, runningCount);
+
+
+    return TransactionRunners.run(transactionRunner,
+        (TxCallable<Counter>) context -> {
+            int AppMetadataStore.create(context).getApplicationCount());
+
+        });
   }
 
   /**
    * Add a new in-flight launch request.
    *
    * @param programRunId run id associated with the launch request
+   *
+   * @return Returns the count of launching programs.
    */
   public int addRequest(ProgramRunId programRunId) {
-    int result;
-    synchronized (launchingQueue) {
-      launchingQueue.add(programRunId);
-      result = launchingQueue.size();
-    }
-    emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, result);
+    int launchingCount = TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramPending(programRunId);
+      return store.countLaunchingRuns(null);
+    });
+    emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingCount);
     LOG.info("Added request with runId {}.", programRunId);
-    return result;
+    return launchingCount;
   }
 
   /**
@@ -176,14 +151,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    *     Constants.Metrics.FlowControl#RUNNING_COUNT}
    */
   public void removeRequest(ProgramRunId programRunId, boolean emitRunningChange) {
-    if (launchingQueue.remove(programRunId)) {
-      LOG.info(
-          "Removed request with runId {}. Counter has {} concurrent launching requests.",
-          programRunId,
-          launchingQueue.size());
-      emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
-    }
-
+    // TODO: See if this func can be refactored as it only emits metrics. Merge it with other
+    //  functions if needed.
+    emitLaunchingMetrics();
     if (emitRunningChange) {
       emitRunningMetrics();
     }
@@ -197,7 +167,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
    * Emit the {@link Constants.Metrics.FlowControl#LAUNCHING_COUNT} metric for runs.
    */
   public void emitLaunchingMetrics() {
-    emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
+    int launchingCount = TransactionRunners.run(transactionRunner, context -> {
+      return AppMetadataStore.create(context).countLaunchingRuns(null);
+    });
+    emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingCount);
   }
 
 
@@ -211,25 +184,6 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   private void emitMetrics(String metricName, long value) {
     LOG.trace("Setting metric {} to value {}", metricName, value);
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(metricName, value);
-  }
-
-  private void cleanupQueue() {
-    while (true) {
-      ProgramRunId programRunId = launchingQueue.peek();
-      if (programRunId == null
-          || RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) + (ageThresholdSec * 1000)
-              >= System.currentTimeMillis()) {
-        // Queue is empty or queue head has not expired yet.
-        break;
-      }
-      // Queue head might have already been removed. So instead of calling poll, we call remove.
-      if (launchingQueue.remove(programRunId)) {
-        LOG.info("Removing request with runId {} due to expired retention time.", programRunId);
-      }
-    }
-    // Always emit both metrics after cleanup.
-    emitLaunchingMetrics();
-    emitRunningMetrics();
   }
 
   /**
