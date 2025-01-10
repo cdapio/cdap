@@ -377,7 +377,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     String body = buildRequestBody(strategy, "authorization_code", code, redirectURI, null, clientCreds);
 
     try {
-      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, false).build();
+      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, true).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
     }
@@ -396,7 +396,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     String body = buildRequestBody(strategy, "refresh_token", null, null, refreshToken, clientCreds);
 
     try {
-      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, true).build();
+      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, false).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
     }
