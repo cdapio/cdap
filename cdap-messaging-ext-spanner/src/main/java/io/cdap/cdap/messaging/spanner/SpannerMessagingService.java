@@ -58,6 +58,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -78,6 +80,7 @@ public class SpannerMessagingService implements MessagingService {
   public static final String PROPERTIES_FIELD = "properties";
   public static final String NAMESPACE_FIELD = "namespace";
   public static final String TOPIC_TABLE_PREFIX = "messaging";
+  public static final int PUBLISH_FUTURE_TIMEOUT_MINUTES = 2;
 
   // Maximum size of data per cell in spanner is 10 MB.
   // Thus, inserting messages with more than 10MB requires chunking them into multiple rows.
@@ -326,8 +329,14 @@ public class SpannerMessagingService implements MessagingService {
     batch.add(new RequestFuture(request, publishFuture, requestSize));
     long start = System.currentTimeMillis();
     writeData(start);
-    // Wait for the corresponding future to finish.
-    publishFuture.join();
+
+    // Timed wait for the corresponding future to finish.
+    // This prevents the thread from hanging indefinitely if an unexpected error occurs in writeData().
+    try {
+      publishFuture.get(PUBLISH_FUTURE_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      throw new IOException("Failed to publish message", e);
+    }
 
     //TODO: Add a RollbackDetail implementation that throws exceptions if any of the methods is called.
     return null;
@@ -343,35 +352,51 @@ public class SpannerMessagingService implements MessagingService {
     List<Mutation> mutations = new ArrayList<>(batch.size());
     List<CompletableFuture<Void>> futures = new ArrayList<>(batch.size());
 
-    // Check if adding mutations related to the head will exceed the batch size limit.
-    // If exceeding limit, publish the accumulated mutations and then only pick the next item in queue.
-    while (!batch.isEmpty() && (estimatedBatchSize + batch.peek().getSize()
-        < MAX_BATCH_SIZE_IN_BYTES)) {
-      // Ensure that all messages within a StoreRequest are published in a single batch to maintain atomicity.
-      // If the batch publish succeeds, all messages are persisted, and the corresponding
-      // future is completed successfully.
-      // If the batch publish fails, none of the messages are persisted,
-      // and the future is completed exceptionally, allowing the caller to retry the entire StoreRequest.
-      RequestFuture headRequest = batch.poll();
-      List<Mutation> mutationsForRequest = createMutations(headRequest.getStoreRequest(),
-          sequenceId);
-      mutations.addAll(mutationsForRequest);
-      futures.add(headRequest.getFuture());
-      estimatedBatchSize += headRequest.getSize();
+    try {
+      // Check if adding mutations related to the head will exceed the batch size limit.
+      // If exceeding limit, publish the accumulated mutations and then only pick the next item in queue.
+      while (!batch.isEmpty() && (estimatedBatchSize + batch.peek().getSize()
+          < MAX_BATCH_SIZE_IN_BYTES)) {
+        // Ensure that all messages within a StoreRequest are published in a single batch to maintain atomicity.
+        // If the batch publish succeeds, all messages are persisted, and the corresponding
+        // future is completed successfully.
+        // If the batch publish fails, none of the messages are persisted,
+        // and the future is completed exceptionally, allowing the caller to retry the entire StoreRequest.
+        RequestFuture headRequest = batch.poll();
+        List<Mutation> mutationsForRequest = createMutations(headRequest.getStoreRequest(),
+            sequenceId);
+        mutations.addAll(mutationsForRequest);
+        futures.add(headRequest.getFuture());
+        estimatedBatchSize += headRequest.getSize();
 
-      // For better performance, wait for more messages to accumulate before committing the batch.
-      if (batch.isEmpty() && (sequenceId.get() < publishBatchSize
-          || System.currentTimeMillis() - start < publishBatchTimeoutMillis)) {
-        try {
-          Thread.sleep(publishDelayMillis);
-        } catch (InterruptedException e) {
-          for (CompletableFuture<Void> future : futures) {
-            future.completeExceptionally(e);
+        // For better performance, wait for more messages to accumulate before committing the batch.
+        if (batch.isEmpty() && (sequenceId.get() < publishBatchSize
+            || System.currentTimeMillis() - start < publishBatchTimeoutMillis)) {
+          try {
+            Thread.sleep(publishDelayMillis);
+          } catch (InterruptedException e) {
+            completeBlockedFutures(mutations, futures, e);
+            return;
           }
         }
       }
+      commitPublishMutations(mutations, futures);
+      futures.clear();
+    } finally {
+      // If any other exception happens (RuntimeException / Error, e.g. StackOverflow) apart from the
+      // handled InterruptedException and SpannerException, all waiting threads should not be stuck forever.
+      completeBlockedFutures(mutations, futures, new IOException("Publish operation failed"));
     }
-    commitPublishMutations(mutations, futures);
+  }
+
+  private static void completeBlockedFutures(List<Mutation> mutations,
+      List<CompletableFuture<Void>> futures,
+      Exception e) {
+    for (CompletableFuture<Void> future : futures) {
+      future.completeExceptionally(e);
+    }
+    mutations.clear();
+    futures.clear();
   }
 
   /**
