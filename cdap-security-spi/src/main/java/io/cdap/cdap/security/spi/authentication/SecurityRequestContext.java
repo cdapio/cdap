@@ -22,7 +22,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
-
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,8 +41,7 @@ public final class SecurityRequestContext {
   private static final ThreadLocal<Queue<AuditLogContext>> auditLogContextQueue = new InheritableThreadLocal<>();
   private static final ThreadLocal<Map<? extends EntityId, AuthorizationResponse>> entityToAuthResponseMap =
     new InheritableThreadLocal<>();
-  // This will be used by AuthenticationChannelHandler to finally write the audit log event to a messaging queue.
-  private static final ThreadLocal<AuditLogRequest> auditLogRequest = new InheritableThreadLocal<>();
+  private static final ThreadLocal<AuditLogRequest.Builder> auditLogRequestBuilder = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }
@@ -79,16 +77,6 @@ public final class SecurityRequestContext {
   }
 
   /**
-   * Get the {@link AuditLogRequest} for this thread.
-   *
-   * @return {@link AuditLogRequest}
-   */
-  @Nullable
-  public static AuditLogRequest getAuditLogRequest() {
-    return auditLogRequest.get();
-  }
-
-  /**
    * Set the userId on the current thread.
    *
    * @param userIdParam userId to be set
@@ -116,15 +104,6 @@ public final class SecurityRequestContext {
   }
 
   /**
-   * Set the {@link AuditLogRequest} on the current thread.
-   *
-   * @param auditLogReq
-   */
-  public static void setAuditLogRequest(AuditLogRequest auditLogReq) {
-    auditLogRequest.set(auditLogReq);
-  }
-
-  /**
    * Returns a {@link Principal} for the user set on the current thread.
    */
   public static Principal toPrincipal() {
@@ -139,8 +118,8 @@ public final class SecurityRequestContext {
     userIP.remove();
     userCredential.remove();
     auditLogContextQueue.remove();
-    auditLogRequest.remove();
     entityToAuthResponseMap.remove();
+    auditLogRequestBuilder.remove();
   }
 
   /**
@@ -230,5 +209,20 @@ public final class SecurityRequestContext {
    */
   public static void clearEntityToAuthResponseMap() {
     entityToAuthResponseMap.remove();
+  }
+
+  /**
+   *  Set the Builder for AuditLogRequest.
+   */
+  public static void setAuditLogRequestBuilder(AuditLogRequest.Builder builder) {
+    auditLogRequestBuilder.set(builder);
+  }
+
+  /**
+   *  Get the Builder for AuditLogRequest.
+   */
+  @Nullable
+  public static AuditLogRequest.Builder getAuditLogRequestBuilder() {
+    return auditLogRequestBuilder.get();
   }
 }

@@ -93,8 +93,14 @@ public class AuditLogContext {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof AuditLogContext)) return false;
+    if (this == o) {
+      return true;
+    }
+
+    if (!(o instanceof AuditLogContext)) {
+      return false;
+    }
+
     AuditLogContext that = (AuditLogContext) o;
     return auditLoggingRequired == that.auditLoggingRequired && Objects.equals(auditLogBody, that.auditLogBody);
   }
@@ -102,5 +108,12 @@ public class AuditLogContext {
   @Override
   public int hashCode() {
     return Objects.hash(auditLoggingRequired, auditLogBody);
+  }
+
+  @Override
+  public String toString() {
+    return "AuditLogContext{"
+      + "auditLoggingRequired=" + auditLoggingRequired + ", auditLogBody='" + auditLogBody + '\''
+      + '}';
   }
 }

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
@@ -34,19 +35,17 @@ import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AttributeKey;
+import java.util.ArrayDeque;
+import java.util.Queue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import java.util.ArrayDeque;
-import java.util.Queue;
 
 public class AuthenticationChannelHandlerTest {
 
   private DefaultHttpRequest req;
   private AuthenticationChannelHandler handler;
   private ChannelHandlerContext ctx;
-  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
 
 
   @Before
@@ -102,13 +101,134 @@ public class AuthenticationChannelHandlerTest {
     verify(ctx, times(1)).fireChannelRead(any());
   }
 
+
+  /**
+   * This simulates the order for NamespaceHttpHandler#create
+   * The flow :
+   *  ACH.channelRead.fireChannelRead
+   *   ->NamespaceHttpHandler#create (sets AuditLogQueue in SRC)
+   *     -> AuditLogSetterHook (Generate metadata and set in SRC's Auditlogrequest.Builder )
+   *       -> ACH#readChannel's Finally block (Sets the AuditLogQueue, Auditlogrequest.Builder in Attribute of channel)
+   *         -> AuthChannelHandler#write (creates the AuditLogRequest from SRC or ATTR and publishes)
+   */
+  @Test
+  public void testCallOrderCreateNamespaceForAuditLog() throws Exception {
+    req
+      .headers()
+      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
+    AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
+    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+
+    //The ACH.channelRead.fireChannelRead , will trigger NamespaceHttpHandler and AuditLogSetterHook
+    // So set AuditLogQueue and MetaData in SRC to simulate that.
+    Mockito.when(ctx.fireChannelRead(any())).thenAnswer(invocation -> {
+      SecurityRequestContext.enqueueAuditLogContext(getAuditLogContexts());
+      SecurityRequestContext.setAuditLogRequestBuilder(getAuditLogRequestBuilder());
+      return null;
+    });
+
+    // ACH.channelRead.fireChannelRead
+    // This should add AuditLogContextsQueue and AuditLogRequest.Builder in SRC.
+    // and in Finally it should have these in ATTRS
+    handler.channelRead(ctx, req);
+
+    //ENUSRE THAT ATTR WAS SET in ACH's Finally Block.
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR)),
+      times(1)).set(any());
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR)),
+          times(1)).set(any());
+
+    // Now in Write and getAuditLogRequest , should create AuditLogRequest properly from ATTRs
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR))
+                   .get()).thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)).get())
+      .thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
+                   .get()).thenReturn(getAuditLogRequestBuilder());
+
+    handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
+    verify(auditLogWriterMock, times(1)).publish(any());
+  }
+
+  /**
+   * This simulates the order for ArtifactHttpHandler#addArtifact
+   * The flow :
+   *  ACH.channelRead.fireChannelRead
+   *   ->ArtifactHttpHandler#addArtifact (sets AuditLogQueue in SRC)
+   *     -> ACH#readChannel's Finally block (Sets ONLY the AuditLogQueue from SRC in ATTR)
+   *       [Here AuditLogBuilder in channel's attribute Should be Null.]
+   *       -> 1000+ calls happen via channelRead as upload happens in chunks [ Nothing to mock here ]
+   *        ->  AuditLogSetterHook (Generate metadata and set in SRC's Auditlogrequest.Builder )
+   *            [This COULD ON DIFFERENT THREAD, this is the last call after Upload is complete]
+   *          -> ACH#readChannel's Finally block (Sets ONLY the Auditlogrequest.Builder from SRC in ATTR)
+   *            -> AuthChannelHandler#write (creates the AuditLogRequest from SRC or ATTR and publishes)
+   */
+  @Test
+  public void testCallOrderAddArtifactForAuditLog() throws Exception {
+    req
+      .headers()
+      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
+    AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
+    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+
+    //The ACH.channelRead.fireChannelRead , will trigger artifactHttpHandler and NOT AuditLogSetterHook
+    // So set AuditLogQueue in SRC to simulate that.
+    Mockito.when(ctx.fireChannelRead(any())).thenAnswer(invocation -> {
+      SecurityRequestContext.enqueueAuditLogContext(getAuditLogContexts());
+      return null;
+    });
+
+    // ACH.channelRead.fireChannelRead
+    // This should add AuditLogContextsQueue and AuditLogRequest.Builder in SRC.
+    // and in Finally it should have these in ATTRS
+    handler.channelRead(ctx, req);
+
+    //ENUSRE THAT ATTR WAS SET in ACH's Finally Block.
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR)),
+           times(1)).set(any());
+    // ENSURE AuditLogRequest Builder is NOT SET
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR)),
+           times(0)).set(any());
+
+    //Now in a different Thread , when the UPLOAD is finally complete, it reaches AuditLogSetterHook and sets only
+    // the Metadata / Builder
+    Mockito.when(ctx.fireChannelRead(any())).thenAnswer(invocation -> {
+      SecurityRequestContext.setAuditLogRequestBuilder(getAuditLogRequestBuilder());
+      return null;
+    });
+
+    //The final read call which invokes AuditLogSetterHook
+    handler.channelRead(ctx, req);
+
+    //ENUSRE THAT auditLogContextQueue was NOT SET i.e. ( total overall 1 call )
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR)),
+           times(1)).set(any());
+    // ENSURE AuditLogRequest Builder is SET
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR)),
+           times(1)).set(any());
+
+    // Now in Write and getAuditLogRequest , should create AuditLogRequest properly from ATTRs
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR))
+                   .get()).thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)).get())
+      .thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
+                   .get()).thenReturn(getAuditLogRequestBuilder());
+
+    handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
+    verify(auditLogWriterMock, times(1)).publish(any());
+  }
+
   @Test
   public void testWriteWithAuditLogging() throws Exception {
-    boolean internalAuthEnabled = true;
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR))
+                   .get()).thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)).get())
+      .thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
+                   .get()).thenReturn(getAuditLogRequestBuilder());
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get())
-      .thenReturn(getAuditLogRequest());
-    handler = new AuthenticationChannelHandler(internalAuthEnabled, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
     handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
@@ -116,33 +236,42 @@ public class AuthenticationChannelHandlerTest {
 
   @Test
   public void testCloseWithAuditLogging() throws Exception {
-    boolean internalAuthEnabled = true;
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR))
+                   .get()).thenReturn(getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)).get())
+      .thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
+                   .get()).thenReturn(getAuditLogRequestBuilder());
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get())
-      .thenReturn(getAuditLogRequest());
-    handler = new AuthenticationChannelHandler(internalAuthEnabled, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
     handler.close(ctx, new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
   }
 
-  private AuditLogRequest getAuditLogRequest() {
+  private ChannelHandlerContext setAuditLogsInFireChannelRead() {
+    SecurityRequestContext.enqueueAuditLogContext(getAuditLogContexts());
+    return null;
+  }
+
+  private Queue<AuditLogContext> getAuditLogContexts() {
     Queue<AuditLogContext> auditLogContexts = new ArrayDeque<>();
     auditLogContexts.add(AuditLogContext.Builder.defaultNotRequired());
     auditLogContexts.add(new AuditLogContext.Builder()
                            .setAuditLoggingRequired(true)
                            .setAuditLogBody("Test Audit Logs")
                            .build());
+    return auditLogContexts;
+  }
 
-    return new AuditLogRequest(
-      200,
-      "testuserIp",
-      "v3/test",
-      "Testhandler",
-      "create",
-      "POST",
-      auditLogContexts,
-      1000000L,
-      1000002L);
+  private AuditLogRequest.Builder getAuditLogRequestBuilder() {
+    return new AuditLogRequest.Builder()
+      .operationResponseCode(200)
+      .uri("v3/test")
+      .handler("Testhandler")
+      .method("create")
+      .methodType("POST")
+      .startTimeNanos(1000000L)
+      .endTimeNanos(1000002L);
   }
 }

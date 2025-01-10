@@ -24,18 +24,14 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.http.AbstractHandlerHook;
-import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 /**
- * Sets
+ * Sets audit log metadata to {@link SecurityRequestContext}.
  */
 public class AuditLogSetterHook extends AbstractHandlerHook {
 
@@ -52,7 +48,7 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
 
   @Override
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
-    if (!Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)){
+    if (!Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)) {
       return;
     }
 
@@ -68,19 +64,17 @@ public class AuditLogSetterHook extends AbstractHandlerHook {
     long startTime = endTime - (endTimeNanos - startTimeNanos);
 
     LOG.trace("Setting a Audit Log event to published in SecurityRequestContext");
-    SecurityRequestContext.setAuditLogRequest(
-      new AuditLogRequest(
-        status.code(),
-        SecurityRequestContext.getUserIp(),
-        request.uri(),
-        getSimpleName(handlerInfo.getHandlerName()),
-        handlerInfo.getMethodName(),
-        request.method().name(),
-        SecurityRequestContext.getAuditLogQueue(),
-        startTime,
-        endTime
-      )
-    );
+
+    AuditLogRequest.Builder auditLogRequestBuilder = new AuditLogRequest.Builder()
+        .operationResponseCode(status.code())
+        .uri(request.uri())
+        .handler(getSimpleName(handlerInfo.getHandlerName()))
+        .method(handlerInfo.getMethodName())
+        .methodType(request.method().name())
+        .startTimeNanos(startTime)
+        .endTimeNanos(endTime);
+
+    SecurityRequestContext.setAuditLogRequestBuilder(auditLogRequestBuilder);
   }
 
   private String getSimpleName(String className) {

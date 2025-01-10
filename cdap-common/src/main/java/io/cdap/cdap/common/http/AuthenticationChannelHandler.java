@@ -34,11 +34,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AttributeKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Queue;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An UpstreamHandler that verifies the userId in a request header and updates the {@code
@@ -53,7 +54,9 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       "CDAP-empty-user-credential",
       Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
-  private static final String AUDIT_LOG_REQ_ATTR_NAME = "AUDIT_LOG_REQUEST";
+  static final String AUDIT_LOG_REQ_BUILDER_ATTR = "AUDIT_LOG_REQ_BUILDER";
+  static final String AUDIT_LOG_USER_IP_ATTR = "AUDIT_LOG_USER_IP";
+  static final String AUDIT_LOG_CONTEXT_QUEUE_ATTR = "AUDIT_LOG_CONTEXT_QUEUE";
 
   private final boolean internalAuthEnabled;
   private final boolean auditLoggingEnabled;
@@ -130,22 +133,21 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIp(currentUserIp);
+      //Also set userIp in ATTR , to be used in audit logging incase it was replaced at a later stage
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).set(currentUserIp);
     }
 
     try {
       ctx.fireChannelRead(msg);
     } finally {
-      // Set the audit log info onto the ongoing channel so it is ensured to be reused later in the same channel, making
-      // it independent of Thread local.
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME))
-        .set(SecurityRequestContext.getAuditLogRequest());
+      setAuditLogMetaDataInChannel(ctx);
       SecurityRequestContext.reset();
     }
   }
 
   /**
    * If Audit logging is enabled then it sends the collection of audit events stored in {@link SecurityRequestContext}
-   * to get stored in a messaging system.
+   * Or Attribute of channel to get stored in a messaging system.
    */
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
@@ -178,10 +180,86 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * It's not null, publish it and set it to Null.
    */
   private void publishAuditLogRequest(ChannelHandlerContext ctx) throws IOException {
-    Object auditLogRequestObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).get();
-    if (auditLoggingEnabled && auditLogRequestObj != null) {
-      auditLogWriter.publish((AuditLogRequest) auditLogRequestObj);
-      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_ATTR_NAME)).set(null);
+    if (!auditLoggingEnabled) {
+      return;
     }
+    AuditLogRequest auditLogRequest = getAuditLogRequest(ctx);
+    if (auditLogRequest != null) {
+      auditLogWriter.publish(auditLogRequest);
+    }
+  }
+
+
+  @Nullable
+  private AuditLogRequest getAuditLogRequest(ChannelHandlerContext ctx) {
+
+    Object auditLogContextsQueueAttr =
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_CONTEXT_QUEUE_ATTR)).get();
+
+    // If NO audit logs, then return NULL.
+    if (auditLogContextsQueueAttr == null) {
+      return null;
+    }
+
+    Queue<AuditLogContext> auditLogContextsQueue =  (Queue<AuditLogContext>) auditLogContextsQueueAttr;
+
+    Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).get();
+    String userIp = userIpObj == null ? SecurityRequestContext.getUserIp() : (String) userIpObj;
+
+    // Check Attr for AuditLogRequest Builder.
+    Object builderObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_BUILDER_ATTR)).get();
+    AuditLogRequest.Builder builder = builderObj == null ? SecurityRequestContext.getAuditLogRequestBuilder() :
+      (AuditLogRequest.Builder) builderObj;
+
+    //If the AuditLogContextsQueue is NOT empty, then the AuditLogRequest.Builder should be NEVER be null.
+    //It should either come from ATTR of pipeline or SecurityRequestContext.
+    //Ideally we will never encounter this.
+    if (builder == null) {
+      LOG.error("The meta data required to publish audit logs are missing or null. Following Audit logs will be "
+                  + "skipped: {}", auditLogContextsQueue.stream().map(String::valueOf)
+                  .collect(Collectors.joining(", ")));
+      //Returning null as Operation is already completed.
+      return null;
+    }
+
+    //Clear Attributes
+    clearAttributes(ctx);
+
+    return builder
+      .userIp(userIp)
+      .auditLogContextQueue(auditLogContextsQueue)
+      .build();
+  }
+
+  /**
+   * Stores metadata from SecurityRequestContext inside channelRead's Finally method.
+   */
+  private void setAuditLogMetaDataInChannel(ChannelHandlerContext ctx) {
+
+    if (!auditLoggingEnabled) {
+      return;
+    }
+
+    Queue<AuditLogContext> auditLogContextQueue = SecurityRequestContext.getAuditLogQueue();
+
+    // In either case, if Queue from SecurityRequestContext is empty, then no Audit Logs.
+    if (!auditLogContextQueue.isEmpty()) {
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_CONTEXT_QUEUE_ATTR))
+        .set(auditLogContextQueue);
+    }
+
+    // Store all audit metadata info stored in AuditLogRequest.Builder in ATTR from  AuditLogSetterHook#postCall
+    // This is just to ensure we don't lose metadata information if already populated because of some RESET call on
+    // SecurityRequestContext. This Also ensures that if Thread changes in Close / Write , then this info is preserved.
+    AuditLogRequest.Builder builder = SecurityRequestContext.getAuditLogRequestBuilder();
+    if (builder != null) {
+      ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_BUILDER_ATTR)).set(builder);
+    }
+  }
+
+  private void clearAttributes(ChannelHandlerContext ctx) {
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_BUILDER_ATTR)).set(null);
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).set(null);
+    ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_CONTEXT_QUEUE_ATTR)).set(null);
   }
 }

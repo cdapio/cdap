@@ -85,4 +85,70 @@ public class AuditLogRequest {
   public long getEndTimeNanos() {
     return endTimeNanos;
   }
+
+  /**
+   * A Builder class to store metadata as in when fetched along the netty pipeline. And later used to build at the last
+   * stage.
+   */
+  public static class Builder {
+    private int operationResponseCode;
+    private String userIp;
+    private String uri;
+    private String handler;
+    private String method;
+    private String methodType;
+    private Queue<AuditLogContext> auditLogContextQueue;
+    private Long startTimeNanos;
+    private Long endTimeNanos;
+
+    public Builder operationResponseCode(int operationResponseCode) {
+      this.operationResponseCode = operationResponseCode;
+      return this;
+    }
+
+    public Builder userIp(String userIp) {
+      this.userIp = userIp;
+      return this;
+    }
+
+    public Builder uri(String uri) {
+      this.uri = uri;
+      return this;
+    }
+
+    public Builder handler(String handler) {
+      this.handler = handler;
+      return this;
+    }
+
+    public Builder method(String method) {
+      this.method = method;
+      return this;
+    }
+
+    public Builder methodType(String methodType) {
+      this.methodType = methodType;
+      return this;
+    }
+
+    public Builder auditLogContextQueue(Queue<AuditLogContext> auditLogContextQueue) {
+      this.auditLogContextQueue = auditLogContextQueue;
+      return this;
+    }
+
+    public Builder startTimeNanos(Long startTimeNanos) {
+      this.startTimeNanos = startTimeNanos;
+      return this;
+    }
+
+    public Builder endTimeNanos(Long endTimeNanos) {
+      this.endTimeNanos = endTimeNanos;
+      return this;
+    }
+
+    public AuditLogRequest build() {
+      return new AuditLogRequest(operationResponseCode, userIp, uri, handler,  method, methodType, auditLogContextQueue,
+                                 startTimeNanos, endTimeNanos);
+    }
+  }
 }
