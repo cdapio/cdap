@@ -117,6 +117,7 @@ public class MasterServiceMainTestBase {
             MetadataServiceMain.class,
             RuntimeServiceMain.class,
             AppFabricServiceMain.class,
+            AppFabricProcessorServiceMain.class,
             SupportBundleServiceMain.class,
             SystemMetricsExporterServiceMain.class,
             ArtifactCacheServiceMain.class,

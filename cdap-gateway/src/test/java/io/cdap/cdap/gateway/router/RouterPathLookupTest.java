@@ -442,6 +442,18 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testUsagePaths() {
+    assertRouting("v3/namespaces//apps//datasets", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces//apps////datasets", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
+  public void testAppPreferencesPaths() {
+    assertRouting("v3/namespaces//apps//preferences", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces//apps////preferences", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
   public void testBeginsWith() {
     // anything begins empty sequence
     Assert.assertTrue(RouterPathLookup.beginsWith(new String[] { }));

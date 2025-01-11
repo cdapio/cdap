@@ -188,8 +188,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
 
         && requestMethod.equals(AllowedMethod.GET)) {
       return APP_FABRIC_HTTP;
-    } else if (beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets")) {
-      return APP_FABRIC_PROCESSOR;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "profiles")
         || beginsWith(uriParts, "v3", "profiles")) {
       return APP_FABRIC_HTTP;
@@ -264,6 +262,15 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}
       return DONT_ROUTE;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "preferences")
+      || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "preferences")) {
+      // App Preferences Paths:
+      // /v3/namespaces/{namespace-id}/apps/{application-id}/preferences
+      // /v3/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences
+      return APP_FABRIC_HTTP;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "datasets")
+      || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "datasets")) {
+      return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps")
         || beginsWith(uriParts, "v3", "namespaces", null, "upgrade")
         || beginsWith(uriParts, "v3", "namespaces", null, "appdetail")
