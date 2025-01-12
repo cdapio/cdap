@@ -547,7 +547,8 @@ public class MasterServiceMain extends DaemonMain {
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
         new TwillModule(),
-        new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
+        new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
+            .getDistributedModules(),
         new MonitorHandlerModule(true),
         new ProgramRunnerRuntimeModule().getDistributedModules(),
         new SecureStoreServerModule(),
