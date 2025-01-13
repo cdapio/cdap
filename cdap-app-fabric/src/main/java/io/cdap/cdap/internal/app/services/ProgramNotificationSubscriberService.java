@@ -112,7 +112,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
   private final ProgramStateWriter programStateWriter;
   private final TransactionRunner transactionRunner;
   private final Store store;
-  private final RunRecordMonitorService runRecordMonitorService;
+  private final FlowControlService flowControlService;
   private Service delegate;
   private Set<ProgramCompletionNotifier> programCompletionNotifiers;
 
@@ -127,7 +127,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
       ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner,
       Store store,
-      RunRecordMonitorService runRecordMonitorService) {
+      FlowControlService flowControlService) {
 
     this.messagingService = messagingService;
     this.cConf = cConf;
@@ -138,7 +138,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
     this.programStateWriter = programStateWriter;
     this.transactionRunner = transactionRunner;
     this.store = store;
-    this.runRecordMonitorService = runRecordMonitorService;
+    this.flowControlService = flowControlService;
     this.programCompletionNotifiers = Collections.emptySet();
   }
 
@@ -163,8 +163,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
   }
 
   private void emitFlowControlMetrics() {
-    runRecordMonitorService.emitLaunchingMetrics();
-    runRecordMonitorService.emitRunningMetrics();
+    flowControlService.emitFlowControlMetrics();
   }
 
   private void restoreActiveRuns() {
@@ -184,23 +183,22 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
                   }
                   try {
                     LOG.info("Found active run: {}", runRecordDetail.getProgramRunId());
-                    if (runRecordDetail.getStatus() == ProgramRunStatus.PENDING) {
-                      runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
-                    } else if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
-                      runRecordMonitorService.addRequest(runRecordDetail.getProgramRunId());
-                      // It is unknown what is the state of program runs in STARTING state.
-                      // A STARTING message is published again to retry STARTING logic.
+                    if (runRecordDetail.getStatus() == ProgramRunStatus.STARTING) {
                       ProgramOptions programOptions =
                           new SimpleProgramOptions(
                               runRecordDetail.getProgramRunId().getParent(),
                               new BasicArguments(runRecordDetail.getSystemArgs()),
                               new BasicArguments(runRecordDetail.getUserArgs()));
+                      ProgramDescriptor programDescriptor = this.store.loadProgram(
+                          runRecordDetail.getProgramRunId().getParent());
+                      // It is unknown what is the state of program runs in STARTING state.
+                      // A STARTING message is published again to retry STARTING logic.
                       LOG.debug("Retrying to start run {}.", runRecordDetail.getProgramRunId());
                       programStateWriter.start(
                           runRecordDetail.getProgramRunId(),
                           programOptions,
                           null,
-                          this.store.loadProgram(runRecordDetail.getProgramRunId().getParent()));
+                          programDescriptor);
                     }
                   } catch (Exception e) {
                     ProgramRunId programRunId = runRecordDetail.getProgramRunId();
@@ -234,7 +232,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
         provisioningService,
         programStateWriter,
         transactionRunner,
-        runRecordMonitorService,
+        flowControlService,
         name,
         topicName,
         programCompletionNotifiers);
@@ -275,7 +273,7 @@ class ProgramNotificationSingleTopicSubscriberService
   private final Queue<Runnable> tasks;
   private final MetricsCollectionService metricsCollectionService;
   private Set<ProgramCompletionNotifier> programCompletionNotifiers;
-  private final RunRecordMonitorService runRecordMonitorService;
+  private final FlowControlService flowControlService;
   private final boolean checkTxSeparation;
 
   ProgramNotificationSingleTopicSubscriberService(
@@ -287,7 +285,7 @@ class ProgramNotificationSingleTopicSubscriberService
       ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner,
-      RunRecordMonitorService runRecordMonitorService,
+      FlowControlService flowControlService,
       String name,
       String topicName,
       Set<ProgramCompletionNotifier> programCompletionNotifiers) {
@@ -310,7 +308,7 @@ class ProgramNotificationSingleTopicSubscriberService
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
     this.programCompletionNotifiers = programCompletionNotifiers;
-    this.runRecordMonitorService = runRecordMonitorService;
+    this.flowControlService = flowControlService;
 
     // If number of partitions equals 1, DB deadlock cannot happen as a result of concurrent
     // modifications to
@@ -582,7 +580,7 @@ class ProgramNotificationSingleTopicSubscriberService
             appMetadataStore.recordProgramRunning(
                 programRunId, logicalStartTimeSecs, twillRunId, messageIdBytes);
         writeToHeartBeatTable(recordedRunRecord, logicalStartTimeSecs, programHeartbeatTable);
-        runRecordMonitorService.removeRequest(programRunId, true);
+        flowControlService.emitFlowControlMetrics();
         long startDelayTime =
             logicalStartTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
         emitStartingTimeMetric(programRunId, startDelayTime, recordedRunRecord);
@@ -660,7 +658,7 @@ class ProgramNotificationSingleTopicSubscriberService
                 Constants.Metrics.Program.PROGRAM_REJECTED_RUNS,
                 null)
             .ifPresent(runnables::add);
-        runRecordMonitorService.removeRequest(programRunId, true);
+        flowControlService.emitFlowControlMetrics();
         break;
       default:
         // This should not happen
@@ -774,7 +772,7 @@ class ProgramNotificationSingleTopicSubscriberService
             programCompletionNotifiers.forEach(
                 notifier ->
                     notifier.onProgramCompleted(programRunId, recordedRunRecord.getStatus()));
-            runRecordMonitorService.removeRequest(programRunId, true);
+            flowControlService.emitFlowControlMetrics();
           });
     }
     return recordedRunRecord;

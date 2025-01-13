@@ -361,7 +361,7 @@ public class ProgramNotificationSubscriberServiceTest {
     // terminate the main service.
     notificationService.shutDown();
     notificationService.startUp();
-    // Running counts are not based on metadata store in RunRecordMonitorService so not asserting it
+    // Running counts are not based on metadata store in FlowControlService so not asserting it
     // here.
     Tasks.waitFor(0L, () -> queryMetrics(metricStore,
         SYSTEM_METRIC_PREFIX + FlowControl.LAUNCHING_COUNT, new HashMap<>()), 10, TimeUnit.SECONDS);
