@@ -434,6 +434,23 @@ public final class Constants {
     public static final String ENABLED = "enable.preview";
 
     /**
+     * Preview Runner pool configurations
+     */
+    public static final String POOL_ENABLE = "preview.runner.pool.enable";
+    public static final String POOL_CHECK_INTERVAL = "preview.runner.pool.check.interval";
+
+    /**
+     * Preview Runner container configurations
+     */
+    public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
+    public static final String CONTAINER_WORKDIR_SIZE_MB = "preview.runner.container.workdir.size.mb";
+    public static final String CONTAINER_DISK_READONLY = "preview.runner.container.disk.readonly";
+    public static final String CONTAINER_KILL_AFTER_DURATION_SECOND =
+      "preview.runner.container.kill.after.duration.second";
+    public static final String PREVIEW_EXECUTION_DEADLINE_SECOND =
+      "preview.runner.previewExecutionDeadline.second";
+
+    /**
      * Guice named bindings.
      */
     public static final String ADDRESS = "preview.bind.address";

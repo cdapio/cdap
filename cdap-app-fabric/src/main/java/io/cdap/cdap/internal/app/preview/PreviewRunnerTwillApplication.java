@@ -28,7 +28,7 @@ import org.apache.twill.api.TwillSpecification;
  */
 public class PreviewRunnerTwillApplication implements TwillApplication {
 
-  static final String NAME = "preview.runner";
+  public static final String NAME = "preview.runner";
 
   private final URI cConfFileURI;
   private final URI hConfFileURI;

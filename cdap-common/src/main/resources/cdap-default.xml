@@ -3664,6 +3664,22 @@
   </property>
 
   <property>
+    <name>preview.runner.pool.enable</name>
+    <value>false</value>
+    <description>
+      If true, preview runner pool will be created with twill application
+    </description>
+  </property>
+
+  <property>
+    <name>preview.runner.pool.check.interval</name>
+    <value>5</value>
+    <description>
+      Interval (in seconds) for ensuring preview runner pool is up and running.
+    </description>
+  </property>
+
+  <property>
     <name>preview.bind.port</name>
     <value>0</value>
     <description>
