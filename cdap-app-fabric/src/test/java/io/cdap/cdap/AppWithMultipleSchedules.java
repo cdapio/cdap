@@ -57,6 +57,7 @@ public class AppWithMultipleSchedules extends AbstractApplication {
   public static final String TRIGGERED_RUNTIME_ARG_KEY = "TriggeredWorkflowRuntimeArgKey";
   public static final String TRIGGERED_TOKEN_KEY = "TriggeredWorkflowTokenKey";
   public static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
+  public static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
 
   @Override
   public void configure() {
@@ -135,6 +136,7 @@ public class AppWithMultipleSchedules extends AbstractApplication {
     public void initialize(WorkflowContext context) throws Exception {
       super.initialize(context);
       context.getToken().put(ANOTHER_TOKEN_KEY, ANOTHER_TOKEN_VALUE);
+      context.getToken().put(RESOLVED_PLUGIN_PROPERTIES_MAP, "{}");
     }
   }
 

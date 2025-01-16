@@ -342,6 +342,18 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     out.defaultWriteObject();
   }
 
+  @Override
+  public String toString() {
+    return "BasicWorkflowToken{"
+        + "tokenValueMap=" + tokenValueMap
+        + ", maxSizeBytes=" + maxSizeBytes
+        + ", mapReduceCounters=" + mapReduceCounters
+        + ", nodeName='" + nodeName + '\''
+        + ", putAllowed=" + putAllowed
+        + ", bytesLeft=" + bytesLeft
+        + '}';
+  }
+
   // Deserialize the WorkflowToken for using it inside the Spark executor. Set the putAllowed
   // flag to false so that we do not allow putting the values inside the Spark executor.
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
