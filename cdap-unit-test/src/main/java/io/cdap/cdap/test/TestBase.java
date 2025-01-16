@@ -303,7 +303,7 @@ public class TestBase {
         new InMemoryDiscoveryModule(),
         new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
             .getInMemoryModules(),
-        new MonitorHandlerModule(false),
+        new MonitorHandlerModule(false, cConf),
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),

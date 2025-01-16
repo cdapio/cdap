@@ -87,7 +87,7 @@ public class SupportBundleTestModule extends AbstractModule {
     install(new InMemoryDiscoveryModule());
     install(new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
         .getInMemoryModules());
-    install(new MonitorHandlerModule(false));
+    install(new MonitorHandlerModule(false, cConf));
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule());
     install(new LocalLogAppenderModule());
