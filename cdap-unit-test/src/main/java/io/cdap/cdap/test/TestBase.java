@@ -302,7 +302,7 @@ public class TestBase {
         new LocalLocationModule(),
         new InMemoryDiscoveryModule(),
         new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
-        new MonitorHandlerModule(false),
+        new MonitorHandlerModule(false, cConf),
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),

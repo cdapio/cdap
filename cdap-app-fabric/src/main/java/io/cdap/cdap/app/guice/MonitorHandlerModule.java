@@ -29,7 +29,9 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import io.cdap.cdap.data2.datafabric.dataset.MetadataServiceManager;
@@ -55,16 +57,18 @@ import io.cdap.http.HttpHandler;
 import java.util.Map;
 
 /**
- * This Guice module providing binding of the {@link MonitorHandler} that get used inside {@link
- * AppFabricServer}.
+ * This Guice module providing binding of the {@link MonitorHandler} that get used inside
+ * {@link AppFabricServer}.
  */
 public class MonitorHandlerModule extends AbstractModule {
 
   private static final String SERVICE_STORE_DS_MODULES = "service.store.ds.modules";
   private final boolean isHadoop;
+  private final CConfiguration cConf;
 
-  public MonitorHandlerModule(boolean isHadoop) {
+  public MonitorHandlerModule(boolean isHadoop, CConfiguration cConf) {
     this.isHadoop = isHadoop;
+    this.cConf = cConf;
   }
 
   @Override
@@ -126,10 +130,13 @@ public class MonitorHandlerModule extends AbstractModule {
         .toProvider(new NonHadoopMasterServiceManagerProvider(DatasetExecutorServiceManager.class));
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
         .toProvider(new NonHadoopMasterServiceManagerProvider(MetadataServiceManager.class));
-    mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
-        .toProvider(new NonHadoopMasterServiceManagerProvider(MessagingServiceManager.class));
     mapBinder.addBinding(Constants.Service.RUNTIME)
         .toProvider(new NonHadoopMasterServiceManagerProvider(RuntimeServiceManager.class));
+
+    if (cConf.getBoolean(MessagingSystem.MESSAGING_SERVICE_ENABLED)) {
+      mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
+          .toProvider(new NonHadoopMasterServiceManagerProvider(MessagingServiceManager.class));
+    }
 
     // The ServiceStore uses a special non-TX KV Table.
     bindDatasetModule(binder, new InMemoryKVTableDefinition.Module());

@@ -565,7 +565,7 @@ public class StandaloneMain {
         new PreviewRunnerManagerModule().getStandaloneModules(),
         new MessagingServerRuntimeModule().getStandaloneModules(),
         new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
-        new MonitorHandlerModule(false),
+        new MonitorHandlerModule(false, cConf),
         new RuntimeServerModule(),
         new OperationalStatsModule(),
         new MetricsWriterModule(),

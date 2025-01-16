@@ -78,7 +78,6 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
@@ -548,7 +547,7 @@ public class MasterServiceMain extends DaemonMain {
         new AuthorizationEnforcementModule().getMasterModule(),
         new TwillModule(),
         new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
-        new MonitorHandlerModule(true),
+        new MonitorHandlerModule(true, cConf),
         new ProgramRunnerRuntimeModule().getDistributedModules(),
         new SecureStoreServerModule(),
         new SupportBundleServiceModule(),

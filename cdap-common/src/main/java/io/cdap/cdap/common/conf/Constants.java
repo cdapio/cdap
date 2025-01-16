@@ -2121,6 +2121,7 @@ public final class Constants {
     public static final String EXTENSIONS_DIR = "messaging.service.extensions.dir";
 
     public static final String MESSAGING_SERVICE_NAME = "messaging.service.name";
+    public static final String MESSAGING_SERVICE_ENABLED = "messaging.service.enabled";
     public static final String CACHE_SIZE_MB = "messaging.cache.size.mb";
 
     public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";

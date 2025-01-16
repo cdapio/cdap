@@ -107,7 +107,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
               }
             }),
         new ProgramRunnerRuntimeModule().getDistributedModules(true),
-        new MonitorHandlerModule(false),
+        new MonitorHandlerModule(false, cConf),
         new SecureStoreServerModule(),
         new OperationalStatsModule(),
         getDataFabricModule(),
