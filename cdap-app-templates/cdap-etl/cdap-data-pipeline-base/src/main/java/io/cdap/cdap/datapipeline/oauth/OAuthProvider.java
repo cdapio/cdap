@@ -28,16 +28,22 @@ public class OAuthProvider {
   private final OAuthClientCredentials clientCreds;
   private final CredentialEncodingStrategy strategy;
 
+  // Optional string to send as a USER_AGENT header
+  @Nullable
+  private final String userAgent;
+
   public OAuthProvider(String name,
                        String loginURL,
                        String tokenRefreshURL,
                        @Nullable OAuthClientCredentials clientCreds,
-                       @Nullable CredentialEncodingStrategy strategy) {
+                       @Nullable CredentialEncodingStrategy strategy,
+                       @Nullable String userAgent) {
     this.name = name;
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientCreds = clientCreds;
     this.strategy = strategy;
+    this.userAgent = userAgent;
   }
 
   public String getName() {
@@ -61,8 +67,13 @@ public class OAuthProvider {
     return strategy;
   }
 
+  @Nullable
+  public String getUserAgent() {
+    return userAgent;
+  }
+
   public enum CredentialEncodingStrategy {
-    // (default) Sends client ID & secret as part of the POST request body 
+    // (default) Sends client ID & secret as part of the POST request body
     FORM_BODY,
     // Sends client ID & secret as part of a HTTP Basic Auth header
     BASIC_AUTH,
@@ -81,6 +92,7 @@ public class OAuthProvider {
     private String tokenRefreshURL;
     private OAuthClientCredentials clientCreds;
     private CredentialEncodingStrategy strategy;
+    private String userAgent;
 
     public Builder() {}
 
@@ -109,6 +121,11 @@ public class OAuthProvider {
       return this;
     }
 
+    public Builder withUserAgent(@Nullable String userAgent) {
+      this.userAgent = userAgent;
+      return this;
+    }
+
     public OAuthProvider build() {
       Preconditions.checkNotNull(name, "OAuth provider name missing");
       Preconditions.checkNotNull(loginURL, "Login URL missing");
@@ -117,7 +134,7 @@ public class OAuthProvider {
       if (strategy == null) {
         this.strategy = CredentialEncodingStrategy.FORM_BODY;
       }
-      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy);
+      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent);
     }
   }
 }

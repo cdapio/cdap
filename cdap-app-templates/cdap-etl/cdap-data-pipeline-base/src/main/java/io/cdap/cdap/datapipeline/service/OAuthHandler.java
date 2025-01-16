@@ -118,6 +118,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             StandardCharsets.UTF_8.decode(request.getContent()).toString(),
             PutOAuthProviderRequest.class);
         CredentialEncodingStrategy strategy = putOAuthProviderRequest.getCredentialEncodingStrategy();
+        String userAgent = putOAuthProviderRequest.getUserAgent();
         // Validate URLs
         URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
         URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
@@ -136,6 +137,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                               .withTokenRefreshURL(tokenRefreshURL.toString())
                                               .withClientCredentials(clientCredentials)
                                               .withCredentialEncodingStrategy(strategy)
+                                              .withUserAgent(userAgent)
                                               .build();
         oauthStore.writeProvider(provider, reuseClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -348,7 +350,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                                CredentialEncodingStrategy strategy,
                                                OAuthClientCredentials clientCreds,
                                                String refreshTokenURL,
-                                               boolean addContentType) throws MalformedURLException {
+                                               boolean addContentType,
+                                               String userAgent) throws MalformedURLException {
     HttpRequest.Builder requestBuilder = HttpRequest.post(new URL(refreshTokenURL))
             .withBody(body);
 
@@ -358,6 +361,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
     if (strategy == CredentialEncodingStrategy.BASIC_AUTH) {
       requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, getBasicAuthHeader(clientCreds));
+    }
+
+    if (userAgent != null) {
+      requestBuilder.addHeader(HttpHeaders.USER_AGENT, userAgent);
     }
 
     return requestBuilder;
@@ -375,9 +382,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     CredentialEncodingStrategy strategy = provider.getCredentialEncodingStrategy();
     String tokenRefreshURL = provider.getTokenRefreshURL();
     String body = buildRequestBody(strategy, "authorization_code", code, redirectURI, null, clientCreds);
+    String userAgent = provider.getUserAgent();
 
     try {
-      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, true).build();
+      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, true, userAgent).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
     }
@@ -394,9 +402,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     CredentialEncodingStrategy strategy = provider.getCredentialEncodingStrategy();
     String tokenRefreshURL = provider.getTokenRefreshURL();
     String body = buildRequestBody(strategy, "refresh_token", null, null, refreshToken, clientCreds);
+    String userAgent = provider.getUserAgent();
 
     try {
-      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, false).build();
+      return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, false, userAgent).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
     }
