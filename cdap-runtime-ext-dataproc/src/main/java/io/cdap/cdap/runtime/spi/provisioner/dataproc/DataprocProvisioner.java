@@ -21,7 +21,8 @@ import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
-import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
@@ -92,13 +93,18 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         getSystemContext().getProperties().get(PRIVATE_INSTANCE));
 
     if (privateInstance && conf.isPreferExternalIp()) {
-      // When prefer external IP is set to true it means only Dataproc external ip can be used to for communication
-      // the instance being private instance is incapable of using external ip for communication
-      throw new DataprocRuntimeException(
-          "The instance is incapable of using external ip for communication with Dataproc cluster. "
-
-              + "Please correct profile configuration by deselecting preferExternalIP.",
-          ErrorTag.CONFIGURATION);
+      // When prefer external IP is set to true it means only Dataproc external ip can be used for
+      // communication, so if the instance is private, it is incapable of using external ip for
+      // communication.
+      String errorMessage = "The instance is incapable of using external ip for communication with "
+          + "Dataproc cluster. Please correct profile configuration by deselecting "
+          + "preferExternalIP.";
+      throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorMessage)
+          .withErrorMessage(errorMessage)
+          .withErrorType(ErrorType.USER)
+          .build();
     }
 
     // Validate Network Tags as per https://cloud.google.com/vpc/docs/add-remove-network-tags
@@ -107,22 +113,37 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     // Lower case letters and dashes allowed only.
     List<String> networkTags = conf.getNetworkTags();
     if (!networkTags.stream().allMatch(e -> NETWORK_TAGS_PATTERN.matcher(e).matches())) {
-      throw new DataprocRuntimeException("Invalid Network Tags: Ensure tag length is max 63 chars"
-          + " and contains lowercase letters, numbers and dashes only. ",
-          ErrorTag.CONFIGURATION);
+      String errorMessage = "Invalid Network Tags: Ensure tag length is max 63 chars"
+          + " and contains lowercase letters, numbers and dashes only. ";
+      throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorMessage)
+          .withErrorMessage(errorMessage)
+          .withErrorType(ErrorType.USER)
+          .build();
     }
 
     if (networkTags.size() > 64) {
-      throw new DataprocRuntimeException("Exceed Max number of tags. Only Max of 64 allowed. ",
-          ErrorTag.CONFIGURATION);
+      String errorMessage = "Exceed Max number of tags. Only Max of 64 allowed. ";
+      throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorMessage)
+          .withErrorMessage(errorMessage)
+          .withErrorType(ErrorType.USER)
+          .build();
     }
 
     if (!isAutoscalingFieldsValid(conf, properties)) {
-      throw new DataprocRuntimeException(
-          String.format("Invalid configs : %s, %s, %s. These are not allowed when %s is enabled ",
-              DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
-              DataprocConf.AUTOSCALING_POLICY, DataprocConf.PREDEFINED_AUTOSCALE_ENABLED),
-          ErrorTag.CONFIGURATION);
+      String errorMessage = String.format("Invalid configs : %s, %s, %s. "
+              + "These are not allowed when %s is enabled ",
+          DataprocConf.WORKER_NUM_NODES, DataprocConf.SECONDARY_WORKER_NUM_NODES,
+          DataprocConf.AUTOSCALING_POLICY, DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
+      throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorMessage)
+          .withErrorMessage(errorMessage)
+          .withErrorType(ErrorType.USER)
+          .build();
     }
   }
 
@@ -169,7 +190,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       }
     }
 
-    try (DataprocClient client = clientFactory.create(conf, sshPublicKey != null)) {
+    try (DataprocClient client = clientFactory.create(conf, sshPublicKey != null,
+        context.getErrorCategory())) {
       Cluster reused = tryReuseCluster(client, context, conf);
       if (reused != null) {
         DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
@@ -198,9 +220,20 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         if (comparableImageVersion == null) {
           LOG.warn("Unable to extract Dataproc version from string '{}'.", imageVersion);
         } else if (DATAPROC_1_5_VERSION.compareTo(comparableImageVersion) > 0) {
-          throw new DataprocRuntimeException(
-              "Dataproc cluster must be version 1.5 or greater for pipeline execution.",
-              ErrorTag.CONFIGURATION);
+          String errorMessage = "Dataproc cluster must be version 1.5 or greater "
+              + "for pipeline execution.";
+          ErrorCategory errorCategory =
+              DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION;
+          if (context.getErrorCategory() != null) {
+            errorCategory =
+                new ErrorCategory(context.getErrorCategory().getParentCategory(), "Configuration");
+          }
+          throw new DataprocRuntimeException.Builder()
+              .withErrorCategory(errorCategory)
+              .withErrorReason(errorMessage)
+              .withErrorMessage(errorMessage)
+              .withErrorType(ErrorType.USER)
+              .build();
         }
       }
 
@@ -260,8 +293,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    */
   @Nullable
   private Cluster tryReuseCluster(DataprocClient client, ProvisionerContext context,
-      DataprocConf conf)
-      throws RetryableProvisionException, InterruptedException {
+      DataprocConf conf) throws RetryableProvisionException, InterruptedException {
     if (!isReuseSupported(conf)) {
       LOG.debug(
           "Not checking cluster reuse, enabled: {}, skip delete: {}, idle ttl: {}, reuse threshold: {}",
@@ -378,6 +410,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    * Waits for the cluster to be found by the run label. The operation may take some time.
    * Note that we don't want to wait for the whole operation to finish, we jsut need to be sure
    * that cluster can be found by the labels.
+   *
    * @param client dataproc client
    * @param conf provisioner configuration
    * @param updateLabelsFuture future for the cluster update operation
@@ -387,9 +420,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    * finished.
    */
   private static void waitForLabelsUpdateToApply(DataprocClient client, DataprocConf conf,
-      Future<?> updateLabelsFuture, String clusterName,
-      Map<String, String> runLabels)
-      throws Exception {
+      Future<?> updateLabelsFuture, String clusterName, Map<String, String> runLabels) throws Exception {
     boolean wasDone = false;
     while (client.getClusters(runLabels).count() == 0) {
       if (wasDone) {
@@ -446,7 +477,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return ClusterStatus.NOT_EXISTS;
     }
 
-    try (DataprocClient client = clientFactory.create(conf)) {
+    try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
       status = client.getClusterStatus(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterStatus.response.count");
@@ -463,7 +494,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
 
-    try (DataprocClient client = clientFactory.create(conf)) {
+    try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
       return client.getClusterFailureMsg(clusterName);
     }
   }
@@ -472,7 +503,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
-    try (DataprocClient client = clientFactory.create(conf, shouldUseSsh(context, conf))) {
+    try (DataprocClient client = clientFactory.create(conf, shouldUseSsh(context, conf),
+        context.getErrorCategory())) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterDetail.response.count");
@@ -491,7 +523,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       return;
     }
     String clusterName = cluster.getName();
-    try (DataprocClient client = clientFactory.create(conf)) {
+    try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
       if (isReuseSupported(conf)) {
         long reuseUntil = System.currentTimeMillis()
             + TimeUnit.MINUTES.toMillis(
@@ -521,7 +553,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterKey = getRunKey(context);
     if (isReuseSupported(conf)) {
-      try (DataprocClient client = clientFactory.create(conf)) {
+      try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
         Optional<Cluster> allocatedCluster = findCluster(clusterKey, client);
         return allocatedCluster.map(Cluster::getName).orElse(clusterKey);
       }

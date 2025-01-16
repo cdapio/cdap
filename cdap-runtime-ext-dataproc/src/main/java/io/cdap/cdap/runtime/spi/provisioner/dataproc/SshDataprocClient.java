@@ -24,6 +24,7 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
+import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.common.IPRange;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
@@ -59,8 +60,8 @@ class SshDataprocClient extends DataprocClient {
           "192.168.0.0/16"));
 
   SshDataprocClient(DataprocConf conf, ClusterControllerClient client,
-      ComputeFactory computeFactory) {
-    super(conf, client, computeFactory);
+      ComputeFactory computeFactory, ErrorCategory errorCategory) {
+    super(conf, client, computeFactory, errorCategory);
   }
 
   @Override
@@ -133,13 +134,23 @@ class SshDataprocClient extends DataprocClient {
    * @throws IOException If failed to discover those firewall rules
    */
   private List<String> getFirewallTargetTags(Network network, boolean useInternalIp)
-      throws IOException, RetryableProvisionException {
+      throws RetryableProvisionException {
     FirewallList firewalls;
+    String project = conf.getNetworkHostProjectId();
     try {
-      firewalls = getOrCreateCompute().firewalls().list(conf.getNetworkHostProjectId()).execute();
+      firewalls = getOrCreateCompute().firewalls().list(project).execute();
     } catch (Exception e) {
       handleRetryableExceptions(e);
-      throw new DataprocRuntimeException(e);
+      String errorReason = String.format("Unable to list firewalls in project '%s'", project);
+      if (e instanceof GoogleJsonResponseException) {
+        throw handleGoogleJsonResponseException((GoogleJsonResponseException) e,
+            errorReason, errorCategory);
+      }
+      throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorReason)
+          .withErrorMessage(e.getMessage())
+          .build();
     }
 
     List<String> tags = new ArrayList<>();

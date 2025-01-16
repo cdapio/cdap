@@ -340,12 +340,16 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     return new FilterClassLoader(getClass().getClassLoader(), new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return resource.startsWith("org/slf4j") || filter.acceptResource(resource);
+        return resource.startsWith("org/slf4j")
+            || resource.startsWith("io/cdap/cdap/api/exception")
+            || filter.acceptResource(resource);
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return packageName.startsWith("org.slf4j") || filter.acceptPackage(packageName);
+        return packageName.startsWith("org.slf4j")
+            || packageName.startsWith("io.cdap.cdap.api.exception")
+            || filter.acceptPackage(packageName);
       }
     });
   }

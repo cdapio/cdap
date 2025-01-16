@@ -118,7 +118,7 @@ public class DataprocTool {
     String name = commandLine.getOptionValue('n');
     DataprocClientFactory clientFactory = new DefaultDataprocClientFactory(
         new GoogleComputeFactory());
-    try (DataprocClient client = clientFactory.create(conf, commandLine.hasOption('l'))) {
+    try (DataprocClient client = clientFactory.create(conf, commandLine.hasOption('l'), null)) {
       if (PROVISION.equalsIgnoreCase(command)) {
         ClusterOperationMetadata createOp = client.createCluster(name, imageVersion,
             Collections.emptyMap(), false,

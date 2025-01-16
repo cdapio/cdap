@@ -17,6 +17,10 @@
 
 package io.cdap.cdap.internal.provision.task;
 
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.FailureDetailsProvider;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.common.async.RepeatedTask;
 import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.logging.LogSamplers;
@@ -105,14 +109,16 @@ public abstract class ProvisioningTask implements RepeatedTask {
     }
 
     // Get the sub-task to execute
+    ProvisioningOp.Type type = currentTaskInfo.getProvisioningOp().getType();
     ProvisioningSubtask subtask = subTasks.get(state);
     if (subtask == null) {
       // should never happen
-      throw new IllegalStateException(
-          String.format("Invalid state '%s' in provisioning task for program run '%s'. "
-                  + "This means there is a bug in provisioning state machine. "
-                  + "Please reach out to the development team.",
-              state, programRunId));
+      String errorReason = String.format("Invalid state '%s' in provisioning task for "
+              + "program run '%s'.", state, programRunId);
+      String errorMessage = String.format("%s This means there is a bug in provisioning state"
+          + "machine. Please reach out to the development team.", errorReason);
+      throw ErrorUtils.getProgramFailureException(provisionerContext.getErrorCategory(),
+          errorReason, errorMessage, ErrorType.SYSTEM, false, null);
     }
     if (subtask == EndSubtask.INSTANCE) {
       LOG.debug("Completed {} task for program run {}.",
@@ -158,10 +164,16 @@ public abstract class ProvisioningTask implements RepeatedTask {
     } catch (InterruptedException e) {
       throw e;
     } catch (Throwable e) {
-      LOG.error("{} task failed in {} state for program run {} due to {}.",
-          currentTaskInfo.getProvisioningOp().getType(), state, programRunId,
-          Exceptions.condenseThrowableMessage(e), e);
-      handleSubtaskFailure(currentTaskInfo, e);
+      String errorReason = String.format("'%s' task failed in '%s' state for program run '%s'",
+          currentTaskInfo.getProvisioningOp().getType(), state, programRunId);
+      ProgramFailureException ex = null;
+      if (!(e instanceof FailureDetailsProvider)) {
+        ex = ErrorUtils.getProgramFailureException(provisionerContext.getErrorCategory(),
+            errorReason, Exceptions.condenseThrowableMessage(e), ErrorType.UNKNOWN, false, e);
+      }
+      LOG.error("{} due to {}.", errorReason,
+          Exceptions.condenseThrowableMessage(ex == null ? e : ex), ex == null ? e : ex);
+      handleSubtaskFailure(currentTaskInfo, ex);
       ProvisioningOp failureOp = new ProvisioningOp(currentTaskInfo.getProvisioningOp().getType(),
           ProvisioningOp.Status.FAILED);
       ProvisioningTaskInfo failureInfo = new ProvisioningTaskInfo(currentTaskInfo, failureOp,

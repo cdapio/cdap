@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
@@ -28,11 +30,13 @@ public interface DataprocClientFactory {
    * Create a {@link DataprocClient} for clusters that do not need SSH access.
    *
    * @param conf configuration about the dataproc clusters to operate on
+   * @param errorCategory error category
    * @return a DataprocClient
    * @throws IOException if there was an exception reading the credentials
    */
-  default DataprocClient create(DataprocConf conf) throws GeneralSecurityException, IOException {
-    return create(conf, false);
+  default DataprocClient create(DataprocConf conf, ErrorCategory errorCategory)
+      throws GeneralSecurityException, IOException, RetryableProvisionException {
+    return create(conf, false, errorCategory);
   }
 
   /**
@@ -41,9 +45,10 @@ public interface DataprocClientFactory {
    * @param conf configuration about the dataproc clusters to operate on
    * @param requireSSH whether the cluster should be open to SSH connections. When false, the
    *     client can avoid making various Compute calls to fetch additional information.
+   * @param errorCategory error category
    * @return a DataprocClient
    * @throws IOException if there was an exception reading the credentials
    */
-  DataprocClient create(DataprocConf conf, boolean requireSSH)
-      throws IOException, GeneralSecurityException;
+  DataprocClient create(DataprocConf conf, boolean requireSSH, ErrorCategory errorCategory)
+      throws IOException, GeneralSecurityException, RetryableProvisionException;
 }

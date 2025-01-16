@@ -17,7 +17,8 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.common.base.Strings;
-import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -81,9 +82,13 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       String sshUser = contextProperties.get(SSH_USER);
       String sshKey = contextProperties.get(SSH_KEY);
       if (Strings.isNullOrEmpty(sshUser) || Strings.isNullOrEmpty(sshKey)) {
-        throw new DataprocRuntimeException(
-            "SSH User and key are required for monitoring through SSH.",
-            ErrorTag.CONFIGURATION);
+        String errorMessage = "SSH User and key are required for monitoring through SSH.";
+        throw new DataprocRuntimeException.Builder()
+            .withErrorCategory(context.getErrorCategory())
+            .withErrorReason(errorMessage)
+            .withErrorMessage(errorMessage)
+            .withErrorType(ErrorType.USER)
+            .build();
       }
 
       SSHKeyPair sshKeyPair = new SSHKeyPair(new SSHPublicKey(sshUser, ""),
@@ -93,7 +98,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
     }
 
     String clusterName = contextProperties.get(CLUSTER_NAME);
-    try (DataprocClient client = CLIENT_FACTORY.create(conf)) {
+    try (DataprocClient client = CLIENT_FACTORY.create(conf, context.getErrorCategory())) {
       try {
         client.updateClusterLabels(clusterName, getCommonDataprocLabels(context));
       } catch (DataprocRuntimeException e) {
@@ -105,11 +110,16 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
           LOG.debug("Cannot update cluster labels due to {}", e.getMessage());
         }
       }
+      final String errorMessage = String.format("Dataproc cluster '%s' does not exist or not in "
+          + "running state.", clusterName);
       Cluster cluster = client.getCluster(clusterName)
           .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
-          .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName
-              + " does not exist or not in running state.",
-              ErrorTag.CONFIGURATION));
+          .orElseThrow(() -> new DataprocRuntimeException.Builder()
+              .withErrorCategory(context.getErrorCategory())
+              .withErrorReason(errorMessage)
+              .withErrorMessage(errorMessage)
+              .withErrorType(ErrorType.USER)
+              .build());
 
       // Determine cluster version and fail if version is smaller than 1.5
       Optional<String> optImageVer = client.getClusterImageVersion(clusterName);
@@ -119,9 +129,19 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       } else if (!optComparableImageVer.isPresent()) {
         LOG.warn("Unable to extract Dataproc version from string '{}'.", optImageVer.get());
       } else if (DATAPROC_1_5_VERSION.compareTo(optComparableImageVer.get()) > 0) {
-        throw new DataprocRuntimeException(
-            "Dataproc cluster must be version 1.5 or greater for pipeline execution.",
-            ErrorTag.CONFIGURATION);
+        String errorReason = "Dataproc cluster must be version 1.5 or greater "
+            + "for pipeline execution.";
+        ErrorCategory errorCategory = DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION;
+        if (context.getErrorCategory() != null) {
+          errorCategory =
+              new ErrorCategory(context.getErrorCategory().getParentCategory(), "Configuration");
+        }
+        throw new DataprocRuntimeException.Builder()
+            .withErrorCategory(errorCategory)
+            .withErrorReason(errorReason)
+            .withErrorMessage(errorReason)
+            .withErrorType(ErrorType.USER)
+            .build();
       }
 
       return cluster;

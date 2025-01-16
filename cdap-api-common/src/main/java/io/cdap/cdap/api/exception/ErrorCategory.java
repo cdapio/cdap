@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.api.exception;
 
+import java.util.Objects;
+import javax.annotation.Nullable;
+
 /**
  * Class representing the category of an error.
  *
@@ -25,6 +28,7 @@ package io.cdap.cdap.api.exception;
  */
 public class ErrorCategory {
   private final ErrorCategoryEnum errorCategory;
+  @Nullable
   private final String subCategory;
 
   /**
@@ -33,8 +37,7 @@ public class ErrorCategory {
    * @param errorCategory The category of the error.
    */
   public ErrorCategory(ErrorCategoryEnum errorCategory) {
-    this.errorCategory = errorCategory;
-    this.subCategory = null;
+    this(errorCategory, null);
   }
 
   /**
@@ -43,7 +46,7 @@ public class ErrorCategory {
    * @param errorCategory The category of the error.
    * @param subCategory The sub-category of the error.
    */
-  public ErrorCategory(ErrorCategoryEnum errorCategory, String subCategory) {
+  public ErrorCategory(ErrorCategoryEnum errorCategory, @Nullable String subCategory) {
     this.errorCategory = errorCategory;
     this.subCategory = subCategory;
   }
@@ -52,8 +55,24 @@ public class ErrorCategory {
    * Returns the category of the error.
    */
   public String getErrorCategory() {
-    return errorCategory == null ? ErrorCategoryEnum.OTHERS.toString() : subCategory == null ?
-        errorCategory.toString() : String.format("%s-'%s'", errorCategory, subCategory);
+    return errorCategory == null ? ErrorCategoryEnum.OTHERS.toString() : subCategory == null
+        ? errorCategory.toString() : String.format("%s-'%s'", errorCategory, subCategory);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ErrorCategory)) {
+      return false;
+    }
+
+    ErrorCategory that = (ErrorCategory) o;
+    return Objects.equals(this.errorCategory, that.errorCategory)
+        && Objects.equals(this.subCategory, that.subCategory);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.errorCategory, this.subCategory);
   }
 
   /*
@@ -65,15 +84,24 @@ public class ErrorCategory {
   }
 
   /**
+   * Returns the parent category of the error.
+   */
+  public ErrorCategoryEnum getParentCategory() {
+    return errorCategory == null ? ErrorCategoryEnum.OTHERS : errorCategory;
+  }
+
+  /**
    * Enum representing the different categories of errors.
    */
   public enum ErrorCategoryEnum {
-    PLUGIN("Plugin"),
-    NETWORKING("Networking"),
-    PROVISIONING("Provisioning"),
     ACCESS("Access"),
+    DEPROVISIONING("Deprovisioning"),
+    NETWORKING("Networking"),
+    OTHERS("Others"),
+    PLUGIN("Plugin"),
+    PROVISIONING("Provisioning"),
     SCHEDULES_AND_TRIGGERS("Schedules and Triggers"),
-    OTHERS("Others");
+    STARTING("Starting");
 
     private final String displayName;
 

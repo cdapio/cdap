@@ -21,6 +21,7 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.exception.ErrorType;
@@ -31,24 +32,33 @@ import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.proto.ErrorClassificationResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import joptsimple.internal.Strings;
 
 /**
  * Classifies error logs and returns {@link ErrorClassificationResponse}.
  * TODO -
  *  - Add rule based classification.
- *  - Handle cases when stage name is not present in the mdc.
  */
 public class ErrorLogsClassifier {
   private static final Gson GSON = new Gson();
+  private static final String DATAPROC_RUNTIME_EXCEPTION =
+      "io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException";
+  private static final ImmutableList<String> ALLOWLIST_CLASSES =
+      ImmutableList.<String>builder().add(DATAPROC_RUNTIME_EXCEPTION).build();
   private static final LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder()
       .maximumSize(5000)
       .build(new CacheLoader<String, Boolean>() {
         @Override
         public Boolean load(String className) {
           try {
-            return FailureDetailsProvider.class.isAssignableFrom(Class.forName(className));
+            return ALLOWLIST_CLASSES.contains(className)
+                || FailureDetailsProvider.class.isAssignableFrom(Class.forName(className));
           } catch (Exception e) {
             return false; // Handle missing class
           }
@@ -71,6 +81,7 @@ public class ErrorLogsClassifier {
    */
   public void classify(CloseableIterator<LogEvent> logIter, HttpResponder responder) {
     Map<String, ErrorClassificationResponse> responseMap = new HashMap<>();
+    Set<ErrorClassificationResponse> responseSet = new HashSet<>();
     while (logIter.hasNext()) {
       ILoggingEvent logEvent = logIter.next().getLoggingEvent();
       Map<String, String> mdc = logEvent.getMDCPropertyMap();
@@ -78,32 +89,44 @@ public class ErrorLogsClassifier {
       IThrowableProxy throwableProxy = logEvent.getThrowableProxy();
       while (throwableProxy != null) {
         if (isFailureDetailsProviderInstance(throwableProxy.getClassName())) {
-          populateResponseMap(throwableProxy, responseMap, stageName, mdc);
+          populateResponse(throwableProxy, mdc, stageName, responseMap, responseSet);
         }
         throwableProxy = throwableProxy.getCause();
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(responseMap.values()));
+    List<ErrorClassificationResponse> responses = new ArrayList<>(responseMap.values());
+    responses.addAll(responseSet);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(responses));
   }
 
-  private void populateResponseMap(IThrowableProxy throwableProxy,
-      Map<String, ErrorClassificationResponse> responseMap, String stageName,
-      Map<String, String> mdc) {
-    // populate responseMap if absent.
-    responseMap.putIfAbsent(stageName, getClassificationResponse(stageName, mdc, throwableProxy));
+  private void populateResponse(IThrowableProxy throwableProxy,
+      Map<String, String> mdc, String stageName,
+      Map<String, ErrorClassificationResponse> responseMap,
+      Set<ErrorClassificationResponse> responseSet) {
+    boolean stageNotPresent = Strings.isNullOrEmpty(stageName);
+    if (stageNotPresent) {
+      responseSet.add(getClassificationResponse(stageName, mdc, throwableProxy,
+          mdc.get(Logging.TAG_ERROR_CATEGORY)));
+      return;
+    }
+
+    String errorCategory = String.format("%s-'%s'", mdc.get(Logging.TAG_ERROR_CATEGORY), stageName);
+    responseMap.putIfAbsent(stageName,
+        getClassificationResponse(stageName, mdc, throwableProxy, errorCategory));
 
     if (WrappedStageException.class.getName().equals(
         responseMap.get(stageName).getThrowableClassName())) {
       // WrappedStageException takes lower precedence than other FailureDetailsProvider exceptions.
-      responseMap.put(stageName, getClassificationResponse(stageName, mdc, throwableProxy));
+      responseMap.put(stageName,
+          getClassificationResponse(stageName, mdc, throwableProxy, errorCategory));
     }
   }
 
   private ErrorClassificationResponse getClassificationResponse(String stageName,
-      Map<String, String> mdc, IThrowableProxy throwableProxy) {
+      Map<String, String> mdc, IThrowableProxy throwableProxy, String errorCategory) {
     return new ErrorClassificationResponse.Builder()
         .setStageName(stageName)
-        .setErrorCategory(String.format("%s-'%s'", mdc.get(Logging.TAG_ERROR_CATEGORY), stageName))
+        .setErrorCategory(errorCategory)
         .setErrorReason(mdc.get(Logging.TAG_ERROR_REASON))
         .setErrorMessage(throwableProxy.getMessage())
         .setErrorType(mdc.get(Logging.TAG_ERROR_TYPE) == null ? ErrorType.UNKNOWN.name() :

@@ -133,22 +133,20 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (throwable instanceof FailureDetailsProvider) {
         FailureDetailsProvider provider = (FailureDetailsProvider) throwable;
         boolean stageKeyAbsent = !modifiableMdc.containsKey(Constants.Logging.TAG_FAILED_STAGE);
-        if (stageKeyAbsent) {
+        if (stageKeyAbsent && provider.getFailureStage() != null) {
           modifiableMdc.put(Constants.Logging.TAG_FAILED_STAGE, provider.getFailureStage());
         }
         modifiableMdc.put(Constants.Logging.TAG_ERROR_CATEGORY,
             provider.getErrorCategory().getErrorCategory());
-        modifiableMdc.put(Constants.Logging.TAG_ERROR_REASON, provider.getErrorReason());
+        if (provider.getErrorReason() != null) {
+          modifiableMdc.put(Constants.Logging.TAG_ERROR_REASON, provider.getErrorReason());
+        }
         modifiableMdc.put(Constants.Logging.TAG_ERROR_TYPE, provider.getErrorType().name());
-      }
-
-      if (throwable instanceof ProgramFailureException) {
-        modifiableMdc.put(Constants.Logging.TAG_DEPENDENCY,
-            String.valueOf(((ProgramFailureException) throwable).isDependency()));
-        ErrorCodeType errorCodeType = ((ProgramFailureException) throwable).getErrorCodeType();
-        String errorCode = ((ProgramFailureException) throwable).getErrorCode();
-        String supportedDocUrl =
-            ((ProgramFailureException) throwable).getSupportedDocumentationUrl();
+        modifiableMdc.put(Constants.Logging.TAG_DEPENDENCY, String.valueOf(
+            provider.isDependency()));
+        ErrorCodeType errorCodeType = provider.getErrorCodeType();
+        String errorCode = provider.getErrorCode();
+        String supportedDocUrl = provider.getSupportedDocumentationUrl();
         if (errorCodeType != null) {
           modifiableMdc.put(Constants.Logging.TAG_ERROR_CODE_TYPE, errorCodeType.name());
         }

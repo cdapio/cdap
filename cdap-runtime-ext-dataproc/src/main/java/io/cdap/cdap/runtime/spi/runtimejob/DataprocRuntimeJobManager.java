@@ -20,7 +20,6 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.ResourceExhaustedException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.WriteChannel;
@@ -49,11 +48,12 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.cloud.storage.StorageRetryStrategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-import io.cdap.cdap.error.api.ErrorTagProvider;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorCodeType;
+import io.cdap.cdap.api.exception.ErrorUtils;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.VersionInfo;
@@ -79,8 +79,6 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -361,29 +359,35 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
       DataprocUtils.emitMetric(provisionerContext, submitJobMetric.build());
     } catch (Exception e) {
-      String errorMessage = String.format("Error while launching job %s on cluster %s.",
+      String errorReason = String.format("Error while launching job %s on cluster %s.",
           getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGcsPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, submitJobMetric.setException(e).build());
-      // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
-      // This usually indicates master VM crashing due to OOM.
-      if (e instanceof ResourceExhaustedException) {
-        String message = String.format("%s Cluster can't accept jobs presently: %s",
-            errorMessage,
-            Throwables.getRootCause(e).getMessage());
-        String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(
-            provisionerProperties.getOrDefault(
-                DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
-                DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT));
-
-        String combined = Stream.of(message, helpMessage)
-            .filter(s -> !Strings.isNullOrEmpty(s))
-            .collect(Collectors.joining("\n"));
-
-        throw new DataprocRuntimeException(e, combined, ErrorTagProvider.ErrorTag.USER);
+      // ResourceExhaustedException indicates Dataproc agent running on master node
+      // isn't emitting heartbeat. This usually indicates master VM crashing due to OOM.
+      ErrorCategory errorCategory = new ErrorCategory(ErrorCategoryEnum.STARTING);
+      if (e instanceof ApiException) {
+        int statusCode =
+            ((ApiException) e).getStatusCode().getCode().getHttpStatusCode();
+        ErrorUtils.ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(statusCode);
+        throw new DataprocRuntimeException.Builder()
+            .withCause(e)
+            .withErrorCategory(errorCategory)
+            .withErrorMessage(e.getMessage())
+            .withErrorReason(DataprocUtils.getErrorReason(errorReason, e))
+            .withErrorType(pair.getErrorType())
+            .withErrorCodeType(ErrorCodeType.HTTP)
+            .withErrorCode(String.valueOf(statusCode))
+            .withDependency(true)
+            .build();
       }
-      throw new DataprocRuntimeException(e, errorMessage);
+      throw new DataprocRuntimeException.Builder()
+          .withErrorMessage(e.getMessage())
+          .withErrorReason(errorReason)
+          .withErrorCategory(errorCategory)
+          .withCause(e)
+          .build();
     } finally {
       if (disableLocalCaching) {
         DataprocUtils.deleteDirectoryContents(tempDir);

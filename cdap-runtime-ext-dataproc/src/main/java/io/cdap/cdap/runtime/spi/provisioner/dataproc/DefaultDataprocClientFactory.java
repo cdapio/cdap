@@ -18,8 +18,12 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterControllerSettings;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
+import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
@@ -40,11 +44,27 @@ public class DefaultDataprocClientFactory implements DataprocClientFactory {
   }
 
   @Override
-  public DataprocClient create(DataprocConf conf, boolean requireSSH)
-      throws IOException, GeneralSecurityException {
-    ClusterControllerClient clusterControllerClient = getClusterControllerClient(conf);
-    return requireSSH ? new SshDataprocClient(conf, clusterControllerClient, computeFactory) :
-        new RuntimeMonitorDataprocClient(conf, clusterControllerClient, computeFactory);
+  public DataprocClient create(DataprocConf conf, boolean requireSSH, ErrorCategory errorCategory)
+      throws IOException, GeneralSecurityException, RetryableProvisionException {
+    ClusterControllerClient clusterControllerClient;
+    try {
+      clusterControllerClient = getClusterControllerClient(conf);
+    } catch (Exception e) {
+      String errorReason = "Unable to create dataproc cluster controller client.";
+      if (e instanceof ApiException) {
+        throw DataprocUtils.handleApiException(null, (ApiException) e, errorReason, errorCategory);
+      }
+      throw new DataprocRuntimeException.Builder()
+          .withCause(e)
+          .withErrorCategory(errorCategory)
+          .withErrorReason(errorReason)
+          .withErrorMessage(String.format("%s %s: %s", errorReason, e.getClass().getName(),
+              e.getMessage()))
+          .build();
+    }
+    return requireSSH ? new SshDataprocClient(conf, clusterControllerClient, computeFactory,
+        errorCategory) : new RuntimeMonitorDataprocClient(conf, clusterControllerClient,
+        computeFactory, errorCategory);
   }
 
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf)

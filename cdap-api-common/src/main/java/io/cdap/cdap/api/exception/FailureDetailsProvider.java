@@ -21,6 +21,8 @@ import javax.annotation.Nullable;
 
 /**
  * Interface for providing failure details.
+ * While implementing the interface, please don't forget to add the class the in
+ * {io.cdap.cdap.logging.ErrorLogsClassifier#ALLOWLIST_CLASSES} list.
  */
 public interface FailureDetailsProvider {
 
@@ -68,5 +70,44 @@ public interface FailureDetailsProvider {
    */
   default ErrorType getErrorType() {
     return ErrorType.UNKNOWN;
+  }
+
+  /**
+   * Returns whether the error is coming from a dependent service.
+   *
+   * @return true if the error is a dependency service error, false otherwise.
+   */
+  default boolean isDependency() {
+    return false;
+  }
+
+  /**
+   * Returns the type of error code.
+   *
+   * @return the type of error code.
+   */
+  @Nullable
+  default ErrorCodeType getErrorCodeType() {
+    return null;
+  }
+
+  /**
+   * Returns the error code.
+   *
+   * @return the error code.
+   */
+  @Nullable
+  default String getErrorCode() {
+    return null;
+  }
+
+  /**
+   * Returns the URL to the documentation.
+   *
+   * @return the URL to the documentation.
+   */
+  @Nullable
+  default String getSupportedDocumentationUrl() {
+    return null;
   }
 }

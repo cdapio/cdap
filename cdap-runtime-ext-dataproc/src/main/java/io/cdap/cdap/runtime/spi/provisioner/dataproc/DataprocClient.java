@@ -20,7 +20,6 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.services.compute.Compute;
 import com.google.api.services.compute.model.Network;
@@ -46,6 +45,7 @@ import com.google.cloud.dataproc.v1.ShieldedInstanceConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.cloud.dataproc.v1.UpdateClusterRequest;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
@@ -53,7 +53,10 @@ import com.google.protobuf.Duration;
 import com.google.protobuf.Empty;
 import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
-import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCodeType;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
@@ -98,35 +101,44 @@ abstract class DataprocClient implements AutoCloseable {
   private static final Set<String> ERROR_INFO_REASONS = ImmutableSet.of(
       "rateLimitExceeded",
       "resourceQuotaExceeded");
+  private static final String CONFIGURATION = "Configuration";
   protected final DataprocConf conf;
   private final ClusterControllerClient client;
   private final ComputeFactory computeFactory;
   private Compute compute;
+  protected final ErrorCategory errorCategory;
 
   protected DataprocClient(DataprocConf conf, ClusterControllerClient client,
-      ComputeFactory computeFactory) {
+      ComputeFactory computeFactory, ErrorCategory errorCategory) {
     this.conf = conf;
     this.client = client;
     this.computeFactory = computeFactory;
+    this.errorCategory = errorCategory == null
+        ? DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION : errorCategory;
   }
 
-  private static String findNetwork(Compute compute, String project)
-      throws IOException, RetryableProvisionException {
+  private static String findNetwork(Compute compute, String project, ErrorCategory errorCategory)
+      throws RetryableProvisionException {
     List<Network> networks;
     try {
       NetworkList networkList = compute.networks().list(project).execute();
       networks = networkList.getItems();
     } catch (Exception e) {
       handleRetryableExceptions(e);
-      throw new DataprocRuntimeException(e);
+      String errorReason = String.format("Unable list networks in project '%s'", project);
+      if (e instanceof GoogleJsonResponseException) {
+        throw handleGoogleJsonResponseException((GoogleJsonResponseException) e,
+            errorReason, errorCategory);
+      }
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorReason, e.getMessage(), true, null, ErrorType.UNKNOWN, e);
     }
 
     if (networks == null || networks.isEmpty()) {
-      throw new DataprocRuntimeException(
-          String.format(
-              "Unable to find any networks in project '%s'. Please create a network in the project.",
-              project),
-          ErrorTag.CONFIGURATION);
+      String errorMessage = String.format("Unable to find any networks in project '%s'. "
+              + "Please create a network in the project.", project);
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
     }
 
     for (Network network : networks) {
@@ -141,10 +153,12 @@ abstract class DataprocClient implements AutoCloseable {
   /**
    * Extracts and returns the zone name from the given full zone URI.
    */
-  private static String getZone(String zoneUri) {
+  private static String getZone(String zoneUri, ErrorCategory errorCategory) {
     int idx = zoneUri.lastIndexOf("/");
     if (idx <= 0) {
-      throw new DataprocRuntimeException("Invalid zone uri " + zoneUri, ErrorTag.CONFIGURATION);
+      String errorMessage = String.format("Invalid zone uri %s", zoneUri);
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
     }
     return zoneUri.substring(idx + 1);
   }
@@ -166,8 +180,7 @@ abstract class DataprocClient implements AutoCloseable {
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   ClusterOperationMetadata createCluster(String name, String imageVersion,
-      Map<String, String> labels,
-      boolean privateInstance, @Nullable SSHPublicKey publicKey)
+      Map<String, String> labels, boolean privateInstance, @Nullable SSHPublicKey publicKey)
       throws RetryableProvisionException, InterruptedException, IOException {
 
     String operationId = null;
@@ -333,10 +346,15 @@ abstract class DataprocClient implements AutoCloseable {
     } catch (ExecutionException e) {
       cleanUpClusterAfterCreationFailure(name);
       Throwable cause = e.getCause();
+      String errorReason = String.format("Dataproc cluster create operation %sfailed.",
+          operationId == null ? "" : String.format(" %s", operationId));
       if (cause instanceof ApiException) {
-        throw handleApiException(operationId, (ApiException) cause);
+        throw DataprocUtils.handleApiException(operationId, (ApiException) cause, errorReason,
+            errorCategory);
       }
-      throw new DataprocRuntimeException(operationId, cause);
+      throw getDataprocRuntimeException(errorCategory, errorReason,
+          cause == null ? e.getMessage() : cause.getMessage(), true, operationId, ErrorType.UNKNOWN,
+          cause == null ? e : cause);
     }
   }
 
@@ -344,11 +362,13 @@ abstract class DataprocClient implements AutoCloseable {
       boolean privateInstance) throws RetryableProvisionException, IOException {
     String network = conf.getNetwork();
     String systemNetwork = null;
+    ErrorCategory category = new ErrorCategory(errorCategory.getParentCategory(), CONFIGURATION);
     try {
       systemNetwork = DataprocUtils.getSystemNetwork(
-          (url) -> (HttpURLConnection) url.openConnection());
-    } catch (IllegalArgumentException e) {
+          (url) -> (HttpURLConnection) url.openConnection(), category);
+    } catch (DataprocRuntimeException e) {
       // expected when not running on GCP, ignore
+      LOG.trace("Unable to automatically detect the network.", e);
     }
 
     String projectId = conf.getProjectId();
@@ -356,9 +376,10 @@ abstract class DataprocClient implements AutoCloseable {
     String systemProjectId = null;
     try {
       systemProjectId = DataprocUtils.getSystemProjectId(
-          (url) -> (HttpURLConnection) url.openConnection());
-    } catch (IllegalArgumentException e) {
+          (url) -> (HttpURLConnection) url.openConnection(), category);
+    } catch (DataprocRuntimeException e) {
       // expected when not running on GCP, ignore
+      LOG.trace("Unable to automatically detect the project.", e);
     }
 
     if (network == null && projectId.equals(systemProjectId)) {
@@ -367,12 +388,13 @@ abstract class DataprocClient implements AutoCloseable {
       network = systemNetwork;
     } else if (network == null) {
       // Otherwise, pick a network from the configured project using the Compute API
-      network = findNetwork(compute, networkHostProjectId);
+      network = findNetwork(compute, networkHostProjectId, errorCategory);
     }
     if (network == null) {
-      throw new DataprocRuntimeException(
-          "Unable to automatically detect a network, please explicitly set a network.",
-          ErrorTag.CONFIGURATION);
+      String errorMessage = "Unable to automatically detect a network, "
+          + "please explicitly set a network.";
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
     }
 
     Network networkInfo = getNetworkInfo(networkHostProjectId, network, compute);
@@ -380,11 +402,11 @@ abstract class DataprocClient implements AutoCloseable {
     String subnet = conf.getSubnet();
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
-      throw new DataprocRuntimeException(
-          String.format(
-              "Subnet '%s' does not exist in network '%s' in project '%s'. Please use a different subnet.",
-              subnet, network, networkHostProjectId),
-          ErrorTag.CONFIGURATION);
+      String errorMessage = String.format(
+          "Subnet '%s' does not exist in network '%s' in project '%s'. "
+              + "Please use a different subnet.", subnet, network, networkHostProjectId);
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
     }
 
     // if the network uses custom subnets, a subnet must be provided to the dataproc api
@@ -392,16 +414,16 @@ abstract class DataprocClient implements AutoCloseable {
         networkInfo.getAutoCreateSubnetworks() != null && networkInfo.getAutoCreateSubnetworks();
     if (!autoCreateSubnet) {
       // if the network uses custom subnets but none exist, error out
+      String errorMessage = String.format("Network '%s' in project '%s' does not contain any subnets. "
+              + "Please create a subnet or use a different network.", network,
+          networkHostProjectId);
       if (subnets == null || subnets.isEmpty()) {
-        throw new DataprocRuntimeException(
-            String.format("Network '%s' in project '%s' does not contain any subnets. "
-                    + "Please create a subnet or use a different network.", network,
-                networkHostProjectId),
-            ErrorTag.CONFIGURATION);
+        throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+                CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
       }
     }
 
-    subnet = chooseSubnet(network, subnets, subnet, conf.getRegion());
+    subnet = chooseSubnet(network, subnets, subnet, conf.getRegion(), errorCategory);
 
     // subnets are unique within a location, not within a network, which is why these configs are mutually exclusive.
     clusterConfig.setSubnetworkUri(subnet);
@@ -439,7 +461,7 @@ abstract class DataprocClient implements AutoCloseable {
   // will be choosen and the region will be picked on basis of the given zone. If a subnet name is not provided then
   // any subnetwork in the region of the given zone will be picked.
   private static String chooseSubnet(String network, List<String> subnets, @Nullable String subnet,
-      String region) {
+      String region, ErrorCategory errorCategory) {
     for (String currentSubnet : subnets) {
       // if a subnet name is given then get the region of that subnet based on the zone
       if (subnet != null && !currentSubnet.endsWith("subnetworks/" + subnet)) {
@@ -449,30 +471,35 @@ abstract class DataprocClient implements AutoCloseable {
         return currentSubnet;
       }
     }
-    throw new DataprocRuntimeException(
-        String.format("Could not find %s in network '%s' that are for region '%s'",
-            subnet == null ? "any subnet" :
-                String.format("a subnet named '%s", subnet), network, region),
-        ErrorTag.CONFIGURATION);
+    String errorMessage = String.format("Could not find %s in network '%s' that are for "
+            + "region '%s'", subnet == null ? "any subnet" : String.format("a subnet named '%s",
+        subnet), network, region);
+    throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+            CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
   }
 
   private Network getNetworkInfo(String project, String network, Compute compute)
-      throws IOException, RetryableProvisionException {
+      throws RetryableProvisionException {
     Network networkObj;
     try {
       networkObj = compute.networks().get(project, network).execute();
     } catch (Exception e) {
       handleRetryableExceptions(e);
-      throw new DataprocRuntimeException(e);
+      String errorReason = String.format("Unable to get details of network '%s' in project '%s'",
+          network, project);
+      if (e instanceof GoogleJsonResponseException) {
+        throw handleGoogleJsonResponseException((GoogleJsonResponseException) e,
+            errorReason, errorCategory);
+      }
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorReason, e.getMessage(), true, null, ErrorType.UNKNOWN, e);
     }
 
     if (networkObj == null) {
-      throw new DataprocRuntimeException(
-          String.format(
-              "Unable to find network '%s' in project '%s'. Please specify another network.",
-              network, project),
-          ErrorTag.CONFIGURATION
-      );
+      String errorMessage = String.format("Unable to find network '%s' in project '%s'. "
+              + "Please specify another network.", network, project);
+      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+              CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
     }
     return networkObj;
   }
@@ -487,12 +514,14 @@ abstract class DataprocClient implements AutoCloseable {
     String systemProjectId = null;
     String systemNetwork = null;
     try {
+      ErrorCategory category = new ErrorCategory(errorCategory.getParentCategory(), CONFIGURATION);
       systemProjectId = DataprocUtils.getSystemProjectId(
-          (url) -> (HttpURLConnection) url.openConnection());
+          (url) -> (HttpURLConnection) url.openConnection(), category);
       systemNetwork = DataprocUtils.getSystemNetwork(
-          (url) -> (HttpURLConnection) url.openConnection());
-    } catch (IllegalArgumentException e) {
+          (url) -> (HttpURLConnection) url.openConnection(), category);
+    } catch (DataprocRuntimeException e) {
       // expected when not running on GCP, ignore
+      LOG.trace("Unable to automatically detect the network or project.", e);
     }
 
     // Use private IP only cluster if privateInstance is true or if the compute profile required
@@ -526,11 +555,11 @@ abstract class DataprocClient implements AutoCloseable {
     }
 
     // If there is no network connectivity and yet private ip only cluster is requested, raise an exception
-    throw new DataprocRuntimeException(
-        String.format(
-            "Direct network connectivity is needed for private Dataproc cluster between VPC %s/%s and %s/%s",
-            systemProjectId, systemNetwork, conf.getNetworkHostProjectId(), network.getName()),
-        ErrorTag.CONFIGURATION);
+    String errorMessage = String.format("Direct network connectivity is needed for private "
+            + "Dataproc cluster between VPC %s/%s and %s/%s", systemProjectId, systemNetwork,
+        conf.getNetworkHostProjectId(), network.getName());
+    throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
+            CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
   }
 
   private static PeeringState getPeeringState(String systemProjectId, String systemNetwork,
@@ -580,7 +609,8 @@ abstract class DataprocClient implements AutoCloseable {
    * @param labels Key/Value pairs to set on the Dataproc cluster.
    */
   void updateClusterLabels(String clusterName,
-      Map<String, String> labels) throws RetryableProvisionException, InterruptedException {
+      Map<String, String> labels) throws RetryableProvisionException,
+      InterruptedException {
     updateClusterLabels(clusterName, labels, Collections.emptyList());
   }
 
@@ -599,12 +629,18 @@ abstract class DataprocClient implements AutoCloseable {
     if (labelsToSet.isEmpty() && labelsToRemove.isEmpty()) {
       return CompletableFuture.completedFuture(null);
     }
+    String operationId = null;
     try {
+      String errorMessage = String.format("Dataproc cluster '%s' does not exist or not in "
+          + "running state", clusterName);
       Cluster cluster = getDataprocCluster(clusterName)
           .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
-          .orElseThrow(() -> new DataprocRuntimeException(
-              "Dataproc cluster " + clusterName + " does not exist or not in running state",
-              ErrorTag.CONFIGURATION));
+          .orElseThrow(() -> new DataprocRuntimeException.Builder()
+              .withErrorCategory(errorCategory)
+              .withErrorReason(errorMessage)
+              .withErrorMessage(errorMessage)
+              .withErrorType(ErrorType.USER)
+              .build());
       Map<String, String> existingLabels = cluster.getLabelsMap();
       // If the labels to set are already exist and labels to remove are not set,
       // no need to update the cluster labelsToSet.
@@ -629,6 +665,7 @@ abstract class DataprocClient implements AutoCloseable {
               .setUpdateMask(updateMask)
               .build());
 
+      operationId = operationFuture.getName();
       ClusterOperationMetadata metadata = operationFuture.getMetadata().get();
       int numWarnings = metadata.getWarningsCount();
       if (numWarnings > 0) {
@@ -638,10 +675,15 @@ abstract class DataprocClient implements AutoCloseable {
       return operationFuture;
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
+      String errorReason = String.format("Dataproc cluster update operation %sfailed.",
+          operationId == null ? "" : String.format(" %s", operationId));
       if (cause instanceof ApiException) {
-        throw handleApiException((ApiException) cause);
+        throw DataprocUtils.handleApiException(operationId, (ApiException) cause,
+            errorReason, errorCategory);
       }
-      throw new DataprocRuntimeException(cause);
+      throw getDataprocRuntimeException(errorCategory, errorReason,
+          cause == null ? e.getMessage() : cause.getMessage(), true, operationId, ErrorType.UNKNOWN,
+          cause == null ? e : cause);
     }
   }
 
@@ -670,6 +712,8 @@ abstract class DataprocClient implements AutoCloseable {
       return Optional.of(operationFuture.getMetadata().get());
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
+      String errorReason = String.format("Dataproc cluster delete operation %sfailed.",
+          operationId == null ? "" : String.format(" %s", operationId));
       if (cause instanceof ApiException) {
         ApiException apiException = (ApiException) cause;
         if (apiException.getStatusCode().getCode().getHttpStatusCode() == 404) {
@@ -692,9 +736,12 @@ abstract class DataprocClient implements AutoCloseable {
         } catch (Exception e1) {
           // if there was an error getting the cluster information, ignore it and handle the original delete error
         }
-        throw handleApiException(operationId, (ApiException) cause);
+        throw DataprocUtils.handleApiException(operationId, (ApiException) cause, errorReason,
+            errorCategory);
       }
-      throw new DataprocRuntimeException(operationId, cause);
+      throw getDataprocRuntimeException(errorCategory, errorReason,
+          cause == null ? e.getMessage() : cause.getMessage(), true, operationId, ErrorType.UNKNOWN,
+          cause == null ? e : cause);
     }
   }
 
@@ -719,20 +766,18 @@ abstract class DataprocClient implements AutoCloseable {
     // same name, was deleted, then this current cluster was created). This won't happen in practice for ephemeral
     // clusters, but it's still not great to have this possibility in the implementation.
     // https://cdap.atlassian.net/browse/CDAP-19641
-    String resourceName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(),
-        conf.getRegion());
+    String projectId = conf.getProjectId();
+    String region = conf.getRegion();
+    String resourceName = String.format("projects/%s/regions/%s/operations", projectId, region);
     String filter = String.format("clusterName=%s AND operationType=CREATE", name);
 
     OperationsClient.ListOperationsPagedResponse operationsResponse;
     try {
       operationsResponse = client.getOperationsClient().listOperations(resourceName, filter);
     } catch (ApiException e) {
-      if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
-        // if there was an API exception that was not a 4xx, we can just try again
-        throw new RetryableProvisionException(e);
-      }
-      // otherwise, it's not a retryable failure
-      throw e;
+      String errorReason = String.format("Dataproc clusters list operation failed in "
+          + "project '%s' and region '%s'.", projectId, region);
+      throw DataprocUtils.handleApiException(null, e, errorReason, errorCategory);
     }
 
     OperationsClient.ListOperationsPage page = operationsResponse.getPage();
@@ -812,7 +857,9 @@ abstract class DataprocClient implements AutoCloseable {
     try {
       return convertCluster(cluster);
     } catch (IOException e) {
-      throw new DataprocRuntimeException(e);
+      String errorReason = "Unable to convert dataproc cluster object into provisioner one.";
+      throw getDataprocRuntimeException(errorCategory, errorReason, e.getMessage(), false,
+          null, ErrorType.SYSTEM, e);
     }
   }
 
@@ -825,7 +872,7 @@ abstract class DataprocClient implements AutoCloseable {
    */
   private io.cdap.cdap.runtime.spi.provisioner.Cluster convertCluster(Cluster cluster)
       throws IOException {
-    String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri());
+    String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri(), errorCategory);
 
     List<Node> nodes = new ArrayList<>();
     for (String masterName : cluster.getConfig().getMasterConfig().getInstanceNamesList()) {
@@ -854,8 +901,10 @@ abstract class DataprocClient implements AutoCloseable {
         // if there was an API exception that was not a 4xx, we can just try again
         throw new RetryableProvisionException(e);
       }
+      String reason = String.format("Failed to get details of dataproc cluster '%s' in project '%s'"
+          + " and region '%s'", name, conf.getProjectId(), conf.getRegion());
       // otherwise, it's not a retryable failure
-      throw new DataprocRuntimeException(e);
+      throw DataprocUtils.handleApiException(null, e, reason, errorCategory);
     }
   }
 
@@ -882,8 +931,8 @@ abstract class DataprocClient implements AutoCloseable {
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
-      Map<String, String> labels,
-      Predicate<Cluster> postFilter) throws RetryableProvisionException {
+      Map<String, String> labels, Predicate<Cluster> postFilter)
+      throws RetryableProvisionException {
 
     try {
       ListClustersRequest.Builder builder = ListClustersRequest.newBuilder()
@@ -899,7 +948,8 @@ abstract class DataprocClient implements AutoCloseable {
           .filter(postFilter)
           .map(this::convertClusterUnchecked);
     } catch (ApiException e) {
-      throw handleApiException(e);
+      String errorReason = "Dataproc clusters list operation failed.";
+      throw DataprocUtils.handleApiException(null, e, errorReason, errorCategory);
     }
   }
 
@@ -941,24 +991,49 @@ abstract class DataprocClient implements AutoCloseable {
     client.close();
   }
 
-  // if there was an API exception that was not a 4xx, we can just try again
-  protected RetryableProvisionException handleApiException(ApiException e)
-      throws RetryableProvisionException {
-    return handleApiException(null, e);
+  private static DataprocRuntimeException getDataprocRuntimeException(ErrorCategory errorCategory,
+      String errorReason, String errorMessage, boolean dependency, @Nullable String operationId,
+      @Nullable ErrorType errorType, @Nullable Throwable cause) {
+    if (cause != null) {
+      List<Throwable> causalChain = Throwables.getCausalChain(cause);
+      for (Throwable e : causalChain) {
+        if (e instanceof DataprocRuntimeException) {
+          return (DataprocRuntimeException) e;
+        }
+      }
+    }
+    return new DataprocRuntimeException.Builder()
+        .withOperationId(operationId)
+        .withErrorCategory(errorCategory)
+        .withErrorReason(errorReason)
+        .withErrorMessage(errorMessage)
+        .withDependency(dependency)
+        .withCause(cause)
+        .withErrorType(errorType == null ? ErrorType.UNKNOWN : errorType)
+        .build();
   }
 
-  private RetryableProvisionException handleApiException(@Nullable String operationId,
-      ApiException e)
-      throws RetryableProvisionException {
-    if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
-      throw new DataprocRetryableException(operationId, e);
+  protected static DataprocRuntimeException handleGoogleJsonResponseException(
+      GoogleJsonResponseException e, String errorReason, ErrorCategory errorCategory) {
+    ErrorUtils.ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(e.getStatusCode());
+
+    if (Strings.isNullOrEmpty(errorReason)) {
+      errorReason = String.format("'%s', %s. %s", e.getStatusCode(), e.getStatusMessage(),
+          pair.getCorrectiveAction());
+    } else {
+      errorReason = String.format("%s with status '%s' %s. %s", errorReason, e.getStatusCode(),
+          e.getStatusMessage(), pair.getCorrectiveAction());
     }
-    String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(
-        conf.getTroubleshootingDocsUrl());
-    if (e instanceof InvalidArgumentException) {
-      throw new DataprocRuntimeException(operationId, helpMessage, e, ErrorTag.USER);
-    }
-    throw new DataprocRuntimeException(operationId, helpMessage, e);
+    return new DataprocRuntimeException.Builder()
+        .withCause(e)
+        .withErrorMessage(e.getMessage())
+        .withErrorCategory(new ErrorCategory(errorCategory.getParentCategory(), CONFIGURATION))
+        .withErrorReason(errorReason)
+        .withErrorType(pair.getErrorType())
+        .withDependency(true)
+        .withErrorCodeType(ErrorCodeType.HTTP)
+        .withErrorCode(String.valueOf(e.getStatusCode()))
+        .build();
   }
 
   //Throws retryable Exception for the cases that are transient in nature
@@ -977,8 +1052,7 @@ abstract class DataprocClient implements AutoCloseable {
         throw new RetryableProvisionException(e);
       }
 
-      if (statusCode == HttpURLConnection.HTTP_FORBIDDEN
-          || statusCode == DataprocUtils.RESOURCE_EXHAUSTED) {
+      if (statusCode == DataprocUtils.RESOURCE_EXHAUSTED) {
         boolean isRetryAble = gError.getDetails().getErrors().stream()
             .anyMatch(errorInfo -> ERROR_INFO_REASONS.contains(errorInfo.getReason()));
         if (isRetryAble) {

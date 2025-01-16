@@ -39,11 +39,16 @@
       <groupId>io.cdap.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
-      <dependency>
-        <groupId>io.cdap.cdap</groupId>
-        <artifactId>cdap-error-api</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-error-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-api-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
 </project>
