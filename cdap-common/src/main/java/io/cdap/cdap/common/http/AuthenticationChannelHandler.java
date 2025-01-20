@@ -135,6 +135,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.setUserIp(currentUserIp);
       //Also set userIp in ATTR , to be used in audit logging incase it was replaced at a later stage
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).set(currentUserIp);
+      LOG.warn("SANKET_TEST : uri : {}, for pipe : {}", request.uri() , ctx.channel().id());
     }
 
     try {
@@ -185,6 +186,9 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     }
     AuditLogRequest auditLogRequest = getAuditLogRequest(ctx);
     if (auditLogRequest != null) {
+      LOG.warn("SANKET_TEST : publishAuditLogRequest 1 , auditLogRequest present: for pipe : {}", ctx.channel().id());
+      LOG.warn("SANKET_TEST : publishAuditLogRequest 2 , auditLogWriter = {} : for pipe : {}",
+               auditLogWriter.getClass().getName(), ctx.channel().id());
       auditLogWriter.publish(auditLogRequest);
     }
   }
@@ -198,11 +202,15 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
     // If NO audit logs, then return NULL.
     if (auditLogContextsQueueAttr == null) {
+      LOG.warn("SANKET_TEST : getAuditLogRequest 1 , LOGS NULL : for channel :{},  for pipe : {}",
+               ctx.channel().id(),
+               ctx.pipeline().channel().id());
       return null;
     }
 
     Queue<AuditLogContext> auditLogContextsQueue =  (Queue<AuditLogContext>) auditLogContextsQueueAttr;
-
+    LOG.warn("SANKET_TEST : getAuditLogRequest 2 , LOGS Prsent: size : {} : for pipe : {}",
+             auditLogContextsQueue.size(), ctx.channel().id());
     Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).get();
     String userIp = userIpObj == null ? SecurityRequestContext.getUserIp() : (String) userIpObj;
 
@@ -225,6 +233,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     //Clear Attributes
     clearAttributes(ctx);
 
+    LOG.warn("SANKET_TEST : getAuditLogRequest 3 , for pipe : {}", ctx.channel().id());
+
     return builder
       .userIp(userIp)
       .auditLogContextQueue(auditLogContextsQueue)
@@ -239,7 +249,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     if (!auditLoggingEnabled) {
       return;
     }
-
+    LOG.warn("SANKET_TEST : setAuditLogMetaDataInChannel 1 : for Channel : {} for pipe : {}", ctx.channel().id(),
+             ctx.pipeline().channel().id());
     Queue<AuditLogContext> auditLogContextQueue = SecurityRequestContext.getAuditLogQueue();
 
     // In either case, if Queue from SecurityRequestContext is empty, then no Audit Logs.
@@ -248,11 +259,16 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
         .set(auditLogContextQueue);
     }
 
+    LOG.warn("SANKET_TEST : setAuditLogMetaDataInChannel 2 , Size : {},  : for Channel : {} for pipe : {}",
+             auditLogContextQueue.size(), ctx.channel().id(),
+             ctx.pipeline().channel().id());
+
     // Store all audit metadata info stored in AuditLogRequest.Builder in ATTR from  AuditLogSetterHook#postCall
     // This is just to ensure we don't lose metadata information if already populated because of some RESET call on
     // SecurityRequestContext. This Also ensures that if Thread changes in Close / Write , then this info is preserved.
     AuditLogRequest.Builder builder = SecurityRequestContext.getAuditLogRequestBuilder();
     if (builder != null) {
+      LOG.warn("SANKET_TEST : setAuditLogMetaDataInChannel 3 , builder PRESENT : for pipe : {}", ctx.channel().id());
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_BUILDER_ATTR)).set(builder);
     }
   }
