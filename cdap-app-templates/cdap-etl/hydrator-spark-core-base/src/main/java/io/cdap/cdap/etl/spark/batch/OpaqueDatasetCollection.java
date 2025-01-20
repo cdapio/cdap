@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -26,6 +29,10 @@ import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.concurrent.ExecutionException;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.MapFunction;
@@ -46,6 +53,10 @@ import org.apache.spark.sql.types.StructType;
  * and allows to run SparkSQL.
  */
 public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
+
+  private static final Cache<StructType, ExpressionEncoder<Row>> ENCODER_CACHE = CacheBuilder.newBuilder()
+                                                                                            .maximumSize(128)
+                                                                                            .build();
 
   private final Dataset<T> dataset;
 
@@ -108,12 +119,46 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
   @Override
   public DataframeCollection toDataframeCollection(Schema schema) {
     StructType sparkSchema = DataFrames.toDataType(schema);
-    ExpressionEncoder<Row> encoder = RowEncoder.apply(sparkSchema);
+    ExpressionEncoder<Row> encoder = getRowEncoder(sparkSchema);
     Dataset<StructuredRecord> ds = (Dataset<StructuredRecord>) getDataset();
     MapFunction<StructuredRecord, Row> converter = r -> DataFrames.toRow(r, sparkSchema);
     return new DataframeCollection(schema, ds.map(converter, encoder),
         sec, jsc, sqlContext, datasetContext, sinkFactory, functionCacheFactory);
   }
 
+  /**
+   * This is required to handle breaking changes between spark 3.3.2 (Dataproc 2.1) to 3.5.1 (Dataproc 2.2).
+   * And we need to support both.
+   * Here we are trying to check if the new method introduced in 3.5.1 exists or not, and based on that we
+   * invoke the new method or the old one.
+   */
+  public static ExpressionEncoder<Row> getRowEncoder(StructType sparkSchema) {
 
+    try {
+      return ENCODER_CACHE.get(sparkSchema, () -> {
+        StringBuilder errorStrBuilder = new StringBuilder("Failed to load a suitable Encoder dynamically. Errors : ");
+        try {
+          Method encoderForMethod =  RowEncoder.class.getMethod("encoderFor", StructType.class);
+          Object agnosticEncoderObj = encoderForMethod.invoke(null, sparkSchema);
+
+          Method applyMethod = ExpressionEncoder.class.getMethod("apply",
+                         Class.forName("org.apache.spark.sql.catalyst.encoders.AgnosticEncoder"));
+          return (ExpressionEncoder<Row>)applyMethod.invoke(null, agnosticEncoderObj);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
+                 ClassNotFoundException e) {
+          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+        }
+
+        // If code reaches here, meaning it should be spark 3.3.2 or lower.
+        try {
+          return RowEncoder.apply(sparkSchema);
+        } catch (Exception e) {
+          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+        }
+        throw new RuntimeException(errorStrBuilder.toString());
+      });
+    } catch (ExecutionException e) {
+      throw new UncheckedExecutionException(e);
+    }
+  }
 }
