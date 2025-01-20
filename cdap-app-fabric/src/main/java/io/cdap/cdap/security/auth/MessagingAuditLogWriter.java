@@ -33,6 +33,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Random;
@@ -44,6 +46,7 @@ import javax.annotation.Nullable;
  */
 public class MessagingAuditLogWriter implements AuditLogWriter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MessagingAuditLogWriter.class);
   private static final Gson GSON = new Gson();
 
   private final String topicPrefix;
@@ -79,6 +82,12 @@ public class MessagingAuditLogWriter implements AuditLogWriter {
    */
   @Override
   public void publish(@Nullable AuditLogRequest auditLogRequest) throws IOException {
+
+    if (auditLogRequest.getUri().toLowerCase().contains("connection")){
+      LOG.warn("SANKET_WARN : {}", auditLogRequest.toString());
+    }
+
+
     if (auditLogRequest != null &&
       (auditLogRequest.getAuditLogContextQueue().isEmpty()
         || auditLogRequest.getAuditLogContextQueue().stream().noneMatch(AuditLogContext::isAuditLoggingRequired))){
@@ -90,10 +99,17 @@ public class MessagingAuditLogWriter implements AuditLogWriter {
       .addPayload(GSON.toJson(auditLogRequest))
       .build();
 
+    if (auditLogRequest.getUri().toLowerCase().contains("connection")){
+      LOG.warn("SANKET_WARN : topic : {}", topic.getTopic());
+    }
+
     try {
       Retries.runWithRetries(() -> {
         try {
           messagingService.publish(storeRequest);
+          if (auditLogRequest.getUri().toLowerCase().contains("connection")){
+            LOG.warn("SANKET_WARN : SUCCESS PUBLISH");
+          }
         } catch (TopicNotFoundException e) {
           // Core Messaging service should create the required topics for audit log.
           // Refer to property `messaging.system.topics`.

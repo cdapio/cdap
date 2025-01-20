@@ -130,6 +130,9 @@ public class AuditLogSingleTopicSubscriberService extends AbstractMessagingSubsc
     while (messages.hasNext()) {
       ImmutablePair<String, AuditLogRequest> next = messages.next();
       LOG.trace("Publishing a queue of Audit Log events ");
+      if (next.getSecond().getUri().toLowerCase().contains("connection")){
+        LOG.warn("SANKET_TEST : ALR : {}" , next.getSecond());
+      }
       AuditLoggerSpi.PublishStatus publishStatus =
         this.accessControllerInstantiator.get().publishAuditLogs(next.getSecond());
       if (publishStatus != AuditLoggerSpi.PublishStatus.PUBLISHED) {

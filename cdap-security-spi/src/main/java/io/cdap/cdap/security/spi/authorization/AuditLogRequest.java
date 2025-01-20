@@ -151,4 +151,19 @@ public class AuditLogRequest {
                                  startTimeNanos, endTimeNanos);
     }
   }
+
+  @Override
+  public String toString() {
+    return "AuditLogRequest{" +
+      "operationResponseCode=" + operationResponseCode +
+      ", userIp='" + userIp + '\'' +
+      ", uri='" + uri + '\'' +
+      ", handler='" + handler + '\'' +
+      ", method='" + method + '\'' +
+      ", methodType='" + methodType + '\'' +
+      ", auditLogContextQueue=" + auditLogContextQueue.size() +
+      ", startTimeNanos=" + startTimeNanos +
+      ", endTimeNanos=" + endTimeNanos +
+      '}';
+  }
 }

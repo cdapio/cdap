@@ -187,8 +187,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     AuditLogRequest auditLogRequest = getAuditLogRequest(ctx);
     if (auditLogRequest != null) {
       LOG.warn("SANKET_TEST : publishAuditLogRequest 1 , auditLogRequest present: for pipe : {}", ctx.channel().id());
-      LOG.warn("SANKET_TEST : publishAuditLogRequest 2 , auditLogWriter = {} : for pipe : {}",
-               auditLogWriter.getClass().getName(), ctx.channel().id());
+      LOG.warn("SANKET_TEST : publishAuditLogRequest 2 , auditLogWriter = {} : for pipe : {}, ALR : {}",
+               auditLogWriter.getClass().getName(), ctx.channel().id(),
+               auditLogRequest.toString());
+      if (!auditLogRequest.getAuditLogContextQueue().isEmpty()){
+        LOG.warn("SANKET_TEST : publishAuditLogRequest 3 : {}" ,
+                 auditLogRequest.getAuditLogContextQueue().peek().isAuditLoggingRequired());
+      }
+
       auditLogWriter.publish(auditLogRequest);
     }
   }
