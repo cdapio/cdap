@@ -188,6 +188,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Nullable
   @Override
   public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
+
+    LOG.warn("SANKET_TEST : {}", request.getTopicId());
+
     try {
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       if (request.isTransactional()) {
