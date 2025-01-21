@@ -120,6 +120,7 @@ import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.FlowControlService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleHandlerService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
 import io.cdap.cdap.internal.capability.CapabilityModule;
@@ -454,7 +455,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(FlowControlService.class).in(Scopes.SINGLETON);
-      bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(SystemAppManagementService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
@@ -496,6 +496,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
       if (serviceTypes.contains(ServiceType.SERVER)) {
+        bind(ProgramLifecycleHandlerService.class).in(Scopes.SINGLETON);
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
             binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
 
@@ -542,6 +543,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       }
 
       if (serviceTypes.contains(ServiceType.PROCESSOR)) {
+        bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
+
         Multibinder<HttpHandler> processorHandlerBinder = Multibinder.newSetBinder(
             binder(), HttpHandler.class, Names.named(AppFabric.PROCESSOR_HANDLERS_BINDING));
         CommonHandlers.add(processorHandlerBinder);

@@ -32,6 +32,7 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.schedule.Trigger;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
@@ -41,7 +42,6 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.NotImplementedException;
-import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
@@ -63,7 +63,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
-import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleHandlerService;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
@@ -177,7 +177,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       .create();
 
   private final ProgramScheduleService programScheduleService;
-  private final ProgramLifecycleService lifecycleService;
+  private final ProgramLifecycleHandlerService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -195,7 +195,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
       DiscoveryServiceClient discoveryServiceClient,
-      ProgramLifecycleService lifecycleService,
+      ProgramLifecycleHandlerService lifecycleService,
       MRJobInfoFetcher mrJobInfoFetcher,
       NamespaceQueryAdmin namespaceQueryAdmin,
       ProgramScheduleService programScheduleService) {

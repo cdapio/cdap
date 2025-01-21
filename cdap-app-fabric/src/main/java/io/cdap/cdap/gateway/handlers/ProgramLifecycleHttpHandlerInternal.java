@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleHandlerService;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramReference;
@@ -42,10 +42,10 @@ public class ProgramLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHa
 
   private static final Gson GSON = new Gson();
 
-  private final ProgramLifecycleService programLifecycleService;
+  private final ProgramLifecycleHandlerService programLifecycleService;
 
   @Inject
-  ProgramLifecycleHttpHandlerInternal(ProgramLifecycleService programLifecycleService) {
+  ProgramLifecycleHttpHandlerInternal(ProgramLifecycleHandlerService programLifecycleService) {
     this.programLifecycleService = programLifecycleService;
   }
 
