@@ -14,10 +14,13 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
+import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -41,7 +44,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String tokenRefreshURL = "http://www.example.com/token";
     String clientId = "clientid";
     String clientSecret = "clientsecret";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -57,7 +66,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // Attempt to create provider with missing client credentials should fail with 400 status code.
     String loginURL = "http://www.example.com/login";
     String tokenRefreshURL = "http://www.example.com/token";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            null,
+            null,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
@@ -68,7 +83,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // param 'true' should succeed with 200 status code.
     String loginURL = "http://www.example.com/login";
     String tokenRefreshURL = "http://www.example.com/token";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            null,
+            null,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider10?reuse_client_credentials=true", request);
     Assert.assertEquals(500, createResponse.getResponseCode());
   }
@@ -80,7 +101,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String tokenRefreshURL = "http://www.example.com/token20";
     String clientId = "clientid";
     String clientSecret = "clientsecret";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider20", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -88,7 +115,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // param 'true' should succeed with 200 status code.
     loginURL = "http://www.example.com/login21";
     tokenRefreshURL = "http://www.example.com/token21";
-    request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            null,
+            null,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     createResponse = makePutCall("provider/testprovider20?reuse_client_credentials=true", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
   }
@@ -99,9 +132,63 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // query param 'false' should fail with 400 status code.
     String loginURL = "http://www.example.com/login30";
     String tokenRefreshURL = "http://www.example.com/token30";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            null,
+            null,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider30?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
+  }
+
+  @Test
+  public void testCreateProviderWithBasicAuth() throws IOException {
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login31";
+    String tokenRefreshURL = "http://www.example.com/token31";
+    String clientId = "clientid";
+    String clientSecret = "clientsecret";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH,
+            null);
+    HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider31", request);
+    Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
+
+    // Grab OAuth login URL to verify write succeeded
+    HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider31/authurl");
+    Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
+    String authURL = getAuthUrlResponse.getResponseBodyAsString();
+    Assert.assertEquals("http://www.example.com/login31?client_id=clientid&redirect_uri=null", authURL);
+  }
+
+  @Test
+  public void testCreateProviderWithBasicAuthAndUserAgent() throws IOException {
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login32";
+    String tokenRefreshURL = "http://www.example.com/token32";
+    String clientId = "clientid";
+    String clientSecret = "clientsecret";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH,
+            "cdap-test");
+    HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider32", request);
+    Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
+
+    // Grab OAuth login URL to verify write succeeded
+    HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider32/authurl");
+    Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
+    String authURL = getAuthUrlResponse.getResponseBodyAsString();
+    Assert.assertEquals("http://www.example.com/login32?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
@@ -110,7 +197,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // query param 'true'.
     String loginURL = "http://www.example.com/login40";
     String tokenRefreshURL = "http://www.example.com/token40";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            null,
+            null,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider40?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
 
@@ -126,7 +219,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String tokenRefreshURL = "http://www.example.com/token50";
     String clientId = "clientid";
     String clientSecret = "clientsecret";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider50", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -140,7 +239,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // param 'true' should succeed with 200 status code.
     loginURL = "http://www.example.com/login51";
     tokenRefreshURL = "http://www.example.com/token51";
-    request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, null, null);
+    request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            null,
+            null,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     createResponse = makePutCall("provider/testprovider50?reuse_client_credentials=true", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -158,7 +263,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String tokenRefreshURL = "http://www.example.com/token";
     String clientId = "clientid";
     String clientSecret = "clientsecret";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
@@ -170,7 +281,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String tokenRefreshURL = "badurl";
     String clientId = "clientid";
     String clientSecret = "clientsecret";
-    PutOAuthProviderRequest request = new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId, clientSecret);
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
