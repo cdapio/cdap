@@ -18,17 +18,24 @@ package io.cdap.cdap.logging;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
+import com.google.common.collect.Iterators;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Metrics;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
+import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import io.cdap.cdap.proto.ErrorClassificationResponse;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -44,10 +51,9 @@ public class ErrorLogsClassifierTest {
 
   private static final Gson GSON = new Gson();
   private final MockResponder responder = new MockResponder();
-  private final ErrorLogsClassifier classifier = new ErrorLogsClassifier();
 
   @Test
-  public void testClassifyLogs() {
+  public void testClassifyLogs() throws Exception {
     LogEvent logEvent1 = new LogEvent(getEvent1(), LogOffset.LATEST_OFFSET);
     LogEvent logEvent2 = new LogEvent(getEvent2(), LogOffset.LATEST_OFFSET);
     List<LogEvent> events = new ArrayList<>();
@@ -70,10 +76,15 @@ public class ErrorLogsClassifierTest {
         // no-op
       }
     };
-    classifier.classify(closeableIterator, responder);
+    List<MetricValues> metricValuesList = new ArrayList<>();
+    MetricsCollectionService mockMetricsCollectionService = getMockCollectionService(metricValuesList);
+    mockMetricsCollectionService.startAndWait();
+    ErrorLogsClassifier classifier = new ErrorLogsClassifier(mockMetricsCollectionService);
+    classifier.classify(closeableIterator, responder, "namespace", "program", "app", "run");
     Type listType = new TypeToken<List<ErrorClassificationResponse>>() {}.getType();
     List<ErrorClassificationResponse> responses =
         GSON.fromJson(responder.getResponseContentAsString(), listType);
+    mockMetricsCollectionService.stopAndWait();
     Assert.assertEquals(1, responses.size());
     Assert.assertEquals("stageName", responses.get(0).getStageName());
     Assert.assertEquals("errorCategory-'stageName'", responses.get(0).getErrorCategory());
@@ -85,6 +96,9 @@ public class ErrorLogsClassifierTest {
     Assert.assertEquals("errorCode", responses.get(0).getErrorCode());
     Assert.assertEquals("supportedDocumentationUrl",
         responses.get(0).getSupportedDocumentationUrl());
+    Assert.assertSame(1, metricValuesList.size());
+    Assert.assertTrue(containsMetric(metricValuesList.get(0),
+        Metrics.Program.FAILED_RUNS_CLASSIFICATION_COUNT));
   }
 
   private ILoggingEvent getEvent1() {
@@ -119,5 +133,23 @@ public class ErrorLogsClassifierTest {
     Mockito.when(event.getThrowableProxy()).thenReturn(throwableProxy);
     Mockito.when(event.getMDCPropertyMap()).thenReturn(map);
     return event;
+  }
+
+  private MetricsCollectionService getMockCollectionService(Collection<MetricValues> collection) {
+    return new AggregatedMetricsCollectionService(1000L) {
+      @Override
+      protected void publish(Iterator<MetricValues> metrics) {
+        Iterators.addAll(collection, metrics);
+      }
+    };
+  }
+
+  private boolean containsMetric(MetricValues metricValues, String metricName) {
+    for (MetricValue metricValue : metricValues.getMetrics()) {
+      if (metricValue.getName().equals(metricName)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

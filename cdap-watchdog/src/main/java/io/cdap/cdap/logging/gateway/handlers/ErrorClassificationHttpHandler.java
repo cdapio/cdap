@@ -103,6 +103,10 @@ public class ErrorClassificationHttpHandler extends AbstractLogHttpHandler {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
   }
 
+  /**
+   * Returns the list of {@link io.cdap.cdap.proto.ErrorClassificationResponse} for
+   * failed program run.
+   */
   @POST
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/classify")
   public void classifyRunIdLogs(HttpRequest request, HttpResponder responder,
@@ -127,7 +131,7 @@ public class ErrorClassificationHttpHandler extends AbstractLogHttpHandler {
     try (CloseableIterator<LogEvent> logIter = logReader.getLog(loggingContext,
         readRange.getFromMillis(), readRange.getToMillis(), filter)) {
       // the iterator is closed by the BodyProducer passed to the HttpResponder
-      errorLogsClassifier.classify(logIter, responder);
+      errorLogsClassifier.classify(logIter, responder, namespaceId, programId, appId, runId);
     } catch (Exception ex) {
       LOG.debug("Exception while classifying logs for logging context {}", loggingContext, ex);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
