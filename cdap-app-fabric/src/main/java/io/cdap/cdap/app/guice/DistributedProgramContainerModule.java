@@ -66,6 +66,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.client.ClientMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
@@ -166,7 +167,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    modules.add(new MessagingClientModule());
+    modules.add(getMessagingModules());
     modules.add(new AuditModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());
@@ -315,6 +316,18 @@ public class DistributedProgramContainerModule extends AbstractModule {
     }
 
     return new NoOpAuditLogModule();
+  }
+
+  /**
+   * Return distributed module of Messaging service only if the program is of SERVICE in SYSTEM namespace.
+   */
+  private Module getMessagingModules() {
+    if (programRunId.getNamespaceId().equals(NamespaceId.SYSTEM)
+      && programRunId.getType().equals(ProgramType.SERVICE)) {
+      return new MessagingServiceModule(cConf);
+    }
+
+    return new MessagingClientModule();
   }
 
   /**
