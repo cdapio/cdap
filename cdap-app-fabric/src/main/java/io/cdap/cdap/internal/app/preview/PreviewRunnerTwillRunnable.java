@@ -237,7 +237,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }
 
     modules.add(new PreviewRunnerManagerModule().getDistributedModules());
-    modules.add(new MessagingServerRuntimeModule().getInMemoryModules());
+    modules.add(new MessagingServerRuntimeModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());
     // Needed for InMemoryProgramRunnerModule. We use local metadata reader/publisher to avoid conflicting with
     // metadata stored in AppFabric.
