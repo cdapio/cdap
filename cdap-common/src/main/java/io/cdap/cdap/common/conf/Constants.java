@@ -1102,6 +1102,13 @@ public final class Constants {
 
       // For operations
       public static final String OPERATION_RUN = "operation";
+
+      // For error classification
+      public static final String ERROR_CATEGORY = "ectgry";
+      public static final String ERROR_TYPE = "etpe";
+      public static final String DEPENDENCY = "edep";
+      public static final String ERROR_CODE_TYPE = "ecdtpe";
+      public static final String ERROR_CODE = "ecd";
     }
 
     /**
@@ -1177,6 +1184,8 @@ public final class Constants {
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
       public static final String APPLICATION_PLUGIN_COUNT = "application.plugin.count";
+      public static final String FAILED_RUNS_CLASSIFICATION_COUNT =
+          "program.failed.runs.classified.count";
     }
 
     /**

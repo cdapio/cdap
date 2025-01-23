@@ -18,16 +18,23 @@ package io.cdap.cdap.logging;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
+import com.google.common.base.Strings;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants.Logging;
+import io.cdap.cdap.common.conf.Constants.Metrics;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.proto.ErrorClassificationResponse;
 import io.cdap.http.HttpResponder;
@@ -38,7 +45,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import joptsimple.internal.Strings;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Classifies error logs and returns {@link ErrorClassificationResponse}.
@@ -51,7 +59,7 @@ public class ErrorLogsClassifier {
       "io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocRuntimeException";
   private static final ImmutableList<String> ALLOWLIST_CLASSES =
       ImmutableList.<String>builder().add(DATAPROC_RUNTIME_EXCEPTION).build();
-  private static final LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder()
+  private static final LoadingCache<String, Boolean> CLASS_CACHE = CacheBuilder.newBuilder()
       .maximumSize(5000)
       .build(new CacheLoader<String, Boolean>() {
         @Override
@@ -64,13 +72,26 @@ public class ErrorLogsClassifier {
           }
         }
       });
+  private final Cache<ErrorClassificationResponseCacheKey,
+      List<ErrorClassificationResponse>> responseCache;
+  private final MetricsCollectionService metricsCollectionService;
 
   private static boolean isFailureDetailsProviderInstance(String className) {
     try {
-      return cache.get(className);
+      return CLASS_CACHE.get(className);
     } catch (Exception e) {
       return false; // Handle any unexpected errors
     }
+  }
+
+  /**
+   * Constructor for {@link ErrorLogsClassifier}.
+   */
+  @Inject
+  public ErrorLogsClassifier(MetricsCollectionService metricsCollectionService) {
+    this.metricsCollectionService = metricsCollectionService;
+    responseCache = CacheBuilder.newBuilder().maximumSize(1000)
+        .expireAfterWrite(7, TimeUnit.DAYS).build();
   }
 
   /**
@@ -78,10 +99,32 @@ public class ErrorLogsClassifier {
    *
    * @param logIter Logs Iterator that can be closed.
    * @param responder The HttpResponder.
+   * @param namespace The namespace of program.
+   * @param program The name of program.
+   * @param appId The name of application.
+   * @param runId The run id of program.
    */
-  public void classify(CloseableIterator<LogEvent> logIter, HttpResponder responder) {
+  public void classify(CloseableIterator<LogEvent> logIter, HttpResponder responder,
+      String namespace, @Nullable String program, String appId, String runId) throws Exception {
+    ErrorClassificationResponseCacheKey errorClassificationResponseCacheKey =
+        new ErrorClassificationResponseCacheKey(namespace, program, appId, runId);
+    List<ErrorClassificationResponse> responses =
+        responseCache.getIfPresent(errorClassificationResponseCacheKey);
+    if (responses != null) {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(responses));
+      return;
+    }
+    responses = getErrorClassificationResponse(namespace, program, appId, runId,
+        logIter, responder);
+    responseCache.put(errorClassificationResponseCacheKey, responses);
+  }
+
+  private List<ErrorClassificationResponse> getErrorClassificationResponse(String namespace,
+      @Nullable String program, String appId, String runId, CloseableIterator<LogEvent> logIter,
+      HttpResponder responder) {
     Map<String, ErrorClassificationResponse> responseMap = new HashMap<>();
     Set<ErrorClassificationResponse> responseSet = new HashSet<>();
+
     while (logIter.hasNext()) {
       ILoggingEvent logEvent = logIter.next().getLoggingEvent();
       Map<String, String> mdc = logEvent.getMDCPropertyMap();
@@ -97,6 +140,25 @@ public class ErrorLogsClassifier {
     List<ErrorClassificationResponse> responses = new ArrayList<>(responseMap.values());
     responses.addAll(responseSet);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(responses));
+
+    // emit metric
+    MetricsContext metricsContext = metricsCollectionService.getContext(ImmutableMap.of(
+        Metrics.Tag.NAMESPACE, namespace,
+        Metrics.Tag.PROGRAM, program,
+        Metrics.Tag.APP, appId,
+        Metrics.Tag.RUN_ID, runId));
+
+    for (ErrorClassificationResponse response : responses) {
+      MetricsContext context = metricsContext.childContext(ImmutableMap.of(
+          Metrics.Tag.ERROR_CATEGORY, response.getErrorCategory(),
+          Metrics.Tag.ERROR_TYPE, response.getErrorType(),
+          Metrics.Tag.DEPENDENCY, response.getDependency(),
+          Metrics.Tag.ERROR_CODE_TYPE, response.getErrorCodeType(),
+          Metrics.Tag.ERROR_CODE, response.getErrorCode()
+      ));
+      context.gauge(Metrics.Program.FAILED_RUNS_CLASSIFICATION_COUNT, 1);
+    }
+    return responses;
   }
 
   private void populateResponse(IThrowableProxy throwableProxy,

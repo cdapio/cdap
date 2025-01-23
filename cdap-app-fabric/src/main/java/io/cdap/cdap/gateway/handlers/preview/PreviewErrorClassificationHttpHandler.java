@@ -88,6 +88,10 @@ public class PreviewErrorClassificationHttpHandler extends PreviewHttpHandler {
     return programRunId;
   }
 
+  /**
+   * Returns the list of {@link io.cdap.cdap.proto.ErrorClassificationResponse} for
+   * failed preview run.
+   */
   @POST
   @Path("/namespaces/{namespace-id}/previews/{preview-id}/classify")
   public void classifyRunIdLogs(HttpRequest request, HttpResponder responder,
@@ -110,7 +114,7 @@ public class PreviewErrorClassificationHttpHandler extends PreviewHttpHandler {
     try (CloseableIterator<LogEvent> logIter = logReader.getLog(loggingContext,
         readRange.getFromMillis(), readRange.getToMillis(), filter)) {
       // the iterator is closed by the BodyProducer passed to the HttpResponder
-      errorLogsClassifier.classify(logIter, responder);
+      errorLogsClassifier.classify(logIter, responder, namespaceId, null, "preview", previewId);
     } catch (Exception ex) {
       LOG.debug("Exception while classifying logs for logging context {}", loggingContext, ex);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
