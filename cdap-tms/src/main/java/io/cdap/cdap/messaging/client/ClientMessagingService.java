@@ -33,6 +33,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -117,7 +118,7 @@ public final class ClientMessagingService implements MessagingService {
   @VisibleForTesting
   public ClientMessagingService(RemoteClientFactory remoteClientFactory, boolean compressPayload) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-        Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
+        Service.APP_FABRIC_HTTP, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
     this.compressPayload = compressPayload;
   }
 
