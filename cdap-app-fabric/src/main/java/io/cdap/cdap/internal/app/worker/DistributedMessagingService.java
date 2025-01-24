@@ -1,7 +1,6 @@
 package io.cdap.cdap.internal.app.worker;
 
 
-import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -108,7 +107,6 @@ public class DistributedMessagingService implements MessagingService {
       throws TopicNotFoundException, IOException, UnauthorizedException {
     LOG.info("sidhdirenge : DS publish called for {}", request.getTopicId().getTopic());
     Map<String, String> headers = new HashMap<>();
-    headers.put(HttpHeaders.CONTENT_TYPE, "avro/binary");
     String message = "Hello";
     HttpRequest httpRequest = remoteClient.requestBuilder(HttpMethod.POST,
             createTopicPath(request.getTopicId()) + "/" + "publish")

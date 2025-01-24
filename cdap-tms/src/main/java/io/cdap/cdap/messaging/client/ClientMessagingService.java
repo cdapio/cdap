@@ -118,7 +118,7 @@ public final class ClientMessagingService implements MessagingService {
   @VisibleForTesting
   public ClientMessagingService(RemoteClientFactory remoteClientFactory, boolean compressPayload) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-        Service.APP_FABRIC_HTTP, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
+        Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
     this.compressPayload = compressPayload;
   }
 

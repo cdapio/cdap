@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class StoreHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(StoreHandler.class);
 
   private final java.nio.file.Path tempDir;
@@ -181,8 +182,8 @@ public final class StoreHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Encodes the {@link RollbackDetail} object as avro record based on the {@link
-   * Schemas.V1.PublishResponse#SCHEMA}.
+   * Encodes the {@link RollbackDetail} object as avro record based on the
+   * {@link Schemas.V1.PublishResponse#SCHEMA}.
    */
   private ByteBuf encodeRollbackDetail(RollbackDetail rollbackDetail) throws IOException {
     Schema schema = Schemas.V1.PublishResponse.SCHEMA;
