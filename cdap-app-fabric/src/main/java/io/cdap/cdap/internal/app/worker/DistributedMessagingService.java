@@ -44,11 +44,6 @@ public class DistributedMessagingService implements MessagingService {
 
   // These types for only for Gson to use, hence using the gson TypeToken instead of guava one
   @Inject
-  public DistributedMessagingService(RemoteClientFactory remoteClientFactory,
-      RemoteClient remoteClient) {
-    this(remoteClientFactory);
-  }
-
   public DistributedMessagingService(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
         Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/");
