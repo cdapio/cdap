@@ -314,6 +314,7 @@ public class SpannerMessagingService implements MessagingService {
   @Override
   public RollbackDetail publish(StoreRequest request)
       throws TopicNotFoundException, IOException, UnauthorizedException {
+    LOG.info("sidhdirenge : Spanner publish called for {}", request.getTopicId().getTopic());
     // All messages within a StoreRequest are published in a single batch to maintain atomicity.
     // Caller should ensure that the request size does not exceed the max allowed size.
     long requestSize = StreamSupport.stream(request.spliterator(), false)
@@ -502,7 +503,7 @@ public class SpannerMessagingService implements MessagingService {
       sequenceId = Bytes.toShort(id, offset);
     }
 
-    LOG.trace("Fetching message from topic : {} with start time : {} sequenceId : {}",
+    LOG.info("sidhdirenge : Fetching message from topic : {} with start time : {} sequenceId : {}",
         messageFetchRequest.getTopicId().getTopic(), startTime, sequenceId);
     // publish_ts > TIMESTAMP_MICROS(startTime)
     // or
