@@ -56,6 +56,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
   static final String AUDIT_LOG_REQ_BUILDER_ATTR = "AUDIT_LOG_REQ_BUILDER";
   static final String AUDIT_LOG_USER_IP_ATTR = "AUDIT_LOG_USER_IP";
+  static final String CDAP_USER_ID_ATTR = "CDAP_USER_ID";
+  static final String CDAP_USER_CREDENTIAL_ATTR = "CDAP_USER_CREDENTIAL";
   static final String AUDIT_LOG_CONTEXT_QUEUE_ATTR = "AUDIT_LOG_CONTEXT_QUEUE";
 
   private final boolean internalAuthEnabled;
@@ -77,9 +79,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     SecurityRequestContext.reset();
 
-    // Only set SecurityRequestContext for the HttpRequest but not for subsequence chunks.
-    // We cannot set a default/placeholder value until CDAP-18773
-    // is fixed since we may perform auth checks in the thread processing the last chunk.
+    // TODO: CDAP-21121 ensure request is authorized before sending response
     if (msg instanceof HttpRequest) {
 
       String currentUserId = null;
@@ -135,6 +135,20 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       SecurityRequestContext.setUserIp(currentUserIp);
       //Also set userIp in ATTR , to be used in audit logging incase it was replaced at a later stage
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).set(currentUserIp);
+      ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_ID_ATTR)).set(currentUserId);
+      ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_CREDENTIAL_ATTR)).set(currentUserCredential);
+    } else {
+      Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).get();
+      Object userIdObj = ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_ID_ATTR)).get();
+      Object userCredentialObj =
+          ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_CREDENTIAL_ATTR)).get();
+      if (userIpObj != null) {
+        SecurityRequestContext.setUserIp((String) userIpObj);
+      }
+      if (userIdObj != null && userCredentialObj != null) {
+        SecurityRequestContext.setUserId((String) userIdObj);
+        SecurityRequestContext.setUserCredential((Credential) userCredentialObj);
+      }
     }
 
     try {
