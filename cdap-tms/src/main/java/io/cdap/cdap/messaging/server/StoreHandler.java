@@ -63,12 +63,15 @@ import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A netty http handler for handling message storage REST API for the messaging system.
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class StoreHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(StoreHandler.class);
 
   private final java.nio.file.Path tempDir;
   private final int bufferSize;
@@ -92,6 +95,7 @@ public final class StoreHandler extends AbstractHttpHandler {
       @PathParam("topic") String topic) throws Exception {
 
     TopicId topicId = new NamespaceId(namespace).topic(topic);
+    LOG.info("sidhdirenge : SH Publish called {}", topicId.getTopic());
     return new SpillableBodyConsumer(Files.createTempFile(tempDir, "tms.publish", ".tmp"),
         bufferSize) {
       @Override

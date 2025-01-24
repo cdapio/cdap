@@ -148,6 +148,9 @@ import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.internal.tethering.TetheringClientHandler;
 import io.cdap.cdap.internal.tethering.TetheringHandler;
 import io.cdap.cdap.internal.tethering.TetheringServerHandler;
+import io.cdap.cdap.messaging.server.FetchHandler;
+import io.cdap.cdap.messaging.server.MetadataHandler;
+import io.cdap.cdap.messaging.server.StoreHandler;
 import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
@@ -178,11 +181,14 @@ import org.quartz.impl.StdScheduler;
 import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.JobStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AppFabric Service Runtime Module.
  */
 public final class AppFabricServiceRuntimeModule extends RuntimeModule {
+  private static final Logger LOG = LoggerFactory.getLogger(AppFabricServiceRuntimeModule.class);
 
   public static final String NOAUTH_ARTIFACT_REPO = "noAuthArtifactRepo";
 
@@ -495,6 +501,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(CredentialProviderHttpHandler.class);
       handlerBinder.addBinding().to(CredentialProviderHttpHandlerInternal.class);
       handlerBinder.addBinding().to(OperationHttpHandler.class);
+      LOG.info("sidhdirenge : Adding handlers here");
+      handlerBinder.addBinding().to(MetadataHandler.class);
+      handlerBinder.addBinding().to(StoreHandler.class);
+      handlerBinder.addBinding().to(FetchHandler.class);
 
       FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
       if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {

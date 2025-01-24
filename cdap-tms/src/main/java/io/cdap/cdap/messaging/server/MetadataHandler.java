@@ -45,12 +45,15 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A netty http handler for metadata REST API for the messaging system.
  */
 @Path("/v1/namespaces/{namespace}")
 public final class MetadataHandler extends AbstractHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataHandler.class);
 
   private static final Gson GSON = new Gson();
   private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() {
@@ -77,6 +80,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
+    LOG.info("sidhdirenge : MH createTopic called for {}", topicId.getTopic());
     messagingService.createTopic(
         new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
