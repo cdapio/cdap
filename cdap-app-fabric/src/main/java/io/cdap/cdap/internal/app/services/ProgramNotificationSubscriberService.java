@@ -33,6 +33,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
@@ -91,6 +92,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import org.apache.twill.api.RunId;
 import org.apache.twill.internal.CompositeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +110,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramRuntimeService runtimeService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final TransactionRunner transactionRunner;
@@ -123,6 +126,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
       MetricsCollectionService metricsCollectionService,
       ProvisionerNotifier provisionerNotifier,
       ProgramLifecycleService programLifecycleService,
+      ProgramRuntimeService runtimeService,
       ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner,
@@ -134,6 +138,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
     this.metricsCollectionService = metricsCollectionService;
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;
+    this.runtimeService = runtimeService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.transactionRunner = transactionRunner;
@@ -229,6 +234,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
         metricsCollectionService,
         provisionerNotifier,
         programLifecycleService,
+        runtimeService,
         provisioningService,
         programStateWriter,
         transactionRunner,
@@ -268,6 +274,7 @@ class ProgramNotificationSingleTopicSubscriberService
   private final String recordedProgramStatusPublishTopic;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramRuntimeService runtimeService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
@@ -282,6 +289,7 @@ class ProgramNotificationSingleTopicSubscriberService
       MetricsCollectionService metricsCollectionService,
       ProvisionerNotifier provisionerNotifier,
       ProgramLifecycleService programLifecycleService,
+      ProgramRuntimeService runtimeService,
       ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner,
@@ -303,6 +311,7 @@ class ProgramNotificationSingleTopicSubscriberService
         cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;
+    this.runtimeService = runtimeService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
@@ -543,7 +552,8 @@ class ProgramNotificationSingleTopicSubscriberService
                   SecurityRequestContext.setUserId(
                       prgOptions.getArguments().getOption(ProgramOptionConstants.USER_ID));
                   try {
-                    programLifecycleService.startInternal(prgDescriptor, prgOptions, programRunId);
+                    RunId runId = RunIds.fromString(programRunId.getRun());
+                    runtimeService.run(prgDescriptor, prgOptions, runId);
                   } catch (Exception e) {
                     LOG.error("Failed to start program {}", programRunId, e);
                     programStateWriter.error(programRunId, e);

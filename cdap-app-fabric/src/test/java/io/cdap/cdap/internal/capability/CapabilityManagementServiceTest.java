@@ -30,6 +30,8 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -38,6 +40,7 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
@@ -82,6 +85,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   private static ApplicationLifecycleService applicationLifecycleService;
   private static ProgramLifecycleService programLifecycleService;
   private static CapabilityStatusStore capabilityStatusStore;
+  private static ProgramStateWriter programStateWriter;
+  private static ProgramRuntimeService runtimeService;
   private static final Gson GSON = new Gson();
 
   @BeforeClass
@@ -93,6 +98,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityStatusStore = new CapabilityStatusStore(getInjector().getInstance(TransactionRunner.class));
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
+    runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
     capabilityManagementService.stopAndWait();
   }
 
@@ -561,7 +568,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+      startProgram(program.getProgramId(), new HashMap<>());
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
@@ -588,7 +595,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+        startProgram(program.getProgramId(), new HashMap<>());
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
@@ -641,7 +648,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+      startProgram(program.getProgramId(), new HashMap<>());
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
@@ -668,7 +675,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+        startProgram(program.getProgramId(), new HashMap<>());
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
@@ -818,5 +825,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       .deployApp(NamespaceId.DEFAULT, appName, artifactId,
                  null, programId -> {
         });
+  }
+
+  private void startProgram(ProgramId programId, Map<String, String> overrides)
+      throws Exception {
+    ProgramStartRequest startRequest = programLifecycleService.prepareStart(
+        programId, overrides, false, false);
+    runtimeService.run(startRequest.getProgramDescriptor(), startRequest.getProgramOptions(), startRequest.getRunId())
+        .getController();
   }
 }

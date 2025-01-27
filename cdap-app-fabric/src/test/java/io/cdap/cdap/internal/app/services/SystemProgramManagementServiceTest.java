@@ -26,6 +26,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -53,9 +54,9 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
   private static SystemProgramManagementService progmMgmtSvc;
   private static ProgramLifecycleService programLifecycleService;
   private static ApplicationLifecycleService applicationLifecycleService;
+  private static ProgramRuntimeService runtimeService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
-
   private static final String VERSION = "1.0.0";
   private static final String APP_NAME = SystemProgramManagementTestApp.NAME;
   private static final String NAMESPACE = "system";
@@ -65,6 +66,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
   @BeforeClass
   public static void setup() {
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
@@ -100,8 +102,8 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramStatus.STOPPED.name(), getProgramStatus(programId));
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
     //Run the program manually twice to test pruning. One run should be killed
-    programLifecycleService.start(programId, new HashMap<>(), false, false);
-    programLifecycleService.start(programId, new HashMap<>(), false, false);
+    startProgram(programId, new HashMap<>());
+    startProgram(programId, new HashMap<>());
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 2);
     progmMgmtSvc.setProgramsEnabled(enabledServices);
     progmMgmtSvc.runTask();
@@ -124,5 +126,13 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
                                           programId -> {
                                             // no-op
                                           }, null, false, false, false, Collections.emptyMap());
+  }
+
+  private void startProgram(ProgramId programId, Map<String, String> overrides)
+      throws Exception {
+    ProgramStartRequest startRequest = programLifecycleService.prepareStart(
+        programId, overrides, false, false);
+    runtimeService.run(startRequest.getProgramDescriptor(), startRequest.getProgramOptions(), startRequest.getRunId())
+        .getController();
   }
 }

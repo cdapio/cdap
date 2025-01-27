@@ -78,6 +78,7 @@ import io.cdap.cdap.gateway.handlers.PreferencesHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
+import io.cdap.cdap.gateway.handlers.ProgramRuntimeHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
 import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
@@ -114,11 +115,11 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import io.cdap.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
+import io.cdap.cdap.internal.app.services.FlowControlService;
 import io.cdap.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
-import io.cdap.cdap.internal.app.services.FlowControlService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
@@ -249,17 +250,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                       Names.named("appfabric.handler.hooks"));
               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
-              // TODO (CDAP-21112): Remove the addtional handler binding for in-memory and use the binding from
-              //  AppFabricServiceModule, after fixing in-memory cache issue in ProgramRuntimeService and
-              //  RunRecordMonitorService.
+              // For ProgramLifecycleHttpHandlerTest the ProgramRuntimeHttpHandler needs to be present
+              // in the appfabric service.
               Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
                   binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
-              handlerBinder.addBinding().to(BootstrapHttpHandler.class);
-              handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
-              handlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
-              handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
-              handlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
-              handlerBinder.addBinding().to(WorkflowHttpHandler.class);
+              handlerBinder.addBinding().to(ProgramRuntimeHttpHandler.class);
 
               // TODO: Uncomment after CDAP-7688 is resolved
               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -531,6 +526,11 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(CredentialProviderHttpHandler.class);
         handlerBinder.addBinding().to(CredentialProviderHttpHandlerInternal.class);
         handlerBinder.addBinding().to(OperationHttpHandler.class);
+        handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
+        handlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
+        handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
+        handlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
+        handlerBinder.addBinding().to(WorkflowHttpHandler.class);
 
         FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
         if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
@@ -547,14 +547,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         Multibinder<HttpHandler> processorHandlerBinder = Multibinder.newSetBinder(
             binder(), HttpHandler.class, Names.named(AppFabric.PROCESSOR_HANDLERS_BINDING));
         CommonHandlers.add(processorHandlerBinder);
-        // TODO (CDAP-21112): Move HTTP handler from Appfabric processor to server after fixing
-        //  ProgramRuntimeService and RunRecordMonitorService.
+        processorHandlerBinder.addBinding().to(ProgramRuntimeHttpHandler.class);
         processorHandlerBinder.addBinding().to(BootstrapHttpHandler.class);
-        processorHandlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
-        processorHandlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
-        processorHandlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
-        processorHandlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
-        processorHandlerBinder.addBinding().to(WorkflowHttpHandler.class);
       }
     }
 

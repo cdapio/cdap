@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -121,7 +122,10 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
       Map<String, String> overrides = enabledProgramsMap.get(programId).asMap();
       LOG.debug("Starting program {} with args {}", programId, overrides);
       try {
-        programLifecycleService.start(programId, overrides, false, false);
+        ProgramStartRequest startRequest = programLifecycleService.prepareStart(programId, overrides, false, false);
+        programRuntimeService.run(
+            startRequest.getProgramDescriptor(), startRequest.getProgramOptions(), startRequest.getRunId())
+            .getController();
       } catch (ConflictException ex) {
         // Ignore if the program is already running.
         LOG.debug("Program {} is already running.", programId);

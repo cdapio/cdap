@@ -34,25 +34,6 @@ import javax.annotation.Nullable;
  */
 public final class RouterPathLookup extends AbstractHttpHandler {
 
-  public static final Set<String> APP_FABRIC_PROCESSOR_PATH_PARTS =
-      createAppFabricPathParts();
-
-  private static Set<String> createAppFabricPathParts() {
-    return ImmutableSet.of("previousruntime",
-        "nextruntime",
-        "status",
-        "stop",
-        "start",
-        "instances",
-        "runcount",
-        "runs",
-        "mapreduce",
-        "spark",
-        "workflows",
-        "services",
-        "workers");
-  }
-
   @SuppressWarnings("unused")
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
@@ -105,12 +86,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
       }
-
-      // TODO (CDAP-21112): Move HTTP handler from Appfabric processor to server after fixing
-      //  ProgramRuntimeService and RunRecordMonitorService.
-      if (uriParts[0].equals(Gateway.INTERNAL_API_VERSION_3_TOKEN)) {
-        return getV3InternalRoutingService(uriParts);
-      }
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
     }
@@ -124,15 +99,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       }
     }
     return false;
-  }
-
-  private RouteDestination getV3InternalRoutingService(String[] uriParts) {
-    if (beginsWith(uriParts, "v3Internal", "namespaces", null)) {
-      // ProgramLifecycleHttpHandlerInternal and AppLifecycleHttpHandlerInternal paths.
-      // Paths: "/v3Internal/namespaces/{namespace-id}/**"
-      return APP_FABRIC_PROCESSOR;
-    }
-    return APP_FABRIC_HTTP;
   }
 
   @Nullable
@@ -163,6 +129,21 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return LOG_QUERY;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null)
+        && (endsWith(uriParts, "instances")
+          || endsWith(uriParts, "live-info")
+          || endsWith(uriParts, "loglevels")
+          || endsWith(uriParts, "resetloglevels"))) {
+      // ProgramRuntimeLifecycleHttpHandler Paths:
+      // v3/namespaces/{ns-id}/instances
+      // v3/namespaces/{ns-id}/apps/{app-id}/services/{service-id}/instances
+      // v3/namespaces/{ns-id}/apps/{app-id}/workers/{worker-id}/instances
+      // v3/namespaces/{ns-id}/apps/{app-id}/{program-category}/{program-id}/live-info
+      // v3/namespaces/{ns-id}/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/loglevels
+      // v3/namespaces/{ns-id}/apps/{app-name}/versions/{appVer}/{progType}/{progName}/runs/{runId}/loglevels
+      // v3/namespaces/{ns-id}/apps/{app-name}/{program-type}/{progName}/runs/{runId}/resetloglevels
+      // v3/namespaces/{ns-id}/apps/{app-name}/versions/{appVer}/{progType}/{progName}/runs/{runId}/resetloglevels
+      return APP_FABRIC_PROCESSOR;
     } else if ((!beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) && (
         endsWith(uriParts, "metadata")
             ||
@@ -192,7 +173,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         || beginsWith(uriParts, "v3", "profiles")) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "runs")) {
-      return APP_FABRIC_PROCESSOR;
+      return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "previews")) {
       return PREVIEW_HTTP;
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
@@ -262,25 +243,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}
       return DONT_ROUTE;
-    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "preferences")
-      || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "preferences")) {
-      // App Preferences Paths:
-      // /v3/namespaces/{namespace-id}/apps/{application-id}/preferences
-      // /v3/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences
-      return APP_FABRIC_HTTP;
-    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "datasets")
-      || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "datasets")) {
-      return APP_FABRIC_HTTP;
-    } else if (beginsWith(uriParts, "v3", "namespaces", null, "apps")
-        || beginsWith(uriParts, "v3", "namespaces", null, "upgrade")
-        || beginsWith(uriParts, "v3", "namespaces", null, "appdetail")
-        || beginsWith(uriParts, "v3", "namespaces", null, "schedules")) {
-      // Paths for AppLifecycleHttpHandler, ProgramLifecycleHttpHandler, WorkflowHttpHandler.
-      return APP_FABRIC_PROCESSOR;
-    } else if (beginsWith(uriParts, "v3", "namespaces")
-        && APP_FABRIC_PROCESSOR_PATH_PARTS.contains(uriParts[3])) {
-      // Paths for ProgramLifecycleHttpHandler.
-      return APP_FABRIC_PROCESSOR;
     }
     return APP_FABRIC_HTTP;
   }
