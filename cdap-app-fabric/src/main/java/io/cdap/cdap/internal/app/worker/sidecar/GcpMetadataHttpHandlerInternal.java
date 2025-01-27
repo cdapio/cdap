@@ -158,7 +158,8 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       // io.cdap.cdap.common.guice.DFSLocationModule$LocationFactoryProvider#get
       // in io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable.
       LOG.warn("The GCP Metadata Task Context has been identified as null.");
-      GcpTokenResponse gcpTokenResponse = new GcpTokenResponse("Bearer", "invalidToken", 3599);
+//      GcpTokenResponse gcpTokenResponse = new GcpTokenResponse("Bearer", "invalidToken", 3599);
+      GcpTokenResponse gcpTokenResponse = convert(remoteAuthenticator.getCredentials());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
       return;
     }
