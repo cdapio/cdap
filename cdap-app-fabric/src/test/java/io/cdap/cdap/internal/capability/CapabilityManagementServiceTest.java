@@ -41,6 +41,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.ProgramRuntimeLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -81,6 +82,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   private static CapabilityManagementService capabilityManagementService;
   private static ApplicationLifecycleService applicationLifecycleService;
   private static ProgramLifecycleService programLifecycleService;
+  private static ProgramRuntimeLifecycleService runtimeLifecycleService;
   private static CapabilityStatusStore capabilityStatusStore;
   private static final Gson GSON = new Gson();
 
@@ -93,6 +95,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityStatusStore = new CapabilityStatusStore(getInjector().getInstance(TransactionRunner.class));
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    runtimeLifecycleService = getInjector().getInstance(ProgramRuntimeLifecycleService.class);
     capabilityManagementService.stopAndWait();
   }
 
@@ -561,7 +564,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+      runtimeLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
@@ -588,7 +591,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+        runtimeLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
@@ -641,7 +644,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
       });
     Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
     for (ProgramDescriptor program : programs) {
-      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+      runtimeLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
@@ -668,7 +671,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //try starting programs
     for (ProgramDescriptor program : programs) {
       try {
-        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
+        runtimeLifecycleService.start(program.getProgramId(), new HashMap<>(), false, false);
         Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception

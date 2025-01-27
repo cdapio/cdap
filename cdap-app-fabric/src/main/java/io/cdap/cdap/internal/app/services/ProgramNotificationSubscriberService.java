@@ -108,6 +108,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramRuntimeLifecycleService runtimeLifecycleService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final TransactionRunner transactionRunner;
@@ -123,6 +124,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
       MetricsCollectionService metricsCollectionService,
       ProvisionerNotifier provisionerNotifier,
       ProgramLifecycleService programLifecycleService,
+      ProgramRuntimeLifecycleService runtimeLifecycleService,
       ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner,
@@ -134,6 +136,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
     this.metricsCollectionService = metricsCollectionService;
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;
+    this.runtimeLifecycleService = runtimeLifecycleService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.transactionRunner = transactionRunner;
@@ -229,6 +232,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
         metricsCollectionService,
         provisionerNotifier,
         programLifecycleService,
+        runtimeLifecycleService,
         provisioningService,
         programStateWriter,
         transactionRunner,
@@ -268,6 +272,7 @@ class ProgramNotificationSingleTopicSubscriberService
   private final String recordedProgramStatusPublishTopic;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramRuntimeLifecycleService runtimeLifecycleService;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
@@ -282,6 +287,7 @@ class ProgramNotificationSingleTopicSubscriberService
       MetricsCollectionService metricsCollectionService,
       ProvisionerNotifier provisionerNotifier,
       ProgramLifecycleService programLifecycleService,
+      ProgramRuntimeLifecycleService runtimeLifecycleService,
       ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner,
@@ -303,6 +309,7 @@ class ProgramNotificationSingleTopicSubscriberService
         cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;
+    this.runtimeLifecycleService = runtimeLifecycleService;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
@@ -543,7 +550,7 @@ class ProgramNotificationSingleTopicSubscriberService
                   SecurityRequestContext.setUserId(
                       prgOptions.getArguments().getOption(ProgramOptionConstants.USER_ID));
                   try {
-                    programLifecycleService.startInternal(prgDescriptor, prgOptions, programRunId);
+                    runtimeLifecycleService.startInternal(prgDescriptor, prgOptions, programRunId);
                   } catch (Exception e) {
                     LOG.error("Failed to start program {}", programRunId, e);
                     programStateWriter.error(programRunId, e);

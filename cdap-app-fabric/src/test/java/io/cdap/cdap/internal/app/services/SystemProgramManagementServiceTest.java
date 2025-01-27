@@ -52,6 +52,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
 
   private static SystemProgramManagementService progmMgmtSvc;
   private static ProgramLifecycleService programLifecycleService;
+  private static ProgramRuntimeLifecycleService runtimeLifecycleService;
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
@@ -65,12 +66,13 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
   @BeforeClass
   public static void setup() {
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    runtimeLifecycleService = getInjector().getInstance(ProgramRuntimeLifecycleService.class);
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     progmMgmtSvc = new SystemProgramManagementService(getInjector().getInstance(CConfiguration.class),
                                                       getInjector().getInstance(ProgramRuntimeService.class),
-                                                      programLifecycleService);
+                                                      programLifecycleService, runtimeLifecycleService);
     progmMgmtSvc.stopAndWait();
   }
 
@@ -100,8 +102,8 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramStatus.STOPPED.name(), getProgramStatus(programId));
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
     //Run the program manually twice to test pruning. One run should be killed
-    programLifecycleService.start(programId, new HashMap<>(), false, false);
-    programLifecycleService.start(programId, new HashMap<>(), false, false);
+    runtimeLifecycleService.start(programId, new HashMap<>(), false, false);
+    runtimeLifecycleService.start(programId, new HashMap<>(), false, false);
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 2);
     progmMgmtSvc.setProgramsEnabled(enabledServices);
     progmMgmtSvc.runTask();

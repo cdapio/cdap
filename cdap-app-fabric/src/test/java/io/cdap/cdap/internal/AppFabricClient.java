@@ -33,6 +33,7 @@ import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProgramRuntimeLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.BufferFileInputStream;
@@ -106,6 +107,7 @@ public class AppFabricClient {
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final ProgramRuntimeLifecycleHttpHandler runtimeLifecycleHttpHandler;
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -114,12 +116,14 @@ public class AppFabricClient {
   public AppFabricClient(LocationFactory locationFactory,
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                         ProgramRuntimeLifecycleHttpHandler runtimeLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceQueryAdmin namespaceQueryAdmin,
                          WorkflowHttpHandler workflowHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
+    this.runtimeLifecycleHttpHandler = runtimeLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
@@ -241,7 +245,7 @@ public class AppFabricClient {
     json.addProperty("instances", instances);
     request.content().writeCharSequence(json.toString(), StandardCharsets.UTF_8);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.setWorkerInstances(request, responder, namespaceId, appId, workerId);
+    runtimeLifecycleHttpHandler.setWorkerInstances(request, responder, namespaceId, appId, workerId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
   }
 
@@ -249,7 +253,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getWorkerInstances(request, responder, namespaceId, appId, workerId);
+    runtimeLifecycleHttpHandler.getWorkerInstances(request, responder, namespaceId, appId, workerId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get worker instances failed");
     return responder.decodeResponseContent(Instances.class);
   }
@@ -264,7 +268,7 @@ public class AppFabricClient {
     json.addProperty("instances", instances);
     request.content().writeCharSequence(json.toString(), StandardCharsets.UTF_8);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.setServiceInstances(request, responder, namespaceId, applicationId, serviceName);
+    runtimeLifecycleHttpHandler.setServiceInstances(request, responder, namespaceId, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set service instances failed");
   }
 
@@ -274,7 +278,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/services/%s/instances",
                                getNamespacePath(namespaceId), applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
+    runtimeLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get service instances failed");
     return responder.decodeResponseContent(ServiceInstances.class);
   }

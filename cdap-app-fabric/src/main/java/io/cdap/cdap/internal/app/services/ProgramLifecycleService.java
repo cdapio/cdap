@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,12 +24,8 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
-import io.cdap.cdap.api.artifact.ApplicationClass;
-import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
-import io.cdap.cdap.app.runtime.LogLevelUpdater;
-import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
@@ -48,7 +43,6 @@ import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -67,7 +61,6 @@ import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRecord;
-import io.cdap.cdap.proto.ProgramRunClusterStatus;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -76,7 +69,6 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
-import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -84,7 +76,6 @@ import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
-import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -95,6 +86,7 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -112,14 +104,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.logging.LogEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Service that manages lifecycle of Programs.
  */
-public class ProgramLifecycleService {
+public class ProgramLifecycleService extends AbstractProgramLifecycleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleService.class);
 
@@ -135,26 +126,19 @@ public class ProgramLifecycleService {
 
   private final Store store;
   private final ProfileService profileService;
-  private final ProgramRuntimeService runtimeService;
-  private final PropertiesResolver propertiesResolver;
   private final PreferencesService preferencesService;
-  private final AccessEnforcer accessEnforcer;
-  private final AuthenticationContext authenticationContext;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
-  private final ProgramStateWriter programStateWriter;
-  private final CapabilityReader capabilityReader;
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
   private final int batchSize;
-  private final ArtifactRepository artifactRepository;
   private final FlowControlService flowControlService;
   private final boolean userProgramLaunchDisabled;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
-      Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
+      Store store, ProfileService profileService,
       PropertiesResolver propertiesResolver,
       PreferencesService preferencesService, AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
@@ -162,6 +146,8 @@ public class ProgramLifecycleService {
       ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
       ArtifactRepository artifactRepository,
       FlowControlService flowControlService) {
+    super(store, programStateWriter, accessEnforcer, authenticationContext, propertiesResolver,
+        capabilityReader, artifactRepository);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
@@ -170,35 +156,10 @@ public class ProgramLifecycleService {
     this.batchSize = cConf.getInt(Constants.AppFabric.STREAMING_BATCH_SIZE);
     this.store = store;
     this.profileService = profileService;
-    this.runtimeService = runtimeService;
-    this.propertiesResolver = propertiesResolver;
     this.preferencesService = preferencesService;
-    this.accessEnforcer = accessEnforcer;
-    this.authenticationContext = authenticationContext;
     this.provisionerNotifier = provisionerNotifier;
     this.provisioningService = provisioningService;
-    this.programStateWriter = programStateWriter;
-    this.capabilityReader = capabilityReader;
-    this.artifactRepository = artifactRepository;
     this.flowControlService = flowControlService;
-  }
-
-  /**
-   * Returns the program status.
-   *
-   * @param programId the id of the program for which the status call is made
-   * @return the status of the program
-   * @throws NotFoundException if the application to which this program belongs was not found
-   */
-  public ProgramStatus getProgramStatus(ProgramId programId) throws Exception {
-    // check that app exists
-    ApplicationId appId = programId.getParent();
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    if (appSpec == null) {
-      throw new NotFoundException(appId);
-    }
-
-    return getExistingAppProgramStatus(appSpec, programId);
   }
 
   /**
@@ -211,29 +172,6 @@ public class ProgramLifecycleService {
   public ProgramStatus getProgramStatus(ProgramReference programReference) throws Exception {
     ProgramId programId = getLatestProgramId(programReference);
     return getProgramStatus(programId);
-  }
-
-  /**
-   * Returns the program status based on the active run records of a program. A program is RUNNING
-   * if there are any RUNNING, STOPPING, or SUSPENDED run records. A program is starting if there
-   * are any PENDING or STARTING run records and no RUNNING run records. Otherwise, it is STOPPED.
-   *
-   * @param runRecords run records for the program
-   * @return the program status
-   */
-  @VisibleForTesting
-  static ProgramStatus getProgramStatus(Collection<RunRecordDetail> runRecords) {
-    boolean hasStarting = false;
-    for (RunRecordDetail runRecord : runRecords) {
-      ProgramRunStatus runStatus = runRecord.getStatus();
-      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED
-          || runStatus == ProgramRunStatus.STOPPING) {
-        return ProgramStatus.RUNNING;
-      }
-      hasStarting = hasStarting || runStatus == ProgramRunStatus.STARTING
-          || runStatus == ProgramRunStatus.PENDING;
-    }
-    return hasStarting ? ProgramStatus.STARTING : ProgramStatus.STOPPED;
   }
 
   /**
@@ -507,27 +445,6 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Returns the program status with no need of application existence check.
-   *
-   * @param appSpec the ApplicationSpecification of the existing application
-   * @param programId the id of the program for which the status call is made
-   * @return the status of the program
-   * @throws NotFoundException if the application to which this program belongs was not found
-   */
-  private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec,
-      ProgramId programId) throws Exception {
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    ProgramSpecification spec = getExistingAppProgramSpecification(appSpec,
-        programId.getProgramReference());
-    if (spec == null) {
-      // program doesn't exist
-      throw new NotFoundException(programId);
-    }
-
-    return getProgramStatus(store.getActiveRuns(programId).values());
-  }
-
-  /**
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
    *
    * @param programId the {@link ProgramId program} for which the {@link ProgramSpecification}
@@ -553,37 +470,6 @@ public class ProgramLifecycleService {
       throws Exception {
     ProgramId programId = getLatestProgramId(programReference);
     return getProgramSpecification(programId);
-  }
-
-  /**
-   * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
-   *
-   * @param appSpec the {@link ApplicationSpecification} of the existing application
-   * @param programReference the {@link ProgramReference program} for which the {@link
-   *     ProgramSpecification} is requested
-   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}, or {@code
-   *     null} if it does not exist
-   */
-  @Nullable
-  private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
-      ProgramReference programReference) {
-    String programName = programReference.getProgram();
-    ProgramType type = programReference.getType();
-    ProgramSpecification programSpec;
-    if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
-      programSpec = appSpec.getMapReduce().get(programName);
-    } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
-      programSpec = appSpec.getSpark().get(programName);
-    } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
-      programSpec = appSpec.getWorkflows().get(programName);
-    } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
-      programSpec = appSpec.getServices().get(programName);
-    } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
-      programSpec = appSpec.getWorkers().get(programName);
-    } else {
-      programSpec = null;
-    }
-    return programSpec;
   }
 
   /**
@@ -821,103 +707,6 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Starts a Program with the specified argument overrides, skipping cluster lifecycle steps in the
-   * run. NOTE: This method should only be called from preview runner.
-   *
-   * @param programId the {@link ProgramId} to start/stop
-   * @param overrides the arguments to override in the program's configured user arguments
-   *     before starting
-   * @param debug {@code true} if the program is to be started in debug mode, {@code false}
-   *     otherwise
-   * @param isPreview true if the program is for preview run, for preview run, the app is
-   *     already deployed with resolved properties, so no need to regenerate app spec again
-   * @return {@link ProgramController}
-   * @throws ConflictException if the specified program is already running, and if concurrent
-   *     runs are not allowed
-   * @throws NotFoundException if the specified program or the app it belongs to is not found in
-   *     the specified namespace
-   * @throws IOException if there is an error starting the program
-   * @throws UnauthorizedException if the logged in user is not authorized to start the program.
-   *     To start a program, a user requires {@link ApplicationPermission#EXECUTE} on the program
-   * @throws Exception if there were other exceptions checking if the current user is authorized
-   *     to start the program
-   */
-  public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug,
-      boolean isPreview) throws Exception {
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
-        ApplicationPermission.EXECUTE);
-    checkConcurrentExecution(programId);
-
-    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
-    addAppCdapVersion(programId, sysArgs);
-    sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
-    sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
-    sysArgs.put(ProgramOptionConstants.IS_PREVIEW, Boolean.toString(isPreview));
-    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
-    if (overrides != null) {
-      userArgs.putAll(overrides);
-    }
-
-    authorizePipelineRuntimeImpersonation(userArgs);
-
-    BasicArguments systemArguments = new BasicArguments(sysArgs);
-    BasicArguments userArguments = new BasicArguments(userArgs);
-    ProgramOptions options = new SimpleProgramOptions(programId, systemArguments, userArguments,
-        debug);
-    ProgramDescriptor programDescriptor = store.loadProgram(programId);
-    ProgramRunId programRunId = programId.run(RunIds.generate());
-
-    checkCapability(programDescriptor);
-
-    programStateWriter.start(programRunId, options, null, programDescriptor);
-    return startInternal(programDescriptor, options, programRunId);
-  }
-
-  private void checkCapability(ProgramDescriptor programDescriptor) throws Exception {
-    //check for capability at application class level
-    Set<ApplicationClass> applicationClasses = artifactRepository
-        .getArtifact(Id.Artifact.fromEntityId(programDescriptor.getArtifactId())).getMeta()
-        .getClasses()
-        .getApps();
-    for (ApplicationClass applicationClass : applicationClasses) {
-      Set<String> capabilities = applicationClass.getRequirements().getCapabilities();
-      capabilityReader.checkAllEnabled(capabilities);
-    }
-    for (Map.Entry<String, Plugin> pluginEntry : programDescriptor.getApplicationSpecification()
-        .getPlugins()
-        .entrySet()) {
-      Set<String> capabilities = pluginEntry.getValue().getPluginClass().getRequirements()
-          .getCapabilities();
-      capabilityReader.checkAllEnabled(capabilities);
-    }
-  }
-
-  /**
-   * Starts a Program run with the given arguments. This method skips cluster lifecycle steps and
-   * does not perform authorization checks. If the program is already started, returns the
-   * controller for the program. NOTE: This method should only be used from this service and the
-   * {@link ProgramNotificationSubscriberService} upon receiving a {@link
-   * ProgramRunClusterStatus#PROVISIONED} state.
-   *
-   * @param programDescriptor descriptor of the program to run
-   * @param programOptions options for the program run
-   * @param programRunId program run id
-   * @return controller for the program
-   */
-  ProgramController startInternal(ProgramDescriptor programDescriptor,
-      ProgramOptions programOptions, ProgramRunId programRunId) {
-    RunId runId = RunIds.fromString(programRunId.getRun());
-
-    synchronized (this) {
-      RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(), runId);
-      if (runtimeInfo != null) {
-        return runtimeInfo.getController();
-      }
-      return runtimeService.run(programDescriptor, programOptions, runId).getController();
-    }
-  }
-
-  /**
    * Stops the specified program. The first run of the program as found by {@link
    * ProgramRuntimeService} is stopped.
    *
@@ -1138,63 +927,6 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Update log levels for the given program. Only supported program types for this action are
-   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
-   *
-   * @param programId the {@link ProgramId} of the program for which log levels are to be
-   *     updated
-   * @param logLevels the {@link Map} of the log levels to be updated.
-   * @param runId the run id of the program.
-   * @throws InterruptedException if there is an error while asynchronously updating log
-   *     levels.
-   * @throws ExecutionException if there is an error while asynchronously updating log levels.
-   * @throws BadRequestException if the log level is not valid or the program type is not
-   *     supported.
-   * @throws UnauthorizedException if the user does not have privileges to update log levels for
-   *     the specified program. To update log levels for a program, a user needs {@link
-   *     StandardPermission#UPDATE} on the program.
-   */
-  public void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
-      @Nullable String runId) throws Exception {
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
-        StandardPermission.UPDATE);
-    if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
-      throw new BadRequestException(
-          String.format("Updating log levels for program type %s is not supported",
-              programId.getType().getPrettyName()));
-    }
-    updateLogLevels(programId, logLevels, runId);
-  }
-
-  /**
-   * Reset log levels for the given program. Only supported program types for this action are {@link
-   * ProgramType#SERVICE} and {@link ProgramType#WORKER}.
-   *
-   * @param programId the {@link ProgramId} of the program for which log levels are to be
-   *     reset.
-   * @param loggerNames the {@link String} set of the logger names to be updated, empty means
-   *     reset for all loggers.
-   * @param runId the run id of the program.
-   * @throws InterruptedException if there is an error while asynchronously resetting log
-   *     levels.
-   * @throws ExecutionException if there is an error while asynchronously resetting log levels.
-   * @throws UnauthorizedException if the user does not have privileges to reset log levels for
-   *     the specified program. To reset log levels for a program, a user needs {@link
-   *     StandardPermission#UPDATE} on the program.
-   */
-  public void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames,
-      @Nullable String runId) throws Exception {
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
-        StandardPermission.UPDATE);
-    if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
-      throw new BadRequestException(
-          String.format("Resetting log levels for program type %s is not supported",
-              programId.getType().getPrettyName()));
-    }
-    resetLogLevels(programId, loggerNames, runId);
-  }
-
-  /**
    * Ensures the caller is authorized to check if the given program exists.
    */
   public void ensureProgramExists(ProgramId programId) throws Exception {
@@ -1225,10 +957,6 @@ public class ProgramLifecycleService {
     Store.ensureProgramExists(programRef.id(appSpec.getAppVersion()), appSpec);
   }
 
-  private boolean isStopped(ProgramId programId) throws Exception {
-    return ProgramStatus.STOPPED == getProgramStatus(programId);
-  }
-
   /**
    * Checks if the given program is running and is allowed for concurrent execution.
    *
@@ -1237,9 +965,10 @@ public class ProgramLifecycleService {
    * @throws NotFoundException if the program is not found
    * @throws Exception if failed to determine the state
    */
-  private synchronized void checkConcurrentExecution(ProgramId programId) throws Exception {
+  @Override
+  public void checkConcurrentExecution(ProgramId programId) throws Exception {
+    Map<ProgramRunId, RunRecordDetail> runs = store.getActiveRuns(programId);
     if (isConcurrentRunsInSameAppForbidden(programId.getType())) {
-      Map<RunId, RuntimeInfo> runs = runtimeService.list(programId);
       if (!runs.isEmpty() || !isStoppedInSameProgram(programId)) {
         throw new ConflictException(
             String.format(
@@ -1248,112 +977,12 @@ public class ProgramLifecycleService {
       }
     }
     if (!isConcurrentRunsAllowed(programId.getType())) {
-      List<RunId> runIds = new ArrayList<>();
-      for (Map.Entry<RunId, RuntimeInfo> entry : runtimeService.list(programId.getType())
-          .entrySet()) {
-        if (programId.equals(entry.getValue().getProgramId())) {
-          runIds.add(entry.getKey());
-        }
-      }
+      List<ProgramRunId> runIds = runs.keySet().stream().map(r -> programId.run(r.getRun()))
+          .collect(Collectors.toList());
       if (!runIds.isEmpty() || !isStopped(programId)) {
         throw new ConflictException(
             String.format("Program %s is already running with run ids %s", programId, runIds));
       }
-    }
-  }
-
-  /**
-   * Returns whether the given program is stopped in all versions of the app.
-   *
-   * @param programId the id of the program for which the stopped status in all versions of the
-   *     app is found
-   * @return whether the given program is stopped in all versions of the app
-   * @throws NotFoundException if the application to which this program belongs was not found
-   */
-  private boolean isStoppedInSameProgram(ProgramId programId) throws Exception {
-    // check that app exists
-    Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(
-        programId.getParent().getAppReference());
-    if (appIds == null || appIds.isEmpty()) {
-      throw new NotFoundException(
-          Id.Application.from(programId.getNamespace(), programId.getApplication()));
-    }
-    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
-    for (ApplicationId appId : appIds) {
-      ProgramId pId = appId.program(programId.getType(), programId.getProgram());
-      if (!getExistingAppProgramStatus(appSpec, pId).equals(ProgramStatus.STOPPED)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean isConcurrentRunsInSameAppForbidden(ProgramType type) {
-    // Concurrent runs in different (or same) versions of an application are forbidden for worker
-    return EnumSet.of(ProgramType.WORKER).contains(type);
-  }
-
-  private boolean isConcurrentRunsAllowed(ProgramType type) {
-    // Concurrent runs are only allowed for the Workflow, MapReduce and Spark
-    return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE, ProgramType.SPARK)
-        .contains(type);
-  }
-
-  private Map<RunId, ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(
-      ProgramId programId, @Nullable String runId) throws BadRequestException {
-
-    if (runId != null) {
-      RunId run;
-      try {
-        run = RunIds.fromString(runId);
-      } catch (IllegalArgumentException e) {
-        throw new BadRequestException("Error parsing run-id.", e);
-      }
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, run);
-      return runtimeInfo == null ? Collections.emptyMap()
-          : Collections.singletonMap(run, runtimeInfo);
-    }
-    return new HashMap<>(runtimeService.list(programId));
-  }
-
-  @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId)
-      throws BadRequestException {
-    return findRuntimeInfo(programId, null).values().stream().findFirst().orElse(null);
-  }
-
-  /**
-   * Set instances for the given program. Only supported program types for this action are {@link
-   * ProgramType#SERVICE} and {@link ProgramType#WORKER}.
-   *
-   * @param programId the {@link ProgramId} of the program for which instances are to be
-   *     updated
-   * @param instances the number of instances to be updated.
-   * @throws InterruptedException if there is an error while asynchronously updating instances
-   * @throws ExecutionException if there is an error while asynchronously updating instances
-   * @throws BadRequestException if the number of instances specified is less than 0
-   * @throws UnauthorizedException if the user does not have privileges to set instances for the
-   *     specified program. To set instances for a program, a user needs {@link
-   *     StandardPermission#UPDATE} on the program.
-   */
-  public void setInstances(ProgramId programId, int instances) throws Exception {
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
-        StandardPermission.UPDATE);
-    if (instances < 1) {
-      throw new BadRequestException(
-          String.format("Instance count should be greater than 0. Got %s.", instances));
-    }
-    switch (programId.getType()) {
-      case SERVICE:
-        setServiceInstances(programId, instances);
-        break;
-      case WORKER:
-        setWorkerInstances(programId, instances);
-        break;
-      default:
-        throw new BadRequestException(
-            String.format("Setting instances for program type %s is not supported",
-                programId.getType().getPrettyName()));
     }
   }
 
@@ -1416,76 +1045,6 @@ public class ProgramLifecycleService {
     return !accessEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
 
-  private void setWorkerInstances(ProgramId programId, int instances)
-      throws ExecutionException, InterruptedException, BadRequestException {
-    int oldInstances = store.getWorkerInstances(programId);
-    if (oldInstances != instances) {
-      store.setWorkerInstances(programId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
-      if (runtimeInfo != null) {
-        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-            ImmutableMap.of("runnable", programId.getProgram(),
-                "newInstances", String.valueOf(instances),
-                "oldInstances", String.valueOf(oldInstances))).get();
-      }
-    }
-  }
-
-  private void setServiceInstances(ProgramId programId, int instances)
-      throws ExecutionException, InterruptedException, BadRequestException {
-    int oldInstances = store.getServiceInstances(programId);
-    if (oldInstances != instances) {
-      store.setServiceInstances(programId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
-      if (runtimeInfo != null) {
-        runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
-            ImmutableMap.of("runnable", programId.getProgram(),
-                "newInstances", String.valueOf(instances),
-                "oldInstances", String.valueOf(oldInstances))).get();
-      }
-    }
-  }
-
-  /**
-   * Helper method to update log levels for Worker or Service.
-   */
-  private void updateLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
-      @Nullable String runId) throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values()
-        .stream()
-        .findFirst().orElse(null);
-    if (runtimeInfo != null) {
-      LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
-      logLevelUpdater.updateLogLevels(logLevels, null);
-    }
-  }
-
-  /**
-   * Helper method to reset log levels for Worker or Service.
-   */
-  private void resetLogLevels(ProgramId programId, Set<String> loggerNames, @Nullable String runId)
-      throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values()
-        .stream()
-        .findFirst().orElse(null);
-    if (runtimeInfo != null) {
-      LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
-      logLevelUpdater.resetLogLevels(loggerNames, null);
-    }
-  }
-
-  /**
-   * Helper method to get the {@link LogLevelUpdater} for the program.
-   */
-  private LogLevelUpdater getLogLevelUpdater(RuntimeInfo runtimeInfo) throws Exception {
-    ProgramController programController = runtimeInfo.getController();
-    if (!(programController instanceof LogLevelUpdater)) {
-      throw new BadRequestException(
-          "Update log levels at runtime is only supported in distributed mode");
-    }
-    return ((LogLevelUpdater) programController);
-  }
-
   /**
    * Returns the active run records (PENDING / STARTING / RUNNING / SUSPENDED) based on the given
    * program id and an optional run id.
@@ -1536,41 +1095,12 @@ public class ProgramLifecycleService {
     return getExistingAppProgramSpecification(appMeta.getSpec(), programReference);
   }
 
-  /**
-   * Adds {@link Constants#APP_CDAP_VERSION} system argument to the argument map if known.
-   *
-   * @param programId program that corresponds to application with version information
-   * @param systemArgs map to add version information to
-   */
-  public void addAppCdapVersion(ProgramId programId, Map<String, String> systemArgs) {
-    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
-    if (appSpec != null) {
-      String appCDAPVersion = appSpec.getAppCDAPVersion();
-      if (appCDAPVersion != null) {
-        systemArgs.put(Constants.APP_CDAP_VERSION, appCDAPVersion);
-      }
-    }
-  }
-
   private Set<PluginRequirement> getPluginRequirements(ProgramSpecification programSpecification) {
     return programSpecification.getPlugins().values()
         .stream().map(plugin -> new PluginRequirement(plugin.getPluginClass().getName(),
             plugin.getPluginClass().getType(),
             plugin.getPluginClass().getRequirements()))
         .collect(Collectors.toSet());
-  }
-
-  private void authorizePipelineRuntimeImpersonation(Map<String, String> userArgs)
-      throws Exception {
-    if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))
-        && (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
-      String principal = userArgs.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
-      LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
-          authenticationContext.getPrincipal(), principal);
-      KerberosPrincipalId kid = new KerberosPrincipalId(principal);
-      accessEnforcer.enforce(kid, authenticationContext.getPrincipal(),
-          AccessPermission.IMPERSONATE);
-    }
   }
 
   private String decodeUserId(@Nullable String encodedUserId) {

@@ -49,6 +49,7 @@ import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import io.cdap.cdap.internal.app.services.ProgramRuntimeLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramStopSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.messaging.spi.MessagingService;
@@ -105,6 +106,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramRuntimeLifecycleService runtimeLifecycleService;
   private final PreviewDataPublisher previewDataPublisher;
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
@@ -125,6 +127,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       ApplicationLifecycleService applicationLifecycleService,
       ProgramRuntimeService programRuntimeService,
       ProgramLifecycleService programLifecycleService,
+      ProgramRuntimeLifecycleService runtimeLifecycleService,
       PreviewDataPublisher previewDataPublisher,
       DataTracerFactory dataTracerFactory,
       NamespaceAdmin namespaceAdmin,
@@ -141,6 +144,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programRuntimeService = programRuntimeService;
+    this.runtimeLifecycleService = runtimeLifecycleService;
     this.programLifecycleService = programLifecycleService;
     this.previewDataPublisher = previewDataPublisher;
     this.dataTracerFactory = dataTracerFactory;
@@ -208,7 +212,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }
 
     LOG.debug("Starting preview for {}", programId);
-    ProgramController controller = programLifecycleService.start(programId, userProps, false, true);
+    ProgramController controller = runtimeLifecycleService.start(programId, userProps, false, true);
 
     long startTimeMillis = System.currentTimeMillis();
     AtomicBoolean timeout = new AtomicBoolean();

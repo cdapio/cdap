@@ -49,11 +49,12 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
   private final long scheduleIntervalInMillis;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramRuntimeLifecycleService runtimeLifecycleService;
   private final AtomicReference<Map<ProgramId, Arguments>> programsEnabled;
 
   @Inject
   SystemProgramManagementService(CConfiguration cConf, ProgramRuntimeService programRuntimeService,
-      ProgramLifecycleService programLifecycleService) {
+      ProgramLifecycleService programLifecycleService, ProgramRuntimeLifecycleService runtimeLifecycleService) {
     super(RetryStrategies
         .fixDelay(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS),
             TimeUnit.SECONDS));
@@ -61,6 +62,7 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
         .toMillis(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS));
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
+    this.runtimeLifecycleService = runtimeLifecycleService;
     this.programsEnabled = new AtomicReference<>();
   }
 
@@ -121,7 +123,7 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
       Map<String, String> overrides = enabledProgramsMap.get(programId).asMap();
       LOG.debug("Starting program {} with args {}", programId, overrides);
       try {
-        programLifecycleService.start(programId, overrides, false, false);
+        runtimeLifecycleService.start(programId, overrides, false, false);
       } catch (ConflictException ex) {
         // Ignore if the program is already running.
         LOG.debug("Program {} is already running.", programId);
