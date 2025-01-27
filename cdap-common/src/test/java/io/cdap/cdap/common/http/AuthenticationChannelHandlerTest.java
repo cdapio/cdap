@@ -133,18 +133,26 @@ public class AuthenticationChannelHandlerTest {
     handler.channelRead(ctx, req);
 
     //ENUSRE THAT ATTR WAS SET in ACH's Finally Block.
-    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR)),
-      times(1)).set(any());
-    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR)),
-          times(1)).set(any());
+    verify(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR)), times(1)).set(any());
+    verify(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR)), times(1)).set(any());
+    verify(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)), times(1)).set(any());
+    verify(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.CDAP_USER_ID_ATTR)), times(1)).set(any());
+    verify(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.CDAP_USER_CREDENTIAL_ATTR)), times(1)).set(any());
 
     // Now in Write and getAuditLogRequest , should create AuditLogRequest properly from ATTRs
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR))
-                   .get()).thenReturn(getAuditLogContexts());
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)).get())
-      .thenReturn("testuserIp");
-    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
-                   .get()).thenReturn(getAuditLogRequestBuilder());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.AUDIT_LOG_CONTEXT_QUEUE_ATTR)).get()).thenReturn(
+            getAuditLogContexts());
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.AUDIT_LOG_USER_IP_ATTR)).get()).thenReturn("testuserIp");
+    Mockito.when(ctx.channel().attr(AttributeKey.valueOf(
+        AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR)).get()).thenReturn(
+            getAuditLogRequestBuilder());
 
     handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
     verify(auditLogWriterMock, times(1)).publish(any());
