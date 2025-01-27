@@ -46,6 +46,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
@@ -208,7 +209,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }
 
     LOG.debug("Starting preview for {}", programId);
-    ProgramController controller = programLifecycleService.start(programId, userProps, false, true);
+    ProgramStartRequest startRequest = programLifecycleService.prepareStart(programId, userProps, false, true);
+    ProgramController controller = programRuntimeService.run(
+        startRequest.getProgramDescriptor(), startRequest.getProgramOptions(), startRequest.getRunId())
+          .getController();
 
     long startTimeMillis = System.currentTimeMillis();
     AtomicBoolean timeout = new AtomicBoolean();

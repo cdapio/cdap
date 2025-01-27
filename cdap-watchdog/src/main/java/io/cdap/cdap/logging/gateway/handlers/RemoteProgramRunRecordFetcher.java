@@ -49,7 +49,7 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
     //  ProgramRuntimeService and RunRecordMonitorService.
     // Use APP_FABRIC_HTTP instead of APP_FABRIC_PROCESSOR after the fix.
     this.remoteClient = remoteClientFactory.createRemoteClient(
-        Constants.Service.APP_FABRIC_PROCESSOR,
+        Constants.Service.APP_FABRIC_HTTP,
         new DefaultHttpRequestConfig(false),
         Constants.Gateway.INTERNAL_API_VERSION_3);
   }
