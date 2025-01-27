@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.messaging.guice;
 
+import static io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
@@ -26,6 +28,10 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.AeadCipherCryptorExtensionLoader;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadCipherProvider;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.messaging.spi.MessagingService;

@@ -18,12 +18,16 @@ package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Credential.CredentialType;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.netty.channel.ChannelDuplexHandler;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -63,12 +67,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   private final boolean internalAuthEnabled;
   private final boolean auditLoggingEnabled;
   private final AuditLogWriter auditLogWriter;
+  private final AeadCipher userEncryptionAeadCipher;
 
   public AuthenticationChannelHandler(boolean internalAuthEnabled, boolean auditLoggingEnabled,
-                                      AuditLogWriter auditLogWriter) {
+                                      AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher) {
     this.internalAuthEnabled = internalAuthEnabled;
     this.auditLoggingEnabled = auditLoggingEnabled;
     this.auditLogWriter = auditLogWriter;
+    this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
 
   /**
@@ -119,6 +125,10 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
+            if (isTaskWorkerEncrypted(credentialValue, credentialType)) {
+              LOG.error("This call was from task worker");
+              throw new UnauthenticatedException("Request denied for Task workers");
+            }
             currentUserCredential = new Credential(credentialValue, credentialType);
             SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
@@ -275,5 +285,21 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_REQ_BUILDER_ATTR)).set(null);
     ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).set(null);
     ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_CONTEXT_QUEUE_ATTR)).set(null);
+  }
+
+  private boolean isTaskWorkerEncrypted(String credentialValue, CredentialType credentialType) {
+    LOG.error("Decrypting user creds to check if task worker call");
+    if (CredentialType.EXTERNAL_ENCRYPTED.equals(credentialType)) {
+      try {
+        userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
+            Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+        LOG.error("Decryption successful, task worker call");
+        return true;
+      } catch (CipherException e) {
+        LOG.error("Decryption unsuccessful, some other call");
+        return false;
+      }
+    }
+    return false;
   }
 }

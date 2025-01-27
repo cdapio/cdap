@@ -1942,6 +1942,12 @@ public final class Constants {
        */
       public static final String USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA
           = "UserCredentialEncryptionAD";
+
+      /**
+       * Associated data for task worker credential encryption
+       */
+      public static final String TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA
+          = "TaskWorkerEncryptionAD";
     }
 
     /**

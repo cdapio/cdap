@@ -32,6 +32,7 @@ import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;

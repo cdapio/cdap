@@ -36,6 +36,8 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
@@ -104,6 +106,7 @@ public class RemoteConfiguratorTest {
   private static NettyHttpService httpService;
   private static RemoteClientFactory remoteClientFactory;
   private static MetricsCollectionService metricsCollectionService;
+  private static AeadCipher aeadCipher;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -119,10 +122,10 @@ public class RemoteConfiguratorTest {
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(),
-                                                    auditLogContexts -> {})
+                                                    auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(
           new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> { },
-                                          new NoOpMetricsCollectionService()),
+                                          new NoOpMetricsCollectionService(), new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext()))),
           new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
           new ArtifactLocalizerHttpHandlerInternal(
               new ArtifactLocalizer(cConf, remoteClientFactory,
@@ -145,6 +148,7 @@ public class RemoteConfiguratorTest {
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
     discoveryService.register(URIScheme.createDiscoverable(Constants.Service.APP_FABRIC_HTTP, httpService));
     metricsCollectionService = new NoOpMetricsCollectionService();
+    aeadCipher = new NoOpAeadCipher();
   }
 
   @AfterClass
@@ -174,7 +178,8 @@ public class RemoteConfiguratorTest {
       .setApplicationClass(new ApplicationClass(AllProgramsApp.class.getName(), "", null))
       .build();
 
-    Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
+    Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info,
+        remoteClientFactory, aeadCipher);
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
@@ -211,7 +216,8 @@ public class RemoteConfiguratorTest {
       .setApplicationClass(new ApplicationClass(AllProgramsApp.class.getName(), "", null))
       .build();
 
-    Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
+    Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info,
+        remoteClientFactory, aeadCipher);
 
     // Expect the future.get would throw an exception
     configurator.config().get(10, TimeUnit.SECONDS);
@@ -236,7 +242,8 @@ public class RemoteConfiguratorTest {
       .setConfigString(GSON.toJson("invalid"))
       .build();
 
-    Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info, remoteClientFactory);
+    Configurator configurator = new RemoteConfigurator(cConf, metricsCollectionService, info,
+        remoteClientFactory, aeadCipher);
 
     // Expect the future.get would throw an exception
     configurator.config().get(10, TimeUnit.SECONDS);

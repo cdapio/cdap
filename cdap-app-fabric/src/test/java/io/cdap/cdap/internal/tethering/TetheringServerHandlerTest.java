@@ -40,6 +40,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -212,7 +213,8 @@ public class TetheringServerHandlerTest {
         new CommonNettyHttpServiceBuilder(
                 CConfiguration.create(),
                 getClass().getSimpleName(),
-                new NoOpMetricsCollectionService(), auditLogContexts -> {})
+                new NoOpMetricsCollectionService(), auditLogContexts -> {},
+                new NoOpAeadCipher())
             .setHttpHandlers(
                 new TetheringServerHandler(
                     cConf,

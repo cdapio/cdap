@@ -16,11 +16,16 @@
 
 package io.cdap.cdap.common.guice;
 
+import static io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION;
+
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.AeadCipherCryptorExtensionLoader;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadCipherProvider;
 import io.cdap.cdap.common.internal.remote.DefaultRemoteAuthenticatorProvider;
 import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticatorExtensionLoader;
