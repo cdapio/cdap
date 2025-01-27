@@ -119,7 +119,7 @@ public class AuthenticationChannelHandlerTest {
       .headers()
       .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock, userEncryptionAeadCipher);
 
     //The ACH.channelRead.fireChannelRead , will trigger NamespaceHttpHandler and AuditLogSetterHook
     // So set AuditLogQueue and MetaData in SRC to simulate that.
@@ -179,7 +179,7 @@ public class AuthenticationChannelHandlerTest {
       .headers()
       .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock, userEncryptionAeadCipher);
 
     //The ACH.channelRead.fireChannelRead , will trigger artifactHttpHandler and NOT AuditLogSetterHook
     // So set AuditLogQueue in SRC to simulate that.
