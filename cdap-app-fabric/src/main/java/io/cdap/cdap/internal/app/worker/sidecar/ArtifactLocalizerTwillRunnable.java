@@ -30,6 +30,7 @@ import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
@@ -116,6 +117,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new MessagingServiceModule(cConf));
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new AuditLogWriterModule(cConf).getInMemoryModules());
+    modules.add(new UserCredentialAeadEncryptionModule());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
