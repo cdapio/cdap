@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
@@ -142,23 +143,46 @@ public class ErrorLogsClassifier {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(responses));
 
     // emit metric
-    MetricsContext metricsContext = metricsCollectionService.getContext(ImmutableMap.of(
-        Metrics.Tag.NAMESPACE, namespace,
-        Metrics.Tag.PROGRAM, program,
-        Metrics.Tag.APP, appId,
-        Metrics.Tag.RUN_ID, runId));
-
+    MetricsContext metricsContext = metricsCollectionService.getContext(
+        getParentTags(namespace, program, appId, runId));
     for (ErrorClassificationResponse response : responses) {
-      MetricsContext context = metricsContext.childContext(ImmutableMap.of(
-          Metrics.Tag.ERROR_CATEGORY, response.getErrorCategory(),
-          Metrics.Tag.ERROR_TYPE, response.getErrorType(),
-          Metrics.Tag.DEPENDENCY, response.getDependency(),
-          Metrics.Tag.ERROR_CODE_TYPE, response.getErrorCodeType(),
-          Metrics.Tag.ERROR_CODE, response.getErrorCode()
-      ));
+      MetricsContext context = metricsContext.childContext(getChildTags(response));
       context.gauge(Metrics.Program.FAILED_RUNS_CLASSIFICATION_COUNT, 1);
     }
     return responses;
+  }
+
+  private Map<String, String> getParentTags(String namespace,
+      @Nullable String program, String appId, String runId) {
+    ImmutableMap.Builder<String, String> tags = ImmutableMap.builder();
+    tags.put(Metrics.Tag.NAMESPACE, namespace);
+    if (!Strings.isNullOrEmpty(program)) {
+      tags.put(Metrics.Tag.PROGRAM, program);
+    }
+    tags.put(Metrics.Tag.APP, appId);
+    tags.put(Metrics.Tag.RUN_ID, runId);
+    return tags.build();
+  }
+
+  private Map<String, String> getChildTags(ErrorClassificationResponse response) {
+    String stageName = response.getStageName();
+    String errorCategory = response.getErrorCategory();
+    if (!Strings.isNullOrEmpty(stageName) && !Strings.isNullOrEmpty(errorCategory)
+        && errorCategory.endsWith("-" + stageName)) {
+      // remove stageName from errorCategory to reduce metric cardinality.
+      errorCategory = errorCategory.substring(0, errorCategory.length() - stageName.length() - 1);
+    }
+    ImmutableMap.Builder<String, String> tags = ImmutableMap.builder();
+    tags.put(Metrics.Tag.ERROR_CATEGORY, errorCategory);
+    tags.put(Metrics.Tag.ERROR_TYPE, response.getErrorType());
+    tags.put(Metrics.Tag.DEPENDENCY, response.getDependency());
+    if (!Strings.isNullOrEmpty(response.getErrorCodeType())) {
+      tags.put(Metrics.Tag.ERROR_CODE_TYPE, response.getErrorCodeType());
+    }
+    if (!Strings.isNullOrEmpty(response.getErrorCode())) {
+      tags.put(Metrics.Tag.ERROR_CODE, response.getErrorCode());
+    }
+    return tags.build();
   }
 
   private void populateResponse(IThrowableProxy throwableProxy,
