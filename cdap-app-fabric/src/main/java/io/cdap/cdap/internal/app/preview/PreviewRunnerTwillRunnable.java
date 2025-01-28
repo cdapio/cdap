@@ -67,7 +67,7 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
-import io.cdap.cdap.messaging.guice.MessagingServiceModule;
+import io.cdap.cdap.messaging.guice.client.PreviewRunnerMessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -237,7 +237,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }
 
     modules.add(new PreviewRunnerManagerModule().getDistributedModules());
-    modules.add(new MessagingServiceModule(cConf));
+    modules.add(new PreviewRunnerMessagingClientModule(cConf));
     modules.add(new SecureStoreClientModule());
     // Needed for InMemoryProgramRunnerModule. We use local metadata reader/publisher to avoid conflicting with
     // metadata stored in AppFabric.

@@ -33,7 +33,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.TwillModule;
@@ -63,7 +62,7 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.messaging.data.MessageId;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -74,7 +73,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
-import java.util.EnumSet;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.commons.cli.BasicParser;
@@ -361,7 +359,7 @@ public class JobQueueDebugger extends AbstractIdleService {
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
         new SecureStoreServerModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

@@ -322,7 +322,7 @@ public class TestBase {
         new LogReaderRuntimeModules().getInMemoryModules(),
         new MessagingServerRuntimeModule().getInMemoryModules(),
         new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
-        new PreviewManagerModule(false),
+        new PreviewManagerModule(cConf, false),
         new PreviewRunnerManagerModule().getInMemoryModules(),
         new MockProvisionerModule(),
         new NoOpAuditLogModule(),
