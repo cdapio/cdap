@@ -42,7 +42,7 @@ import io.cdap.cdap.logging.framework.distributed.DistributedLogFramework;
 import io.cdap.cdap.logging.guice.DistributedLogFrameworkModule;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.service.LogSaverStatusService;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -118,7 +118,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
         new AuditModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
         new AuthenticationContextModules().getMasterModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new NoOpAuditLogModule(),
         new AbstractModule() {
           @Override

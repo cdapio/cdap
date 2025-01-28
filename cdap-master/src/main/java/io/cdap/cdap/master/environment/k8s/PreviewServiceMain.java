@@ -52,7 +52,6 @@ import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -124,9 +123,9 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     ));
 
     if (cConf.getInt(Constants.Preview.CONTAINER_COUNT) > 0) {
-      modules.add(new PreviewManagerModule(true));
+      modules.add(new PreviewManagerModule(cConf, true));
     } else {
-      modules.add(new PreviewManagerModule(false));
+      modules.add(new PreviewManagerModule(cConf, false));
       modules.add(new PreviewRunnerManagerModule().getStandaloneModules());
     }
 

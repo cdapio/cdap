@@ -45,7 +45,7 @@ import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.logging.service.LogQueryService;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
@@ -110,7 +110,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
         new ZkClientModule(),
         new ZkDiscoveryModule(),
         new KafkaClientModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new DataFabricModules(txClientId).getDistributedModules(),
         new DataSetsModules().getDistributedModules(),
         // For the injection of DatasetDefinition of MetricsTable directly

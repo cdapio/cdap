@@ -47,6 +47,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.encryption.guice.DataStorageAeadEncryptionModule;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
@@ -150,6 +151,9 @@ import io.cdap.cdap.internal.tethering.TetheringAgentService;
 import io.cdap.cdap.internal.tethering.TetheringClientHandler;
 import io.cdap.cdap.internal.tethering.TetheringHandler;
 import io.cdap.cdap.internal.tethering.TetheringServerHandler;
+import io.cdap.cdap.messaging.server.FetchHandler;
+import io.cdap.cdap.messaging.server.MetadataHandler;
+import io.cdap.cdap.messaging.server.StoreHandler;
 import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
@@ -531,6 +535,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
         handlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
         handlerBinder.addBinding().to(WorkflowHttpHandler.class);
+
+        if (!cConf.getBoolean(MessagingSystem.MESSAGING_SERVICE_ENABLED)) {
+          // Add these handlers only if messaging service endpoint doesn't exist and task workers need to
+          // communicate with messaging service via AppFabric.
+          handlerBinder.addBinding().to(MetadataHandler.class);
+          handlerBinder.addBinding().to(StoreHandler.class);
+          handlerBinder.addBinding().to(FetchHandler.class);
+        }
 
         FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
         if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {

@@ -44,7 +44,7 @@ import io.cdap.cdap.data.runtime.main.transaction.TransactionPingHandler;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -105,7 +105,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
         new ZkClientModule(),
         new ZkDiscoveryModule(),
         new KafkaClientModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new DataFabricModules(txClientId).getDistributedModules(),
         new DataSetsModules().getDistributedModules(),
         new SystemDatasetRuntimeModule().getDistributedModules(),

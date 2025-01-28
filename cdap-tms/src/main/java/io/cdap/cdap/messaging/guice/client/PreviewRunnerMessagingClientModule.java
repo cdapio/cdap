@@ -14,39 +14,36 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.guice;
+package io.cdap.cdap.messaging.guice.client;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.MessagingSystem;
 import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
-import io.cdap.cdap.messaging.client.DelegatingMessagingService;
+import io.cdap.cdap.messaging.client.PreviewRunnerClientMessagingService;
 import io.cdap.cdap.messaging.spi.MessagingService;
 
 /**
- * The Guice module to bind messaging service based on
- * {@link MessagingSystem#MESSAGING_SERVICE_NAME} if set in cConf. Otherwise, binds to
- * {@link DefaultClientMessagingService}.
+ * The Guice module to provide binding for messaging system client in preview runners and is based
+ * on {@link MessagingSystem#MESSAGING_SERVICE_ENABLED}. If set in cConf it binds to
+ * {@link DefaultClientMessagingService} to prevent redundant network calls.
  */
-public class MessagingServiceModule extends AbstractModule {
+public class PreviewRunnerMessagingClientModule extends AbstractModule {
 
-  private static final String DEFAULT_MESSAGING_SERVICE_NAME =
-      DefaultClientMessagingService.class.getSimpleName();
-  private final String messagingService;
+  private final boolean messagingServiceEnabled;
 
-  public MessagingServiceModule(CConfiguration cConf) {
-    messagingService =
-        cConf
-            .get(MessagingSystem.MESSAGING_SERVICE_NAME, DEFAULT_MESSAGING_SERVICE_NAME);
+  public PreviewRunnerMessagingClientModule(CConfiguration cConf) {
+    this.messagingServiceEnabled = cConf.getBoolean(MessagingSystem.MESSAGING_SERVICE_ENABLED);
   }
 
   @Override
   protected void configure() {
-    if (messagingService.equals(DEFAULT_MESSAGING_SERVICE_NAME)) {
+    if (messagingServiceEnabled) {
       bind(MessagingService.class).to(DefaultClientMessagingService.class).in(Scopes.SINGLETON);
     } else {
-      bind(MessagingService.class).to(DelegatingMessagingService.class).in(Scopes.SINGLETON);
+      bind(MessagingService.class).to(PreviewRunnerClientMessagingService.class)
+          .in(Scopes.SINGLETON);
     }
   }
 }

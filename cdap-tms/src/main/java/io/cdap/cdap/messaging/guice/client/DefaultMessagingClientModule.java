@@ -14,21 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.messaging.guice;
+package io.cdap.cdap.messaging.guice.client;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
 import io.cdap.cdap.messaging.spi.MessagingService;
-import io.cdap.cdap.messaging.client.ClientMessagingService;
 
 /**
  * The Guice module to provide binding for messaging system client. This module should only be used
  * in containers in distributed mode.
  */
-public class MessagingClientModule extends AbstractModule {
+public class DefaultMessagingClientModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(MessagingService.class).to(ClientMessagingService.class).in(Scopes.SINGLETON);
+    bind(MessagingService.class).to(DefaultClientMessagingService.class).in(Scopes.SINGLETON);
   }
 }
