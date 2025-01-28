@@ -55,8 +55,8 @@ public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Satisfiable
   }
 
   @Override
-  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
-    for (Notification notification : notifications) {
+  public boolean isSatisfied(ProgramSchedule schedule, NotificationContext notificationContext) {
+    for (Notification notification : notificationContext.getNotifications()) {
       if (isSatisfied(schedule, notification)) {
         return true;
       }
