@@ -289,7 +289,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
-        BootstrapModules.getFileBasedModule(),
+        serviceTypes.contains(ServiceType.PROCESSOR) ? BootstrapModules.getFileBasedModule() :
+            BootstrapModules.getNoOpModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -352,7 +353,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
-        BootstrapModules.getFileBasedModule(),
+        serviceTypes.contains(ServiceType.PROCESSOR) ? BootstrapModules.getFileBasedModule() :
+            BootstrapModules.getNoOpModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

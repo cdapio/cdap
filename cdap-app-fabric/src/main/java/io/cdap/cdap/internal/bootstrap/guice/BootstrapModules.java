@@ -73,6 +73,23 @@ public class BootstrapModules {
   }
 
   /**
+   * Module with empty config to not perform any bootstrap steps.
+   *
+   * @return bootstrap module that do not need to execute bootstrap steps.
+   */
+  public static Module getNoOpModule() {
+    return new BaseModule() {
+      @Override
+      protected void configure() {
+        super.configure();
+        BootstrapConfigProvider inMemoryProvider = new InMemoryBootstrapConfigProvider(
+            BootstrapConfig.EMPTY);
+        bind(BootstrapConfigProvider.class).toInstance(inMemoryProvider);
+      }
+    };
+  }
+
+  /**
    * Bindings common to all modules
    */
   private abstract static class BaseModule extends AbstractModule {
