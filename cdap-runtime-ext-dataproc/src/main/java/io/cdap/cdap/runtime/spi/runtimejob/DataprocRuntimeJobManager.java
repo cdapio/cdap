@@ -53,7 +53,10 @@ import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorCodeType;
+import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.ErrorUtils.ActionErrorPair;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.runtime.spi.CacheableLocalFile;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.VersionInfo;
@@ -113,6 +116,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   // Dataproc specific error groups
   private static final String ERRGP_GCS = "gcs";
+  private static final String GCS_DOC_URL =
+      "https://cloud.google.com/storage/docs/json_api/v1/status-codes";
+
 
   private final ProvisionerContext provisionerContext;
   private final String clusterName;
@@ -595,10 +601,26 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     }
     BlobInfo blobInfo = blobInfoBuilder.setContentType(contentType).build();
     Storage storage = getStorageClient();
+    Bucket bucketObj;
+    try {
+       bucketObj = storage.get(bucket);
+    } catch (StorageException e) {
+      ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(e.getCode());
+      String errorReason = String.format("%s Unable to access GCS bucket '%s'. %s", e.getCode(),
+          bucket, pair.getCorrectiveAction());
+      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.STARTING),
+          errorReason, e.getMessage(), pair.getErrorType(), true,
+          ErrorCodeType.HTTP, String.valueOf(e.getCode()), GCS_DOC_URL, e);
+    }
 
-    Bucket bucketObj = storage.get(bucket);
     if (bucketObj == null) {
-      throw new IOException("GCS bucket '" + bucket + "'does not exists");
+      String error = String.format("GCS Bucket '%s' does not exist", bucket);
+      throw new ProgramFailureException.Builder()
+          .withErrorCategory(new ErrorCategory(ErrorCategoryEnum.STARTING))
+          .withErrorReason(error)
+          .withErrorMessage(error)
+          .withErrorType(ErrorType.USER)
+          .build();
     }
 
     LOG.debug(
@@ -610,7 +632,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           Storage.BlobWriteOption.doesNotExist());
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
-        throw e;
+        ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(e.getCode());
+        String errorReason = String.format("%s Unable to access GCS bucket %s. %s", e.getCode(),
+            bucket, pair.getCorrectiveAction());
+        throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.STARTING),
+            errorReason, e.getMessage(), pair.getErrorType(), true,
+            ErrorCodeType.HTTP, String.valueOf(e.getCode()), GCS_DOC_URL, e);
       }
 
       if (!cacheable) {
