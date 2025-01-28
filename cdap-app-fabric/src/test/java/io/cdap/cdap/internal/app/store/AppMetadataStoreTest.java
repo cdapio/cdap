@@ -861,7 +861,7 @@ public abstract class AppMetadataStoreTest {
     byte[] sourceId = new byte[] { 0 };
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      assertSecondCallIsNull(() -> store.recordProgramProvisioning(runId, null, SINGLETON_PROFILE_MAP,
+      Assert.assertNotNull(store.recordProgramProvisioning(runId, null, SINGLETON_PROFILE_MAP,
                                                                    sourceId, ARTIFACT_ID));
       assertSecondCallIsNull(() -> store.recordProgramProvisioned(runId, 0, sourceId));
       assertSecondCallIsNull(() -> store.recordProgramStart(runId, null, Collections.emptyMap(), sourceId));

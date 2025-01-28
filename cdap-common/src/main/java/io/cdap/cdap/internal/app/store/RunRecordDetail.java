@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,6 +63,10 @@ public class RunRecordDetail extends RunRecord {
   @Nullable
   private final String principal;
 
+  @SerializedName("flowcontrolstatus")
+  @Nullable
+  private final String flowControlStatus;
+
   // carries the user arguments decoded from properties. No need to serialize since it is from the properties.
   private transient volatile Map<String, String> userArgs;
 
@@ -72,7 +77,7 @@ public class RunRecordDetail extends RunRecord {
       @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
       @Nullable String twillRunId, ProgramRunCluster cluster, ProfileId profileId,
       @Nullable String peerName, byte[] sourceId, @Nullable ArtifactId artifactId,
-      @Nullable String principal) {
+      @Nullable String principal, @Nullable String flowControlStatus) {
     super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs,
         terminateTs,
         status, properties, cluster, profileId, peerName, programRunId.getVersion());
@@ -82,6 +87,7 @@ public class RunRecordDetail extends RunRecord {
     this.sourceId = sourceId;
     this.artifactId = artifactId;
     this.principal = principal;
+    this.flowControlStatus = flowControlStatus;
   }
 
   @Nullable
@@ -137,6 +143,11 @@ public class RunRecordDetail extends RunRecord {
     return principal;
   }
 
+  @Nullable
+  public String getFlowControlStatus() {
+    return flowControlStatus;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -161,15 +172,16 @@ public class RunRecordDetail extends RunRecord {
         && Objects.equal(this.getTwillRunId(), that.getTwillRunId())
         && Arrays.equals(this.getSourceId(), that.getSourceId())
         && Objects.equal(this.getArtifactId(), that.getArtifactId())
-        && Objects.equal(this.getPrincipal(), that.getPrincipal());
+        && Objects.equal(this.getPrincipal(), that.getPrincipal())
+        && Objects.equal(this.getFlowControlStatus(), that.getFlowControlStatus());
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(),
-        getSuspendTs(), getResumeTs(),
-        getStoppingTs(), getTerminateTs(), getStatus(), getProperties(), getPeerName(),
-        getTwillRunId(), Arrays.hashCode(getSourceId()), getArtifactId(), getPrincipal());
+        getSuspendTs(), getResumeTs(), getStoppingTs(), getTerminateTs(), getStatus(),
+        getProperties(), getPeerName(), getTwillRunId(), Arrays.hashCode(getSourceId()),
+        getArtifactId(), getPrincipal(), getFlowControlStatus());
   }
 
   @Override
@@ -193,6 +205,7 @@ public class RunRecordDetail extends RunRecord {
         .add("sourceId", getSourceId() == null ? null : Bytes.toHexString(getSourceId()))
         .add("artifactId", getArtifactId())
         .add("principal", getPrincipal())
+        .add("flowcontrolstatus", getFlowControlStatus())
         .toString();
   }
 
@@ -239,6 +252,7 @@ public class RunRecordDetail extends RunRecord {
     protected byte[] sourceId;
     protected String principal;
     protected ArtifactId artifactId;
+    protected String flowControlStatus;
 
     protected ABuilder() {
       systemArgs = new HashMap<>();
@@ -252,6 +266,7 @@ public class RunRecordDetail extends RunRecord {
       sourceId = record.getSourceId();
       principal = record.getPrincipal();
       artifactId = record.getArtifactId();
+      flowControlStatus = record.getFlowControlStatus();
     }
 
     public T setProgramRunId(ProgramRunId programRunId) {
@@ -286,12 +301,16 @@ public class RunRecordDetail extends RunRecord {
       this.artifactId = artifactId;
       return (T) this;
     }
+    public T setFlowControlStatus(String flowControlStatus) {
+      this.flowControlStatus = flowControlStatus;
+      return (T) this;
+    }
 
     public RunRecordDetail build() {
       if (programRunId == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
       }
-      if (sourceId == null) {
+      if (status != ProgramRunStatus.PENDING && sourceId == null) {
         throw new IllegalArgumentException("Run record source id must be specified.");
       }
       // we are not validating artifactId for null,
@@ -300,7 +319,7 @@ public class RunRecordDetail extends RunRecord {
       return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
           stoppingTs,
           terminateTs, status, properties, systemArgs, twillRunId, cluster,
-          profileId, peerName, sourceId, artifactId, principal);
+          profileId, peerName, sourceId, artifactId, principal, flowControlStatus);
     }
   }
 }

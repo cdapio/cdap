@@ -51,7 +51,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -75,7 +74,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final RunDataTimeToLiveService runDataTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
-  private final RunRecordMonitorService runRecordCounterService;
+  private final FlowControlService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
@@ -111,7 +110,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       ProvisioningService provisioningService,
       BootstrapService bootstrapService,
       SystemAppManagementService systemAppManagementService,
-      RunRecordMonitorService runRecordCounterService,
+      FlowControlService runRecordCounterService,
       RunDataTimeToLiveService runDataTimeToLiveService,
       OperationNotificationSubscriberService operationNotificationSubscriberService,
       ScheduleNotificationSubscriberService scheduleNotificationSubscriberService) {

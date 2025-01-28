@@ -149,7 +149,7 @@ public class ProgramLifecycleService {
   private final int defaultStopTimeoutSecs;
   private final int batchSize;
   private final ArtifactRepository artifactRepository;
-  private final RunRecordMonitorService runRecordMonitorService;
+  private final FlowControlService flowControlService;
   private final boolean userProgramLaunchDisabled;
 
   @Inject
@@ -161,7 +161,7 @@ public class ProgramLifecycleService {
       ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
       ArtifactRepository artifactRepository,
-      RunRecordMonitorService runRecordMonitorService) {
+      FlowControlService flowControlService) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
@@ -180,7 +180,7 @@ public class ProgramLifecycleService {
     this.programStateWriter = programStateWriter;
     this.capabilityReader = capabilityReader;
     this.artifactRepository = artifactRepository;
-    this.runRecordMonitorService = runRecordMonitorService;
+    this.flowControlService = flowControlService;
   }
 
   /**
@@ -730,8 +730,8 @@ public class ProgramLifecycleService {
     checkCapability(programDescriptor);
 
     ProgramRunId programRunId = programId.run(runId);
-    RunRecordMonitorService.Counter counter = runRecordMonitorService.addRequestAndGetCount(
-        programRunId);
+    FlowControlService.Counter counter = flowControlService.addRequestAndGetCounter(
+        programRunId, programOptions, programDescriptor);
 
     boolean done = false;
     try {
@@ -765,7 +765,7 @@ public class ProgramLifecycleService {
       done = true;
     } finally {
       if (!done) {
-        runRecordMonitorService.removeRequest(programRunId, false);
+        flowControlService.emitFlowControlMetrics();
       }
     }
 

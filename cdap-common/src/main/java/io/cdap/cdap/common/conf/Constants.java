@@ -284,10 +284,6 @@ public final class Constants {
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
     public static final String MAX_CONCURRENT_LAUNCHING = "app.max.concurrent.launching";
-    public static final String MONITOR_RECORD_AGE_THRESHOLD_SECONDS =
-        "run.record.monitor.record.age.threshold.seconds";
-    public static final String MONITOR_CLEANUP_INTERVAL_SECONDS =
-        "run.record.monitor.cleanup.interval.seconds";
     public static final String PROGRAM_LAUNCH_THREADS = "app.program.launch.threads";
     public static final String PROGRAM_KILL_THREADS = "app.program.kill.threads";
     public static final String RUN_DATA_CLEANUP_TTL_DAYS = "app.run.records.ttl.days";

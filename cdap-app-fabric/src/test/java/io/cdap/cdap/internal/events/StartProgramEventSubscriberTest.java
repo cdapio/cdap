@@ -27,7 +27,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
-import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
+import io.cdap.cdap.internal.app.services.FlowControlService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.events.dummy.DummyEventReader;
 import io.cdap.cdap.internal.events.dummy.DummyEventReaderExtensionProvider;
@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +48,8 @@ import org.slf4j.LoggerFactory;
 public class StartProgramEventSubscriberTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(StartProgramEventSubscriberTest.class);
   private ProgramLifecycleService lifecycleService;
-  private RunRecordMonitorService runRecordMonitorService;
-  private RunRecordMonitorService.Counter mockCounter;
+  private FlowControlService flowControlService;
+  private FlowControlService.Counter mockCounter;
   private CConfiguration cConf;
   private DummyEventReader<StartProgramEvent> eventReader;
   private Injector injector;
@@ -59,16 +58,16 @@ public class StartProgramEventSubscriberTest extends AppFabricTestBase {
   @Before
   public void setup() {
     lifecycleService = Mockito.mock(ProgramLifecycleService.class);
-    runRecordMonitorService = Mockito.mock(RunRecordMonitorService.class);
-    mockCounter = Mockito.mock(RunRecordMonitorService.Counter.class);
-    Mockito.doReturn(mockCounter).when(runRecordMonitorService).getCount();
+    flowControlService = Mockito.mock(FlowControlService.class);
+    mockCounter = Mockito.mock(FlowControlService.Counter.class);
+    Mockito.doReturn(mockCounter).when(flowControlService).getCounter();
     cConf = CConfiguration.create();
     eventReader = new DummyEventReader<>(mockedEvents());
     injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
         bind(ProgramLifecycleService.class).toInstance(lifecycleService);
-        bind(RunRecordMonitorService.class).toInstance(runRecordMonitorService);
+        bind(FlowControlService.class).toInstance(flowControlService);
         bind(CConfiguration.class).toInstance(cConf);
         bind(new TypeLiteral<EventReaderProvider<StartProgramEvent>>() {
         })
