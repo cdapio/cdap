@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
-import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.api.exception.WrappedStageException;
@@ -48,6 +47,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Classifies error logs and returns {@link ErrorClassificationResponse}.
@@ -73,6 +74,7 @@ public class ErrorLogsClassifier {
           }
         }
       });
+  private static final Logger LOG = LoggerFactory.getLogger(ErrorLogsClassifier.class);
   private final Cache<ErrorClassificationResponseCacheKey,
       List<ErrorClassificationResponse>> responseCache;
   private final MetricsCollectionService metricsCollectionService;
@@ -143,13 +145,22 @@ public class ErrorLogsClassifier {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(responses));
 
     // emit metric
+    try {
+      emitMetric(namespace, program, appId, runId, responses);
+    } catch (Exception e) {
+      LOG.error("Unable to emit metric {}.", Metrics.Program.FAILED_RUNS_CLASSIFICATION_COUNT, e);
+    }
+    return responses;
+  }
+
+  private void emitMetric(String namespace, @Nullable String program, String appId, String runId,
+      List<ErrorClassificationResponse> responses) {
     MetricsContext metricsContext = metricsCollectionService.getContext(
         getParentTags(namespace, program, appId, runId));
     for (ErrorClassificationResponse response : responses) {
       MetricsContext context = metricsContext.childContext(getChildTags(response));
       context.gauge(Metrics.Program.FAILED_RUNS_CLASSIFICATION_COUNT, 1);
     }
-    return responses;
   }
 
   private Map<String, String> getParentTags(String namespace,
