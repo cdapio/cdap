@@ -777,7 +777,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
       updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
-    Principal requestingUser = authenticationContext.getPrincipal();
 
     String versionId = appId.getVersion();
     // If LCM flow is enabled - we generate specific versions of the app.
@@ -796,8 +795,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         .setConfigString(updatedAppConfig)
         .setOwnerPrincipal(ownerPrincipal)
         .setUpdateSchedules(false)
-        .setChangeDetail(new ChangeDetail(null, appId.getVersion(), requestingUser == null ? null :
-            requestingUser.getName(), System.currentTimeMillis()))
+        .setChangeDetail(new ChangeDetail(null, appId.getVersion(),
+            decodeUserId(authenticationContext), System.currentTimeMillis()))
         .setDeployedApplicationSpec(appSpec)
         .setIsUpgrade(true)
         .build();
@@ -1102,7 +1101,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ChangeDetail change = new ChangeDetail(
         changeSummary == null ? null : changeSummary.getDescription(),
         changeSummary == null ? null : changeSummary.getParentVersion(),
-        requestingUser == null ? null : requestingUser.getName(),
+        decodeUserId(authenticationContext),
         System.currentTimeMillis());
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()

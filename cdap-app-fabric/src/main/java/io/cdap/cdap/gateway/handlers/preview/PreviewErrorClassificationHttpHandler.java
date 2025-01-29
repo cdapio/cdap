@@ -20,37 +20,24 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.preview.PreviewStatus.Status;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.ErrorLogsClassifier;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.filter.FilterParser;
-import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
-import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.read.ReadRange;
-import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.io.IOException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -88,6 +75,10 @@ public class PreviewErrorClassificationHttpHandler extends PreviewHttpHandler {
     return programRunId;
   }
 
+  /**
+   * Returns the list of {@link io.cdap.cdap.proto.ErrorClassificationResponse} for
+   * failed preview run.
+   */
   @POST
   @Path("/namespaces/{namespace-id}/previews/{preview-id}/classify")
   public void classifyRunIdLogs(HttpRequest request, HttpResponder responder,
@@ -110,7 +101,7 @@ public class PreviewErrorClassificationHttpHandler extends PreviewHttpHandler {
     try (CloseableIterator<LogEvent> logIter = logReader.getLog(loggingContext,
         readRange.getFromMillis(), readRange.getToMillis(), filter)) {
       // the iterator is closed by the BodyProducer passed to the HttpResponder
-      errorLogsClassifier.classify(logIter, responder);
+      errorLogsClassifier.classify(logIter, responder, namespaceId, null, "preview", previewId);
     } catch (Exception ex) {
       LOG.debug("Exception while classifying logs for logging context {}", loggingContext, ex);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);

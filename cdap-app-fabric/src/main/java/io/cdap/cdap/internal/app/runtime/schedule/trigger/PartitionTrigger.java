@@ -39,8 +39,8 @@ public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements S
   }
 
   @Override
-  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
-    return getPartitionsCount(notifications) >= numPartitions;
+  public boolean isSatisfied(ProgramSchedule schedule, NotificationContext notificationContext) {
+    return getPartitionsCount(notificationContext.getNotifications()) >= numPartitions;
   }
 
   private int getPartitionsCount(List<Notification> notifications) {

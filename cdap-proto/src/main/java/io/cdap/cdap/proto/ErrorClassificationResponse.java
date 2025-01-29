@@ -31,7 +31,7 @@ public final class ErrorClassificationResponse {
   private final String errorCodeType;
   private final String errorCode;
   private final String supportedDocumentationUrl;
-  private transient String throwableClassName;
+  private transient final String throwableClassName;
 
   private ErrorClassificationResponse(String stageName, String errorCategory, String errorReason,
       String errorMessage, String errorType, String dependency, String errorCodeType,

@@ -576,31 +576,6 @@
   </property>
 
   <property>
-    <name>run.record.monitor.record.age.threshold.seconds</name>
-    <value>3600</value>
-    <description>
-      Maximum amount of time (in seconds) in which a run record is retained in
-      run record monitor.
-      This is to safe guard launch requests flow-control such that if a request
-      is somehow stuck in PENDING/STARTING
-      state, it will be dropped from after the threshold.
-      Note that run.record.monitor.cleanup.interval.seconds might be needed to
-      changed if this config changes.
-    </description>
-  </property>
-
-  <property>
-    <name>run.record.monitor.cleanup.interval.seconds</name>
-    <value>60</value>
-    <description>
-      Cleanup interval (in seconds) in which run record monitor service cleanup
-      logic runs to delete old entries.
-      Note that run.record.monitor.record.age.threshold.seconds might be needed
-      to changed if this config changes.
-    </description>
-  </property>
-
-  <property>
     <name>app.program.launch.threads</name>
     <value>20</value>
     <description>

@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
-import io.cdap.cdap.internal.app.services.RunRecordMonitorService;
+import io.cdap.cdap.internal.app.services.FlowControlService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -54,7 +54,7 @@ public class StartProgramEventSubscriber extends EventSubscriber {
   private final CConfiguration cConf;
   private final EventReaderProvider<StartProgramEvent> extensionProvider;
   private final ProgramLifecycleService lifecycleService;
-  private final RunRecordMonitorService runRecordMonitorService;
+  private final FlowControlService flowControlService;
   private ScheduledExecutorService executor;
   private Collection<EventReader<StartProgramEvent>> readers;
   private ExecutorService threadPoolExecutor;
@@ -66,17 +66,17 @@ public class StartProgramEventSubscriber extends EventSubscriber {
    * @param cConf                   CDAP configuration
    * @param extensionProvider       eventReaderProvider for StartProgramEvent Readers
    * @param lifecycleService        to publish start programs to TMS
-   * @param runRecordMonitorService basic flow-control
+   * @param flowControlService basic flow-control
    */
   @Inject
   StartProgramEventSubscriber(CConfiguration cConf,
                               EventReaderProvider<StartProgramEvent> extensionProvider,
                               ProgramLifecycleService lifecycleService,
-                              RunRecordMonitorService runRecordMonitorService) {
+                              FlowControlService flowControlService) {
     this.cConf = cConf;
     this.extensionProvider = extensionProvider;
     this.lifecycleService = lifecycleService;
-    this.runRecordMonitorService = runRecordMonitorService;
+    this.flowControlService = flowControlService;
     maxConcurrentRuns = -1;
   }
 
@@ -132,14 +132,14 @@ public class StartProgramEventSubscriber extends EventSubscriber {
     if (threadPoolExecutor != null) {
       for (EventReader<StartProgramEvent> reader : readers) {
         threadPoolExecutor.execute(() -> {
-          if (runRecordMonitorService.isRunning()) {
+          if (flowControlService.isRunning()) {
             // Only attempt to process event if there is no max or the current count is less than max
             if (hasNominalCapacity()) {
               processEvents(reader);
             }
           } else {
-            LOG.warn("RunRecordMonitorService not yet running, currently in state: {}."
-                + " Status will be checked again in next attempt.", runRecordMonitorService.state());
+            LOG.warn("FlowControlService not yet running, currently in state: {}."
+                + " Status will be checked again in next attempt.", flowControlService.state());
           }
         });
       }
@@ -153,7 +153,7 @@ public class StartProgramEventSubscriber extends EventSubscriber {
    */
   @VisibleForTesting
   boolean hasNominalCapacity() {
-    RunRecordMonitorService.Counter counter = runRecordMonitorService.getCount();
+    FlowControlService.Counter counter = flowControlService.getCounter();
     // no limit
     if (maxConcurrentRuns <= 0) {
       return true;

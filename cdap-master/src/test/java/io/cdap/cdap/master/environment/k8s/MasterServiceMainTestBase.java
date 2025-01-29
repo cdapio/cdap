@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
+import io.cdap.cdap.internal.bootstrap.executor.DefaultNamespaceCreator;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -129,6 +130,11 @@ public class MasterServiceMainTestBase {
     for (Class<? extends AbstractServiceMain> serviceMainClass : serviceMainClasses) {
       startService(serviceMainClass);
     }
+
+    // Creates default namespace from appfabric service required for tests.
+    getServiceMainInstance(AppFabricServiceMain.class).getInjector()
+        .getInstance(DefaultNamespaceCreator.class)
+        .execute(null);
   }
 
   @AfterClass

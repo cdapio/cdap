@@ -80,9 +80,9 @@ import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.logging.service.LogQueryService;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
@@ -564,7 +564,8 @@ public class StandaloneMain {
         new PreviewManagerModule(false),
         new PreviewRunnerManagerModule().getStandaloneModules(),
         new MessagingServerRuntimeModule().getStandaloneModules(),
-        new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
+        new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
+            .getStandaloneModules(),
         new MonitorHandlerModule(false, cConf),
         new RuntimeServerModule(),
         new OperationalStatsModule(),

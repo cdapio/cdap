@@ -85,7 +85,8 @@ public class SupportBundleTestModule extends AbstractModule {
     install(RemoteAuthenticatorModules.getNoOpModule());
     install(new IOModule());
     install(new InMemoryDiscoveryModule());
-    install(new AppFabricServiceRuntimeModule(cConf).getInMemoryModules());
+    install(new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
+        .getInMemoryModules());
     install(new MonitorHandlerModule(false, cConf));
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule());

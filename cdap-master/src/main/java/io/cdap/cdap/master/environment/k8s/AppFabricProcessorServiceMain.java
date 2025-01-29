@@ -25,6 +25,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -65,6 +66,7 @@ import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.store.SecureStoreService;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -98,7 +100,8 @@ public class AppFabricProcessorServiceMain extends AbstractServiceMain<Environme
         new AuditModule(),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
-        Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
+        Modules.override(new AppFabricServiceRuntimeModule(cConf, ServiceType.PROCESSOR)
+            .getDistributedModules())
             .with(new AbstractModule() {
               @Override
               protected void configure() {

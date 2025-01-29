@@ -82,6 +82,13 @@ public class BootstrapService extends AbstractIdleService {
   protected void startUp() {
     LOG.info("Starting {}", getClass().getSimpleName());
     config = bootstrapConfigProvider.getConfig();
+
+    // Do not start other services if no bootstrap steps were executed.
+    if (config.getSteps().isEmpty()) {
+      LOG.info("Skipping execution of bootstrap steps as bootstrap config has no steps.");
+      return;
+    }
+
     executorService = Executors.newSingleThreadExecutor(
         Threads.createDaemonThreadFactory("bootstrap-service"));
     executorService.execute(() -> {

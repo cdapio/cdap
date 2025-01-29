@@ -25,6 +25,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
@@ -51,6 +52,7 @@ import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -98,7 +100,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     List<Module> modules = new ArrayList<>(Arrays.asList(
         new DataSetServiceModules().getStandaloneModules(),
         new DataSetsModules().getStandaloneModules(),
-        new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
+        new AppFabricServiceRuntimeModule(cConf, ServiceType.SERVER).getStandaloneModules(),
         new ProgramRunnerRuntimeModule().getStandaloneModules(),
         new MetricsStoreModule(),
         new MessagingServiceModule(cConf),
