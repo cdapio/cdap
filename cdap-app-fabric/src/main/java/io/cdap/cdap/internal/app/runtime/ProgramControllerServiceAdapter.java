@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
@@ -94,7 +94,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        Throwable rootCause = Throwables.getRootCause(failure);
+        Throwable rootCause = getRootCause(failure);
         LOG.error("{} Program '{}' failed.", getProgramRunId().getType(),
             getProgramRunId().getProgram(), failure);
         USER_LOG.error(
@@ -102,6 +102,18 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
             getProgramRunId().getType(), getProgramRunId().getProgram(), rootCause.getMessage(),
             rootCause);
         error(failure);
+      }
+
+      private Throwable getRootCause(Throwable failure) {
+        Throwable cause;
+        while ((cause = failure.getCause()) != null) {
+          failure = cause;
+          if (WrappedStageException.class.isAssignableFrom(failure.getClass())) {
+            // to prevent stage information from getting lost from the log.
+            break;
+          }
+        }
+        return failure;
       }
 
       @Override
