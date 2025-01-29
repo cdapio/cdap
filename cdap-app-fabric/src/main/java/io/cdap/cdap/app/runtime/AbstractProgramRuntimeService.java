@@ -18,6 +18,7 @@ package io.cdap.cdap.app.runtime;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.io.Closeables;
@@ -26,12 +27,14 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.deploy.ProgramRunDispatcherContext;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.proto.InMemoryProgramLiveInfo;
 import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
@@ -46,6 +49,8 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,6 +64,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,27 +127,38 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options,
       RunId runId) {
-    ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(
-        programDescriptor, options, runId,
-        isDistributed());
     ProgramId programId = programDescriptor.getProgramId();
     ProgramRunId programRunId = programId.run(runId);
-    DelayedProgramController controller = new DelayedProgramController(programRunId);
-    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId,
-        dispatcherContext::executeCleanupTasks);
-    updateRuntimeInfo(runtimeInfo);
-    executor.execute(() -> {
-      try {
-        controller.setProgramController(
-            programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
-                .dispatchProgram(dispatcherContext));
-      } catch (Exception e) {
-        controller.failed(e);
-        programStateWriter.error(programRunId, e);
-        LOG.error("Exception while trying to run program run {}", programRunId, e);
+    Lock lock = runtimeInfosLock.writeLock();
+    lock.lock();
+    try {
+      RuntimeInfo runtimeInfo = lookup(programRunId.getParent(), runId);
+      if (runtimeInfo != null) {
+        return runtimeInfo;
       }
-    });
-    return runtimeInfo;
+
+      ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(
+          programDescriptor, options, runId,
+          isDistributed());
+      DelayedProgramController controller = new DelayedProgramController(programRunId);
+      runtimeInfo = createRuntimeInfo(controller, programId,
+          dispatcherContext::executeCleanupTasks);
+      updateRuntimeInfo(runtimeInfo);
+      executor.execute(() -> {
+        try {
+          controller.setProgramController(
+              programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
+                  .dispatchProgram(dispatcherContext));
+        } catch (Exception e) {
+          controller.failed(e);
+          programStateWriter.error(programRunId, e);
+          LOG.error("Exception while trying to run program run {}", programRunId, e);
+        }
+      });
+      return runtimeInfo;
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -237,6 +254,28 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       }
     }
     return runningPrograms;
+  }
+
+  @Override
+  public void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames,
+      @Nullable String runId) throws Exception {
+    if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
+      throw new BadRequestException(
+          String.format("Resetting log levels for program type %s is not supported",
+              programId.getType().getPrettyName()));
+    }
+    resetLogLevels(programId, loggerNames, runId);
+  }
+
+  @Override
+  public void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
+      @Nullable String runId) throws Exception {
+    if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
+      throw new BadRequestException(
+          String.format("Updating log levels for program type %s is not supported",
+              programId.getType().getPrettyName()));
+    }
+    updateLogLevels(programId, logLevels, runId);
   }
 
   @Override
@@ -435,5 +474,80 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     if (info instanceof Closeable) {
       Closeables.closeQuietly((Closeable) info);
     }
+  }
+
+  /**
+   * Helper method to get the {@link LogLevelUpdater} for the program.
+   */
+  private LogLevelUpdater getLogLevelUpdater(RuntimeInfo runtimeInfo) throws Exception {
+    ProgramController programController = runtimeInfo.getController();
+    if (!(programController instanceof LogLevelUpdater)) {
+      throw new BadRequestException(
+          "Update log levels at runtime is only supported in distributed mode");
+    }
+    return ((LogLevelUpdater) programController);
+  }
+
+  /**
+   * Helper method to update log levels for Worker or Service.
+   */
+  private void updateLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
+      @Nullable String runId) throws Exception {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values()
+        .stream()
+        .findFirst().orElse(null);
+    if (runtimeInfo != null) {
+      LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
+      logLevelUpdater.updateLogLevels(logLevels, null);
+    }
+  }
+
+  /**
+   * Helper method to reset log levels for Worker or Service.
+   */
+  private void resetLogLevels(ProgramId programId, Set<String> loggerNames, @Nullable String runId)
+      throws Exception {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values()
+        .stream()
+        .findFirst().orElse(null);
+    if (runtimeInfo != null) {
+      LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
+      logLevelUpdater.resetLogLevels(loggerNames, null);
+    }
+  }
+
+  @Override
+  public void setInstances(ProgramId programId, int instances, int oldInstances)
+      throws ExecutionException, InterruptedException, BadRequestException {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+    if (runtimeInfo != null) {
+      runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+          ImmutableMap.of("runnable", programId.getProgram(),
+              "newInstances", String.valueOf(instances),
+              "oldInstances", String.valueOf(oldInstances))).get();
+    }
+  }
+
+  private Map<RunId, ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(
+      ProgramId programId, @Nullable String runId) throws BadRequestException {
+
+    if (runId != null) {
+      RunId run;
+      try {
+        run = RunIds.fromString(runId);
+      } catch (IllegalArgumentException e) {
+        throw new BadRequestException("Error parsing run-id.", e);
+      }
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lookup(programId, run);
+      return runtimeInfo == null ? Collections.emptyMap()
+          : Collections.singletonMap(run, runtimeInfo);
+    }
+    return new HashMap<>(list(programId));
+  }
+
+  @Nullable
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId)
+      throws BadRequestException {
+    return findRuntimeInfo(programId, null).values().stream().findFirst().orElse(null);
   }
 }

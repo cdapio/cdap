@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -49,12 +50,11 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
   private final long scheduleIntervalInMillis;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
-  private final ProgramRuntimeLifecycleService runtimeLifecycleService;
   private final AtomicReference<Map<ProgramId, Arguments>> programsEnabled;
 
   @Inject
   SystemProgramManagementService(CConfiguration cConf, ProgramRuntimeService programRuntimeService,
-      ProgramLifecycleService programLifecycleService, ProgramRuntimeLifecycleService runtimeLifecycleService) {
+      ProgramLifecycleService programLifecycleService) {
     super(RetryStrategies
         .fixDelay(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS),
             TimeUnit.SECONDS));
@@ -62,7 +62,6 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
         .toMillis(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS));
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
-    this.runtimeLifecycleService = runtimeLifecycleService;
     this.programsEnabled = new AtomicReference<>();
   }
 
@@ -123,7 +122,10 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
       Map<String, String> overrides = enabledProgramsMap.get(programId).asMap();
       LOG.debug("Starting program {} with args {}", programId, overrides);
       try {
-        runtimeLifecycleService.start(programId, overrides, false, false);
+        ProgramStartRequest startRequest = programLifecycleService.start(programId, overrides, false, false);
+        programRuntimeService.run(
+            startRequest.getProgramDescriptor(), startRequest.getProgramOptions(), startRequest.getRunId())
+            .getController();
       } catch (ConflictException ex) {
         // Ignore if the program is already running.
         LOG.debug("Program {} is already running.", programId);

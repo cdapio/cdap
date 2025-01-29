@@ -87,7 +87,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
 
   @Test
   public void testEmptyRunsIsStopped() {
-    Assert.assertEquals(ProgramStatus.STOPPED, ProgramLifecycleService.getProgramStatus(Collections.emptyList()));
+    Assert.assertEquals(ProgramStatus.STOPPED, programLifecycleService.getProgramStatus(Collections.emptyList()));
   }
 
   @Test
@@ -101,33 +101,33 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       .build();
 
     // pending or starting -> starting
-    ProgramStatus status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    ProgramStatus status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STARTING, status);
 
     record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.STARTING).build();
-    status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STARTING, status);
 
     // running, suspended, resuming -> running
     record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.RUNNING).build();
-    status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.RUNNING, status);
 
     record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.SUSPENDED).build();
-    status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.RUNNING, status);
 
     // failed, killed, completed -> stopped
     record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.FAILED).build();
-    status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
 
     record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.KILLED).build();
-    status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
 
     record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.COMPLETED).build();
-    status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
+    status = programLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
   }
 
@@ -158,18 +158,18 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       .setStatus(ProgramRunStatus.COMPLETED).build();
 
     // running takes precedence over others
-    ProgramStatus status = ProgramLifecycleService.getProgramStatus(
+    ProgramStatus status = programLifecycleService.getProgramStatus(
       Arrays.asList(pending, starting, running, killed, failed, completed));
     Assert.assertEquals(ProgramStatus.RUNNING, status);
 
     // starting takes precedence over stopped
-    status = ProgramLifecycleService.getProgramStatus(Arrays.asList(pending, killed, failed, completed));
+    status = programLifecycleService.getProgramStatus(Arrays.asList(pending, killed, failed, completed));
     Assert.assertEquals(ProgramStatus.STARTING, status);
-    status = ProgramLifecycleService.getProgramStatus(Arrays.asList(starting, killed, failed, completed));
+    status = programLifecycleService.getProgramStatus(Arrays.asList(starting, killed, failed, completed));
     Assert.assertEquals(ProgramStatus.STARTING, status);
 
     // end states are stopped
-    status = ProgramLifecycleService.getProgramStatus(Arrays.asList(killed, failed, completed));
+    status = programLifecycleService.getProgramStatus(Arrays.asList(killed, failed, completed));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
   }
 

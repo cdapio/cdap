@@ -39,6 +39,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
@@ -937,6 +938,18 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getLatest(appRef);
     });
+  }
+
+  @Override
+  public ApplicationId getLatestApp(ApplicationReference appRef) throws ApplicationNotFoundException {
+    ApplicationMeta appMeta = getLatest(appRef);
+    if (appMeta == null) {
+      throw new ApplicationNotFoundException(appRef);
+    }
+
+    return new ApplicationId(appRef.getNamespace(),
+        appRef.getApplication(),
+        appMeta.getSpec().getAppVersion());
   }
 
   @Override
