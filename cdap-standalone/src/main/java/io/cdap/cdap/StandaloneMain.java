@@ -566,7 +566,7 @@ public class StandaloneMain {
         new MessagingServerRuntimeModule().getStandaloneModules(),
         new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
             .getStandaloneModules(),
-        new MonitorHandlerModule(false),
+        new MonitorHandlerModule(false, cConf),
         new RuntimeServerModule(),
         new OperationalStatsModule(),
         new MetricsWriterModule(),
