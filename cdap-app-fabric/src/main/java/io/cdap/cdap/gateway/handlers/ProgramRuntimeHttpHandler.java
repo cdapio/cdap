@@ -25,12 +25,15 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.gateway.handlers.util.NamespaceHelper;
+import io.cdap.cdap.gateway.handlers.util.ProgramHandlerUtil;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
-import io.cdap.cdap.internal.app.services.ProgramRuntimeLifecycleService;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.BatchRunnable;
 import io.cdap.cdap.proto.BatchRunnableInstances;
@@ -41,8 +44,12 @@ import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ServiceInstances;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -57,6 +64,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -64,22 +72,31 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * {@link io.cdap.http.HttpHandler} to manage program runtime lifecycle for v3 REST APIs
+ * {@link io.cdap.http.HttpHandler} to manage runtime of Programs for v3 REST APIs
+ *
+ * Only supported program types for this handler are {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycleHttpHandler {
+public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
 
-  private final ProgramRuntimeLifecycleService runtimeLifecycleService;
+  private final ProgramLifecycleService lifecycleService;
   private final ProgramRuntimeService runtimeService;
+  private final Store store;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  public ProgramRuntimeLifecycleHttpHandler(ProgramLifecycleService lifecycleService, Store store,
-      ProgramRuntimeLifecycleService runtimeLifecycleService, ProgramRuntimeService runtimeService,
-      NamespaceQueryAdmin namespaceQueryAdmin) {
-    super(lifecycleService, store, namespaceQueryAdmin);
-    this.runtimeLifecycleService = runtimeLifecycleService;
+  public ProgramRuntimeHttpHandler(ProgramLifecycleService lifecycleService, Store store,
+      ProgramRuntimeService runtimeService, NamespaceQueryAdmin namespaceQueryAdmin, AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
+    this.lifecycleService = lifecycleService;
     this.runtimeService = runtimeService;
+    this.store = store;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   private static final Type BATCH_RUNNABLES_TYPE = new TypeToken<List<BatchRunnable>>() {
@@ -125,14 +142,14 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
   public void getInstances(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
 
-    List<BatchRunnable> runnables = validateAndGetBatchInput(request, BATCH_RUNNABLES_TYPE);
+    List<BatchRunnable> runnables = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_RUNNABLES_TYPE);
 
     // cache app specs to perform fewer store lookups
     Map<ApplicationId, ApplicationSpecification> appSpecs = new HashMap<>();
 
     List<BatchRunnableInstances> output = new ArrayList<>(runnables.size());
     for (BatchRunnable runnable : runnables) {
-      // cant get instances for things that are not flows, services, or workers
+      // cant get instances for things that are not services, or workers
       if (!canHaveInstances(runnable.getProgramType())) {
         output.add(
             new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
@@ -143,8 +160,7 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
 
       ApplicationId appId = new ApplicationId(namespaceId, runnable.getAppId());
       try {
-        appId = new ApplicationId(namespaceId, runnable.getAppId(),
-            getLatestAppVersion(new NamespaceId(namespaceId), runnable.getAppId()));
+        appId = store.getLatestApp(new ApplicationReference(namespaceId, runnable.getAppId()));
       } catch (ApplicationNotFoundException e) {
         output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
             String.format("App: %s not found", appId)));
@@ -160,7 +176,7 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
       output.add(getProgramInstances(runnable, spec, programId));
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(output));
   }
 
   /**
@@ -173,13 +189,12 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       @PathParam("app-id") String appId,
       @PathParam("service-id") String serviceId) throws Exception {
     try {
-      ProgramId programId = validateAndGetNamespace(namespaceId)
-          .app(appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
-          .service(serviceId);
+      NamespaceHelper.validateNamespace(namespaceQueryAdmin, namespaceId);
+      ProgramId programId = store.getLatestApp(new ApplicationReference(namespaceId, appId)).service(serviceId);
       lifecycleService.ensureProgramExists(programId);
       int instances = store.getServiceInstances(programId);
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(new ServiceInstances(instances, getInstanceCount(programId, serviceId))));
+          ProgramHandlerUtil.toJson(new ServiceInstances(instances, getInstanceCount(programId, serviceId))));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -196,13 +211,12 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       @PathParam("app-id") String appId,
       @PathParam("service-id") String serviceId) throws Exception {
     try {
-      ProgramId programId = new ApplicationId(namespaceId, appId,
-          getLatestAppVersion(new NamespaceId(namespaceId), appId))
+      ProgramId programId = store.getLatestApp(new ApplicationReference(namespaceId, appId))
           .program(ProgramType.SERVICE, serviceId);
       Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
-
       int instances = getInstances(request);
-      runtimeLifecycleService.setInstances(programId, instances);
+      accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+      setInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -224,12 +238,11 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       @PathParam("app-id") String appId,
       @PathParam("worker-id") String workerId) throws Exception {
     try {
-      ProgramId programId = validateAndGetNamespace(namespaceId)
-          .app(appId, getLatestAppVersion(new NamespaceId(namespaceId), appId))
-          .worker(workerId);
+      NamespaceHelper.validateNamespace(namespaceQueryAdmin, namespaceId);
+      ProgramId programId = store.getLatestApp(new ApplicationReference(namespaceId, appId)).worker(workerId);
       lifecycleService.ensureProgramExists(programId);
       int count = store.getWorkerInstances(programId);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Instances(count)));
+      responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(new Instances(count)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -252,9 +265,11 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       @PathParam("worker-id") String workerId) throws Exception {
     int instances = getInstances(request);
     try {
-      runtimeLifecycleService.setInstances(new ApplicationId(namespaceId, appId,
-          getLatestAppVersion(new NamespaceId(namespaceId), appId))
-          .program(ProgramType.WORKER, workerId), instances);
+      ProgramId programId = store.getLatestApp(new ApplicationReference(namespaceId, appId))
+          .program(ProgramType.WORKER, workerId);
+      Store.ensureProgramExists(programId, store.getApplication(programId.getParent()));
+      accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+      setInstances(programId, instances);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -266,6 +281,19 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
     }
   }
 
+  /**
+   * Gets runtime information about a running program.
+   *
+   * @param request the HTTP request
+   * @param responder the HTTP responder
+   * @param namespaceId namespaceId for the program
+   * @param appId appId for the program
+   * @param programCategory program type
+   * @param programId the program Id
+   *
+   * @throws BadRequestException
+   * @throws ApplicationNotFoundException
+   */
   @GET
   @Path("/apps/{app-id}/{program-category}/{program-id}/live-info")
   @SuppressWarnings("unused")
@@ -274,9 +302,8 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       @PathParam("app-id") String appId, @PathParam("program-category") String programCategory,
       @PathParam("program-id") String programId)
       throws BadRequestException, ApplicationNotFoundException {
-    ProgramType type = getProgramType(programCategory);
-    ProgramId program = new ApplicationId(namespaceId, appId,
-        getLatestAppVersion(new NamespaceId(namespaceId), appId))
+    ProgramType type = ProgramType.valueOfCategoryName(programCategory, BadRequestException::new);
+    ProgramId program = store.getLatestApp(new ApplicationReference(namespaceId, appId))
         .program(type, programId);
     getLiveInfo(responder, program, runtimeService);
   }
@@ -361,7 +388,7 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
   private void getLiveInfo(HttpResponder responder, ProgramId programId,
       ProgramRuntimeService runtimeService) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimeService.getLiveInfo(programId)));
+      responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(runtimeService.getLiveInfo(programId)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -444,10 +471,12 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       String appName,
       String appVersion, String type, String programName,
       String runId) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     try {
       Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
-      runtimeLifecycleService.resetProgramLogLevels(
+      ProgramId programId = new ApplicationId(namespace, appName, appVersion).program(programType, programName);
+      accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+      runtimeService.resetProgramLogLevels(
           new ApplicationId(namespace, appName, appVersion).program(programType, programName),
           loggerNames == null ? Collections.emptySet() : loggerNames, runId);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -462,11 +491,13 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
       String appName,
       String appVersion, String type, String programName,
       String runId) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     try {
       // we are decoding the body to Map<String, String> instead of Map<String, LogEntry.Level> here since Gson will
       // serialize invalid enum values to null, which is allowed for log level, instead of throw an Exception.
-      runtimeLifecycleService.updateProgramLogLevels(
+      ProgramId programId = new ApplicationId(namespace, appName, appVersion).program(programType, programName);
+      accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+      runtimeService.updateProgramLogLevels(
           new ApplicationId(namespace, appName, appVersion).program(programType, programName),
           transformLogLevelsMap(decodeArguments(request)), runId);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -477,5 +508,59 @@ public class ProgramRuntimeLifecycleHttpHandler extends AbstractProgramLifecycle
     } catch (SecurityException e) {
       throw new UnauthorizedException("Unauthorized to update the log levels");
     }
+  }
+
+  /**
+   * Set instances for the given program. Only supported program types for this action are {@link
+   * ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which instances are to be
+   *     updated
+   * @param instances the number of instances to be updated.
+   * @throws InterruptedException if there is an error while asynchronously updating instances
+   * @throws ExecutionException if there is an error while asynchronously updating instances
+   * @throws BadRequestException if the number of instances specified is less than 0
+   * @throws UnauthorizedException if the user does not have privileges to set instances for the
+   *     specified program. To set instances for a program, a user needs {@link
+   *     StandardPermission#UPDATE} on the program.
+   */
+  private void setInstances(ProgramId programId, int instances) throws Exception {
+    if (instances < 1) {
+      throw new BadRequestException(
+          String.format("Instance count should be greater than 0. Got %s.", instances));
+    }
+    switch (programId.getType()) {
+      case SERVICE:
+        int oldInstances = store.getServiceInstances(programId);
+        if (oldInstances != instances) {
+          store.setServiceInstances(programId, instances);
+          runtimeService.setInstances(programId, instances, instances);
+        }
+        break;
+      case WORKER:
+        oldInstances = store.getWorkerInstances(programId);
+        if (oldInstances != instances) {
+          store.setWorkerInstances(programId, instances);
+          runtimeService.setInstances(programId, instances, instances);
+        }
+        break;
+      default:
+        throw new BadRequestException(
+            String.format("Setting instances for program type %s is not supported",
+                programId.getType().getPrettyName()));
+    }
+  }
+
+  private RunRecordDetail getRunRecordDetailFromId(String namespaceId, String appName, String type,
+      String programName, String runId) throws NotFoundException, BadRequestException {
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
+    ProgramReference programRef = new ApplicationReference(namespaceId, appName).program(programType,
+        programName);
+    RunRecordDetail runRecordMeta = store.getRun(programRef, runId);
+    if (runRecordMeta == null) {
+      throw new NotFoundException(
+          String.format("No run record found for program %s and runID: %s", programRef, runId));
+    }
+    return runRecordMeta;
   }
 }

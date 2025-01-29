@@ -46,6 +46,9 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.gateway.handlers.util.NamespaceHelper;
+import io.cdap.cdap.gateway.handlers.util.ProgramHandlerUtil;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -121,7 +124,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHandler {
+public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
   private static final Type BATCH_PROGRAMS_TYPE = new TypeToken<List<BatchProgram>>() {
@@ -134,20 +137,24 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   private static final String SCHEDULES = "schedules";
 
   private final ProgramScheduleService programScheduleService;
-  // private final ProgramLifecycleService lifecycleService;
+  private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final MRJobInfoFetcher mrJobInfoFetcher;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final Store store;
 
   @Inject
   ProgramLifecycleHttpHandler(Store store,
       DiscoveryServiceClient discoveryServiceClient,
       ProgramLifecycleService lifecycleService,
-      NamespaceQueryAdmin namespaceQueryAdmin,
       MRJobInfoFetcher mrJobInfoFetcher,
+      NamespaceQueryAdmin namespaceQueryAdmin,
       ProgramScheduleService programScheduleService) {
-    super(lifecycleService, store, namespaceQueryAdmin);
+    this.store = store;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.lifecycleService = lifecycleService;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.programScheduleService = programScheduleService;
   }
 
@@ -243,7 +250,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       return;
     }
 
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramStatus programStatus;
     if (ApplicationId.DEFAULT_VERSION.equals(versionId)) {
       programStatus = lifecycleService.getProgramStatus(
@@ -254,7 +261,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     }
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(status));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(status));
   }
 
   /**
@@ -268,7 +275,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("program-type") String type,
       @PathParam("program-id") String programId,
       @PathParam("run-id") String runId) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramReference program = new ApplicationReference(namespaceId, appId).program(programType,
         programId);
 
@@ -351,7 +358,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       return;
     }
 
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramReference programReference = new ProgramReference(namespaceId, appId, programType,
         programId);
     ProgramId program = applicationId.program(programType, programId);
@@ -434,7 +441,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @QueryParam("end") String endTs,
       @QueryParam("limit") @DefaultValue("100") final int resultLimit)
       throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
 
     long start = parseAndValidate(startTs, 0L, "start");
     long end = parseAndValidate(endTs, Long.MAX_VALUE, "end");
@@ -451,7 +458,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     List<RunRecord> records = lifecycleService.getAllRunRecords(programReference, runStatus, start,
         end, resultLimit,
         record -> !isTetheredRunRecord(record));
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(records));
   }
 
   /**
@@ -471,7 +478,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @QueryParam("end") String endTs,
       @QueryParam("limit") @DefaultValue("100") final int resultLimit)
       throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
 
     long start = parseAndValidate(startTs, 0L, "start");
     long end = parseAndValidate(endTs, Long.MAX_VALUE, "end");
@@ -496,7 +503,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     }
     records = records.stream().filter(record -> !isTetheredRunRecord(record))
         .collect(Collectors.toList());
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(records));
   }
 
   private long parseAndValidate(String strVal, long defaultVal, String paramName)
@@ -521,12 +528,19 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-name") String appName,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName,
-      @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
-    RunRecordDetail runRecordMeta = getRunRecordDetailFromId(namespaceId, appName, type,
-        programName, runid);
+      @PathParam("run-id") String runId) throws NotFoundException, BadRequestException {
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
+    ProgramReference programRef = new ApplicationReference(namespaceId, appName).program(programType,
+        programName);
+    RunRecordDetail runRecordMeta = store.getRun(programRef, runId);
+    if (runRecordMeta == null) {
+      throw new NotFoundException(
+          String.format("No run record found for program %s and runID: %s", programRef, runId));
+    }
+
     if (!isTetheredRunRecord(runRecordMeta)) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
+      responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(runRecord));
       return;
     }
     throw new NotFoundException(runRecordMeta.getProgramRunId());
@@ -548,13 +562,13 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("program-name") String programName,
       @PathParam("run-id") String runid)
       throws NotFoundException, BadRequestException {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType,
         programName);
     RunRecordDetail runRecordMeta = store.getRun(progId.run(runid));
     if (runRecordMeta != null && !isTetheredRunRecord(runRecordMeta)) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
+      responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(runRecord));
       return;
     }
     throw new NotFoundException(progId.run(runid));
@@ -570,10 +584,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-name") String appName,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
-    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType,
-        programName);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
+    ProgramId programId = store.getLatestApp(new ApplicationReference(namespaceId, appName))
+        .program(programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
   }
 
@@ -588,9 +601,8 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-name") String appName,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
-    ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType,
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
+    ProgramId programId = store.getLatestApp(new ApplicationReference(namespaceId, appName)).program(programType,
         programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
   }
@@ -609,7 +621,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-version") String appVersion,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType,
         programName);
     getProgramIdRuntimeArgs(programId, responder);
@@ -630,12 +642,12 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-version") String appVersion,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    String latestVersion = getLatestAppVersion(new NamespaceId(namespaceId), appName);
+    String latestVersion = store.getLatestApp(new ApplicationReference(namespaceId, appName)).getVersion();
     if (!appVersion.equals(latestVersion) && !ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
       throw new BadRequestException(
           "Runtime arguments can only be changed on the latest program version");
     }
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType,
         programName);
     saveProgramIdRuntimeArgs(programId, request, responder);
@@ -644,7 +656,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   private void getProgramIdRuntimeArgs(ProgramId programId, HttpResponder responder)
       throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(lifecycleService.getRuntimeArgs(programId)));
+        ProgramHandlerUtil.toJson(lifecycleService.getRuntimeArgs(programId)));
   }
 
   private void saveProgramIdRuntimeArgs(ProgramId programId, FullHttpRequest request,
@@ -676,7 +688,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-version") String appVersion,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ApplicationId application = new ApplicationId(namespaceId, appName, appVersion);
     ProgramId programId = application.program(programType, programName);
     ProgramSpecification specification;
@@ -690,7 +702,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     if (specification == null) {
       throw new NotFoundException(programId);
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(specification));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(specification));
   }
 
   /**
@@ -755,7 +767,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       throw new BadRequestException("Must specify trigger-program-name as a query param");
     }
 
-    ProgramType programType = getProgramType(triggerProgramType);
+    ProgramType programType = ProgramType.valueOfCategoryName(triggerProgramType, BadRequestException::new);
     ProgramScheduleStatus programScheduleStatus;
     try {
       programScheduleStatus =
@@ -796,7 +808,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
         .map(ProgramScheduleRecord::toScheduleDetail)
         .collect(Collectors.toList());
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
+        ProgramHandlerUtil.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
   }
 
   @GET
@@ -828,7 +840,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     ScheduleId scheduleId = new ApplicationId(namespace, app).schedule(scheduleName);
     ProgramScheduleRecord record = programScheduleService.getRecord(scheduleId);
     ScheduleDetail detail = record.toScheduleDetail();
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(detail, ScheduleDetail.class));
   }
 
   /**
@@ -906,7 +918,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("program-name") String program,
       @QueryParam("trigger-type") String triggerType,
       @QueryParam("schedule-status") String scheduleStatus) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     if (programType.getSchedulableType() == null) {
       throw new BadRequestException("Program type " + programType + " cannot have schedule");
     }
@@ -967,7 +979,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
         .map(ProgramScheduleRecord::toScheduleDetail)
         .collect(Collectors.toList());
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
+        ProgramHandlerUtil.toJson(details, Schedulers.SCHEDULE_DETAILS_TYPE));
   }
 
   /**
@@ -977,14 +989,12 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   @Path("/apps/{app-name}/{program-type}/{program-name}/previousruntime")
   public void getPreviousScheduledRunTime(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
-      @PathParam("app-name") String appId,
+      @PathParam("app-name") String appName,
       @PathParam("program-type") String type,
       @PathParam("program-name") String program) throws Exception {
-    ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    handleScheduleRunTime(responder,
-        new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
-        true);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
+    ApplicationId appId = store.getLatestApp(new ApplicationReference(namespaceId, appName));
+    handleScheduleRunTime(responder, appId.program(programType, program), true);
   }
 
   /**
@@ -994,14 +1004,12 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   @Path("/apps/{app-name}/{program-type}/{program-name}/nextruntime")
   public void getNextScheduledRunTime(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
-      @PathParam("app-name") String appId,
+      @PathParam("app-name") String appName,
       @PathParam("program-type") String type,
       @PathParam("program-name") String program) throws Exception {
-    ProgramType programType = getProgramType(type);
-    String appVersion = getLatestAppVersion(new NamespaceId(namespaceId), appId);
-    handleScheduleRunTime(responder,
-        new NamespaceId(namespaceId).app(appId, appVersion).program(programType, program),
-        false);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
+    ApplicationId appId = store.getLatestApp(new ApplicationReference(namespaceId, appName));
+    handleScheduleRunTime(responder, appId.program(programType, program), false);
   }
 
   private void handleScheduleRunTime(HttpResponder responder, ProgramId programId,
@@ -1009,7 +1017,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     try {
       lifecycleService.ensureProgramExists(programId);
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(getScheduledRunTimes(programId, previousRuntimeRequested)));
+          ProgramHandlerUtil.toJson(getScheduledRunTimes(programId, previousRuntimeRequested)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -1039,9 +1047,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void batchPreviousRunTimes(FullHttpRequest request,
       HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
-    List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> batchPrograms = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(batchRunTimes(namespaceId, batchPrograms, true)));
+        ProgramHandlerUtil.toJson(batchRunTimes(namespaceId, batchPrograms, true)));
   }
 
   /**
@@ -1068,9 +1076,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void batchNextRunTimes(FullHttpRequest request,
       HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
-    List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> batchPrograms = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(batchRunTimes(namespaceId, batchPrograms, false)));
+        ProgramHandlerUtil.toJson(batchRunTimes(namespaceId, batchPrograms, false)));
   }
 
   /**
@@ -1240,7 +1248,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
         Charsets.UTF_8)) {
       // The schedule spec in the request body does not contain the program information
-      json = DECODE_GSON.fromJson(reader, JsonElement.class);
+      json = ProgramHandlerUtil.fromJson(reader, JsonElement.class);
     } catch (IOException e) {
       throw new IOException("Error reading request body", e);
     } catch (JsonSyntaxException e) {
@@ -1248,11 +1256,11 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
     }
     if (!json.isJsonObject()) {
       throw new BadRequestException(
-          "Expected a json object in the request body but received " + GSON.toJson(json));
+          "Expected a json object in the request body but received " + ProgramHandlerUtil.toJson(json));
     }
     ScheduleDetail scheduleDetail;
     try {
-      scheduleDetail = DECODE_GSON.fromJson(json, ScheduleDetail.class);
+      scheduleDetail = ProgramHandlerUtil.fromJson(json, ScheduleDetail.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
           "Error parsing request body as a schedule specification: " + e.getMessage());
@@ -1330,7 +1338,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void getStatuses(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
-    List<BatchProgram> batchPrograms = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> batchPrograms = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramReference> programs = batchPrograms.stream()
         .map(p -> new ProgramReference(namespaceId, p.getAppId(), p.getProgramType(),
             p.getProgramId()))
@@ -1354,7 +1362,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
             null, statuses.get(programId).name()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(result));
   }
 
   /**
@@ -1390,13 +1398,11 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
   public void stopPrograms(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
-    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> programs = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
     List<BatchProgramResult> issuedStops = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
-      ApplicationId applicationId = new ApplicationId(namespaceId, program.getAppId(),
-          getLatestAppVersion(new NamespaceId(namespaceId),
-              program.getAppId()));
+      ApplicationId applicationId = store.getLatestApp(new ApplicationReference(namespaceId, program.getAppId()));
       ProgramId programId = new ProgramId(applicationId, program.getProgramType(),
           program.getProgramId());
       try {
@@ -1414,7 +1420,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       }
     }
 
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(issuedStops));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(issuedStops));
   }
 
   /**
@@ -1453,13 +1459,11 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void startPrograms(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
 
-    List<BatchProgramStart> programs = validateAndGetBatchInput(request, BATCH_STARTS_TYPE);
+    List<BatchProgramStart> programs = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_STARTS_TYPE);
 
     List<BatchProgramResult> output = new ArrayList<>(programs.size());
     for (BatchProgramStart program : programs) {
-      ApplicationId applicationId = new ApplicationId(namespaceId, program.getAppId(),
-          getLatestAppVersion(new NamespaceId(namespaceId),
-              program.getAppId()));
+      ApplicationId applicationId = store.getLatestApp(new ApplicationReference(namespaceId, program.getAppId()));
       ProgramId programId = new ProgramId(applicationId, program.getProgramType(),
           program.getProgramId());
       try {
@@ -1476,7 +1480,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
             new BatchProgramResult(program, HttpResponseStatus.CONFLICT.code(), e.getMessage()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(output));
   }
 
   /**
@@ -1517,7 +1521,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   @Path("/runcount")
   public void getRunCounts(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
-    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> programs = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
       throw new BadRequestException(
           String.format("%d programs found in the request, the maximum number "
@@ -1548,7 +1552,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
                 exception.getMessage(), null));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(counts));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(counts));
   }
 
   /**
@@ -1589,7 +1593,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   @Path("/runs")
   public void getLatestRuns(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
-    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    List<BatchProgram> programs = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     List<ProgramReference> programRefs =
         programs.stream().map(
                 p -> new ProgramReference(namespaceId, p.getAppId(), p.getProgramType(),
@@ -1620,7 +1624,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
                 exception.getMessage(), Collections.emptyList()));
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(response));
   }
 
   /**
@@ -1633,11 +1637,11 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-name") String appName,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramReference programReference = new ProgramReference(namespaceId, appName, programType,
         programName);
     long runCount = lifecycleService.getProgramTotalRunCount(programReference);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runCount));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(runCount));
   }
 
   /**
@@ -1651,7 +1655,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("app-version") String appVersion,
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName) throws Exception {
-    ProgramType programType = getProgramType(type);
+    ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     long runCount;
     if (ApplicationId.DEFAULT_VERSION.equals(appVersion)) {
       ProgramReference programReference = new ProgramReference(namespaceId, appName, programType,
@@ -1662,7 +1666,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
           programName);
       runCount = lifecycleService.getProgramRunCount(programId);
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runCount));
+    responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(runCount));
   }
 
   /*
@@ -1677,8 +1681,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(
-            lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.MAPREDUCE)));
+        ProgramHandlerUtil.toJson(
+            lifecycleService.list(NamespaceHelper.validateNamespace(namespaceQueryAdmin,namespaceId),
+                ProgramType.MAPREDUCE)));
   }
 
   /**
@@ -1689,8 +1694,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void getAllSpark(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(
-            lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SPARK)));
+        ProgramHandlerUtil.toJson(
+            lifecycleService.list(NamespaceHelper.validateNamespace(namespaceQueryAdmin,namespaceId),
+                ProgramType.SPARK)));
   }
 
   /**
@@ -1701,8 +1707,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(
-            lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.WORKFLOW)));
+        ProgramHandlerUtil.toJson(
+            lifecycleService.list(NamespaceHelper.validateNamespace(namespaceQueryAdmin,namespaceId),
+                ProgramType.WORKFLOW)));
   }
 
   /**
@@ -1713,8 +1720,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void getAllServices(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(
-            lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.SERVICE)));
+        ProgramHandlerUtil.toJson(
+            lifecycleService.list(NamespaceHelper.validateNamespace(namespaceQueryAdmin,namespaceId),
+                ProgramType.SERVICE)));
   }
 
   @GET
@@ -1722,8 +1730,9 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(
-            lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.WORKER)));
+        ProgramHandlerUtil.toJson(
+            lifecycleService.list(NamespaceHelper.validateNamespace(namespaceQueryAdmin,namespaceId),
+                ProgramType.WORKER)));
   }
 
   /**
@@ -1756,7 +1765,7 @@ public class ProgramLifecycleHttpHandler extends AbstractProgramLifecycleHttpHan
       @PathParam("service-type") String serviceType,
       @PathParam("program-name") String programName) throws Exception {
     // Currently, we only support services and sparks as the service-type
-    ProgramType programType = getProgramType(serviceType);
+    ProgramType programType = ProgramType.valueOfCategoryName(serviceType, BadRequestException::new);
     if (!ServiceDiscoverable.getUserServiceTypes().contains(programType)) {
       throw new BadRequestException(
           "Only service or spark is support for service availability check");

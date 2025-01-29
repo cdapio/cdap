@@ -250,7 +250,7 @@ public class RouterPathLookupTest {
     String path = "/v3/namespaces/default//apps/WordCount/services/WordCountService/instances";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP,  result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR,  result);
   }
 
   @Test

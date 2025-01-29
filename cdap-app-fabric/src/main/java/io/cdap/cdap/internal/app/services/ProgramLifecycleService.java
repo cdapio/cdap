@@ -24,11 +24,12 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
-import io.cdap.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
@@ -43,11 +44,13 @@ import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -69,6 +72,7 @@ import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -76,6 +80,7 @@ import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
+import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -86,7 +91,6 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -110,7 +114,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Service that manages lifecycle of Programs.
  */
-public class ProgramLifecycleService extends AbstractProgramLifecycleService {
+public class ProgramLifecycleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleService.class);
 
@@ -125,15 +129,22 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
       ProgramRunStatus.SUSPENDED);
 
   private final Store store;
+  private final ProgramStateWriter programStateWriter;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
+  private final PropertiesResolver propertiesResolver;
+  private final CapabilityReader capabilityReader;
+  private final ArtifactRepository artifactRepository;
   private final ProfileService profileService;
   private final PreferencesService preferencesService;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
+  private final FlowControlService flowControlService;
   private final int maxConcurrentRuns;
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
   private final int batchSize;
-  private final FlowControlService flowControlService;
+
   private final boolean userProgramLaunchDisabled;
 
   @Inject
@@ -146,15 +157,19 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
       ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
       ArtifactRepository artifactRepository,
       FlowControlService flowControlService) {
-    super(store, programStateWriter, accessEnforcer, authenticationContext, propertiesResolver,
-        capabilityReader, artifactRepository);
+    this.store = store;
+    this.programStateWriter = programStateWriter;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
+    this.propertiesResolver = propertiesResolver;
+    this.capabilityReader = capabilityReader;
+    this.artifactRepository = artifactRepository;
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.maxConcurrentLaunching = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING);
     this.defaultStopTimeoutSecs = cConf.getInt(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
     this.userProgramLaunchDisabled = cConf.getBoolean(
         Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
     this.batchSize = cConf.getInt(Constants.AppFabric.STREAMING_BATCH_SIZE);
-    this.store = store;
     this.profileService = profileService;
     this.preferencesService = preferencesService;
     this.provisionerNotifier = provisionerNotifier;
@@ -175,14 +190,31 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
   }
 
   /**
+   * Returns the program status.
+   *
+   * @param programId the id of the program for which the status call is made
+   * @return the status of the program
+   * @throws NotFoundException if the application to which this program belongs was not found
+   */
+  public ProgramStatus getProgramStatus(ProgramId programId) throws Exception {
+    // check that app exists
+    ApplicationId appId = programId.getParent();
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      throw new NotFoundException(appId);
+    }
+
+    return getExistingAppProgramStatus(appSpec, programId);
+  }
+
+  /**
    * Gets the {@link ProgramStatus} for the given set of programs.
    *
    * @param programRefs collection of versionless program ids for retrieving status
    * @return a {@link Map} from the {@link ProgramId} to the corresponding status; there will be no
    *     entry for programs that do not exist.
    */
-  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramReference> programRefs)
-      throws Exception {
+  public Map<ProgramId, ProgramStatus> getProgramStatuses(Collection<ProgramReference> programRefs) {
     // filter the result
     Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(
         new LinkedHashSet<>(programRefs),
@@ -506,7 +538,6 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
     }
 
     authorizePipelineRuntimeImpersonation(userArgs);
-
     return runInternal(programId, userArgs, sysArgs, debug);
   }
 
@@ -614,7 +645,6 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
     userId = userId == null ? "" : userId;
 
     checkCapability(programDescriptor);
-
     ProgramRunId programRunId = programId.run(runId);
     FlowControlService.Counter counter = flowControlService.addRequestAndGetCounter(
         programRunId, programOptions, programDescriptor);
@@ -704,6 +734,61 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
         GSON.toJson(getPluginRequirements(programSpecification)));
     return new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
         new BasicArguments(userArgs), debug);
+  }
+
+  /**
+   * Starts a Program with the specified argument overrides, skipping cluster lifecycle steps in the
+   * run.
+   *
+   * NOTE: {@Link ProgramRuntimeService#run} needs be called to start the program run.
+   *
+   * NOTE: This method should only be called from preview runner.
+   *
+   * @param programId the {@link ProgramId} to start/stop
+   * @param overrides the arguments to override in the program's configured user arguments
+   *     before starting
+   * @param debug {@code true} if the program is to be started in debug mode, {@code false}
+   *     otherwise
+   * @param isPreview true if the program is for preview run, for preview run, the app is
+   *     already deployed with resolved properties, so no need to regenerate app spec again
+   *
+   * @throws ConflictException if the specified program is already running, and if concurrent
+   *     runs are not allowed
+   * @throws NotFoundException if the specified program or the app it belongs to is not found in
+   *     the specified namespace
+   * @throws IOException if there is an error starting the program
+   * @throws UnauthorizedException if the logged in user is not authorized to start the program.
+   *     To start a program, a user requires {@link ApplicationPermission#EXECUTE} on the program
+   * @throws Exception if there were other exceptions checking if the current user is authorized
+   *     to start the program
+   */
+  public ProgramStartRequest prepareStart(ProgramId programId, Map<String, String> overrides, boolean debug,
+      boolean isPreview) throws Exception {
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
+        ApplicationPermission.EXECUTE);
+    checkConcurrentExecution(programId);
+
+    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
+    addAppCdapVersion(programId, sysArgs);
+    sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
+    sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    sysArgs.put(ProgramOptionConstants.IS_PREVIEW, Boolean.toString(isPreview));
+    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
+    if (overrides != null) {
+      userArgs.putAll(overrides);
+    }
+
+    authorizePipelineRuntimeImpersonation(userArgs);
+    BasicArguments systemArguments = new BasicArguments(sysArgs);
+    BasicArguments userArguments = new BasicArguments(userArgs);
+    ProgramOptions programOptions = new SimpleProgramOptions(programId, systemArguments, userArguments, debug);
+
+    ProgramDescriptor programDescriptor = store.loadProgram(programId);
+    checkCapability(programDescriptor);
+    ProgramRunId programRunId = programId.run(RunIds.generate());
+
+    programStateWriter.start(programRunId, programOptions, null, programDescriptor);
+    return new ProgramStartRequest(programOptions, programDescriptor, programRunId);
   }
 
   /**
@@ -965,7 +1050,6 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
    * @throws NotFoundException if the program is not found
    * @throws Exception if failed to determine the state
    */
-  @Override
   public void checkConcurrentExecution(ProgramId programId) throws Exception {
     Map<ProgramRunId, RunRecordDetail> runs = store.getActiveRuns(programId);
     if (isConcurrentRunsInSameAppForbidden(programId.getType())) {
@@ -1141,5 +1225,169 @@ public class ProgramLifecycleService extends AbstractProgramLifecycleService {
       throws ApplicationNotFoundException {
     ApplicationId applicationId = getLatestApplicationId(programReference.getParent());
     return applicationId.program(programReference.getType(), programReference.getProgram());
+  }
+
+  public void checkCapability(ProgramDescriptor programDescriptor) throws Exception {
+    // Check for capability at application class level.
+    Set<ApplicationClass> applicationClasses = artifactRepository
+        .getArtifact(Id.Artifact.fromEntityId(programDescriptor.getArtifactId())).getMeta()
+        .getClasses()
+        .getApps();
+    for (ApplicationClass applicationClass : applicationClasses) {
+      Set<String> capabilities = applicationClass.getRequirements().getCapabilities();
+      capabilityReader.checkAllEnabled(capabilities);
+    }
+    for (Map.Entry<String, Plugin> pluginEntry : programDescriptor.getApplicationSpecification()
+        .getPlugins()
+        .entrySet()) {
+      Set<String> capabilities = pluginEntry.getValue().getPluginClass().getRequirements()
+          .getCapabilities();
+      capabilityReader.checkAllEnabled(capabilities);
+    }
+  }
+
+  /**
+   * Adds {@link Constants#APP_CDAP_VERSION} system argument to the argument map if known.
+   *
+   * @param programId program that corresponds to application with version information
+   * @param systemArgs map to add version information to
+   */
+  private void addAppCdapVersion(ProgramId programId, Map<String, String> systemArgs) {
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    if (appSpec != null) {
+      String appCDAPVersion = appSpec.getAppCDAPVersion();
+      if (appCDAPVersion != null) {
+        systemArgs.put(Constants.APP_CDAP_VERSION, appCDAPVersion);
+      }
+    }
+  }
+
+  private void authorizePipelineRuntimeImpersonation(Map<String, String> userArgs) {
+    if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))
+        && (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
+      String principal = userArgs.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
+      LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
+          authenticationContext.getPrincipal(), principal);
+      KerberosPrincipalId kid = new KerberosPrincipalId(principal);
+      accessEnforcer.enforce(kid, authenticationContext.getPrincipal(),
+          AccessPermission.IMPERSONATE);
+    }
+  }
+
+  private static boolean isConcurrentRunsInSameAppForbidden(ProgramType type) {
+    // Concurrent runs in different (or same) versions of an application are forbidden for worker
+    return EnumSet.of(ProgramType.WORKER).contains(type);
+  }
+
+  private static boolean isConcurrentRunsAllowed(ProgramType type) {
+    // Concurrent runs are only allowed for the Workflow, MapReduce and Spark
+    return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE, ProgramType.SPARK)
+        .contains(type);
+  }
+
+  private boolean isStopped(ProgramId programId) throws Exception {
+    return ProgramStatus.STOPPED == getProgramStatus(programId);
+  }
+
+  /**
+   * Returns whether the given program is stopped in all versions of the app.
+   *
+   * @param programId the id of the program for which the stopped status in all versions of the
+   *     app is found
+   * @return whether the given program is stopped in all versions of the app
+   * @throws NotFoundException if the application to which this program belongs was not found
+   */
+  private boolean isStoppedInSameProgram(ProgramId programId) throws Exception {
+    // check that app exists
+    Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(
+        programId.getParent().getAppReference());
+    if (appIds == null || appIds.isEmpty()) {
+      throw new NotFoundException(
+          Id.Application.from(programId.getNamespace(), programId.getApplication()));
+    }
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
+    for (ApplicationId appId : appIds) {
+      ProgramId pId = appId.program(programId.getType(), programId.getProgram());
+      if (!getExistingAppProgramStatus(appSpec, pId).equals(ProgramStatus.STOPPED)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns the program status with no need of application existence check.
+   *
+   * @param appSpec the ApplicationSpecification of the existing application
+   * @param programId the id of the program for which the status call is made
+   * @return the status of the program
+   * @throws NotFoundException if the application to which this program belongs was not found
+   */
+  private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec,
+      ProgramId programId) throws Exception {
+    // TODO(CDAP-21126): Review access enforcement in this auxiliary function.
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    ProgramSpecification spec = getExistingAppProgramSpecification(appSpec,
+        programId.getProgramReference());
+    if (spec == null) {
+      // program doesn't exist
+      throw new NotFoundException(programId);
+    }
+
+    return getProgramStatus(store.getActiveRuns(programId).values());
+  }
+
+  /**
+   * Returns the program status based on the active run records of a program. A program is RUNNING
+   * if there are any RUNNING, STOPPING, or SUSPENDED run records. A program is starting if there
+   * are any PENDING or STARTING run records and no RUNNING run records. Otherwise, it is STOPPED.
+   *
+   * @param runRecords run records for the program
+   * @return the program status
+   */
+  @VisibleForTesting
+  static ProgramStatus getProgramStatus(Collection<RunRecordDetail> runRecords) {
+    boolean hasStarting = false;
+    for (RunRecordDetail runRecord : runRecords) {
+      ProgramRunStatus runStatus = runRecord.getStatus();
+      if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED
+          || runStatus == ProgramRunStatus.STOPPING) {
+        return ProgramStatus.RUNNING;
+      }
+      hasStarting = hasStarting || runStatus == ProgramRunStatus.STARTING
+          || runStatus == ProgramRunStatus.PENDING;
+    }
+    return hasStarting ? ProgramStatus.STARTING : ProgramStatus.STOPPED;
+  }
+
+  /**
+   * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
+   *
+   * @param appSpec the {@link ApplicationSpecification} of the existing application
+   * @param programReference the {@link ProgramReference program} for which the {@link
+   *     ProgramSpecification} is requested
+   * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}, or {@code
+   *     null} if it does not exist
+   */
+  @Nullable
+  private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
+      ProgramReference programReference) {
+    String programName = programReference.getProgram();
+    ProgramType type = programReference.getType();
+    ProgramSpecification programSpec;
+    if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
+      programSpec = appSpec.getMapReduce().get(programName);
+    } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
+      programSpec = appSpec.getSpark().get(programName);
+    } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
+      programSpec = appSpec.getWorkflows().get(programName);
+    } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
+      programSpec = appSpec.getServices().get(programName);
+    } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
+      programSpec = appSpec.getWorkers().get(programName);
+    } else {
+      programSpec = null;
+    }
+    return programSpec;
   }
 }
