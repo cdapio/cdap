@@ -135,7 +135,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private volatile JobControllerClient jobControllerClient;
   private volatile ClusterControllerClient clusterControllerClient;
   // CDAP specific artifacts which will be cached in GCS.
-  private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
+  static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
       Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR)
   );
   private static final int SNAPSHOT_EXPIRE_DAYS = 7;
@@ -216,7 +216,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns a {@link JobControllerClient} to interact with Dataproc Job API.
    */
-  private JobControllerClient getJobControllerClient() throws IOException {
+  JobControllerClient getJobControllerClient() throws IOException {
     JobControllerClient client = jobControllerClient;
     if (client != null) {
       return client;
@@ -461,8 +461,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Returns list of runtime local files with twill.jar and launcher.jar added to it.
    */
-  private List<LocalFile> getRuntimeLocalFiles(Collection<? extends LocalFile> runtimeLocalFiles,
-      File tempDir) throws Exception {
+  List<LocalFile> getRuntimeLocalFiles(Collection<? extends LocalFile> runtimeLocalFiles,
+                                       File tempDir) throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(tempDir);
     List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
     localFiles.add(getTwillJar(locationFactory));
@@ -496,7 +496,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    *
    * @return true if delete lifecycle with days since custom time is set on the bucket.
    */
-  private boolean validateDeleteLifecycle(String bucketName, String run) {
+  boolean validateDeleteLifecycle(String bucketName, String run) {
     Storage storage = getStorageClient();
     Bucket bucket = storage.get(bucketName);
     for (BucketInfo.LifecycleRule rule : bucket.getLifecycleRules()) {
@@ -538,8 +538,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Upload cacheable files uploads the file to GCS if the file does not exists. Once uploaded, it
    * also sets custom time on the object.
    */
-  private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
-      LocalFile localFile)
+  LocalFile uploadCacheableFile(String bucket, String targetFilePath,
+                                LocalFile localFile)
       throws IOException, StorageException {
     Storage storage = getStorageClient();
     BlobId blobId = BlobId.of(bucket, targetFilePath);
@@ -716,8 +716,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Creates and returns dataproc job submit request.
    */
-  private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
-      List<LocalFile> localFiles, LaunchMode launchMode) throws IOException {
+  SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
+                                       List<LocalFile> localFiles, LaunchMode launchMode) throws IOException {
     String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
 
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
@@ -914,7 +914,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     }
   }
 
-  private String getPath(String... pathSubComponents) {
+  String getPath(String... pathSubComponents) {
     return Joiner.on("/").join(pathSubComponents);
   }
 

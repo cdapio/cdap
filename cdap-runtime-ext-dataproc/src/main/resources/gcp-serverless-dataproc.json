@@ -1,0 +1,172 @@
+{
+  "icon": {
+    "type": "inline",
+    "arguments": {
+      "data": "data:image/png;base64,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"
+    }
+  },
+  "configuration-groups": [
+    {
+      "label": "GCP Account Information",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Project ID",
+          "name": "projectId",
+          "description": "Google Cloud Project ID, which uniquely identifies your project. You can find it on the Dashboard in the Cloud Platform Console. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's project id will be used.",
+          "widget-attributes": {
+            "placeholder": "Specify your GCP Project ID"
+          }
+        },
+        {
+          "widget-type": "securekey-textarea",
+          "label": "Creator Service Account Key",
+          "name": "accountKey",
+          "description": "Service account key used to create Dataproc clusters. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's credentials will be used.",
+          "widget-attributes": {
+            "placeholder": "Specify the GCP service account"
+          }
+        }
+      ]
+    },
+    {
+      "label": "General Settings",
+      "properties": [
+        {
+          "widget-type": "select",
+          "label": "Region",
+          "name": "region",
+          "description": "Regions are collections of zones. Zones have high-bandwidth, low-latency network connections to other zones in the same region. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/. If the system is running on Google Cloud Platform, this can be set to 'auto-detect' and the system's region will be used.",
+          "widget-attributes": {
+            "values": [
+              "auto-detect",
+              "asia-east1",
+              "asia-east2",
+              "asia-northeast1",
+              "asia-northeast2",
+              "asia-northeast3",
+              "asia-south1",
+              "asia-southeast1",
+              "asia-southeast2",
+              "australia-southeast1",
+              "europe-north1",
+              "europe-west1",
+              "europe-west2",
+              "europe-west3",
+              "europe-west4",
+              "europe-west6",
+              "northamerica-northeast1",
+              "southamerica-east1",
+              "us-central1",
+              "us-east1",
+              "us-east4",
+              "us-west1",
+              "us-west2",
+              "us-west3",
+              "us-west4"
+            ],
+            "default": "us-east1",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Zone",
+          "name": "zone",
+          "description": "A zone is an isolated location within a region. The fully-qualified name for a zone is made up of <region>-<zone>. For example, the fully-qualified name for zone a in region us-central1 is us-central1-a. For more information, refer to https://cloud.google.com/compute/docs/regions-zones/. If the system is running on Google Cloud Platform, this can be set to 'auto-detect' and the system's zone will be used.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Network",
+          "name": "network",
+          "description": "Select a VPC network in the specified project to use when creating clusters with this profile. If this is left blank or set to 'auto-detect', a network from the project will be chosen.",
+          "widget-attributes": {
+            "default": "default",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Network Host Project ID",
+          "name": "networkHostProjectId",
+          "description": "Google Cloud Project ID, which uniquely identifies the project where the network resides. This can be left blank if the network resides in the same project as specified in the Project ID. In case of Shared VPC this must be set to the host project ID where the network resides.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Subnet",
+          "name": "subnet",
+          "description": "Subnet to use when creating clusters. The subnet must be within the given network, and it must be for the same region that the zone is in. If this is left blank, a subnet will automatically be chosen based on the network and zone.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Runner Service Account",
+          "name": "serviceAccount",
+          "description": "Name of the service account of the Dataproc virtual machines (VM) that are used to run programs. If none is given, the default Compute Engine service account will be used.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "radio-group",
+          "label": "Launch Mode",
+          "name": "launchMode",
+          "description": "Whether to launch the program directly in the Dataproc job (client mode) or in a separate container (cluster mode). Client mode will result in faster start up times and fewer cluster resources used, but may run into errors if the launcher requires more memory.",
+          "widget-attributes": {
+            "layout": "inline",
+            "size": "medium",
+            "default": "cluster",
+            "options": [
+              {
+                "id": "client",
+                "label": "Client"
+              },
+              {
+                "id": "cluster",
+                "label": "Cluster"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "GCS Bucket",
+          "name": "gcsBucket",
+          "description": "Google Cloud Storage bucket used to stage job dependencies and config files for running pipelines in Google Cloud Dataproc",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "Show disableGCSCaching",
+      "condition": {
+        "property": "disableGCSCaching",
+        "operator": "equal",
+        "value": "true"
+      },
+      "show": [
+        {
+          "name": "disableGCSCaching",
+          "type": "property"
+        }
+      ]
+    }
+  ]
+}
