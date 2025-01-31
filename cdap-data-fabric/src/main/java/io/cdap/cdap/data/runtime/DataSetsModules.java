@@ -43,7 +43,6 @@ import io.cdap.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import io.cdap.cdap.data2.registry.BasicUsageRegistry;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.data2.registry.UsageWriter;
-import io.cdap.cdap.metadata.elastic.ElasticsearchMetadataStorage;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.dataset.DatasetMetadataStorage;
@@ -179,7 +178,7 @@ class MetadataStorageProvider implements Provider<MetadataStorage> {
       return injector.getInstance(DatasetMetadataStorage.class);
     }
     if (Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH.equalsIgnoreCase(config)) {
-      return injector.getInstance(ElasticsearchMetadataStorage.class);
+      return injector.getInstance(DefaultMetadataStorageProvider.class);
     }
     throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '"
         + Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '"

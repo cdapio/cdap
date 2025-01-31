@@ -121,6 +121,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    */
   @Nullable
   public EXTENSION get(EXTENSION_TYPE type) {
+    LOG.info(type.toString());
     return extensionsCache.getUnchecked(type).get();
   }
 
@@ -131,13 +132,17 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    */
   public synchronized Map<EXTENSION_TYPE, EXTENSION> getAll() {
     if (allExtensions != null) {
+      LOG.info("Extension Loader is not Empty");
+      LOG.info(allExtensions.toString());
       return allExtensions;
     }
+    LOG.info("Extension Loader is Empty");
 
     Map<EXTENSION_TYPE, EXTENSION> result = new HashMap<>();
 
     for (String dir : extDirs) {
       File extDir = new File(dir);
+      LOG.info(extDir.toString());
       if (!extDir.isDirectory()) {
         continue;
       }
@@ -146,12 +151,14 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
       List<File> files = new ArrayList<>(DirUtils.listFiles(extDir));
       Collections.sort(files);
       for (File moduleDir : files) {
+        LOG.info(extDir.toString());
         if (!moduleDir.isDirectory()) {
           continue;
         }
         // Try to find a provider that can support the given program type.
         try {
           putEntriesIfAbsent(result, getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)));
+          LOG.info(getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).toString());
         } catch (Exception e) {
           LOG.warn("Exception raised when loading an extension from {}. Extension ignored.",
               moduleDir, e);
@@ -163,6 +170,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     putEntriesIfAbsent(result, getAllExtensions(systemExtensionLoader));
 
     allExtensions = Collections.unmodifiableMap(result);
+    LOG.info(allExtensions.toString());
     return allExtensions;
   }
 
@@ -210,7 +218,9 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
 
   private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result,
       Map<EXTENSION_TYPE, EXTENSION> entries) {
+    LOG.info(entries.toString());
     for (Map.Entry<EXTENSION_TYPE, EXTENSION> entry : entries.entrySet()) {
+      LOG.info(entry.toString());
       // TODO: Handle duplicate keys (currently silently ignores duplicates)
       if (!result.containsKey(entry.getKey())) {
         result.put(entry.getKey(), entry.getValue());
@@ -242,6 +252,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   private EXTENSION findExtension(EXTENSION_TYPE type) {
     for (String dir : extDirs) {
       File extDir = new File(dir);
+      LOG.info(extDir.toString());
       if (!extDir.isDirectory()) {
         continue;
       }
@@ -250,6 +261,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
       List<File> files = new ArrayList<>(DirUtils.listFiles(extDir));
       Collections.sort(files);
       for (File moduleDir : files) {
+        LOG.info(moduleDir.toString());
         if (!moduleDir.isDirectory()) {
           continue;
         }
@@ -271,17 +283,26 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    * ServiceLoader}.
    */
   private Map<EXTENSION_TYPE, EXTENSION> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader) {
+    LOG.info("getAllExtensions() called. ServiceLoader: {}", serviceLoader);
+    LOG.info("ServiceLoader classloader: {}", serviceLoader.getClass().getClassLoader());
+    LOG.info("Calling class classloader: {}", this.getClass().getClassLoader());
+    LOG.info("Thread context classloader: {}", Thread.currentThread().getContextClassLoader());
     Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
     Iterator<EXTENSION> iterator = serviceLoader.iterator();
     // Cannot use for each loop here, because we want to catch exceptions during iterator.next().
+    LOG.info(iterator.toString());
     while (iterator.hasNext()) {
       try {
         EXTENSION extension = iterator.next();
+        LOG.info(extension.toString());
         if (serviceLoader == systemExtensionLoader) {
           extension = prepareSystemExtension(extension);
+          LOG.info(extension.toString(),"Inside the serviceLoader if statement") ;
         }
 
+        LOG.info("Inside the EXTENSION_TYPE Loop",getSupportedTypesForProvider(extension).toString());
         for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
+          LOG.info("Inside the EXTENSION_TYPE Loop",type.toString());
           if (extensions.containsKey(type)) {
             LOG.info("Ignoring extension {} for type {}", extension, type);
           } else {
@@ -294,6 +315,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
         LOG.warn("Error while loading extension. Extension will be ignored.", t);
       }
     }
+    LOG.info(extensions.toString());
     return extensions;
   }
 
@@ -335,7 +357,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    */
   private ClassLoader getExtensionParentClassLoader() {
     FilterClassLoader.Filter filter = getExtensionParentClassLoaderFilter();
-
+    LOG.info(filter.toString());
     // SLF4j resources are always coming from parent.
     return new FilterClassLoader(getClass().getClassLoader(), new FilterClassLoader.Filter() {
       @Override

@@ -54,6 +54,7 @@ public class DefaultStorageProvider implements StorageProvider {
     this.extensionLoader = extensionLoader;
     this.metricsCollector = metricsCollectionService.getContext(
         Constants.Metrics.STORAGE_METRICS_TAGS);
+    this.extensionLoader.getAll();
   }
 
   @Override

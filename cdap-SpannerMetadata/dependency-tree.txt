@@ -1,0 +1,288 @@
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-SpannerMetadata:jar:6.12.0-SNAPSHOT
+[WARNING] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/komalyd/CDF/cdapio/cdap/pom.xml, line 1713, column 15
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] Inspecting build with total of 1 modules...
+[INFO] Installing Nexus Staging features:
+[INFO]   ... total of 1 executions of maven-deploy-plugin replaced with nexus-staging-maven-plugin
+[INFO] 
+[INFO] -----------------< io.cdap.cdap:cdap-SpannerMetadata >------------------
+[INFO] Building cdap-SpannerMetadata 6.12.0-SNAPSHOT
+[INFO] --------------------------------[ jar ]---------------------------------
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-common/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-common/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.4 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-common/6.12.0-SNAPSHOT/maven-metadata.xml (2.4 kB at 1.9 kB/s)
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 776 B                   Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap/6.12.0-SNAPSHOT/maven-metadata.xml (776 B at 1.9 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-api/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 5.0 kB/s)
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-api-common/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-api-common/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-api-common/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 4.9 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-system-app-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-system-app-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.4 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-system-app-api/6.12.0-SNAPSHOT/maven-metadata.xml (2.4 kB at 6.0 kB/s)
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-security-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-security-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.4 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-security-spi/6.12.0-SNAPSHOT/maven-metadata.xml (2.4 kB at 6.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-proto/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-proto/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-proto/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 5.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-runtime-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-runtime-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-runtime-spi/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 4.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-error-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-error-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-error-api/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 5.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-storage-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-storage-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.4 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-storage-spi/6.12.0-SNAPSHOT/maven-metadata.xml (2.4 kB at 6.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-features/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-features/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-features/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 5.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-watchdog-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-watchdog-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-watchdog-api/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 5.0 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-formats/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-formats/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-formats/6.12.0-SNAPSHOT/maven-metadata.xml (2.0 kB at 4.9 kB/s)
+Downloading from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-metadata-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Downloading from snapshot: https://repository.apache.org/content/repositories/snapshots/io/cdap/cdap/cdap-metadata-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.4 kB                    Downloaded from sonatype: https://oss.sonatype.org/content/repositories/snapshots/io/cdap/cdap/cdap-metadata-spi/6.12.0-SNAPSHOT/maven-metadata.xml (2.4 kB at 6.0 kB/s)
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ cdap-SpannerMetadata ---
+[INFO] io.cdap.cdap:cdap-SpannerMetadata:jar:6.12.0-SNAPSHOT
+[INFO] +- io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  +- io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile
+[INFO] |  |  +- io.cdap.cdap:cdap-api-common:jar:6.12.0-SNAPSHOT:compile
+[INFO] |  |  \- org.slf4j:slf4j-api:jar:1.7.15:compile
+[INFO] |  +- io.cdap.cdap:cdap-system-app-api:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  |  \- io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  +- io.cdap.cdap:cdap-features:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  +- io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  |  \- ch.qos.logback:logback-classic:jar:1.2.11:provided
+[INFO] |  +- io.cdap.cdap:cdap-formats:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  |  \- com.google.guava:guava:jar:13.0.1:provided
+[INFO] |  +- io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  +- io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  +- io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  |  \- io.cdap.cdap:cdap-error-api:jar:6.12.0-SNAPSHOT:provided
+[INFO] |  +- javax.ws.rs:javax.ws.rs-api:jar:2.0:compile
+[INFO] |  +- io.cdap.http:netty-http:jar:1.7.0:provided
+[INFO] |  |  \- commons-beanutils:commons-beanutils-core:jar:1.8.3:provided
+[INFO] |  +- io.netty:netty-all:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-buffer:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-dns:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-haproxy:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-http:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-http2:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-memcache:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-mqtt:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-redis:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-smtp:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-socks:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-stomp:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-codec-xml:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-common:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-handler:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-handler-proxy:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-resolver:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-resolver-dns:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-rxtx:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-sctp:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-udt:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.75.Final:provided
+[INFO] |  |  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.75.Final:provided
+[INFO] |  |  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.75.Final:provided
+[INFO] |  +- com.google.inject:guice:jar:4.0:provided
+[INFO] |  |  +- javax.inject:javax.inject:jar:1:provided
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:provided
+[INFO] |  +- com.google.inject.extensions:guice-multibindings:jar:4.0:provided
+[INFO] |  +- com.google.inject.extensions:guice-assistedinject:jar:4.0:provided
+[INFO] |  +- org.ow2.asm:asm-commons:jar:7.1:provided
+[INFO] |  |  +- org.ow2.asm:asm:jar:7.1:provided
+[INFO] |  |  +- org.ow2.asm:asm-tree:jar:7.1:provided
+[INFO] |  |  \- org.ow2.asm:asm-analysis:jar:7.1:provided
+[INFO] |  +- org.apache.thrift:libthrift:jar:0.9.3:provided
+[INFO] |  +- org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile
+[INFO] |  +- io.cdap.twill:twill-discovery-api:jar:1.4.0:compile
+[INFO] |  +- io.cdap.twill:twill-discovery-core:jar:1.4.0:provided
+[INFO] |  +- io.cdap.twill:twill-common:jar:1.4.0:compile
+[INFO] |  +- io.cdap.twill:twill-yarn:jar:1.4.0:provided
+[INFO] |  |  +- org.slf4j:jcl-over-slf4j:jar:1.7.15:provided
+[INFO] |  |  \- org.apache.hadoop:hadoop-hdfs:jar:3.3.6:provided
+[INFO] |  |     +- org.eclipse.jetty:jetty-util-ajax:jar:9.4.51.v20230217:provided
+[INFO] |  |     +- io.netty:netty:jar:3.10.6.Final:provided
+[INFO] |  |     \- org.fusesource.leveldbjni:leveldbjni-all:jar:1.8:provided
+[INFO] |  +- io.cdap.twill:twill-core:jar:1.4.0:provided
+[INFO] |  |  +- org.xerial.snappy:snappy-java:jar:1.1.1.7:provided
+[INFO] |  |  +- ch.qos.logback:logback-core:jar:1.2.11:provided
+[INFO] |  |  +- org.apache.kafka:kafka_2.12:jar:0.10.2.2:provided
+[INFO] |  |  |  +- org.apache.kafka:kafka-clients:jar:0.10.2.2:provided
+[INFO] |  |  |  +- com.yammer.metrics:metrics-core:jar:2.2.0:provided
+[INFO] |  |  |  +- org.scala-lang:scala-library:jar:2.12.15:provided
+[INFO] |  |  |  +- com.101tec:zkclient:jar:0.10:provided
+[INFO] |  |  |  \- org.scala-lang.modules:scala-parser-combinators_2.12:jar:1.0.4:provided
+[INFO] |  |  \- net.sf.jopt-simple:jopt-simple:jar:3.2:provided
+[INFO] |  +- io.cdap.twill:twill-api:jar:1.4.0:compile
+[INFO] |  +- io.cdap.twill:twill-zookeeper:jar:1.4.0:provided
+[INFO] |  |  \- org.apache.zookeeper:zookeeper:jar:3.4.5:provided
+[INFO] |  +- org.apache.hadoop:hadoop-common:jar:3.3.6:provided
+[INFO] |  |  +- org.apache.hadoop.thirdparty:hadoop-shaded-protobuf_3_7:jar:1.1.1:provided
+[INFO] |  |  +- org.apache.hadoop:hadoop-annotations:jar:3.3.6:provided
+[INFO] |  |  +- org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:provided
+[INFO] |  |  +- commons-cli:commons-cli:jar:1.2:provided
+[INFO] |  |  +- org.apache.commons:commons-math3:jar:3.1.1:provided
+[INFO] |  |  +- commons-io:commons-io:jar:2.8.0:provided
+[INFO] |  |  +- commons-net:commons-net:jar:3.9.0:provided
+[INFO] |  |  +- commons-collections:commons-collections:jar:3.2.2:provided
+[INFO] |  |  +- jakarta.activation:jakarta.activation-api:jar:1.2.1:provided
+[INFO] |  |  +- org.eclipse.jetty:jetty-server:jar:9.4.51.v20230217:provided
+[INFO] |  |  |  +- org.eclipse.jetty:jetty-http:jar:9.4.51.v20230217:provided
+[INFO] |  |  |  \- org.eclipse.jetty:jetty-io:jar:9.4.51.v20230217:provided
+[INFO] |  |  +- org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:provided
+[INFO] |  |  +- org.eclipse.jetty:jetty-servlet:jar:9.4.51.v20230217:provided
+[INFO] |  |  |  \- org.eclipse.jetty:jetty-security:jar:9.4.51.v20230217:provided
+[INFO] |  |  +- org.eclipse.jetty:jetty-webapp:jar:9.4.51.v20230217:provided
+[INFO] |  |  |  \- org.eclipse.jetty:jetty-xml:jar:9.4.51.v20230217:provided
+[INFO] |  |  +- com.sun.jersey:jersey-servlet:jar:1.19.4:provided
+[INFO] |  |  +- com.github.pjfanning:jersey-json:jar:1.20:provided
+[INFO] |  |  |  +- org.codehaus.jettison:jettison:jar:1.1:provided
+[INFO] |  |  |  \- com.sun.xml.bind:jaxb-impl:jar:2.2.3-1:provided
+[INFO] |  |  +- ch.qos.reload4j:reload4j:jar:1.2.22:provided
+[INFO] |  |  +- commons-beanutils:commons-beanutils:jar:1.9.4:provided
+[INFO] |  |  +- org.apache.commons:commons-configuration2:jar:2.8.0:provided
+[INFO] |  |  +- org.apache.commons:commons-lang3:jar:3.5:provided
+[INFO] |  |  +- org.apache.commons:commons-text:jar:1.10.0:provided
+[INFO] |  |  +- com.google.re2j:re2j:jar:1.1:provided
+[INFO] |  |  +- org.apache.hadoop:hadoop-auth:jar:3.3.6:provided
+[INFO] |  |  |  +- com.nimbusds:nimbus-jose-jwt:jar:9.8.1:provided
+[INFO] |  |  |  |  \- com.github.stephenc.jcip:jcip-annotations:jar:1.0-1:provided
+[INFO] |  |  |  +- org.apache.curator:curator-framework:jar:5.2.0:provided
+[INFO] |  |  |  \- org.apache.kerby:kerb-simplekdc:jar:1.0.1:provided
+[INFO] |  |  |     +- org.apache.kerby:kerb-client:jar:1.0.1:provided
+[INFO] |  |  |     |  +- org.apache.kerby:kerby-config:jar:1.0.1:provided
+[INFO] |  |  |     |  +- org.apache.kerby:kerb-common:jar:1.0.1:provided
+[INFO] |  |  |     |  |  \- org.apache.kerby:kerb-crypto:jar:1.0.1:provided
+[INFO] |  |  |     |  +- org.apache.kerby:kerb-util:jar:1.0.1:provided
+[INFO] |  |  |     |  \- org.apache.kerby:token-provider:jar:1.0.1:provided
+[INFO] |  |  |     \- org.apache.kerby:kerb-admin:jar:1.0.1:provided
+[INFO] |  |  |        +- org.apache.kerby:kerb-server:jar:1.0.1:provided
+[INFO] |  |  |        |  \- org.apache.kerby:kerb-identity:jar:1.0.1:provided
+[INFO] |  |  |        \- org.apache.kerby:kerby-xdr:jar:1.0.1:provided
+[INFO] |  |  +- org.apache.curator:curator-client:jar:5.2.0:provided
+[INFO] |  |  +- org.apache.curator:curator-recipes:jar:5.2.0:provided
+[INFO] |  |  +- io.dropwizard.metrics:metrics-core:jar:3.1.2:provided
+[INFO] |  |  +- org.apache.commons:commons-compress:jar:1.22:provided
+[INFO] |  |  +- org.apache.kerby:kerb-core:jar:1.0.1:provided
+[INFO] |  |  |  \- org.apache.kerby:kerby-pkix:jar:1.0.1:provided
+[INFO] |  |  |     +- org.apache.kerby:kerby-asn1:jar:1.0.1:provided
+[INFO] |  |  |     \- org.apache.kerby:kerby-util:jar:1.0.1:provided
+[INFO] |  |  +- org.codehaus.woodstox:stax2-api:jar:4.2.1:provided
+[INFO] |  |  +- com.fasterxml.woodstox:woodstox-core:jar:5.4.0:provided
+[INFO] |  |  \- dnsjava:dnsjava:jar:2.1.7:provided
+[INFO] |  +- org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:provided
+[INFO] |  |  +- javax.xml.bind:jaxb-api:jar:2.2.11:provided
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.15.1:provided
+[INFO] |  +- org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:provided
+[INFO] |  |  +- org.eclipse.jetty.websocket:websocket-client:jar:9.4.51.v20230217:provided
+[INFO] |  |  |  +- org.eclipse.jetty:jetty-client:jar:9.4.51.v20230217:provided
+[INFO] |  |  |  \- org.eclipse.jetty.websocket:websocket-common:jar:9.4.51.v20230217:provided
+[INFO] |  |  |     \- org.eclipse.jetty.websocket:websocket-api:jar:9.4.51.v20230217:provided
+[INFO] |  |  \- org.jline:jline:jar:3.9.0:provided
+[INFO] |  +- org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:provided
+[INFO] |  |  +- org.apache.hadoop:hadoop-hdfs-client:jar:3.3.6:provided
+[INFO] |  |  |  +- com.squareup.okhttp3:okhttp:jar:4.9.3:provided
+[INFO] |  |  |  |  \- com.squareup.okio:okio:jar:2.8.0:provided
+[INFO] |  |  |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.4.10:provided
+[INFO] |  |  |  \- org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.4.10:provided
+[INFO] |  |  +- com.sun.jersey:jersey-client:jar:1.19.4:provided
+[INFO] |  |  +- com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.12.7:provided
+[INFO] |  |  |  \- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.2:provided
+[INFO] |  |  \- com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.12.7:provided
+[INFO] |  |     \- com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.12.7:provided
+[INFO] |  +- org.bouncycastle:bcprov-jdk15on:jar:1.70:provided
+[INFO] |  +- org.bouncycastle:bcpkix-jdk15on:jar:1.70:provided
+[INFO] |  |  \- org.bouncycastle:bcutil-jdk15on:jar:1.70:provided
+[INFO] |  +- javax.servlet:javax.servlet-api:jar:3.1.0:provided
+[INFO] |  +- io.cdap.common:common-http:jar:0.13.1:provided
+[INFO] |  +- io.cdap.common:common-io:jar:0.13.1:provided
+[INFO] |  |  \- io.cdap.common:common-lang:jar:0.13.1:provided
+[INFO] |  \- com.jcraft:jsch:jar:0.1.54:provided
+[INFO] +- io.cdap.cdap:cdap-metadata-spi:jar:6.12.0-SNAPSHOT:compile
+[INFO] \- com.google.cloud:google-cloud-spanner:jar:6.12.1:compile
+[INFO]    +- com.google.cloud:grpc-gcp:jar:1.1.0:compile
+[INFO]    +- io.grpc:grpc-api:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-auth:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-context:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-core:jar:1.40.0:compile
+[INFO]    +- com.google.android:annotations:jar:4.1.1.4:runtime
+[INFO]    +- org.codehaus.mojo:animal-sniffer-annotations:jar:1.20:runtime
+[INFO]    +- io.perfmark:perfmark-api:jar:0.23.0:runtime
+[INFO]    +- io.grpc:grpc-netty-shaded:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-protobuf:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-protobuf-lite:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-stub:jar:1.40.0:compile
+[INFO]    +- com.google.api:api-common:jar:2.0.1:compile
+[INFO]    +- javax.annotation:javax.annotation-api:jar:1.3.2:compile
+[INFO]    +- com.google.auto.value:auto-value-annotations:jar:1.8.2:compile
+[INFO]    +- com.google.protobuf:protobuf-java:jar:3.17.3:compile
+[INFO]    +- com.google.protobuf:protobuf-java-util:jar:3.17.3:compile
+[INFO]    +- com.google.errorprone:error_prone_annotations:jar:2.9.0:compile
+[INFO]    +- com.google.api.grpc:proto-google-common-protos:jar:2.3.2:compile
+[INFO]    +- com.google.api.grpc:grpc-google-common-protos:jar:2.3.2:compile
+[INFO]    +- com.google.guava:failureaccess:jar:1.0.1:compile
+[INFO]    +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
+[INFO]    +- org.checkerframework:checker-compat-qual:jar:2.5.5:compile
+[INFO]    +- com.google.j2objc:j2objc-annotations:jar:1.3:compile
+[INFO]    +- com.google.api.grpc:proto-google-iam-v1:jar:1.0.14:compile
+[INFO]    +- com.google.cloud:google-cloud-core:jar:2.1.0:compile
+[INFO]    +- com.google.http-client:google-http-client-gson:jar:1.39.2:compile
+[INFO]    +- com.google.cloud:google-cloud-core-grpc:jar:2.1.0:compile
+[INFO]    +- io.opencensus:opencensus-api:jar:0.28.0:compile
+[INFO]    +- io.opencensus:opencensus-contrib-grpc-util:jar:0.28.0:compile
+[INFO]    +- com.google.auth:google-auth-library-oauth2-http:jar:1.1.0:compile
+[INFO]    +- com.google.http-client:google-http-client:jar:1.39.2:compile
+[INFO]    +- org.apache.httpcomponents:httpclient:jar:4.5.13:compile
+[INFO]    +- commons-logging:commons-logging:jar:1.2:compile
+[INFO]    +- commons-codec:commons-codec:jar:1.15:compile
+[INFO]    +- org.apache.httpcomponents:httpcore:jar:4.4.14:compile
+[INFO]    +- io.opencensus:opencensus-contrib-http-util:jar:0.28.0:compile
+[INFO]    +- com.google.api.grpc:proto-google-cloud-spanner-admin-instance-v1:jar:6.12.1:compile
+[INFO]    +- com.google.api.grpc:proto-google-cloud-spanner-v1:jar:6.12.1:compile
+[INFO]    +- com.google.api.grpc:proto-google-cloud-spanner-admin-database-v1:jar:6.12.1:compile
+[INFO]    +- com.google.api.grpc:grpc-google-cloud-spanner-admin-instance-v1:jar:6.12.1:compile
+[INFO]    +- com.google.api.grpc:grpc-google-cloud-spanner-v1:jar:6.12.1:compile
+[INFO]    +- com.google.api.grpc:grpc-google-cloud-spanner-admin-database-v1:jar:6.12.1:compile
+[INFO]    +- org.checkerframework:checker-qual:jar:3.8.0:compile
+[INFO]    +- com.google.api:gax:jar:2.3.0:compile
+[INFO]    +- com.google.api:gax-grpc:jar:2.3.0:compile
+[INFO]    +- org.threeten:threetenbp:jar:1.5.1:compile
+[INFO]    +- com.google.code.findbugs:jsr305:jar:2.0.1:compile
+[INFO]    +- com.google.code.gson:gson:jar:2.3.1:compile
+[INFO]    +- com.google.auth:google-auth-library-credentials:jar:1.1.0:compile
+[INFO]    +- io.grpc:grpc-alts:jar:1.40.0:compile
+[INFO]    +- io.grpc:grpc-grpclb:jar:1.40.0:compile
+[INFO]    \- org.conscrypt:conscrypt-openjdk-uber:jar:2.5.1:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.992 s
+[INFO] Finished at: 2025-02-20T05:46:20Z
+[INFO] ------------------------------------------------------------------------
