@@ -25,6 +25,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.AlreadyExistsException;
@@ -32,7 +33,6 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
-import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -48,8 +48,8 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreData
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -98,6 +98,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Inject
   CoreSchedulerService(TimeSchedulerService timeSchedulerService,
+      ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
       ConstraintCheckerService constraintCheckerService,
       MessagingService messagingService,
       CConfiguration cConf, Store store, Impersonator impersonator,
@@ -123,12 +124,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         timeSchedulerService.startAndWait();
         cleanupJobs();
         constraintCheckerService.startAndWait();
+        scheduleNotificationSubscriberService.startAndWait();
         startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
       @Override
       protected void shutDown() {
+        scheduleNotificationSubscriberService.stopAndWait();
         constraintCheckerService.stopAndWait();
         timeSchedulerService.stopAndWait();
         LOG.info("Stopped core scheduler service.");
@@ -567,8 +570,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   /**
-   * Gets a copy of the given {@link ProgramSchedule} and add user and artifact ID in the schedule
-   * properties
+   * Gets a copy of the given {@link ProgramSchedule} and add user and artifact ID in the schedule properties.
    * TODO CDAP-13662 - move logic to find artifactId and userId to dashboard service and remove this method
    */
   private ProgramSchedule getProgramScheduleWithUserAndArtifactId(ProgramSchedule schedule) {
