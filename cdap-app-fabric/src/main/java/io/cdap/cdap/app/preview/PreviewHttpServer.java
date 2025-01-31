@@ -31,8 +31,11 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.util.Set;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -64,7 +67,13 @@ public class PreviewHttpServer extends AbstractIdleService {
         .setConnectionBacklog(cConf.getInt(Constants.Preview.BACKLOG_CONNECTIONS))
         .setExecThreadPoolSize(cConf.getInt(Constants.Preview.EXEC_THREADS))
         .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
-        .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS));
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS))
+        .setChannelPipelineModifier(new ChannelPipelineModifier() {
+          @Override
+          public void modify(ChannelPipeline pipeline) {
+            pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+          }
+        });
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

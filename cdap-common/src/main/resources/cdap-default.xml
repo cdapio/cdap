@@ -3796,6 +3796,14 @@
   </property>
 
   <property>
+    <name>preview.http.compress.payload</name>
+    <value>true</value>
+    <description>
+      Compress payload for HTTP calls in the preview http handler.
+    </description>
+  </property>
+
+  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>

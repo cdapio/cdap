@@ -17,6 +17,8 @@
 package io.cdap.cdap.messaging.client;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import org.slf4j.Logger;
@@ -31,10 +33,11 @@ public class PreviewRunnerClientMessagingService extends AbstractClientMessaging
       PreviewRunnerClientMessagingService.class);
 
   @Inject
-  public PreviewRunnerClientMessagingService(RemoteClientFactory remoteClientFactory) {
-    // TODO (CDAP-21118) - enable gzip compression for preview http server.
+  public PreviewRunnerClientMessagingService(CConfiguration cConf,
+      RemoteClientFactory remoteClientFactory) {
     super(remoteClientFactory.createRemoteClient(Service.PREVIEW_HTTP, HTTP_REQUEST_CONFIG,
-        "/v1/namespaces/"), false);
+            "/v1/namespaces/"),
+        cConf.getBoolean(Constants.Preview.HTTP_COMPRESS_PAYLOAD));
     LOG.info("PreviewRunnerClientMessagingService initialised");
   }
 }
