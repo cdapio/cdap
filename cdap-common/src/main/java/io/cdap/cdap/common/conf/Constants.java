@@ -465,6 +465,7 @@ public final class Constants {
     public static final String CONTAINER_JVM_OPTS = "preview.runner.container.jvm.opts";
     public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
     public static final String INTERNAL_ROUTER_ENABLED = "preview.runner.internal.router.enabled";
+    public static final String HTTP_COMPRESS_PAYLOAD = "preview.http.compress.payload";
   }
 
   /**
