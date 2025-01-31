@@ -80,6 +80,7 @@ import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProgramRuntimeHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProgramScheduleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
 import io.cdap.cdap.gateway.handlers.SourceControlManagementHttpHandler;
 import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
@@ -158,6 +159,7 @@ import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.securestore.spi.SecretStore;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -193,6 +195,9 @@ import org.quartz.spi.JobStore;
  */
 public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
+  /**
+   * Service type for App Fabric.
+   */
   public enum ServiceType {
     SERVER,
     PROCESSOR,
@@ -259,6 +264,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
               Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
                   binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
               handlerBinder.addBinding().to(ProgramRuntimeHttpHandler.class);
+              handlerBinder.addBinding().to(ProgramScheduleHttpHandler.class);
 
               // TODO: Uncomment after CDAP-7688 is resolved
               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -458,8 +464,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(SystemAppManagementService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-      bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
-      bind(Scheduler.class).to(CoreSchedulerService.class);
       install(new PrivateModule() {
         @Override
         protected void configure() {
@@ -556,11 +560,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       }
 
       if (serviceTypes.contains(ServiceType.PROCESSOR)) {
+        bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
+        bind(Scheduler.class).to(CoreSchedulerService.class);
+
         Multibinder<HttpHandler> processorHandlerBinder = Multibinder.newSetBinder(
             binder(), HttpHandler.class, Names.named(AppFabric.PROCESSOR_HANDLERS_BINDING));
         CommonHandlers.add(processorHandlerBinder);
         processorHandlerBinder.addBinding().to(ProgramRuntimeHttpHandler.class);
         processorHandlerBinder.addBinding().to(BootstrapHttpHandler.class);
+        processorHandlerBinder.addBinding().to(ProgramScheduleHttpHandler.class);
+      } else {
+        bind(NoOpScheduler.class).in(Scopes.SINGLETON);
+        bind(Scheduler.class).to(NoOpScheduler.class);
       }
     }
 
