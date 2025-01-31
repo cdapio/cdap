@@ -18,13 +18,19 @@ package io.cdap.cdap.app.runtime;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.logging.LogEntry;
 
 /**
  * Service for interacting with the runtime system.
@@ -47,7 +53,9 @@ public interface ProgramRuntimeService extends Service {
   }
 
   /**
-   * Starts the given program and return a {@link RuntimeInfo} about the running program.
+   * Runs the given program and return a {@link RuntimeInfo} about the running program. The program
+   * is run if it is not already running, otherwise the {@link RuntimeInfo} of the already running
+   * program is returned.
    *
    * @param programDescriptor describing the program to run
    * @param options {@link ProgramOptions} that are needed by the program.
@@ -97,4 +105,60 @@ public interface ProgramRuntimeService extends Service {
    * @param types Types of program to check returns List of info about running programs.
    */
   List<RuntimeInfo> listAll(ProgramType... types);
+
+  /**
+   * Reset log levels for the given program. Only supported program types for this action are {@link
+   * ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which log levels are to be
+   *     reset.
+   * @param loggerNames the {@link String} set of the logger names to be updated, empty means
+   *     reset for all loggers.
+   * @param runId the run id of the program.
+   * @throws InterruptedException if there is an error while asynchronously resetting log
+   *     levels.
+   * @throws ExecutionException if there is an error while asynchronously resetting log levels.
+   * @throws UnauthorizedException if the user does not have privileges to reset log levels for
+   *     the specified program. To reset log levels for a program, a user needs {@link
+   *     StandardPermission#UPDATE} on the program.
+   */
+   void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames, @Nullable String runId) throws Exception;
+
+  /**
+   * Update log levels for the given program. Only supported program types for this action are
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which log levels are to be
+   *     updated
+   * @param logLevels the {@link Map} of the log levels to be updated.
+   * @param runId the run id of the program.
+   * @throws InterruptedException if there is an error while asynchronously updating log
+   *     levels.
+   * @throws ExecutionException if there is an error while asynchronously updating log levels.
+   * @throws BadRequestException if the log level is not valid or the program type is not
+   *     supported.
+   * @throws UnauthorizedException if the user does not have privileges to update log levels for
+   *     the specified program. To update log levels for a program, a user needs {@link
+   *     StandardPermission#UPDATE} on the program.
+   */
+  void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels, @Nullable String runId)
+      throws Exception;
+
+  /**
+   * Set instances for the given program. Only supported program types for this action are {@link
+   * ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   *
+   * @param programId the {@link ProgramId} of the program for which instances are to be
+   *     updated
+   * @param instances the number of instances to be updated.
+   * @param instances the previous number of instances.
+   *
+   * @throws InterruptedException if there is an error while asynchronously updating instances
+   * @throws ExecutionException if there is an error while asynchronously updating instances
+   * @throws BadRequestException if the number of instances specified is less than 0
+   * @throws UnauthorizedException if the user does not have privileges to set instances for the
+   *     specified program. To set instances for a program, a user needs {@link
+   *     StandardPermission#UPDATE} on the program.
+   */
+  void setInstances(ProgramId programId, int instances, int oldInstances) throws Exception;
 }

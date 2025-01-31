@@ -56,7 +56,7 @@ public class RouterPathLookupTest {
     String path = "/v3/namespaces/n1/runs";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR, result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
   }
 
   @Test
@@ -165,13 +165,13 @@ public class RouterPathLookupTest {
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     RouteDestination result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR, result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
 
     servicePath = "v3/namespaces/some/apps/otherAppName/services/CatalogLookup//methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR, result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
 
     // v3 servicePaths
     servicePath = "/v3/namespaces/testnamespace/apps//PurchaseHistory///services/CatalogLookup///methods//ping/1";
@@ -207,13 +207,13 @@ public class RouterPathLookupTest {
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR, result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
 
     servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup////methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR, result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
   }
 
   @Test
@@ -226,7 +226,7 @@ public class RouterPathLookupTest {
     String path = "/v3/namespaces/default//apps/ResponseCodeAnalytics/services/LogAnalyticsService/status";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR, result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
   }
 
   @Test
@@ -234,7 +234,7 @@ public class RouterPathLookupTest {
     String path = "/v3/namespaces/default/apps///PurchaseHistory///workflows/PurchaseHistoryWorkflow/status";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR,  result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP,  result);
   }
 
   @Test
@@ -242,7 +242,7 @@ public class RouterPathLookupTest {
     String path = "/v3/namespaces/default//apps/";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_PROCESSOR,  result);
+    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP,  result);
   }
 
   @Test
@@ -422,23 +422,16 @@ public class RouterPathLookupTest {
 
   @Test
   public void testAppLifecycleAndWorkflowPaths() {
-    assertRouting("v3/namespaces/default/apps", RouterPathLookup.APP_FABRIC_PROCESSOR);
-    assertRouting("v3/namespaces/default/apps/myapp", RouterPathLookup.APP_FABRIC_PROCESSOR);
-    assertRouting("v3/namespaces/default/upgrade", RouterPathLookup.APP_FABRIC_PROCESSOR);
-    assertRouting("v3/namespaces/default/appdetail", RouterPathLookup.APP_FABRIC_PROCESSOR);
-  }
-
-  @Test
-  public void testProgramLifecyclePaths() {
-    for (String part : RouterPathLookup.APP_FABRIC_PROCESSOR_PATH_PARTS) {
-      assertRouting("v3/namespaces/default/" + part, RouterPathLookup.APP_FABRIC_PROCESSOR);
-    }
+    assertRouting("v3/namespaces/default/apps", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/apps/myapp", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/upgrade", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("v3/namespaces/default/appdetail", RouterPathLookup.APP_FABRIC_HTTP);
   }
 
   @Test
   public void testProgramLifecycleInternalAndAppLifecycleInternalPaths() {
     assertRouting("v3Internal/namespaces//apps//versions//workflows/DataPipelineWorkflow/runs/",
-        RouterPathLookup.APP_FABRIC_PROCESSOR);
+        RouterPathLookup.APP_FABRIC_HTTP);
   }
 
   @Test
@@ -451,6 +444,18 @@ public class RouterPathLookupTest {
   public void testAppPreferencesPaths() {
     assertRouting("v3/namespaces//apps//preferences", RouterPathLookup.APP_FABRIC_HTTP);
     assertRouting("v3/namespaces//apps////preferences", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
+  public void testProgramRuntimeLifecyclePaths() {
+    assertRouting("v3/namespaces//instances", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps//services//instances", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps//workers//instances", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps////live-info", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps////runs//loglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps////runs//resetloglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps//versions////runs//loglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces//apps//versions////runs//resetloglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
   }
 
   @Test

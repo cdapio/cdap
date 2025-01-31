@@ -26,6 +26,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
@@ -463,6 +464,16 @@ public interface Store {
    */
   @Nullable
   ApplicationMeta getLatest(ApplicationReference appRef);
+
+  /**
+   * Gets the ApplicationId with the latest version for the given ApplicationReference.
+   *
+   * @param appRef ApplicationReference
+   * @return ApplicationId for the latest version
+   *
+   * @throws ApplicationNotFoundException if the app was not found for the given application reference.
+   */
+  ApplicationId getLatestApp(ApplicationReference appRef) throws ApplicationNotFoundException;
 
   /**
    * Scans for the latest applications across all namespaces.

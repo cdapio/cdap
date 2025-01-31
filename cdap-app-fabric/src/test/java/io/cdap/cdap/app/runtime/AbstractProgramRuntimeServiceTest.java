@@ -287,7 +287,8 @@ public class AbstractProgramRuntimeServiceTest {
     InMemoryProgramRunDispatcher launchDispatcher =
       new TestProgramRunDispatcher(cConf, runnerFactory, program, locationFactory,
                                    remoteClientFactory, true);
-    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null, launchDispatcher);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null,
+        launchDispatcher);
     runtimeService.startAndWait();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,

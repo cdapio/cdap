@@ -24,7 +24,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
@@ -46,8 +45,7 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
   private final CapabilityApplier capabilityApplier;
 
   @Inject
-  CapabilityManagementService(CConfiguration cConf, CapabilityApplier capabilityApplier,
-      SystemProgramManagementService systemProgramManagementService) {
+  CapabilityManagementService(CConfiguration cConf, CapabilityApplier capabilityApplier) {
     super(RetryStrategies
         .fixDelay(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES), TimeUnit.MINUTES));
     this.cConf = cConf;
