@@ -561,7 +561,7 @@ public class StandaloneMain {
         new NoOpAuditLogModule(),
         new AuthorizationEnforcementModule().getStandaloneModules(),
         new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
-        new PreviewManagerModule(false),
+        new PreviewManagerModule(cConf, false),
         new PreviewRunnerManagerModule().getStandaloneModules(),
         new MessagingServerRuntimeModule().getStandaloneModules(),
         new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)

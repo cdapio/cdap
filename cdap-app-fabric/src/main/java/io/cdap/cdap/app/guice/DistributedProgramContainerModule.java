@@ -64,8 +64,8 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
-import io.cdap.cdap.messaging.client.ClientMessagingService;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -327,7 +327,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
       return new MessagingServiceModule(cConf);
     }
 
-    return new MessagingClientModule();
+    return new DefaultMessagingClientModule();
   }
 
   /**
@@ -389,7 +389,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
           internalAuthenticator);
 
       return new MessagingProgramStatePublisher(cConf,
-          new ClientMessagingService(cConf, remoteClientFactory));
+          new DefaultClientMessagingService(cConf, remoteClientFactory));
     }
   }
 }

@@ -45,7 +45,7 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
@@ -121,7 +121,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
         new ZkClientModule(),
         new ZkDiscoveryModule(),
         new KafkaClientModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new MetricsStoreModule(),
         new KafkaLogAppenderModule(),

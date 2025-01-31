@@ -39,7 +39,7 @@ import io.cdap.cdap.internal.tethering.TetheringProgramEventPublisher;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
         RemoteAuthenticatorModules.getDefaultModule(
             TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
             Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new NamespaceQueryAdminModule(),
         getDataFabricModule(),
         // Always use local table implementations, which use LevelDB.

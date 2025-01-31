@@ -37,16 +37,16 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
+import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
-import io.cdap.cdap.messaging.client.ClientMessagingService;
-import io.cdap.cdap.messaging.client.StoreRequestBuilder;
-import io.cdap.cdap.messaging.data.MessageId;
-import io.cdap.cdap.messaging.spi.RawMessage;
-import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -129,7 +129,7 @@ public class MessagingHttpServiceTest {
 
     httpService = injector.getInstance(MessagingHttpService.class);
     httpService.startAndWait();
-    client = new ClientMessagingService(injector.getInstance(RemoteClientFactory.class), compressPayload);
+    client = new DefaultClientMessagingService(injector.getInstance(RemoteClientFactory.class), compressPayload);
   }
 
   @After

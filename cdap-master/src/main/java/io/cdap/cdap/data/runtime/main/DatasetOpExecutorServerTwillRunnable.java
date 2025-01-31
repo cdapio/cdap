@@ -51,7 +51,7 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.metadata.MetadataConsumerSubscriberService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -111,7 +111,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
         new ZkClientModule(),
         new ZkDiscoveryModule(),
         new KafkaClientModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new DFSLocationModule(),
         new NamespaceQueryAdminModule(),

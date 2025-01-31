@@ -25,7 +25,6 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.DefaultAppConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.TwillModule;
@@ -56,7 +55,7 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
@@ -70,7 +69,6 @@ import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.Configs;
@@ -284,7 +282,7 @@ public class DistributedWorkflowProgramRunnerTest {
         new DataSetsModules().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new MetricsStoreModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new AuditModule(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
         new AuthenticationContextModules().getNoOpModule(),

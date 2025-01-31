@@ -73,7 +73,7 @@ import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.master.startup.ServiceResourceKeys;
-import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.operations.OperationalStatsService;
@@ -538,7 +538,7 @@ public class MasterServiceMain extends DaemonMain {
         new DataSetsModules().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new MetricsStoreModule(),
-        new MessagingClientModule(),
+        new DefaultMessagingClientModule(),
         new AuditModule(),
         new AuditLogWriterModule(cConf).getDistributedModules(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
