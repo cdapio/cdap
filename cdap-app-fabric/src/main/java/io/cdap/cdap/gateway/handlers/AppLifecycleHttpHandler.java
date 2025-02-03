@@ -244,7 +244,8 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @QueryParam("nameFilter") String nameFilter,
       @QueryParam("nameFilterType") NameFilterType nameFilterType,
       @QueryParam("latestOnly") @DefaultValue("true") Boolean latestOnly,
-      @QueryParam("sortCreationTime") Boolean sortCreationTime)
+      @QueryParam("sortCreationTime") Boolean sortCreationTime,
+      @QueryParam("enableDefaultPagination") @DefaultValue("false") boolean enableDefaultPagination)
       throws Exception {
 
     validateNamespace(namespaceId);
@@ -256,13 +257,12 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       }
     }
 
-    if (pageSize == null) {
+    if (pageSize == null && enableDefaultPagination) {
       pageSize = configuration.getInt(Constants.GET_APPS_DEFAULT_PAGE_SIZE);
       LOG.debug("Paginating GET apps call with page size as {}", pageSize);
     }
-    pageSize = Math.max(pageSize, 0);
 
-    if (Optional.ofNullable(pageSize).orElse(0) != 0) {
+    if (Optional.ofNullable(pageSize).orElse(0) > 0) {
       Integer finalPageSize = pageSize;
       JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY,
           jsonListResponder -> {
