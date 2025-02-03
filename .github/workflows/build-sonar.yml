@@ -21,6 +21,9 @@ on:
     branches: [ develop, release/** ]
     types: [opened, synchronize, reopened, labeled]
 
+permissions:
+  checks: write
+
 jobs:
   build-sonar:
     runs-on: k8s-runner-build
