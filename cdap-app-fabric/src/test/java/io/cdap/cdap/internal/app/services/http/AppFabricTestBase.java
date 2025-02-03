@@ -646,18 +646,6 @@ public abstract class AppFabricTestBase {
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
 
-  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
-                                                 String filter) throws Exception {
-    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, null, null, null);
-  }
-
-  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
-                                                 String filter, String nameFilterType,
-                                                 Boolean latestOnly, Boolean sortCreationTime) throws Exception {
-    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, nameFilterType, latestOnly,
-                                     sortCreationTime);
-  }
-
   protected List<JsonObject> getAppListForNegativePaginatedApi(String namespace, int pageSize) throws Exception {
     String uri = "apps/?pageSize=" + pageSize;
 
@@ -667,10 +655,38 @@ public abstract class AppFabricTestBase {
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
 
-  protected JsonObject getAppListForPaginatedApi(String namespace, int pageSize, String token,
+  protected List<JsonObject> getAppListForDefaultPaginationDisabledApi(String namespace,
+      Boolean enabledDefaultPagination) throws Exception {
+    String uri = "apps/?enabledDefaultPagination=" + enabledDefaultPagination;
+
+    HttpResponse response = doGet(getVersionedApiPath(uri,
+        Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return readResponse(response, LIST_JSON_OBJECT_TYPE);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, Integer pageSize, String token,
+      String filter) throws Exception {
+    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, null, null, null, false);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, Integer pageSize, String token,
+      String filter, String nameFilterType,
+      Boolean latestOnly, Boolean sortCreationTime,
+      boolean enableDefaultPagination) throws Exception {
+    return getAppListForPaginatedApi(namespace, pageSize, token, null, filter, nameFilterType, latestOnly,
+        sortCreationTime, enableDefaultPagination);
+  }
+
+  protected JsonObject getAppListForPaginatedApi(String namespace, Integer pageSize, String token,
                                                  String orderBy, String filter, String nameFilterType,
-                                                 Boolean latestOnly, Boolean sortCreationTime) throws Exception {
-    String uri = "apps/?pageSize=" + pageSize;
+                                                 Boolean latestOnly, Boolean sortCreationTime,
+      boolean enableDefaultPagination) throws Exception {
+    String uri = "apps/?";
+
+    if (pageSize != null) {
+      uri += ("&pageSize=" + pageSize);
+    }
 
     if (token != null) {
       uri += ("&pageToken=" + token);
@@ -696,6 +712,11 @@ public abstract class AppFabricTestBase {
       uri += ("&sortCreationTime=" + sortCreationTime);
     }
 
+    if (enableDefaultPagination) {
+      uri += ("&enableDefaultPagination=" + enableDefaultPagination);
+    }
+
+    uri = uri.replace("?&", "?");
     HttpResponse response = doGet(getVersionedApiPath(uri,
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     assertResponseCode(200, response);
