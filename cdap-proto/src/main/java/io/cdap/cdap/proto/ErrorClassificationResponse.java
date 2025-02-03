@@ -31,11 +31,10 @@ public final class ErrorClassificationResponse {
   private final String errorCodeType;
   private final String errorCode;
   private final String supportedDocumentationUrl;
-  private transient final String throwableClassName;
 
   private ErrorClassificationResponse(String stageName, String errorCategory, String errorReason,
       String errorMessage, String errorType, String dependency, String errorCodeType,
-      String errorCode, String supportedDocumentationUrl, String throwableClassName) {
+      String errorCode, String supportedDocumentationUrl) {
     this.stageName = stageName;
     this.errorCategory = errorCategory;
     this.errorReason = errorReason;
@@ -45,7 +44,6 @@ public final class ErrorClassificationResponse {
     this.errorCodeType = errorCodeType;
     this.errorCode = errorCode;
     this.supportedDocumentationUrl = supportedDocumentationUrl;
-    this.throwableClassName = throwableClassName;
   }
 
   /**
@@ -111,13 +109,6 @@ public final class ErrorClassificationResponse {
     return supportedDocumentationUrl;
   }
 
-  /**
-   * Gets the throwable class name for ErrorClassificationResponse.
-   */
-  public String getThrowableClassName() {
-    return throwableClassName;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ErrorClassificationResponse)) {
@@ -154,7 +145,6 @@ public final class ErrorClassificationResponse {
     private String errorCodeType;
     private String errorCode;
     private String supportedDocumentationUrl;
-    private String throwableClassName;
 
     /**
      * Sets the stage name for ErrorClassificationResponse.
@@ -229,20 +219,11 @@ public final class ErrorClassificationResponse {
     }
 
     /**
-     * Sets the throwable class name for ErrorClassificationResponse.
-     */
-    public Builder setThrowableClassName(String throwableClassName) {
-      this.throwableClassName = throwableClassName;
-      return this;
-    }
-
-    /**
      * Builds and returns a new instance of ErrorClassificationResponse.
      */
     public ErrorClassificationResponse build() {
       return new ErrorClassificationResponse(stageName, errorCategory, errorReason, errorMessage,
-          errorType, dependency, errorCodeType, errorCode, supportedDocumentationUrl,
-          throwableClassName);
+          errorType, dependency, errorCodeType, errorCode, supportedDocumentationUrl);
     }
   }
 }
