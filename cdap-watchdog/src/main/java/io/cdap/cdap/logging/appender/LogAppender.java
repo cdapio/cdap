@@ -26,7 +26,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.api.exception.ErrorCodeType;
 import io.cdap.cdap.api.exception.FailureDetailsProvider;
-import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -138,6 +137,8 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
         }
         modifiableMdc.put(Constants.Logging.TAG_ERROR_CATEGORY,
             provider.getErrorCategory().getErrorCategory());
+        modifiableMdc.put(Constants.Logging.TAG_PARENT_ERROR_CATEGORY,
+            provider.getErrorCategory().getParentCategory().name());
         if (provider.getErrorReason() != null) {
           modifiableMdc.put(Constants.Logging.TAG_ERROR_REASON, provider.getErrorReason());
         }
