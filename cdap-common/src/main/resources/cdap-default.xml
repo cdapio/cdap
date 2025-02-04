@@ -1253,6 +1253,23 @@
   </property>
 
   <property>
+    <name>data.storage.properties.gcp-spanner.tx.runner.max.retries</name>
+    <value>12</value>
+    <description>
+      The max number of retries for the spanner transaction runner on retryable
+      failures.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.properties.gcp-spanner.tx.runner.initial.delay.ms</name>
+    <value>500</value>
+    <description>
+      The initial delay between retries due to spanner transaction failures in milliseconds.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.enabled</name>
     <value>true</value>
     <description>

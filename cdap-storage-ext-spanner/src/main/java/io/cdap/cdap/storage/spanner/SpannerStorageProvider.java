@@ -54,7 +54,7 @@ public class SpannerStorageProvider implements StorageProvider {
 
   private Spanner spanner;
   private SpannerStructuredTableAdmin admin;
-  private SpannerTransactionRunner txRunner;
+  private RetryingSpannerTransactionRunner txRunner;
 
   @Override
   public void initialize(StorageProviderContext context) throws Exception {
@@ -90,7 +90,7 @@ public class SpannerStorageProvider implements StorageProvider {
 
     this.spanner = options.getService();
     this.admin = new SpannerStructuredTableAdmin(spanner, databaseId);
-    this.txRunner = new SpannerTransactionRunner(admin);
+    this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
   }
 
   @Override
