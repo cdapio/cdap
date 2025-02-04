@@ -416,8 +416,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           getJobStatusDetails(job)));
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
-        throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
-            jobId, clusterName), e);
+        int code = e.getStatusCode().getCode().getHttpStatusCode();
+        ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(code);
+        String errorReason = String.format("%s Unable to get details for job %s on cluster %s. %s",
+            code, jobId, clusterName, pair.getCorrectiveAction());
+        throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.OTHERS),
+            errorReason, e.getMessage(), pair.getErrorType(), true, ErrorCodeType.HTTP,
+            String.valueOf(code), null, e);
       }
       // Status is not found if job is finished or manually deleted by the user
       LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId,
@@ -560,7 +565,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
               Storage.BlobWriteOption.metagenerationMatch());
         } catch (StorageException e) {
           if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
-            throw e;
+            ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(e.getCode());
+            String errorReason = String.format("%s Unable to upload file %s to GCS bucket gs://%s."
+                    + " %s", e.getCode(), localFile.getURI(), bucket, pair.getCorrectiveAction());
+            throw ErrorUtils.getProgramFailureException(
+                new ErrorCategory(ErrorCategoryEnum.STARTING), errorReason, e.getMessage(),
+                pair.getErrorType(), true, ErrorCodeType.HTTP, String.valueOf(e.getCode()),
+                GCS_DOC_URL, e);
           }
           // Precondition failed means file has already been replaced, hence ignore it.
           LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
@@ -633,8 +644,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(e.getCode());
-        String errorReason = String.format("%s Unable to access GCS bucket %s. %s", e.getCode(),
-            bucket, pair.getCorrectiveAction());
+        String errorReason = String.format("%s Unable to upload file %s to GCS bucket gs://%s. %s",
+            e.getCode(), localFile.getURI(), bucket, pair.getCorrectiveAction());
         throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.STARTING),
             errorReason, e.getMessage(), pair.getErrorType(), true,
             ErrorCodeType.HTTP, String.valueOf(e.getCode()), GCS_DOC_URL, e);
