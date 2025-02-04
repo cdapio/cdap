@@ -44,6 +44,8 @@ public class OAuthStore {
   private static final String OAUTH_PROVIDER_COL = "oauthprovider";
   private static final String LOGIN_URL_COL = "loginurl";
   private static final String TOKEN_REFRESH_URL_COL = "tokenrefreshurl";
+  private static final String CREDENTIAL_ENCODING_STRATEGY_COL = "credentialencodingstrategy";
+  private static final String USER_AGENT_COL = "useragent";
   private static final String CLIENT_CREDS_KEY_PREFIX = "oauthclientcreds";
   private static final String REFRESH_TOKEN_KEY_PREFIX = "oauthrefreshtoken";
   private static final Gson GSON = new Gson();
@@ -56,7 +58,9 @@ public class OAuthStore {
       .withId(TABLE_ID)
       .withFields(Fields.stringType(OAUTH_PROVIDER_COL),
                   Fields.stringType(LOGIN_URL_COL),
-                  Fields.stringType(TOKEN_REFRESH_URL_COL))
+                  Fields.stringType(TOKEN_REFRESH_URL_COL),
+                  Fields.stringType(CREDENTIAL_ENCODING_STRATEGY_COL),
+                  Fields.stringType(USER_AGENT_COL))
       .withPrimaryKeys(OAUTH_PROVIDER_COL)
       .build();
 
@@ -217,12 +221,16 @@ public class OAuthStore {
     String name = row.getString(OAUTH_PROVIDER_COL);
     String loginURL = row.getString(LOGIN_URL_COL);
     String tokenRefreshURL = row.getString(TOKEN_REFRESH_URL_COL);
+    String credentialEncodingStrategy = row.getString(CREDENTIAL_ENCODING_STRATEGY_COL);
+    String userAgent = row.getString(USER_AGENT_COL);
 
     return OAuthProvider.newBuilder()
         .withName(name)
         .withLoginURL(loginURL)
         .withTokenRefreshURL(tokenRefreshURL)
         .withClientCredentials(clientCreds)
+        .withCredentialEncodingStrategy(OAuthProvider.CredentialEncodingStrategy.valueOf(credentialEncodingStrategy))
+        .withUserAgent(userAgent)
         .build();
   }
 
@@ -231,6 +239,10 @@ public class OAuthStore {
     fields.add(Fields.stringField(OAUTH_PROVIDER_COL, oauthProvider.getName()));
     fields.add(Fields.stringField(LOGIN_URL_COL, oauthProvider.getLoginURL()));
     fields.add(Fields.stringField(TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL()));
+    fields.add(Fields.stringField(
+            CREDENTIAL_ENCODING_STRATEGY_COL,
+            oauthProvider.getCredentialEncodingStrategy().toString()));
+    fields.add(Fields.stringField(USER_AGENT_COL, oauthProvider.getUserAgent()));
     return fields;
   }
 }
