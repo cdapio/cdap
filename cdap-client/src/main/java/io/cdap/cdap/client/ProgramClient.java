@@ -44,6 +44,7 @@ import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.codec.ConditionSpecificationCodec;
 import io.cdap.cdap.proto.codec.CustomActionSpecificationCodec;
@@ -63,6 +64,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -271,7 +273,7 @@ public class ProgramClient {
   /**
    * Stops all currently running programs.
    */
-  public void stopAll(NamespaceId namespace)
+  public void stopAll(NamespaceId namespace, Set<ProgramType> excludeProgramTypes)
       throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
       ApplicationNotFoundException, BadRequestException {
 
@@ -282,6 +284,10 @@ public class ProgramClient {
       List<ProgramRecord> programRecords = applicationClient.listPrograms(appId);
       for (ProgramRecord programRecord : programRecords) {
         try {
+          if (excludeProgramTypes.contains(programRecord.getType())) {
+            LOG.info("Skipping program {} of type {}", programRecord.getName(), programRecord.getType());
+            continue;
+          }
           ProgramId program = appId.program(programRecord.getType(), programRecord.getName());
           String status = this.getStatus(program);
           if (!status.equals("STOPPED")) {

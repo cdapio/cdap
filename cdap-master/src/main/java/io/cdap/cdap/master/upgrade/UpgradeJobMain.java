@@ -39,7 +39,9 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -58,11 +60,22 @@ public class UpgradeJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeJobMain.class);
 
   public static void main(String[] args) {
-    if (args.length != 2) {
+    if (args.length < 2) {
       throw new RuntimeException(
-          String.format("Invalid number of arguments to UpgradeJobMain. Needed 2, found %d",
+          String.format("Invalid number of arguments to UpgradeJobMain. Needed at least 2, found %d",
               args.length));
     }
+
+    // Extract the program types which you want to exclude
+    Set<ProgramType> excludeProgramTypes = new HashSet<>();
+    for (int i = 0; i < args.length; i++) {
+      if (args[i].startsWith("--exclude-program-type=")) {
+        String excludedType = args[i].substring("--exclude-program-type=".length());
+        ProgramType programType = ProgramType.valueOfCategoryName(excludedType.toLowerCase());
+        excludeProgramTypes.add(programType);
+      }
+    }
+
     // TODO(CDAP-18299): Refactor to use internal service discovery mechanism instead of making calls via the router.
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
         .setHostname(args[0])
@@ -93,7 +106,7 @@ public class UpgradeJobMain {
     try {
       Retries.callWithRetries(
           () -> {
-            suspendSchedulesAndStopPipelines(clientConfig);
+            suspendSchedulesAndStopPipelines(clientConfig, excludeProgramTypes);
             return null;
           }, retryStrategy, e -> e instanceof IOException || e instanceof NotFoundException);
     } catch (Exception e) {
@@ -101,7 +114,7 @@ public class UpgradeJobMain {
     }
   }
 
-  private static void suspendSchedulesAndStopPipelines(ClientConfig clientConfig) throws Exception {
+  private static void suspendSchedulesAndStopPipelines(ClientConfig clientConfig, Set<ProgramType> excludeProgramTypes) throws Exception {
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
     ScheduleClient scheduleClient = new ScheduleClient(clientConfig);
     ProgramClient programClient = new ProgramClient(clientConfig);
@@ -158,7 +171,7 @@ public class UpgradeJobMain {
             "At least one pipeline in namespace " + namespaceId + " is still running.");
       }
       // All schedules are stopped, now stop all programs
-      programClient.stopAll(namespaceId);
+      programClient.stopAll(namespaceId, excludeProgramTypes);
     }
   }
 }
