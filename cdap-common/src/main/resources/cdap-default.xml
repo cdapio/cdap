@@ -514,10 +514,18 @@
   </property>
 
   <property>
-    <name>app.bind.port</name>
+    <name>appfabric.processor.bind.port</name>
     <value>0</value>
     <description>
-      App Fabric service bind port; if 0, binds to a random port
+      App Fabric processor bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+  <property>
+    <name>appfabric.bind.port</name>
+    <value>0</value>
+    <description>
+      App Fabric server bind port; if 0, binds to a random port
     </description>
   </property>
 
