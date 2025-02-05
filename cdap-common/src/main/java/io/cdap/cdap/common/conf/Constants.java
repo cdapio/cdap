@@ -230,10 +230,17 @@ public final class Constants {
   public static final class AppFabric {
 
     /**
+     * App Fabric Processor.
+     */
+
+    public static final String PROCESSOR_PORT = "appfabric.processor.bind.port";
+    public static final String PROCESSOR_ANNOUNCE_PORT = "appfabric.processor.announce.port";
+
+    /**
      * App Fabric Server.
      */
-    public static final String SERVER_PORT = "app.bind.port";
-    public static final String SERVER_ANNOUNCE_PORT = "app.announce.port";
+    public static final String SERVER_PORT = "appfabric.bind.port";
+    public static final String SERVER_ANNOUNCE_PORT = "appfabric.announce.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";

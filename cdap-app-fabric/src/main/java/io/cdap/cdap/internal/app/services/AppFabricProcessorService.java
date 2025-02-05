@@ -26,6 +26,7 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
@@ -182,7 +183,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
             Constants.AppFabric.DEFAULT_BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.AppFabric.WORKER_THREADS,
             Constants.AppFabric.DEFAULT_WORKER_THREADS))
-        .setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
+        .setPort(cConf.getInt(Constants.AppFabric.PROCESSOR_PORT));
     if (sslEnabled) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(httpServiceBuilder);
     }
@@ -217,7 +218,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
 
     String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
         httpService.getBindAddress().getHostName());
-    int announcePort = cConf.getInt(Constants.AppFabric.SERVER_ANNOUNCE_PORT,
+    int announcePort = cConf.getInt(AppFabric.PROCESSOR_ANNOUNCE_PORT,
         httpService.getBindAddress().getPort());
 
     final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
