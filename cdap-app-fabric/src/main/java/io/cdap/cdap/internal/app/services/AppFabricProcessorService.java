@@ -42,7 +42,6 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
-import io.cdap.cdap.scheduler.ScheduleNotificationSubscriberService;
 import io.cdap.cdap.security.auth.AuditLogSubscriberService;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -80,7 +79,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private final BootstrapService bootstrapService;
   private final SystemAppManagementService systemAppManagementService;
   private final OperationNotificationSubscriberService operationNotificationSubscriberService;
-  private final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -112,8 +110,7 @@ public class AppFabricProcessorService extends AbstractIdleService {
       SystemAppManagementService systemAppManagementService,
       FlowControlService runRecordCounterService,
       RunDataTimeToLiveService runDataTimeToLiveService,
-      OperationNotificationSubscriberService operationNotificationSubscriberService,
-      ScheduleNotificationSubscriberService scheduleNotificationSubscriberService) {
+      OperationNotificationSubscriberService operationNotificationSubscriberService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -136,7 +133,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
     this.runRecordCounterService = runRecordCounterService;
     this.runDataTimeToLiveService = runDataTimeToLiveService;
     this.operationNotificationSubscriberService = operationNotificationSubscriberService;
-    this.scheduleNotificationSubscriberService = scheduleNotificationSubscriberService;
   }
 
   /**
@@ -166,7 +162,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
         programStopSubscriberService.start(),
         runRecordCorrectorService.start(),
         programRunStatusMonitorService.start(),
-        scheduleNotificationSubscriberService.start(),
         coreSchedulerService.start(),
         runRecordCounterService.start(),
         runDataTimeToLiveService.start(),
@@ -200,7 +195,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    scheduleNotificationSubscriberService.stopAndWait();
     coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
     systemAppManagementService.stopAndWait();

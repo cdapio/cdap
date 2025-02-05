@@ -34,6 +34,7 @@ import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramRuntimeHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProgramScheduleHttpHandler;
 import io.cdap.cdap.gateway.handlers.WorkflowHttpHandler;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.BufferFileInputStream;
@@ -108,6 +109,7 @@ public class AppFabricClient {
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
   private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
   private final ProgramRuntimeHttpHandler programRuntimeHttpHandler;
+  private final ProgramScheduleHttpHandler programScheduleHttpHandler;
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -117,6 +119,7 @@ public class AppFabricClient {
                          AppLifecycleHttpHandler appLifecycleHttpHandler,
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          ProgramRuntimeHttpHandler programRuntimeHttpHandler,
+                         ProgramScheduleHttpHandler programScheduleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceQueryAdmin namespaceQueryAdmin,
                          WorkflowHttpHandler workflowHttpHandler) {
@@ -124,6 +127,7 @@ public class AppFabricClient {
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.programRuntimeHttpHandler = programRuntimeHttpHandler;
+    this.programScheduleHttpHandler = programScheduleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
@@ -290,7 +294,7 @@ public class AppFabricClient {
                                getNamespacePath(namespace), app, workflow);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     try {
-      programLifecycleHttpHandler.getProgramSchedules(request, responder, namespace, app, workflow, null, null, null);
+      programScheduleHttpHandler.getProgramSchedules(request, responder, namespace, app, workflow, null, null, null);
     } catch (Exception e) {
       // cannot happen
       throw Throwables.propagate(e);
@@ -393,8 +397,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/schedules/%s/suspend", getNamespacePath(namespaceId), appId, scheduleName);
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                              "schedules", scheduleName, "suspend");
+    programScheduleHttpHandler.performAction(request, responder, namespaceId, appId, scheduleName, "suspend");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
   }
 
@@ -403,8 +406,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/schedules/%s/resume", getNamespacePath(namespaceId), appId, schedName);
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                              "schedules", schedName, "resume");
+    programScheduleHttpHandler.performAction(request, responder, namespaceId, appId, schedName, "resume");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
@@ -414,7 +416,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/schedules/%s/status", getNamespacePath(namespaceId), appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     try {
-      programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
+      programScheduleHttpHandler.getStatus(request, responder, namespaceId, appId, schedId);
     } catch (NotFoundException e) {
       return "NOT_FOUND";
     }
@@ -618,7 +620,7 @@ public class AppFabricClient {
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     request.content().writeCharSequence(GSON.toJson(scheduleDetail), StandardCharsets.UTF_8);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.addScheduleVersioned(request, responder, application.getNamespace(),
+    programScheduleHttpHandler.addScheduleVersioned(request, responder, application.getNamespace(),
                                             application.getApplication(), application.getVersion(),
                                             scheduleDetail.getName());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Add schedule failed");
@@ -631,9 +633,8 @@ public class AppFabricClient {
                                scheduleId.getSchedule());
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     HttpUtil.setContentLength(request, 0);
-    programLifecycleHttpHandler.performAction(request, responder, scheduleId.getNamespace(),
-                                              scheduleId.getApplication(), "schedules",
-                                              scheduleId.getSchedule(), "enable");
+    programScheduleHttpHandler.performAction(request, responder, scheduleId.getNamespace(),
+                                              scheduleId.getApplication(), scheduleId.getSchedule(), "enable");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Enable schedule failed");
   }
 
@@ -646,7 +647,7 @@ public class AppFabricClient {
     FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     request.content().writeCharSequence(GSON.toJson(scheduleDetail), StandardCharsets.UTF_8);
     HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.updateScheduleVersioned(request, responder, application.getNamespace(),
+    programScheduleHttpHandler.updateScheduleVersioned(request, responder, application.getNamespace(),
                                                application.getApplication(), application.getVersion(),
                                                scheduleId.getSchedule());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Update schedule failed");
@@ -658,7 +659,7 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/versions/%s/schedules/%s", getNamespacePath(application.getNamespace()),
                                application.getApplication(), application.getVersion(), scheduleId.getSchedule());
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri);
-    programLifecycleHttpHandler.deleteScheduleVersioned(request, responder, application.getNamespace(),
+    programScheduleHttpHandler.deleteScheduleVersioned(request, responder, application.getNamespace(),
                                                application.getApplication(), application.getVersion(),
                                                scheduleId.getSchedule());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Delete schedule failed");

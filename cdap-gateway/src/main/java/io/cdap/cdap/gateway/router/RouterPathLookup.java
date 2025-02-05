@@ -18,14 +18,11 @@ package io.cdap.cdap.gateway.router;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
-import java.util.Set;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
@@ -181,6 +178,35 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "credentials")
         || beginsWith(uriParts, "v3", "credentials")) {
       return APP_FABRIC_HTTP;
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "schedules")
+        || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "schedules")
+        || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "schedules")
+        || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "versions", null, "schedules")
+        || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, "versions", null, null, null, "schedules")
+        || beginsWith(uriParts, "v3", "namespaces", null, "previousruntime")
+        || beginsWith(uriParts, "v3", "namespaces", null, "nextruntime")
+        || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "previousruntime")
+        || beginsWith(uriParts, "v3", "namespaces", null, "apps", null, null, null, "nextruntime")) {
+      // Program Schedule handler paths:
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/{program-type}/{program-name}/schedules
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/schedules
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/schedules
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/schedules/{schedule-name}
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/schedules/{schedule-name}/update
+      // /v3/namespaces/{namespace-id}/apps/{app-id}/schedules/{schedule-name}/{action}
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/versions/{app-version}/schedules
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/versions/{app-version}/schedules/{schedule-name}
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/versions/{app-version}/schedules/{schedule-name}/update
+      // /v3/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}/schedules/{schedule-name}/status
+      // /v3/namespaces/{namespace-id}/apps/{app-id}/versions/{app-version}/schedules/{schedule-name}/{action}
+      // /v3/namespaces/{namespace-id}/schedules/re-enable
+      // /v3/namespaces/{namespace-id}/schedules/trigger-type/program-status
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/{program-type}/{program-name}/previousruntime
+      // /v3/namespaces/{namespace-id}/apps/{app-name}/{program-type}/{program-name}/nextruntime
+      // /v3/namespaces/{namespace-id}/previousruntime
+      // /v3/namespaces/{namespace-id}/nextruntime
+      // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/status
+      return APP_FABRIC_PROCESSOR;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs"))
         || (uriParts.length >= 10 && (uriParts[9].equals("logs") || uriParts[9].equals("classify")))
         || (uriParts.length >= 6 && uriParts[5].equals("logs"))) {

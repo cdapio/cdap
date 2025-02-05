@@ -43,7 +43,6 @@ import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -78,7 +77,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
-  private final CoreSchedulerService coreSchedulerService;
   private final CredentialProviderService credentialProviderService;
   private final NamespaceCredentialProviderService namespaceCredentialProviderService;
   private final ProvisioningService provisioningService;
@@ -107,7 +105,6 @@ public class AppFabricServer extends AbstractIdleService {
       ApplicationLifecycleService applicationLifecycleService,
       @Named("appfabric.services.names") Set<String> servicesNames,
       @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-      CoreSchedulerService coreSchedulerService,
       CredentialProviderService credentialProviderService,
       NamespaceCredentialProviderService namespaceCredentialProviderService,
       ProvisioningService provisioningService,
@@ -126,7 +123,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
-    this.coreSchedulerService = coreSchedulerService;
     this.credentialProviderService = credentialProviderService;
     this.namespaceCredentialProviderService = namespaceCredentialProviderService;
     this.provisioningService = provisioningService;
@@ -155,7 +151,6 @@ public class AppFabricServer extends AbstractIdleService {
         provisioningService.start(),
         applicationLifecycleService.start(),
         bootstrapService.start(),
-        coreSchedulerService.start(),
         credentialProviderService.start(),
         sourceControlOperationRunner.start(),
         repositoryCleanupService.start()
@@ -209,7 +204,6 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    coreSchedulerService.stopAndWait();
     cancelHttpService.cancel();
     applicationLifecycleService.stopAndWait();
     bootstrapService.stopAndWait();

@@ -18,9 +18,9 @@
 package io.cdap.cdap.gateway.router;
 
 /**
- * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}
+ * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}.
  */
 public final class ExpectedNumberOfAuditPolicyPaths {
 
-  public static final int EXPECTED_PATH_NUMBER = 47;
+  public static final int EXPECTED_PATH_NUMBER = 49;
 }

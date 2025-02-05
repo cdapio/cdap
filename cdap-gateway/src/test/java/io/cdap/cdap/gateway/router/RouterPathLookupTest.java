@@ -288,8 +288,8 @@ public class RouterPathLookupTest {
     assertRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata/properties",
                   RouterPathLookup.METADATA_SERVICE);
     // program metadata properties
-    assertRouting("/v3/namespaces/default//apps/WordCount/services/ServiceName/metadata/properties"
-      , RouterPathLookup.METADATA_SERVICE);
+    assertRouting("/v3/namespaces/default//apps/WordCount/services/ServiceName/metadata/properties",
+        RouterPathLookup.METADATA_SERVICE);
     // dataset metadata properties
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
     // app metadata tags
@@ -456,6 +456,35 @@ public class RouterPathLookupTest {
     assertRouting("v3/namespaces//apps////runs//resetloglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
     assertRouting("v3/namespaces//apps//versions////runs//loglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
     assertRouting("v3/namespaces//apps//versions////runs//resetloglevels", RouterPathLookup.APP_FABRIC_PROCESSOR);
+  }
+
+  @Test
+  public void testProgramSchedulePaths() {
+    assertRouting("v3/namespaces/{ns}/apps/{app}/{ptype}/{pname}/schedules", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/versions/{ver}/{ptype}/{name}/schedules",
+        RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/schedules", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/schedules/", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/schedules/{sched}/update", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/schedules/{sched}/status", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/schedules/{sched}/{action}", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/versions/{ver}/schedules", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/versions/{ver}/schedules/{sched}",
+        RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/versions/{ver}/schedules/{sched}/update",
+        RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/versions/{ver}/schedules/{sched}/status",
+        RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/versions/{ver}/schedules/{sched}/{action}",
+        RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/schedules/re-enable", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/schedules/trigger-type/program-status", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/{ptype}/{pname}/previousruntime",
+        RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/apps/{app}/{ptype}/{pname}/nextruntime", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/previousruntime", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/nextruntime", RouterPathLookup.APP_FABRIC_PROCESSOR);
+    assertRouting("v3/namespaces/{ns}/instances", RouterPathLookup.APP_FABRIC_PROCESSOR);
   }
 
   @Test
