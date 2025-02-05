@@ -59,9 +59,9 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   /**
    * Time (in millisecond) to refresh the credentials before it expires.
    */
-  private static final int NUMBER_OF_RETRIES = 10;
-  private static final int MIN_WAIT_TIME_MILLISECOND = 500;
-  private static final int MAX_WAIT_TIME_MILLISECOND = 10000;
+  private static final int NUMBER_OF_RETRIES = 20;
+  private static final int MIN_WAIT_TIME_MILLISECOND = 2000;
+  private static final int MAX_WAIT_TIME_MILLISECOND = 60000;
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private final String endPoint;
 
