@@ -111,7 +111,10 @@ import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
+import io.cdap.cdap.internal.app.runtime.schedule.LocalScheduleManager;
 import io.cdap.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.RemoteScheduleManager;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import io.cdap.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
@@ -244,6 +247,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                 .in(Scopes.SINGLETON);
             bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
                 .in(Scopes.SINGLETON);
+            bind(ScheduleManager.class).to(LocalScheduleManager.class).in(Scopes.SINGLETON);
             bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
             bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
@@ -265,6 +269,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                   binder(), HttpHandler.class, Names.named(Constants.AppFabric.SERVER_HANDLERS_BINDING));
               handlerBinder.addBinding().to(ProgramRuntimeHttpHandler.class);
               handlerBinder.addBinding().to(ProgramScheduleHttpHandler.class);
+              handlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
 
               // TODO: Uncomment after CDAP-7688 is resolved
               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -303,6 +308,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                 .in(Scopes.SINGLETON);
             bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
                 .in(Scopes.SINGLETON);
+            bind(ScheduleManager.class).to(LocalScheduleManager.class).in(Scopes.SINGLETON);
             bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
             bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
@@ -367,6 +373,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                 .in(Scopes.SINGLETON);
             bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class)
                 .in(Scopes.SINGLETON);
+            bind(ScheduleManager.class).to(RemoteScheduleManager.class).in(Scopes.SINGLETON);
             bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
             bind(StorageProviderNamespaceAdmin.class)
                 .to(DistributedStorageProviderNamespaceAdmin.class);
@@ -511,8 +518,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(InstanceOperationHttpHandler.class);
         handlerBinder.addBinding().to(NamespaceHttpHandler.class);
         handlerBinder.addBinding().to(SourceControlManagementHttpHandler.class);
-        // TODO: [CDAP-13355] Move OperationsDashboardHttpHandler into report generation app
-        handlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
         handlerBinder.addBinding().to(PreferencesHttpHandler.class);
         handlerBinder.addBinding().to(PreferencesHttpHandlerInternal.class);
         handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
@@ -569,6 +574,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         processorHandlerBinder.addBinding().to(ProgramRuntimeHttpHandler.class);
         processorHandlerBinder.addBinding().to(BootstrapHttpHandler.class);
         processorHandlerBinder.addBinding().to(ProgramScheduleHttpHandler.class);
+        // TODO: [CDAP-13355] Move OperationsDashboardHttpHandler into report generation app
+        // TODO(CDAP-21134): Check feasibility of moving OperationsDashboardHttpHandler to Appfabric Server.
+        processorHandlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
       } else {
         bind(NoOpScheduler.class).in(Scopes.SINGLETON);
         bind(Scheduler.class).to(NoOpScheduler.class);

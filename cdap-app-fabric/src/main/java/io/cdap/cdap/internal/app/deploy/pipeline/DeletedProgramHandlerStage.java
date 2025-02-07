@@ -24,11 +24,11 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProgramTypes;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,18 +53,18 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final ProgramTerminator programTerminator;
   private final MetricsSystemClient metricsSystemClient;
   private final MetadataServiceClient metadataServiceClient;
-  private final Scheduler programScheduler;
+  private final ScheduleManager scheduleManager;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
       MetricsSystemClient metricsSystemClient,
       MetadataServiceClient metadataServiceClient,
-      Scheduler programScheduler) {
+      ScheduleManager scheduleManager) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
     this.metricsSystemClient = metricsSystemClient;
     this.metadataServiceClient = metadataServiceClient;
-    this.programScheduler = programScheduler;
+    this.scheduleManager = scheduleManager;
   }
 
   @Override
@@ -81,8 +81,8 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       ProgramType type = ProgramTypes.fromSpecification(spec);
       ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
       programTerminator.stop(programId);
-      programScheduler.deleteSchedules(programId);
-      programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
+      scheduleManager.deleteSchedules(programId);
+      scheduleManager.modifySchedulesTriggeredByDeletedProgram(programId);
 
       // Remove metadata for the deleted program
       metadataServiceClient.drop(new MetadataMutation.Drop(programId.toMetadataEntity()));

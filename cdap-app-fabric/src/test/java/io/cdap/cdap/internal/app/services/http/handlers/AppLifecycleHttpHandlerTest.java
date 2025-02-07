@@ -53,6 +53,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -75,7 +76,6 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
-import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -136,7 +136,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       @Provides
       @Singleton
       public ApplicationLifecycleService createLifeCycleService(CConfiguration cConf,
-          Store store, Scheduler scheduler, UsageRegistry usageRegistry,
+          Store store, ScheduleManager scheduleManager, UsageRegistry usageRegistry,
           PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
           OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
           ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
@@ -145,7 +145,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MessagingService messagingService, Impersonator impersonator,
           CapabilityReader capabilityReader) {
 
-        return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduler,
+        return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduleManager,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
             messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
