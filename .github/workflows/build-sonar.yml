@@ -21,6 +21,9 @@ on:
     types:
       - completed
 
+permissions:
+  checks: write
+
 jobs:
   build:
     runs-on: k8s-runner-build
