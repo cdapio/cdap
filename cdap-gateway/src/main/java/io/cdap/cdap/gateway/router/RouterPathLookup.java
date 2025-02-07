@@ -269,6 +269,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}
       return DONT_ROUTE;
+    } else if ((uriParts.length == 2) && beginsWith(uriParts, "v3", "dashboard")) {
+      return APP_FABRIC_PROCESSOR;
     }
     return APP_FABRIC_HTTP;
   }

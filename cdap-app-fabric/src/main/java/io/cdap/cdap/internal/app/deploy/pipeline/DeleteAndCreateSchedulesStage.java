@@ -20,11 +20,11 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.scheduler.Scheduler;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,11 +33,11 @@ import java.util.Set;
  */
 public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
 
-  private final Scheduler programScheduler;
+  private final ScheduleManager scheduleManager;
 
-  public DeleteAndCreateSchedulesStage(Scheduler programScheduler) {
+  public DeleteAndCreateSchedulesStage(ScheduleManager scheduleManager) {
     super(TypeToken.of(ApplicationWithPrograms.class));
-    this.programScheduler = programScheduler;
+    this.scheduleManager = scheduleManager;
   }
 
   @Override
@@ -52,17 +52,17 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     ApplicationId appId = input.getApplicationId();
     // Get a set of new schedules from the app spec
     Set<ProgramSchedule> newSchedules = getProgramScheduleSet(appId, input.getSpecification());
-    for (ProgramSchedule schedule : programScheduler.listSchedules(appId)) {
+    for (ProgramSchedule schedule : scheduleManager.listSchedules(appId)) {
       if (newSchedules.contains(schedule)) {
         newSchedules.remove(schedule); // Remove the existing schedule from the newSchedules
         continue;
       }
       // Delete the existing schedule if it is not present in newSchedules
-      programScheduler.deleteSchedule(schedule.getScheduleId());
+      scheduleManager.deleteSchedule(schedule.getScheduleId());
     }
 
     // Add new schedules
-    programScheduler.addSchedules(newSchedules);
+    scheduleManager.addSchedules(newSchedules);
 
     // Emit the input to next stage.
     emit(input);

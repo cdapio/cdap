@@ -79,6 +79,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
@@ -112,7 +113,6 @@ import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -165,7 +165,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private final CConfiguration cConf;
   private final Store store;
-  private final Scheduler scheduler;
+  private final ScheduleManager scheduleManager;
   private final UsageRegistry usageRegistry;
   private final PreferencesService preferencesService;
   private final MetricsSystemClient metricsSystemClient;
@@ -189,7 +189,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   @Inject
   public ApplicationLifecycleService(CConfiguration cConf,
-      Store store, Scheduler scheduler, UsageRegistry usageRegistry,
+      Store store, ScheduleManager scheduleManager, UsageRegistry usageRegistry,
       PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
       OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
       ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
@@ -203,7 +203,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.store = store;
-    this.scheduler = scheduler;
+    this.scheduleManager = scheduleManager;
     this.usageRegistry = usageRegistry;
     this.preferencesService = preferencesService;
     this.metricsSystemClient = metricsSystemClient;
@@ -1338,9 +1338,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteApp(ApplicationId appId, ApplicationSpecification spec) throws IOException {
     //Delete the schedules
-    scheduler.deleteSchedules(appId);
+    scheduleManager.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+      scheduleManager.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
     }
 
     deleteMetrics(appId, spec);
@@ -1378,9 +1378,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteAppVersion(ApplicationId appId, ApplicationSpecification spec) {
     //Delete the schedules
-    scheduler.deleteSchedules(appId);
+    scheduleManager.deleteSchedules(appId);
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+      scheduleManager.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
     }
     store.removeApplication(appId);
   }
