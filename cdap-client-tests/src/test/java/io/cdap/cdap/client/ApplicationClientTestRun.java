@@ -18,6 +18,7 @@ package io.cdap.cdap.client;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -161,6 +162,42 @@ public class ApplicationClientTestRun extends ClientTestBase {
       appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
       Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
     }
+  }
+
+  @Test
+  public void testPaginatedList() throws Exception {
+    ApplicationId app = NamespaceId.DEFAULT.app(FakeApp.NAME);
+    for (int i = 0; i < 30; i++) {
+      appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class,
+          FakeApp.NAME, "1.0.0-SNAPSHOT"));
+      ApplicationDetail appDetail = appClient.get(app);
+      app = new ApplicationId(app.getNamespace(), app.getApplication(), appDetail.getAppVersion());
+      appClient.waitForDeployed(app, 30, TimeUnit.SECONDS);
+    }
+    Assert.assertEquals(30, appClient.list(NamespaceId.DEFAULT).size());
+
+    int count = 0;
+    String token = null;
+    boolean isLastPage = false;
+    int currentResultSize = 0;
+    while (!isLastPage) {
+      JsonObject result = appClient.paginatedList(NamespaceId.DEFAULT, token);
+      currentResultSize = result.get("applications").getAsJsonArray().size();
+      count += currentResultSize;
+      token =
+          result.get("nextPageToken") == null ? null : result.get("nextPageToken").getAsString();
+      isLastPage = (token == null);
+      if (!isLastPage) {
+        Assert.assertEquals(25, currentResultSize);
+      }
+    }
+
+    Assert.assertEquals(5, currentResultSize);
+    Assert.assertEquals(30, count);
+
+    appClient.deleteAll(NamespaceId.DEFAULT);
+    appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
+    Assert.assertEquals(0, appClient.list(NamespaceId.DEFAULT).size());
   }
 
   @Test
