@@ -35,11 +35,9 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
-import io.cdap.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import io.cdap.cdap.metrics.process.MetricsAdminSubscriberService;
-import io.cdap.cdap.metrics.process.MetricsProcessorStatusService;
 import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
@@ -75,7 +73,6 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         new MetricsStoreModule(),
         new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class),
-        new MetricsProcessorStatusServiceModule(),
         new MetricsHandlerModule(),
         new DFSLocationModule(),
         new MetricsWriterModule()
@@ -98,7 +95,6 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
 
     services.add(injector.getInstance(MessagingMetricsProcessorServiceFactory.class)
         .create(topicNumbers, metricsContext, 0));
-    services.add(injector.getInstance(MetricsProcessorStatusService.class));
     services.add(injector.getInstance(MetricsQueryService.class));
     services.add(injector.getInstance(MetricsAdminSubscriberService.class));
     services.add(injector.getInstance(MetricsCleanUpService.class));

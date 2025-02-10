@@ -81,7 +81,7 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
       // Don't increment metrics for logs from MetricsProcessor to avoid possibility of infinite loop
       if (!(metricsTags.containsKey(Constants.Metrics.Tag.COMPONENT)
           && metricsTags.get(Constants.Metrics.Tag.COMPONENT)
-          .equals(Constants.Service.METRICS_PROCESSOR))) {
+          .equals(Constants.Service.METRICS))) {
         // todo this is inefficient as childContext implementation creates new map should use metricsCollectionService
         MetricsContext childContext = metricsContext.childContext(metricsTags);
         childContext.increment(metricName, 1);

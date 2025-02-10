@@ -52,8 +52,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination LOG_QUERY = new RouteDestination(
       Constants.Service.LOG_QUERY);
   public static final RouteDestination LOG_SAVER = new RouteDestination(Constants.Service.LOGSAVER);
-  public static final RouteDestination METRICS_PROCESSOR = new RouteDestination(
-      Constants.Service.METRICS_PROCESSOR);
   public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(
       Constants.Service.DATASET_EXECUTOR);
   public static final RouteDestination MESSAGING = new RouteDestination(
@@ -225,8 +223,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           return LOG_SAVER;
         case Constants.Service.TRANSACTION:
           return TRANSACTION;
-        case Constants.Service.METRICS_PROCESSOR:
-          return METRICS_PROCESSOR;
         case Constants.Service.METRICS:
           return METRICS;
         case Constants.Service.APP_FABRIC_HTTP:

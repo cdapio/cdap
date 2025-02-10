@@ -370,8 +370,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.LOG_SAVER);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.TRANSACTION),
                   RouterPathLookup.TRANSACTION);
-    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METRICS_PROCESSOR),
-                  RouterPathLookup.METRICS_PROCESSOR);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METRICS),
                   RouterPathLookup.METRICS);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.APP_FABRIC_HTTP),
@@ -393,8 +391,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.LOG_SAVER);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.TRANSACTION),
                   RouterPathLookup.TRANSACTION);
-    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METRICS_PROCESSOR),
-                  RouterPathLookup.METRICS_PROCESSOR);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METRICS),
                   RouterPathLookup.METRICS);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.APP_FABRIC_HTTP),

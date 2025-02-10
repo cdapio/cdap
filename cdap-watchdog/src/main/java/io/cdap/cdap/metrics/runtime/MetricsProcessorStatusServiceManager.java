@@ -31,7 +31,7 @@ public class MetricsProcessorStatusServiceManager extends AbstractMasterServiceM
   @Inject
   MetricsProcessorStatusServiceManager(CConfiguration cConf, TwillRunner twillRunner,
       DiscoveryServiceClient discoveryClient) {
-    super(cConf, discoveryClient, Constants.Service.METRICS_PROCESSOR, twillRunner);
+    super(cConf, discoveryClient, Constants.Service.METRICS, twillRunner);
   }
 
   @Override
