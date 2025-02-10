@@ -41,11 +41,13 @@ import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.framework.distributed.DistributedAppenderContext;
-import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
+import io.cdap.cdap.logging.gateway.handlers.ErrorClassificationHttpHandler;
+import io.cdap.cdap.logging.gateway.handlers.LogHttpHandler;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
 import io.cdap.cdap.logging.logbuffer.LogBufferService;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
-import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
@@ -86,8 +88,6 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         new DataSetsModules().getStandaloneModules(),
         new LocalLocationModule(),
-        // log handler is co-located with log saver
-        new LogQueryRuntimeModule().getDistributedModules(),
         new PrivateModule() {
           @Override
           protected void configure() {
@@ -106,7 +106,10 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
             // Bind the log buffer as the log saver service
             Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
                 (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
+            handlerBinder.addBinding().to(LogHttpHandler.class);
+            handlerBinder.addBinding().to(ErrorClassificationHttpHandler.class);
             CommonHandlers.add(handlerBinder);
+            bind(ProgramRunRecordFetcher.class).to(RemoteProgramRunRecordFetcher.class);
 
             bind(LogBufferService.class).in(Scopes.SINGLETON);
             expose(LogBufferService.class);
@@ -119,10 +122,7 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   protected void addServices(Injector injector, List<? super Service> services,
       List<? super AutoCloseable> closeableResources, MasterEnvironment masterEnv,
       MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
-    // log saver
     services.add(injector.getInstance(LogBufferService.class));
-    // log handler
-    services.add(injector.getInstance(LogQueryService.class));
     // ZK client service
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
         Key.get(ZKClientService.class));

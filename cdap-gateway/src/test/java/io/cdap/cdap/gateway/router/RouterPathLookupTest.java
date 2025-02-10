@@ -83,7 +83,7 @@ public class RouterPathLookupTest {
     String path = "/v3/system/services/foo/logs";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.LOG_QUERY, result);
+    Assert.assertEquals(RouterPathLookup.LOG_SAVER, result);
 
     path = "/v3/system/services/foo/live-info";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
@@ -145,17 +145,17 @@ public class RouterPathLookupTest {
     String path = "/v3/namespaces/default/apps//InvalidApp///services/ServiceName/logs/";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.LOG_QUERY, result);
+    Assert.assertEquals(RouterPathLookup.LOG_SAVER, result);
 
     path = "///v3/namespaces/default///apps/InvalidApp/services/ServiceName/////logs";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
     result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.LOG_QUERY, result);
+    Assert.assertEquals(RouterPathLookup.LOG_SAVER, result);
 
     path = "/v3/namespaces/default/apps/InvalidApp/service/ServiceName/runs/7e6adc79-0f5d-4252-70817ea47698/logs/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.LOG_QUERY, result);
+    Assert.assertEquals(RouterPathLookup.LOG_SAVER, result);
   }
 
   @Test
