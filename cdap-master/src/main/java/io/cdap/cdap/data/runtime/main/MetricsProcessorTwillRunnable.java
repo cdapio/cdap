@@ -96,7 +96,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     LoggingContextAccessor.setLoggingContext(
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
-            Constants.Service.METRICS_PROCESSOR));
+            Constants.Service.METRICS));
     return injector;
   }
 
