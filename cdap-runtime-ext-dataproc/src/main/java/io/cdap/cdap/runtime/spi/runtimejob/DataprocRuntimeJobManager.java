@@ -388,12 +388,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
             .withDependency(true)
             .build();
       }
-      throw new DataprocRuntimeException.Builder()
-          .withErrorMessage(e.getMessage())
-          .withErrorReason(errorReason)
-          .withErrorCategory(errorCategory)
-          .withCause(e)
-          .build();
+      if (DataprocUtils.isFailureDetailsProviderInCausalChain(e)) {
+        // avoid double wrapping
+        throw e;
+      } else {
+        throw new DataprocRuntimeException.Builder()
+            .withErrorMessage(e.getMessage())
+            .withErrorReason(errorReason)
+            .withErrorCategory(errorCategory)
+            .withCause(e)
+            .build();
+      }
     } finally {
       if (disableLocalCaching) {
         DataprocUtils.deleteDirectoryContents(tempDir);

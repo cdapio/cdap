@@ -148,7 +148,6 @@ public class ErrorLogsClassifierTest {
   private ILoggingEvent getEvent1() {
     Map<String, String> map = new HashMap<>();
     map.put(Constants.Logging.TAG_FAILED_STAGE, "stageName");
-    map.put(Constants.Logging.TAG_PARENT_ERROR_CATEGORY, "errorCategory");
     map.put(Constants.Logging.TAG_ERROR_CATEGORY, "errorCategory");
     map.put(Constants.Logging.TAG_ERROR_REASON, "errorReason");
     map.put(Constants.Logging.TAG_ERROR_TYPE, "errorType");
@@ -164,7 +163,6 @@ public class ErrorLogsClassifierTest {
   private ILoggingEvent getEvent2() {
     Map<String, String> map = new HashMap<>();
     map.put(Constants.Logging.TAG_FAILED_STAGE, "stageName");
-    map.put(Constants.Logging.TAG_PARENT_ERROR_CATEGORY, "errorCategory");
     map.put(Constants.Logging.TAG_ERROR_CATEGORY, "errorCategory");
     map.put(Constants.Logging.TAG_ERROR_REASON, "errorReason");
     map.put(Constants.Logging.TAG_ERROR_TYPE, "errorType");

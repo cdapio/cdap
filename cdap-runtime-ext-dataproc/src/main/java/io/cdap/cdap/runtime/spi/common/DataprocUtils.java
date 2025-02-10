@@ -27,12 +27,14 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCodeType;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
@@ -584,6 +586,20 @@ public final class DataprocUtils {
         .withErrorCode(String.valueOf(statusCode))
         .withDependency(true)
         .build();
+  }
+
+  /**
+   * Returns a boolean true if {@link FailureDetailsProvider} is present in causal chain,
+   * otherwise false.
+   */
+  public static boolean isFailureDetailsProviderInCausalChain(Throwable e) {
+    List<Throwable> causalChain = Throwables.getCausalChain(e);
+    for (Throwable cause : causalChain) {
+      if (cause instanceof FailureDetailsProvider) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private DataprocUtils() {
