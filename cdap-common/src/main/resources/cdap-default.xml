@@ -2245,6 +2245,13 @@
     </description>
   </property>
 
+  <property>
+    <name>log.saver.status.bind.port</name>
+    <value>0</value>
+    <description>
+      Log saver HTTP service bind port
+    </description>
+  </property>
 
   <!-- Market Configuration -->
 

@@ -49,8 +49,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       Constants.Service.PREVIEW_HTTP);
   public static final RouteDestination TRANSACTION = new RouteDestination(
       Constants.Service.TRANSACTION_HTTP);
-  public static final RouteDestination LOG_QUERY = new RouteDestination(
-      Constants.Service.LOG_QUERY);
   public static final RouteDestination LOG_SAVER = new RouteDestination(Constants.Service.LOGSAVER);
   public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(
       Constants.Service.DATASET_EXECUTOR);
@@ -123,7 +121,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           uriParts[6]));
     } else if (beginsWith(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
-      return LOG_QUERY;
+      return LOG_SAVER;
     } else if (beginsWith(uriParts, "v3", "namespaces", null)
         && (endsWith(uriParts, "instances")
           || endsWith(uriParts, "live-info")
@@ -212,7 +210,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
       // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
       // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/classify
-      return LOG_QUERY;
+      return LOG_SAVER;
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics
       return METRICS;

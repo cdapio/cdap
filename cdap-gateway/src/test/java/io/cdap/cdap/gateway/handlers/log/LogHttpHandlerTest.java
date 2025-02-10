@@ -120,7 +120,7 @@ public class LogHttpHandlerTest {
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.set(Constants.LogQuery.ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
+    cConf.set(Constants.LogSaver.ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
 
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
@@ -834,7 +834,7 @@ public class LogHttpHandlerTest {
    */
   private HttpResponse doGet(String path) throws IOException {
     Discoverable discoverable = new RandomEndpointStrategy(
-      () -> discoveryServiceClient.discover(Constants.Service.LOG_QUERY)).pick(10, TimeUnit.SECONDS);
+      () -> discoveryServiceClient.discover(Constants.Service.LOGSAVER)).pick(10, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 
     URL url = URIScheme.createURI(discoverable, "%s", path).toURL();
