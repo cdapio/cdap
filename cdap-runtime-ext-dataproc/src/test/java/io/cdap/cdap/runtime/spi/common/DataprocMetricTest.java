@@ -28,17 +28,17 @@ public class DataprocMetricTest {
   public void testImageVersion() {
     String metricName = "provisioner.createCluster.response.count";
     String region = "us-east1";
-    String imageVersion = "2.1.35-debian11";
+    String imageVersion = "2.2.35-debian11";
 
     DataprocMetric dataprocMetric =
         DataprocMetric.builder(metricName)
             .setRegion(region).setImageVersion(imageVersion).build();
-    Assert.assertEquals("2.1", dataprocMetric.getImageVersion());
+    Assert.assertEquals("2.2", dataprocMetric.getImageVersion());
 
-    imageVersion = "2.1";
+    imageVersion = "2.2";
     dataprocMetric = DataprocMetric.builder(metricName)
         .setRegion(region).setImageVersion(imageVersion).build();
-    Assert.assertEquals("2.1", dataprocMetric.getImageVersion());
+    Assert.assertEquals("2.2", dataprocMetric.getImageVersion());
 
     imageVersion = null;
     dataprocMetric = DataprocMetric.builder(metricName)
