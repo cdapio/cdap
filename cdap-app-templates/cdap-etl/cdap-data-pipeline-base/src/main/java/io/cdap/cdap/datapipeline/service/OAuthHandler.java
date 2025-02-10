@@ -413,7 +413,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
   private String getBasicAuthHeader(OAuthClientCredentials clientCreds) {
     String authInfo = String.format("%s:%s", clientCreds.getClientId(), clientCreds.getClientSecret());
-    return String.format("Basic %s", Base64.getEncoder().encode(authInfo.getBytes()));
+    return String.format("Basic %s", Base64.getEncoder().encodeToString(authInfo.getBytes()));
   }
 
   private OAuthProvider getProvider(String provider) throws OAuthServiceException {
