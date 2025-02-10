@@ -137,8 +137,6 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
         }
         modifiableMdc.put(Constants.Logging.TAG_ERROR_CATEGORY,
             provider.getErrorCategory().getErrorCategory());
-        modifiableMdc.put(Constants.Logging.TAG_PARENT_ERROR_CATEGORY,
-            provider.getErrorCategory().getParentCategory().name());
         if (provider.getErrorReason() != null) {
           modifiableMdc.put(Constants.Logging.TAG_ERROR_REASON, provider.getErrorReason());
         }

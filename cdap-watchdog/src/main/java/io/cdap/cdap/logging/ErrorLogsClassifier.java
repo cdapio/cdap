@@ -317,6 +317,6 @@ public class ErrorLogsClassifier {
             .setErrorCodeType(mdc.get(Logging.TAG_ERROR_CODE_TYPE))
             .setErrorCode(mdc.get(Logging.TAG_ERROR_CODE))
             .setSupportedDocumentationUrl(mdc.get(Logging.TAG_SUPPORTED_DOC_URL)).build(),
-        mdc.get(Logging.TAG_PARENT_ERROR_CATEGORY), throwableProxy.getClassName(), null, null);
+        mdc.get(Logging.TAG_ERROR_CATEGORY), throwableProxy.getClassName(), null, null);
   }
 }
