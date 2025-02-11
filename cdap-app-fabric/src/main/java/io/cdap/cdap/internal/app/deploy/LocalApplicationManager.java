@@ -40,10 +40,10 @@ import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.MetadataWriterStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
-import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -71,7 +71,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
-  private final io.cdap.cdap.scheduler.Scheduler programScheduler;
+  private final ScheduleManager scheduleManager;
   private final AccessEnforcer accessEnforcer;
   private final StructuredTableAdmin structuredTableAdmin;
   private final CapabilityReader capabilityReader;
@@ -87,7 +87,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
       UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
       MetadataServiceClient metadataServiceClient,
       Impersonator impersonator, AuthenticationContext authenticationContext,
-      Scheduler programScheduler,
+      ScheduleManager scheduleManager,
       AccessEnforcer accessEnforcer,
       StructuredTableAdmin structuredTableAdmin,
       CapabilityReader capabilityReader,
@@ -105,7 +105,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.metadataServiceClient = metadataServiceClient;
     this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
-    this.programScheduler = programScheduler;
+    this.scheduleManager = scheduleManager;
     this.accessEnforcer = accessEnforcer;
     this.structuredTableAdmin = structuredTableAdmin;
     this.capabilityReader = capabilityReader;
@@ -128,11 +128,11 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
         authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
-        metricsSystemClient, metadataServiceClient, programScheduler));
+        metricsSystemClient, metadataServiceClient, scheduleManager));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin,
         metricsCollectionService));
-    pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
+    pipeline.addLast(new DeleteAndCreateSchedulesStage(scheduleManager));
     pipeline.addLast(new MetadataWriterStage(metadataServiceClient));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);

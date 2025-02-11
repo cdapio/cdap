@@ -53,6 +53,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReaderWithLocalization;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryWithLocalization;
+import io.cdap.cdap.internal.app.runtime.schedule.RemoteScheduleManager;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -189,6 +191,7 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(PreviewRunner.class);
 
     bind(Scheduler.class).to(NoOpScheduler.class);
+    bind(ScheduleManager.class).to(RemoteScheduleManager.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);

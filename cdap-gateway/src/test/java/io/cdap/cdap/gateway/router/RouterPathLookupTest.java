@@ -218,7 +218,7 @@ public class RouterPathLookupTest {
 
   @Test
   public void testOpsDashboardPath() {
-    assertRouting("/v3/dashboard", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/dashboard", RouterPathLookup.APP_FABRIC_PROCESSOR);
   }
 
   @Test
