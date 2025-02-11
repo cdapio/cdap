@@ -732,7 +732,8 @@ final class DataprocConf {
         CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
     final String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
-    final int computeCredentialsNumberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_MAX_RETRIES, COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT);
+    final int computeCredentialsNumberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_MAX_RETRIES,
+        COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT);
     final boolean secureBootEnabled = Boolean.parseBoolean(
         properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
     final boolean vTpmEnabled = Boolean.parseBoolean(
