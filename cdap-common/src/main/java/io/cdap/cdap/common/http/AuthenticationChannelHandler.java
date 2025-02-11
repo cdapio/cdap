@@ -66,13 +66,16 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private final boolean internalAuthEnabled;
   private final boolean auditLoggingEnabled;
+  private final boolean taskWorkerDecryptionEnabled;
   private final AuditLogWriter auditLogWriter;
   private final AeadCipher userEncryptionAeadCipher;
 
   public AuthenticationChannelHandler(boolean internalAuthEnabled, boolean auditLoggingEnabled,
-                                      AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher) {
+                                      boolean taskWorkerDecryptionEnabled, AuditLogWriter auditLogWriter,
+                                      AeadCipher userEncryptionAeadCipher) {
     this.internalAuthEnabled = internalAuthEnabled;
     this.auditLoggingEnabled = auditLoggingEnabled;
+    this.taskWorkerDecryptionEnabled = taskWorkerDecryptionEnabled;
     this.auditLogWriter = auditLogWriter;
     this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
@@ -125,7 +128,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            if (isTaskWorkerEncrypted(credentialValue, credentialType)) {
+            if (taskWorkerDecryptionEnabled && isTaskWorkerEncrypted(credentialValue, credentialType)) {
               LOG.error("This call was from task worker");
               throw new UnauthenticatedException("Request denied for Task workers");
             }
