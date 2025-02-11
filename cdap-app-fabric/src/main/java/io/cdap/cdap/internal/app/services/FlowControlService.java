@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -25,10 +26,12 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +122,10 @@ public class FlowControlService extends AbstractIdleService {
 
   private void emitMetrics(String metricName, long value) {
     LOG.trace("Setting metric {} to value {}", metricName, value);
-    metricsCollectionService.getContext(Collections.emptyMap()).gauge(metricName, value);
+    Map<String, String> tags = ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace()
+    );
+    metricsCollectionService.getContext(tags).gauge(metricName, value);
   }
 
   /**
