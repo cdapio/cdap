@@ -58,11 +58,18 @@ public class UpgradeJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeJobMain.class);
 
   public static void main(String[] args) {
-    if (args.length != 2) {
+    if (args.length != 3) {
       throw new RuntimeException(
-          String.format("Invalid number of arguments to UpgradeJobMain. Needed 2, found %d",
+          String.format("Invalid number of arguments to UpgradeJobMain. Needed 3, found %d",
               args.length));
     }
+
+    boolean skipPreUpgrade = Boolean.parseBoolean(args[2]);
+    if (skipPreUpgrade) {
+      LOG.info("Patch upgrade detected. Skipping pre upgrade steps.");
+      return;
+    }
+
     // TODO(CDAP-18299): Refactor to use internal service discovery mechanism instead of making calls via the router.
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
         .setHostname(args[0])
