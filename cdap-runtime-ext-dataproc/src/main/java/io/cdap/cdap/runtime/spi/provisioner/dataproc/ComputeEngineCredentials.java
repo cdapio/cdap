@@ -78,7 +78,8 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
    *     the token locally.
    * @return ComputeEngineCredentials
    */
-  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint, int numberOfRetries) throws IOException {
+  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint,
+      int numberOfRetries) throws IOException {
     String key = endpoint != null ? endpoint : LOCAL_COMPUTE_ENGINE_CREDENTIALS;
     if (!cachedComputeEngineCredentials.containsKey(key)) {
       synchronized (cachedComputeEngineCredentials) {
