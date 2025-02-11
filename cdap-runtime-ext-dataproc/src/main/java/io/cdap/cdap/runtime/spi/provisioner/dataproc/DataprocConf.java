@@ -44,6 +44,7 @@ final class DataprocConf {
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
   static final String TOKEN_ENDPOINT_KEY = "token.endpoint";
+  static final String COMPUTE_CREDENTIALS_NUMBER_OF_RETRIES = "compute.credentials.number.of.retries";
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String NETWORK = "network";
@@ -167,6 +168,7 @@ final class DataprocConf {
   private final boolean runtimeJobManagerEnabled;
 
   private final String tokenEndpoint;
+  private final int computeCredentialsNumberOfRetries;
 
   private final boolean clusterReuseEnabled;
   private final long clusterReuseThresholdMinutes;
@@ -199,7 +201,7 @@ final class DataprocConf {
       @Nullable Map<String, String> clusterLabels, List<String> networkTags,
       List<String> scopes, @Nullable String initActions, boolean runtimeJobManagerEnabled,
       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTtlMinutes,
-      @Nullable String tokenEndpoint, boolean secureBootEnabled, boolean vTpmEnabled,
+      @Nullable String tokenEndpoint, int computeCredentialsNumberOfRetries, boolean secureBootEnabled, boolean vTpmEnabled,
       boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
       long clusterReuseThresholdMinutes, long clusterReuseRetryDelayMs, long clusterReuseRetryMaxMs,
       long clusterReuseUpdateMaxMs, @Nullable String clusterReuseKey,
@@ -257,6 +259,7 @@ final class DataprocConf {
     this.autoScalingPolicy = autoScalingPolicy;
     this.idleTtlMinutes = idleTtlMinutes;
     this.tokenEndpoint = tokenEndpoint;
+    this.computeCredentialsNumberOfRetries = computeCredentialsNumberOfRetries;
     this.secureBootEnabled = secureBootEnabled;
     this.vTpmEnabled = vTpmEnabled;
     this.integrityMonitoringEnabled = integrityMonitoringEnabled;
@@ -528,7 +531,7 @@ final class DataprocConf {
    */
   GoogleCredentials getComputeCredential() throws IOException {
     if (accountKey == null) {
-      return ComputeEngineCredentials.getOrCreate(tokenEndpoint);
+      return ComputeEngineCredentials.getOrCreate(tokenEndpoint, computeCredentialsNumberOfRetries);
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
@@ -545,7 +548,7 @@ final class DataprocConf {
    */
   GoogleCredentials getDataprocCredentials() throws IOException {
     if (accountKey == null) {
-      return ComputeEngineCredentials.getOrCreate(tokenEndpoint);
+      return ComputeEngineCredentials.getOrCreate(tokenEndpoint, computeCredentialsNumberOfRetries);
     }
 
     try (InputStream is = new ByteArrayInputStream(accountKey.getBytes(StandardCharsets.UTF_8))) {
@@ -570,8 +573,9 @@ final class DataprocConf {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);
+      int numberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_NUMBER_OF_RETRIES, 20);
       try {
-        ComputeEngineCredentials.getOrCreate(endPoint);
+        ComputeEngineCredentials.getOrCreate(endPoint, numberOfRetries);
       } catch (IOException e) {
         throw new IllegalArgumentException("Unable to get credentials from the environment. "
             + "Please explicitly set the account key.", e);
@@ -726,6 +730,7 @@ final class DataprocConf {
         CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
     final String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
+    final int computeCredentialsNumberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_NUMBER_OF_RETRIES, 20);
     final boolean secureBootEnabled = Boolean.parseBoolean(
         properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
     final boolean vTpmEnabled = Boolean.parseBoolean(
@@ -794,7 +799,7 @@ final class DataprocConf {
         componentGatewayEnabled, skipDelete,
         imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
         scopes, initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTtl,
-        tokenEndpoint, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
+        tokenEndpoint, computeCredentialsNumberOfRetries, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
         clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseRetryDelayMs,
         clusterReuseRetryMaxMs, clusterReuseUpdateMaxMs, clusterReuseKey,
         enablePredefinedAutoScaling, computeReadTimeout, computeConnectionTimeout, rootUrl,

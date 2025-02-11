@@ -59,14 +59,15 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   /**
    * Time (in millisecond) to refresh the credentials before it expires.
    */
-  private static final int NUMBER_OF_RETRIES = 10;
-  private static final int MIN_WAIT_TIME_MILLISECOND = 500;
-  private static final int MAX_WAIT_TIME_MILLISECOND = 10000;
+  private static final int MIN_WAIT_TIME_MILLISECOND = 2000;
+  private static final int MAX_WAIT_TIME_MILLISECOND = 60000;
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private final String endPoint;
+  private final int numberOfRetries;
 
-  private ComputeEngineCredentials(@Nullable String endPoint) {
+  private ComputeEngineCredentials(@Nullable String endPoint, int numberOfRetries) {
     this.endPoint = endPoint;
+    this.numberOfRetries = numberOfRetries;
   }
 
   /**
@@ -77,12 +78,12 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
    *     the token locally.
    * @return ComputeEngineCredentials
    */
-  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint) throws IOException {
+  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint, int numberOfRetries) throws IOException {
     String key = endpoint != null ? endpoint : LOCAL_COMPUTE_ENGINE_CREDENTIALS;
     if (!cachedComputeEngineCredentials.containsKey(key)) {
       synchronized (cachedComputeEngineCredentials) {
         if (!cachedComputeEngineCredentials.containsKey(key)) {
-          ComputeEngineCredentials credentials = new ComputeEngineCredentials(endpoint);
+          ComputeEngineCredentials credentials = new ComputeEngineCredentials(endpoint, numberOfRetries);
           credentials.refresh();
           cachedComputeEngineCredentials.put(key, credentials);
         }
@@ -167,7 +168,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
 
     Exception exception = null;
     int counter = 0;
-    while (counter < NUMBER_OF_RETRIES) {
+    while (counter < numberOfRetries) {
       counter++;
 
       try {
