@@ -44,7 +44,8 @@ final class DataprocConf {
   static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
   static final String TOKEN_ENDPOINT_KEY = "token.endpoint";
-  static final String COMPUTE_CREDENTIALS_NUMBER_OF_RETRIES = "compute.credentials.number.of.retries";
+  static final String COMPUTE_CREDENTIALS_MAX_RETRIES = "compute.credentials.max.retries";
+  static final int COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT = 20;
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String NETWORK = "network";
@@ -573,7 +574,8 @@ final class DataprocConf {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);
-      int numberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_NUMBER_OF_RETRIES, 20);
+      int numberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_MAX_RETRIES,
+          COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT);
       try {
         ComputeEngineCredentials.getOrCreate(endPoint, numberOfRetries);
       } catch (IOException e) {
@@ -730,7 +732,7 @@ final class DataprocConf {
         CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
     final String tokenEndpoint = getString(properties, TOKEN_ENDPOINT_KEY);
-    final int computeCredentialsNumberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_NUMBER_OF_RETRIES, 20);
+    final int computeCredentialsNumberOfRetries = getInt(properties, COMPUTE_CREDENTIALS_MAX_RETRIES, COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT);
     final boolean secureBootEnabled = Boolean.parseBoolean(
         properties.getOrDefault(SECURE_BOOT_ENABLED, "false"));
     final boolean vTpmEnabled = Boolean.parseBoolean(
