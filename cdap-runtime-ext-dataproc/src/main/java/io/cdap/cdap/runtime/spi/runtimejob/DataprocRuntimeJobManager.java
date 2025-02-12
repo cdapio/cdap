@@ -417,8 +417,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           .setJobId(jobId)
           .build());
       return Optional.of(new DataprocRuntimeJobDetail(getProgramRunInfo(job),
-          getRuntimeJobStatus(job),
-          getJobStatusDetails(job)));
+          getRuntimeJobStatus(job), getJobStatusDetails(job), getJobId(programRunInfo)));
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
         int code = e.getStatusCode().getCode().getHttpStatusCode();
