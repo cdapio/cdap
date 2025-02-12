@@ -73,6 +73,8 @@ import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader.Filter;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -732,7 +734,23 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     ClassLoader pluginsClassLoader = PluginClassLoaders.createFilteredPluginsClassLoader(
         program.getApplicationSpecification().getPlugins(), pluginInstantiator);
 
-    return new CombineClassLoader(null, program.getClassLoader(), pluginsClassLoader,
+    FilterClassLoader filteredProgramClassLoader = new FilterClassLoader(
+        program.getClassLoader(),
+        new Filter() {
+          @Override
+          public boolean acceptResource(String resource) {
+            return !(resource.contains("org/apache/hadoop/fs/s3a")
+                || resource.contains("org/apache/hadoop/fs/s3native"));
+          }
+
+          @Override
+          public boolean acceptPackage(String packageName) {
+            return !(packageName.contains("org.apache.hadoop.fs.s3a")
+                || packageName.contains("org.apache.hadoop.fs.s3native"));
+          }
+        });
+
+    return new CombineClassLoader(null, filteredProgramClassLoader, pluginsClassLoader,
         getClass().getClassLoader());
   }
 
