@@ -22,7 +22,6 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -35,6 +34,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunFailureException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
@@ -127,8 +127,10 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
           // Status details is specific to dataproc jobs, so it was not added to RuntimeJobDetail spi.
           String statusDetails = ((DataprocRuntimeJobDetail) jobDetail).getJobStatusDetails();
           if (statusDetails != null) {
-            LOG.error("Dataproc job '{}' with the status details: {}",
-                jobDetail.getStatus().name(), statusDetails);
+            ProgramRunFailureException e = new ProgramRunFailureException(
+                String.format("Dataproc job '%s' status details: %s",
+                    ((DataprocRuntimeJobDetail) jobDetail).getJobId(), statusDetails));
+            LOG.error("Dataproc Job {}", jobDetail.getStatus(), e);
           }
         }
       } finally {
