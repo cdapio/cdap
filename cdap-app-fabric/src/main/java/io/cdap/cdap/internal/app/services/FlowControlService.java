@@ -47,6 +47,10 @@ public class FlowControlService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final TransactionRunner transactionRunner;
 
+  private static final Map<String, String> tags = ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace()
+  );
+
   /**
    * Monitors the program flow control.
    *
@@ -122,9 +126,6 @@ public class FlowControlService extends AbstractIdleService {
 
   private void emitMetrics(String metricName, long value) {
     LOG.trace("Setting metric {} to value {}", metricName, value);
-    Map<String, String> tags = ImmutableMap.of(
-        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace()
-    );
     metricsCollectionService.getContext(tags).gauge(metricName, value);
   }
 
