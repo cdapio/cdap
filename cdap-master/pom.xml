@@ -943,7 +943,6 @@
     <profile>
       <id>k8s</id>
       <properties>
-        <hadoop.version>2.9.2</hadoop.version>
         <stage.hadoop.lib.dir>${stage.opt.dir}/lib/hadoop</stage.hadoop.lib.dir>
         <stage.master.environments.ext.dir>${stage.opt.dir}/ext/environments</stage.master.environments.ext.dir>
       </properties>
