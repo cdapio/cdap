@@ -272,12 +272,12 @@ public class ErrorLogsClassifier {
         String errorMessage = throwableProxy.getMessage();
         ruleMatchedResponse = new ErrorClassificationResponseWrapper(
             new ErrorClassificationResponse.Builder()
-                .setErrorCategory(ErrorCategoryEnum.OTHERS.name())
+                .setErrorCategory(ErrorCategoryEnum.OTHERS.toString())
                 .setErrorType(rule.getErrorType().name())
                 .setErrorReason(errorReason)
                 .setErrorMessage(errorMessage)
                 .setDependency(String.valueOf(rule.isDependency())).build(),
-            ErrorCategoryEnum.OTHERS.name(), throwableProxy.getClassName(), rule.getPriority(),
+            ErrorCategoryEnum.OTHERS.toString(), throwableProxy.getClassName(), rule.getPriority(),
             rule.getId());
         break;
       }
