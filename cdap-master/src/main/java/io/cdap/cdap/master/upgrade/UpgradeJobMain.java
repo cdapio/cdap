@@ -15,6 +15,9 @@
  */
 package io.cdap.cdap.master.upgrade;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.NamespaceClient;
@@ -39,6 +42,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -54,8 +58,11 @@ import org.slf4j.LoggerFactory;
 public class UpgradeJobMain {
 
   private static final int DEFAULT_READ_TIMEOUT_MILLIS = 90 * 1000;
+  private static final int APP_LIST_PAGE_SIZE = 25;
   private static final String SCHEDULED = "SCHEDULED";
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeJobMain.class);
+
+  private static final Gson GSON = new Gson();
 
   public static void main(String[] args) {
     if (args.length != 2) {
@@ -72,7 +79,8 @@ public class UpgradeJobMain {
     ClientConfig.Builder clientConfigBuilder =
         ClientConfig.builder()
             .setDefaultReadTimeout(DEFAULT_READ_TIMEOUT_MILLIS)
-            .setConnectionConfig(connectionConfig);
+            .setConnectionConfig(connectionConfig)
+            .setAppListPageSize(APP_LIST_PAGE_SIZE);
 
     // If used in proxy mode, attach a user ID header to upgrade jobs.
     CConfiguration cConf = CConfiguration.create();
@@ -114,43 +122,62 @@ public class UpgradeJobMain {
     namespaceIdList.add(NamespaceId.SYSTEM);
 
     for (NamespaceId namespaceId : namespaceIdList) {
-      for (ApplicationRecord record : applicationClient.list(namespaceId)) {
-        ApplicationId applicationId =
-            new ApplicationId(namespaceId.getNamespace(), record.getName(), record.getAppVersion());
-        LOG.debug("Trying to stop schedule and workflows for application " + applicationId);
-        List<WorkflowId> workflowIds =
-            applicationClient.get(applicationId).getPrograms().stream()
-                .filter(programRecord -> programRecord.getType().equals(ProgramType.WORKFLOW))
-                .map(programRecord -> new WorkflowId(applicationId, programRecord.getName()))
-                .collect(Collectors.toList());
-        for (WorkflowId workflowId : workflowIds) {
-          List<ScheduleId> scheduleIds =
-              scheduleClient.listSchedules(workflowId).stream()
-                  .map(scheduleDetail ->
-                      new ScheduleId(namespaceId.getNamespace(), record.getName(),
-                          scheduleDetail.getName()))
-                  .collect(Collectors.toList());
-          for (ScheduleId scheduleId : scheduleIds) {
-            if (scheduleClient.getStatus(scheduleId).equals(SCHEDULED)) {
-              scheduleClient.suspend(scheduleId);
-            }
-          }
-          // Need to stop workflows first or else the program will fail to stop below
-          if (!programClient.getStatus(workflowId).equals(ProgramStatus.STOPPED.toString())) {
-            try {
-              programClient.stop(workflowId);
-            } catch (BadRequestException e) {
-              // There might be race condition between checking if the program is in RUNNING state and stopping it.
-              // This can cause programClient.stop to throw BadRequestException so verifying if the program
-              // transitioned to stop state since it was checked earlier or not.
+      String token = null;
+      boolean isLastPage = false;
+      while (!isLastPage) {
+        JsonObject paginatedListResponse = applicationClient.paginatedList(namespaceId, token);
+        token = paginatedListResponse.get("nextPageToken") == null ? null
+            : paginatedListResponse.get("nextPageToken").getAsString();
+        LOG.debug("Called paginated list API and got token: {}", token);
+        if (paginatedListResponse.get("applications").getAsJsonArray().size() != 0) {
+          Type appListType = new TypeToken<List<ApplicationRecord>>() {
+          }.getType();
+          List<ApplicationRecord> records = GSON.fromJson(
+              paginatedListResponse.get("applications").getAsJsonArray(), appListType);
+          for (ApplicationRecord record : records) {
+            ApplicationId applicationId =
+                new ApplicationId(namespaceId.getNamespace(),
+                    record.getName(), record.getAppVersion());
+            LOG.debug("Trying to stop schedule and workflows for application " + applicationId);
+            List<WorkflowId> workflowIds =
+                applicationClient.get(applicationId).getPrograms().stream()
+                    .filter(programRecord -> programRecord.getType().equals(ProgramType.WORKFLOW))
+                    .map(programRecord -> new WorkflowId(applicationId, programRecord.getName()))
+                    .collect(Collectors.toList());
+            for (WorkflowId workflowId : workflowIds) {
+              List<ScheduleId> scheduleIds =
+                  scheduleClient.listSchedules(workflowId).stream()
+                      .map(scheduleDetail ->
+                          new ScheduleId(namespaceId.getNamespace(), record.getName(),
+                              scheduleDetail.getName()))
+                      .collect(Collectors.toList());
+              for (ScheduleId scheduleId : scheduleIds) {
+                if (scheduleClient.getStatus(scheduleId).equals(SCHEDULED)) {
+                  scheduleClient.suspend(scheduleId);
+                }
+              }
+              // Need to stop workflows first or else the program will fail to stop below
               if (!programClient.getStatus(workflowId).equals(ProgramStatus.STOPPED.toString())) {
-                // Pipeline still in running state. Continue with stopping rest of the pipelines in this namespace and
-                // next retry should try to stop/verify status for this pipeline.
-                shouldRetry = true;
+                try {
+                  programClient.stop(workflowId);
+                } catch (BadRequestException e) {
+                  // There might be race condition between checking if the program
+                  // is in RUNNING state and stopping it. This can cause programClient.stop to
+                  // throw BadRequestException so verifying if the program transitioned to stop
+                  // state since it was checked earlier or not.
+                  if (!programClient.getStatus(workflowId)
+                      .equals(ProgramStatus.STOPPED.toString())) {
+                    // Pipeline still in running state. Continue with stopping rest of the
+                    // pipelines in this namespace and next retry should try to stop/verify status
+                    // for this pipeline.
+                    shouldRetry = true;
+                  }
+                }
               }
             }
           }
         }
+        isLastPage = (token == null);
       }
       // At least one pipeline is still in running state so retry to verify pipeline status .
       if (shouldRetry) {

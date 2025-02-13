@@ -102,7 +102,7 @@ public abstract class AbstractClientTest {
       .setVerifySSLCert(false)
       .setDefaultReadTimeout(60 * 1000)
       .setUploadReadTimeout(120 * 1000)
-      .setConnectionConfig(connectionConfig).build();
+      .setConnectionConfig(connectionConfig).setAppListPageSize(25).build();
   }
 
   protected ClientConfig getClientConfig() {
