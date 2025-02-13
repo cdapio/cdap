@@ -104,10 +104,10 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     }
   }
 
-  private void disableVerifySSL(HttpsURLConnection connection) throws IOException {
+  private void disableVerifySsl(HttpsURLConnection connection) throws IOException {
     try {
       SSLContext sslContextWithNoVerify = SSLContext.getInstance("SSL");
-      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+      TrustManager[] trustAllCerts = new TrustManager[]{ new X509TrustManager() {
         public X509Certificate[] getAcceptedIssuers() {
           return null;
         }
@@ -121,7 +121,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
         public void checkServerTrusted(X509Certificate[] arg0, String arg1) {
           // No-op
         }
-      }};
+      } };
       sslContextWithNoVerify.init(null, trustAllCerts, SECURE_RANDOM);
       connection.setSSLSocketFactory(sslContextWithNoVerify.getSocketFactory());
       connection.setHostnameVerifier((s, sslSession) -> true);
@@ -136,7 +136,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     if (connection instanceof HttpsURLConnection) {
       // TODO (CDAP-18047) enable ssl verification
-      disableVerifySSL(((HttpsURLConnection) connection));
+      disableVerifySsl(((HttpsURLConnection) connection));
     }
     connection.connect();
     try (Reader reader = new InputStreamReader(connection.getInputStream(),
@@ -192,5 +192,4 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     }
     throw new IOException(exception.getMessage(), exception);
   }
-
 }

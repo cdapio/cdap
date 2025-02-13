@@ -574,10 +574,10 @@ final class DataprocConf {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       String endPoint = getString(properties, TOKEN_ENDPOINT_KEY);
-      int MaxRetries = getInt(properties, COMPUTE_CREDENTIALS_MAX_RETRIES_KEY,
+      int maxRetries = getInt(properties, COMPUTE_CREDENTIALS_MAX_RETRIES_KEY,
           COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT);
       try {
-        ComputeEngineCredentials.getOrCreate(endPoint, MaxRetries);
+        ComputeEngineCredentials.getOrCreate(endPoint, maxRetries);
       } catch (IOException e) {
         throw new IllegalArgumentException("Unable to get credentials from the environment. "
             + "Please explicitly set the account key.", e);
