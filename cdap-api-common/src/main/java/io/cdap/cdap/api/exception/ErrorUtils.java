@@ -125,6 +125,56 @@ public final class ErrorUtils {
         return new ActionErrorPair("Please ensure there are no network connectivity "
           + "issues between the proxy/gateway server and the upstream server or try again later.",
           ErrorType.SYSTEM);
+      case HttpURLConnection.HTTP_PROXY_AUTH:
+        return new ActionErrorPair("Proxy authentication required. Please check your "
+            + "proxy settings and provide valid credentials.", ErrorType.USER);
+      case HttpURLConnection.HTTP_NOT_ACCEPTABLE:
+        return new ActionErrorPair("Request cannot be processed in the requested format."
+            + " Please check the Accept headers.", ErrorType.USER);
+      case HttpURLConnection.HTTP_GONE:
+        return new ActionErrorPair("Requested resource is no longer available.",
+            ErrorType.USER);
+      case HttpURLConnection.HTTP_LENGTH_REQUIRED:
+        return new ActionErrorPair("Content-Length header is required. "
+            + "Please include it in your request.", ErrorType.USER);
+      case HttpURLConnection.HTTP_ENTITY_TOO_LARGE:
+        return new ActionErrorPair("Request entity too large. "
+            + "Please reduce payload size and try again.", ErrorType.USER);
+      case HttpURLConnection.HTTP_REQ_TOO_LONG: // 414
+        return new ActionErrorPair("Request URL is too long. "
+            + "Consider shortening the URL.", ErrorType.USER);
+      case HttpURLConnection.HTTP_UNSUPPORTED_TYPE:
+        return new ActionErrorPair("Unsupported media type. "
+            + "Please use a supported format and try again.", ErrorType.USER);
+      case 416: // HTTP 416 Requested Range Not Satisfiable
+        return new ActionErrorPair("Requested range is not satisfiable. "
+            + "Please adjust range headers and try again.", ErrorType.USER);
+      case 417: // HTTP 417 Expectation Failed
+        return new ActionErrorPair("Expectation failed. "
+            + "Server cannot meet Expect header requirements.", ErrorType.USER);
+      case 421: // HTTP 421 Misdirected Request
+        return new ActionErrorPair("Request was misdirected. "
+            + "Please try sending it to the correct server.", ErrorType.USER);
+      case 422: // HTTP 422 Unprocessable Entity
+        return new ActionErrorPair("Request cannot be processed due to semantic errors. "
+            + "Please check the request syntax and try again.", ErrorType.USER);
+      case 423: // HTTP 423 Locked
+        return new ActionErrorPair("Resource is locked. Please try again later.",
+            ErrorType.USER);
+      case 424: // HTTP 424 Failed Dependency
+        return new ActionErrorPair("Request failed due to a failed dependency. "
+            + "Please ensure related actions are successful.", ErrorType.USER);
+      case 426: // HTTP 426 Upgrade Required
+        return new ActionErrorPair("Upgrade required. "
+            + "Please use a newer protocol version.", ErrorType.USER);
+      case 428: // HTTP 428 Precondition Required
+        return new ActionErrorPair("Request requires preconditions. "
+            + "Please ensure headers are set correctly.", ErrorType.USER);
+      case 431: // HTTP 431 Request Header Fields Too Large
+        return new ActionErrorPair("Request headers are too large. "
+            + "Please reduce the number or size of headers.", ErrorType.USER);
+      case 451: // HTTP 451 Unavailable For Legal Reasons
+        return new ActionErrorPair("Content is restricted due to legal reasons.", ErrorType.USER);
       default:
         return new ActionErrorPair(String.format("Request failed with error code: %s", statusCode),
           ErrorType.UNKNOWN);

@@ -25,11 +25,13 @@ import java.util.Objects;
 public class DataprocRuntimeJobDetail extends RuntimeJobDetail {
 
   private final String jobStatusDetails;
+  private final String jobId;
 
   public DataprocRuntimeJobDetail(ProgramRunInfo runInfo, RuntimeJobStatus status,
-      String jobStatusDetails) {
+      String jobStatusDetails, String jobId) {
     super(runInfo, status);
     this.jobStatusDetails = jobStatusDetails;
+    this.jobId = jobId;
   }
 
   /**
@@ -37,6 +39,13 @@ public class DataprocRuntimeJobDetail extends RuntimeJobDetail {
    */
   public String getJobStatusDetails() {
     return jobStatusDetails;
+  }
+
+  /**
+   * Returns dataproc job id.
+   */
+  public String getJobId() {
+    return jobId;
   }
 
   @Override
@@ -49,11 +58,12 @@ public class DataprocRuntimeJobDetail extends RuntimeJobDetail {
     }
 
     DataprocRuntimeJobDetail that = (DataprocRuntimeJobDetail) o;
-    return Objects.equals(jobStatusDetails, that.jobStatusDetails);
+    return Objects.equals(jobStatusDetails, that.jobStatusDetails)
+        && Objects.equals(jobId, that.jobId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.getRunInfo(), this.getStatus(), jobStatusDetails);
+    return Objects.hash(this.getRunInfo(), this.getStatus(), jobStatusDetails, jobId);
   }
 }

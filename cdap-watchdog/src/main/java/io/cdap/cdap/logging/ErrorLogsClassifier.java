@@ -173,7 +173,7 @@ public class ErrorLogsClassifier {
           isFailureDetailsProviderInstancePresent = true;
           populateResponse(throwableProxy, mdc, stageName, responseMap, responseSet);
         } else if (!isFailureDetailsProviderInstancePresent) {
-          String errorReason = String.format("Program run '%s:%s:%s' failed,"
+          String errorReason = String.format("Program run '%s:%s:%s' failed. "
               + "View raw logs for more details.", namespace, appId, runId);
           ruleMatchedResponse = findMatchingRule(throwableProxy, ruleMatchedResponse, errorReason);
         }
@@ -272,12 +272,12 @@ public class ErrorLogsClassifier {
         String errorMessage = throwableProxy.getMessage();
         ruleMatchedResponse = new ErrorClassificationResponseWrapper(
             new ErrorClassificationResponse.Builder()
-                .setErrorCategory(ErrorCategoryEnum.OTHERS.name())
+                .setErrorCategory(ErrorCategoryEnum.OTHERS.toString())
                 .setErrorType(rule.getErrorType().name())
                 .setErrorReason(errorReason)
                 .setErrorMessage(errorMessage)
                 .setDependency(String.valueOf(rule.isDependency())).build(),
-            throwableProxy.getClassName(), ErrorCategoryEnum.OTHERS.name(), rule.getPriority(),
+            ErrorCategoryEnum.OTHERS.toString(), throwableProxy.getClassName(), rule.getPriority(),
             rule.getId());
         break;
       }
