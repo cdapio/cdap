@@ -192,4 +192,5 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     }
     throw new IOException(exception.getMessage(), exception);
   }
+
 }
