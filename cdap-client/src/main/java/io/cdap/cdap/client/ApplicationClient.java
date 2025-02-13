@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.security.AccessException;
@@ -105,6 +106,34 @@ public class ApplicationClient {
         config.resolveNamespacedURLV3(namespace, "apps?latestOnly=false"),
         config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
+    }).getResponseObject();
+  }
+
+  /**
+   * Retrieves a paginated list of applications within the specified namespace.
+   *
+   * @param namespace     The {@link NamespaceId} representing the namespace from which to list
+   *                      applications.
+   * @param nextPageToken The token for fetching the next page of results.
+   * @return A {@link JsonObject} containing the paginated list of applications and the next page
+   *         token if available.
+   * @throws IOException              If a network error occurred.
+   * @throws UnauthenticatedException If the request is not authorized successfully in th gateway
+   *                                  server
+   * @throws UnauthorizedException    If the caller lacks sufficient permissions.
+   */
+  public JsonObject paginatedList(NamespaceId namespace, String nextPageToken)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
+    StringBuilder pathBuilder = new StringBuilder("apps?latestOnly=false&pageSize=").append(
+        config.getAppListPageSize());
+
+    if (nextPageToken != null && !nextPageToken.isEmpty()) {
+      pathBuilder.append("&pageToken=").append(nextPageToken);
+    }
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+        config.resolveNamespacedURLV3(namespace, pathBuilder.toString()),
+        config.getAccessToken());
+    return ObjectResponse.fromJsonBody(response, new TypeToken<JsonObject>() {
     }).getResponseObject();
   }
 
