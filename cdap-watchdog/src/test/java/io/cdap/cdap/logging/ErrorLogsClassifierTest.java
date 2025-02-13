@@ -119,7 +119,7 @@ public class ErrorLogsClassifierTest {
     List<ErrorClassificationResponse> responses =
         GSON.fromJson(responder.getResponseContentAsString(), LIST_TYPE);
     Assert.assertEquals(1, responses.size());
-    Assert.assertEquals(ErrorCategoryEnum.OTHERS.name(), responses.get(0).getErrorCategory());
+    Assert.assertEquals(ErrorCategoryEnum.OTHERS.toString(), responses.get(0).getErrorCategory());
     Assert.assertEquals(ErrorType.USER.name(), responses.get(0).getErrorType());
     Assert.assertSame(1, metricValuesList.size());
     Assert.assertTrue(containsMetric(metricValuesList.get(0),
