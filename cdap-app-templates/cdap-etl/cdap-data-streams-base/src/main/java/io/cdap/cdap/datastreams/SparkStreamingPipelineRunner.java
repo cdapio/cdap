@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.preview.DataTracer;
@@ -313,10 +315,24 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         //process the remaining stages
         for (int i = 1; i < topologicalOrder.size(); i++) {
           String stageName = topologicalOrder.get(i);
-          processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors,
-              pipelinePhase, functionCacheFactory, macroEvaluator, emittedRecords, groupedDag,
-              groups, branchers, shufflers, sinkRunnables, stageName, time.milliseconds(), context,
-              sinkRunnableProvider);
+          try {
+            processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext,
+                collectors,
+                pipelinePhase, functionCacheFactory, macroEvaluator, emittedRecords, groupedDag,
+                groups, branchers, shufflers, sinkRunnables, stageName, time.milliseconds(),
+                context,
+                sinkRunnableProvider);
+          } catch (Exception e) {
+            List<Throwable> causalChain = Throwables.getCausalChain(e);
+            for (Throwable t : causalChain) {
+              if (t instanceof WrappedStageException) {
+                // avoid double wrapping
+                throw e;
+              }
+            }
+            // this can occur in cases like `joins` where we do `SparkCollection#join`
+            throw new WrappedStageException(e, stageName);
+          }
         }
       }, Exception.class);
 
