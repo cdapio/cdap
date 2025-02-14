@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.common;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -39,7 +41,7 @@ public class OAuthAccessTokenMacroEvaluator extends AbstractServiceRetryableMacr
   private final Gson gson;
 
   public OAuthAccessTokenMacroEvaluator(ServiceDiscoverer serviceDiscoverer) {
-    super(FUNCTION_NAME);
+    super(SERVICE_NAME, FUNCTION_NAME);
     this.serviceDiscoverer = serviceDiscoverer;
     this.gson = new Gson();
   }
@@ -66,7 +68,8 @@ public class OAuthAccessTokenMacroEvaluator extends AbstractServiceRetryableMacr
       RetryableException {
     if (args.length != 2) {
       throw new InvalidMacroException(
-          "Macro '" + FUNCTION_NAME + "' should have exactly 2 arguments");
+          "Macro '" + FUNCTION_NAME + "' should have exactly 2 arguments", new ErrorCategory(
+          ErrorCategoryEnum.MACROS, String.format("%s-%s", SERVICE_NAME, FUNCTION_NAME)));
     }
 
     return getAccessToken(args[0], args[1]);

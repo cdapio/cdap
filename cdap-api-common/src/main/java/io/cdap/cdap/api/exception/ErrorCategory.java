@@ -97,6 +97,7 @@ public class ErrorCategory {
     ACCESS("Access"),
     DEPROVISIONING("Deprovisioning"),
     NETWORKING("Networking"),
+    MACROS("Macros"),
     OTHERS("Others"),
     PLUGIN("Plugin"),
     PROVISIONING("Provisioning"),

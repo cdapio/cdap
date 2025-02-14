@@ -20,6 +20,11 @@ package io.cdap.cdap.etl.common;
 import com.google.common.base.Stopwatch;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorCodeType;
+import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.ErrorUtils.ActionErrorPair;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -45,8 +50,10 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
   private static final double RETRY_RANDOMIZE_FACTOR = 0.1d;
 
   private final String functionName;
+  private final String serviceName;
 
-  AbstractServiceRetryableMacroEvaluator(String functionName) {
+  AbstractServiceRetryableMacroEvaluator(String serviceName, String functionName) {
+    this.serviceName = serviceName;
     this.functionName = functionName;
   }
 
@@ -54,15 +61,18 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
   public String lookup(String property) throws InvalidMacroException {
     throw new InvalidMacroException("The '" + functionName
         + "' macro function doesn't support direct property lookup for property '"
-        + property + "'");
+        + property + "'", new ErrorCategory(ErrorCategoryEnum.MACROS,
+        String.format("%s-%s", serviceName, functionName)));
   }
 
   @Override
   public String evaluate(String macroFunction, String... args) throws InvalidMacroException {
     if (!functionName.equals(macroFunction)) {
       // This shouldn't happen
-      throw new IllegalArgumentException(
-          "Invalid function name " + macroFunction + ". Expecting " + functionName);
+      throw new InvalidMacroException(
+          "Invalid function name " + macroFunction + ". Expecting " + functionName,
+          new ErrorCategory(ErrorCategoryEnum.MACROS,
+          String.format("%s-%s", serviceName, functionName)));
     }
 
     long delay = RETRY_BASE_DELAY_MILLIS;
@@ -85,8 +95,9 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
               (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier
                   + 1)));
           delay = Math.min(delay, RETRY_MAX_DELAY_MILLIS);
-        } catch (IOException e) {
-          throw new InvalidMacroException(e);
+        } catch (IOException | HttpResponseException e) {
+          throw new InvalidMacroException(e, new ErrorCategory(ErrorCategoryEnum.MACROS,
+          String.format("%s-%s", serviceName, functionName)));
         }
       }
     } catch (InterruptedException e) {
@@ -129,8 +140,9 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
       throws InvalidMacroException {
     if (!functionName.equals(macroFunction)) {
       // This shouldn't happen
-      throw new IllegalArgumentException("Invalid function name " + macroFunction
-          + ". Expecting " + functionName);
+      throw new InvalidMacroException("Invalid function name " + macroFunction
+          + ". Expecting " + functionName, new ErrorCategory(ErrorCategoryEnum.MACROS,
+          String.format("%s-%s", serviceName, functionName)));
     }
 
     // Make call with exponential delay on failure retry.
@@ -149,6 +161,15 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
           delay = (long) (delay * (minMultiplier + Math.random() * (maxMultiplier - minMultiplier
               + 1)));
           delay = Math.min(delay, RETRY_MAX_DELAY_MILLIS);
+        } catch (HttpResponseException e) {
+          int responseCode = e.getResponseCode();
+          ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(responseCode);
+          String errorReason = String.format("Failed to call %s service with status '%s'. %s",
+              serviceName, responseCode, pair.getCorrectiveAction());
+          throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.MACROS,
+                  String.format("%s-%s", serviceName, functionName)), errorReason, e.getMessage(),
+              pair.getErrorType(), false, ErrorCodeType.HTTP, String.valueOf(responseCode), null,
+              e);
         } catch (IOException e) {
           throw new RuntimeException("Failed to evaluate the macro function '" + functionName
               + "' with args " + Arrays.asList(args), e);
@@ -166,7 +187,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
   }
 
   protected String validateAndRetrieveContent(String serviceName,
-      HttpURLConnection urlConn) throws IOException {
+      HttpURLConnection urlConn) throws HttpResponseException {
     if (urlConn == null) {
       throw new RetryableException(serviceName + " service is not available");
     }
@@ -182,7 +203,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
   }
 
   private void validateResponseCode(String serviceName, HttpURLConnection urlConn)
-      throws IOException {
+      throws HttpResponseException {
     int responseCode;
     try {
       responseCode = urlConn.getResponseCode();
@@ -195,15 +216,15 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
         throw new RetryableException(
             serviceName + " service is not available with status " + responseCode);
       }
-      throw new IOException(
+      throw new HttpResponseException(
           "Failed to call " + serviceName + " service with status " + responseCode + ": "
-              + getError(urlConn));
+              + getError(urlConn), responseCode);
     }
   }
 
   abstract Map<String, String> evaluateMacroMap(
       String macroFunction, String... args)
-      throws InvalidMacroException, IOException, RetryableException;
+      throws InvalidMacroException, IOException, RetryableException, HttpResponseException;
 
   abstract String evaluateMacro(
       String macroFunction, String... args)
@@ -221,5 +242,17 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     } catch (IOException e) {
       return "Unknown error due to failure to read from error output: " + e.getMessage();
     }
+  }
+
+  private static class HttpResponseException extends RuntimeException {
+    private final int responseCode;
+
+    private HttpResponseException(String message, int responseCode) {
+      super(message);
+      this.responseCode = responseCode;
+    }
+
+    int getResponseCode() {
+      return responseCode;}
   }
 }
