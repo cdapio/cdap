@@ -287,7 +287,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
         newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
       } catch (Exception e) {
-        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
+        LOG.error("Failed to regenerate the app spec for program {}, using the existing app spec",
             programId, e);
       }
     }
