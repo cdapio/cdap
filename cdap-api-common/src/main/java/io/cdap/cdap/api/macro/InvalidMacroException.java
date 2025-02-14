@@ -16,21 +16,76 @@
 
 package io.cdap.cdap.api.macro;
 
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.FailureDetailsProvider;
+import javax.annotation.Nullable;
+
 /**
  * Indicates that there is an invalid macro.
  */
-public class InvalidMacroException extends RuntimeException {
+public class InvalidMacroException extends RuntimeException implements FailureDetailsProvider {
 
+  private final ErrorCategory errorCategory;
+
+  /**
+   * Constructor for {@link InvalidMacroException}.
+   */
   public InvalidMacroException(String message) {
-    super(message);
+    this(message, null, null);
   }
 
+  /**
+   * Constructor for {@link InvalidMacroException}.
+   */
   public InvalidMacroException(String message, Throwable cause) {
-    super(message, cause);
+    this(message, cause, null);
   }
 
+  /**
+   * Constructor for {@link InvalidMacroException}.
+   */
   public InvalidMacroException(Throwable cause) {
-    super(cause);
+    this(cause.getMessage(), cause, null);
   }
 
+  /**
+   * Constructor for {@link InvalidMacroException}.
+   */
+  public InvalidMacroException(Throwable cause, ErrorCategory errorCategory) {
+    this(cause.getMessage(), cause, errorCategory);
+  }
+
+  /**
+   * Constructor for {@link InvalidMacroException}.
+   */
+  public InvalidMacroException(String message, ErrorCategory errorCategory) {
+    this(message, null, errorCategory);
+  }
+
+  /**
+   * Constructor for {@link InvalidMacroException}.
+   */
+  public InvalidMacroException(String message, @Nullable Throwable cause,
+      @Nullable ErrorCategory errorCategory) {
+    super(message, cause);
+    this.errorCategory = errorCategory;
+  }
+
+
+  @Override
+  public ErrorCategory getErrorCategory() {
+    return errorCategory == null ?  new ErrorCategory(ErrorCategoryEnum.MACROS) : errorCategory;
+  }
+
+  @Override
+  public ErrorType getErrorType() {
+    return ErrorType.USER;
+  }
+
+  @Override
+  public String getErrorReason() {
+    return getMessage();
+  }
 }

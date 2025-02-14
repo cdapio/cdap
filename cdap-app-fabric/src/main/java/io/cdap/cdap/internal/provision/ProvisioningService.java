@@ -701,7 +701,8 @@ public class ProvisioningService extends AbstractIdleService {
       String errorMessage = String.format("Could not evaluate macros with message: %s",
           e.getMessage());
       ProgramFailureException ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
-          errorMessage, ErrorType.USER, false, e);
+          errorMessage, ErrorType.USER, false, null);
+      ex.addSuppressed(e);
       runWithProgramLogging(programRunId, systemArgs,
           () -> LOG.error("The run will be marked as failed.", ex));
       programStateWriter.error(programRunId, ex);
@@ -763,7 +764,8 @@ public class ProvisioningService extends AbstractIdleService {
       String errorMessage = String.format("Could not evaluate macros with message: %s",
           e.getMessage());
       ProgramFailureException ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
-          errorMessage, ErrorType.USER, false, e);
+          errorMessage, ErrorType.USER, false, null);
+      ex.addSuppressed(e);
       runWithProgramLogging(programRunId, systemArgs,
           () -> LOG.error("The cluster will be marked as orphaned.", ex));
       provisionerNotifier.orphaned(programRunId);
