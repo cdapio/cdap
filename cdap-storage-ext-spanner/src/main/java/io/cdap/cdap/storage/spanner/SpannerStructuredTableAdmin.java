@@ -42,11 +42,14 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -264,6 +267,11 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     List<FieldType> fields = new ArrayList<>();
     SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
     Set<String> indexes = new LinkedHashSet<>();
+    StructuredTableSpecification tableSpecification = StoreDefinition.getTableSpecificationsMap().get(tableId);
+    Map<String, FieldType> tableSpecFields = new HashMap<>();
+    for (FieldType field : tableSpecification.getFieldTypes()) {
+      tableSpecFields.put(field.getName(), field);
+    }
 
     try (ReadOnlyTransaction tx = databaseClient.readOnlyTransaction()) {
       try (ResultSet resultSet = tx.executeQuery(schemaStatement)) {
@@ -275,7 +283,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           // If a field is not a primary nor an index, the ordinal_position will be NULL in the index_columns table.
           boolean isIndex = !row.isNull("ordinal_position");
 
-          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type"))));
+          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type")), tableSpecFields.get(columnName).getCompressor()));
           if ("PRIMARY_KEY".equalsIgnoreCase(indexType)) {
             primaryKeysOrderMap.put(row.getLong("ordinal_position"), columnName);
           } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {

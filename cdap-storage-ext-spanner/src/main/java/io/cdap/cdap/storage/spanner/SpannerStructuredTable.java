@@ -647,6 +647,7 @@ public class SpannerStructuredTable implements StructuredTable {
       case DOUBLE:
         return Value.float64((Double) value);
       case STRING:
+        // If compression enabled, encode string here.
         return Value.string((String) value);
       case BYTES:
         return Value.bytes(value == null ? null : (ByteArray.copyFrom((byte[]) value)));

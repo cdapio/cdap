@@ -24,6 +24,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,8 @@ public final class StoreDefinition {
   private static final Logger LOG = LoggerFactory.getLogger(StoreDefinition.class);
 
   private static List<StructuredTableSpecification> tableSpecifications;
+
+  private static Map<StructuredTableId, StructuredTableSpecification> tableSpecificationsMap;
 
   private StoreDefinition() {
     // prevent instantiation
@@ -106,6 +109,11 @@ public final class StoreDefinition {
       tableSpecifications = new ArrayList<>();
     }
     tableSpecifications.add(spec);
+    tableSpecificationsMap.put(spec.getTableId(), spec);
+  }
+
+  public static Map<StructuredTableId, StructuredTableSpecification> getTableSpecificationsMap() {
+    return tableSpecificationsMap;
   }
 
   /**
