@@ -35,22 +35,16 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xerial.snappy.Snappy;
 
 /**
  * Operations on top of StructuredTable for Provisioning related CRUD operations
  */
 public class ProvisionerTable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProvisionerTable.class);
   private final StructuredTable table;
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
           new GsonBuilder())
@@ -140,26 +134,10 @@ public class ProvisionerTable {
   }
 
   private ProvisioningTaskInfo deserialize(String provisioningTaskInfo) {
-    LOG.info("sidhdirenge - Started decompress here.");
-    byte[] compressedBytes = Base64.getDecoder().decode(provisioningTaskInfo);
-    ProvisioningTaskInfo taskInfo = null;
-    try {
-      taskInfo = GSON.fromJson(
-          new String(Snappy.uncompress(compressedBytes), StandardCharsets.UTF_8),
-          ProvisioningTaskInfo.class);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    LOG.info("sidhdirenge - Decompress done.");
-    return taskInfo;
+    return GSON.fromJson(provisioningTaskInfo, ProvisioningTaskInfo.class);
   }
 
-  private String serialize(ProvisioningTaskInfo taskInfo) throws IOException {
-    String jsonString = GSON.toJson(taskInfo, ProvisioningTaskInfo.class);
-    LOG.info("sidhdirenge: before compression {}", jsonString.length());
-    String compressedString = Base64.getEncoder()
-        .encodeToString(Snappy.compress(jsonString.getBytes(StandardCharsets.UTF_8)));
-    LOG.info("sidhdirenge: after compression {}", compressedString.length());
-    return compressedString;
+  private String serialize(ProvisioningTaskInfo taskInfo) {
+    return GSON.toJson(taskInfo, ProvisioningTaskInfo.class);
   }
 }
