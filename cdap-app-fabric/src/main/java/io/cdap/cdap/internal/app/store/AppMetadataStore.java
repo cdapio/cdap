@@ -553,10 +553,14 @@ public class AppMetadataStore {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         ApplicationId appId = getApplicationIdFromRow(row);
-        String appMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
-        if (appMeta == null) {
+        LOG.info("sidhdirenge - Started decompress here.");
+        String compressedData = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+        if (compressedData == null) {
           throw new IOException("Missing application metadata for application " + appId);
         }
+        byte[] compressedBytes = Base64.getDecoder().decode(compressedData);
+        String appMeta = new String(Snappy.uncompress(compressedBytes), StandardCharsets.UTF_8);
+        LOG.info("sidhdirenge - Decompress done.");
 
         ApplicationReference appRef = appId.getAppReference();
         Boolean isLatest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
