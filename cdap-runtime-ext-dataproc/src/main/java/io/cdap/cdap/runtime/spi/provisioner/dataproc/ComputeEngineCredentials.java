@@ -59,14 +59,15 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   /**
    * Time (in millisecond) to refresh the credentials before it expires.
    */
-  private static final int NUMBER_OF_RETRIES = 10;
-  private static final int MIN_WAIT_TIME_MILLISECOND = 500;
-  private static final int MAX_WAIT_TIME_MILLISECOND = 10000;
+  private static final int MIN_WAIT_TIME_MILLISECOND = 2000;
+  private static final int MAX_WAIT_TIME_MILLISECOND = 20000;
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private final String endPoint;
+  private final int maxRetries;
 
-  private ComputeEngineCredentials(@Nullable String endPoint) {
+  private ComputeEngineCredentials(@Nullable String endPoint, int maxRetries) {
     this.endPoint = endPoint;
+    this.maxRetries = maxRetries;
   }
 
   /**
@@ -77,12 +78,13 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
    *     the token locally.
    * @return ComputeEngineCredentials
    */
-  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint) throws IOException {
+  public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint,
+      int maxRetries) throws IOException {
     String key = endpoint != null ? endpoint : LOCAL_COMPUTE_ENGINE_CREDENTIALS;
     if (!cachedComputeEngineCredentials.containsKey(key)) {
       synchronized (cachedComputeEngineCredentials) {
         if (!cachedComputeEngineCredentials.containsKey(key)) {
-          ComputeEngineCredentials credentials = new ComputeEngineCredentials(endpoint);
+          ComputeEngineCredentials credentials = new ComputeEngineCredentials(endpoint, maxRetries);
           credentials.refresh();
           cachedComputeEngineCredentials.put(key, credentials);
         }
@@ -102,10 +104,10 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     }
   }
 
-  private void disableVerifySSL(HttpsURLConnection connection) throws IOException {
+  private void disableVerifySsl(HttpsURLConnection connection) throws IOException {
     try {
       SSLContext sslContextWithNoVerify = SSLContext.getInstance("SSL");
-      TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+      TrustManager[] trustAllCerts = new TrustManager[]{ new X509TrustManager() {
         public X509Certificate[] getAcceptedIssuers() {
           return null;
         }
@@ -119,7 +121,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
         public void checkServerTrusted(X509Certificate[] arg0, String arg1) {
           // No-op
         }
-      }};
+      } };
       sslContextWithNoVerify.init(null, trustAllCerts, SECURE_RANDOM);
       connection.setSSLSocketFactory(sslContextWithNoVerify.getSocketFactory());
       connection.setHostnameVerifier((s, sslSession) -> true);
@@ -134,7 +136,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     if (connection instanceof HttpsURLConnection) {
       // TODO (CDAP-18047) enable ssl verification
-      disableVerifySSL(((HttpsURLConnection) connection));
+      disableVerifySsl(((HttpsURLConnection) connection));
     }
     connection.connect();
     try (Reader reader = new InputStreamReader(connection.getInputStream(),
@@ -167,7 +169,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
 
     Exception exception = null;
     int counter = 0;
-    while (counter < NUMBER_OF_RETRIES) {
+    while (counter < maxRetries) {
       counter++;
 
       try {
