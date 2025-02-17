@@ -63,6 +63,7 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public String getString(String fieldName) throws InvalidFieldException {
+    // decompress here based on the schema.getFieldType for the given fieldName & compressor.
     return isNull(fieldName) ? null : struct.getString(fieldName);
   }
 

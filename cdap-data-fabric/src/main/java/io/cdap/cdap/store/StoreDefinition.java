@@ -447,7 +447,7 @@ public final class StoreDefinition {
             Fields.stringType(PROGRAM_FIELD),
             Fields.stringType(RUN_FIELD),
             Fields.stringType(KEY_TYPE),
-            Fields.stringType(PROVISIONER_TASK_INFO_FIELD))
+            Fields.compressedStringType(PROVISIONER_TASK_INFO_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD,
             PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD, KEY_TYPE)
         .build();
@@ -519,7 +519,7 @@ public final class StoreDefinition {
             .withFields(Fields.stringType(NAMESPACE_FIELD),
                 Fields.stringType(APPLICATION_FIELD),
                 Fields.stringType(VERSION_FIELD),
-                Fields.stringType(APPLICATION_DATA_FIELD),
+                Fields.compressedStringType(APPLICATION_DATA_FIELD),
                 Fields.longType(CREATION_TIME_FIELD),
                 Fields.stringType(AUTHOR_FIELD),
                 Fields.stringType(CHANGE_SUMMARY_FIELD),

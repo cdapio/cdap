@@ -50,6 +50,10 @@ public final class Fields {
     return new FieldType(name, FieldType.Type.STRING);
   }
 
+  public static FieldType compressedStringType(String name) {
+    return new FieldType(name, FieldType.Type.STRING, "snappy");
+  }
+
   /**
    * @return the FieldType of BOOLEAN with the given name
    */

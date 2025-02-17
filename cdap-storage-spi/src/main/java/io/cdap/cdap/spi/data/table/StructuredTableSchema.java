@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public class StructuredTableSchema {
 
   private final StructuredTableId tableId;
-  private final Map<String, FieldType.Type> fields;
+  private final Map<String, FieldType> fields;
   // primary keys have to be ordered as defined in the table schema
   private final List<String> primaryKeys;
   private final Set<String> indexes;
@@ -46,16 +46,17 @@ public class StructuredTableSchema {
     this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes());
   }
 
-  /** Constructor of {@code StructuredTableSchema} with table schema details. */
+  /**
+   * Constructor of {@code StructuredTableSchema} with table schema details.
+   */
   public StructuredTableSchema(
       StructuredTableId tableId,
       List<FieldType> fields,
       List<String> primaryKeys,
       Collection<String> indexes) {
     this.tableId = tableId;
-    this.fields =
-        Collections.unmodifiableMap(
-            fields.stream().collect(Collectors.toMap(FieldType::getName, FieldType::getType)));
+    this.fields = fields.stream()
+        .collect(Collectors.toMap(FieldType::getName, field -> field));
     this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
@@ -110,7 +111,7 @@ public class StructuredTableSchema {
    */
   @Nullable
   public FieldType.Type getType(String fieldName) {
-    return fields.get(fieldName);
+    return fields.get(fieldName).getType();
   }
 
   public Set<String> getFieldNames() {
@@ -158,7 +159,7 @@ public class StructuredTableSchema {
    *
    * @param spec the {@link StructuredTableSpecification} to check for compatibility
    * @return {@code true} if this schema is compatible with the given specification, otherwise
-   *     return {@code false}
+   * return {@code false}
    */
   public boolean isCompatible(StructuredTableSpecification spec) {
     return isCompatible(new StructuredTableSchema(spec));
@@ -185,7 +186,7 @@ public class StructuredTableSchema {
    *
    * @param schema the {@link StructuredTableSchema} to check for compatibility
    * @return {@code true} if this schema is compatible with the given schema, otherwise return
-   *     {@code false}
+   * {@code false}
    */
   public boolean isCompatible(StructuredTableSchema schema) {
     for (String field : getFieldNames()) {
