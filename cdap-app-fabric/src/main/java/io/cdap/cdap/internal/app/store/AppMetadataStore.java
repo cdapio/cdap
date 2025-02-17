@@ -611,7 +611,7 @@ public class AppMetadataStore {
    * @throws ApplicationNotFoundException when the application is not found
    */
   public void markAsLatest(ApplicationId id)
-      throws IOException, ApplicationNotFoundException {
+    throws IOException, ApplicationNotFoundException {
     StructuredTable appSpecTable = getApplicationSpecificationTable();
 
     // check if the application being marked latest is already present in the table
@@ -2104,7 +2104,7 @@ public class AppMetadataStore {
    */
   public void deleteCompletedRunsStartedBefore(Instant timeUpperBound) throws IOException {
     ImmutableList<Field<?>> keyPrefixFields = ImmutableList.of(
-        Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
+            Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
 
     getRunRecordsTable()
         .deleteAll(createRunRecordScanRange(keyPrefixFields, 0L, timeUpperBound.getEpochSecond()));
@@ -2393,17 +2393,17 @@ public class AppMetadataStore {
   }
 
   public void deleteProgramHistory(ApplicationReference applicationReference)
-      throws IOException {
+    throws IOException {
     getRunRecordsTable()
-        .deleteAll(
-            Range.singleton(getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_ACTIVE, applicationReference)));
+      .deleteAll(
+        Range.singleton(getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_ACTIVE, applicationReference)));
     getRunRecordsTable()
-        .deleteAll(Range.singleton(
-            getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_COMPLETED, applicationReference)));
+      .deleteAll(Range.singleton(
+        getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_COMPLETED, applicationReference)));
     getProgramCountsTable().deleteAll(
-        Range.singleton(getCountApplicationRefPrefix(TYPE_COUNT, applicationReference)));
+      Range.singleton(getCountApplicationRefPrefix(TYPE_COUNT, applicationReference)));
     getProgramCountsTable().deleteAll(
-        Range.singleton(getCountApplicationRefPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationReference)));
+      Range.singleton(getCountApplicationRefPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationReference)));
   }
 
   public void deleteProgramHistory(NamespaceId namespaceId) throws IOException {
@@ -2784,9 +2784,9 @@ public class AppMetadataStore {
   private List<Field<?>> getCountApplicationRefPrefix(String countType, ApplicationReference applicationReference) {
     List<Field<?>> fields = getCountTypePrefix(countType);
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
-        applicationReference.getNamespace()));
+                                  applicationReference.getNamespace()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD,
-        applicationReference.getApplication()));
+                                  applicationReference.getApplication()));
     return fields;
   }
 
@@ -2861,7 +2861,7 @@ public class AppMetadataStore {
   }
 
   private List<Field<?>> getRunRecordApplicationRefPrefix(String status,
-      @Nullable ApplicationReference applicationReference) {
+                                                          @Nullable ApplicationReference applicationReference) {
     List<Field<?>> fields = getRunRecordStatusPrefix(status);
     if (applicationReference == null) {
       return fields;
