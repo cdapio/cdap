@@ -50,8 +50,8 @@ public final class Fields {
     return new FieldType(name, FieldType.Type.STRING);
   }
 
-  public static FieldType compressedStringType(String name) {
-    return new FieldType(name, FieldType.Type.STRING, "snappy");
+  public static FieldType compressedStringType(String name, String compressor) {
+    return new FieldType(name, FieldType.Type.STRING, compressor);
   }
 
   /**
