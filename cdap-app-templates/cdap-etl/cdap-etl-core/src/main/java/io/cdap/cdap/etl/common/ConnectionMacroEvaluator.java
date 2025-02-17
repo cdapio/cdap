@@ -19,6 +19,8 @@ package io.cdap.cdap.etl.common;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -44,7 +46,7 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
   private final Gson gson;
 
   public ConnectionMacroEvaluator(String namespace, ServiceDiscoverer serviceDiscoverer) {
-    super(FUNCTION_NAME);
+    super(SERVICE_NAME, FUNCTION_NAME);
     this.namespace = namespace;
     this.serviceDiscoverer = serviceDiscoverer;
     this.gson = new Gson();
@@ -63,7 +65,9 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
       String... args) throws InvalidMacroException, IOException, RetryableException {
     if (args.length != 1) {
       throw new InvalidMacroException(
-          "Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
+          "Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments",
+          new ErrorCategory(ErrorCategoryEnum.MACROS, String.format("%s-%s", SERVICE_NAME,
+              FUNCTION_NAME)));
     }
 
     // only encode the connection name here since / will get encoded to %2f and some router cannot recognize it

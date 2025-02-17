@@ -43,7 +43,7 @@ public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator 
   private final Gson gson;
 
   public OAuthMacroEvaluator(ServiceDiscoverer serviceDiscoverer) {
-    super(FUNCTION_NAME);
+    super(SERVICE_NAME, FUNCTION_NAME);
     this.serviceDiscoverer = serviceDiscoverer;
     this.gson = new Gson();
   }
