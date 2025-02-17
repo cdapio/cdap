@@ -741,8 +741,11 @@ public class AppMetadataStore {
       throws IOException {
     String jsonString = GSON.toJson(
         new ApplicationMeta(appId, spec, null, null));
-    return Base64.getEncoder()
+    LOG.info("sidhdirenge: before compression {}", jsonString.length());
+    String compressedString = Base64.getEncoder()
         .encodeToString(Snappy.compress(jsonString.getBytes(StandardCharsets.UTF_8)));
+    LOG.info("sidhdirenge: after compression {}", compressedString.length());
+    return compressedString;
   }
 
   @VisibleForTesting
