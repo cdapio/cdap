@@ -2857,6 +2857,7 @@ public class AppMetadataStore {
     Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
     Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
     String compressedData = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+    LOG.info("sidhdirenge - Started decompress here.");
     byte[] compressedBytes = Base64.getDecoder().decode(compressedData);
     ApplicationMeta meta = null;
     try {
@@ -2866,6 +2867,7 @@ public class AppMetadataStore {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    LOG.info("sidhdirenge - Decompress done.");
     SourceControlMeta sourceControl = GSON.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
         SourceControlMeta.class);
@@ -3167,6 +3169,7 @@ public class AppMetadataStore {
         return meta;
       }
       byte[] compressedBytes = Base64.getDecoder().decode(rawAppMeta);
+      LOG.info("sidhdirenge - Decompress started.");
       ApplicationMeta tempMeta = null;
       try {
         tempMeta = GSON.fromJson(
@@ -3175,6 +3178,7 @@ public class AppMetadataStore {
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+      LOG.info("sidhdirenge - Decompress done.");
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);
       return meta;
