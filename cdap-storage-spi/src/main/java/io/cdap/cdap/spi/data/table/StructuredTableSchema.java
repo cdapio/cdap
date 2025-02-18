@@ -109,12 +109,12 @@ public class StructuredTableSchema {
    */
   @Nullable
   public FieldType.Type getType(String fieldName) {
-    return fields.get(fieldName).getType();
+    return fields.get(fieldName) == null ? null : fields.get(fieldName).getType();
   }
 
   @Nullable
   public String getCompressor(String fieldName) {
-    return fields.get(fieldName).getCompressor();
+    return fields.get(fieldName) == null ? null : fields.get(fieldName).getCompressor();
   }
 
   public Set<String> getFieldNames() {
