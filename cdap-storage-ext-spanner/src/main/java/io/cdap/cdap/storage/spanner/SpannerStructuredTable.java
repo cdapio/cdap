@@ -663,7 +663,7 @@ public class SpannerStructuredTable implements StructuredTable {
 
   private String getStringValue(Object value, String compressor) {
     String val = (String) value;
-    if (value != null && compressor != null) {
+    if (compressor != null) {
       if (compressor.equals("snappy")) {
         val = Base64.getEncoder()
             .encodeToString(snappyCompress(val.getBytes(StandardCharsets.UTF_8)));

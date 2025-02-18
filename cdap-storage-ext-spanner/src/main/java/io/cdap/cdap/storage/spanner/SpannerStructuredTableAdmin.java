@@ -64,7 +64,8 @@ import org.slf4j.LoggerFactory;
 public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerStructuredTableAdmin.class);
-  private static final Map<StructuredTableId, StructuredTableSpecification> tableSpecificationsMap = StoreDefinition.getTableSpecificationsMap();
+  private static final Map<StructuredTableId, StructuredTableSpecification> tableSpecificationsMap =
+      StoreDefinition.getTableSpecificationsMap();
   private final DatabaseId databaseId;
   private final DatabaseAdminClient adminClient;
   private final DatabaseClient databaseClient;
@@ -77,7 +78,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   /**
    * Constructor for {@code SpannerStructuredTableAdmin}.
    *
-   * @param spanner    the gcp Spanner service.
+   * @param spanner the gcp Spanner service.
    * @param databaseId the ID of the Spanner instance database.
    */
   public SpannerStructuredTableAdmin(Spanner spanner, DatabaseId databaseId) {

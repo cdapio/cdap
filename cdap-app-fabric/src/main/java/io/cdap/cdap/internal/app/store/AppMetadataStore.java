@@ -2719,7 +2719,7 @@ public class AppMetadataStore {
       throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
-        Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
+        Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized, "snappy"));
     if (change != null) {
       fields.add(
           Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, change.getAuthor()));
@@ -2753,7 +2753,8 @@ public class AppMetadataStore {
       throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
-        Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
+        Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD,
+            serialized, "snappy"));
     getApplicationSpecificationTable().upsert(fields);
   }
 
@@ -2883,7 +2884,7 @@ public class AppMetadataStore {
     return getRunRecordProgramPrefix(status, programId.getProgramReference(),
         programId.getVersion());
   }
-  
+
   private List<Field<?>> getRunRecordProgramPrefix(String status,
       @Nullable ProgramReference programRef, @Nullable String version) {
     List<Field<?>> fields = getRunRecordStatusPrefix(status);

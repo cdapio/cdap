@@ -121,7 +121,6 @@ public final class StoreDefinition {
 
   public static Map<StructuredTableId, StructuredTableSpecification> getTableSpecificationsMap() {
     if (tableSpecificationsMap == null) {
-      tableSpecificationsMap = new HashMap<>();
       registerAllTables();
     }
     return tableSpecificationsMap;

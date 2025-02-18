@@ -30,6 +30,8 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xerial.snappy.Snappy;
 
 /**
@@ -37,6 +39,7 @@ import org.xerial.snappy.Snappy;
  */
 public class SpannerStructuredRow implements StructuredRow {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerStructuredRow.class);
   private final StructuredTableSchema schema;
   private final Struct struct;
   private volatile Collection<Field<?>> primaryKeys;
@@ -181,9 +184,8 @@ public class SpannerStructuredRow implements StructuredRow {
   }
 
   private byte[] snappyDecompress(String field, byte[] value) throws InvalidFieldException {
-    byte[] compressedBytes = Base64.getDecoder().decode(value);
     try {
-      return Snappy.uncompress(compressedBytes);
+      return Snappy.uncompress(value);
     } catch (IOException e) {
       throw new InvalidFieldException(schema.getTableId(), field, "snappy", e);
     }

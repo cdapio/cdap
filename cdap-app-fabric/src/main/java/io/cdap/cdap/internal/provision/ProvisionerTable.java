@@ -100,8 +100,8 @@ public class ProvisionerTable {
   public void putTaskInfo(ProvisioningTaskInfo taskInfo) throws IOException {
     List<Field<?>> fields = createPrimaryKey(taskInfo.getTaskKey().getProgramRunId(),
         taskInfo.getTaskKey().getType());
-    fields.add(Fields.stringField(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD,
-        serialize(taskInfo)));
+    fields.add(Fields.compressedStringField(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD,
+        serialize(taskInfo), "snappy"));
     table.upsert(fields);
   }
 

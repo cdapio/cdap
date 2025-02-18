@@ -119,6 +119,18 @@ public final class Fields {
   }
 
   /**
+   * Create a field with string value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @param compressor compressor used
+   * @return a field with type string
+   */
+  public static Field<String> compressedStringField(String name, @Nullable String value, String compressor) {
+    return new Field<>(new FieldType(name, FieldType.Type.STRING, compressor), value);
+  }
+
+  /**
    * Create a field with float value.
    *
    * @param name name of the field
