@@ -18,6 +18,7 @@ package io.cdap.cdap.spi.data.table;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,15 +47,17 @@ public class StructuredTableSchema {
     this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes());
   }
 
-  /** Constructor of {@code StructuredTableSchema} with table schema details. */
+  /**
+   * Constructor of {@code StructuredTableSchema} with table schema details.
+   */
   public StructuredTableSchema(
       StructuredTableId tableId,
       List<FieldType> fields,
       List<String> primaryKeys,
       Collection<String> indexes) {
     this.tableId = tableId;
-    this.fields = fields.stream()
-        .collect(Collectors.toMap(FieldType::getName, field -> field));
+    this.fields = Collections.unmodifiableMap(fields.stream()
+        .collect(Collectors.toMap(FieldType::getName, field -> field)));
     this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
@@ -113,7 +116,7 @@ public class StructuredTableSchema {
   }
 
   @Nullable
-  public String getCompressor(String fieldName) {
+  public Compressor getCompressor(String fieldName) {
     return fields.get(fieldName) == null ? null : fields.get(fieldName).getCompressor();
   }
 

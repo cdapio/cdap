@@ -18,6 +18,7 @@ package io.cdap.cdap.spi.data.table.field;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -48,7 +49,7 @@ public final class Field<T> {
   /**
    * @return the compressor used for the field.
    */
-  public String getCompressor() {
+  public Compressor getCompressor() {
     return fieldType.getCompressor();
   }
 

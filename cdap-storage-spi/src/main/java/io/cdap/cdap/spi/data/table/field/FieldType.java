@@ -52,7 +52,9 @@ public final class FieldType {
     }
   }
 
-  public static final String SNAPPY_COMPRESSOR = "snappy";
+  public enum Compressor {
+    SNAPPY
+  }
 
   /**
    * Valid field types that can be part of a primary key.
@@ -69,7 +71,7 @@ public final class FieldType {
           Type.STRING, Type.BOOLEAN));
   private final String name;
   private final Type type;
-  private final String compressor;
+  private final Compressor compressor;
 
   /**
    * Construct a field type with the given field name and type.
@@ -88,7 +90,7 @@ public final class FieldType {
    * @param type       field type
    * @param compressor type of compressor used
    */
-  public FieldType(String name, Type type, String compressor) {
+  public FieldType(String name, Type type, Compressor compressor) {
     this.name = name;
     this.type = type;
     this.compressor = compressor;
@@ -111,7 +113,7 @@ public final class FieldType {
   /**
    * @return the compressor
    */
-  public String getCompressor() {
+  public Compressor getCompressor() {
     return compressor;
   }
 

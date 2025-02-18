@@ -42,6 +42,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -308,7 +309,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     return new StructuredTableSchema(tableId, fields, primaryKeys, nonPrimaryKeyIndexes);
   }
 
-  private String getCompressor(Map<String, FieldType> fieldTypeMap, String name) {
+  private Compressor getCompressor(Map<String, FieldType> fieldTypeMap, String name) {
     return fieldTypeMap.get(name) == null ? null
         : fieldTypeMap.get(name).getCompressor();
   }

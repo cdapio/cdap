@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.app.store;
 
-import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -68,6 +66,7 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
@@ -2721,7 +2720,8 @@ public class AppMetadataStore {
       throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
-        Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized, SNAPPY_COMPRESSOR));
+        Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD,
+            serialized, Compressor.SNAPPY));
     if (change != null) {
       fields.add(
           Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, change.getAuthor()));
@@ -2756,7 +2756,7 @@ public class AppMetadataStore {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
         Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD,
-            serialized, SNAPPY_COMPRESSOR));
+            serialized, Compressor.SNAPPY));
     getApplicationSpecificationTable().upsert(fields);
   }
 

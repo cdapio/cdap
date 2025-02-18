@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -102,9 +103,9 @@ public class InvalidFieldException extends RuntimeException {
    * @param fieldName field name
    * @param compressor compressor name
    */
-  public InvalidFieldException(StructuredTableId tableId, String fieldName, String compressor, Exception e) {
+  public InvalidFieldException(StructuredTableId tableId, String fieldName, Compressor compressor, Exception e) {
     super(String.format("Error with compressor %s for field %s in table %s.",
-        compressor, fieldName, tableId.getName()), e);
+        compressor.name(), fieldName, tableId.getName()), e);
     this.tableId = tableId;
     this.fieldNames = Collections.singleton(fieldName);
   }

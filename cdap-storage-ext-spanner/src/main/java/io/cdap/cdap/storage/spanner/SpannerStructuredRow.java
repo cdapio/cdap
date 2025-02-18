@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.storage.spanner;
 
-import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
-
 import com.google.cloud.spanner.Struct;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -75,9 +74,9 @@ public class SpannerStructuredRow implements StructuredRow {
     String value = null;
     if (!isNull(fieldName)) {
       value = struct.getString(fieldName);
-      String compressor = schema.getCompressor(fieldName);
+      Compressor compressor = schema.getCompressor(fieldName);
       if (value != null && compressor != null) {
-        if (compressor.equals(SNAPPY_COMPRESSOR)) {
+        if (compressor.equals(Compressor.SNAPPY)) {
           value = snappyDecompress(fieldName, value);
         } else {
           throw new InvalidFieldException(schema.getTableId(), fieldName,
@@ -106,9 +105,9 @@ public class SpannerStructuredRow implements StructuredRow {
     byte[] value = null;
     if (!isNull(fieldName)) {
       value = struct.getBytes(fieldName).toByteArray();
-      String compressor = schema.getCompressor(fieldName);
+      Compressor compressor = schema.getCompressor(fieldName);
       if (value != null && compressor != null) {
-        if (compressor.equals(SNAPPY_COMPRESSOR)) {
+        if (compressor.equals(Compressor.SNAPPY)) {
           value = snappyDecompress(fieldName, value);
         } else {
           throw new InvalidFieldException(schema.getTableId(), fieldName,
@@ -189,7 +188,7 @@ public class SpannerStructuredRow implements StructuredRow {
     try {
       return Snappy.uncompress(value);
     } catch (IOException e) {
-      throw new InvalidFieldException(schema.getTableId(), field, SNAPPY_COMPRESSOR, e);
+      throw new InvalidFieldException(schema.getTableId(), field, Compressor.SNAPPY, e);
     }
   }
 }

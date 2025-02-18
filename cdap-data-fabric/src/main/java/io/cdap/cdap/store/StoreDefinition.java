@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.store;
 
-import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
-
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableSchemaIncompatibleException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -467,7 +466,7 @@ public final class StoreDefinition {
             Fields.stringType(PROGRAM_FIELD),
             Fields.stringType(RUN_FIELD),
             Fields.stringType(KEY_TYPE),
-            Fields.compressedStringType(PROVISIONER_TASK_INFO_FIELD, SNAPPY_COMPRESSOR))
+            Fields.compressedStringType(PROVISIONER_TASK_INFO_FIELD, Compressor.SNAPPY))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD,
             PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD, KEY_TYPE)
         .build();
@@ -539,7 +538,7 @@ public final class StoreDefinition {
             .withFields(Fields.stringType(NAMESPACE_FIELD),
                 Fields.stringType(APPLICATION_FIELD),
                 Fields.stringType(VERSION_FIELD),
-                Fields.compressedStringType(APPLICATION_DATA_FIELD, SNAPPY_COMPRESSOR),
+                Fields.compressedStringType(APPLICATION_DATA_FIELD, Compressor.SNAPPY),
                 Fields.longType(CREATION_TIME_FIELD),
                 Fields.stringType(AUTHOR_FIELD),
                 Fields.stringType(CHANGE_SUMMARY_FIELD),

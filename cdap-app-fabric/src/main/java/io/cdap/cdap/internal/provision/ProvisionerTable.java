@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.internal.provision;
 
-import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
-
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,6 +31,7 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
@@ -103,7 +102,7 @@ public class ProvisionerTable {
     List<Field<?>> fields = createPrimaryKey(taskInfo.getTaskKey().getProgramRunId(),
         taskInfo.getTaskKey().getType());
     fields.add(Fields.compressedStringField(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD,
-        serialize(taskInfo), SNAPPY_COMPRESSOR));
+        serialize(taskInfo), Compressor.SNAPPY));
     table.upsert(fields);
   }
 

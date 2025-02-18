@@ -17,6 +17,7 @@
 package io.cdap.cdap.spi.data.table.field;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.spi.data.table.field.FieldType.Compressor;
 import javax.annotation.Nullable;
 
 /**
@@ -53,7 +54,7 @@ public final class Fields {
   /**
    * @return the FieldType of STRING with the given name and the compressor involved.
    */
-  public static FieldType compressedStringType(String name, String compressor) {
+  public static FieldType compressedStringType(String name, Compressor compressor) {
     return new FieldType(name, FieldType.Type.STRING, compressor);
   }
 
@@ -126,7 +127,7 @@ public final class Fields {
    * @param compressor compressor used
    * @return a field with type string
    */
-  public static Field<String> compressedStringField(String name, @Nullable String value, String compressor) {
+  public static Field<String> compressedStringField(String name, @Nullable String value, FieldType.Compressor compressor) {
     return new Field<>(new FieldType(name, FieldType.Type.STRING, compressor), value);
   }
 
