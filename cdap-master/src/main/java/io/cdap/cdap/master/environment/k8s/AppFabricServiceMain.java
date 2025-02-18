@@ -41,8 +41,6 @@ import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
-import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
@@ -134,7 +132,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
-    services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
 
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
@@ -148,8 +145,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
         Constants.AppFabric.RemoteExecution.class));
     services.add(new TwillRunnerServiceWrapper(remoteTwillRunner));
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
-    services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
-        RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
     services.add(new RetryOnStartFailureService(
         () -> injector.getInstance(NamespaceInitializerService.class),
