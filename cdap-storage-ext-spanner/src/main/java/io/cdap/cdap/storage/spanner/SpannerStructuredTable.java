@@ -38,7 +38,9 @@ import io.cdap.cdap.spi.data.table.field.FieldValidator;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,6 +55,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xerial.snappy.Snappy;
 
 /**
  * A {@link StructuredTable} implementation backed by GCP Cloud Spanner.
@@ -647,15 +650,48 @@ public class SpannerStructuredTable implements StructuredTable {
       case DOUBLE:
         return Value.float64((Double) value);
       case STRING:
-        return Value.string((String) value);
+        return Value.string(getStringValue(value, field.getCompressor()));
       case BYTES:
-        return Value.bytes(value == null ? null : (ByteArray.copyFrom((byte[]) value)));
+        return Value.bytes(value == null ? null : getBytesValue(value, field.getCompressor()));
       case BOOLEAN:
         return Value.bool((Boolean) value);
     }
 
     // This shouldn't happen
     throw new IllegalArgumentException("Unsupported field type " + field.getFieldType());
+  }
+
+  private String getStringValue(Object value, String compressor) {
+    String val = (String) value;
+    if (value != null && compressor != null) {
+      if (compressor.equals("snappy")) {
+        val = Base64.getEncoder()
+            .encodeToString(snappyCompress(val.getBytes(StandardCharsets.UTF_8)));
+      } else {
+        throw new IllegalArgumentException("No implementation found for compressor " + compressor);
+      }
+    }
+    return val;
+  }
+
+  private ByteArray getBytesValue(Object value, String compressor) {
+    byte[] val = (byte[]) value;
+    if (compressor != null) {
+      if (compressor.equals("snappy")) {
+        val = snappyCompress(val);
+      } else {
+        throw new IllegalArgumentException("No implementation found for compressor " + compressor);
+      }
+    }
+    return ByteArray.copyFrom(val);
+  }
+
+  private byte[] snappyCompress(byte[] value) {
+    try {
+      return Snappy.compress(value);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

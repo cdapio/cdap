@@ -51,6 +51,13 @@ public final class Fields {
   }
 
   /**
+   * @return the FieldType of STRING with the given name and the compressor involved.
+   */
+  public static FieldType compressedStringType(String name, String compressor) {
+    return new FieldType(name, FieldType.Type.STRING, compressor);
+  }
+
+  /**
    * @return the FieldType of BOOLEAN with the given name
    */
   public static FieldType booleanType(String name) {

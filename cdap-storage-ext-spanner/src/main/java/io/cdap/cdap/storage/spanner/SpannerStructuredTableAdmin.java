@@ -42,11 +42,14 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -61,6 +64,7 @@ import org.slf4j.LoggerFactory;
 public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerStructuredTableAdmin.class);
+  private static final Map<StructuredTableId, StructuredTableSpecification> tableSpecificationsMap = StoreDefinition.getTableSpecificationsMap();
   private final DatabaseId databaseId;
   private final DatabaseAdminClient adminClient;
   private final DatabaseClient databaseClient;
@@ -264,6 +268,12 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     List<FieldType> fields = new ArrayList<>();
     SortedMap<Long, String> primaryKeysOrderMap = new TreeMap<>();
     Set<String> indexes = new LinkedHashSet<>();
+    Map<String, FieldType> fieldTypeMap = new HashMap<>();
+    List<FieldType> fieldTypes = tableSpecificationsMap.get(tableId) == null ? new ArrayList<>()
+        : tableSpecificationsMap.get(tableId).getFieldTypes();
+    for (FieldType field : fieldTypes) {
+      fieldTypeMap.put(field.getName(), field);
+    }
 
     try (ReadOnlyTransaction tx = databaseClient.readOnlyTransaction()) {
       try (ResultSet resultSet = tx.executeQuery(schemaStatement)) {
@@ -275,7 +285,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           // If a field is not a primary nor an index, the ordinal_position will be NULL in the index_columns table.
           boolean isIndex = !row.isNull("ordinal_position");
 
-          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type"))));
+          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type")),
+              getCompressor(fieldTypeMap, columnName)));
           if ("PRIMARY_KEY".equalsIgnoreCase(indexType)) {
             primaryKeysOrderMap.put(row.getLong("ordinal_position"), columnName);
           } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {
@@ -294,6 +305,11 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     Set<String> nonPrimaryKeyIndexes = Sets.difference(indexes, new HashSet<>(primaryKeys));
 
     return new StructuredTableSchema(tableId, fields, primaryKeys, nonPrimaryKeyIndexes);
+  }
+
+  private String getCompressor(Map<String, FieldType> fieldTypeMap, String name) {
+    return fieldTypeMap.get(name) == null ? null
+        : fieldTypeMap.get(name).getCompressor();
   }
 
   private String getCreateTableStatement(StructuredTableSpecification spec) {

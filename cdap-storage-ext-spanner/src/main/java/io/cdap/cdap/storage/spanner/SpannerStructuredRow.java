@@ -23,10 +23,14 @@ import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import org.xerial.snappy.Snappy;
 
 /**
  * A {@link StructuredRow} implementation backed by GCP Cloud Spanner {@link Struct} object.
@@ -63,7 +67,20 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public String getString(String fieldName) throws InvalidFieldException {
-    return isNull(fieldName) ? null : struct.getString(fieldName);
+    String value = null;
+    if (!isNull(fieldName)) {
+      value = struct.getString(fieldName);
+      String compressor = schema.getCompressor(fieldName);
+      if (value != null && compressor != null) {
+        if (compressor.equals("snappy")) {
+          value = snappyDecompress(fieldName, value);
+        } else {
+          throw new InvalidFieldException(schema.getTableId(), fieldName,
+              "No implementation found for compressor " + compressor);
+        }
+      }
+    }
+    return value;
   }
 
   @Nullable
@@ -81,7 +98,20 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public byte[] getBytes(String fieldName) throws InvalidFieldException {
-    return isNull(fieldName) ? null : struct.getBytes(fieldName).toByteArray();
+    byte[] value = null;
+    if (!isNull(fieldName)) {
+      value = struct.getBytes(fieldName).toByteArray();
+      String compressor = schema.getCompressor(fieldName);
+      if (value != null && compressor != null) {
+        if (compressor.equals("snappy")) {
+          value = snappyDecompress(fieldName, value);
+        } else {
+          throw new InvalidFieldException(schema.getTableId(), fieldName,
+              "No implementation found for compressor " + compressor);
+        }
+      }
+    }
+    return value;
   }
 
   @Override
@@ -142,6 +172,20 @@ public class SpannerStructuredRow implements StructuredRow {
       // If the field is not part of the Struct object, IAE will be thrown.
       // To maintain compatibility with other implementations, any missing field is considered as null.
       return true;
+    }
+  }
+
+  private String snappyDecompress(String field, String value) throws InvalidFieldException {
+    return new String(snappyDecompress(field, Base64.getDecoder().decode(value)),
+        StandardCharsets.UTF_8);
+  }
+
+  private byte[] snappyDecompress(String field, byte[] value) throws InvalidFieldException {
+    byte[] compressedBytes = Base64.getDecoder().decode(value);
+    try {
+      return Snappy.uncompress(compressedBytes);
+    } catch (IOException e) {
+      throw new InvalidFieldException(schema.getTableId(), field, "snappy", e);
     }
   }
 }

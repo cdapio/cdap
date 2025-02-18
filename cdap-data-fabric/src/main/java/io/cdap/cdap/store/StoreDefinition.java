@@ -23,7 +23,9 @@ import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ public final class StoreDefinition {
   private static final Logger LOG = LoggerFactory.getLogger(StoreDefinition.class);
 
   private static List<StructuredTableSpecification> tableSpecifications;
+  private static Map<StructuredTableId, StructuredTableSpecification> tableSpecificationsMap;
 
   private StoreDefinition() {
     // prevent instantiation
@@ -51,6 +54,13 @@ public final class StoreDefinition {
   public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException {
     // Please use register() in case of multiple table creation calls.
     // Some structured table admin implementations batch these table creation calls for better performance.
+    registerAllTables();
+
+    // Please ensure createRegisteredTables() is not followed by any other register calls.
+    createRegisteredTables(tableAdmin);
+  }
+
+  private static void registerAllTables() {
     ArtifactStore.register();
     OwnerStore.register();
     NamespaceStore.register();
@@ -78,9 +88,6 @@ public final class StoreDefinition {
     AppStateStore.register();
     CredentialProviderStore.register();
     OperationRunsStore.register();
-
-    // Please ensure createRegisteredTables() is not followed by any other register calls.
-    createRegisteredTables(tableAdmin);
   }
 
   /**
@@ -94,6 +101,8 @@ public final class StoreDefinition {
         throw new IllegalStateException(
             "Table already exists with an incompatible schema", e);
       }
+      // If Store definition create() calls are called individually,
+      // we should ensure the list is cleared post table creation.
       tableSpecifications.clear();
     }
   }
@@ -104,8 +113,18 @@ public final class StoreDefinition {
   private static void registerTable(StructuredTableSpecification spec) {
     if (tableSpecifications == null) {
       tableSpecifications = new ArrayList<>();
+      tableSpecificationsMap = new HashMap<>();
     }
     tableSpecifications.add(spec);
+    tableSpecificationsMap.put(spec.getTableId(), spec);
+  }
+
+  public static Map<StructuredTableId, StructuredTableSpecification> getTableSpecificationsMap() {
+    if (tableSpecificationsMap == null) {
+      tableSpecificationsMap = new HashMap<>();
+      registerAllTables();
+    }
+    return tableSpecificationsMap;
   }
 
   /**
@@ -447,7 +466,7 @@ public final class StoreDefinition {
             Fields.stringType(PROGRAM_FIELD),
             Fields.stringType(RUN_FIELD),
             Fields.stringType(KEY_TYPE),
-            Fields.stringType(PROVISIONER_TASK_INFO_FIELD))
+            Fields.compressedStringType(PROVISIONER_TASK_INFO_FIELD, "snappy"))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD,
             PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD, KEY_TYPE)
         .build();
@@ -519,7 +538,7 @@ public final class StoreDefinition {
             .withFields(Fields.stringType(NAMESPACE_FIELD),
                 Fields.stringType(APPLICATION_FIELD),
                 Fields.stringType(VERSION_FIELD),
-                Fields.stringType(APPLICATION_DATA_FIELD),
+                Fields.compressedStringType(APPLICATION_DATA_FIELD, "snappy"),
                 Fields.longType(CREATION_TIME_FIELD),
                 Fields.stringType(AUTHOR_FIELD),
                 Fields.stringType(CHANGE_SUMMARY_FIELD),

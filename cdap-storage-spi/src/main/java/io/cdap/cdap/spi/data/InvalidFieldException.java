@@ -96,6 +96,20 @@ public class InvalidFieldException extends RuntimeException {
   }
 
   /**
+   * Create an exception when a field throws error during decompression
+   *
+   * @param tableId table
+   * @param fieldName field name
+   * @param compressor compressor name
+   */
+  public InvalidFieldException(StructuredTableId tableId, String fieldName, String compressor, Exception e) {
+    super(String.format("Error with compressor %s for field %s in table %s.",
+        compressor, fieldName, tableId.getName()), e);
+    this.tableId = tableId;
+    this.fieldNames = Collections.singleton(fieldName);
+  }
+
+  /**
    * @return the table id
    */
   public StructuredTableId getTableId() {

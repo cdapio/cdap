@@ -46,6 +46,13 @@ public final class Field<T> {
   }
 
   /**
+   * @return the compressor used for the field.
+   */
+  public String getCompressor() {
+    return fieldType.getCompressor();
+  }
+
+  /**
    * @return the field name
    */
   public String getName() {
