@@ -51,7 +51,6 @@ import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServiceManager;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.run.LogSaverServiceManager;
 import io.cdap.cdap.messaging.distributed.MessagingServiceManager;
-import io.cdap.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import io.cdap.cdap.metrics.runtime.MetricsServiceManager;
 import io.cdap.http.HttpHandler;
 import java.util.Map;
@@ -115,9 +114,6 @@ public class MonitorHandlerModule extends AbstractModule {
         .toProvider(new NonHadoopMasterServiceManagerProvider(LogSaverServiceManager.class));
     mapBinder.addBinding(Constants.Service.TRANSACTION)
         .toProvider(new NonHadoopMasterServiceManagerProvider(TransactionServiceManager.class));
-    mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-        .toProvider(
-            new NonHadoopMasterServiceManagerProvider(MetricsProcessorStatusServiceManager.class));
     mapBinder.addBinding(Constants.Service.METRICS)
         .toProvider(new NonHadoopMasterServiceManagerProvider(MetricsServiceManager.class));
     mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
@@ -152,11 +148,10 @@ public class MonitorHandlerModule extends AbstractModule {
         MasterServiceManager.class);
     mapBinder.addBinding(Constants.Service.LOGSAVER).to(LogSaverServiceManager.class);
     mapBinder.addBinding(Constants.Service.TRANSACTION).to(TransactionServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-        .to(MetricsProcessorStatusServiceManager.class);
     mapBinder.addBinding(Constants.Service.METRICS).to(MetricsServiceManager.class);
     mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP).to(AppFabricServiceManager.class);
-    mapBinder.addBinding(Constants.Service.APP_FABRIC_PROCESSOR).to(AppFabricProcessorManager.class);
+    mapBinder.addBinding(Constants.Service.APP_FABRIC_PROCESSOR)
+        .to(AppFabricProcessorManager.class);
     mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
         .to(DatasetExecutorServiceManager.class);
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE).to(MetadataServiceManager.class);

@@ -72,7 +72,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
         Constants.Logging.COMPONENT_NAME,
-        Constants.Service.METRICS_PROCESSOR));
+        Constants.Service.METRICS));
     LOG.info("Starting MetricsProcessor Status Service...");
 
     httpService.start();

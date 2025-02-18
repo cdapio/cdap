@@ -54,12 +54,6 @@ public final class MasterUtils {
             Constants.Metrics.NUM_INSTANCES,
             Constants.Metrics.MAX_INSTANCES))
         .add(new ServiceResourceKeys(cConf,
-            Constants.Service.METRICS_PROCESSOR,
-            Constants.MetricsProcessor.MEMORY_MB,
-            Constants.MetricsProcessor.NUM_CORES,
-            Constants.MetricsProcessor.NUM_INSTANCES,
-            Constants.MetricsProcessor.MAX_INSTANCES))
-        .add(new ServiceResourceKeys(cConf,
             Constants.Service.LOGSAVER,
             Constants.LogSaver.MEMORY_MB,
             Constants.LogSaver.NUM_CORES,

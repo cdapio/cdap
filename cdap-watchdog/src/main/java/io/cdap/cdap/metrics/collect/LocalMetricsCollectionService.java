@@ -42,7 +42,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   private static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
-          Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
+          Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS);
 
   private final CConfiguration cConf;
   private final MetricStore metricStore;

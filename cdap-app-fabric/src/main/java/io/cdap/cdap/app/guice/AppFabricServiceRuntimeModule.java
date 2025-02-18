@@ -320,7 +320,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
               // for PingHandler
-              servicesNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
               servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
               servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
               servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
@@ -331,7 +330,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
               // for PingHandler
-              handlerHookNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
