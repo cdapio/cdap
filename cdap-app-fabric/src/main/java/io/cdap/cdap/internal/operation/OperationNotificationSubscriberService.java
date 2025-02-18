@@ -76,19 +76,15 @@ public class OperationNotificationSubscriberService extends AbstractIdleService 
     RetryStrategy retryStrategy =
         RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
 
-    TransactionRunners.run(
-        transactionRunner, context -> {
-          Retries.runWithRetries(
-              () -> {
-                processStartingOperations(context);
-                processRunningOperations(context);
-                processStoppingOperations(context);
-              },
-              retryStrategy,
-              e -> true
-          );
-        }
-    );
+    Retries.runWithRetries(() ->
+        TransactionRunners.run(transactionRunner, context -> {
+          processStartingOperations(context);
+          processRunningOperations(context);
+          processStoppingOperations(context);
+        }),
+        retryStrategy,
+        e -> true);
+
 
     List<Service> children = new ArrayList<>();
     String topicPrefix = cConf.get(Constants.Operation.STATUS_EVENT_TOPIC);
