@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.store;
 
+import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -2719,7 +2721,7 @@ public class AppMetadataStore {
       throws IOException {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
-        Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized, "snappy"));
+        Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized, SNAPPY_COMPRESSOR));
     if (change != null) {
       fields.add(
           Fields.stringField(StoreDefinition.AppMetadataStore.AUTHOR_FIELD, change.getAuthor()));
@@ -2754,7 +2756,7 @@ public class AppMetadataStore {
     List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
     fields.add(
         Fields.compressedStringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD,
-            serialized, "snappy"));
+            serialized, SNAPPY_COMPRESSOR));
     getApplicationSpecificationTable().upsert(fields);
   }
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.storage.spanner;
 
+import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
+
 import com.google.cloud.ByteArray;
 import com.google.cloud.spanner.Key;
 import com.google.cloud.spanner.KeyRange;
@@ -664,7 +666,7 @@ public class SpannerStructuredTable implements StructuredTable {
   private String getStringValue(Object value, String compressor) {
     String val = (String) value;
     if (compressor != null) {
-      if (compressor.equals("snappy")) {
+      if (compressor.equals(SNAPPY_COMPRESSOR)) {
         val = Base64.getEncoder()
             .encodeToString(snappyCompress(val.getBytes(StandardCharsets.UTF_8)));
       } else {
@@ -677,7 +679,7 @@ public class SpannerStructuredTable implements StructuredTable {
   private ByteArray getBytesValue(Object value, String compressor) {
     byte[] val = (byte[]) value;
     if (compressor != null) {
-      if (compressor.equals("snappy")) {
+      if (compressor.equals(SNAPPY_COMPRESSOR)) {
         val = snappyCompress(val);
       } else {
         throw new IllegalArgumentException("No implementation found for compressor " + compressor);

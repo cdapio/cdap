@@ -52,6 +52,8 @@ public final class FieldType {
     }
   }
 
+  public static final String SNAPPY_COMPRESSOR = "snappy";
+
   /**
    * Valid field types that can be part of a primary key.
    */

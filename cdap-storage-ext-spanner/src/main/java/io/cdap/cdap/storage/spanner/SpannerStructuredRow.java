@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.storage.spanner;
 
+import static io.cdap.cdap.spi.data.table.field.FieldType.SNAPPY_COMPRESSOR;
+
 import com.google.cloud.spanner.Struct;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -75,7 +77,7 @@ public class SpannerStructuredRow implements StructuredRow {
       value = struct.getString(fieldName);
       String compressor = schema.getCompressor(fieldName);
       if (value != null && compressor != null) {
-        if (compressor.equals("snappy")) {
+        if (compressor.equals(SNAPPY_COMPRESSOR)) {
           value = snappyDecompress(fieldName, value);
         } else {
           throw new InvalidFieldException(schema.getTableId(), fieldName,
@@ -106,7 +108,7 @@ public class SpannerStructuredRow implements StructuredRow {
       value = struct.getBytes(fieldName).toByteArray();
       String compressor = schema.getCompressor(fieldName);
       if (value != null && compressor != null) {
-        if (compressor.equals("snappy")) {
+        if (compressor.equals(SNAPPY_COMPRESSOR)) {
           value = snappyDecompress(fieldName, value);
         } else {
           throw new InvalidFieldException(schema.getTableId(), fieldName,
@@ -187,7 +189,7 @@ public class SpannerStructuredRow implements StructuredRow {
     try {
       return Snappy.uncompress(value);
     } catch (IOException e) {
-      throw new InvalidFieldException(schema.getTableId(), field, "snappy", e);
+      throw new InvalidFieldException(schema.getTableId(), field, SNAPPY_COMPRESSOR, e);
     }
   }
 }
