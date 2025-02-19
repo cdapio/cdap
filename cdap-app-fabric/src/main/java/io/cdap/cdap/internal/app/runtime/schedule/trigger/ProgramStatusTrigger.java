@@ -23,12 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
-import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.schedule.TriggerInfo;
-import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.common.service.Retries;
-import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -37,15 +33,12 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been
@@ -54,12 +47,7 @@ import org.slf4j.LoggerFactory;
 public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements
     SatisfiableTrigger {
 
-  private static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
-
   private static final Gson GSON = new Gson();
-  private static final Logger LOG =
-      LoggerFactory.getLogger(
-          io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger.class);
 
   public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
     super(programId, programStatuses);
@@ -71,55 +59,13 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
   }
 
   @Override
-  public boolean isSatisfied(ProgramSchedule schedule, NotificationContext notificationContext) {
-
-    return getTriggerSatisfiedResult(notificationContext.getNotifications(), false,
-        runInfo -> {
-          if (!io.cdap.cdap.proto.ProgramType.WORKFLOW.equals(
-              runInfo.getProgramRunId().getType())) {
-            LOG.info(
-                "Program {} is of type '{}' and not 'Workflow', skipping workflow token validation",
-                runInfo.getProgramRunId(), runInfo.getProgramRunId().getType());
-            return true;
-          }
-          RetryStrategy retryStrategy = notificationContext.getRetryStrategy();
-          try {
-            // Retries are added because there may be delays while the workflow token is published.
-            return Retries.callWithRetries(
-                () -> fetchWorkflowToken(runInfo.getProgramRunId(), notificationContext),
-                retryStrategy);
-          } catch (RetryableException e) {
-            LOG.error("Retries exhausted for program runId {} with exception: ",
-                runInfo.getProgramRunId(), e);
-          }
-          return false;
-        });
-  }
-  /**
-   * Exception thrown when the workflow token is not found.
-   */
-  public static class WorkflowTokenNotFoundException extends RetryableException {
-
-  }
-
-  private boolean fetchWorkflowToken(ProgramRunId programRunId, NotificationContext context) {
-    try {
-      WorkflowToken workflowToken = context.getWorkflowToken(
-          programRunId);
-      if (workflowToken != null
-          && workflowToken.get(RESOLVED_PLUGIN_PROPERTIES_MAP) != null) {
-        // Return true only if workflow token has been recorded and resolved properties have
-        // been added.
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
+    return getTriggerSatisfiedResult(notifications, false, new Function<ProgramRunInfo, Boolean>() {
+      @Override
+      public Boolean apply(ProgramRunInfo input) {
         return true;
       }
-      LOG.warn("Retrying invalid workflow token \"{}\" for program runId {}", workflowToken,
-          programRunId);
-    } catch (IOException e) {
-      LOG.warn("Retrying read of workflow token failed for program runId {} with error:",
-          programRunId,
-          e);
-    }
-    throw new WorkflowTokenNotFoundException();
+    });
   }
 
   @Override

@@ -29,13 +29,10 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import io.cdap.cdap.internal.app.runtime.schedule.trigger.NotificationContext;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
@@ -60,8 +57,8 @@ import javax.annotation.Nullable;
 /**
  * Dataset that stores {@link Job}s, which correspond to schedules that have been triggered, but not
  * yet executed. The queue can have only one {@link Job.State#PENDING_TRIGGER} job per schedule. It
- * can have other jobs for the same schedule in various other states - marked for deletion,
- * {@link Job.State#PENDING_LAUNCH}, etc. <p/>
+ * can have other jobs for the same schedule in various other states - marked for deletion, {@link
+ * Job.State#PENDING_LAUNCH}, etc. <p/>
  *
  * The queue is designed to avoid conflicts when different services use it concurrently. For
  * instance, when notification processors are adding notifications to a job, the job can be
@@ -76,8 +73,7 @@ import javax.annotation.Nullable;
  * deletion, then the generation id is incremented by one and a new job is created, again creating
  * conflicts on concurrent creation of jobs. <p/>
  *
- * Row Key is in the following format for a job: <p/>
- * &lt;partition_id>&lt;scheduleId>&lt;generationI>&lt;rowType
+ * Row Key is in the following format for a job: <p/> &lt;partition_id>&lt;scheduleId>&lt;generationI>&lt;rowType
  * <ul>
  *   <li>The &lt;partition_id> is a hash based upon the scheduleId</li>
  *   <li>The &lt;generationId> is used to distinguish jobs for the same schedule in the queue</li>
@@ -97,20 +93,18 @@ public class JobQueueTable implements JobQueue {
   private final StructuredTable jobQueueTable;
   private final AppMetadataStore appMetadataStore;
   private final int numPartitions;
-  private final RetryStrategy notificationRetryStrategy;
 
   JobQueueTable(StructuredTable jobQueueTable, AppMetadataStore appMetadataStore,
-      CConfiguration cConf) {
+      int numPartitions) {
     this.jobQueueTable = jobQueueTable;
     this.appMetadataStore = appMetadataStore;
-    this.numPartitions = cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS);
-    this.notificationRetryStrategy = RetryStrategies.fromConfiguration(cConf,
-        "system.notification.");
+    this.numPartitions = numPartitions;
   }
 
   public static JobQueueTable getJobQueue(StructuredTableContext context, CConfiguration cConf) {
     StructuredTable jobQueueTable = context.getTable(StoreDefinition.JobQueueStore.JOB_QUEUE_TABLE);
-    return new JobQueueTable(jobQueueTable, AppMetadataStore.create(context), cConf);
+    return new JobQueueTable(jobQueueTable, AppMetadataStore.create(context),
+        cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS));
   }
 
   @Override
@@ -215,8 +209,7 @@ public class JobQueueTable implements JobQueue {
   }
 
   private boolean isTriggerSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
-    return ((SatisfiableTrigger) schedule.getTrigger()).isSatisfied(schedule,
-        new NotificationContext(notifications, appMetadataStore, notificationRetryStrategy));
+    return ((SatisfiableTrigger) schedule.getTrigger()).isSatisfied(schedule, notifications);
   }
 
   @Override
