@@ -35,11 +35,10 @@ public interface SatisfiableTrigger extends Trigger {
    * it will remain satisfied no matter what new notifications it receives.
    *
    * @param schedule the schedule that this trigger belongs to
-   * @param notificationContext that provides necessary information related to notifications
-   *     received.
+   * @param notifications the notifications used to check whether this trigger is satisfied
    * @return {@code true} if this trigger is satisfied, {@code false} otherwise
    */
-  boolean isSatisfied(ProgramSchedule schedule, NotificationContext notificationContext);
+  boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications);
 
   /**
    * Get all trigger keys which will be used to index the schedule containing this trigger, so that
