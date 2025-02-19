@@ -45,6 +45,10 @@ public final class Field<T> {
     return fieldType.getType();
   }
 
+  public boolean isCompressed() {
+    return fieldType.isCompressed();
+  }
+
   /**
    * @return the field name
    */

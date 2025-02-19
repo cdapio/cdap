@@ -23,16 +23,23 @@ import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xerial.snappy.Snappy;
 
 /**
  * A {@link StructuredRow} implementation backed by GCP Cloud Spanner {@link Struct} object.
  */
 public class SpannerStructuredRow implements StructuredRow {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerStructuredRow.class);
   private final StructuredTableSchema schema;
   private final Struct struct;
   private volatile Collection<Field<?>> primaryKeys;
@@ -63,7 +70,14 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public String getString(String fieldName) throws InvalidFieldException {
-    return isNull(fieldName) ? null : struct.getString(fieldName);
+    String value = null;
+    if (!isNull(fieldName)) {
+      value = struct.getString(fieldName);
+      if (value != null && schema.isCompressed(fieldName)) {
+        value = snappyDecompress(fieldName, value);
+      }
+    }
+    return value;
   }
 
   @Nullable
@@ -81,7 +95,14 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public byte[] getBytes(String fieldName) throws InvalidFieldException {
-    return isNull(fieldName) ? null : struct.getBytes(fieldName).toByteArray();
+    byte[] value = null;
+    if (!isNull(fieldName)) {
+      value = struct.getBytes(fieldName).toByteArray();
+      if (value != null && schema.isCompressed(fieldName)) {
+        value = snappyDecompress(value);
+      }
+    }
+    return value;
   }
 
   @Override
@@ -142,6 +163,19 @@ public class SpannerStructuredRow implements StructuredRow {
       // If the field is not part of the Struct object, IAE will be thrown.
       // To maintain compatibility with other implementations, any missing field is considered as null.
       return true;
+    }
+  }
+
+  private String snappyDecompress(String field, String value) throws InvalidFieldException {
+    return new String(snappyDecompress(Base64.getDecoder().decode(value)),
+        StandardCharsets.UTF_8);
+  }
+
+  private byte[] snappyDecompress(byte[] value) throws InvalidFieldException {
+    try {
+      return Snappy.uncompress(value);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

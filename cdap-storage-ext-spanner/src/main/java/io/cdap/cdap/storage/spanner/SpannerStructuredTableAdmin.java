@@ -65,6 +65,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   private final DatabaseAdminClient adminClient;
   private final DatabaseClient databaseClient;
   private final LoadingCache<StructuredTableId, StructuredTableSchema> schemaCache;
+  private final Set<String> compressedColumns;
 
   static String getIndexName(StructuredTableId tableId, String column) {
     return String.format("%s_%s_idx", tableId.getName(), column);
@@ -76,7 +77,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
    * @param spanner    the gcp Spanner service.
    * @param databaseId the ID of the Spanner instance database.
    */
-  public SpannerStructuredTableAdmin(Spanner spanner, DatabaseId databaseId) {
+  public SpannerStructuredTableAdmin(Spanner spanner, DatabaseId databaseId,
+      Set<String> compressedColumns) {
     this.databaseId = databaseId;
     this.adminClient = spanner.getDatabaseAdminClient();
     this.databaseClient = spanner.getDatabaseClient(databaseId);
@@ -87,6 +89,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
             return loadSchema(tableId);
           }
         });
+    this.compressedColumns = compressedColumns;
   }
 
   @Override
@@ -275,7 +278,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           // If a field is not a primary nor an index, the ordinal_position will be NULL in the index_columns table.
           boolean isIndex = !row.isNull("ordinal_position");
 
-          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type"))));
+          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type")), compressedColumns.contains(columnName)));
           if ("PRIMARY_KEY".equalsIgnoreCase(indexType)) {
             primaryKeysOrderMap.put(row.getLong("ordinal_position"), columnName);
           } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {

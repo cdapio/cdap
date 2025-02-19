@@ -38,7 +38,9 @@ import io.cdap.cdap.spi.data.table.field.FieldValidator;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,6 +55,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xerial.snappy.Snappy;
 
 /**
  * A {@link StructuredTable} implementation backed by GCP Cloud Spanner.
@@ -636,6 +639,7 @@ public class SpannerStructuredTable implements StructuredTable {
    */
   private Value getValue(Field<?> field) {
     Object value = field.getValue();
+    boolean isCompressed = schema.isCompressed(field.getName());
 
     switch (field.getFieldType()) {
       case INTEGER:
@@ -647,15 +651,40 @@ public class SpannerStructuredTable implements StructuredTable {
       case DOUBLE:
         return Value.float64((Double) value);
       case STRING:
-        return Value.string((String) value);
+        return Value.string(getStringValue(value, isCompressed));
       case BYTES:
-        return Value.bytes(value == null ? null : (ByteArray.copyFrom((byte[]) value)));
+        return Value.bytes(value == null ? null : getBytesValue(value, isCompressed));
       case BOOLEAN:
         return Value.bool((Boolean) value);
     }
 
     // This shouldn't happen
     throw new IllegalArgumentException("Unsupported field type " + field.getFieldType());
+  }
+
+  private String getStringValue(Object value, boolean isCompressed) {
+    String val = (String) value;
+    if (isCompressed) {
+      val = Base64.getEncoder()
+          .encodeToString(snappyCompress(val.getBytes(StandardCharsets.UTF_8)));
+    }
+    return val;
+  }
+
+  private ByteArray getBytesValue(Object value, boolean isCompressed) {
+    byte[] val = (byte[]) value;
+    if (isCompressed) {
+        val = snappyCompress(val);
+    }
+    return ByteArray.copyFrom(val);
+  }
+
+  private byte[] snappyCompress(byte[] value) {
+    try {
+      return Snappy.compress(value);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

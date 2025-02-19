@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public class StructuredTableSchema {
 
   private final StructuredTableId tableId;
-  private final Map<String, FieldType.Type> fields;
+  private final Map<String, FieldType> fields;
   // primary keys have to be ordered as defined in the table schema
   private final List<String> primaryKeys;
   private final Set<String> indexes;
@@ -53,9 +53,8 @@ public class StructuredTableSchema {
       List<String> primaryKeys,
       Collection<String> indexes) {
     this.tableId = tableId;
-    this.fields =
-        Collections.unmodifiableMap(
-            fields.stream().collect(Collectors.toMap(FieldType::getName, FieldType::getType)));
+    this.fields = Collections.unmodifiableMap(fields.stream()
+        .collect(Collectors.toMap(FieldType::getName, field -> field)));
     this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
@@ -110,7 +109,11 @@ public class StructuredTableSchema {
    */
   @Nullable
   public FieldType.Type getType(String fieldName) {
-    return fields.get(fieldName);
+    return fields.get(fieldName) == null ? null : fields.get(fieldName).getType();
+  }
+
+  public boolean isCompressed(String fieldName) {
+    return fields.get(fieldName) != null && fields.get(fieldName).isCompressed();
   }
 
   public Set<String> getFieldNames() {

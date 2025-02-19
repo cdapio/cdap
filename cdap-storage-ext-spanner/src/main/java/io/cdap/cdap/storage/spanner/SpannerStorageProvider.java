@@ -27,7 +27,9 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link StorageProvider} implementation that uses Google Cloud Spanner as the storage engine.
@@ -89,7 +91,9 @@ public class SpannerStorageProvider implements StorageProvider {
         database);
 
     this.spanner = options.getService();
-    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId);
+    // TODO: Derive based on cConf.
+    Set<String> compressedColumns = new HashSet<>();
+    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, compressedColumns);
     this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
   }
 

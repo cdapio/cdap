@@ -67,6 +67,7 @@ public final class FieldType {
           Type.STRING, Type.BOOLEAN));
   private final String name;
   private final Type type;
+  private final boolean isCompressed;
 
   /**
    * Construct a field type with the given field name and type.
@@ -75,8 +76,17 @@ public final class FieldType {
    * @param type field type
    */
   public FieldType(String name, Type type) {
+    this(name, type, false);
+  }
+
+  public FieldType(String name, Type type, Boolean isCompressed) {
     this.name = name;
     this.type = type;
+    this.isCompressed = isCompressed;
+  }
+
+  public boolean isCompressed() {
+    return isCompressed;
   }
 
   /**
