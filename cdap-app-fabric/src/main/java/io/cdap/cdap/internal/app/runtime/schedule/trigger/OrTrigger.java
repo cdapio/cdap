@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.schedule.trigger;
 
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ProgramId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,9 +40,9 @@ public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
   }
 
   @Override
-  public boolean isSatisfied(ProgramSchedule schedule, NotificationContext notificationContext) {
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
     for (SatisfiableTrigger trigger : getTriggers()) {
-      if (trigger.isSatisfied(schedule, notificationContext)) {
+      if (trigger.isSatisfied(schedule, notifications)) {
         return true;
       }
     }
