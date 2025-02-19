@@ -95,7 +95,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
     // Query the appended logs, we can not query logs for a given run because run record does not exist
     String url = "/v3/namespaces/default/apps/app1/workflows/myworkflow/logs?format=json";
     Tasks.waitFor(true, () -> {
-      HttpResponse response = doGet(url, client, Constants.Service.LOG_QUERY);
+      HttpResponse response = doGet(url, client, Constants.Service.LOGSAVER);
       if (response.getResponseCode() != 200) {
         LOG.warn("testLogsService get logs response non 200 response code: {} {} {}",
                  response.getResponseCode(), response.getResponseMessage(), response.getResponseBodyAsString());

@@ -1402,6 +1402,7 @@ public final class Constants {
 
     public static final String LOG_SAVER_HANDLER = "log.saver.handler";
     public static final String ADDRESS = "log.saver.status.bind.address";
+    public static final String PORT = "log.saver.status.bind.port";
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
 

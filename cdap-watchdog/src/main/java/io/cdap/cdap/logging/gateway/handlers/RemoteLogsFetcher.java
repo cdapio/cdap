@@ -49,7 +49,7 @@ public class RemoteLogsFetcher implements LogsFetcher {
   @Inject
   public RemoteLogsFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient =
-        remoteClientFactory.createRemoteClient(Constants.Service.LOG_QUERY,
+        remoteClientFactory.createRemoteClient(Constants.Service.LOGSAVER,
             new DefaultHttpRequestConfig(false),
             Gateway.API_VERSION_3);
   }

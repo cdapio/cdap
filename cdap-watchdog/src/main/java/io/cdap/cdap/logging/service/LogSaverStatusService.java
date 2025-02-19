@@ -55,7 +55,8 @@ public class LogSaverStatusService extends AbstractIdleService {
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.LOGSAVER)
         .setHttpHandlers(handlers)
-        .setHost(cConf.get(Constants.LogSaver.ADDRESS));
+        .setHost(cConf.get(Constants.LogSaver.ADDRESS))
+        .setPort(cConf.getInt(Constants.LogSaver.PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

@@ -127,8 +127,8 @@ public class LogBufferService extends AbstractIdleService {
             Constants.Service.LOGSAVER)
         .setHttpHandlers(handlers)
         .setExceptionHandler(new HttpExceptionHandler())
-        .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
-        .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT));
+        .setHost(cConf.get(Constants.LogSaver.ADDRESS))
+        .setPort(cConf.getInt(Constants.LogSaver.PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
