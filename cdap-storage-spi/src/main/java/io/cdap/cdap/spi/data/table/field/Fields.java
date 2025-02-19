@@ -127,7 +127,8 @@ public final class Fields {
    * @param compressor compressor used
    * @return a field with type string
    */
-  public static Field<String> compressedStringField(String name, @Nullable String value, FieldType.Compressor compressor) {
+  public static Field<String> compressedStringField(String name, @Nullable String value,
+      FieldType.Compressor compressor) {
     return new Field<>(new FieldType(name, FieldType.Type.STRING, compressor), value);
   }
 
