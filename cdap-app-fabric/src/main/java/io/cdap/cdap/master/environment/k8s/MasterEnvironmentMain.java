@@ -107,7 +107,23 @@ public class MasterEnvironmentMain {
 
       if (options.getExtraConfPath() != null) {
         // Copy config files from per-run configmap to the working directory
-        FileUtils.copyDirectory(new File(options.getExtraConfPath()), new File("."));
+        File srcFile = new File(options.getExtraConfPath());
+        LOG.info("before srcFile canRead:{}, exists: {}, getAbsolutePath: {}, isDirectory: {}, lastModified: {}",
+            srcFile.canRead(), srcFile.exists(), srcFile.getAbsolutePath(), srcFile.isDirectory(),
+            srcFile.lastModified());
+        File destFile = new File(".");
+        LOG.info("before destFile canWrite:{}, exists: {}, getAbsolutePath: {}, isDirectory: {}, lastModified: {}",
+            destFile.canWrite(), destFile.exists(), destFile.getAbsolutePath(), destFile.isDirectory(),
+            destFile.lastModified());
+        FileUtils.copyDirectory(new File(options.getExtraConfPath()), new File("."), false);
+        srcFile = new File(options.getExtraConfPath());
+        LOG.info("after srcFile canRead:{}, exists: {}, getAbsolutePath: {}, isDirectory: {}, lastModified: {}",
+            srcFile.canRead(), srcFile.exists(), srcFile.getAbsolutePath(), srcFile.isDirectory(),
+            srcFile.lastModified());
+        destFile = new File(".");
+        LOG.info("after destFile canWrite:{}, exists: {}, getAbsolutePath: {}, isDirectory: {}, lastModified: {}",
+            destFile.canWrite(), destFile.exists(), destFile.getAbsolutePath(), destFile.isDirectory(),
+            destFile.lastModified());
       }
       CConfiguration cConf = CConfiguration.create();
       File cConfFile = new File("cConf.xml");
