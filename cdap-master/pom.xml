@@ -943,6 +943,7 @@
     <profile>
       <id>k8s</id>
       <properties>
+        <commons-io.version>2.12.0</commons-io.version>
         <stage.hadoop.lib.dir>${stage.opt.dir}/lib/hadoop</stage.hadoop.lib.dir>
         <stage.master.environments.ext.dir>${stage.opt.dir}/ext/environments</stage.master.environments.ext.dir>
       </properties>
@@ -963,6 +964,11 @@
         <dependency>
           <groupId>org.apache.logging.log4j</groupId>
           <artifactId>log4j-to-slf4j</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>commons-io</groupId>
+          <artifactId>commons-io</artifactId>
+          <version>${commons-io.version}</version>
         </dependency>
       </dependencies>
 
