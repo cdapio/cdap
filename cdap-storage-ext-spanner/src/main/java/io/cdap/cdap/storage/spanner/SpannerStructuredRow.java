@@ -16,13 +16,18 @@
 
 package io.cdap.cdap.storage.spanner;
 
+import com.google.api.client.util.Throwables;
 import com.google.cloud.spanner.Struct;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
-import io.cdap.cdap.spi.data.table.StructuredTableSchema;
+import io.cdap.cdap.spi.data.compression.Compressor;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.storage.spanner.compression.CompressionConfig;
+import io.cdap.cdap.storage.spanner.compression.CompressorFactory;
+import io.cdap.cdap.storage.spanner.compression.CompressorType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
@@ -33,11 +38,11 @@ import javax.annotation.Nullable;
  */
 public class SpannerStructuredRow implements StructuredRow {
 
-  private final StructuredTableSchema schema;
+  private final SpannerStructuredTableSchema schema;
   private final Struct struct;
   private volatile Collection<Field<?>> primaryKeys;
 
-  public SpannerStructuredRow(StructuredTableSchema schema, Struct struct) {
+  public SpannerStructuredRow(SpannerStructuredTableSchema schema, Struct struct) {
     this.schema = schema;
     this.struct = struct;
   }
@@ -63,7 +68,23 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public String getString(String fieldName) throws InvalidFieldException {
-    return isNull(fieldName) ? null : struct.getString(fieldName);
+    if (isNull(fieldName)) {
+      return null;
+    }
+
+    String value = struct.getString(fieldName);
+    CompressorType compressorType = getCompressorType(fieldName);
+    if (value == null || compressorType == null) {
+      return value;
+    }
+
+    Compressor compressor = CompressorFactory.getCompressor(compressorType);
+    try {
+      value = compressor.decompress(value);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    return value;
   }
 
   @Nullable
@@ -81,7 +102,23 @@ public class SpannerStructuredRow implements StructuredRow {
   @Nullable
   @Override
   public byte[] getBytes(String fieldName) throws InvalidFieldException {
-    return isNull(fieldName) ? null : struct.getBytes(fieldName).toByteArray();
+    if (isNull(fieldName)) {
+      return null;
+    }
+
+    byte[] value = struct.getBytes(fieldName).toByteArray();
+    CompressorType compressorType = getCompressorType(fieldName);
+    if (value == null || compressorType == null) {
+      return value;
+    }
+
+    try {
+      Compressor compressor = CompressorFactory.getCompressor(compressorType);
+      value = compressor.decompress(value);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    return value;
   }
 
   @Override
@@ -126,6 +163,20 @@ public class SpannerStructuredRow implements StructuredRow {
       this.primaryKeys = primaryKeys;
       return primaryKeys;
     }
+  }
+
+  /**
+   * Returns compression status of the field stored in db, if the field is compression enabled.
+   */
+  private CompressorType getCompressorType(String fieldName) {
+    // First check if the field is compression enabled based on cConf.
+    if (schema.getCompressorType(fieldName) == null) {
+      return null;
+    }
+
+    // Use the compression status read from the db.
+    String compressorType = getString(fieldName + CompressionConfig.COMPRESSED_COLUMN_SUFFIX);
+    return compressorType == null ? null : CompressorType.fromString(compressorType);
   }
 
   @Override
