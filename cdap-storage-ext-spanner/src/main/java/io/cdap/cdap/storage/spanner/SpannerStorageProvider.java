@@ -40,7 +40,7 @@ import java.util.Map;
  *   <li>data.storage.properties.gcp-spanner.database: &lt;Spanner database name&gt;</li>
  * </ul>>
  *
- * Optional configuration
+ * <p>Optional configuration
  * <ul>
  *   <li>data.storage.properties.gcp-spanner.credentials.path: &lt;GCP service account file&gt;</li>
  * </ul>
@@ -51,6 +51,7 @@ public class SpannerStorageProvider implements StorageProvider {
   static final String INSTANCE = "instance";
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
+  public static final String COMPRESSION_CONFIG = "compression.config";
 
   private Spanner spanner;
   private SpannerStructuredTableAdmin admin;
@@ -89,7 +90,7 @@ public class SpannerStorageProvider implements StorageProvider {
         database);
 
     this.spanner = options.getService();
-    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId);
+    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
     this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
   }
 
