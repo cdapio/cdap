@@ -27,6 +27,7 @@ import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +54,7 @@ public class SpannerStorageProvider implements StorageProvider {
   static final String INSTANCE = "instance";
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
+  static final String COMPRESS_COLUMNS = "compress.columns";
 
   private Spanner spanner;
   private SpannerStructuredTableAdmin admin;
@@ -90,11 +92,37 @@ public class SpannerStorageProvider implements StorageProvider {
     DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
         database);
 
+    Map<String, Set<String>> compressedColumns = getCompressedColumns(conf.get(COMPRESS_COLUMNS));
+
     this.spanner = options.getService();
-    // TODO: Derive based on cConf.
-    Set<String> compressedColumns = new HashSet<>();
     this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, compressedColumns);
     this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+  }
+
+  private Map<String, Set<String>> getCompressedColumns(String compressColumns) {
+    Map<String, Set<String>> tableColumnsMap = new HashMap<>();
+
+    if (compressColumns == null || compressColumns.isEmpty()) {
+      return tableColumnsMap;
+    }
+
+    String[] pairs = compressColumns.split(",");
+    for (String pair : pairs) {
+      String[] parts = pair.split("\\.");
+      if (parts.length == 2) {
+        String tableName = parts[0];
+        String columnName = parts[1];
+
+        tableColumnsMap
+            .computeIfAbsent(tableName, k -> new HashSet<>())
+            .add(columnName);
+      } else {
+        throw new IllegalArgumentException(
+            "Invalid format for Spanner property " + COMPRESS_COLUMNS);
+      }
+    }
+
+    return tableColumnsMap;
   }
 
   @Override

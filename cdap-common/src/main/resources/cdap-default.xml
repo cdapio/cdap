@@ -1278,6 +1278,16 @@
   </property>
 
   <property>
+    <name>data.storage.properties.gcp-spanner.compress.columns</name>
+    <value>application_specs.application_data,provisioner_data.provisioner_task_info
+    </value>
+    <description>
+      Represents table_name.column_name which possibly can cross spanner cell limit and will need
+      compression to reduce size.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.enabled</name>
     <value>true</value>
     <description>

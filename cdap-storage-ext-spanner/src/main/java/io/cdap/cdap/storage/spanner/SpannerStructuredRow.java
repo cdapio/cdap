@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +43,13 @@ public class SpannerStructuredRow implements StructuredRow {
   private static final Logger LOG = LoggerFactory.getLogger(SpannerStructuredRow.class);
   private final StructuredTableSchema schema;
   private final Struct struct;
+  private final Set<String> compressedColumns;
   private volatile Collection<Field<?>> primaryKeys;
 
-  public SpannerStructuredRow(StructuredTableSchema schema, Struct struct) {
+  public SpannerStructuredRow(StructuredTableSchema schema, Struct struct, Set<String> compressedColumns) {
     this.schema = schema;
     this.struct = struct;
+    this.compressedColumns = compressedColumns;
   }
 
   @Nullable
@@ -73,7 +76,7 @@ public class SpannerStructuredRow implements StructuredRow {
     String value = null;
     if (!isNull(fieldName)) {
       value = struct.getString(fieldName);
-      if (value != null && schema.isCompressed(fieldName)) {
+      if (value != null && compressedColumns.contains(fieldName)) {
         value = snappyDecompress(fieldName, value);
       }
     }
@@ -167,6 +170,10 @@ public class SpannerStructuredRow implements StructuredRow {
   }
 
   private String snappyDecompress(String field, String value) throws InvalidFieldException {
+    String compressType = struct.getString(field + "_compress_type");
+    if (compressType.isEmpty()) {
+      return value;
+    }
     return new String(snappyDecompress(Base64.getDecoder().decode(value)),
         StandardCharsets.UTF_8);
   }

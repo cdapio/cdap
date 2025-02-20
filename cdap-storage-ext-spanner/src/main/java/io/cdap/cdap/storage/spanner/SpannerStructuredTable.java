@@ -67,12 +67,17 @@ public class SpannerStructuredTable implements StructuredTable {
   private final TransactionContext transactionContext;
   private final StructuredTableSchema schema;
   private final FieldValidator fieldValidator;
+  private final Set<String> compressColumns;
+  private static final int STRING_LIMIT = 11;
+  private static final int BYTES_LIMIT = 9 * 1024 * 1024;
+  private static final String COMPRESSOR_TYPE = "SNAPPY";
 
   public SpannerStructuredTable(TransactionContext transactionContext,
-      StructuredTableSchema schema) {
+      StructuredTableSchema schema, Set<String> compressColumns) {
     this.transactionContext = transactionContext;
     this.schema = schema;
     this.fieldValidator = new FieldValidator(schema);
+    this.compressColumns = compressColumns;
   }
 
   @Override
@@ -113,6 +118,10 @@ public class SpannerStructuredTable implements StructuredTable {
         primaryKeyFields.add(field);
       } else {
         updateFields.add(field);
+        if (shouldCompressField(field)) {
+          Field<String> compressedField = Fields.stringField(field.getName()+"_compress_type", COMPRESSOR_TYPE);
+          updateFields.add(compressedField);
+        }
       }
       fieldNames.add(field.getName());
     }
@@ -167,7 +176,7 @@ public class SpannerStructuredTable implements StructuredTable {
 
     Struct row = transactionContext.readRow(schema.getTableId().getName(), createKey(keys),
         queryColumns);
-    return Optional.ofNullable(row).map(r -> new SpannerStructuredRow(schema, r));
+    return Optional.ofNullable(row).map(r -> new SpannerStructuredRow(schema, r, compressColumns));
   }
 
   @Override
@@ -611,6 +620,10 @@ public class SpannerStructuredTable implements StructuredTable {
     for (Field<?> field : fields) {
       fieldValidator.validateField(field);
       insertFields.add(field);
+      if (shouldCompressField(field)) {
+        Field<String> compressedField = Fields.stringField(field.getName()+"_compress_type", COMPRESSOR_TYPE);
+        insertFields.add(compressedField);
+      }
     }
 
     String sql = "INSERT INTO " + escapeName(schema.getTableId().getName()) + " ("
@@ -634,6 +647,28 @@ public class SpannerStructuredTable implements StructuredTable {
     return Key.of(fields.stream().map(Field::getValue).toArray());
   }
 
+  private boolean shouldCompressField(Field field) {
+    if (!compressColumns.contains(field.getName())) {
+      return false;
+    }
+
+    Object value = field.getValue();
+    if (value == null) {
+      return false;
+    }
+
+    switch (field.getFieldType()) {
+      case STRING:
+        String stringValue = (String) value;
+        return stringValue.length() > STRING_LIMIT;
+      case BYTES:
+        byte[] bytesValue = (byte[]) value;
+        return bytesValue.length > BYTES_LIMIT;
+      default:
+        return false;
+    }
+  }
+
   /**
    * Converts a {@link Field} into spanner {@link Value}.
    */
@@ -651,9 +686,9 @@ public class SpannerStructuredTable implements StructuredTable {
       case DOUBLE:
         return Value.float64((Double) value);
       case STRING:
-        return Value.string(getStringValue(value, isCompressed));
+        return Value.string(getStringValue(field));
       case BYTES:
-        return Value.bytes(value == null ? null : getBytesValue(value, isCompressed));
+        return Value.bytes(value == null ? null : getBytesValue(field));
       case BOOLEAN:
         return Value.bool((Boolean) value);
     }
@@ -662,19 +697,19 @@ public class SpannerStructuredTable implements StructuredTable {
     throw new IllegalArgumentException("Unsupported field type " + field.getFieldType());
   }
 
-  private String getStringValue(Object value, boolean isCompressed) {
-    String val = (String) value;
-    if (isCompressed) {
+  private String getStringValue(Field field) {
+    String val = (String) field.getValue();
+    if (val != null && val.length() > STRING_LIMIT && compressColumns.contains(field.getName())) {
       val = Base64.getEncoder()
           .encodeToString(snappyCompress(val.getBytes(StandardCharsets.UTF_8)));
     }
     return val;
   }
 
-  private ByteArray getBytesValue(Object value, boolean isCompressed) {
-    byte[] val = (byte[]) value;
-    if (isCompressed) {
-        val = snappyCompress(val);
+  private ByteArray getBytesValue(Field field) {
+    byte[] val = (byte[]) field.getValue();
+    if (val != null && val.length > BYTES_LIMIT && compressColumns.contains(field.getName())) {
+      val = snappyCompress(val);
     }
     return ByteArray.copyFrom(val);
   }
@@ -782,10 +817,12 @@ public class SpannerStructuredTable implements StructuredTable {
 
     private final StructuredTableSchema schema;
     private final ResultSet resultSet;
+    private final Set<String> compressedColumns;
 
-    ResultSetIterator(StructuredTableSchema schema, ResultSet resultSet) {
+    ResultSetIterator(StructuredTableSchema schema, ResultSet resultSet, Set<String> compressedColumns) {
       this.schema = schema;
       this.resultSet = resultSet;
+      this.compressedColumns = compressedColumns;
     }
 
     @Override
@@ -793,7 +830,7 @@ public class SpannerStructuredTable implements StructuredTable {
       if (!resultSet.next()) {
         return endOfData();
       }
-      return new SpannerStructuredRow(schema, resultSet.getCurrentRowAsStruct());
+      return new SpannerStructuredRow(schema, resultSet.getCurrentRowAsStruct(), compressedColumns);
     }
 
     @Override

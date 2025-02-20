@@ -42,11 +42,13 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.FieldType;
+import io.cdap.cdap.spi.data.table.field.FieldType.Type;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -65,7 +67,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
   private final DatabaseAdminClient adminClient;
   private final DatabaseClient databaseClient;
   private final LoadingCache<StructuredTableId, StructuredTableSchema> schemaCache;
-  private final Set<String> compressedColumns;
+  private final Map<String, Set<String>> compressColumns;
+  private static final String COMPRESS_TYPE = "_compress_type";
 
   static String getIndexName(StructuredTableId tableId, String column) {
     return String.format("%s_%s_idx", tableId.getName(), column);
@@ -78,7 +81,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
    * @param databaseId the ID of the Spanner instance database.
    */
   public SpannerStructuredTableAdmin(Spanner spanner, DatabaseId databaseId,
-      Set<String> compressedColumns) {
+      Map<String, Set<String>> compressColumns) {
     this.databaseId = databaseId;
     this.adminClient = spanner.getDatabaseAdminClient();
     this.databaseClient = spanner.getDatabaseClient(databaseId);
@@ -89,7 +92,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
             return loadSchema(tableId);
           }
         });
-    this.compressedColumns = compressedColumns;
+    this.compressColumns = compressColumns;
   }
 
   @Override
@@ -158,11 +161,15 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     }
   }
 
+  Set<String> getCompressColumnsForTable(StructuredTableId tableId) {
+    return compressColumns.get(tableId.getName());
+  }
+
   private void updateTable(StructuredTableSpecification spec)
       throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
     StructuredTableId tableId = spec.getTableId();
     StructuredTableSchema cachedTableSchema = getSchema(tableId);
-    StructuredTableSchema newTableSchema = convertSpecToCompatibleSchema(spec);
+    StructuredTableSchema newTableSchema = getUpdatedSchema(spec);
 
     if (newTableSchema.equals(cachedTableSchema)) {
       LOG.trace("The table schema is already up to date: {}", tableId);
@@ -198,6 +205,28 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
       throw new IOException("Failed to update table schema in Spanner", cause);
     }
+  }
+
+  private StructuredTableSchema getUpdatedSchema(StructuredTableSpecification spec) {
+    List<FieldType> convertedFieldTypes = new ArrayList<>();
+    Set<String> compressFields = compressColumns.get(spec.getTableId().getName());
+    Set<String> specFields = new HashSet<>();
+    for (FieldType field : spec.getFieldTypes()) {
+      specFields.add(field.getName());
+      String spannerType = getSpannerType(field.getType());
+      FieldType.Type convertedType = fromSpannerType(spannerType);
+      convertedFieldTypes.add(new FieldType(field.getName(), convertedType));
+    }
+    if (compressFields != null) {
+      for (String field : compressFields) {
+        String compressedFieldName = field + COMPRESS_TYPE;
+        if (specFields.contains(field) && !specFields.contains(compressedFieldName)) {
+          convertedFieldTypes.add(new FieldType(compressedFieldName, Type.STRING));
+        }
+      }
+    }
+    return new StructuredTableSchema(
+        spec.getTableId(), convertedFieldTypes, spec.getPrimaryKeys(), spec.getIndexes());
   }
 
   @VisibleForTesting
@@ -278,7 +307,7 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
           // If a field is not a primary nor an index, the ordinal_position will be NULL in the index_columns table.
           boolean isIndex = !row.isNull("ordinal_position");
 
-          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type")), compressedColumns.contains(columnName)));
+          fields.add(new FieldType(columnName, fromSpannerType(row.getString("spanner_type"))));
           if ("PRIMARY_KEY".equalsIgnoreCase(indexType)) {
             primaryKeysOrderMap.put(row.getLong("ordinal_position"), columnName);
           } else if ("INDEX".equalsIgnoreCase(indexType) && isIndex) {
