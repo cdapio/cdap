@@ -15,6 +15,10 @@
  */
 package io.cdap.cdap.master.upgrade;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+
+import com.google.gson.JsonObject;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
@@ -33,9 +37,12 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Restarts all schedules and programs stopped between startTimeMillis and now. The first parameter
@@ -49,6 +56,8 @@ import java.util.stream.Collectors;
 public class PostUpgradeJobMain {
 
   private static final int DEFAULT_READ_TIMEOUT_MILLIS = 90 * 1000;
+  private static final Logger LOG = LoggerFactory.getLogger(UpgradeJobMain.class);
+  private static final Gson GSON = new Gson();
 
   public static void main(String[] args) {
     if (args.length < 3 || args.length > 4) {
@@ -111,12 +120,28 @@ public class PostUpgradeJobMain {
     }
 
     for (NamespaceId namespaceId : namespaceIdList) {
-      for (ApplicationRecord record : applicationClient.list(namespaceId)) {
-        ApplicationId applicationId =
-            new ApplicationId(namespaceId.getNamespace(), record.getName(), record.getAppVersion());
-        programClient.restart(applicationId,
-            TimeUnit.MILLISECONDS.toSeconds(startTimeMillis),
-            TimeUnit.MILLISECONDS.toSeconds(endTimeMillis));
+      String token = null;
+      boolean isLastPage = false;
+      while (!isLastPage) {
+        JsonObject paginatedListResponse = applicationClient.paginatedList(namespaceId, token);
+        token = paginatedListResponse.get("nextPageToken") == null ? null
+            : paginatedListResponse.get("nextPageToken").getAsString();
+        LOG.debug("Called paginated list API to restart programs and got token: {}", token);
+        if (paginatedListResponse.get("applications").getAsJsonArray().size() != 0) {
+          Type appListType = new TypeToken<List<ApplicationRecord>>() {
+          }.getType();
+          List<ApplicationRecord> records = GSON.fromJson(
+              paginatedListResponse.get("applications").getAsJsonArray(), appListType);
+          for (ApplicationRecord record : records) {
+            ApplicationId applicationId =
+                new ApplicationId(namespaceId.getNamespace(), record.getName(),
+                    record.getAppVersion());
+            programClient.restart(applicationId,
+                TimeUnit.MILLISECONDS.toSeconds(startTimeMillis),
+                TimeUnit.MILLISECONDS.toSeconds(endTimeMillis));
+          }
+        }
+        isLastPage = (token == null);
       }
 
       // Re-enable schedules in a namespace AFTER programs have been restarted.
