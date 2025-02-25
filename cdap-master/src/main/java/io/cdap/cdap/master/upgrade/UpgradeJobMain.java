@@ -128,7 +128,7 @@ public class UpgradeJobMain {
         JsonObject paginatedListResponse = applicationClient.paginatedList(namespaceId, token);
         token = paginatedListResponse.get("nextPageToken") == null ? null
             : paginatedListResponse.get("nextPageToken").getAsString();
-        LOG.debug("Called paginated list API and got token: {}", token);
+        LOG.debug("Called paginated list API to schedule and workflows and got token: {}", token);
         if (paginatedListResponse.get("applications").getAsJsonArray().size() != 0) {
           Type appListType = new TypeToken<List<ApplicationRecord>>() {
           }.getType();
