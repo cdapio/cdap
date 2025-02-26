@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
@@ -275,36 +276,53 @@ public class ProgramClient {
       throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
       ApplicationNotFoundException, BadRequestException {
 
-    List<ApplicationRecord> allApps = applicationClient.list(namespace);
-    for (ApplicationRecord applicationRecord : allApps) {
-      ApplicationId appId = new ApplicationId(namespace.getNamespace(), applicationRecord.getName(),
-          applicationRecord.getAppVersion());
-      List<ProgramRecord> programRecords = applicationClient.listPrograms(appId);
-      for (ProgramRecord programRecord : programRecords) {
-        try {
-          ProgramId program = appId.program(programRecord.getType(), programRecord.getName());
-          String status = this.getStatus(program);
-          if (!status.equals("STOPPED")) {
+    String token = null;
+    boolean isLastPage = false;
+    while (!isLastPage) {
+      JsonObject paginatedListResponse = applicationClient.paginatedList(namespace, token);
+      token = paginatedListResponse.get("nextPageToken") == null ? null
+          : paginatedListResponse.get("nextPageToken").getAsString();
+      LOG.debug("Called paginated list API to stop programs and got token: {}", token);
+      if (paginatedListResponse.get("applications").getAsJsonArray().size() != 0) {
+        Type appListType = new TypeToken<List<ApplicationRecord>>() {
+        }.getType();
+        List<ApplicationRecord> records = GSON.fromJson(
+            paginatedListResponse.get("applications").getAsJsonArray(), appListType);
+        for (ApplicationRecord applicationRecord : records) {
+          ApplicationId appId = new ApplicationId(namespace.getNamespace(),
+              applicationRecord.getName(),
+              applicationRecord.getAppVersion());
+          List<ProgramRecord> programRecords = applicationClient.listPrograms(appId);
+          for (ProgramRecord programRecord : programRecords) {
             try {
-              this.stop(program);
-            } catch (IOException ioe) {
-              // ProgramClient#stop calls RestClient, which throws an IOException if the HTTP response code is 400,
-              // which can be due to the program already being stopped when calling stop on it.
-              // Most likely, there was a race condition that the program stopped between the time we checked its
-              // status and calling the stop method.
-              LOG.warn(
-                  "Program {} is already stopped, proceeding even though the following exception is raised.",
-                  program, ioe);
+              ProgramId program = appId.program(programRecord.getType(), programRecord.getName());
+              String status = this.getStatus(program);
+              if (!status.equals("STOPPED")) {
+                try {
+                  this.stop(program);
+                } catch (IOException ioe) {
+                  // ProgramClient#stop calls RestClient, which throws an IOException if the
+                  // HTTP response code is 400, which can be due to the program already being
+                  // stopped when calling stop on it.Most likely, there was a race condition that
+                  // the program stopped between the time we checked its status and calling
+                  // the stop method.
+                  LOG.warn(
+                      "Program {} is already stopped, proceeding even though the following exception is raised.",
+                      program, ioe);
+                }
+                // YarnTwillController has a timeout of 60 seconds after sending a stop signal
+                // using ZK. If this fails, it kills the app usin Yarn API. In cases where there
+                // is a failure to send the message via ZK, it waits for 60 seconds.
+                // So a wait of 60 seconds here is not enough.
+                this.waitForStatus(program, ProgramStatus.STOPPED, 120, TimeUnit.SECONDS);
+              }
+            } catch (ProgramNotFoundException e) {
+              // IGNORE
             }
-            // YarnTwillController has a timeout of 60 seconds after sending a stop signal using ZK.
-            // If this fails, it kills the app usin Yarn API. In cases where there is a failure to send the message
-            // via ZK, it waits for 60 seconds. So a wait of 60 seconds here is not enough.
-            this.waitForStatus(program, ProgramStatus.STOPPED, 120, TimeUnit.SECONDS);
           }
-        } catch (ProgramNotFoundException e) {
-          // IGNORE
         }
       }
+      isLastPage = (token == null);
     }
   }
 
