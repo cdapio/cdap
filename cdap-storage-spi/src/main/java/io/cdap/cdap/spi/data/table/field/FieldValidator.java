@@ -28,7 +28,7 @@ import java.util.Set;
  * A field validator class which can be used to validate the given field.
  */
 @Beta
-public final class FieldValidator {
+public class FieldValidator {
 
   private final StructuredTableSchema tableSchema;
 
