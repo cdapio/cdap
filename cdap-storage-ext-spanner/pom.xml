@@ -29,6 +29,11 @@
   <name>CDAP Google Cloud Spanner Storage Extension</name>
   <packaging>jar</packaging>
 
+  <properties>
+    <guava.version>33.4.0-jre</guava.version>
+    <spanner.version>6.87.0</spanner.version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
