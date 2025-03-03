@@ -6593,7 +6593,16 @@
     </description>
   </property>
 
-<!--  ONLY FOR TESTING :  MAKE SURE TO ADD THIS IN CLH -->
+  <property>
+    <name>app.cdap.file.max.size.bytes</name>
+    <value>2097152</value>
+    <description>
+      Maximum file size for pipelines. Restricts creation and import of pipelines where the
+      size of the json file exceeds the configured limit. Defaults to 2MB (2097152 bytes).
+    </description>
+  </property>
+
+  <!--  ONLY FOR TESTING :  MAKE SURE TO ADD THIS IN CLH -->
   <property>
     <name>app.program.runtime.monitor.type.gcp-serverless-dataproc</name>
     <value>url</value>
