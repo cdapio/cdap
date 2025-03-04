@@ -218,16 +218,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public String getName(){
-    return "elasticsearch";
-  }
-
-  @Override
-  public Object getDatasetMetadata(String datasetName) {
-    return  Collections.emptyMap();
-  }
-
-  @Override
   public void close() {
     Closeables.closeQuietly(client);
   }

@@ -41,7 +41,6 @@ import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -85,16 +84,6 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public String getName(){
-    return "AuditMetadataStorage";
-  }
-
-  @Override
-  public Object getDatasetMetadata(String datasetName) {
-    return  Collections.emptyMap();
-  }
-
-  @Override
   public void createIndex() throws IOException {
     try {
       storage.createIndex();
@@ -133,7 +122,7 @@ public class AuditMetadataStorage implements MetadataStorage {
 
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
-                                    MutationOptions options) throws IOException {
+      MutationOptions options) throws IOException {
     List<MetadataChange> changes;
     try {
       changes = storage.batch(mutations, options);

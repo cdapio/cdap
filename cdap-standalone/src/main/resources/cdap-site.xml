@@ -316,10 +316,4 @@
     </description>
   </property>
 
-  <!--Related to Spanner -->
-  <property>
-    <name>metadata.provider.type</name>
-    <value>spanner</value>
-  </property>
-
 </configuration>
