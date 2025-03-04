@@ -21,6 +21,11 @@ on:
     types:
     - completed
 
+permissions:
+  actions: read    # Allows reading workflow run information
+  statuses: write  # Required if the action updates commit statuses
+  checks: write    # Required if it updates GitHub Checks API
+
 jobs:
   build:
     runs-on: ubuntu-latest
