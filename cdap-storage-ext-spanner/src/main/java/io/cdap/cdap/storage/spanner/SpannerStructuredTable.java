@@ -28,6 +28,7 @@ import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.Value;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
+import io.cdap.cdap.spi.data.FieldSizeLimitExceededException;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -726,6 +727,12 @@ public class SpannerStructuredTable implements StructuredTable {
         throw Throwables.propagate(e);
       }
     }
+
+    if (val != null && val.length() > STRING_LIMIT) {
+      throw new FieldSizeLimitExceededException(schema.getTableId(), field.getName(), val.length(),
+          STRING_LIMIT);
+    }
+
     return val;
   }
 
@@ -740,6 +747,12 @@ public class SpannerStructuredTable implements StructuredTable {
         throw Throwables.propagate(e);
       }
     }
+
+    if (val != null && val.length > BYTES_LIMIT) {
+      throw new FieldSizeLimitExceededException(schema.getTableId(), field.getName(), val.length,
+          BYTES_LIMIT);
+    }
+
     return ByteArray.copyFrom(val);
   }
 
