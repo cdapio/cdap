@@ -60,6 +60,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.spi.data.FieldSizeLimitExceededException;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
@@ -708,9 +709,16 @@ public class AppMetadataStore {
     }
 
     // Add a new version of the app
-    writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(),
-        appMeta.getChange(),
-        appMeta.getSourceControlMeta(), markAsLatest);
+    try {
+      writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), appMeta.getSpec(),
+          appMeta.getChange(),
+          appMeta.getSourceControlMeta(), markAsLatest);
+    } catch (FieldSizeLimitExceededException e) {
+      LOG.error("Application deployment failed: ", e);
+      throw new IllegalArgumentException(
+          "Application deployment failed as size exceeds the supported limit of " + e.getLimit()
+              + " characters");
+    }
     return getApplicationEditNumber(
         new ApplicationReference(id.getNamespaceId(), id.getApplication()));
   }
@@ -2883,7 +2891,7 @@ public class AppMetadataStore {
     return getRunRecordProgramPrefix(status, programId.getProgramReference(),
         programId.getVersion());
   }
-  
+
   private List<Field<?>> getRunRecordProgramPrefix(String status,
       @Nullable ProgramReference programRef, @Nullable String version) {
     List<Field<?>> fields = getRunRecordStatusPrefix(status);
