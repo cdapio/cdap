@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.util.Collections;
@@ -55,7 +56,7 @@ public class SecurityMetricsService {
       return new NoopMetricsContext();
     }
     Map<String, String> tags = Collections.emptyMap();
-    if (metricsTagsEnabled && entityId != null) {
+    if (metricsTagsEnabled) {
       tags = createEntityIdMetricsTags(entityId);
     }
     return metricsCollectionService == null ? new NoopMetricsContext(tags)
@@ -67,8 +68,12 @@ public class SecurityMetricsService {
    */
   static Map<String, String> createEntityIdMetricsTags(EntityId entityId) {
     Map<String, String> tags = new HashMap<>();
-    for (EntityId currEntityId : entityId.getHierarchy()) {
-      addTagsForEntityId(tags, currEntityId);
+    // Adding default namespace tag
+    tags.put(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace());
+    if (entityId != null) {
+      for (EntityId currEntityId : entityId.getHierarchy()) {
+        addTagsForEntityId(tags, currEntityId);
+      }
     }
     return tags;
   }
