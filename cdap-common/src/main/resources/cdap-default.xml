@@ -6593,13 +6593,4 @@
     </description>
   </property>
 
-  <property>
-    <name>app.cdap.file.max.size.bytes</name>
-    <value>2097152</value>
-    <description>
-      Maximum file size for pipelines. Restricts creation and import of pipelines where the
-      size of the json file exceeds the configured limit. Defaults to 2MB (2097152 bytes).
-    </description>
-  </property>
-
 </configuration>
