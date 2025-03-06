@@ -39,6 +39,7 @@ import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Authorizable;
@@ -543,6 +544,16 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
     expectedTags.put(Constants.Metrics.Tag.PROGRAM_TYPE,
         ProgramTypeMetricTag.getTagName(programId.getType()));
     Map<String, String> tags = SecurityMetricsService.createEntityIdMetricsTags(programId);
+    Assert.assertEquals(expectedTags, tags);
+  }
+
+  @Test
+  public void testDefaultNamespaceTagForEntityIdWithNoNamespace() {
+    Map<String, String> expectedTags = new HashMap<>();
+    expectedTags.put(Constants.Metrics.Tag.NAMESPACE, "system");
+    expectedTags.put(Constants.Metrics.Tag.INSTANCE_ID, "");
+    Map<String, String> tags = SecurityMetricsService.createEntityIdMetricsTags(InstanceId.SELF);
+
     Assert.assertEquals(expectedTags, tags);
   }
 }
