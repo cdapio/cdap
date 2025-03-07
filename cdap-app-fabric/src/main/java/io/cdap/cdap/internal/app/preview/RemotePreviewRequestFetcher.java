@@ -42,6 +42,7 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
 
   private final RemoteClient remoteClientInternal;
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
+  // TODO : dbshweta - Make an object of RemoteTaskExecutor and in fetch invoke the run for it - Same as RemoteConfigurator
 
   @Inject
   RemotePreviewRequestFetcher(PreviewRequestPollerInfoProvider pollerInfoProvider,
@@ -55,6 +56,7 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
 
   @Override
   public Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException {
+    // TODO : dbshweta - check whether to make change here - /run
     HttpRequest request = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull")
         .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
         .build();

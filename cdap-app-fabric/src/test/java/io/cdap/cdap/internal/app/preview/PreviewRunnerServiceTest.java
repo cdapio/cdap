@@ -17,12 +17,16 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -38,6 +42,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Test;
 
 /**
@@ -45,17 +51,24 @@ import org.junit.Test;
  */
 public class PreviewRunnerServiceTest {
 
+  private static final MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
+
   private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.setLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS, 200);
     return cConf;
   }
 
+  private SConfiguration createSConf() {
+    return SConfiguration.create();
+  }
+
   @Test
   public void testStartAndStop() throws InterruptedException, ExecutionException, TimeoutException {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
-    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), createSConf(), discoveryService, discoveryService, metricsCollectionService, new CommonNettyHttpServiceFactory(createCConf(), metricsCollectionService, auditLogContexts -> {}));
     runnerService.startAndWait();
 
     Tasks.waitFor(true, () -> fetcher.fetchCount.get() > 0, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -67,7 +80,8 @@ public class PreviewRunnerServiceTest {
   public void testStopPreview() throws InterruptedException, ExecutionException, TimeoutException {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
-    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), createSConf(), discoveryService, discoveryService, metricsCollectionService, new CommonNettyHttpServiceFactory(createCConf(), metricsCollectionService, auditLogContexts -> {}));
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
@@ -88,7 +102,8 @@ public class PreviewRunnerServiceTest {
 
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
-    PreviewRunnerService runnerService = new PreviewRunnerService(cConf, fetcher, mockRunner);
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    PreviewRunnerService runnerService = new PreviewRunnerService(cConf, createSConf(), discoveryService, discoveryService, metricsCollectionService, new CommonNettyHttpServiceFactory(createCConf(), metricsCollectionService, auditLogContexts -> {}));
     runnerService.startAndWait();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");

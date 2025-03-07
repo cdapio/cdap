@@ -28,6 +28,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.preview.PreviewRunnerServiceLauncher;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -160,6 +161,10 @@ public class AppFabricProcessorServiceMain extends AbstractServiceMain<Environme
 
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
+    }
+
+    if(cConf.getBoolean(Constants.Preview.POOL_ENABLE)) {
+      services.add(injector.getInstance(PreviewRunnerServiceLauncher.class));
     }
 
     if (cConf.getBoolean(SystemWorker.POOL_ENABLE)) {

@@ -84,7 +84,7 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
             .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
             .to(RemoteDatasetFramework.class);
 
-        bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class)
+        bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class) // TODO : dbshweta - check where distributed modules are being called
             .in(Scopes.SINGLETON);
 
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);

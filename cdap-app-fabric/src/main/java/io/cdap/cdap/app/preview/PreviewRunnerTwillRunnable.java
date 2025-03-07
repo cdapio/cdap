@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020-2023 Cask Data, Inc.
+ * Copyright © 2025 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.preview;
+package io.cdap.cdap.app.preview;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -22,15 +22,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.AbstractModule;
-import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
-import io.cdap.cdap.app.preview.PreviewRunner;
-import io.cdap.cdap.app.preview.PreviewRunnerTwillApplication;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -44,6 +40,8 @@ import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerTwillApplication;
 import io.cdap.cdap.internal.app.worker.SystemAppModule;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -51,21 +49,14 @@ import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
-import io.cdap.cdap.spi.data.StorageProvider;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -73,18 +64,20 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The {@link TwillRunnable} for running {@link PreviewRunner}.
- */
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerTwillRunnable.class);
 
-//  private PreviewRunnerManager previewRunnerManager;
-  private PreviewRunnerService previewRunnerService;
+  private PreviewRunnerService previewRunner; // TODO : dbshweta to modify implementation of preview runner service like TaskWorkerService
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
-  private StorageProvider storageProvider;
 
   public PreviewRunnerTwillRunnable(String cConfFileName, String hConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName));
@@ -104,6 +97,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(coreSecurityModule);
     modules.add(new MessagingServiceModule(cConf));
     modules.add(new SystemAppModule());
+    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new AuditLogWriterModule(cConf).getDistributedModules());
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
@@ -151,7 +145,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    previewRunnerService.addListener(new ServiceListenerAdapter() {
+    previewRunner.addListener(new ServiceListenerAdapter() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -164,13 +158,13 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting preview runner");
-    previewRunnerService.start();
+    previewRunner.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
-      LOG.debug("Preview runner stopped");
+      LOG.debug("Preview Runner stopped");
     } catch (ExecutionException e) {
-      LOG.warn("Preview runner stopped with exception", e);
+      LOG.warn("Preview Runner stopped with exception", e);
     }
   }
 
@@ -178,21 +172,14 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   public void stop() {
     LOG.info("Stopping preview runner");
     Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
-    if(previewRunnerService != null) {
-      previewRunnerService.stop();
+    if (previewRunner != null) {
+      previewRunner.stop();
     }
   }
 
   @Override
   public void destroy() {
-    if (storageProvider != null) {
-      try {
-        storageProvider.close();
-      } catch (Exception e) {
-        LOG.warn("Exception raised when closing storage provider", e);
-      }
-    }
-    if(logAppenderInitializer != null) {
+    if (logAppenderInitializer != null) {
       logAppenderInitializer.close();
     }
   }
@@ -216,17 +203,11 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
 
-    // Optionally get the storage provider. It is for destroy() method to close it on shutdown.
-    Binding<StorageProvider> storageBinding = injector.getExistingBinding(
-      Key.get(StorageProvider.class));
-    if (storageBinding != null) {
-      storageProvider = storageBinding.getProvider().get();
-    }
-
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                               Constants.Logging.COMPONENT_NAME,
                                                               PreviewRunnerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
-    previewRunnerService = injector.getInstance(PreviewRunnerService.class);
+    previewRunner = injector.getInstance(PreviewRunnerService.class);
   }
+
 }

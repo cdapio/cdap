@@ -149,21 +149,13 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     }
   }
 
+  // TODO : dbshweta - update the stop logic/remove all impls
   @Override
   public void stop(ApplicationId preview) throws Exception {
-    PreviewRunnerService runnerService = previewRunnerServices.stream()
-        .filter(r -> r.getPreviewApplication().filter(preview::equals).isPresent())
-        .findFirst()
-        .orElse(null);
-
-    if (runnerService == null) {
-      throw new NotFoundException(
-          "Preview run cannot be stopped. Please try stopping again or start new preview run.");
+    previewRunnerServices.forEach(this::stopQuietly);
+    if (runner instanceof Service) {
+      stopQuietly((Service) runner);
     }
-
-    PreviewRunnerService newRunnerService = createPreviewRunnerService();
-    runnerService.stopAndWait();
-    newRunnerService.startAndWait();
   }
 
   /**

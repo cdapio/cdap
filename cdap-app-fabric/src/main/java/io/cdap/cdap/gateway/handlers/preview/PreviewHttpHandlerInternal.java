@@ -20,17 +20,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
-import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RunnableTaskLauncher;
 import io.cdap.cdap.common.internal.remote.TaskDetails;
-import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
@@ -102,18 +98,13 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int concurrentRequestLimit;
 
-//  @Inject
-//  PreviewHttpHandlerInternal(PreviewManager previewManager) {
-//    this.previewManager = previewManager;
-//  }
-
   // TODO : dbshweta find the invocations for this constructor and make changes
 
   @Inject
-  PreviewHttpHandlerInternal(CConfiguration cConf,
-                             DiscoveryService discoveryService,
-                             DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
-                             MetricsCollectionService metricsCollectionService) {
+  public PreviewHttpHandlerInternal(CConfiguration cConf,
+                                    DiscoveryService discoveryService,
+                                    DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
+                                    MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     final int killAfterRequestCount = cConf.getInt(
       Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
@@ -126,7 +117,7 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
       // Run only one request at a time in user code isolation mode.
       this.concurrentRequestLimit = 1;
     } else {
-      this.concurrentRequestLimit = cConf.getInt(Constants.TaskWorker.REQUEST_LIMIT);
+      this.concurrentRequestLimit = cConf.getInt(Constants.Preview.MAX_RUNS);
     }
 
     // Restart the service to clean up and re-claim resources after user code
@@ -158,8 +149,8 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * If there is no ongoing request, worker pod gets restarted after a random
-   * duration is selected from the following range. Otherwise, worker pod can
+   * If there is no ongoing request, preview pod gets restarted after a random
+   * duration is selected from the following range. Otherwise, preview pod can
    * only get restarted once the ongoing request finishes. range = [Duration -
    * DURATION_FRACTION * Duration, Duration + DURATION_FRACTION * Duration]
    * Reason: by randomizing the duration, it is guaranteed that pods do not get
@@ -196,7 +187,7 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
         Thread.sleep(TimeUnit.SECONDS.toMillis(finalTaskDeadlineSeconds));
       } catch (InterruptedException e) {
         LOG.warn(
-          "Interrupted while waiting for task completion. Stopping immediately",
+          "Interrupted while waiting for preview task completion. Stopping immediately",
           e);
       }
       stopper.accept("");

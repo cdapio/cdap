@@ -62,7 +62,10 @@ public class RemoteTaskExecutor {
 
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
-  private static final String SYSTEM_WORKER_URL = "/system/run"; // TODO : dbshweta add for preview as well
+  private static final String SYSTEM_WORKER_URL = "/system/run";
+  private static final String PREVIEW_RUNNER_URL = "/previews/run";
+  private static final Predicate<Throwable> RETRYABLE_PREDICATE_PREVIEW_RUNNER = throwable ->
+    (throwable instanceof RetryableException);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
       (throwable instanceof RetryableException) || (throwable instanceof ServiceException);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
@@ -84,8 +87,15 @@ public class RemoteTaskExecutor {
       RemoteClientFactory remoteClientFactory, Type workerType,
       HttpRequestConfig httpRequestConfig) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
-    String serviceName = workerType == Type.TASK_WORKER
-        ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
+    String serviceName = Constants.Service.SYSTEM_WORKER;
+    switch (workerType) {
+      case TASK_WORKER:
+        serviceName = Constants.Service.TASK_WORKER;
+        break;
+      case PREVIEW_RUNNER:
+        serviceName = Constants.Service.PREVIEW_RUNNER;
+        break;
+    }
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
@@ -95,6 +105,11 @@ public class RemoteTaskExecutor {
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.TASK_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
+    } else if (workerType == Type.PREVIEW_RUNNER) {
+      this.workerUrl = PREVIEW_RUNNER_URL;
+      this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
+                                                             Constants.Service.PREVIEW_RUNNER + ".");
+      this.retryablePredicate = RETRYABLE_PREDICATE_PREVIEW_RUNNER;
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
@@ -259,6 +274,7 @@ public class RemoteTaskExecutor {
    */
   public enum Type {
     SYSTEM_WORKER,
-    TASK_WORKER
+    TASK_WORKER,
+    PREVIEW_RUNNER
   }
 }

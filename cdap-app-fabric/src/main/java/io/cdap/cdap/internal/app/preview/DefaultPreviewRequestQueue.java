@@ -66,9 +66,11 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
         .collect(Collectors.toCollection(() -> new LinkedBlockingDeque<>(capacity)));
   }
 
+  // TODO : dbshweta - check for this impl of poll and whether it should be removed
   @Override
   public Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo) {
     while (true) {
+      // TODO : dbshweta - change poll method to run here
       PreviewRequest previewRequest = requestQueue.poll();
       if (previewRequest == null) {
         return Optional.empty();
