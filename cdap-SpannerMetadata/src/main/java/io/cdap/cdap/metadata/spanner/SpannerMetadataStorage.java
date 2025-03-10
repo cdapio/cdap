@@ -88,7 +88,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
     private static final String TYPE_FIELD = "type";
     private static final String TEXT_FIELD = "text";
 
-    private final String instanceId = "cdf-komalyd-instance-test";
+    private final String instanceId = "cdf-komalyd-instance";
     private final String databaseId = "cdap";
     private final String projectId = "da3c84c7b9685e836-tp";
     private volatile SpannerOptions options;
@@ -220,20 +220,16 @@ public class SpannerMetadataStorage implements MetadataStorage {
     public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
         MetadataEntity entity = mutation.getEntity();
         try {
-            TransactionRunner runner = getDbClient().readWriteTransaction(); // Use getDbClient()
-            return runner.run(new TransactionRunner.TransactionCallable<MetadataChange>() {
-                @Override
-                public MetadataChange run(TransactionContext transaction) throws Exception {
-                    Metadata existingMetadata = readFromSpanner(entity);
-                    Metadata updatedMetadata = applyMutation(existingMetadata, mutation, transaction);
-                    return createMetadataChange(mutation, existingMetadata, updatedMetadata);
-                }
+            TransactionRunner runner = getDbClient().readWriteTransaction();
+            return runner.run(transaction -> {
+                Metadata existingMetadata = readFromSpannerTx(entity, transaction);
+                Metadata updatedMetadata = applyMutation(existingMetadata, mutation, transaction);
+                return createMetadataChange(mutation, existingMetadata, updatedMetadata);
             });
         } catch (SpannerException e) {
             throw new IOException("Error applying mutation to Spanner: " + e.getMessage(), e);
         }
     }
-
     private MetadataChange createMetadataChange(MetadataMutation mutation, Metadata existingMetadata, 
                                                 Metadata updatedMetadata) {
         return new MetadataChange(mutation.getEntity(), existingMetadata, updatedMetadata);
@@ -241,6 +237,58 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
     private Metadata readFromSpanner(MetadataEntity entity) throws IOException {
         try (ReadOnlyTransaction transaction = getDbClient().readOnlyTransaction()) {
+            String namespace = entity.getValue(MetadataEntity.NAMESPACE);
+            String name = entity.getValue(MetadataEntity.APPLICATION);
+
+            if (namespace == null || name == null) {
+                LOG.error("Namespace or name is null for entity: {}", entity);
+                return Metadata.EMPTY;
+            }
+
+            Key key = Key.of(namespace, name);
+
+            ResultSet resultSet = transaction.read(
+                    METADATA_TABLE,
+                    KeySet.singleKey(key),
+                    Arrays.asList(NAMESPACE_FIELD, NAME_FIELD, CREATED_FIELD, HIDDEN_FIELD, TYPE_FIELD, TEXT_FIELD)
+            );
+
+            if (resultSet.next()) {
+                Map<String, String> properties = new HashMap<>();
+                properties.put(NAMESPACE_FIELD, resultSet.getString(NAMESPACE_FIELD));
+                properties.put(NAME_FIELD, resultSet.getString(NAME_FIELD));
+                if (!resultSet.isNull(CREATED_FIELD)) {
+                    properties.put(CREATED_FIELD, String.valueOf(resultSet.getTimestamp(CREATED_FIELD)
+                            .toSqlTimestamp().getTime()));
+                }
+                if (!resultSet.isNull(HIDDEN_FIELD)) {
+                    properties.put(HIDDEN_FIELD, String.valueOf(resultSet.getBoolean(HIDDEN_FIELD)));
+                }
+                if (!resultSet.isNull(TYPE_FIELD)) {
+                    properties.put(TYPE_FIELD, resultSet.getString(TYPE_FIELD));
+                }
+                if (!resultSet.isNull(TEXT_FIELD)) {
+                    properties.put(TEXT_FIELD, resultSet.getString(TEXT_FIELD));
+                }
+
+                Map<ScopedName, String> scopedProperties = new HashMap<>();
+                properties.forEach((propKey, propValue) -> scopedProperties
+                        .put(new ScopedName(MetadataScope.USER, propKey), propValue));
+
+                // Create Metadata with empty tags and scoped properties.
+                Metadata metadata = new Metadata(Collections.emptySet(), scopedProperties);
+                return metadata;
+            } else {
+                return Metadata.EMPTY;
+            }
+        } catch (SpannerException e) {
+            throw new IOException("Failed to read from Spanner for entity " + entity, e);
+        }
+    }
+
+
+    private Metadata readFromSpannerTx(MetadataEntity entity, TransactionContext transaction) throws IOException {
+        try {
             String namespace = entity.getValue(MetadataEntity.NAMESPACE);
             String name = entity.getValue(MetadataEntity.APPLICATION);
 
@@ -402,13 +450,13 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
         List<MetadataChange> changes = new ArrayList<>(mutations.size());
         try {
-            TransactionRunner runner = getDbClient().readWriteTransaction(); // Use getDbClient()
+            TransactionRunner runner = getDbClient().readWriteTransaction();
             runner.run(new TransactionRunner.TransactionCallable<Void>() {
                 @Override
                 public Void run(TransactionContext transaction) throws Exception {
                     for (MetadataMutation mutation : mutations) {
                         MetadataEntity entity = mutation.getEntity();
-                        Metadata existingMetadata = readFromSpanner(entity);
+                        Metadata existingMetadata = readFromSpannerTx(entity, transaction);
                         Metadata updatedMetadata = applyMutation(existingMetadata, mutation, transaction);
                         writeToSpanner(transaction, entity, updatedMetadata);
                         changes.add(createMetadataChange(mutation, existingMetadata, updatedMetadata));
