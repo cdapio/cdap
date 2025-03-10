@@ -229,7 +229,9 @@ public class OAuthStore {
         .withLoginURL(loginURL)
         .withTokenRefreshURL(tokenRefreshURL)
         .withClientCredentials(clientCreds)
-        .withCredentialEncodingStrategy(OAuthProvider.CredentialEncodingStrategy.valueOf(credentialEncodingStrategy))
+        .withCredentialEncodingStrategy(
+            Optional.ofNullable(credentialEncodingStrategy)
+                .map(OAuthProvider.CredentialEncodingStrategy::valueOf).orElse(null))
         .withUserAgent(userAgent)
         .build();
   }

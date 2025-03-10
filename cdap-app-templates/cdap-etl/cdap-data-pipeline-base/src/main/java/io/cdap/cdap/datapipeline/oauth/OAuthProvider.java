@@ -26,6 +26,7 @@ public class OAuthProvider {
   private final String tokenRefreshURL;
   @Nullable
   private final OAuthClientCredentials clientCreds;
+  @Nullable
   private final CredentialEncodingStrategy strategy;
 
   // Optional string to send as a USER_AGENT header
@@ -63,6 +64,7 @@ public class OAuthProvider {
     return clientCreds;
   }
 
+  @Nullable
   public CredentialEncodingStrategy getCredentialEncodingStrategy() {
     return strategy;
   }
