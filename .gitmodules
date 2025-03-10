@@ -13,7 +13,3 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-[submodule "cdap-ui"]
-  path = cdap-ui
-  url = ../cdap-ui
-  branch = develop
