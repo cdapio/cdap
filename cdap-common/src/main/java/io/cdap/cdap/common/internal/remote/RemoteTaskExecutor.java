@@ -46,6 +46,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -64,7 +65,8 @@ public class RemoteTaskExecutor {
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
-      (throwable instanceof RetryableException) || (throwable instanceof ServiceException);
+      (throwable instanceof RetryableException) || (throwable instanceof ServiceException)
+          || (throwable instanceof SocketTimeoutException);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
       (throwable instanceof RetryableException);
   private final boolean compression;
