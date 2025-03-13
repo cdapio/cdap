@@ -6543,4 +6543,18 @@
     </description>
   </property>
 
+<!--  ONLY FOR TESTING :  MAKE SURE TO ADD THIS IN CLH -->
+  <property>
+    <name>app.program.runtime.monitor.type.gcp-serverless-dataproc</name>
+    <value>url</value>
+    <description>
+      provisioner.system.properties.gcp-serverless-dataproc.bucket: gs://df-5174705604629642991-qceyg67cd4i67jwoaizbbqaaaa
+      provisioner.system.properties.gcp-serverless-dataproc.labels: goog-datafusion-edition=developer,goog-datafusion-instance=dev-serverless,goog-datafusion-project=cdf-test-317207,goog-datafusion-version=latest
+      provisioner.system.properties.gcp-serverless-dataproc.projectId: cdf-test-317207
+      provisioner.system.properties.gcp-serverless-dataproc.runtime.job.manager: "true"
+      provisioner.system.properties.gcp-serverless-dataproc.token.endpoint: https://cdap-dev-serverless-task-worker:11020/v3Internal/worker/token
+      provisioner.system.properties.gcp-serverless-dataproc.troubleshootingDocsURL: https://cloud.google.com/dataproc/docs/troubleshooting
+    </description>
+  </property>
+
 </configuration>

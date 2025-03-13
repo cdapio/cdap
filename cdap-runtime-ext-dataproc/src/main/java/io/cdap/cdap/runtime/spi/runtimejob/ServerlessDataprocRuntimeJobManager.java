@@ -20,6 +20,9 @@ import com.google.cloud.dataproc.v1.RuntimeConfig;
 import com.google.cloud.dataproc.v1.SparkBatch;
 import com.google.cloud.dataproc.v1.SparkHistoryServerConfig;
 import com.google.cloud.dataproc.v1.SubmitJobRequest;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCodeType;
 import io.cdap.cdap.api.exception.ErrorUtils;
@@ -44,11 +47,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServerlessDataprocRuntimeJobManager.class);
+
+  private static final Pattern DATAPROC_BATCH_ID_PATTERN = Pattern.compile("[a-z0-9][a-z0-9\\-]{2,61}[a-z0-9]");
 
   private final ProvisionerContext provisionerContext;
   private final String bucket;
@@ -397,18 +403,18 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
       .setSubnetworkUri("pga-subnet")
       .build();
 
-    //TODO : To make this an advanced option via UI
-    SparkHistoryServerConfig sparkHistoryServerConfig = SparkHistoryServerConfig.newBuilder()
-      .setDataprocCluster("projects/cdf-test-317207/regions/us-west1/clusters/sanket-spark-history").build();
+//    //TODO : To make this an advanced option via UI
+//    SparkHistoryServerConfig sparkHistoryServerConfig = SparkHistoryServerConfig.newBuilder()
+//      .setDataprocCluster("projects/cdf-test-317207/regions/us-west1/clusters/sanket-spark-history").build();
 
-    PeripheralsConfig peripheralsConfig = PeripheralsConfig.newBuilder()
-      .setSparkHistoryServerConfig(sparkHistoryServerConfig)
-      .build();
+//    PeripheralsConfig peripheralsConfig = PeripheralsConfig.newBuilder()
+//      .setSparkHistoryServerConfig(sparkHistoryServerConfig)
+//      .build();
 
 
     EnvironmentConfig environmentConfig = EnvironmentConfig.newBuilder()
       .setExecutionConfig(executionConfig)
-      .setPeripheralsConfig(peripheralsConfig)
+//      .setPeripheralsConfig(peripheralsConfig)
       .build();
 
     RuntimeConfig runtimeConfig = RuntimeConfig.newBuilder()
@@ -459,5 +465,26 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
     }
     return client;
   }
+
+  public static String getJobId(ProgramRunInfo runInfo) {
+    List<String> parts = ImmutableList.of(
+      runInfo.getNamespace().substring(0,Math.min(runInfo.getNamespace().length(),5)).toLowerCase(),
+      runInfo.getApplication().substring(0,Math.min(runInfo.getApplication().length(),15)).toLowerCase(),
+      runInfo.getProgram().toLowerCase());
+    String joined = Joiner.on("-").join(parts);
+    joined = joined.substring(0, Math.min(joined.length(), 26));
+    joined = joined + "-" + runInfo.getRun();
+    if (!DATAPROC_BATCH_ID_PATTERN.matcher(joined).matches()) {
+      throw new IllegalArgumentException(
+        String.format("Job ID %s is not a valid dataproc job id. ", joined));
+    }
+
+    //A batch ID must start and end in a letter or a number, be between 4 and 63 characters long, and contain only
+    //lowercase letters, numbers, and hyphens
+
+
+    return joined;
+  }
+
 
 }
