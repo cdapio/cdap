@@ -104,6 +104,11 @@ public class DataprocJobMain {
     //TODO from serverless job manager
     String launchMode = "CLIENT"; //arguments.get(LAUNCH_MODE).iterator().next();
 
+    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+    if (!(cl instanceof URLClassLoader)) {
+      throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
+    }
+
     // create classpath from resources, application and twill jars
     URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
@@ -190,6 +195,13 @@ public class DataprocJobMain {
       }
       urls.addAll(createClassPathUrls(jarDir));
     }
+
+    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+
+    if (cl instanceof URLClassLoader && cl != ClassLoader.getSystemClassLoader()) {
+      urls.addAll(Arrays.asList(((URLClassLoader) cl).getURLs()));
+    }
+
 
     // Add the system class path to the URL list
     for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
