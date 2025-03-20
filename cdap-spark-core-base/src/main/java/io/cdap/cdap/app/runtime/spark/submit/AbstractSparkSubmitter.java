@@ -57,7 +57,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkSubmitter.class);
 
   // Transforms LocalizeResource to URI string
-  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = input -> input.getURI().toString();
+  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = input ->
+    input.getURI().toString().split("#")[0];
 
   @Override
   public final <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
