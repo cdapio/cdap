@@ -1113,6 +1113,7 @@ public final class Constants {
       public static final String DEPENDENCY = "edep";
       public static final String ERROR_CODE_TYPE = "ecdtpe";
       public static final String ERROR_CODE = "ecd";
+      public static final String FROM_PLUGIN="frmplg";
     }
 
     /**
