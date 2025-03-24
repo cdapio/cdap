@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -68,7 +69,7 @@ public class GcpMetadataHttpHandlerInternalTest {
 
     RemoteClientFactory remoteClientFactory = Mockito.mock(RemoteClientFactory.class);
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test",
-        new NoOpMetricsCollectionService(), auditLogContexts -> {})
+        new NoOpMetricsCollectionService(), auditLogContexts -> {}, new NoOpAeadCipher())
         .setHttpHandlers(
             new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory,
                 new NoOpRemoteAuthenticator())

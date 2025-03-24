@@ -28,12 +28,17 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Credential.CredentialType;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -55,6 +60,8 @@ import java.util.function.Predicate;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for executing a {@link RunnableTaskRequest} on a remote worker.
@@ -74,17 +81,20 @@ public class RemoteTaskExecutor {
   private final RetryStrategy retryStrategy;
   private final Predicate<Throwable> retryablePredicate;
   private final MetricsCollectionService metricsCollectionService;
+  private final AeadCipher userEncryptionAeadCipher;
   private final String workerUrl;
+  private final boolean isWorkerEncryptionRequired;
+  private final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-      RemoteClientFactory remoteClientFactory, Type workerType) {
+      RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
     this(cConf, metricsCollectionService, remoteClientFactory, workerType,
-        new DefaultHttpRequestConfig(false));
+        new DefaultHttpRequestConfig(false), aeadCipher);
   }
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType,
-      HttpRequestConfig httpRequestConfig) {
+      HttpRequestConfig httpRequestConfig, AeadCipher aeadCipher) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
     String serviceName = workerType == Type.TASK_WORKER
         ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
@@ -92,16 +102,19 @@ public class RemoteTaskExecutor {
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
     this.metricsCollectionService = metricsCollectionService;
+    this.userEncryptionAeadCipher = aeadCipher;
     if (workerType == Type.TASK_WORKER) {
       this.workerUrl = TASK_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.TASK_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
+      this.isWorkerEncryptionRequired = true;
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.SYSTEM_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_SYSTEM_WORKER;
+      this.isWorkerEncryptionRequired = false;
     }
   }
 
@@ -127,6 +140,15 @@ public class RemoteTaskExecutor {
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
+          }
+          if (isWorkerEncryptionRequired) {
+            LOG.error("Encrypting user creds with task worker associated data");
+            Credential currentCredential = SecurityRequestContext.getUserCredential();
+            String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
+                Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+            Credential encryptedCredential = new Credential(encryptedValue, CredentialType.EXTERNAL_ENCRYPTED);
+            SecurityRequestContext.setUserCredential(encryptedCredential);
+            LOG.error("Done with encryption");
           }
           HttpRequest httpRequest = requestBuilder.build();
 

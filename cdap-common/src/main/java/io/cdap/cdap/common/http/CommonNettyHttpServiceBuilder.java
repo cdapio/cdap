@@ -22,6 +22,7 @@ import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.http.ChannelPipelineModifier;
@@ -45,11 +46,12 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier additionalModifier;
 
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-      MetricsCollectionService metricsCollectionService, AuditLogWriter auditLogWriter) {
+      MetricsCollectionService metricsCollectionService, boolean taskWorkerDecryptionEnabled,
+      AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-      boolean auditLoggingEnabled = Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider) ;
+      boolean auditLoggingEnabled = Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider);
 
       pipelineModifier = new ChannelPipelineModifier() {
         @Override
@@ -61,7 +63,8 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, auditLogWriter));
+                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, taskWorkerDecryptionEnabled
+                                 auditLogWriter, userEncryptionAeadCipher));
         }
       };
     }

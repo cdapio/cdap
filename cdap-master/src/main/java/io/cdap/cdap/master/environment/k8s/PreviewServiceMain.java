@@ -34,6 +34,7 @@ import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -111,6 +112,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new MetadataServiceModule(),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
+        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

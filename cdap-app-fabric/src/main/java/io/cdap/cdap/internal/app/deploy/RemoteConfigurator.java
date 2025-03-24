@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -29,6 +30,8 @@ import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -58,7 +61,8 @@ public class RemoteConfigurator implements Configurator {
   @Inject
   public RemoteConfigurator(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       @Assisted AppDeploymentInfo deploymentInfo,
-      RemoteClientFactory remoteClientFactory) {
+      RemoteClientFactory remoteClientFactory,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     this.deploymentInfo = deploymentInfo;
     int connectTimeout = cConf.getInt(
         Constants.TaskWorker.CONFIGURATOR_HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
@@ -66,7 +70,7 @@ public class RemoteConfigurator implements Configurator {
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
         remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig);
+        RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig, userEncryptionAeadCipher);
   }
 
   @Override

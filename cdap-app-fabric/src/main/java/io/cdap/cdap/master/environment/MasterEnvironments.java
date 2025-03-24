@@ -22,6 +22,7 @@ import com.google.inject.Injector;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -88,6 +89,7 @@ public final class MasterEnvironments {
     Injector injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new DFSLocationModule(),
+        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

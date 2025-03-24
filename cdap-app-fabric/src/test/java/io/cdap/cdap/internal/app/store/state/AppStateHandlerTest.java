@@ -24,6 +24,7 @@ import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -111,7 +112,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
   public void setUp() throws Exception {
     NettyHttpService service = new CommonNettyHttpServiceBuilder(CConfiguration.create(), getClass().getSimpleName(),
                                                                  new NoOpMetricsCollectionService(),
-                                                                 auditLogContexts -> {})
+                                                                 auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(new AppStateHandler(applicationLifecycleService, namespaceAdmin))
       .build();
     service.start();

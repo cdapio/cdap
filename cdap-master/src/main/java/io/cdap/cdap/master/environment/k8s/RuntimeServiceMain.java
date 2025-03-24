@@ -26,6 +26,7 @@ import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.InternalRouter;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -66,7 +67,8 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         getDataFabricModule(),
         new RuntimeServerModule(),
-        new AuthorizationEnforcementModule().getDistributedModules()
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new UserCredentialAeadEncryptionModule()
     );
   }
 

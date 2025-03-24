@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.service;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metadata.MetadataReader;
@@ -32,6 +33,8 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -91,6 +94,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private final AppStateStoreProvider appStateStoreProvider;
   private final SConfiguration sConf;
+  private final AeadCipher userEncryptionAeadCipher;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf,
@@ -106,7 +110,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
       ContextAccessEnforcer contextAccessEnforcer,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      AppStateStoreProvider appStateStoreProvider, SConfiguration sConf) {
+      AppStateStoreProvider appStateStoreProvider, SConfiguration sConf,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -129,6 +134,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.appStateStoreProvider = appStateStoreProvider;
     this.sConf = sConf;
+    this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
 
   @Override
@@ -180,7 +186,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
           metadataPublisher, namespaceQueryAdmin, pluginFinder,
           fieldLineageWriter, transactionRunner, preferencesFetcher,
           remoteClientFactory, contextAccessEnforcer,
-          commonNettyHttpServiceFactory, appStateStoreProvider, sConf);
+          commonNettyHttpServiceFactory, appStateStoreProvider, sConf,
+          userEncryptionAeadCipher);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),

@@ -26,6 +26,8 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -72,6 +74,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
   private static final MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
+  private static final AeadCipher aeadCipher = new NoOpAeadCipher();
 
   private SystemWorkerService systemWorkerService;
 
@@ -105,7 +108,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     SystemWorkerService service = new SystemWorkerService(cConf, sConf,
         discoveryService, metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}),
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
         injector.getInstance(TokenManager.class), new NoopTwillRunnerService(),
         new NoopTwillRunnerService(),
         getInjector().getInstance(ProvisioningService.class),

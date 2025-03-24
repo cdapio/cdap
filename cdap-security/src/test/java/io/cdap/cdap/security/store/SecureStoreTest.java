@@ -27,6 +27,7 @@ import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -107,7 +108,8 @@ public class SecureStoreTest {
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
     httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore",
-                                                   new NoOpMetricsCollectionService(), auditLogContexts -> {})
+                                                   new NoOpMetricsCollectionService(), auditLogContexts -> {},
+                                                    injector.getInstance(AeadCipher.class))
       .setHttpHandlers(Collections.singleton(injector.getInstance(SecureStoreHandler.class)))
       .build();
     httpServer.start();

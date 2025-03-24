@@ -26,11 +26,16 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -68,6 +73,7 @@ public class TaskWorkerServiceTest {
 
   private static final Gson GSON = new Gson();
   private static final MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
+  private static final AeadCipher aeadCipher = new NoOpAeadCipher();
 
   private TaskWorkerService taskWorkerService;
   private CompletableFuture<Service.State> serviceCompletionFuture;
@@ -96,7 +102,8 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -123,7 +130,8 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -144,7 +152,8 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -187,7 +196,8 @@ public class TaskWorkerServiceTest {
             discoveryService,
             discoveryService,
             metricsCollectionService,
-            new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+            new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+            new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -232,7 +242,8 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(
         cConf, sConf, discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
@@ -361,7 +372,8 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
         createSConf(), discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     taskWorkerService.startAndWait();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
@@ -422,7 +434,8 @@ public class TaskWorkerServiceTest {
     TaskWorkerService taskWorkerService = new TaskWorkerService(cConf,
         createSConf(), discoveryService, discoveryService,
         metricsCollectionService,
-        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher),
+        new RemoteClientFactory(discoveryService, new DefaultInternalAuthenticator(new AuthenticationTestContext())));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     taskWorkerService.startAndWait();

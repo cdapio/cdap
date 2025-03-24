@@ -47,6 +47,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -320,6 +321,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getStandaloneModules(),
         new MessagingServerRuntimeModule().getInMemoryModules(),
+        new UserCredentialAeadEncryptionModule(),
         Modules.override(new MetadataReaderWriterModules().getInMemoryModules())
             .with(new AbstractModule() {
               @Override

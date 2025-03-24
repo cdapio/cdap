@@ -32,6 +32,7 @@ import com.google.inject.name.Names;
 import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -88,6 +89,7 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         new DataSetsModules().getStandaloneModules(),
         new LocalLocationModule(),
+        new UserCredentialAeadEncryptionModule(),
         new PrivateModule() {
           @Override
           protected void configure() {

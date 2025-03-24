@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,6 +30,7 @@ import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -43,6 +45,7 @@ import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -93,6 +96,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final String metadataServiceEndpoint;
   private final MetricsCollectionService metricsCollectionService;
   private final CConfiguration cConf;
+  private final RemoteClientFactory remoteClientFactory;
 
   /**
    * If true, pod will restart once an operation finish its execution.
@@ -106,13 +110,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService, RemoteClientFactory remoteClientFactory) {
     this.cConf = cConf;
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
         discoveryService, discoveryServiceClient, metricsCollectionService);
     this.metricsCollectionService = metricsCollectionService;
+    this.remoteClientFactory = remoteClientFactory;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
@@ -208,6 +213,30 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
+    LOG.error("Reached task worker run execution");
+    RemoteClient remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
+        RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
+        Constants.Gateway.INTERNAL_API_VERSION_3);
+
+    try {
+      HttpRequest.Builder requestBuilder =
+          remoteClient.requestBuilder(HttpMethod.PUT, "/namespaces/default/apps/test/states/test")
+              .withBody(ByteBuffer.wrap("true".getBytes(StandardCharsets.UTF_8)));
+      HttpResponse httpResponse = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
+      int responseCode = httpResponse.getResponseCode();
+      String responseBody = httpResponse.getResponseBodyAsString();
+      String responseMessage = httpResponse.getResponseMessage();
+      LOG.error("Received response code {} ", responseCode);
+      LOG.error("Received response body {} ", responseBody);
+      LOG.error("Received response message {} ", responseMessage);
+
+    } catch (Exception e) {
+      LOG.error("Received exception during http call: {}", e);
+      LOG.error("Stack trace: {}", e.getStackTrace());
+      LOG.error("Message: {}", e.getMessage());
+      LOG.error("Cause: {}", e.getCause());
+    }
+
     if (mustRestart.get()) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
@@ -46,12 +47,13 @@ public class AuthenticationChannelHandlerTest {
   private DefaultHttpRequest req;
   private AuthenticationChannelHandler handler;
   private ChannelHandlerContext ctx;
-
+  private AeadCipher userEncryptionAeadCipher;
 
   @Before
   public void initHandler() {
     boolean internalAuthEnabled = true;
-    handler = new AuthenticationChannelHandler(internalAuthEnabled, false, null);
+    userEncryptionAeadCipher = mock(AeadCipher.class);
+    handler = new AuthenticationChannelHandler(internalAuthEnabled, false, false, null, userEncryptionAeadCipher);
     ctx = mock(ChannelHandlerContext.class, RETURNS_DEEP_STUBS);
     req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "foo");
   }
@@ -117,7 +119,7 @@ public class AuthenticationChannelHandlerTest {
       .headers()
       .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, userEncryptionAeadCipher);
 
     //The ACH.channelRead.fireChannelRead , will trigger NamespaceHttpHandler and AuditLogSetterHook
     // So set AuditLogQueue and MetaData in SRC to simulate that.
@@ -177,7 +179,7 @@ public class AuthenticationChannelHandlerTest {
       .headers()
       .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, userEncryptionAeadCipher);
 
     //The ACH.channelRead.fireChannelRead , will trigger artifactHttpHandler and NOT AuditLogSetterHook
     // So set AuditLogQueue in SRC to simulate that.
@@ -236,7 +238,7 @@ public class AuthenticationChannelHandlerTest {
     Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
                    .get()).thenReturn(getAuditLogRequestBuilder());
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, userEncryptionAeadCipher);
     handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
@@ -251,7 +253,7 @@ public class AuthenticationChannelHandlerTest {
     Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
                    .get()).thenReturn(getAuditLogRequestBuilder());
     AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, userEncryptionAeadCipher);
     handler.close(ctx, new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());

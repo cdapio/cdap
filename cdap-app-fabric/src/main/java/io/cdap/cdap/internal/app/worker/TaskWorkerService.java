@@ -28,6 +28,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.ChannelPipelineModifier;
@@ -60,7 +61,8 @@ public class TaskWorkerService extends AbstractIdleService {
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
       MetricsCollectionService metricsCollectionService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      RemoteClientFactory remoteClientFactory) {
     this.discoveryService = discoveryService;
 
     // set workdir location in cConf
@@ -85,7 +87,7 @@ public class TaskWorkerService extends AbstractIdleService {
         })
         .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
             discoveryServiceClient, this::stopService,
-            metricsCollectionService));
+            metricsCollectionService, remoteClientFactory));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
