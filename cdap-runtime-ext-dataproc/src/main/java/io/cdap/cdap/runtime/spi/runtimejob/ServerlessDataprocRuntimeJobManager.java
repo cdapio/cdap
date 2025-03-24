@@ -415,8 +415,9 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
 //      .setPeripheralsConfig(peripheralsConfig)
       .build();
 
+
     RuntimeConfig runtimeConfig = RuntimeConfig.newBuilder()
-      .setVersion("1.1")
+      .setVersion(provisionerProperties.getOrDefault("runtimeversion", "1.1.50"))
       .putAllProperties(getProperties(runtimeJobInfo)).build();
 
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
