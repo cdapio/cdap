@@ -236,6 +236,8 @@ public class ErrorLogsClassifier {
     if (!Strings.isNullOrEmpty(response.getErrorCode())) {
       tags.put(Metrics.Tag.ERROR_CODE, response.getErrorCode());
     }
+    tags.put(Metrics.Tag.FROM_PLUGIN,
+        String.valueOf(!Strings.isNullOrEmpty(response.getStageName())));
     return tags.build();
   }
 
