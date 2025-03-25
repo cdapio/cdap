@@ -82,8 +82,9 @@ public class SparkPreparer extends AbstractSparkPreparer {
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
-
-    File configFile = File.createTempFile("HydratorSpark", ".config");
+    // Issue : NoSuchFileException HydratorSpark.config
+//    File configFile = File.createTempFile("HydratorSpark", ".config");
+    File configFile = new File("/tmp/HydratorSpark.config");
     if (!configFile.getParentFile().exists()) {
       configFile.getParentFile().mkdirs();
     }
