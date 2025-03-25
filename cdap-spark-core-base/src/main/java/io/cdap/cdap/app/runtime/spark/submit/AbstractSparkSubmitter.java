@@ -246,6 +246,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     configs.putAll(generateSubmitConf(configs));
+    // TODO : Error : for distributed spark : $destFile exists and does not match contents
+    configs.put("spark.files","");
+    configs.put("spark.jars","");
+    configs.put("spark.repl.local.jars","");
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
 
