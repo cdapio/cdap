@@ -250,6 +250,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     configs.put("spark.files","");
     configs.put("spark.jars","");
     configs.put("spark.repl.local.jars","");
+    // TODO : Error : DataprocMetricsListener is not a subclass of org.apache.spark.scheduler.SparkListenerInterface
+    configs.put("spark.dataproc.listeners","");
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
 
