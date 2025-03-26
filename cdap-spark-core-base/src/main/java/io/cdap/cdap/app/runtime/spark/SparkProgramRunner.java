@@ -39,6 +39,7 @@ import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.MasterEnvironmentSparkSubmitter;
+import io.cdap.cdap.app.runtime.spark.submit.ServerlessDataprocSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -220,7 +221,12 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       SparkSubmitter submitter;
       // If MasterEnvironment is not available, use non-master env spark submitters
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (masterEnv != null && cConf.getBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, true)) {
+      //TODO : figure out that this is serverless
+      if (true) {
+        String schedulerQueue = options.getArguments().getOption(AppFabric.APP_SCHEDULER_QUEUE);
+        submitter = new ServerlessDataprocSubmitter(hConf, locationFactory, host, runtimeContext,
+                                                    schedulerQueue, LaunchMode.CLIENT);
+      } else if (masterEnv != null && cConf.getBoolean(Constants.Environment.PROGRAM_SUBMISSION_MASTER_ENV_ENABLED, true)) {
         submitter = new MasterEnvironmentSparkSubmitter(cConf, locationFactory, host, runtimeContext,
                                                         masterEnv, options);
       } else {

@@ -45,8 +45,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -57,8 +55,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkSubmitter.class);
 
   // Transforms LocalizeResource to URI string
-  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = input ->
-    input.getURI().toString().split("#")[0];
+  private static final Function<LocalizeResource, String> RESOURCE_TO_PATH = input -> input.getURI().toString();
 
   @Override
   public final <V> SparkJobFuture<V> submit(SparkRuntimeContext runtimeContext,
@@ -187,6 +184,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     return true;
   }
 
+  protected Function<LocalizeResource, String> getLocalizeResourceToURIFunc() {
+    return RESOURCE_TO_PATH;
+  }
+
   /**
    * Submits the Spark job using {@link SparkSubmit}.
    *
@@ -208,21 +209,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
-  private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
-  protected void addMasterPOC(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
-    // Use at least two threads for Spark Streaming
-    String masterArg = "local[2]";
 
-    String master = configs.get("spark.master");
-    if (master != null) {
-      Matcher matcher = LOCAL_MASTER_PATTERN.matcher(master);
-      if (matcher.matches()) {
-        masterArg = "local[" + matcher.group(1) + "]";
-      }
-    }
-
-    argBuilder.add("--master").add(masterArg);
-  }
   /**
    * Creates the list of arguments that will be used for calling {@link SparkSubmit#main(String[])}.
    *
@@ -241,22 +228,16 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     Iterable<LocalizeResource> archivesIterable = getArchives(resources);
     Iterable<LocalizeResource> filesIterable = getFiles(resources);
 
-//    addMaster(configs, builder);
-    addMasterPOC(configs, builder);
+    addMaster(configs, builder);
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     configs.putAll(generateSubmitConf(configs));
-    // TODO : Error : for distributed spark : $destFile exists and does not match contents
-    configs.put("spark.files","");
-    configs.put("spark.jars","");
-    configs.put("spark.repl.local.jars","");
-    // TODO : Error : DataprocMetricsListener is not a subclass of org.apache.spark.scheduler.SparkListenerInterface
-    configs.put("spark.dataproc.listeners","");
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
 
-    String archives = Joiner.on(',').join(Iterables.transform(archivesIterable, RESOURCE_TO_PATH));
-    String files = Joiner.on(',').join(Iterables.transform(filesIterable, RESOURCE_TO_PATH));
+    String archives = Joiner.on(',').join(Iterables.transform(archivesIterable,
+                                                              getLocalizeResourceToURIFunc()));
+    String files = Joiner.on(',').join(Iterables.transform(filesIterable, getLocalizeResourceToURIFunc()));
 
     if (!Strings.isNullOrEmpty(archives)) {
       builder.add("--archives").add(archives);
