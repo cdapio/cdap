@@ -30,6 +30,7 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.internal.app.runtime.AppStateStoreProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactManager;
@@ -71,6 +72,8 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     install(new AppStateModule());
     expose(AppStateStoreProvider.class);
+
+    install(new UserCredentialAeadEncryptionModule());
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =

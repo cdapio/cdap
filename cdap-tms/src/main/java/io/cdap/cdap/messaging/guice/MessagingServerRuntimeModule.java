@@ -108,6 +108,9 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
+
+      install(new UserCredentialAeadEncryptionModule());
+
       // No caching in local mode
       bind(MessageTableCacheProvider.class).toInstance(new MessageTableCacheProvider() {
         @Nullable
