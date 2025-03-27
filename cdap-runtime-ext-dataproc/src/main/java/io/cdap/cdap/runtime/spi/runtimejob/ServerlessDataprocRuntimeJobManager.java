@@ -67,6 +67,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
   private volatile BatchControllerClient batchControllerClient;
   private final GoogleCredentials credentials;
   private final String endpoint;
+  private final String imageVersion;
 
 
   /**
@@ -79,7 +80,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
    */
   public ServerlessDataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
                                              Map<String, String> provisionerProperties,
-                                             VersionInfo cdapVersionInfo) {
+                                             VersionInfo cdapVersionInfo, String imageVersion) {
 
     super(clusterInfo, provisionerProperties, cdapVersionInfo);
     this.provisionerContext = clusterInfo.getProvisionerContext();
@@ -91,6 +92,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
     this.labels = clusterInfo.getLabels();
     this.credentials = clusterInfo.getCredentials();
     this.endpoint = clusterInfo.getEndpoint();
+    this.imageVersion = imageVersion;
   }
 
   @Override
@@ -132,12 +134,14 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
                                   cdapVersionInfo.getFix());
     }
 
-    LaunchMode launchMode = LaunchMode.valueOf(
-      provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
+    //Serverless needs to be in Client mode to make workflow run on master.
+    LaunchMode launchMode = LaunchMode.CLIENT;
+
     DataprocMetric.Builder submitJobMetric =
       DataprocMetric.builder("provisioner.submitJob.response.count")
         .setRegion(region)
         .setLaunchMode(launchMode);
+
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
@@ -338,8 +342,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
                                       List<LocalFile> localFiles) {
     String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
 
-    LaunchMode launchMode = LaunchMode.valueOf(
-      provisionerProperties.getOrDefault("launchMode", LaunchMode.CLIENT.name()).toUpperCase());
+    LaunchMode launchMode = LaunchMode.CLIENT;
 
     SparkBatch.Builder sparkBatchBuilder =
       SparkBatch.newBuilder()
@@ -395,10 +398,9 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
 
     // TODO : HARDCODED PROPS : Need to define flow for this
 
-
     ExecutionConfig executionConfig = ExecutionConfig.newBuilder()
-      .setNetworkUri("default")
-      .setSubnetworkUri("pga-subnet")
+      .setNetworkUri(provisionerContext.getProperties().getOrDefault("network", "default"))
+      .setSubnetworkUri(provisionerContext.getProperties().getOrDefault("subnet", ""))
       .build();
 
     //TODO : To make this an advanced option via UI
@@ -417,7 +419,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
 
 
     RuntimeConfig runtimeConfig = RuntimeConfig.newBuilder()
-      .setVersion(provisionerProperties.getOrDefault("runtimeversion", "1.1.50"))
+      .setVersion(imageVersion)
       .putAllProperties(getProperties(runtimeJobInfo)).build();
 
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();

@@ -138,9 +138,18 @@ public class ServerlessDataprocProvisioner extends AbstractDataprocProvisioner {
           new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
                                   getRootUrl(conf), projectId,
                                   region, bucket, getCommonDataprocLabels(context)),
-          Collections.unmodifiableMap(properties), context.getCDAPVersionInfo()));
+          Collections.unmodifiableMap(properties), context.getCDAPVersionInfo(), getImageVersion(conf)));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
+  }
+
+  String getImageVersion(DataprocConf conf) {
+    String imageVersion = conf.getImageVersion();
+    if (imageVersion == null) {
+      imageVersion = "1.1";
+    }
+    LOG.warn("Going for Serverless version : " + imageVersion);
+    return imageVersion;
   }
 }
