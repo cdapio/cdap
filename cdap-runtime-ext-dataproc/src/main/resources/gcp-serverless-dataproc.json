@@ -149,6 +149,15 @@
           "widget-attributes": {
             "size": "medium"
           }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Image Version",
+          "name": "imageVersion",
+          "description": "The Dataproc serverless image version.",
+          "widget-attributes": {
+            "size": "medium"
+          }
         }
       ]
     }
