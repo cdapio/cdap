@@ -86,7 +86,7 @@ public class RemoteClientAuthenticatorTest {
 
     // Setup test HTTP handler and register the service.
     testHttpHandler = new TestHttpHandler();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService(),
+    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService(), true,
                                                     auditLogContexts -> {}, aeadCipher)
       .setHttpHandlers(testHttpHandler).build();
     httpService.start();

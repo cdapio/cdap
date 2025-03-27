@@ -71,7 +71,7 @@ public class RemoteTaskExecutorTest {
     mockAeadCipher = createMockAeadCipher();
     remoteClientFactory = new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator());
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(),
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), true,
                                                     auditLogContexts -> {}, mockAeadCipher)
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {

@@ -108,7 +108,7 @@ public class SecureStoreTest {
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
     httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore",
-                                                   new NoOpMetricsCollectionService(), auditLogContexts -> {},
+                                                   new NoOpMetricsCollectionService(), true, auditLogContexts -> {},
                                                     injector.getInstance(AeadCipher.class))
       .setHttpHandlers(Collections.singleton(injector.getInstance(SecureStoreHandler.class)))
       .build();

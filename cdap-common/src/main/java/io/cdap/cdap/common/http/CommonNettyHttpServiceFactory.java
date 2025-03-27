@@ -52,8 +52,11 @@ public class CommonNettyHttpServiceFactory {
    * @param serviceName Name of the service passed to {@link CommonNettyHttpServiceBuilder}
    * @return {@link CommonNettyHttpServiceBuilder}
    */
+  public CommonNettyHttpServiceBuilder builder(String serviceName) {
+    return builder(serviceName, true);
+  }
+
   public CommonNettyHttpServiceBuilder builder(String serviceName, boolean taskWorkerDecryptionEnabled) {
-    return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService,
-        taskWorkerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher);
+    return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService, taskWorkerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher);
   }
 }

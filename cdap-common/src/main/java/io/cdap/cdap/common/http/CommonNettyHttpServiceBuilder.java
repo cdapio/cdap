@@ -23,6 +23,7 @@ import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.EncryptionExemptionHook;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.http.ChannelPipelineModifier;
@@ -63,7 +64,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, taskWorkerDecryptionEnabled
+                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, taskWorkerDecryptionEnabled,
                                  auditLogWriter, userEncryptionAeadCipher));
         }
       };
@@ -71,7 +72,8 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
     this.setExceptionHandler(new HttpExceptionHandler());
     this.setHandlerHooks(Collections.unmodifiableList(
       Arrays.asList(new MetricsReporterHook(cConf, metricsCollectionService, serviceName),
-                    new AuditLogSetterHook(cConf, serviceName))));
+                    new AuditLogSetterHook(cConf, serviceName),
+                    new EncryptionExemptionHook(cConf, serviceName))));
   }
 
   /**

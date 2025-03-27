@@ -213,7 +213,8 @@ public class TetheringServerHandlerTest {
         new CommonNettyHttpServiceBuilder(
                 CConfiguration.create(),
                 getClass().getSimpleName(),
-                new NoOpMetricsCollectionService(), auditLogContexts -> {},
+                new NoOpMetricsCollectionService(), true,
+                auditLogContexts -> {},
                 new NoOpAeadCipher())
             .setHttpHandlers(
                 new TetheringServerHandler(

@@ -85,7 +85,7 @@ public class AuthorizationHandlerTest {
     final InMemoryPermissionManager auth = new InMemoryPermissionManager();
     final InMemoryRoleController inMemoryRoleController = new InMemoryRoleController();
     //    auth.initialize(FACTORY.create(properties)); //Will be used on migration to SPI implementation
-    service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName(), new NoOpMetricsCollectionService(),
+    service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName(), new NoOpMetricsCollectionService(), true,
                                                 auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(new AuthorizationHandler(auth, conf, new MasterAuthenticationContext(), inMemoryRoleController))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
@@ -136,6 +136,7 @@ public class AuthorizationHandlerTest {
     final InMemoryRoleController inMemoryRoleController = new InMemoryRoleController();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName(),
                                                                  new NoOpMetricsCollectionService(),
+                                                                 true,
                                                                  auditLogContexts -> {},
                                                                   new NoOpAeadCipher())
       .setHttpHandlers(new AuthorizationHandler(

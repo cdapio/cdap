@@ -69,7 +69,7 @@ public class GcpMetadataHttpHandlerInternalTest {
 
     RemoteClientFactory remoteClientFactory = Mockito.mock(RemoteClientFactory.class);
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test",
-        new NoOpMetricsCollectionService(), auditLogContexts -> {}, new NoOpAeadCipher())
+        new NoOpMetricsCollectionService(), true, auditLogContexts -> {}, new NoOpAeadCipher())
         .setHttpHandlers(
             new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory,
                 new NoOpRemoteAuthenticator())

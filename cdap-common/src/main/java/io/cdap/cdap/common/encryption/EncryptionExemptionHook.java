@@ -1,0 +1,50 @@
+/*
+ * Copyright © 2024 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.common.encryption;
+
+import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.http.AbstractHandlerHook;
+import io.cdap.http.HttpResponder;
+import io.cdap.http.internal.HandlerInfo;
+import io.netty.handler.codec.http.HttpRequest;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Sets encryption exception metadata to {@link SecurityRequestContext}
+ */
+public class EncryptionExemptionHook extends AbstractHandlerHook {
+  private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
+  private final String serviceName;
+
+  private static final List<String> listExemptedUri = ImmutableList.of();
+
+  public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
+    this.serviceName = serviceName;
+  }
+
+  @Override
+  public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+    LOG.error("Reached in encryption exemption precall for request {}", request);
+    LOG.error("Reached in encryption exemption precall for handler {}", handlerInfo);
+    LOG.error("Reached in encryption exemption precall for URI {}", request.uri());
+    return true;
+  }
+}
