@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManager {
@@ -280,8 +281,18 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
 
 
   private ProgramRunInfo getProgramRunInfo(Batch batch) {
-    Map<String, String> jobProperties = batch.getRuntimeConfig().getPropertiesMap();
+    Map<String, String> jobPropertiesPrefixed = batch.getRuntimeConfig().getPropertiesMap();
+    String prefix = "spark:";
+    Map<String, String> jobProperties = jobPropertiesPrefixed.entrySet().stream()
+      .collect(Collectors.toMap(
+        entry -> {
+          String key = entry.getKey();
+          return  key.startsWith(prefix) ? key.substring(prefix.length()) :  key;
+        },
+        Map.Entry::getValue
+      ));
 
+    //Returns the Map with key prefixed with `spark:`
     ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder()
       .setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE))
       .setApplication(jobProperties.get(CDAP_RUNTIME_APPLICATION))
