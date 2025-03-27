@@ -13,3 +13,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+[submodule "cdap-ui"]
+	path = cdap-ui
+	url = https://github.com/cdapio/cdap-ui.git
+  branch = develop
+
