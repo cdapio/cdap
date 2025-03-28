@@ -361,6 +361,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       @Nullable @QueryParam("entityScope") String entityScope,
       @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
       throws Exception {
+
     SearchRequest searchRequest = getValidatedSearchRequest(scope, namespaces, searchQuery, targets,
         sort,
         offset, limit, numCursors, cursorRequested, cursor,
