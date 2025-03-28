@@ -112,7 +112,6 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new MetadataServiceModule(),
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
-        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
