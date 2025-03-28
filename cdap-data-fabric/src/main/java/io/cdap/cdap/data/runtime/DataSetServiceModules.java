@@ -111,6 +111,7 @@ public class DataSetServiceModules extends RuntimeModule {
       protected void configure() {
         // Add the system dataset runtime module as public binding so that adding bindings could be added
         install(new SystemDatasetRuntimeModule().getStandaloneModules());
+        install(new UserCredentialAeadEncryptionModule());
         install(new PrivateModule() {
           @Override
           protected void configure() {

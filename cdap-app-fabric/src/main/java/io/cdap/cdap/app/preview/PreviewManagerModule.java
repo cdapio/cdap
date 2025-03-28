@@ -23,6 +23,7 @@ import com.google.inject.name.Names;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.MessagingSystem;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -60,6 +61,8 @@ public class PreviewManagerModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    install(new UserCredentialAeadEncryptionModule());
+
     bind(DatasetDefinitionRegistryFactory.class)
         .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
