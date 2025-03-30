@@ -34,6 +34,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
@@ -177,6 +178,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
         RemoteAuthenticatorModules.getDefaultModule(),
         new CoreSecurityRuntimeModule().getInMemoryModules(),
         new AuditLogWriterModule(previewCConf).getInMemoryModules(),
+        new UserCredentialAeadEncryptionModule(),
         new AuthenticationContextModules().getMasterWorkerModule(),
         new PreviewSecureStoreModule(secureStore),
         new PreviewDiscoveryRuntimeModule(discoveryServiceClient),

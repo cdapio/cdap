@@ -95,7 +95,6 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
         new EntityVerifierModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
         new DFSLocationModule(),
-        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

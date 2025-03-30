@@ -73,8 +73,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     install(new AppStateModule());
     expose(AppStateStoreProvider.class);
 
-    install(new UserCredentialAeadEncryptionModule());
-
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
         MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);

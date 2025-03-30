@@ -30,7 +30,6 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.AuthorizationDatasetTypeService;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -111,7 +110,6 @@ public class DataSetServiceModules extends RuntimeModule {
       protected void configure() {
         // Add the system dataset runtime module as public binding so that adding bindings could be added
         install(new SystemDatasetRuntimeModule().getStandaloneModules());
-        install(new UserCredentialAeadEncryptionModule());
         install(new PrivateModule() {
           @Override
           protected void configure() {
@@ -161,7 +159,6 @@ public class DataSetServiceModules extends RuntimeModule {
       protected void configure() {
         // Add the system dataset runtime module as public binding so that adding bindings could be added
         install(new SystemDatasetRuntimeModule().getDistributedModules());
-        install(new UserCredentialAeadEncryptionModule());
         install(new PrivateModule() {
           @Override
           protected void configure() {

@@ -171,6 +171,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     modules.add(new IOModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new AuditLogWriterModule(cConf).getDistributedModules());
+    modules.add(new UserCredentialAeadEncryptionModule());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {

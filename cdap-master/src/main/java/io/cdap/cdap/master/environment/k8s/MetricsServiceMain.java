@@ -76,8 +76,7 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class),
         new MetricsHandlerModule(),
         new DFSLocationModule(),
-        new MetricsWriterModule(),
-        new UserCredentialAeadEncryptionModule()
+        new MetricsWriterModule()
     );
   }
 

@@ -315,13 +315,13 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             previewLevelDBTableService),
         new PreviewDataModules().getDataSetsModule(datasetFramework),
         new AuditLogWriterModule(previewCConf).getInMemoryModules(),
+        new UserCredentialAeadEncryptionModule(),
         new AuthenticationContextModules().getMasterModule(),
         new LocalLocationModule(),
         new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getStandaloneModules(),
         new MessagingServerRuntimeModule().getInMemoryModules(),
-        new UserCredentialAeadEncryptionModule(),
         Modules.override(new MetadataReaderWriterModules().getInMemoryModules())
             .with(new AbstractModule() {
               @Override

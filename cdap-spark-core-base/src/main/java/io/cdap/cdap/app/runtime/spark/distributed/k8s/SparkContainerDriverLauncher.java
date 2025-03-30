@@ -35,6 +35,7 @@ import io.cdap.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import io.cdap.cdap.app.runtime.spark.service.ArtifactFetcherService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
@@ -263,6 +264,7 @@ public class SparkContainerDriverLauncher {
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     //Need for guice binding, but No Audit Log action required.
     modules.add(new NoOpAuditLogModule());
+    modules.add(new UserCredentialAeadEncryptionModule());
 
     modules.add(new AbstractModule() {
       @Override

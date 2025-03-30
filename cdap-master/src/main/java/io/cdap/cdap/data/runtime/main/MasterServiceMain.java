@@ -542,6 +542,7 @@ public class MasterServiceMain extends DaemonMain {
         new DefaultMessagingClientModule(),
         new AuditModule(),
         new AuditLogWriterModule(cConf).getDistributedModules(),
+        new UserCredentialAeadEncryptionModule(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),
@@ -555,7 +556,6 @@ public class MasterServiceMain extends DaemonMain {
         new SupportBundleServiceModule(),
         new RuntimeServerModule(),
         new OperationalStatsModule(),
-        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

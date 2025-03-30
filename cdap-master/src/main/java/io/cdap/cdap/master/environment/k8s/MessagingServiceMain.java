@@ -23,7 +23,6 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -60,8 +59,7 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
         new NamespaceQueryAdminModule(),
         new AuthorizationEnforcementModule().getDistributedModules(),
         new MessagingServerRuntimeModule().getStandaloneModules(),
-        new DFSLocationModule(),
-        new UserCredentialAeadEncryptionModule()
+        new DFSLocationModule()
     );
   }
 

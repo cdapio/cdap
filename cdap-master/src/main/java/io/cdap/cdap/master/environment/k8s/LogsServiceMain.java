@@ -89,7 +89,6 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         new DataSetsModules().getStandaloneModules(),
         new LocalLocationModule(),
-        new UserCredentialAeadEncryptionModule(),
         new PrivateModule() {
           @Override
           protected void configure() {

@@ -67,8 +67,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
         new SystemDatasetRuntimeModule().getStandaloneModules(),
         getDataFabricModule(),
         new RuntimeServerModule(),
-        new AuthorizationEnforcementModule().getDistributedModules(),
-        new UserCredentialAeadEncryptionModule()
+        new AuthorizationEnforcementModule().getDistributedModules()
     );
   }
 

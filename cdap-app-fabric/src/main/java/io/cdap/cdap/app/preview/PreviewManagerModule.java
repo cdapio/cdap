@@ -61,8 +61,6 @@ public class PreviewManagerModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    install(new UserCredentialAeadEncryptionModule());
-
     bind(DatasetDefinitionRegistryFactory.class)
         .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 

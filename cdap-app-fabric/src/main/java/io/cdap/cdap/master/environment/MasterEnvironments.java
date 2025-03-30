@@ -89,7 +89,6 @@ public final class MasterEnvironments {
     Injector injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
         new DFSLocationModule(),
-        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

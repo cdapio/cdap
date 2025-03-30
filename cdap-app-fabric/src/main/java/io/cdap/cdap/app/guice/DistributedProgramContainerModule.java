@@ -28,6 +28,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -163,6 +164,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     List<Module> modules = new ArrayList<>();
 
     modules.add(getAuditLogModules());
+    modules.add(new UserCredentialAeadEncryptionModule());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());
