@@ -46,12 +46,12 @@ public class SpannerMetadataDocument {
     private final Set<Property> props;
 
     private SpannerMetadataDocument(MetadataEntity entity, Metadata metadata,
-                                    @Nullable String namespace,
-                                    String type, String name,
-                                    @Nullable Long created,
-                                    @Nullable Long ttl,
-                                    String user, String system,
-                                    Set<Property> props) {
+                             @Nullable String namespace,
+                             String type, String name,
+                             @Nullable Long created,
+                             @Nullable Long ttl,
+                             String user, String system,
+                             Set<Property> props) {
         this.entity = entity;
         this.metadata = metadata;
         this.namespace = namespace;
@@ -215,8 +215,6 @@ public class SpannerMetadataDocument {
         private Metadata metadata = Metadata.EMPTY;
         private Long created;
         private Long ttl;
-        private static final Gson GSON = new GsonBuilder().create();
-
 
         public Builder(MetadataEntity entity) {
             this.entity = entity;
@@ -227,7 +225,6 @@ public class SpannerMetadataDocument {
             append(MetadataScope.SYSTEM, this.name);
             addProperty(new ScopedName(MetadataScope.SYSTEM, this.type), this.name);
         }
-
         public static Builder builder(MetadataEntity entity) { // ADDED THIS METHOD
             return new Builder(entity);
         }
@@ -236,30 +233,16 @@ public class SpannerMetadataDocument {
         static String parseSchema(MetadataEntity entity, String schemaStr) {
             try {
                 Schema schema = Schema.parseJson(schemaStr);
-                List<Map<String, Object>> fields = new ArrayList<>();
+                StringBuilder builder = new StringBuilder();
                 SchemaWalker.walk(schema, (field, subSchema) -> {
                     if (field != null) {
-                        Map<String, Object> fieldMap = new HashMap<>();
-                        fieldMap.put("name", field); // Use field directly as it's the field name
-                        fieldMap.put("type", (subSchema.isNullable() ? subSchema.getNonNullable() : subSchema).
-                                getType().toString().toLowerCase());
-                        fields.add(fieldMap);
+                        String type = (subSchema.isNullable() ? subSchema.getNonNullable() : subSchema).getType().
+                                toString();
+                        builder.append(field).append(' ').append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).
+                                append(type).append(' ');
                     }
                 });
-
-                // Filter out records from fields
-                List<Map<String, Object>> filteredFields = new ArrayList<>();
-                for (Map<String, Object> field : fields) {
-                    if (!"record".equalsIgnoreCase((String) field.get("type"))) {
-                        filteredFields.add(field);
-                    }
-                }
-
-                Map<String, Object> schemaJson = new HashMap<>();
-                schemaJson.put("type", "record");
-                schemaJson.put("name", "etlSchemaBody");
-                schemaJson.put("fields", filteredFields); // Use the filtered fields
-                return GSON.toJson(schemaJson);
+                return builder.toString();
             } catch (Exception e) {
                 LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text.", schemaStr, entity);
                 return schemaStr;

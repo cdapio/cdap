@@ -384,7 +384,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
             Struct row;
             Key key = Key.of(namespace, entity.getType().toLowerCase(), name.toLowerCase());
             ResultSet resultSet = transaction.read(METADATA_TABLE, KeySet.singleKey(key), Arrays.asList(NAMESPACE_FIELD,
-                    TYPE_FIELD, NAME_FIELD, PROPERTIES_FIELD, CREATED_FIELD, TAGS_FIELD, "schema"));
+                    TYPE_FIELD, NAME_FIELD, PROPERTIES_FIELD, CREATED_FIELD, "schema", TAGS_FIELD));
             if (resultSet.next()) {
                 row = resultSet.getCurrentRowAsStruct();
             } else {
@@ -392,11 +392,13 @@ public class SpannerMetadataStorage implements MetadataStorage {
             }
 
             String propsJson = row.getString(PROPERTIES_FIELD);
-            String tagsJson = row.isNull(TAGS_FIELD) ? null : row.getString(TAGS_FIELD);
             String schemaJson = row.isNull("schema") ? null : row.getString("schema");
+            String tagsJson = row.isNull(TAGS_FIELD) ? null : row.getString(TAGS_FIELD);
 
-            List<Map<String, String>> propsList = gson.fromJson(propsJson, new TypeToken<List<Map<String, String>>>() {
-            }.getType());
+            List<Map<String, String>> propsList = gson.fromJson(propsJson, new TypeToken<List<Map<String, String>>>()
+            {}.getType());
+            Map<String, List<Map<String, String>>> tagsMap = gson.fromJson(tagsJson, new TypeToken<Map<String,
+                    List<Map<String, String>>>>() {}.getType());
 
             Set<ScopedName> tags = new HashSet<>();
             Map<ScopedName, String> propertiesMap = new HashMap<>();
@@ -415,18 +417,13 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 }
             }
 
-            if (tagsJson != null) {
-                Map<String, List<Map<String, String>>> tagsMap = gson.fromJson(tagsJson, new TypeToken<Map<String,
-                        List<Map<String, String>>>>() {
-                }.getType());
-                if (tagsMap != null) {
-                    for (Map.Entry<String, List<Map<String, String>>> entry : tagsMap.entrySet()) {
-                        if (entry.getValue() != null) {
-                            for (Map<String, String> tag : entry.getValue()) {
-                                if (tag.containsKey("scope") && tag.containsKey("name")) {
-                                    MetadataScope scope = MetadataScope.valueOf(tag.get("scope").toUpperCase());
-                                    tags.add(new ScopedName(scope, tag.get("name")));
-                                }
+            if (tagsMap != null) {
+                for (Map.Entry<String, List<Map<String, String>>> entry : tagsMap.entrySet()) {
+                    if (entry.getValue() != null) {
+                        for (Map<String, String> tag : entry.getValue()) {
+                            if (tag.containsKey("scope") && tag.containsKey("name")) {
+                                MetadataScope scope = MetadataScope.valueOf(tag.get("scope").toUpperCase());
+                                tags.add(new ScopedName(scope, tag.get("name")));
                             }
                         }
                     }
@@ -455,7 +452,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 if (resultSet.next()) {
                     return rowToMetadata(resultSet.getCurrentRowAsStruct());
                 } else {
-                    return VersionedMetadata.NONE;
+                    return null;
                 }
             }
         } catch (SpannerException e) {
@@ -537,7 +534,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
             newProperties.putAll(existingPropertiesToKeep);
         }
         Metadata after = new Metadata(newTags, newProperties);
-        return new RequestandChange(writeToSpanner(create.getEntity(),after),
+        return new RequestandChange(writeToSpanner(create.getEntity(), after),
                 new MetadataChange(create.getEntity(), before.getMetadata(), after));
     }
 
@@ -622,62 +619,57 @@ public class SpannerMetadataStorage implements MetadataStorage {
         builder.set(NAME_FIELD).to(doc.getName());
 
         List<Map<String, String>> propsList = new ArrayList<>();
-        Map<String, List<Map<String, String>>> tagsMap = new HashMap<>(); // Change to Map<Scope, List<Tag>>
+        Map<String, List<Map<String, String>>> tagsMap = new HashMap<>();
         String schemaValue = null;
 
-        // Process properties and assign scopes
         for (SpannerMetadataDocument.Property prop : doc.getProps()) {
-            Map<String, String> propMap = new HashMap<>();
-            propMap.put("name", prop.getName());
-            propMap.put("value", prop.getValue());
-            propMap.put("scope", prop.getScope());
-
             if ("schema".equals(prop.getName())) {
                 schemaValue = prop.getValue();
-            } else if (prop.getScope().equals("SYSTEM") &&
-                    !prop.getName().equals("creation-time") &&
-                    !prop.getName().equals("entity-name") &&
-                    !prop.getName().equals("type")) {
-                continue; // Skip system props except for creation-time, entity-name, and type
             } else {
+                Map<String, String> propMap = new HashMap<>();
+                propMap.put("name", prop.getName());
+                propMap.put("value", prop.getValue());
+                propMap.put("scope", prop.getScope());
                 propsList.add(propMap);
             }
         }
 
-        String propsJson = gson.toJson(propsList);
-        builder.set("props").to(propsJson);
-
-        // Process tags and group by scope, filtering out cdap-data-pipeline
         if (metadata.getTags() != null) {
-            Map<String, List<ScopedName>> tagsByScope = metadata.getTags().stream()
-                    .collect(Collectors.groupingBy(tag -> tag.getScope().name()));
-
-            for (Map.Entry<String, List<ScopedName>> entry : tagsByScope.entrySet()) {
-                String scopeName = entry.getKey();
-                List<Map<String, String>> tagList = entry.getValue().stream()
-                        .filter(tag -> !(scopeName.equals("SYSTEM") && tag.getName().
-                                equals("cdap-data-pipeline")))
-                        .map(tag -> {
-                            Map<String, String> tagMap = new HashMap<>();
-                            tagMap.put("name", tag.getName());
-                            tagMap.put("scope", scopeName);
-                            return tagMap;
-                        })
-                        .collect(Collectors.toList());
-
-                if (!tagList.isEmpty()) {
-                    tagsMap.computeIfAbsent(scopeName, k -> new ArrayList<>()).addAll(tagList);
-                }
+            for (ScopedName tag : metadata.getTags()) {
+                Map<String, String> tagMap = new HashMap<>();
+                tagMap.put("name", tag.getName());
+                tagMap.put("scope", tag.getScope().name());
+                String scopeName = tag.getScope().name();
+                tagsMap.computeIfAbsent(scopeName, k -> new ArrayList<>()).add(tagMap);
             }
         }
 
+        String propsJson = gson.toJson(propsList);
         String tagsJson = gson.toJson(tagsMap);
+
+        builder.set("props").to(propsJson);
         builder.set("tags").to(tagsJson);
 
-        //add the schema value to the schema column.
-        if(schemaValue != null){
+        if (schemaValue != null) {
             builder.set("schema").to(schemaValue);
+            // Add schema as a system property
+            Map<String, String> schemaProp = new HashMap<>();
+            schemaProp.put("name", "schema");
+            schemaProp.put("value", schemaValue);
+            schemaProp.put("scope", MetadataScope.SYSTEM.name());
+            propsList.add(schemaProp);
+            builder.set("props").to(gson.toJson(propsList)); //update the props list with the new schema property.
         }
+
+        if (doc.getCreated() != null) {
+            builder.set("created").to(doc.getCreated());
+        }
+        if (doc.getTtl() != null) {
+            builder.set("ttl").to(doc.getTtl());
+        }
+        builder.set("user").to(doc.getUser());
+        builder.set("system").to(doc.getSystem());
+
         builder.set("VERSION").to(System.currentTimeMillis());
 
         return builder.build();
@@ -723,7 +715,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 for (MetadataMutation mutation : mutations) {
                     MetadataEntity entity = mutation.getEntity();
                     VersionedMetadata existingMetadata = readFromSpanner(transaction, entity);
-                    LOG.info(existingMetadata.toString());
+
                     Metadata updatedMetadata;
                     if (existingMetadata != null) {
                         RequestandChange requestAndChange = applyMutation(existingMetadata, mutation);
@@ -930,11 +922,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
                     append(entity.getValue(NAME_FIELD)).append("'");
         }
 
-        if (entity.getType() != null) {
-            queryBuilder.append(" AND ").append(TYPE_FIELD).append(" = '").
-                    append(entity.getType()).append("'");
-        }
-
         // You may add other filtering criteria based on the MetadataEntity, if needed.
         String queryString = queryBuilder.toString();
         LOG.debug("Spanner Query for MetadataEntity: {}", queryString);
@@ -943,7 +930,8 @@ public class SpannerMetadataStorage implements MetadataStorage {
     private VersionedMetadata rowToMetadata(Struct row) {
         String propsJson = row.getString("props");
         String tagsJson = row.isNull("tags") ? null : row.getString("tags");
-        String schema = row.isNull("schema") ? null : row.getString("schema"); //Added line.
+        String schemaJson = row.isNull("schema") ? null : row.getString("schema"); // Get schemaJson
+
         Type listType = new TypeToken<List<Map<String, String>>>() {}.getType();
         Type mapType = new TypeToken<Map<String, List<Map<String, String>>>>() {}.getType();
 
@@ -975,6 +963,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 }
             }
         }
+
         if (tagsMap != null) {
             for (Map.Entry<String, List<Map<String, String>>> entry : tagsMap.entrySet()) {
                 if (entry.getValue() != null) {
@@ -987,13 +976,16 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 }
             }
         }
-        if(schema != null){
-            scopedProperties.put(new ScopedName(MetadataScope.SYSTEM, "schema"), schema);
+
+        if (schemaJson != null) {
+            // Add schema as a system property
+            scopedProperties.put(new ScopedName(MetadataScope.SYSTEM, "schema"), schemaJson);
         }
 
         long version = row.getLong("VERSION");
         return VersionedMetadata.of(new Metadata(tags, scopedProperties), version);
     }
+
     private String computeCursor(List<VersionedMetadata> results, SearchRequest request, Cursor cursor) {
         if (results == null || results.isEmpty()) {
             return null;
