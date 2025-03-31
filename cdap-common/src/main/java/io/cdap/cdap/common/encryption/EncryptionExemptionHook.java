@@ -56,13 +56,13 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       Matcher matcher = uriPattern.matcher(request.uri());
       if (matcher.matches()) {
         LOG.error("Matched {} for {}", request.uri(), pattern);
-        LOG.error("Setting SRC to true");
+        LOG.error("Setting SRC to false");
         SecurityRequestContext.setTaskWorkerDecryptionRequired(false);
         return true;
       }
     }
 
-    LOG.error("Setting SRC to false");
+    LOG.error("Setting SRC to true");
     SecurityRequestContext.setTaskWorkerDecryptionRequired(true);
     return true;
   }

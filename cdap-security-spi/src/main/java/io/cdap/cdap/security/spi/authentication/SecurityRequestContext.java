@@ -227,7 +227,7 @@ public final class SecurityRequestContext {
     return auditLogRequestBuilder.get();
   }
 
-  public static void setTaskWorkerDecryptionRequired(boolean taskWorkerDecryptionRequiredParam) {
+  public static void setTaskWorkerDecryptionRequired(Boolean taskWorkerDecryptionRequiredParam) {
     taskWorkerDecryptionRequired.set(taskWorkerDecryptionRequiredParam);
   }
 
