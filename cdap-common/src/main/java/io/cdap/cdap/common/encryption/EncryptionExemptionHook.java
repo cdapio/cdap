@@ -24,6 +24,8 @@ import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +36,10 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
   private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
   private final String serviceName;
 
-  private static final List<String> listExemptedUri = ImmutableList.of();
+  private static final List<String> EXEMPTED_URIS = ImmutableList.of(
+      "/artifact/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)",
+      "/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)"
+  );
 
   public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
     this.serviceName = serviceName;
@@ -45,6 +50,18 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
     LOG.error("Reached in encryption exemption precall for request {}", request);
     LOG.error("Reached in encryption exemption precall for handler {}", handlerInfo);
     LOG.error("Reached in encryption exemption precall for URI {}", request.uri());
+
+    for (String pattern : EXEMPTED_URIS) {
+      Pattern uriPattern = Pattern.compile(pattern);
+      Matcher matcher = uriPattern.matcher(request.uri());
+      if (matcher.matches()) {
+        LOG.error("Matched {} for {}", request.uri(), pattern);
+        SecurityRequestContext.setTaskWorkerDecryptionRequired(false);
+        return true;
+      }
+    }
+
+    SecurityRequestContext.setTaskWorkerDecryptionRequired(true);
     return true;
   }
 }

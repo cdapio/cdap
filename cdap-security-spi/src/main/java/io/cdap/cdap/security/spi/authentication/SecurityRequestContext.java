@@ -42,6 +42,7 @@ public final class SecurityRequestContext {
   private static final ThreadLocal<Map<? extends EntityId, AuthorizationResponse>> entityToAuthResponseMap =
     new InheritableThreadLocal<>();
   private static final ThreadLocal<AuditLogRequest.Builder> auditLogRequestBuilder = new InheritableThreadLocal<>();
+  private static final ThreadLocal<Boolean> taskWorkerDecryptionRequired = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }
@@ -120,6 +121,7 @@ public final class SecurityRequestContext {
     auditLogContextQueue.remove();
     entityToAuthResponseMap.remove();
     auditLogRequestBuilder.remove();
+    taskWorkerDecryptionRequired.remove();
   }
 
   /**
@@ -224,5 +226,13 @@ public final class SecurityRequestContext {
   @Nullable
   public static AuditLogRequest.Builder getAuditLogRequestBuilder() {
     return auditLogRequestBuilder.get();
+  }
+
+  public static void setTaskWorkerDecryptionRequired(boolean taskWorkerDecryptionRequiredParam) {
+    taskWorkerDecryptionRequired.set(taskWorkerDecryptionRequiredParam);
+  }
+
+  public static boolean getTaskWorkerDecryptionRequired() {
+    return taskWorkerDecryptionRequired.get();
   }
 }

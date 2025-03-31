@@ -128,7 +128,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            if (taskWorkerDecryptionEnabled && isTaskWorkerEncrypted(credentialValue, credentialType)) {
+            if (taskWorkerDecryptionEnabled && SecurityRequestContext.getTaskWorkerDecryptionRequired() && isTaskWorkerEncrypted(credentialValue, credentialType)) {
               LOG.error("This call was from task worker");
               throw new UnauthenticatedException("Request denied for Task workers");
             }
