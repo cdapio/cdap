@@ -303,6 +303,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
         return false;
       }
     }
+    LOG.error("Credential type was {}", credentialType);
     return false;
   }
 }

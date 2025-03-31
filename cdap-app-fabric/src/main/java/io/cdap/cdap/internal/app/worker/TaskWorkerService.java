@@ -73,7 +73,7 @@ public class TaskWorkerService extends AbstractIdleService {
     }
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
-            Constants.Service.TASK_WORKER)
+            Constants.Service.TASK_WORKER, false)
         .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.TaskWorker.PORT))
         .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
