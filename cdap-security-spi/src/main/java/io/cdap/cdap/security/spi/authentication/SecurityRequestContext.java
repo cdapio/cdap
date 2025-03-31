@@ -231,7 +231,7 @@ public final class SecurityRequestContext {
     taskWorkerDecryptionRequired.set(taskWorkerDecryptionRequiredParam);
   }
 
-  public static boolean getTaskWorkerDecryptionRequired() {
+  public static Boolean getTaskWorkerDecryptionRequired() {
     return taskWorkerDecryptionRequired.get();
   }
 }
