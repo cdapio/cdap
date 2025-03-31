@@ -121,7 +121,6 @@ public final class SecurityRequestContext {
     auditLogContextQueue.remove();
     entityToAuthResponseMap.remove();
     auditLogRequestBuilder.remove();
-    taskWorkerDecryptionRequired.remove();
   }
 
   /**
