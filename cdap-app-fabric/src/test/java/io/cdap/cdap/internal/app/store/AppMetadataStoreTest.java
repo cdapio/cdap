@@ -1848,7 +1848,8 @@ public abstract class AppMetadataStoreTest {
     return new DefaultApplicationSpecification(
         appName, appVersion, ProjectInfo.getVersion().toString(), "desc", null, artifactId,
         Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-        ImmutableMap.of(workflowId.getProgram(), wfSpec), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+        ImmutableMap.of(workflowId.getProgram(), wfSpec), Collections.emptyMap(), Collections.emptyMap(),
+        Collections.emptyMap(),
         Collections.emptyMap());
   }
 
