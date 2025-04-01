@@ -146,7 +146,7 @@ public class RemoteTaskExecutor {
             Credential currentCredential = SecurityRequestContext.getUserCredential();
             String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
                 Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-            Credential encryptedCredential = new Credential(encryptedValue, CredentialType.EXTERNAL_ENCRYPTED);
+            Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
             SecurityRequestContext.setUserCredential(encryptedCredential);
             LOG.error("Done with encryption");
           }

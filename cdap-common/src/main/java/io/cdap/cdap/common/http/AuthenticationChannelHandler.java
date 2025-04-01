@@ -294,18 +294,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private boolean isTaskWorkerEncrypted(String credentialValue, CredentialType credentialType) {
     LOG.error("Decrypting user creds to check if task worker call");
-    if (CredentialType.EXTERNAL_ENCRYPTED.equals(credentialType)) {
-      try {
-        userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
-            Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-        LOG.error("Decryption successful, task worker call");
-        return true;
-      } catch (CipherException e) {
-        LOG.error("Decryption unsuccessful, some other call");
-        return false;
-      }
+    try {
+      userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
+          Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+      LOG.error("Decryption successful, task worker call");
+      return true;
+    } catch (CipherException e) {
+      LOG.error("Decryption unsuccessful, some other call");
+      return false;
     }
-    LOG.error("Credential type was {}", credentialType);
-    return false;
   }
 }
