@@ -38,8 +38,8 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
   private final String serviceName;
 
   private static final List<String> EXEMPTED_URIS = ImmutableList.of(
-      "/artifact/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)",
-      "/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)"
+      "/artifact/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$",
+      "/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"
   );
 
   public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
