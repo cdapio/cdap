@@ -381,7 +381,7 @@ public class AppMetadataStore {
       boolean keepScanning = true;
       while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
-        AppScanEntry scanEntry = new AppScanEntry(row);
+        AppScanEntry scanEntry = new AppScanEntry(row, getPluginDataTable());
         if (scanEntryPredicate.test(scanEntry)) {
           keepScanning = func.apply(scanEntry);
           limit--;
@@ -3112,14 +3112,16 @@ public class AppMetadataStore {
     private final ApplicationId appId;
     private final String rawAppMeta;
     private volatile ApplicationMeta appMeta;
+    private final StructuredTable pluginDataTable;
     @Nullable
     private final ChangeDetail changeDetail;
     @Nullable
     private final SourceControlMeta sourceControlMeta;
 
-    private AppScanEntry(StructuredRow row) {
+    private AppScanEntry(StructuredRow row, StructuredTable pluginDataTable) {
       this.appId = getApplicationIdFromRow(row);
       this.rawAppMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+      this.pluginDataTable = pluginDataTable;
       String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
       String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
       Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
@@ -3148,7 +3150,8 @@ public class AppMetadataStore {
         return meta;
       }
       //TODO(sidhdirenge): Deserialization needed here.
-      ApplicationMeta tempMeta = GSON.fromJson(rawAppMeta, ApplicationMeta.class);
+      Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+      ApplicationMeta tempMeta = gson.fromJson(rawAppMeta, ApplicationMeta.class);
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);
       return meta;
