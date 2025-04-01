@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.http;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
@@ -115,6 +116,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
         currentUserIp = userIp;
       }
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
+      boolean taskWorkerDecryptionHeader = Boolean.parseBoolean(request.headers().get(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR));
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
@@ -128,7 +130,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            if (taskWorkerDecryptionEnabled && SecurityRequestContext.getTaskWorkerDecryptionRequired() && isTaskWorkerEncrypted(credentialValue, credentialType)) {
+            if (taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader && isTaskWorkerEncrypted(credentialValue, credentialType)) {
               LOG.error("This call was from task worker");
               throw new UnauthenticatedException("Request denied for Task workers");
             }

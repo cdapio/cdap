@@ -18,6 +18,7 @@ package io.cdap.cdap.common.encryption;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpResponder;
@@ -56,14 +57,14 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       Matcher matcher = uriPattern.matcher(request.uri());
       if (matcher.matches()) {
         LOG.error("Matched {} for {}", request.uri(), pattern);
-        LOG.error("Setting SRC to false");
-        SecurityRequestContext.setTaskWorkerDecryptionRequired(false);
+        LOG.error("Adding header with false to request");
+        request.headers().add(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, false);
         return true;
       }
     }
 
-    LOG.error("Setting SRC to true");
-    SecurityRequestContext.setTaskWorkerDecryptionRequired(true);
+    LOG.error("Adding header with true to request");
+    request.headers().add(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, true);
     return true;
   }
 }

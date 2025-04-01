@@ -27,6 +27,11 @@ public final class HttpHeaderNames {
    */
   public static final String CDAP_REQ_TIMESTAMP_HDR = "CDAP_REQ_TIMESTAMP_HDR";
 
+  /**
+   * Store whether task worker decryption is required
+   */
+  public static final String TASK_WORKER_DECRYPTION_HDR = "TASK_WORKER_DECRYPTION_HDR";
+
   // TODO move all other custom headers used by CDAP to this class. JIRA https://cdap.atlassian.net/browse/CDAP-18799
 
   // to prevent instantiation of this class
