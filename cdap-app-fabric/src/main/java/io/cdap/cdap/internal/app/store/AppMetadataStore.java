@@ -170,6 +170,7 @@ public class AppMetadataStore {
   private StructuredTable workflowsTable;
   private StructuredTable programCountsTable;
   private StructuredTable subscriberStateTable;
+  private StructuredTable pluginDataTable;
 
   /**
    * Static method for creating an instance of {@link AppMetadataStore}.
@@ -178,8 +179,17 @@ public class AppMetadataStore {
     return new AppMetadataStore(context);
   }
 
+  public static AppMetadataStore create(StructuredTableContext context, StructuredTable pluginDataTable) {
+    return new AppMetadataStore(context, pluginDataTable);
+  }
+
   private AppMetadataStore(StructuredTableContext context) {
     this.context = context;
+  }
+
+  private AppMetadataStore(StructuredTableContext context, StructuredTable pluginDataTable) {
+    this.context = context;
+    this.pluginDataTable = pluginDataTable;
   }
 
   private StructuredTable getApplicationSpecificationTable() {
@@ -259,6 +269,17 @@ public class AppMetadataStore {
       throw new RuntimeException(e);
     }
     return subscriberStateTable;
+  }
+
+  public StructuredTable getPluginDataTable() {
+    try {
+      if (pluginDataTable == null) {
+        pluginDataTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      }
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    return pluginDataTable;
   }
 
   /**
@@ -550,6 +571,7 @@ public class AppMetadataStore {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         ApplicationId appId = getApplicationIdFromRow(row);
+        // NOTE(sidhdirenge) : Deserialization not needed here.
         String appMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
         if (appMeta == null) {
           throw new IOException("Missing application metadata for application " + appId);
@@ -734,9 +756,11 @@ public class AppMetadataStore {
   void writeApplication(String namespaceId, String appId, String versionId,
       ApplicationSpecification spec, @Nullable ChangeDetail change,
       @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest) throws IOException {
+    ApplicationMeta meta =  new ApplicationMeta(appId, spec, null, null);
+    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+    String json = gson.toJson(meta);
     writeApplicationSerialized(namespaceId, appId, versionId,
-        GSON.toJson(
-            new ApplicationMeta(appId, spec, null, null)),
+        json,
         change, sourceControlMeta, markAsLatest);
     updateApplicationEdit(namespaceId, appId);
   }
@@ -814,8 +838,11 @@ public class AppMetadataStore {
     }
     // creation time cannot be null  - will be written to app-spec but won't be added to table
     ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null);
+    pluginDataTable = getPluginDataTable();
+    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+    String json = gson.toJson(updated);
     updateApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
-        GSON.toJson(updated));
+        json);
   }
 
   /**
@@ -2816,7 +2843,11 @@ public class AppMetadataStore {
     String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
     Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
     Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
-    ApplicationMeta meta = GSON.fromJson(
+
+    //TODO(sidhdirenge):Deserialization needed here.
+    pluginDataTable = getPluginDataTable();
+    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+    ApplicationMeta meta = gson.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
         ApplicationMeta.class);
     SourceControlMeta sourceControl = GSON.fromJson(
@@ -3116,6 +3147,7 @@ public class AppMetadataStore {
       if (meta != null) {
         return meta;
       }
+      //TODO(sidhdirenge): Deserialization needed here.
       ApplicationMeta tempMeta = GSON.fromJson(rawAppMeta, ApplicationMeta.class);
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);

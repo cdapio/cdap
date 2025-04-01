@@ -18,12 +18,23 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.PluginProperties;
+import io.cdap.cdap.api.plugin.PluginPropertyField;
+import io.cdap.cdap.api.plugin.Requirements;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.ProjectInfo;
@@ -42,6 +53,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.Field;
@@ -49,6 +61,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.cdap.store.StoreDefinition.ArtifactStore;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -1506,15 +1519,88 @@ public abstract class AppMetadataStoreTest {
     runConcurrentOperation("concurrent-first-deploy-application", numThreads, () ->
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore metaStore = AppMetadataStore.create(context);
+        StructuredTable pluginDataTable = metaStore.getPluginDataTable();
+        Collection<Field<?>> fields = new ArrayList<>();
+        fields.add(Fields.stringField(ArtifactStore.PARENT_NAMESPACE_FIELD, "system"));
+        fields.add(Fields.stringField(ArtifactStore.PARENT_NAME_FIELD, "cdap-data-pipeline"));
+        fields.add(Fields.stringField(ArtifactStore.PLUGIN_TYPE_FIELD, "transform"));
+        fields.add(Fields.stringField(ArtifactStore.PLUGIN_NAME_FIELD, "Wrangler"));
+        fields.add(Fields.stringField(ArtifactStore.ARTIFACT_NAMESPACE_FIELD, artifactId.getScope().name()));
+        fields.add(Fields.stringField(ArtifactStore.ARTIFACT_NAME_FIELD, artifactId.getName()));
+        fields.add(Fields.stringField(ArtifactStore.ARTIFACT_VER_FIELD, artifactId.getVersion().getVersion()));
+        fields.add(Fields.stringField(ArtifactStore.PLUGIN_DATA_FIELD, "{\"pluginClass\":{\"type\":"
+            + "\"transform\",\"name\":\"Wrangler\",\"description\":\"Wrangler - A interactive tool "
+            + "for data cleansing and transformation.\",\"className\":\"io.cdap.wrangler.Wrangler\","
+            + "\"configFieldName\":\"config\",\"properties\":{\"schema\":{\"name\":\"schema\",\"description"
+            + "\":\"Specifies the schema that has to be output.\",\"type\":\"string\",\"required\":true,"
+            + "\"macroSupported\":true,\"macroEscapingEnabled\":false,\"children\":[]},\"preconditionSQL\""
+            + ":{\"name\":\"preconditionSQL\",\"description\":\"SQL Precondition expression specifying"
+            + " filtering before applying directives (false to filter)\",\"type\":\"string\",\"required"
+            + "\":false,\"macroSupported\":true,\"macroEscapingEnabled\":false,\"children\":[]},\"udd\":"
+            + "{\"name\":\"udd\",\"description\":\"List of User Defined Directives (UDD) that have to be loaded."
+            + "\",\"type\":\"string\",\"required\":false,\"macroSupported\":false,\"macroEscapingEnabled\":false,"
+            + "\"children\":[]},\"field\":{\"name\":\"field\",\"description\":\"Name of the input field to be "
+            + "wrangled or \\u0027*\\u0027 to wrangle all the fields.\",\"type\":\"string\",\"required\":true,"
+            + "\"macroSupported\":true,\"macroEscapingEnabled\":false,\"children\":[]},\"on-error\":{\"name\":"
+            + "\"on-error\",\"description\":\"How to handle error in record processing\",\"type\":\"string\","
+            + "\"required\":false,\"macroSupported\":true,\"macroEscapingEnabled\":false,\"children\":[]},\""
+            + "directives\":{\"name\":\"directives\",\"description\":\"Recipe for wrangling the input records\","
+            + "\"type\":\"string\",\"required\":false,\"macroSupported\":true,\"macroEscapingEnabled\":false,\""
+            + "children\":[]},\"expressionLanguage\":{\"name\":\"expressionLanguage\",\"description\":\"Toggle "
+            + "to configure precondition language between JEXL and SQL\",\"type\":\"string\",\"required\":false,"
+            + "\"macroSupported\":true,\"macroEscapingEnabled\":false,\"children\":[]},\"precondition\":{\"name\":"
+            + "\"precondition\",\"description\":\"JEXL Precondition expression specifying filtering before "
+            + "applying directives (true to filter)\",\"type\":\"string\",\"required\":false,\"macroSupported\":"
+            + "true,\"macroEscapingEnabled\":false,\"children\":[]}},\"requirements\":{\"datasetTypes\":[],\""
+            + "capabilities\":[]}},\"artifactLocationPath\":\"/cdap/namespaces/system/artifacts/wrangler-transform"
+            + "/4.11.0-SNAPSHOT.d26c4ac8-600a-4bf0-8280-0561037036d8.jar\",\"usableBy\":\""
+            + "system:cdap-data-pipeline[6.10.0,7.0.0-SNAPSHOT)\"}"));
+        pluginDataTable.upsert(fields);
+
+
         int id = idGenerator.getAndIncrement();
         ApplicationId appId = appRef.app(appName + "_version_" + id);
-        ApplicationSpecification spec = createDummyAppSpec(appId.getApplication(), appId.getVersion(), artifactId);
+        Map<String, Plugin> plugins = new HashMap<>();
+
+        PluginClass pluginClass = PluginClass.builder().setClassName("io.cdap.wrangler.Wrangler")
+            .setName("Wrangler").setCategory("").setConfigFieldName("")
+            .setRequirements(Requirements.EMPTY).setType("transform").setDescription("description")
+            .add("key1", new PluginPropertyField("key1", "", "string", false, true))
+            .add("key2", new PluginPropertyField("key2", "", "Connection", false, true, false,
+                ImmutableSet.of("child1", "child2")))
+            .add("child1", new PluginPropertyField("child1", "", "string", false, true))
+            .add("child2", new PluginPropertyField("child2", "", "string", false, true))
+            .build();
+        Gson gson = new Gson();
+
+        // test macro with additional fields can be evaluated successfully
+        Map<String, String> childProperties =
+            ImmutableMap.of("child1", "childVal1", "child2", "${secure(acc)}", "child3", "val3");
+        Map<String, String> properties = ImmutableMap.of("key2", gson.toJson(childProperties), "key1", "val1");
+
+        Plugin plugin = new Plugin(Collections.emptyList(), artifactId, pluginClass,
+            PluginProperties.builder().addAll(properties).build());
+        plugins.put("p1", plugin);
+        ImmutableList<WorkflowNode> nodes = ImmutableList.of(
+            new WorkflowActionNode("mr1", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr1")),
+            new WorkflowActionNode("spark1", new ScheduleProgramInfo(SchedulableProgramType.SPARK, "spark1")));
+        WorkflowSpecification wfSpec =
+            new WorkflowSpecification("test", "wf1", "", Collections.emptyMap(),
+                nodes,
+                Collections.emptyMap(), plugins );
+        ApplicationSpecification spec = createDummyAppSpec(appId.getApplication(), appId.getVersion(),
+            artifactId, appId.workflow("wf1"), wfSpec);
         ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
                                                    new ChangeDetail(null, null, null,
                                                                     creationTimeMillis + id));
         metaStore.createLatestApplicationVersion(appId, meta);
       })
     );
+
+    ApplicationMeta latestAppMeta = TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      return metaStore.getLatest(appRef);
+    });
 
     // Verify latest version
     AtomicInteger latestVersionCount = new AtomicInteger();
@@ -1678,7 +1764,7 @@ public abstract class AppMetadataStoreTest {
 
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationId appId = appRef.app(appVersion);
-    ApplicationSpecification spec = createDummyAppSpec(appId.getApplication(), appId.getVersion(), artifactId);
+    ApplicationSpecification spec = createWithWf(appId, artifactId);
     ApplicationMeta appMeta = new ApplicationMeta(appName, spec, null, null);
 
     TransactionRunners.run(transactionRunner, context -> {
@@ -1755,6 +1841,48 @@ public abstract class AppMetadataStoreTest {
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
+  }
+
+  private ApplicationSpecification createDummyAppSpec(String appName, String appVersion, ArtifactId artifactId,
+      WorkflowId workflowId, WorkflowSpecification wfSpec) {
+    return new DefaultApplicationSpecification(
+        appName, appVersion, ProjectInfo.getVersion().toString(), "desc", null, artifactId,
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+        ImmutableMap.of(workflowId.getProgram(), wfSpec), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+        Collections.emptyMap());
+  }
+
+  private ApplicationSpecification createWithWf(ApplicationId appId, ArtifactId artifactId ) {
+    Map<String, Plugin> plugins = new HashMap<>();
+
+    PluginClass pluginClass = PluginClass.builder().setClassName("io.cdap.wrangler.Wrangler")
+        .setName("Wrangler").setCategory("").setConfigFieldName("")
+        .setRequirements(Requirements.EMPTY).setType("transform").setDescription("description")
+        .add("key1", new PluginPropertyField("key1", "", "string", false, true))
+        .add("key2", new PluginPropertyField("key2", "", "Connection", false, true, false,
+            ImmutableSet.of("child1", "child2")))
+        .add("child1", new PluginPropertyField("child1", "", "string", false, true))
+        .add("child2", new PluginPropertyField("child2", "", "string", false, true))
+        .build();
+    Gson gson = new Gson();
+
+    // test macro with additional fields can be evaluated successfully
+    Map<String, String> childProperties =
+        ImmutableMap.of("child1", "childVal1", "child2", "${secure(acc)}", "child3", "val3");
+    Map<String, String> properties = ImmutableMap.of("key2", gson.toJson(childProperties), "key1", "val1");
+
+    Plugin plugin = new Plugin(Collections.emptyList(), artifactId, pluginClass,
+        PluginProperties.builder().addAll(properties).build());
+    plugins.put("p1", plugin);
+    ImmutableList<WorkflowNode> nodes = ImmutableList.of(
+        new WorkflowActionNode("mr1", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr1")),
+        new WorkflowActionNode("spark1", new ScheduleProgramInfo(SchedulableProgramType.SPARK, "spark1")));
+    WorkflowSpecification wfSpec =
+        new WorkflowSpecification("test", "wf1", "", Collections.emptyMap(),
+            nodes,
+            Collections.emptyMap(), plugins );
+    return createDummyAppSpec(appId.getApplication(), appId.getVersion(), artifactId, appId.workflow("wf1"), wfSpec);
+
   }
 
   private void runConcurrentOperation(String name, int numThreads, Runnable runnable) throws Exception {
