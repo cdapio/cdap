@@ -20,6 +20,8 @@ import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.StringUtils;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
@@ -128,11 +130,16 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            if (IsValidTaskWorkerCall(credentialValue, taskWorkerDecryptionHeader)) {
+            ImmutablePair<Boolean, String> newCredentialPair = isValidTaskWorkerCall(credentialValue, taskWorkerDecryptionHeader);
+            if (newCredentialPair.getFirst()) {
               LOG.error("This call was from task worker");
               throw new UnauthenticatedException("Request denied for Task workers");
             }
-            currentUserCredential = new Credential(credentialValue, credentialType);
+            if (newCredentialPair.getSecond().isEmpty()) {
+              currentUserCredential = new Credential(credentialValue, credentialType);
+            } else {
+              currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
+            }
             SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
@@ -290,16 +297,16 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_CONTEXT_QUEUE_ATTR)).set(null);
   }
 
-  private boolean isTaskWorkerEncrypted(String credentialValue) {
+  private ImmutablePair<Boolean, String> isTaskWorkerEncrypted(String credentialValue) {
     LOG.error("Decrypting user creds to check if task worker call");
     try {
-      userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
+      String decryptedCredentialValue = userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
           Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
       LOG.error("Decryption successful, task worker call");
-      return true;
+      return new ImmutablePair<>(true, decryptedCredentialValue);
     } catch (CipherException | IllegalArgumentException e) {
       LOG.error("Decryption unsuccessful, some other call");
-      return false;
+      return new ImmutablePair<>(false, "");
     }
   }
 
@@ -308,8 +315,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * 1. Decrypt the credential with task worker AD
    * 2. Check if the pod is exempted from task worker call checks or not
    * 3. Check if the URI is exempted from task worker call checks or not
+   *
+   * @return Pair of boolean and string, boolean for checking valid call, string for decrypted credential value
    */
-  private boolean IsValidTaskWorkerCall(String credentialValue, boolean taskWorkerDecryptionHeader) {
-    return (isTaskWorkerEncrypted(credentialValue) && taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader);
+  private ImmutablePair<Boolean, String> isValidTaskWorkerCall(String credentialValue, boolean taskWorkerDecryptionHeader) {
+    ImmutablePair<Boolean, String> taskWorkerEncryptedPair = isTaskWorkerEncrypted(credentialValue);
+    if (taskWorkerEncryptedPair.getFirst() && taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader) {
+      return new ImmutablePair<>(true, taskWorkerEncryptedPair.getSecond());
+    }
+    return new ImmutablePair<>(false, taskWorkerEncryptedPair.getSecond());
   }
 }
