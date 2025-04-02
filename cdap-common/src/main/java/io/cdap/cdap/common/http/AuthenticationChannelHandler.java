@@ -16,13 +16,11 @@
 
 package io.cdap.cdap.common.http;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.proto.security.Credential;
-import io.cdap.cdap.proto.security.Credential.CredentialType;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
@@ -130,7 +128,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            if (taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader && isTaskWorkerEncrypted(credentialValue, credentialType)) {
+            if (IsValidTaskWorkerCall(credentialValue, taskWorkerDecryptionHeader)) {
               LOG.error("This call was from task worker");
               throw new UnauthenticatedException("Request denied for Task workers");
             }
@@ -292,16 +290,26 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_CONTEXT_QUEUE_ATTR)).set(null);
   }
 
-  private boolean isTaskWorkerEncrypted(String credentialValue, CredentialType credentialType) {
+  private boolean isTaskWorkerEncrypted(String credentialValue) {
     LOG.error("Decrypting user creds to check if task worker call");
     try {
       userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
           Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
       LOG.error("Decryption successful, task worker call");
       return true;
-    } catch (CipherException e) {
+    } catch (CipherException | IllegalArgumentException e) {
       LOG.error("Decryption unsuccessful, some other call");
       return false;
     }
+  }
+
+  /**
+   * Checks if the call is being made from task worker and if it is permitted:
+   * 1. Decrypt the credential with task worker AD
+   * 2. Check if the pod is exempted from task worker call checks or not
+   * 3. Check if the URI is exempted from task worker call checks or not
+   */
+  private boolean IsValidTaskWorkerCall(String credentialValue, boolean taskWorkerDecryptionHeader) {
+    return (isTaskWorkerEncrypted(credentialValue) && taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader);
   }
 }
