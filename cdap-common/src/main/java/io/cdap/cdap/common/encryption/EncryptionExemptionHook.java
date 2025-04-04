@@ -59,13 +59,13 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       if (matcher.matches()) {
         LOG.error("Matched {} for {}", request.uri(), pattern);
         LOG.error("Adding header with false to request");
-        request.headers().add(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, false);
+        request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "false");
         return true;
       }
     }
 
     LOG.error("Adding header with true to request");
-    request.headers().add(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, true);
+    request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "true");
     return true;
   }
 }
