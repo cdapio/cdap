@@ -135,11 +135,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
               LOG.error("This call was from task worker");
               throw new UnauthenticatedException("Request denied for Task workers");
             }
-            if (newCredentialPair.getSecond().isEmpty()) {
-              currentUserCredential = new Credential(credentialValue, credentialType);
-            } else {
-              currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
-            }
+            currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
             SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
@@ -306,7 +302,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       return new ImmutablePair<>(true, decryptedCredentialValue);
     } catch (CipherException | IllegalArgumentException e) {
       LOG.error("Decryption unsuccessful, some other call");
-      return new ImmutablePair<>(false, "");
+      return new ImmutablePair<>(false, credentialValue);
     }
   }
 
@@ -319,7 +315,9 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * @return Pair of boolean and string, boolean for checking valid call, string for decrypted credential value
    */
   private ImmutablePair<Boolean, String> isValidTaskWorkerCall(String credentialValue, boolean taskWorkerDecryptionHeader) {
+    LOG.error("Received credential value as {}", credentialValue);
     ImmutablePair<Boolean, String> taskWorkerEncryptedPair = isTaskWorkerEncrypted(credentialValue);
+    LOG.error("Credential value after decrypting {} ", taskWorkerEncryptedPair.getSecond());
     if (taskWorkerEncryptedPair.getFirst() && taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader) {
       return new ImmutablePair<>(true, taskWorkerEncryptedPair.getSecond());
     }

@@ -131,6 +131,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
           && credential != null) {
         request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN,
             String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
+        LOG.error("Set runtime token header to {}", request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN));
       }
       request.headers().set(Constants.Security.Headers.USER_ID,
           userIdentityPair.getUserIdentity().getUsername());
