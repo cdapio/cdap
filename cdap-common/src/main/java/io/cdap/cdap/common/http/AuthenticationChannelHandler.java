@@ -298,7 +298,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     try {
       String decryptedCredentialValue = userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
           Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-      LOG.error("Decryption successful, task worker call");
+      LOG.error("Decryption successful with {}, task worker call", decryptedCredentialValue);
       return new ImmutablePair<>(true, decryptedCredentialValue);
     } catch (CipherException | IllegalArgumentException e) {
       LOG.error("Decryption unsuccessful, some other call");

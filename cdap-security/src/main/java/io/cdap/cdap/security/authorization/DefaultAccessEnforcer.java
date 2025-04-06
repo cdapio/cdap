@@ -278,9 +278,11 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements Rol
     // When user credential encryption is enabled, credential should be encrypted upon arrival
     // at router and decrypted right here before calling auth extension.
     try {
+      LOG.error("Initial user creds are {}", userCredential.getValue());
       String plainCredential = userEncryptionAeadCipher
           .decryptStringFromBase64(userCredential.getValue(),
               Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+      LOG.error("Decrypted user creds are {}", plainCredential);
       return new Principal(principal.getName(),
           principal.getType(),
           principal.getKerberosPrincipal(),

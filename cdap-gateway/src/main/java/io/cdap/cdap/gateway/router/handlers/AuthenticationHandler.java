@@ -256,9 +256,11 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         false)) {
       return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
     }
+    LOG.error("Got user creds as {}", userCredential);
     String encryptedCredential = userCredentialAeadCipher
         .encryptToBase64(userCredential,
             Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+    LOG.error("Encrypted creds are {}", encryptedCredential);
     return new Credential(encryptedCredential, Credential.CredentialType.EXTERNAL_ENCRYPTED);
   }
 
