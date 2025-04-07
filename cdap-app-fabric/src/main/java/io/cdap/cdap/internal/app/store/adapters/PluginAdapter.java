@@ -25,11 +25,13 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.internal.guava.reflect.TypeParameter;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.field.Field;
@@ -49,11 +51,13 @@ public class PluginAdapter implements JsonSerializer<Plugin>, JsonDeserializer<P
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginAdapter.class);
 
-  public PluginAdapter(StructuredTable pluginDataTable) {
+  public PluginAdapter(StructuredTable pluginDataTable, String namespace) {
     this.pluginDataTable = pluginDataTable;
+    this.namespace = namespace;
   }
 
   private final StructuredTable pluginDataTable;
+  private final String namespace;
 
   @Override
   public JsonElement serialize(Plugin src, Type typeOfSrc, JsonSerializationContext context) {
@@ -79,8 +83,10 @@ public class PluginAdapter implements JsonSerializer<Plugin>, JsonDeserializer<P
       fields.add(Fields.stringField(ArtifactStore.PARENT_NAME_FIELD, "cdap-data-pipeline"));
       fields.add(Fields.stringField(ArtifactStore.PLUGIN_TYPE_FIELD, pluginClass.getType()));
       fields.add(Fields.stringField(ArtifactStore.PLUGIN_NAME_FIELD, pluginClass.getName()));
+      String artifactNamespace = artifactId.getScope().equals(ArtifactScope.SYSTEM) ?
+          NamespaceId.SYSTEM.getNamespace() : namespace;
       fields.add(
-          Fields.stringField(ArtifactStore.ARTIFACT_NAMESPACE_FIELD, artifactId.getScope().name()));
+          Fields.stringField(ArtifactStore.ARTIFACT_NAMESPACE_FIELD, artifactNamespace));
       fields.add(Fields.stringField(ArtifactStore.ARTIFACT_NAME_FIELD, artifactId.getName()));
       fields.add(Fields.stringField(ArtifactStore.ARTIFACT_VER_FIELD,
           artifactId.getVersion().getVersion()));

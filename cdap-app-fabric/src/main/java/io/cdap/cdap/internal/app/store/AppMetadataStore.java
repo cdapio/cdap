@@ -757,7 +757,7 @@ public class AppMetadataStore {
       ApplicationSpecification spec, @Nullable ChangeDetail change,
       @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest) throws IOException {
     ApplicationMeta meta =  new ApplicationMeta(appId, spec, null, null);
-    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable, namespaceId);
     String json = gson.toJson(meta);
     writeApplicationSerialized(namespaceId, appId, versionId,
         json,
@@ -839,7 +839,7 @@ public class AppMetadataStore {
     // creation time cannot be null  - will be written to app-spec but won't be added to table
     ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null);
     pluginDataTable = getPluginDataTable();
-    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable, appId.getNamespace());
     String json = gson.toJson(updated);
     updateApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
         json);
@@ -2843,10 +2843,11 @@ public class AppMetadataStore {
     String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
     Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
     Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
+    String namespace = row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
 
     //TODO(sidhdirenge):Deserialization needed here.
     pluginDataTable = getPluginDataTable();
-    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+    Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable, namespace);
     ApplicationMeta meta = gson.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
         ApplicationMeta.class);
@@ -3150,7 +3151,7 @@ public class AppMetadataStore {
         return meta;
       }
       //TODO(sidhdirenge): Deserialization needed here.
-      Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable);
+      Gson gson = ApplicationMetaAdapter.createGson(pluginDataTable, appId.getNamespace());
       ApplicationMeta tempMeta = gson.fromJson(rawAppMeta, ApplicationMeta.class);
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);

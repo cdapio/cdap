@@ -285,11 +285,11 @@ public class ApplicationMetaAdapter implements JsonSerializer<ApplicationMeta>,
 
 
   // Utility method to create Gson with this adapter
-  public static Gson createGson(StructuredTable pluginDataTable) {
+  public static Gson createGson(StructuredTable pluginDataTable, String namespace) {
     GsonBuilder gson = new GsonBuilder()
         .registerTypeAdapter(ApplicationMeta.class, new ApplicationMetaAdapter(pluginDataTable))
         .registerTypeAdapter(PluginClass.class, new PluginClassAdapter())
-        .registerTypeAdapter(Plugin.class, new PluginAdapter(pluginDataTable));
+        .registerTypeAdapter(Plugin.class, new PluginAdapter(pluginDataTable, namespace));
     gson = ApplicationSpecificationAdapter.addTypeAdapters(gson);
     return gson.create();
   }
