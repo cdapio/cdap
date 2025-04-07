@@ -136,7 +136,6 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
               throw new UnauthenticatedException("Request denied for Task workers");
             }
             currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
-            SecurityRequestContext.setUserCredential(currentUserCredential);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
             throw new UnauthenticatedException(e);

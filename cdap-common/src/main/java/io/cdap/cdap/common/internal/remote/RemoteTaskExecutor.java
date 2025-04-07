@@ -149,6 +149,11 @@ public class RemoteTaskExecutor {
             Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
             SecurityRequestContext.setUserCredential(encryptedCredential);
             LOG.error("Done with encryption {} ", encryptedCredential.getValue());
+
+            LOG.error("Trying to decrypt here");
+            String decryptedValue = userEncryptionAeadCipher.decryptStringFromBase64(encryptedValue,
+                Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+            LOG.error("Decrypted string is {}", decryptedValue);
           }
           HttpRequest httpRequest = requestBuilder.build();
 
