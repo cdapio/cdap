@@ -129,8 +129,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            if (taskWorkerDecryptionEnabled) {
-              currentUserCredential = new Credential(credentialValue, credentialType)
+            if (!taskWorkerDecryptionEnabled) {
+              currentUserCredential = new Credential(credentialValue, credentialType);
             } else {
               ImmutablePair<Boolean, String> newCredentialPair = isValidTaskWorkerCall(
                   credentialValue, taskWorkerDecryptionHeader);
