@@ -21,7 +21,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.common.utils.StringUtils;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
@@ -130,12 +129,17 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
                 credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
-            ImmutablePair<Boolean, String> newCredentialPair = isValidTaskWorkerCall(credentialValue, taskWorkerDecryptionHeader);
-            if (newCredentialPair.getFirst()) {
-              LOG.error("This call was from task worker");
-              throw new UnauthenticatedException("Request denied for Task workers");
+            if (taskWorkerDecryptionEnabled) {
+              currentUserCredential = new Credential(credentialValue, credentialType)
+            } else {
+              ImmutablePair<Boolean, String> newCredentialPair = isValidTaskWorkerCall(
+                  credentialValue, taskWorkerDecryptionHeader);
+              if (newCredentialPair.getFirst()) {
+                LOG.error("This call was from task worker");
+                throw new UnauthenticatedException("Request denied for Task workers");
+              }
+              currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
             }
-            currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
             throw new UnauthenticatedException(e);
@@ -317,7 +321,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
     LOG.error("Received credential value as {}", credentialValue);
     ImmutablePair<Boolean, String> taskWorkerEncryptedPair = isTaskWorkerEncrypted(credentialValue);
     LOG.error("Credential value after decrypting {} ", taskWorkerEncryptedPair.getSecond());
-    if (taskWorkerEncryptedPair.getFirst() && taskWorkerDecryptionEnabled && taskWorkerDecryptionHeader) {
+    if (taskWorkerEncryptedPair.getFirst() && taskWorkerDecryptionHeader) {
       return new ImmutablePair<>(true, taskWorkerEncryptedPair.getSecond());
     }
     return new ImmutablePair<>(false, taskWorkerEncryptedPair.getSecond());
