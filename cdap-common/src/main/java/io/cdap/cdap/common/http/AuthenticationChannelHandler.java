@@ -20,6 +20,7 @@ import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.LazyDelegateAeadCipher;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -298,14 +299,19 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private ImmutablePair<Boolean, String> isTaskWorkerEncrypted(String credentialValue) {
     LOG.error("Decrypting user creds to check if task worker call");
-    try {
-      String decryptedCredentialValue = userEncryptionAeadCipher.decryptStringFromBase64(credentialValue,
-          Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-      LOG.error("Decryption successful with {}, task worker call", decryptedCredentialValue);
-      return new ImmutablePair<>(true, decryptedCredentialValue);
-    } catch (CipherException | IllegalArgumentException e) {
-      LOG.error("Decryption unsuccessful, some other call");
-      return new ImmutablePair<>(false, credentialValue);
+    if (userEncryptionAeadCipher instanceof LazyDelegateAeadCipher) {
+      try {
+        String decryptedCredentialValue = userEncryptionAeadCipher.decryptStringFromBase64(
+            credentialValue,
+            Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+        LOG.error("Decryption successful with {}, task worker call", decryptedCredentialValue);
+        return new ImmutablePair<>(true, decryptedCredentialValue);
+      } catch (CipherException | IllegalArgumentException e) {
+        LOG.error("Decryption unsuccessful, some other call");
+        return new ImmutablePair<>(false, credentialValue);
+      }
+    } else {
+      LOG.error("Cipher was not Lazy Delegate, instead {}", userEncryptionAeadCipher.getClass().getName());
     }
   }
 
