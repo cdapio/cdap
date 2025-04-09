@@ -312,6 +312,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       }
     } else {
       LOG.error("Cipher was not Lazy Delegate, instead {}", userEncryptionAeadCipher.getClass().getName());
+      return new ImmutablePair<>(false, credentialValue);
     }
   }
 
