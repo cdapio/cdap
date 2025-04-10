@@ -21,31 +21,35 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
 import com.google.cloud.spanner.DatabaseClient;
-import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseId;
+import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.SpannerException;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.TransactionRunner;
 import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.Mutation;
-import com.google.cloud.spanner.ErrorCode;
-import com.google.cloud.spanner.ReadOnlyTransaction;
-import com.google.cloud.spanner.Key;
-import com.google.cloud.spanner.KeySet;
 import com.google.cloud.spanner.Struct;
-import com.google.cloud.spanner.Value;
+import com.google.cloud.spanner.Key;
+import com.google.cloud.spanner.ReadOnlyTransaction;
+import com.google.cloud.spanner.ErrorCode;
+
+
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataConflictException;
-import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageContext;
@@ -60,23 +64,28 @@ import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.SearchResponse;
-import io.cdap.cdap.spi.metadata.Sorting;
 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Collections;
+import javax.annotation.Nullable;
 import java.util.Set;
-import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Arrays;
+
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
 
 
 import java.io.FileInputStream;
@@ -96,22 +105,21 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpannerMetadataStorage.class);
 
-    private static final String METADATA_TABLE = "Metadata";
-    private static final String NAMESPACE_FIELD = "namespace";
-    private static final String NAME_FIELD = "name";
-    private static final String PROPERTIES_FIELD = "props";
-    private static final String CREATED_FIELD = "created";
-    private static final String HIDDEN_FIELD = "hidden";
-    private static final String TYPE_FIELD = "type";
-    private static final String TEXT_FIELD = "text";
-    private static final String TTL_FIELD = "ttl";
-    private static final String User_FIELD = "user";
-    private static final String SYSTEM_FIELD ="system";
-    private static final String TAGS_FIELD = "tags";
+    private static final String METADATA_TABLE = "Metadata"; // Table name
+    private static final String NAMESPACE_FIELD = "namespace"; // Namespace of the metadata
+    private static final String TYPE_FIELD = "entity_type"; // Type of the entity (e.g., dataset, application)
+    private static final String NAME_FIELD = "name"; // Name of the entity
+    private static final String CREATED_FIELD = "creation_time"; // Creation timestamp
+    private static final String TTL_FIELD = "ttl"; // Time-to-live
+    private static final String HIDDEN_FIELD = "hidden"; // Hidden flag
+    private static final String User_FIELD = "user"; // User-scoped text data
+    private static final String SYSTEM_FIELD = "system"; // System-scoped text data
+    private static final String TEXT_FIELD = "text"; // storing all searchable values
 
-    private final String instanceId = "cdf-komalyd-instance";
-    private final String databaseId = "cdap";
-    private final String projectId = "da3c84c7b9685e836-tp";
+
+    private  String instanceId = "instance";
+    private  String databaseId = "database";
+    private  String projectId = "project";
     private volatile SpannerOptions options;
     private volatile Spanner spanner;
     private volatile DatabaseClient dbClient;
@@ -119,7 +127,19 @@ public class SpannerMetadataStorage implements MetadataStorage {
     private volatile boolean created;
     private static final String CREDENTIALS_PATH = "credentials.path";
 
+    @VisibleForTesting
     static final boolean KEEP = true;
+    @VisibleForTesting
+    static final boolean DISCARD = false;
+
+    private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
+    private static final String TAG_PREFIX = "tag:";
+    private static final String SCHEMA_PREFIX = "schema:";
+    private static final Pattern USER_PROPERTY_PATTERN =
+            Pattern.compile("^([a-za-z0-9_]+):([a-za-z0-9_]+)$|^([a-za-z0-9_]+):$|^([a-za-z0-9_]+)$");
+    private static final String EXACT_EXTERNAL_DATASET_WORD = "externaldataset";
+    private static final String EXACT_DATASET_WORD = "dataset";
+    private static final String ENTITY_NAME_SEPARATOR = ".";
 
 
 
@@ -133,6 +153,11 @@ public class SpannerMetadataStorage implements MetadataStorage {
     public void initialize(MetadataStorageContext context) throws Exception {
         LOG.info("Initializing SpannerMetadataStorage...");
         Map<String, String> conf = context.getConfiguration();
+        LOG.info(conf.toString());
+        projectId=getProjectId(conf);
+        databaseId=getDatabaseId(conf);
+        instanceId=getInstanceId(conf);
+        LOG.info(projectId,databaseId,instanceId);
         SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(projectId);
         String credentialsPath = conf.get(CREDENTIALS_PATH);
         if (credentialsPath != null) {
@@ -168,14 +193,14 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
     @Override
     public void createIndex() throws IOException {
-        LOG.info("Creating index for SpannerMetadataStorage...");
+        LOG.info("Creating Table for SpannerMetadataStorage...");
         if (created) {
-            LOG.info("Index already created.");
+            LOG.info("Table already created.");
             return;
         }
         synchronized (this) {
             if (created) {
-                LOG.info("Index already created (within sync block).");
+                LOG.info("Table already created (within sync block).");
                 return;
             }
             try {
@@ -187,7 +212,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 }
 
                 // Perform a read operation to ensure the table is ready
-                readFromSpanner(MetadataEntity.ofNamespace("system"));
+                //readFromSpanner(MetadataEntity.ofNamespace("system"));
 
                 created = true;
                 LOG.debug("Spanner index {} is ready to use.", METADATA_TABLE);
@@ -228,6 +253,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         LOG.info("Creating Metadata table...");
         List<String> ddlStatements = new ArrayList<>();
         ddlStatements.add(getCreateTableDDLStatement());
+        ddlStatements.add(getMetadataIndexDDLStatement());
         executeCreateDDLStatements(ddlStatements);
         LOG.info("Metadata table creation completed.");
     }
@@ -237,20 +263,19 @@ public class SpannerMetadataStorage implements MetadataStorage {
         LOG.info("Generating create table DDL statement.");
         return String.format(
                 "CREATE TABLE IF NOT EXISTS %s (" +
-                        "%s STRING(MAX) NOT NULL," +
-                        "%s STRING(MAX) NOT NULL," +
-                        "%s STRING(MAX) NOT NULL," +
-                        "%s INT64," +
-                        "%s INT64," +
-                        "%s BOOL," +
-                        "%s STRING(MAX)," +
-                        "%s STRING(MAX)," +
-                        "%s STRING(MAX)," +
-                        "%s STRING(MAX)," +
+                        "%s STRING(MAX) NOT NULL," + // namespace
+                        "%s STRING(MAX) NOT NULL," + // entity_type
+                        "%s STRING(MAX) NOT NULL," + // name
+                        "%s INT64," + // created
+                        "%s INT64," + // ttl
+                        "%s BOOL," + // hidden
+                        "%s JSON," + // user
+                        "%s JSON," + // system
+                        "%s STRING(MAX)," + // text
+                        "properties JSON," + // properties as JSON
+                        "metadata_column JSON," + // metadata
                         "VERSION INT64 NOT NULL," +
-                        "schema STRING(MAX)," + // Add the schema column
-                        ")  PRIMARY KEY (%s, %s, %s)",
-
+                        ")PRIMARY KEY (%s, %s, %s) ", // primary key
                 METADATA_TABLE,
                 NAMESPACE_FIELD,
                 TYPE_FIELD,
@@ -260,12 +285,16 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 HIDDEN_FIELD,
                 User_FIELD,
                 SYSTEM_FIELD,
-                PROPERTIES_FIELD,
-                TAGS_FIELD,
-                NAMESPACE_FIELD,
+                TEXT_FIELD,
                 TYPE_FIELD,
-                NAME_FIELD
+                NAME_FIELD,
+                NAMESPACE_FIELD
         );
+    }
+
+    private String getMetadataIndexDDLStatement() {
+        return String.format("CREATE INDEX MetadataIdx1 ON %s (%s,%s,%s)", METADATA_TABLE,
+                NAME_FIELD,TYPE_FIELD,TEXT_FIELD);
     }
 
     private void executeCreateDDLStatements(List<String> ddlStatements) throws IOException {
@@ -303,31 +332,27 @@ public class SpannerMetadataStorage implements MetadataStorage {
             LOG.info("Index drop completed");
         }
     }
-     @Override
-     public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
-         MetadataEntity entity = mutation.getEntity();
-         try {
-             TransactionRunner runner = dbClient.readWriteTransaction(); // Get the TransactionRunner
-             return runner.run(new TransactionRunner.TransactionCallable<MetadataChange>() {
 
-                 @Override
-                 public MetadataChange run(TransactionContext transaction) throws Exception {
-                     VersionedMetadata before = readFromSpanner(transaction, entity);
-                     assert before != null;
-                     RequestandChange intermediary = applyMutation(before, mutation);
-                     executeMutation(transaction, mutation.getEntity(), intermediary.getMutation(), options);
-                     return intermediary.getChange();
-                 }
-             });
-         } catch (SpannerException e) {
-             if (e.getErrorCode() == com.google.cloud.spanner.ErrorCode.ABORTED) {
-                 throw new MetadataConflictException("Spanner transaction aborted, conflict detected.", entity);
-             } else {
-                 LOG.error("Error applying mutation to Spanner: {}", e.getMessage(), e);
-                 throw new IOException("Error applying mutation to Spanner", e);
-             }
-         }
-
+    @Override
+    public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
+        MetadataEntity entity = mutation.getEntity();
+        try {
+            TransactionRunner runner = dbClient.readWriteTransaction();
+            return runner.run(transaction -> {
+                VersionedMetadata before = readFromSpanner(entity, transaction); // Use transaction directly
+                assert before != null;
+                RequestandChange intermediary = applyMutation(before, mutation);
+                executeMutation(transaction, mutation.getEntity(), intermediary.getMutation(), options);
+                return intermediary.getChange();
+            });
+        } catch (SpannerException e) {
+            if (e.getErrorCode() == com.google.cloud.spanner.ErrorCode.ABORTED) {
+                throw new MetadataConflictException("Spanner transaction aborted, conflict detected.", entity);
+            } else {
+                LOG.error("Error applying mutation to Spanner: {}", e.getMessage(), e);
+                throw new IOException("Error applying mutation to Spanner", e);
+            }
+        }
     }
     private void executeMutation(TransactionContext transaction, MetadataEntity entity, Mutation mutation,
                                  MutationOptions options) throws IOException {
@@ -351,126 +376,140 @@ public class SpannerMetadataStorage implements MetadataStorage {
             throw new IOException("Spanner mutation failed for entity " + entity, e);
         }
     }
-
-    // Helper methods to check status (if needed) - Spanner doesn't use HTTP status codes like Elasticsearch
-    private boolean isConflict(ErrorCode errorCode) {
-        return errorCode == ErrorCode.ALREADY_EXISTS;
-    }
-
-    private boolean isNotFound(ErrorCode errorCode) {
-        return errorCode == ErrorCode.NOT_FOUND;
-    }
-
-    private boolean isFailure(SpannerException e) {
-        return e != null;
-    }
     private MetadataChange createMetadataChange(MetadataMutation mutation, Metadata existingMetadata,
                                                 Metadata updatedMetadata) {
         return new MetadataChange(mutation.getEntity(), existingMetadata, updatedMetadata);
     }
 
-    private VersionedMetadata readFromSpanner(ReadOnlyTransaction transaction, MetadataEntity entity) throws IOException
-    {
+    /**
+     * Reads the existing metadata for an entity from the index.
+     *
+     * @return existing metadata along with its version in the index, or an empty metadata with null
+     *     version.
+     */
+
+    public VersionedMetadata readFromSpanner(MetadataEntity entity, TransactionContext transaction) throws IOException {
         try {
-            String namespace = entity.containsKey(MetadataEntity.NAMESPACE) ? entity.getValue(MetadataEntity.NAMESPACE)
-                    : null;
-            String name = entity.getType().equals(MetadataEntity.PLUGIN) ? entity.getValue(MetadataEntity.PLUGIN) :
-                    entity.getValue(entity.getType());
+            Statement statement = Statement.newBuilder(
+                            "SELECT metadata_column, VERSION FROM Metadata " +
+                                    "WHERE namespace = @namespace AND entity_type = @Type AND name = @name")
+                    .bind("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
+                    .bind("Type").to(entity.getType())
+                    .bind("name").to(entity.getValue(entity.getType()))
+                    .build();
 
-            if (namespace == null || name == null) {
-                throw new IllegalArgumentException("Namespace and name must be provided in MetadataEntity.");
-            }
+            ResultSet resultSet = transaction.executeQuery(statement);
 
-            Struct row;
-            Key key = Key.of(namespace, entity.getType().toLowerCase(), name.toLowerCase());
-            ResultSet resultSet = transaction.read(METADATA_TABLE, KeySet.singleKey(key), Arrays.asList(NAMESPACE_FIELD,
-                    TYPE_FIELD, NAME_FIELD, PROPERTIES_FIELD, CREATED_FIELD, "schema", TAGS_FIELD));
             if (resultSet.next()) {
-                row = resultSet.getCurrentRowAsStruct();
+                Struct row = resultSet.getCurrentRowAsStruct();
+                LOG.info("Row Struct: {}", row);
+
+                // Get the JSON string from the first column of the Struct.
+                String metadataString = row.getJson(0);
+
+                long version = row.getLong(1);
+
+                Metadata metadata = createMetadataFromJson(metadataString);
+                return VersionedMetadata.of(metadata, version);
             } else {
                 return VersionedMetadata.NONE;
             }
-
-            String propsJson = row.getString(PROPERTIES_FIELD);
-            String schemaJson = row.isNull("schema") ? null : row.getString("schema");
-            String tagsJson = row.isNull(TAGS_FIELD) ? null : row.getString(TAGS_FIELD);
-
-            List<Map<String, String>> propsList = gson.fromJson(propsJson, new TypeToken<List<Map<String, String>>>()
-            {}.getType());
-            Map<String, List<Map<String, String>>> tagsMap = gson.fromJson(tagsJson, new TypeToken<Map<String,
-                    List<Map<String, String>>>>() {}.getType());
-
-            Set<ScopedName> tags = new HashSet<>();
-            Map<ScopedName, String> propertiesMap = new HashMap<>();
-
-            if (propsList != null) {
-                for (Map<String, String> prop : propsList) {
-                    if (prop.containsKey("scope") && prop.containsKey("name")) {
-                        MetadataScope scope = MetadataScope.valueOf(prop.get("scope").toUpperCase());
-                        ScopedName scopedName = new ScopedName(scope, prop.get("name"));
-                        if (prop.containsKey("value") && prop.get("value") != null && !prop.get("value").isEmpty()) {
-                            propertiesMap.put(scopedName, prop.get("value"));
-                        } else {
-                            tags.add(scopedName);
-                        }
-                    }
-                }
-            }
-
-            if (tagsMap != null) {
-                for (Map.Entry<String, List<Map<String, String>>> entry : tagsMap.entrySet()) {
-                    if (entry.getValue() != null) {
-                        for (Map<String, String> tag : entry.getValue()) {
-                            if (tag.containsKey("scope") && tag.containsKey("name")) {
-                                MetadataScope scope = MetadataScope.valueOf(tag.get("scope").toUpperCase());
-                                tags.add(new ScopedName(scope, tag.get("name")));
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (schemaJson != null) {
-                propertiesMap.put(new ScopedName(MetadataScope.SYSTEM, "schema"), schemaJson);
-            }
-
-            Metadata metadata = new Metadata(tags, propertiesMap);
-            Long version = row.isNull(CREATED_FIELD) ? null : row.getLong(CREATED_FIELD);
-
-            return VersionedMetadata.of(metadata, version);
-
         } catch (SpannerException e) {
+            LOG.error("Spanner exception during batch:", e);
             throw new IOException("Failed to read from Spanner for entity " + entity, e);
         }
     }
 
-    private VersionedMetadata readFromSpanner(TransactionContext transaction, MetadataEntity entity) throws IOException
+    public VersionedMetadata readFromSpanner(MetadataEntity entity, ReadOnlyTransaction transaction) throws IOException
     {
         try {
-            Statement statement = buildSpannerQuery(entity);
-            try (ResultSet resultSet = transaction.executeQuery(statement)) {
-                if (resultSet.next()) {
-                    return rowToMetadata(resultSet.getCurrentRowAsStruct());
-                } else {
-                    return null;
-                }
+            Statement statement = Statement.newBuilder(
+                            "SELECT metadata_column, VERSION FROM Metadata " +
+                                    "WHERE namespace = @namespace AND entity_type = @Type AND name = @name")
+                    .bind("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
+                    .bind("Type").to(entity.getType())
+                    .bind("name").to(entity.getValue(entity.getType()))
+                    .build();
+
+            ResultSet resultSet = transaction.executeQuery(statement);
+
+            if (resultSet.next()) {
+                Struct row = resultSet.getCurrentRowAsStruct();
+                LOG.info("Row Struct: {}", row);
+
+                // Get the JSON string from the first column of the Struct.
+                String metadataString = row.getJson(0);
+
+                long version = row.getLong(1);
+
+                Metadata metadata = createMetadataFromJson(metadataString);
+                return VersionedMetadata.of(metadata, version);
+            } else {
+                return VersionedMetadata.NONE;
             }
         } catch (SpannerException e) {
-            LOG.error("Error reading from Spanner: {}", e.getMessage(), e);
-            throw new IOException("Error reading from Spanner", e);
+            LOG.error("Spanner exception during batch:", e);
+            throw new IOException("Failed to read from Spanner for entity " + entity, e);
         }
     }
 
-    private VersionedMetadata readFromSpanner(MetadataEntity entity) throws IOException {
-        ReadOnlyTransaction transaction = dbClient.singleUseReadOnlyTransaction();
-        try {
-            return readFromSpanner(transaction, entity);
-        } finally {
-            transaction.close();
+    private Metadata createMetadataFromJson(String json) {
+        Gson gson = new Gson();
+        TypeToken<Map<String, Object>> typeToken = new TypeToken<Map<String, Object>>() {};
+        Map<String, Object> map = gson.fromJson(json, typeToken.getType());
+
+        Set<ScopedName> tags = new HashSet<>();
+        Map<ScopedName, String> properties = new HashMap<>();
+
+        if (map != null) {
+            // Parse tags as a list of strings
+            if (map.containsKey("tags") && map.get("tags") instanceof List) {
+                List<String> tagList = (List<String>) map.get("tags");
+                for (String tag : tagList) {
+                    // Assuming your tags are of the format "scope:name"
+                    String[] parts = tag.split(":");
+                    if (parts.length == 2) {
+                        try {
+                            tags.add(new ScopedName(MetadataScope.valueOf(parts[0]), parts[1]));
+                        } catch (IllegalArgumentException e) {
+                            // Handle invalid scope names if necessary
+                            System.err.println("Invalid scope name: " + parts[0]);
+                        }
+                    }
+                }
+            }
+
+            // Parse properties as a map of strings to strings
+            if (map.containsKey("properties") && map.get("properties") instanceof Map) {
+                Map<String, String> propMap = (Map<String, String>) map.get("properties");
+                for (Map.Entry<String, String> entry : propMap.entrySet()) {
+                    // Assuming your properties are of the format "scope:name"
+                    String[] parts = entry.getKey().split(":");
+                    if (parts.length == 2) {
+                        try {
+                            properties.put(new ScopedName(MetadataScope.valueOf(parts[0]), parts[1]), entry.getValue());
+                        } catch (IllegalArgumentException e) {
+                            // Handle invalid scope names if necessary
+                            System.err.println("Invalid scope name: " + parts[0]);
+                        }
+                    }
+                }
+            }
         }
+
+        return new Metadata(tags, properties);
     }
 
-    private RequestandChange applyMutation(VersionedMetadata before, MetadataMutation mutation) {
+    /**
+     * Creates a Spanner request that corresponds to the given mutation, along with the change
+     * effected by this mutation. The request must be executed by the caller.
+     *
+     * @param before the metadata for the mutation's entity before the change
+     * @param mutation the mutation to apply
+     * @return an ElasticSearch request to be executed, and the change caused by the mutation.
+     */
+
+    private RequestandChange applyMutation(VersionedMetadata before, MetadataMutation mutation) throws IOException {
         LOG.trace("Applying mutation {} to entity {} with metadata {}",
                 mutation, mutation.getEntity(), before.getMetadata());
         switch (mutation.getType()) {
@@ -488,193 +527,247 @@ public class SpannerMetadataStorage implements MetadataStorage {
         }
     }
 
-    private RequestandChange create(VersionedMetadata before, MetadataMutation.Create create) {
+    /**
+     * Creates the Spanner request for an entity creation or update. See {@link
+     * MetadataMutation.Create} for detailed semantics.
+     *
+     * @param before the metadata for the mutation's entity before the change
+     * @param create the mutation to apply
+     * @return an ElasticSearch request to be executed, and the change caused by the mutation
+     */
+    private RequestandChange create(VersionedMetadata before, MetadataMutation.Create create) throws IOException {
+        // if the entity did not exist before, none of the directives apply and this is equivalent to update()
         if (!before.existing()) {
             return update(create.getEntity(), before, create.getMetadata());
         }
         Metadata meta = create.getMetadata();
         Map<ScopedNameOfKind, MetadataDirective> directives = create.getDirectives();
-        Set<MetadataScope> scopes = Stream.concat(meta.getTags().stream(), meta.getProperties().keySet().stream())
+        // determine the scopes that this mutation applies to (scopes that do not occur in the metadata are no changed)
+        Set<MetadataScope> scopes = Stream.concat(meta.getTags().stream(),
+                        meta.getProperties().keySet().stream())
                 .map(ScopedName::getScope).collect(Collectors.toSet());
+        // compute what previously existing tags and properties have to be preserved (all others are replaced)
         Set<ScopedName> existingTagsToKeep = new HashSet<>();
         Map<ScopedName, String> existingPropertiesToKeep = new HashMap<>();
-        Sets.difference(MetadataScope.ALL, scopes).forEach(scope -> {
-            before.getMetadata().getTags().stream().filter(tag -> tag.getScope().equals(scope)).
-                    forEach(existingTagsToKeep::add);
-            before.getMetadata().getProperties().entrySet().stream().filter(entry ->
-                            entry.getKey().getScope().equals(scope))
-                    .forEach(entry -> existingPropertiesToKeep.put(entry.getKey(),
-                            entry.getValue()));
-        });
-        directives.entrySet().stream().filter(entry -> scopes.contains(entry.
-                getKey().getScope())).forEach(entry -> {
-            ScopedNameOfKind key = entry.getKey();
-            if (key.getKind() == MetadataKind.TAG && (entry.getValue() == MetadataDirective.PRESERVE ||
-                    entry.getValue() == MetadataDirective.KEEP)) {
-                ScopedName tag = new ScopedName(key.getScope(), key.getName());
-                if (!meta.getTags().contains(tag) && before.getMetadata().getTags().contains(tag)) {
-                    existingTagsToKeep.add(tag);
-                }
-            } else if (key.getKind() == MetadataKind.PROPERTY) {
-                ScopedName property = new ScopedName(key.getScope(), key.getName());
-                String existingValue = before.getMetadata().getProperties().get(property);
-                String newValue = meta.getProperties().get(property);
-                if (existingValue != null && (entry.getValue() == MetadataDirective.PRESERVE &&
-                        !existingValue.equals(newValue)
-                        || entry.getValue() == MetadataDirective.KEEP && newValue == null)) {
-                    existingPropertiesToKeep.put(property, existingValue);
-                }
-            }
-        });
-        Set<ScopedName> newTags = existingTagsToKeep.isEmpty() ? meta.getTags() : Sets.union(meta.getTags(),
-                existingTagsToKeep);
+        // all tags and properties that are in a scope not affected by this mutation
+        Sets.difference(MetadataScope.ALL, scopes).forEach(
+                scope -> {
+                    before.getMetadata().getTags().stream()
+                            .filter(tag -> tag.getScope().equals(scope))
+                            .forEach(existingTagsToKeep::add);
+                    before.getMetadata().getProperties().entrySet().stream()
+                            .filter(entry -> entry.getKey().getScope().equals(scope))
+                            .forEach(entry -> existingPropertiesToKeep.put(entry.getKey(),
+                                    entry.getValue()));
+                });
+        // tags and properties in affected scopes that must be kept or preserved
+        directives.entrySet().stream()
+                .filter(entry -> scopes.contains(entry.getKey().getScope()))
+                .forEach(entry -> {
+                    ScopedNameOfKind key = entry.getKey();
+                    if (key.getKind() == MetadataKind.TAG
+                            && (entry.getValue() == MetadataDirective.PRESERVE
+                            || entry.getValue() == MetadataDirective.KEEP)) {
+                        ScopedName tag = new ScopedName(key.getScope(), key.getName());
+                        if (!meta.getTags().contains(tag) && before.getMetadata().getTags().contains(tag)) {
+                            existingTagsToKeep.add(tag);
+                        }
+                    } else if (key.getKind() == MetadataKind.PROPERTY) {
+                        ScopedName property = new ScopedName(key.getScope(), key.getName());
+                        String existingValue = before.getMetadata().getProperties().get(property);
+                        String newValue = meta.getProperties().get(property);
+                        if (existingValue != null
+                                && (
+                                entry.getValue() == MetadataDirective.PRESERVE && !existingValue.equals(newValue)
+                                        || entry.getValue() == MetadataDirective.KEEP && newValue == null)) {
+                            existingPropertiesToKeep.put(property, existingValue);
+                        }
+                    }
+                });
+        // compute the new tags and properties
+        Set<ScopedName> newTags =
+                existingTagsToKeep.isEmpty() ? meta.getTags()
+                        : Sets.union(meta.getTags(), existingTagsToKeep);
         Map<ScopedName, String> newProperties = meta.getProperties();
         if (!existingPropertiesToKeep.isEmpty()) {
             newProperties = new HashMap<>(newProperties);
             newProperties.putAll(existingPropertiesToKeep);
         }
         Metadata after = new Metadata(newTags, newProperties);
-        return new RequestandChange(writeToSpanner(create.getEntity(), after),
+        return new RequestandChange(writeToSpanner(create.getEntity(), before.getVersion(), after),
                 new MetadataChange(create.getEntity(), before.getMetadata(), after));
     }
+
+    /**
+     * Creates the Spanner delete request for an entity deletion. This drops the corresponding
+     * metadata document from the index.
+     *
+     * @param before the metadata for the mutation's entity before the change
+     * @return an ElasticSearch request to be executed, and the change caused by the mutation
+     */
 
     private RequestandChange drop(MetadataEntity entity, VersionedMetadata before) {
         return new RequestandChange(deleteFromSpanner(entity, before.getVersion()),
                 new MetadataChange(entity, before.getMetadata(), Metadata.EMPTY));
     }
 
+    /**
+     * Create a Spanner Delete Request for removing an row in the table. The request must be
+     * executed by the caller.
+     */
     private Mutation deleteFromSpanner(MetadataEntity entity, Long existingVersion) {
-        String id = toDocumentId(entity);
-        LOG.trace("Deleting document with id: {}", id);
-
-        String[] parts = id.split(":");
-        if (parts.length == 3) {
-            String namespace = parts[0];
-            String type = parts[1];
-            String name = parts[2];
-
-            Key key = Key.of(namespace, type, name);
-            return Mutation.delete(METADATA_TABLE, KeySet.singleKey(key));
-
-        } else {
-            LOG.error("Id does not match expected format for deletion: {}", id);
-            throw new IllegalArgumentException("Invalid id format: " + id);
-        }
+        return Mutation.delete(
+                "Metadata",
+                Key.of(
+                        entity.getValue(MetadataEntity.NAMESPACE),
+                        entity.getType(),
+                        entity.getValue(entity.getType())
+                )
+        );
     }
 
-    private static String toDocumentId(MetadataEntity entity) {
-        StringBuilder builder = new StringBuilder(entity.getValue(MetadataEntity.TYPE));
-        char sep = ':';
-        for (MetadataEntity.KeyValue kv : entity) {
-            if (MetadataUtil.isVersionedEntityType(entity.getValue(MetadataEntity.TYPE))
-                    && MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey())) {
-                continue;
-            }
-            builder.append(sep).append(kv.getKey()).append('=').append(kv.getValue());
-            sep = ',';
-        }
-        return builder.toString();
-    }
-
-    private RequestandChange update(MetadataEntity entity, VersionedMetadata before, Metadata updates) {
+    /**
+     * Creates the Spanner request for updating the metadata of an entity. This updates or
+     * adds the new metadata.
+     *
+     * @param before the metadata for the mutation's entity before the change, and its version
+     * @return an ElasticSearch request to be executed, and the change caused by the mutation
+     */
+    private RequestandChange update(MetadataEntity entity,
+                                    VersionedMetadata before,
+                                    Metadata updates) {
         Set<ScopedName> tags = new HashSet<>(before.getMetadata().getTags());
         tags.addAll(updates.getTags());
         Map<ScopedName, String> properties = new HashMap<>(before.getMetadata().getProperties());
         properties.putAll(updates.getProperties());
-
-        // Ensure schema is preserved if it exists in the original metadata
-        if (before.getMetadata().getProperties().containsKey(new ScopedName(MetadataScope.SYSTEM, "schema"))) {
-            properties.put(new ScopedName(MetadataScope.SYSTEM, "schema"),
-                    before.getMetadata().getProperties().get(new ScopedName(MetadataScope.SYSTEM, "schema")));
-        }
-
         Metadata after = new Metadata(tags, properties);
-        return new RequestandChange(writeToSpanner(entity, after),
-                new MetadataChange(entity, before.getMetadata(), after));
+        try {
+            return new RequestandChange(writeToSpanner(entity, before.getVersion(), after),
+                    new MetadataChange(entity, before.getMetadata(), after));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private RequestandChange remove(VersionedMetadata before, MetadataMutation.Remove remove) {
-        Metadata after = filterMetadata(before.getMetadata(), remove.getKinds(), remove.getScopes(),
-                remove.getRemovals());
+    /**
+     * Creates the Spanner index request for removing some metadata from an entity. This removed
+     * the specified metadata from the corresponding metadata document in the index.
+     *
+     * Note that even if all tags and properties are removed, the document will remain in the index
+     * and it still searchable by its type, name, or a match-all query. Use {@link
+     * MetadataMutation.Drop} to completely remove the entity from the index.
+     *
+     * @param before the metadata for the mutation's entity before the change
+     * @return an ElasticSearch request to be executed, and the change caused by the mutation
+     */
 
-        // Ensure schema is preserved
-        if (before.getMetadata().getProperties().containsKey(new ScopedName(MetadataScope.SYSTEM, "schema"))
-                && !after.getProperties().containsKey(new ScopedName(MetadataScope.SYSTEM, "schema"))) {
-            after.getProperties().put(new ScopedName(MetadataScope.SYSTEM, "schema"),
-                    before.getMetadata().getProperties().get(new ScopedName(MetadataScope.SYSTEM, "schema")));
-        }
-
-        return new RequestandChange(writeToSpanner(remove.getEntity(), after),
+    private RequestandChange remove(VersionedMetadata before, MetadataMutation.Remove remove) throws IOException {
+        Metadata after = filterMetadata(before.getMetadata(), DISCARD,
+                remove.getKinds(), remove.getScopes(), remove.getRemovals());
+        return new RequestandChange(writeToSpanner(remove.getEntity(), before.getVersion(), after),
                 new MetadataChange(remove.getEntity(), before.getMetadata(), after));
     }
 
-    private Mutation writeToSpanner(MetadataEntity entity, Metadata metadata) {
-        SpannerMetadataDocument doc = SpannerMetadataDocument.of(entity, metadata);
-        LOG.trace("Writing to Spanner: {}", doc);
+    public Mutation writeToSpanner(MetadataEntity entity, Long expectVersion, Metadata metadata) throws IOException {
+        Mutation.WriteBuilder mutationBuilder = Mutation.newInsertOrUpdateBuilder("Metadata")
+                .set("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
+                .set("entity_type").to(entity.getType())
+                .set("name").to(entity.getValue(entity.getType()))
+                .set("metadata_column").to(gson.toJson(metadata))
+                .set("VERSION").to(expectVersion == null ? 1L : expectVersion + 1);
 
-        Mutation.WriteBuilder builder = Mutation.newInsertOrUpdateBuilder(METADATA_TABLE);
+        Map<String, String> systemProperties = metadata.getProperties(MetadataScope.SYSTEM);
+        Map<String, String> userProperties = metadata.getProperties(MetadataScope.USER);
+        Set<String> userTags = metadata.getTags(MetadataScope.USER);
+          Set<String> systemTags = metadata.getTags(MetadataScope.SYSTEM);
 
-        builder.set(NAMESPACE_FIELD).to(doc.getNamespace());
-        builder.set(TYPE_FIELD).to(doc.getType());
-        builder.set(NAME_FIELD).to(doc.getName());
+        // Declare textBuilder here, before the if block
+        StringBuilder textBuilder = new StringBuilder();
+        textBuilder.append(Objects.requireNonNull(entity.getValue(entity.getType())).
+                toLowerCase()).append(" "); // Add entity name
 
-        List<Map<String, String>> propsList = new ArrayList<>();
-        Map<String, List<Map<String, String>>> tagsMap = new HashMap<>();
-        String schemaValue = null;
+        // Populate the 'properties' column with all properties as JSON
+        if (!metadata.getProperties().isEmpty()) { // Using metadata.getProperties() to include all scopes
+            mutationBuilder.set("properties").to(gson.toJson(metadata.getProperties()));
+        }
 
-        for (SpannerMetadataDocument.Property prop : doc.getProps()) {
-            if ("schema".equals(prop.getName())) {
-                schemaValue = prop.getValue();
-            } else {
-                Map<String, String> propMap = new HashMap<>();
-                propMap.put("name", prop.getName());
-                propMap.put("value", prop.getValue());
-                propMap.put("scope", prop.getScope());
-                propsList.add(propMap);
+        // Extract and populate 'creation_time' from system properties
+        String createdString = systemProperties.get("creation-time");
+        if (createdString != null) {
+            try {
+                long created = Long.parseLong(createdString);
+                mutationBuilder.set("creation_time").to(created);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid creation_time value: " + createdString);
             }
         }
 
-        if (metadata.getTags() != null) {
-            for (ScopedName tag : metadata.getTags()) {
-                Map<String, String> tagMap = new HashMap<>();
-                tagMap.put("name", tag.getName());
-                tagMap.put("scope", tag.getScope().name());
-                String scopeName = tag.getScope().name();
-                tagsMap.computeIfAbsent(scopeName, k -> new ArrayList<>()).add(tagMap);
+        // Populate 'user' column with user-scoped tags and properties as JSON
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("tags", userTags);
+        userData.put("properties", userProperties);
+        if (!userData.isEmpty()) {
+            mutationBuilder.set("user").to(gson.toJson(userData));
+        }
+
+        // Populate 'system' column with system-scoped tags and the 'schema' property as JSON
+        Map<String, Object> systemData = new HashMap<>();
+        systemData.put("tags", systemTags);
+        String schema = systemProperties.get("schema");
+        if (schema != null) {
+            systemData.put("schema", schema);
+        }
+        if (!systemData.isEmpty()) {
+            mutationBuilder.set("system").to(gson.toJson(systemData));
+        }
+
+        // Add user tags to text_column
+        if (userTags != null && !userTags.isEmpty()) {
+            textBuilder.append(String.join(" ", userTags).toLowerCase()).append(" ");
+        }
+
+        // Add user properties (key:value) to text_column
+        if (userProperties != null && !userProperties.isEmpty()) {
+            for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+                textBuilder.append(entry.getKey().toLowerCase()).append(":").append(entry.getValue().
+                        toLowerCase()).append(" ");
             }
         }
 
-        String propsJson = gson.toJson(propsList);
-        String tagsJson = gson.toJson(tagsMap);
-
-        builder.set("props").to(propsJson);
-        builder.set("tags").to(tagsJson);
-
-        if (schemaValue != null) {
-            builder.set("schema").to(schemaValue);
-            // Add schema as a system property
-            Map<String, String> schemaProp = new HashMap<>();
-            schemaProp.put("name", "schema");
-            schemaProp.put("value", schemaValue);
-            schemaProp.put("scope", MetadataScope.SYSTEM.name());
-            propsList.add(schemaProp);
-            builder.set("props").to(gson.toJson(propsList)); //update the props list with the new schema property.
+        // Add system tags to text_column
+        if (systemTags != null && !systemTags.isEmpty()) {
+            textBuilder.append(String.join(" ", systemTags).toLowerCase()).append(" ");
         }
 
-        if (doc.getCreated() != null) {
-            builder.set("created").to(doc.getCreated());
+        // Add SYSTEM:type to text_column
+        String systemType = systemProperties.get("type");
+        if (systemType != null) {
+            textBuilder.append(systemType.toLowerCase()).append(" ");
         }
-        if (doc.getTtl() != null) {
-            builder.set("ttl").to(doc.getTtl());
+
+        // Add schema field names from system properties to text_column
+        if (schema != null) {
+            try {
+                JsonObject schemaJson = gson.fromJson(schema, JsonObject.class);
+                JsonArray fields = schemaJson.getAsJsonArray("fields");
+                if (fields != null) {
+                    for (JsonElement fieldElement : fields) {
+                        JsonObject fieldObject = fieldElement.getAsJsonObject();
+                        JsonElement nameElement = fieldObject.get("name");
+                        if (nameElement != null && nameElement.isJsonPrimitive()) {
+                            textBuilder.append(nameElement.getAsString().toLowerCase()).append(" ");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Error parsing schema JSON: " + e.getMessage());
+            }
         }
-        builder.set("user").to(doc.getUser());
-        builder.set("system").to(doc.getSystem());
 
-        builder.set("VERSION").to(System.currentTimeMillis());
+        mutationBuilder.set("text").to(textBuilder.toString().trim());
 
-        return builder.build();
+        return mutationBuilder.build();
     }
-
     @Override
     public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
             throws IOException {
@@ -707,43 +800,77 @@ public class SpannerMetadataStorage implements MetadataStorage {
             return changes;
         }
 
-        // Spanner batch processing
+        // Spanner Batch Processing (No Duplicates) with Retry
+        return retrySpannerBatch(mutationMap, options);
+    }
+
+
+    private List<MetadataChange> retrySpannerBatch(LinkedHashMap<MetadataEntity, MetadataMutation> mutations,
+                                                   MutationOptions options) throws IOException {
+        int maxRetries = 50; // Set a maximum number of retries
+        int retryDelayMillis = 100; // Set an initial retry delay
+
+        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
+            try {
+                return doSpannerBatch(mutations, options);
+            } catch (SpannerException e) {
+                if (e.getErrorCode() == ErrorCode.ABORTED) {
+                    LOG.warn("Spanner transaction aborted, retrying (attempt {}/{}): {}", retryCount + 1,
+                            maxRetries, e.getMessage());
+                    try {
+                        Thread.sleep(retryDelayMillis);
+                        // Exponential backoff with a maximum delay of 5 seconds
+                        retryDelayMillis = Math.min(retryDelayMillis * 2, 5000);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt(); // Restore interrupted state.
+                        throw new IOException("Retry interrupted", ex);
+                    }
+                } else {
+                    LOG.error("Spanner exception during batch: {}", e.getMessage(), e);
+                    throw new IOException("Spanner exception during batch", e);
+                }
+            }
+        }
+
+        throw new MetadataConflictException("Spanner batch failed after " + maxRetries + " retries",
+                new ArrayList<>(mutations.keySet()));
+    }
+
+
+    private List<MetadataChange> doSpannerBatch(LinkedHashMap<MetadataEntity, MetadataMutation> mutations,
+                                                MutationOptions options) throws IOException {
         List<MetadataChange> changes = new ArrayList<>(mutations.size());
         try {
             TransactionRunner runner = dbClient.readWriteTransaction();
             runner.run(transaction -> {
-                for (MetadataMutation mutation : mutations) {
+                for (MetadataMutation mutation : mutations.values()) {
                     MetadataEntity entity = mutation.getEntity();
-                    VersionedMetadata existingMetadata = readFromSpanner(transaction, entity);
+
+                    // Use the existing read-write transaction for read operations
+                    VersionedMetadata existingMetadata = readFromSpanner(entity, transaction);
 
                     Metadata updatedMetadata;
                     if (existingMetadata != null) {
                         RequestandChange requestAndChange = applyMutation(existingMetadata, mutation);
                         updatedMetadata = requestAndChange.getChange().getAfter();
                     } else {
-                        // Metadata doesn't exist, create a new entry (if it's a Create mutation)
                         if (mutation instanceof MetadataMutation.Create) {
                             updatedMetadata = ((MetadataMutation.Create) mutation).getMetadata();
                             existingMetadata = VersionedMetadata.of(Metadata.EMPTY, System.currentTimeMillis());
                         } else {
-                            // For other mutation types (Update, Remove, Drop), skip if metadata doesn't exist
                             LOG.warn("Metadata not found, skipping mutation of type: {}", mutation.getType());
-                            continue; // Skip to the next mutation
+                            continue;
                         }
                     }
 
-                    // Add the mutation to the transaction.
-                    transaction.buffer(writeToSpanner(entity, updatedMetadata));
-
+                    transaction.buffer(writeToSpanner(entity, existingMetadata.getVersion(), updatedMetadata));
                     changes.add(createMetadataChange(mutation, existingMetadata.getMetadata(), updatedMetadata));
                 }
                 return null;
             });
         } catch (SpannerException e) {
-            LOG.error("Error applying batch mutations to Spanner: {}", e.getMessage(), e);
-            throw new IOException("Error applying batch mutations to Spanner: " + e.getMessage(), e);
+            throw e;
         }
-
         return changes;
     }
 
@@ -752,8 +879,8 @@ public class SpannerMetadataStorage implements MetadataStorage {
         try {
             ReadOnlyTransaction transaction = dbClient.readOnlyTransaction(); // Get a read-only transaction
             try {
-                VersionedMetadata versionedMetadata = readFromSpanner(transaction, read.getEntity());
-                return filterMetadata(versionedMetadata.getMetadata(), read.getKinds(),
+                Metadata metadata = readFromSpanner(read.getEntity(), transaction).getMetadata();
+                return filterMetadata(metadata, KEEP, read.getKinds(),
                         read.getScopes(), read.getSelection());
             } finally {
                 transaction.close(); // Important: Close the transaction
@@ -767,249 +894,278 @@ public class SpannerMetadataStorage implements MetadataStorage {
     @Override
     public SearchResponse search(SearchRequest request) throws IOException {
         return request.getCursor() != null && !request.getCursor().isEmpty()
-                ? doScroll(request) : doSearch(request,null);
+                ? doScroll(request) : doSearch(request);
     }
-    private SearchResponse doScroll(SearchRequest request) throws IOException {
-        // Spanner doesn't have native scroll functionality. We'll emulate it using a cursor.
-        try {
-            Cursor cursor = Cursor.fromString(request.getCursor());
-            return doSearch(createRequestFromCursor(request, cursor), cursor);
-        } catch (IllegalArgumentException e) {
-            // Invalid cursor, perform a regular search.
-            return doSearch(request,null);
-        }
+    private io.cdap.cdap.spi.metadata.SearchResponse doScroll(SearchRequest request) throws IOException {
+        Cursor cursor = Cursor.fromString(request.getCursor());
+        return performSpannerSearch(request, cursor);
     }
 
-
-    private SearchResponse doSearch(SearchRequest request, Cursor cursor) throws IOException {
-        try {
-            LOG.info("Search Request: {}", request);
-            Statement statement = buildSpannerQuery(request, cursor);
-            LOG.info("Spanner Query: {}", statement);
-            List<VersionedMetadata> results = executeSpannerQuery(statement);
-            LOG.info("Spanner Query Results: {}", results);
-
-            MetadataEntity entity = getMetadataEntityFromContext(request);
-            String newCursor = computeCursor(results, request, cursor);
-            return createSearchResponse(request, results, entity, newCursor);
-        } catch (Exception e) {
-            throw new IOException("Failed to search metadata in Spanner: " + e.getMessage(), e);
-        }
-    }
-    private SearchResponse createSearchResponse(SearchRequest request, List<VersionedMetadata> results,
-                                                MetadataEntity baseEntity, String cursor) {
-        List<MetadataRecord> metadataRecords = new ArrayList<>();
-        for (VersionedMetadata metadata : results) {
-            String application = metadata.getMetadata().getProperties().get(new ScopedName(MetadataScope.USER,
-                    "name"));
-            if (application == null) {
-                continue;
-            }
-
-            MetadataEntity entity = MetadataEntity.builder()
-                    .append(MetadataEntity.NAMESPACE, baseEntity.getValue(MetadataEntity.NAMESPACE))
-                    .append(MetadataEntity.APPLICATION, application)
-                    .build();
-
-            metadataRecords.add(new MetadataRecord(entity, metadata.getMetadata()));
-        }
-
-        return new SearchResponse(request, cursor, request.getOffset(), request.getLimit(), metadataRecords.size(),
-                metadataRecords);
-    }
-    private static SearchRequest createRequestFromCursor(SearchRequest request, Cursor cursor) {
-        SearchRequest.Builder builder = SearchRequest.of(cursor.getQuery())
-                .setOffset(cursor.getOffset())
-                .setLimit(cursor.getLimit())
-                .setShowHidden(cursor.isShowHidden())
-                .setScope(cursor.getScope())
-                .setCursorRequested(request.isCursorRequested());
-
-        if (cursor.getSorting() != null) {
-            builder.setSorting(Sorting.of(cursor.getSorting()));
-        }
-
-        if (cursor.getNamespaces() != null) {
-            cursor.getNamespaces().forEach(builder::addNamespace);
-        }
-
-        if (cursor.getTypes() != null) {
-            cursor.getTypes().forEach(builder::addType);
-        }
-
-        return builder.build();
+    private io.cdap.cdap.spi.metadata.SearchResponse doSearch(SearchRequest request) throws IOException {
+        return performSpannerSearch(request, null);
     }
 
+    private io.cdap.cdap.spi.metadata.SearchResponse performSpannerSearch(SearchRequest request,
+                                                                          @Nullable Cursor cursor) throws IOException {
+        DatabaseClient dbClient = getDbClient();
+        try (ReadOnlyTransaction transaction = dbClient.readOnlyTransaction()) {
 
-    private MetadataEntity getMetadataEntityFromContext(SearchRequest request) {
-        MetadataEntity.Builder builder = MetadataEntity.builder();
+            String sql = buildSpannerQuery(request, cursor);
+            Statement statement = Statement.newBuilder(sql).build();
+            ResultSet resultSet = transaction.executeQuery(statement);
 
-        if (request.getNamespaces() != null && !request.getNamespaces().isEmpty()) {
-            String namespace = request.getNamespaces().iterator().next();
-            builder.append(MetadataEntity.NAMESPACE, namespace);
-        } else {
-            builder.append(MetadataEntity.NAMESPACE, "default");
-        }
+            LOG.info(sql);
+            LOG.info(statement.toString());
+            LOG.info(resultSet.toString());
 
-        String query = request.getQuery();
-        if (query != null && !query.isEmpty()) {
-            builder.append(NAME_FIELD, query);
-        }
+            List<MetadataRecord> results = new ArrayList<>();
+            String nextCursor = null;
 
-        return builder.build();
-    }
-
-    private Statement buildSpannerQuery(SearchRequest request, Cursor cursor) {
-        Statement.Builder queryBuilder = Statement.newBuilder("SELECT * FROM " + METADATA_TABLE + " WHERE 1=1");
-
-        Set<String> types = request.getTypes();
-        if (types != null && !types.isEmpty()) {
-            queryBuilder.append(" AND ").append(TYPE_FIELD).append(" IN UNNEST(@types)");
-            List<String> typeList = new ArrayList<>(types);
-            queryBuilder.bind("types").to(Value.stringArray(typeList));
-        }
-
-        Set<String> namespaces = request.getNamespaces();
-        if (namespaces != null && !namespaces.isEmpty()) {
-            queryBuilder.append(" AND ").append(NAMESPACE_FIELD).append(" IN UNNEST(@namespaces)");
-            List<String> namespaceList = new ArrayList<>(namespaces);
-            queryBuilder.bind("namespaces").to(Value.stringArray(namespaceList));
-        }
-
-        String query = request.getQuery();
-        if (query != null && !query.isEmpty()) {
-            if (query.equals("profile:SYSTEM:autoscaling-dataproc")) {
-                queryBuilder.append(" AND ").append(NAMESPACE_FIELD).append(" = 'default'");
-                queryBuilder.append(" AND ").append(TYPE_FIELD).append(" = 'program'");
-                queryBuilder.append(" AND ").append(SYSTEM_FIELD).append(" LIKE '%system:autoscaling-dataproc%'");
-            }
-        }
-
-        // Handle cursor (emulated scroll)
-        if (cursor != null) {
-            queryBuilder.append(" AND VERSION > @cursorVersion");
-            queryBuilder.bind("cursorVersion").to(cursor.getOffset());
-        }
-
-        int limit = request.getLimit();
-        queryBuilder.append(" LIMIT @limit");
-        queryBuilder.bind("limit").to(limit);
-
-        Statement statement = queryBuilder.build();
-        LOG.info("Spanner Query: {}", statement);
-        return statement;
-    }
-
-    private List<VersionedMetadata> executeSpannerQuery(Statement statement) {
-        List<VersionedMetadata> results = new ArrayList<>();
-        try (com.google.cloud.spanner.ResultSet resultSet = getDbClient().singleUse().executeQuery(statement)) {
             while (resultSet.next()) {
-                results.add(rowToMetadata(resultSet.getCurrentRowAsStruct()));
+                results.add(mapSpannerResult(resultSet));
+                nextCursor = createNextCursorKey(resultSet);
             }
+
+            if (results.isEmpty()) {
+                nextCursor = null;
+            }
+            LOG.info(results.toString());
+            return createSpannerSearchResponse(request, results, nextCursor);
+        } catch (SpannerException e) {
+            throw new IOException("Spanner search failed", e);
         }
-        return results;
     }
-    private Statement buildSpannerQuery(MetadataEntity entity) {
-        StringBuilder queryBuilder = new StringBuilder("SELECT * FROM " + METADATA_TABLE + " WHERE 1=1");
+    private MetadataRecord mapSpannerResult(ResultSet resultSet) {
+        String namespace = resultSet.getString("namespace");
+        String name = resultSet.getString("name");
+        String entityType = resultSet.getString("entity_type");
+        Struct row = resultSet.getCurrentRowAsStruct();
+        LOG.info(row.toString());
+        String metadataString = row.getJson(9);
+        Metadata metadata = parseMetadataFromJson(metadataString);
+        MetadataEntity entity;
 
-        if (entity.getValue(NAMESPACE_FIELD) != null) {
-            queryBuilder.append(" AND ").append(NAMESPACE_FIELD).append(" = '").
-                    append(entity.getValue(NAMESPACE_FIELD)).append("'");
+        if ("plugin".equals(entityType)) {
+            // Extract artifact and version from the metadata properties
+            String artifact = metadata.getProperties(MetadataScope.SYSTEM).get("artifact");
+            String version = metadata.getProperties(MetadataScope.SYSTEM).get("version");
+            String pluginName = name;
+
+            if (artifact != null && version != null) {
+                entity = MetadataEntity.builder()
+                        .append(MetadataEntity.NAMESPACE, namespace)
+                        .append("artifact", artifact)
+                        .append("version", version)
+                        .append("type", "plugin")
+                        .append("plugin", pluginName)
+                        .build();
+            } else {
+                LOG.error("Could not find artifact or version for plugin: {}", name);
+                return null;
+            }
+        } else {
+            entity = MetadataEntity.builder()
+                    .append(MetadataEntity.NAMESPACE, namespace)
+                    .append(entityType, name)
+                    .build();
         }
 
-        if (entity.getValue(NAME_FIELD) != null) {
-            queryBuilder.append(" AND ").append(NAME_FIELD).append(" = '").
-                    append(entity.getValue(NAME_FIELD)).append("'");
-        }
-
-        // You may add other filtering criteria based on the MetadataEntity, if needed.
-        String queryString = queryBuilder.toString();
-        LOG.debug("Spanner Query for MetadataEntity: {}", queryString);
-        return Statement.of(queryString);
+        MetadataRecord record = new MetadataRecord(entity, metadata);
+        return record;
     }
-    private VersionedMetadata rowToMetadata(Struct row) {
-        String propsJson = row.getString("props");
-        String tagsJson = row.isNull("tags") ? null : row.getString("tags");
-        String schemaJson = row.isNull("schema") ? null : row.getString("schema"); // Get schemaJson
 
-        Type listType = new TypeToken<List<Map<String, String>>>() {}.getType();
-        Type mapType = new TypeToken<Map<String, List<Map<String, String>>>>() {}.getType();
+    private Metadata parseMetadataFromJson(String metadataJson) {
+        if (metadataJson == null || metadataJson.isEmpty()) {
+            return Metadata.EMPTY;
+        }
 
-        List<Map<String, String>> propertiesList = null;
-        Map<ScopedName, String> scopedProperties = new HashMap<>();
+        java.lang.reflect.Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        Map<String, Object> metadataMap = gson.fromJson(metadataJson, type);
+
         Set<ScopedName> tags = new HashSet<>();
-        Map<String, List<Map<String, String>>> tagsMap = null;
+        Map<ScopedName, String> properties = new HashMap<>();
 
-        try {
-            propertiesList = gson.fromJson(propsJson, listType);
-            if (tagsJson != null) {
-                tagsMap = gson.fromJson(tagsJson, mapType);
-            }
-        } catch (JsonSyntaxException e) {
-            LOG.error("Error parsing JSON: propsJson={}, tagsJson={}", propsJson, tagsJson, e);
-            return VersionedMetadata.of(new Metadata(Collections.emptySet(), Collections.emptyMap()), 0L);
-        }
+        if (metadataMap != null) {
+            for (Map.Entry<String, Object> entry : metadataMap.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
 
-        if (propertiesList != null) {
-            for (Map<String, String> prop : propertiesList) {
-                if (prop.containsKey("scope") && prop.containsKey("name")) {
-                    MetadataScope scope = MetadataScope.valueOf(prop.get("scope").toUpperCase());
-                    ScopedName scopedName = new ScopedName(scope, prop.get("name"));
-                    if (prop.containsKey("value") && prop.get("value") != null) {
-                        scopedProperties.put(scopedName, prop.get("value"));
-                    } else {
-                        tags.add(scopedName);
+                if (value instanceof String) {
+                    properties.put(new ScopedName(MetadataScope.USER, key), (String) value);
+                } else if (value instanceof Boolean) {
+                    properties.put(new ScopedName(MetadataScope.USER, key), value.toString());
+                } else if (value instanceof Number) {
+                    properties.put(new ScopedName(MetadataScope.USER, key), value.toString());
+                } else if (value instanceof String[]) {
+                    for (String tag : (String[])value){
+                        tags.add(new ScopedName(MetadataScope.USER, tag));
                     }
                 }
             }
         }
 
-        if (tagsMap != null) {
-            for (Map.Entry<String, List<Map<String, String>>> entry : tagsMap.entrySet()) {
-                if (entry.getValue() != null) {
-                    for (Map<String, String> tag : entry.getValue()) {
-                        if (tag.containsKey("scope") && tag.containsKey("name")) {
-                            MetadataScope scope = MetadataScope.valueOf(tag.get("scope").toUpperCase());
-                            tags.add(new ScopedName(scope, tag.get("name")));
-                        }
-                    }
+        return new Metadata(tags, properties);
+    }
+    private String createNextCursorKey(ResultSet resultSet) {
+        return resultSet.getString("namespace") + "," + resultSet.getString("name")
+                + "," + resultSet.getString("entity_type");
+    }
+
+    private io.cdap.cdap.spi.metadata.SearchResponse createSpannerSearchResponse(SearchRequest request,
+                                                                                 List<MetadataRecord> results,
+                                                                                 String nextCursor) {
+        return new io.cdap.cdap.spi.metadata.SearchResponse(request, nextCursor, request.getOffset(),
+                request.getLimit(), results.size(), results);
+    }
+
+    private static String mapSortKey(String key) {
+        // Map SearchRequest sort keys to Spanner column names
+        // Example:
+        if ("name".equals(key)) {
+            return "name";
+        }
+        if ("namespace".equals(key)) {
+            return "namespace";
+        }
+        if ("entity_type".equals(key)) {
+            return "entity_type";
+        }
+        throw new IllegalArgumentException("Unsupported sort key: " + key);
+    }
+
+    private String buildSpannerQuery(SearchRequest request, @Nullable Cursor cursor) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM Metadata WHERE 1=1 ");
+
+        if (cursor != null && cursor.getActualCursor() != null && !cursor.getActualCursor().isEmpty()) {
+            sql.append(" AND (namespace, name, entity_type) > ('").append(cursor.getActualCursor()).append("')");
+        }
+
+        // Add filters from the SearchRequest (namespace, types, etc.)
+        if (request.getNamespaces() != null && !request.getNamespaces().isEmpty()) {
+            sql.append(" AND namespace IN ('").append(String.join("','", request.getNamespaces())).append("')");
+        }
+
+        if (request.getTypes() != null && !request.getTypes().isEmpty()) {
+            sql.append(" AND entity_type IN ('").append(String.join("','", request.getTypes())).append("')");
+        } else {
+            sql.append(" AND entity_type = 'dataset'"); // Default to dataset if no type specified
+        }
+
+        // Main query (search terms)
+        if (request.getQuery() != null && !request.getQuery().isEmpty() && !request.getQuery().equals("*")) {
+            List<String> searchConditions = processSearchQuery(request.getQuery());
+            if (!searchConditions.isEmpty()) {
+                sql.append(" AND (").append(String.join(" AND ", searchConditions)).append(")");
+            }
+        }
+
+        // Add sorting from the SearchRequest
+        if (request.getSorting() != null) {
+            sql.append(" ORDER BY ").append(mapSortKey(request.getSorting().getKey().toLowerCase())).append(" ").
+                    append(request.getSorting().getOrder().name());
+        } else {
+            sql.append(" ORDER BY name, entity_type, text"); // Matching the index order
+        }
+
+        sql.append(" LIMIT ").append(request.getLimit());
+
+        return sql.toString();
+    }
+
+    private List<String> processSearchQuery(String query) {
+        List<String> conditions = new ArrayList<>();
+        String[] terms = SPACE_SEPARATOR_PATTERN.split(query);
+        boolean containsExactExternalDataset = false;
+        List<String> otherConditions = new ArrayList<>();
+
+        for (String term : terms) {
+            String cleanedTerm = term.trim().toLowerCase().replace("*", "");
+            if (cleanedTerm.equals(EXACT_EXTERNAL_DATASET_WORD) || cleanedTerm.equals(EXACT_DATASET_WORD)
+                    || cleanedTerm.equals("external dataset")) {
+                containsExactExternalDataset = true;
+            } else {
+                otherConditions.add(createSearchConditionForTerm(cleanedTerm));
+            }
+        }
+
+        if (containsExactExternalDataset) {
+            conditions.add("LOWER(text) LIKE '%externaldataset%'");
+            if (!otherConditions.isEmpty()) {
+                conditions.add("(" + String.join(" AND ", otherConditions) + ")");
+                return Collections.singletonList(String.join(" AND ", conditions));
+            } else {
+                return conditions;
+            }
+        } else {
+            return otherConditions;
+        }
+    }
+
+    private String createSearchConditionForTerm(String term) {
+        if (term.contains(ENTITY_NAME_SEPARATOR) || !term.startsWith(TAG_PREFIX) && !term.startsWith(SCHEMA_PREFIX)
+                && !USER_PROPERTY_PATTERN.matcher(term).matches()) {
+            return createEntityNamePartOrCombinationCondition(term);
+        } else if (term.startsWith(TAG_PREFIX)) {
+            return createExactMatchCondition("text", term);
+        } else if (term.startsWith(SCHEMA_PREFIX)) {
+            return createExactMatchCondition("text", term);
+        } else if (USER_PROPERTY_PATTERN.matcher(term).matches()) {
+            return createUserPropertyCondition(term);
+        }
+        // Fallback to exact match if none of the above
+        return createExactMatchCondition("text", term);
+    }
+
+    private String createExactMatchCondition(String column, String value) {
+        return "LOWER(" + column + ") = '" + value + "'";
+    }
+
+    private String createUserPropertyCondition(String term) {
+        Matcher propertyMatcher = USER_PROPERTY_PATTERN.matcher(term);
+        List<String> validMatches = new ArrayList<>();
+        if (propertyMatcher.matches()) {
+            // Case 1: key:value
+            if (propertyMatcher.group(1) != null && propertyMatcher.group(2) != null) {
+                String propertyKey = propertyMatcher.group(1);
+                String propertyValue = propertyMatcher.group(2);
+                validMatches.add(propertyKey);
+                validMatches.add(propertyKey + ":");
+                validMatches.add(propertyKey + ":" + propertyValue);
+                validMatches.add(propertyValue);
+            }
+            // Case 2: key: (key with empty value)
+            else if (propertyMatcher.group(3) != null) {
+                validMatches.add(propertyMatcher.group(3));
+                validMatches.add(propertyMatcher.group(3) + ":");
+            }
+            // Case 3: key (just the key)
+            else if (propertyMatcher.group(4) != null) {
+                validMatches.add(propertyMatcher.group(4));
+            }
+        }
+        return validMatches.stream()
+                .map(match -> "LOWER(text) LIKE '%" + match + "%'")
+                .collect(Collectors.joining(" OR "));
+    }
+
+    private String createEntityNamePartOrCombinationCondition(String term) {
+        List<String> entityNameParts = Arrays.asList(term.toLowerCase().split(Pattern.quote(ENTITY_NAME_SEPARATOR)));
+        List<String> conditions = new ArrayList<>();
+
+        // Add condition for the full term
+        conditions.add("LOWER(text) LIKE '%" + term.toLowerCase() + "%'");
+
+        // Add conditions for individual parts only if the term had separators
+        if (term.contains(ENTITY_NAME_SEPARATOR)) {
+            for (String part : entityNameParts) {
+                if (!part.isEmpty() && !term.toLowerCase().equals("%" + part + "%")) {
+                    conditions.add("LOWER(text) LIKE '%" + part + "%'");
                 }
             }
         }
 
-        if (schemaJson != null) {
-            // Add schema as a system property
-            scopedProperties.put(new ScopedName(MetadataScope.SYSTEM, "schema"), schemaJson);
-        }
-
-        long version = row.getLong("VERSION");
-        return VersionedMetadata.of(new Metadata(tags, scopedProperties), version);
+        return "(" + String.join(" OR ", conditions) + ")";
     }
-
-    private String computeCursor(List<VersionedMetadata> results, SearchRequest request, Cursor cursor) {
-        if (results == null || results.isEmpty()) {
-            return null;
-        }
-
-        if (results.size() < request.getLimit()) {
-            return null; // No more results
-        }
-
-        long lastVersion = results.get(results.size() - 1).getVersion();
-
-        return new Cursor(
-                (cursor != null) ? cursor.getOffset() : 0,
-                request.getLimit(),
-                request.isShowHidden(),
-                request.getScope(),
-                request.getNamespaces(),
-                request.getTypes(),
-                (request.getSorting() != null) ? request.getSorting().toString() : null,
-                String.valueOf(lastVersion),
-                request.getQuery()
-        ).toString();
-    }
-
     private DatabaseClient getDbClient() {
         DatabaseClient client = this.dbClient;
         if (client != null) {
@@ -1056,47 +1212,40 @@ public class SpannerMetadataStorage implements MetadataStorage {
         }
     }
 
-    private Metadata filterMetadata(Metadata metadata, Set<MetadataKind> kinds,
-                                    Set<MetadataScope> scopes, Set<ScopedNameOfKind> selection) {
-
-        Set<ScopedName> filteredTags = metadata.getTags();
-        Map<ScopedName, String> filteredProperties = metadata.getProperties();
-
+    @VisibleForTesting
+    @SuppressWarnings("ConstantConditions")
+    static Metadata filterMetadata(Metadata metadata, boolean keep, Set<MetadataKind> kinds,
+                                   Set<MetadataScope> scopes, Set<ScopedNameOfKind> selection) {
         if (selection != null) {
-            filteredTags = metadata.getTags().stream()
-                    .filter(tag -> selection.contains(new ScopedNameOfKind(MetadataKind.TAG,
-                            tag.getScope(), tag.getName())))
-                    .collect(Collectors.toSet());
-
-            filteredProperties = metadata.getProperties().entrySet().stream()
-                    .filter(entry -> selection.contains(new
-                            ScopedNameOfKind(MetadataKind.PROPERTY, entry.getKey().getScope(), entry.getKey().getName())
-                    ))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        } else {
-            if (!kinds.contains(MetadataKind.TAG) || !scopes.stream().anyMatch(scope ->
-                    metadata.getTags().stream().anyMatch(tag -> tag.getScope().equals(scope)))) {
-                filteredTags = metadata.getTags().stream()
-                        .filter(tag -> kinds.contains(MetadataKind.TAG) && scopes.contains(tag.getScope()))
-                        .collect(Collectors.toSet());
-            }
-            if (!kinds.contains(MetadataKind.PROPERTY) || !scopes.stream().anyMatch(scope ->
-                    metadata.getProperties().keySet().stream().anyMatch(key -> key.getScope().equals(scope)
-                    ))) {
-                filteredProperties = metadata.getProperties().entrySet().stream()
-                        .filter(entry -> kinds.contains(MetadataKind.PROPERTY) &&
-                                scopes.contains(entry.getKey().getScope()))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            }
-
+            return new Metadata(
+                    Sets.filter(metadata.getTags(), tag ->
+                            keep == selection.contains(
+                                    new ScopedNameOfKind(MetadataKind.TAG, tag.getScope(), tag.getName()))),
+                    Maps.filterKeys(metadata.getProperties(), key ->
+                            keep == selection.contains(
+                                    new ScopedNameOfKind(MetadataKind.PROPERTY, key.getScope(), key.getName())))
+            );
         }
-
-        return new Metadata(filteredTags, filteredProperties);
+        return new Metadata(
+                Sets.filter(metadata.getTags(), tag ->
+                        keep == (kinds.contains(MetadataKind.TAG) && scopes.contains(tag.getScope()))),
+                Maps.filterKeys(metadata.getProperties(), key ->
+                        keep == (kinds.contains(MetadataKind.PROPERTY) && scopes.contains(key.getScope()))));
     }
 
     @Override
     public Object getDatasetMetadata(String datasetName) {
         return Collections.emptyMap();
+    }
+
+    public String getProjectId(Map<String, String> conf){
+         return conf.get(projectId);
+    }
+    public String getDatabaseId(Map<String, String> conf){
+        return conf.get(databaseId);
+    }
+    public String getInstanceId(Map<String, String> conf){
+        return conf.get(instanceId);
     }
 
 }

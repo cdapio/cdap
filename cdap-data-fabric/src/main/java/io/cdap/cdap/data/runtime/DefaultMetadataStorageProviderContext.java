@@ -8,13 +8,13 @@ import java.util.Map;
 
 public class DefaultMetadataStorageProviderContext implements MetadataStorageContext {
 
-    public static final String METADATA_STORAGE_PREFIX = "metadata.storage";
+    public static final String METADATA_STORAGE_PREFIX = "data.storage.properties.gcp-spanner";
     private final Map<String, String> cConf;
 
     private final Map<String, String> properties;
 
     protected DefaultMetadataStorageProviderContext(CConfiguration cConf, String storageName) {
-        String prefix = String.format("%s.%s.", METADATA_STORAGE_PREFIX, storageName);
+        String prefix = String.format("%s.", METADATA_STORAGE_PREFIX);
         this.cConf = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
         this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
     }

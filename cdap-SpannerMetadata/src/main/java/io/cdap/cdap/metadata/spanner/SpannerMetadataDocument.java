@@ -236,15 +236,17 @@ public class SpannerMetadataDocument {
                 StringBuilder builder = new StringBuilder();
                 SchemaWalker.walk(schema, (field, subSchema) -> {
                     if (field != null) {
-                        String type = (subSchema.isNullable() ? subSchema.getNonNullable() : subSchema).getType().
-                                toString();
-                        builder.append(field).append(' ').append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).
-                                append(type).append(' ');
+                        String type = (subSchema.isNullable() ? subSchema.getNonNullable()
+                                : subSchema).getType().toString();
+                        builder.append(field).append(' ')
+                                .append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).append(type)
+                                .append(' ');
                     }
                 });
                 return builder.toString();
             } catch (Exception e) {
-                LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text.", schemaStr, entity);
+                LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text.", schemaStr,
+                        entity);
                 return schemaStr;
             }
         }

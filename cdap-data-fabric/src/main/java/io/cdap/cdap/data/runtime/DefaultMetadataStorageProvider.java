@@ -9,11 +9,15 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.io.IOException;
 import java.util.List;
 
 public class DefaultMetadataStorageProvider implements MetadataStorage {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStorageProvider.class);
 
     private final CConfiguration cConf;
     private final  MetadataStorageExtensionLoader extensionLoader;
@@ -28,6 +32,7 @@ public class DefaultMetadataStorageProvider implements MetadataStorage {
         this.extensionLoader.getAll();
 
         String providerName = "spanner";
+        LOG.info(cConf.toString());
 
         this.delegate = this.extensionLoader.get(providerName);
         if (this.delegate == null) {
