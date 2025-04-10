@@ -158,6 +158,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_ID_ATTR)).set(currentUserId);
       ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_CREDENTIAL_ATTR)).set(currentUserCredential);
     } else {
+      LOG.error("Reached in alternate ACH for msg {} ", msg);
+      LOG.error("Message is instance of {} ", msg.getClass());
       Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).get();
       Object userIdObj = ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_ID_ATTR)).get();
       Object userCredentialObj =
@@ -167,6 +169,8 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       }
       if (userIdObj != null && userCredentialObj != null) {
         SecurityRequestContext.setUserId((String) userIdObj);
+        Credential cred = (Credential) userCredentialObj;
+        LOG.error("Setting SRC with cred value {}", cred.getValue());
         SecurityRequestContext.setUserCredential((Credential) userCredentialObj);
       }
     }
