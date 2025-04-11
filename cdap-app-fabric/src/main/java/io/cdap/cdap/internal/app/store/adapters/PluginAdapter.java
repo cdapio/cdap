@@ -76,10 +76,10 @@ public class PluginAdapter implements JsonSerializer<Plugin>, JsonDeserializer<P
     if (pluginClass.getDescription().isEmpty()) {
       String artifactNamespace = artifactId.getScope().equals(ArtifactScope.SYSTEM) ?
           NamespaceId.SYSTEM.getNamespace() : serializationContext.getNamespace();
-      String parentName = (pluginClass.getName().equals("directive") && !pluginParent.equals("")) ?
+      String parentName = (pluginClass.getType().equals("directive") && !pluginParent.equals("")) ?
           pluginParent : serializationContext.getParentName();
       String parentNamespace =
-          (pluginClass.getName().equals("directive") && !pluginParent.equals("")) ?
+          (pluginClass.getType().equals("directive") && !pluginParent.equals("")) ?
               pluginParentNamespace : serializationContext.getParentNamespace();
       PluginKey pluginKey = new PluginKey(parentName, parentNamespace,
           artifactId.getName(), artifactNamespace, artifactId.getVersion().getVersion(),
