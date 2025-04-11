@@ -1521,11 +1521,11 @@ public abstract class AppMetadataStoreTest {
         AppMetadataStore metaStore = AppMetadataStore.create(context);
         StructuredTable pluginDataTable = metaStore.getPluginDataTable();
         Collection<Field<?>> fields = new ArrayList<>();
-        fields.add(Fields.stringField(ArtifactStore.PARENT_NAMESPACE_FIELD, "system"));
-        fields.add(Fields.stringField(ArtifactStore.PARENT_NAME_FIELD, "cdap-data-pipeline"));
+        fields.add(Fields.stringField(ArtifactStore.PARENT_NAMESPACE_FIELD, "default"));
+        fields.add(Fields.stringField(ArtifactStore.PARENT_NAME_FIELD, "testArtifact"));
         fields.add(Fields.stringField(ArtifactStore.PLUGIN_TYPE_FIELD, "transform"));
         fields.add(Fields.stringField(ArtifactStore.PLUGIN_NAME_FIELD, "Wrangler"));
-        fields.add(Fields.stringField(ArtifactStore.ARTIFACT_NAMESPACE_FIELD, artifactId.getScope().name()));
+        fields.add(Fields.stringField(ArtifactStore.ARTIFACT_NAMESPACE_FIELD, "default"));
         fields.add(Fields.stringField(ArtifactStore.ARTIFACT_NAME_FIELD, artifactId.getName()));
         fields.add(Fields.stringField(ArtifactStore.ARTIFACT_VER_FIELD, artifactId.getVersion().getVersion()));
         fields.add(Fields.stringField(ArtifactStore.PLUGIN_DATA_FIELD, "{\"pluginClass\":{\"type\":"
@@ -1561,6 +1561,7 @@ public abstract class AppMetadataStoreTest {
         int id = idGenerator.getAndIncrement();
         ApplicationId appId = appRef.app(appName + "_version_" + id);
         Map<String, Plugin> plugins = new HashMap<>();
+//        ArtifactId parent = NamespaceId.DEFAULT.artifact("parent", "1.0").toApiArtifactId();
 
         PluginClass pluginClass = PluginClass.builder().setClassName("io.cdap.wrangler.Wrangler")
             .setName("Wrangler").setCategory("").setConfigFieldName("")
