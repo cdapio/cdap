@@ -141,23 +141,23 @@ public class RemoteTaskExecutor {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
           }
+          Credential currentCredential = SecurityRequestContext.getUserCredential();
           if (isWorkerEncryptionRequired) {
-            Credential currentCredential = SecurityRequestContext.getUserCredential();
             LOG.error("Encrypting user creds {} with task worker associated data", currentCredential.getValue());
             String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
                 Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
             Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
             SecurityRequestContext.setUserCredential(encryptedCredential);
             LOG.error("Done with encryption {} ", encryptedCredential.getValue());
-
-            LOG.error("Trying to decrypt here");
-            String decryptedValue = userEncryptionAeadCipher.decryptStringFromBase64(encryptedValue,
-                Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-            LOG.error("Decrypted string is {}", decryptedValue);
           }
           HttpRequest httpRequest = requestBuilder.build();
 
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
+
+          if (isWorkerEncryptionRequired) {
+            LOG.error("Setting user creds back to original decrypted value {}", currentCredential.getValue());
+            SecurityRequestContext.setUserCredential(currentCredential);
+          }
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
                 String.format("Received response code %s for %s", httpResponse.getResponseCode(),
