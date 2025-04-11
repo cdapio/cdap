@@ -87,10 +87,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    LOG.error("Resetting SRC for ACH");
     SecurityRequestContext.reset();
 
+    LOG.error("Inside ACH for msg {}", msg);
     // TODO: CDAP-21121 ensure request is authorized before sending response
     if (msg instanceof HttpRequest) {
+
+      LOG.error("Reached in if block of ACH for msg {} ", msg);
 
       String currentUserId = null;
       Credential currentUserCredential = null;
@@ -117,6 +121,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       }
       String authHeader = request.headers().get(Constants.Security.Headers.RUNTIME_TOKEN);
       boolean taskWorkerDecryptionHeader = Boolean.parseBoolean(request.headers().get(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR));
+      LOG.error("Setting taskWorkerDecryptionHeader to {} ", taskWorkerDecryptionHeader);
       if (authHeader != null) {
         int idx = authHeader.trim().indexOf(' ');
         if (idx < 0) {
@@ -132,6 +137,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
             String credentialValue = authHeader.substring(idx + 1).trim();
             if (!taskWorkerDecryptionEnabled) {
               currentUserCredential = new Credential(credentialValue, credentialType);
+              LOG.error("In if Set current cred to {} ", currentUserCredential.getValue());
             } else {
               ImmutablePair<Boolean, String> newCredentialPair = isValidTaskWorkerCall(
                   credentialValue, taskWorkerDecryptionHeader);
@@ -140,6 +146,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
                 throw new UnauthenticatedException("Request denied for Task workers");
               }
               currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);
+              LOG.error("In else Set current cred to {} ", currentUserCredential.getValue());
             }
           } catch (IllegalArgumentException e) {
             LOG.error("Invalid credential type in Authorization header: {}", credentialTypeStr);
@@ -152,13 +159,16 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
           authHeader == null ? "NULL" : authHeader.length());
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserCredential(currentUserCredential);
+      LOG.error("Set current cred in SRC to {} ", currentUserCredential);
+      LOG.error("With cred value {} ", currentUserCredential.getValue());
       SecurityRequestContext.setUserIp(currentUserIp);
       //Also set userIp in ATTR , to be used in audit logging incase it was replaced at a later stage
       ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).set(currentUserIp);
       ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_ID_ATTR)).set(currentUserId);
       ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_CREDENTIAL_ATTR)).set(currentUserCredential);
+      LOG.error("Set current cred in channel attribute to {} ", currentUserCredential);
     } else {
-      LOG.error("Reached in alternate ACH for msg {} ", msg);
+      LOG.error("Reached in else block of ACH for msg {} ", msg);
       LOG.error("Message is instance of {} ", msg.getClass());
       Object userIpObj = ctx.channel().attr(AttributeKey.valueOf(AUDIT_LOG_USER_IP_ATTR)).get();
       Object userIdObj = ctx.channel().attr(AttributeKey.valueOf(CDAP_USER_ID_ATTR)).get();
@@ -170,7 +180,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       if (userIdObj != null && userCredentialObj != null) {
         SecurityRequestContext.setUserId((String) userIdObj);
         Credential cred = (Credential) userCredentialObj;
-        LOG.error("Setting SRC with cred value {}", cred.getValue());
+        LOG.error("Setting SRC in else with cred value {}", cred.getValue());
         SecurityRequestContext.setUserCredential((Credential) userCredentialObj);
       }
     }
@@ -179,6 +189,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
       ctx.fireChannelRead(msg);
     } finally {
       setAuditLogMetaDataInChannel(ctx);
+      LOG.error("Resetting SRC for ACH 2");
       SecurityRequestContext.reset();
     }
   }

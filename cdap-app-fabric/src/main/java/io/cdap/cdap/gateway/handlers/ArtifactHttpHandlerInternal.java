@@ -43,6 +43,7 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -125,6 +126,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       @PathParam("artifact-version") String artifactVersion,
       @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
 
+    LOG.error("Reached getArtifactBytes with request {} ", request);
+    LOG.error("Current creds value {} ", SecurityRequestContext.getUserCredential().getValue());
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(
@@ -194,6 +197,8 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       @PathParam("artifact-name") String artifactName,
       @PathParam("artifact-version") String artifactVersion,
       @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+    LOG.error("Reached getArtifactDetail with request {} ", request);
+    LOG.error("Current cred value {} ", SecurityRequestContext.getUserCredential().getValue());
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceId.equals(NamespaceId.SYSTEM)) {
       if (!namespaceQueryAdmin.exists(namespaceId)) {

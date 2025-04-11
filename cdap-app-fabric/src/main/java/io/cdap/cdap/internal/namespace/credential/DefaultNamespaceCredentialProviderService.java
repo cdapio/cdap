@@ -44,6 +44,8 @@ import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation for {@link NamespaceCredentialProviderService} used in AppFabric.
@@ -57,6 +59,7 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final CredentialProfileManager credentialProfileManager;
   private final CConfiguration cConf;
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceCredentialProviderService.class);
 
 
   @Inject
@@ -127,6 +130,7 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
   }
 
   private void switchToInternalUser() {
+    LOG.error("Resetting SRC for Default Namespace Credential Provider Service");
     SecurityRequestContext.reset();
   }
 

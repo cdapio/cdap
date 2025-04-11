@@ -96,6 +96,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     // force the system worker to use its system context.
     internalAccessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
         ApplicationPermission.EXECUTE);
+    LOG.error("Resetting SRC for System Worker Http Handler Internal");
     SecurityRequestContext.reset();
 
     if (requestProcessedCount.incrementAndGet() > requestLimit) {
