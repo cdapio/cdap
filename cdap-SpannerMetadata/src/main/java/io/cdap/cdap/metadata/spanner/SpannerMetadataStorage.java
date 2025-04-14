@@ -66,10 +66,12 @@ import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Type;
 import java.util.Set;
 import java.util.Map;
 import java.util.List;
@@ -950,7 +952,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         String entityType = resultSet.getString("entity_type");
         Struct row = resultSet.getCurrentRowAsStruct();
         LOG.info(row.toString());
-        String metadataString = row.getJson(9);
+        String metadataString = row.getJson(10);
         Metadata metadata = parseMetadataFromJson(metadataString);
         MetadataEntity entity;
 
@@ -984,11 +986,11 @@ public class SpannerMetadataStorage implements MetadataStorage {
     }
 
     private Metadata parseMetadataFromJson(String metadataJson) {
-        if (metadataJson == null || metadataJson.isEmpty()) {
+        if (StringUtils.isEmpty(metadataJson)) {
             return Metadata.EMPTY;
         }
 
-        java.lang.reflect.Type type = new TypeToken<Map<String, Object>>() {}.getType();
+        Type type = new TypeToken<Map<String, Object>>() {}.getType();
         Map<String, Object> metadataMap = gson.fromJson(metadataJson, type);
 
         Set<ScopedName> tags = new HashSet<>();
@@ -999,10 +1001,9 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 String key = entry.getKey();
                 Object value = entry.getValue();
 
-                if ("tags".equals(key) && value instanceof List) { // Explicitly handle the "tags" key
+                if ("tags".equals(key) && value instanceof List) {
                     for (Object tagValue : (List<?>) value) {
                         if (tagValue instanceof String) {
-                            // Assuming tags in the array might also have a scope prefix
                             String fullTag = (String) tagValue;
                             String[] parts = fullTag.split(":", 2);
                             MetadataScope scope = MetadataScope.USER; // Default scope for tags
