@@ -37,11 +37,11 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
   private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
   private final String serviceName;
 
-  private static final List<String> EXEMPTED_URIS = ImmutableList.of(
-      "/artifact/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$",
-      "/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$",
-      "/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$",
-      "/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision$"
+  private static final List<Pattern> EXEMPTED_URIS = ImmutableList.of(
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)")
   );
 
   public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
@@ -54,11 +54,10 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
     LOG.error("Reached in encryption exemption precall for handler {}", handlerInfo);
     LOG.error("Reached in encryption exemption precall for URI {}", request.uri());
 
-    for (String pattern : EXEMPTED_URIS) {
-      Pattern uriPattern = Pattern.compile(pattern);
+    for (Pattern uriPattern : EXEMPTED_URIS) {
       Matcher matcher = uriPattern.matcher(request.uri());
       if (matcher.matches()) {
-        LOG.error("Matched {} for {}", request.uri(), pattern);
+        LOG.error("Matched {} for {}", request.uri(), uriPattern);
         LOG.error("Adding header with false to request");
         request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "false");
         return true;
