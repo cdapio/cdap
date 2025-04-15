@@ -142,7 +142,7 @@ public class RemoteTaskExecutor {
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
           }
           Credential currentCredential = SecurityRequestContext.getUserCredential();
-          if (isWorkerEncryptionRequired) {
+          if (isWorkerEncryptionRequired && currentCredential != null) {
             LOG.error("Encrypting user creds {} with task worker associated data", currentCredential.getValue());
             String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
                 Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
