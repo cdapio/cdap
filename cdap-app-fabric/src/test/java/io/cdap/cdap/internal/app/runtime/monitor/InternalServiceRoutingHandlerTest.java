@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -87,6 +88,7 @@ public class InternalServiceRoutingHandlerTest {
         new LocalLocationModule(),
         new InMemoryDiscoveryModule(),
         new NoOpAuditLogModule(),
+        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

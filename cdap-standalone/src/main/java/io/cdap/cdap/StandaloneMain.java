@@ -44,6 +44,7 @@ import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -558,6 +559,7 @@ public class StandaloneMain {
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),
         new NoOpAuditLogModule(),
+        new UserCredentialAeadEncryptionModule(),
         new AuthorizationEnforcementModule().getStandaloneModules(),
         new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
         new PreviewManagerModule(cConf, false),

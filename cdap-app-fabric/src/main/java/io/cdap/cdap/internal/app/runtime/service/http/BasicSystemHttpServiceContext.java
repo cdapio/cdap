@@ -33,6 +33,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -97,7 +98,8 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
       FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
       PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
       ContextAccessEnforcer contextAccessEnforcer,
-      AppStateStoreProvider appStateStoreProvider) {
+      AppStateStoreProvider appStateStoreProvider,
+      AeadCipher userEncryptionAeadCipher) {
     super(program, programOptions, cConf, spec, instanceId, instanceCount, metricsCollectionService,
         dsFramework,
         discoveryServiceClient, txClient, pluginInstantiator, secureStore, secureStoreManager,
@@ -117,7 +119,7 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
         remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig);
+        RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig, userEncryptionAeadCipher);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 

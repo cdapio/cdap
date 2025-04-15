@@ -41,6 +41,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.AuthenticationChannelHandler;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -114,7 +115,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
       TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher,
       RemoteClientFactory remoteClientFactory, ContextAccessEnforcer contextAccessEnforcer,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      AppStateStoreProvider appStateStoreProvider, SConfiguration sConf) {
+      AppStateStoreProvider appStateStoreProvider, SConfiguration sConf, AeadCipher userEncryptionAeadCipher) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -129,7 +130,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
         messagingService, artifactManager, metadataReader, metadataPublisher,
         pluginFinder, fieldLineageWriter, transactionRunner,
         preferencesFetcher, remoteClientFactory, contextAccessEnforcer,
-        appStateStoreProvider);
+        appStateStoreProvider, userEncryptionAeadCipher);
 
     Class<?> serviceClass = null;
     try {
@@ -254,7 +255,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
       PreferencesFetcher preferencesFetcher,
       RemoteClientFactory remoteClientFactory,
       ContextAccessEnforcer contextAccessEnforcer,
-      AppStateStoreProvider appStateStoreProvider) {
+      AppStateStoreProvider appStateStoreProvider,
+      AeadCipher userEncryptionAeadCipher) {
     return (spec, handlerClass) -> {
       if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(
           handlerClass)) {
@@ -265,7 +267,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
             messagingService, artifactManager, metadataReader, metadataPublisher,
             namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
             transactionRunner, preferencesFetcher, remoteClientFactory,
-            contextAccessEnforcer, appStateStoreProvider);
+            contextAccessEnforcer, appStateStoreProvider, userEncryptionAeadCipher);
       }
       return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId,
           instanceCount,

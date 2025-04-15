@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.tethering;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -79,7 +80,8 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     DiscoveryService discoveryService = getInjector().getInstance(DiscoveryService.class);
     artifactCacheService = new ArtifactCacheService(
       cConf, artifactCache, tetheringStore, null, discoveryService,
-      new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {}));
+      new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {},
+      new NoOpAeadCipher()));
     artifactCacheService.startAndWait();
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);

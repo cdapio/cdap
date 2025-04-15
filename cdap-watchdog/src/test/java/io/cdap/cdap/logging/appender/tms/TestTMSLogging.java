@@ -26,6 +26,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
@@ -40,9 +41,9 @@ import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
+import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RawMessage;
-import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -96,6 +97,7 @@ public class TestTMSLogging {
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new NoOpAuditLogModule(),
+      new UserCredentialAeadEncryptionModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

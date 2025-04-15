@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.EncryptionExemptionHook;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -167,7 +168,13 @@ public class AppFabricServer extends AbstractIdleService {
       .map(name -> new AuditLogSetterHook(cConf, name))
       .collect(Collectors.toList());
 
+    // Create encryption exemption handler hooks
+    List<EncryptionExemptionHook> encryptionHandlerHooks = handlerHookNames.stream()
+        .map(name -> new EncryptionExemptionHook(cConf, name))
+        .collect(Collectors.toList());
+
     handlerHooks.addAll(auditHandlerHooks);
+    handlerHooks.addAll(encryptionHandlerHooks);
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory

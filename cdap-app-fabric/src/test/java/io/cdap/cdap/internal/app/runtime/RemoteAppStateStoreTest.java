@@ -22,6 +22,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -91,8 +92,8 @@ public class RemoteAppStateStoreTest {
     namespaceAdmin.create(testNameSpace);
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "appfabric", new NoOpMetricsCollectionService(),
-                                                    auditLogContexts -> {})
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "appfabric", new NoOpMetricsCollectionService(), true,
+                                                    auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(new AppStateHandler(applicationLifecycleService, namespaceAdmin)).build();
     httpService.start();
     cancellable = discoveryService

@@ -65,6 +65,7 @@ import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -326,6 +327,7 @@ public class TestBase {
         new PreviewRunnerManagerModule().getInMemoryModules(),
         new MockProvisionerModule(),
         new NoOpAuditLogModule(),
+        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
@@ -439,6 +441,7 @@ public class TestBase {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
     appStateStoreProvider = injector.getInstance(AppStateStoreProvider.class);
+    LOG.error("Got all instances");
   }
 
   /**

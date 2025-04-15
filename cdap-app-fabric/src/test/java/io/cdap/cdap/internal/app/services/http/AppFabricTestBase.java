@@ -32,6 +32,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
@@ -58,6 +59,8 @@ import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
@@ -249,6 +252,8 @@ public abstract class AppFabricTestBase {
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
         install(new NoOpAuditLogModule());
+        bind(AeadCipher.class).annotatedWith(Names.named("UserCredentialEncryption")).to(
+            NoOpAeadCipher.class);
       }
     });
   }

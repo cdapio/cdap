@@ -40,6 +40,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -56,9 +57,9 @@ import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.InstanceId;
@@ -212,7 +213,9 @@ public class TetheringServerHandlerTest {
         new CommonNettyHttpServiceBuilder(
                 CConfiguration.create(),
                 getClass().getSimpleName(),
-                new NoOpMetricsCollectionService(), auditLogContexts -> {})
+                new NoOpMetricsCollectionService(), true,
+                auditLogContexts -> {},
+                new NoOpAeadCipher())
             .setHttpHandlers(
                 new TetheringServerHandler(
                     cConf,

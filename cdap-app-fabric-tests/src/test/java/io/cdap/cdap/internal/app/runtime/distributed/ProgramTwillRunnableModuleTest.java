@@ -27,6 +27,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkTwillRunnable;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.test.MockTwillContext;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -153,7 +154,8 @@ public class ProgramTwillRunnableModuleTest {
     }.createModule(CConfiguration.create(), new Configuration(),
                    createProgramOptions(programRunId), programRunId);
 
-    Injector injector = Guice.createInjector(module,new NoOpAuditLogModule());
+    Injector injector = Guice.createInjector(module, new NoOpAuditLogModule(),
+        new UserCredentialAeadEncryptionModule());
     injector.getInstance(SparkProgramRunner.class);
     injector.getInstance(ProgramStateWriter.class);
 

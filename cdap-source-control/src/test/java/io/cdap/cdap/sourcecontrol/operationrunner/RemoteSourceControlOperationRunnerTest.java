@@ -26,6 +26,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
@@ -104,6 +106,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   private static RemoteClientFactory remoteClientFactory;
   private static MetricsCollectionService metricsCollectionService;
   private static RemoteSecureStore remoteSecureStore;
+  private static AeadCipher aeadCipher;
   public LocalGitServer gitServer = getGitServer();
   @Rule
   public RuleChain chain = RuleChain.outerRule(baseTempFolder).around(gitServer);
@@ -118,6 +121,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         TEST_TEMP_FOLDER.newFolder("repository").getAbsolutePath());
 
     metricsCollectionService = new NoOpMetricsCollectionService();
+    aeadCipher = new NoOpAeadCipher();
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     remoteClientFactory = new RemoteClientFactory(discoveryService,
                                                   new DefaultInternalAuthenticator(new AuthenticationTestContext()));
@@ -136,8 +140,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
                                                                                FileSecureStoreService.CURRENT_CODEC
                                                                                  .newInstance());
 
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(),
-                                                    auditLogContexts -> {})
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), true,
+                                                    auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
         }, new NoOpMetricsCollectionService()),
@@ -183,7 +187,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     PushAppsResponse pushResponse = operationRunner.push(mockPushContext);
     // Verify SecureSystemReader is being used.
@@ -206,7 +210,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     // close the remote repository
     gitServer.after();
@@ -223,7 +227,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     operationRunner.push(mockPushContext);
     // Push the same unchanged application again
@@ -245,7 +249,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     operationRunner.push(mockPushContext);
   }
@@ -258,7 +262,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
     Path configFilePath = Paths.get(PATH_PREFIX, TEST_APP_NAME + ".json");
 
     addFileToGit(configFilePath, TEST_APP_SPEC, gitServer);
@@ -280,7 +284,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
     operationRunner.pull(mockPullRequest);
   }
 
@@ -292,7 +296,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     PullAppOperationRequest mockPullRequest = new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     // close the remote repository simulating failure
     gitServer.after();
@@ -313,7 +317,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
       new PullAppOperationRequest(mockAppRef, repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     operationRunner.pull(mockPullRequest);
   }
@@ -326,7 +330,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     NamespaceRepository testNamespaceRepository = new NamespaceRepository(new NamespaceId(NAMESPACE), repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     RepositoryApp app1 = new RepositoryApp(TEST_APP_NAME, getGitStyleHash(TEST_APP_SPEC));
     Path configFile1 = Paths.get(PATH_PREFIX, app1.getName() + ".json");
@@ -354,7 +358,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     NamespaceRepository testNamespaceRepository = new NamespaceRepository(new NamespaceId(NAMESPACE), repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     RepositoryApp app1 = new RepositoryApp(TEST_APP_NAME, getGitStyleHash(TEST_APP_SPEC));
     Path configFile1 = Paths.get(PATH_PREFIX, app1.getName() + ".json");
@@ -373,7 +377,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     NamespaceRepository testNamespaceRepository = new NamespaceRepository(new NamespaceId(NAMESPACE), repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     operationRunner.list(testNamespaceRepository);
   }
@@ -390,7 +394,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     NamespaceRepository testNamespaceRepository = new NamespaceRepository(new NamespaceId(NAMESPACE), repoConfig);
 
     RemoteSourceControlOperationRunner operationRunner =
-      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory, aeadCipher);
 
     operationRunner.list(testNamespaceRepository);
   }

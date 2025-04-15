@@ -25,6 +25,7 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.proto.element.EntityType;
@@ -85,7 +86,7 @@ public class AuthorizationHandlerTest {
     final InMemoryRoleController inMemoryRoleController = new InMemoryRoleController();
     //    auth.initialize(FACTORY.create(properties)); //Will be used on migration to SPI implementation
     service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName(), new NoOpMetricsCollectionService(),
-                                                auditLogContexts -> {})
+                        true, auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(new AuthorizationHandler(auth, conf, new MasterAuthenticationContext(), inMemoryRoleController))
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
@@ -135,7 +136,9 @@ public class AuthorizationHandlerTest {
     final InMemoryRoleController inMemoryRoleController = new InMemoryRoleController();
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName(),
                                                                  new NoOpMetricsCollectionService(),
-                                                                 auditLogContexts -> {})
+                                                                 true,
+                                                                 auditLogContexts -> {},
+                                                                  new NoOpAeadCipher())
       .setHttpHandlers(new AuthorizationHandler(
         accessController, cConf, new MasterAuthenticationContext(), inMemoryRoleController))
       .build();
