@@ -154,7 +154,7 @@ public class RemoteTaskExecutor {
 
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
-          if (isWorkerEncryptionRequired) {
+          if (isWorkerEncryptionRequired && currentCredential != null) {
             LOG.error("Setting user creds back to original decrypted value {}", currentCredential.getValue());
             SecurityRequestContext.setUserCredential(currentCredential);
           }
