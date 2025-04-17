@@ -54,9 +54,11 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
 import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorCodeType;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.ErrorUtils.ActionErrorPair;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
@@ -795,14 +797,28 @@ abstract class DataprocClient implements AutoCloseable {
     if (page.getPageElementCount() > 0) {
       Operation operation = page.getValues().iterator().next();
       Status operationError = operation.getError();
-      if (operationError != null) {
-        return MessageFormat.format("Failed to create cluster {0}: {1}. Details: {2}", name,
-            operationError.getMessage(),
-            operationError.getDetailsList() != null
-                ? Arrays.toString(operationError.getDetailsList().toArray()) : "");
-      }
+      int code = DataprocUtils.getHttpCode(operationError.getCode());
+      String errorMsg =
+          MessageFormat.format("Failed to create cluster {0}: {1}. Details: {2}", name,
+              operationError.getMessage(),
+              Arrays.toString(operationError.getDetailsList().toArray()));
+      ActionErrorPair actionErrorPair =
+          ErrorUtils.getActionErrorByStatusCode(code);
+      String errorReason = String.format("Failed to create cluster %s: %s. %s", name, code,
+          actionErrorPair.getCorrectiveAction());
+      DataprocRuntimeException exception = new DataprocRuntimeException.Builder()
+          .withErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
+          .withErrorReason(errorReason)
+          .withErrorMessage(errorMsg)
+          .withErrorCode(String.valueOf(code))
+          .withDependency(true)
+          .withErrorType(actionErrorPair.getErrorType())
+          .withOperationId(operation.getName())
+          .withSupportedDocumentationUrl(DataprocRuntimeException.TROUBLESHOOTING_DOC_URL)
+          .build();
+      LOG.error("Failed to create dataproc cluster {}.", name, exception);
+      return errorMsg;
     }
-
     return "";
   }
 

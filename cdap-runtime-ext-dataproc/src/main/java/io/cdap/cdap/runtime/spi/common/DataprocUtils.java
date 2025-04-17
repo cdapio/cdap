@@ -122,6 +122,23 @@ public final class DataprocUtils {
   // keys cannot be empty
   private static final Pattern LABEL_KEY_PATTERN = Pattern.compile("^[a-z][a-z0-9_-]{0,62}$");
   private static final Pattern LABEL_VAL_PATTERN = Pattern.compile("^[a-z0-9_-]{0,63}$");
+  // HTTP status code to gRPC status code mapping
+  private static final Map<Integer, Integer> grpcToHttpMap =
+      new ImmutableMap.Builder<Integer, Integer>()
+          .put(1, 499) // CANCELLED
+          .put(3, 400) // INVALID_ARGUMENT
+          .put(4, 504) // DEADLINE_EXCEEDED
+          .put(5, 404) // NOT_FOUND
+          .put(7, 403) // PERMISSION_DENIED
+          .put(8, 409) // RESOURCE_EXHAUSTED
+          .put(9, 400) // FAILED_PRECONDITION
+          .put(10, 409) // ABORTED
+          .put(11, 400) // OUT_OF_RANGE
+          .put(12, 501) // UNIMPLEMENTED
+          .put(13, 500) // INTERNAL
+          .put(14, 503) // UNAVAILABLE
+          .put(16, 401) // UNAUTHENTICATED
+          .build();
 
   public interface ConnectionProvider {
     HttpURLConnection getConnection(URL url) throws IOException;
@@ -600,6 +617,10 @@ public final class DataprocUtils {
       }
     }
     return false;
+  }
+
+  public static Integer getHttpCode(int code) {
+    return grpcToHttpMap.getOrDefault(code, 500);
   }
 
   private DataprocUtils() {
