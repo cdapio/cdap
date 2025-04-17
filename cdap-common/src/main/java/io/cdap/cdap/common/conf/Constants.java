@@ -24,7 +24,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Constants used by different systems are all defined here.
@@ -639,6 +642,8 @@ public final class Constants {
   public static final class AppMetaStore {
 
     public static final String TABLE = "app.meta";
+    public static final Set<String> APPSPEC_REDUCTION_SUPPORTED_STORAGE_PROVIDERS = new HashSet<>(
+        Collections.singleton(Dataset.DATA_STORAGE_SPANNER));
   }
 
   /**
@@ -731,6 +736,7 @@ public final class Constants {
     public static final String DATA_STORAGE_IMPLEMENTATION = "data.storage.implementation";
     public static final String DATA_STORAGE_NOSQL = "nosql";
     public static final String DATA_STORAGE_SQL = "postgresql";
+    public static final String DATA_STORAGE_SPANNER = "gcp-spanner";
     public static final String DATA_STORAGE_SQL_DRIVER_EXTERNAL = "data.storage.sql.jdbc.driver.external";
     public static final String DATA_STORAGE_SQL_DRIVER_DIRECTORY = "data.storage.sql.jdbc.driver.directory";
     public static final String DATA_STORAGE_SQL_JDBC_DRIVER_NAME = "data.storage.sql.jdbc.driver.name";
