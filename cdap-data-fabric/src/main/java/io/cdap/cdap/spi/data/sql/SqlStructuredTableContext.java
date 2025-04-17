@@ -17,6 +17,7 @@
 package io.cdap.cdap.spi.data.sql;
 
 import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.conf.Constants.Dataset;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -58,5 +59,10 @@ public class SqlStructuredTableContext implements StructuredTableContext {
     } catch (IOException e) {
       throw new StructuredTableInstantiationException(tableId, "Failed to get the table schema", e);
     }
+  }
+
+  @Override
+  public String getStorageProvider() {
+    return Dataset.DATA_STORAGE_SQL;
   }
 }

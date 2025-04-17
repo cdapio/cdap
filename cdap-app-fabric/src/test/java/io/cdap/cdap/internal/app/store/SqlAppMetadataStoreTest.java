@@ -68,6 +68,7 @@ public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
 
     transactionRunner = injector.getInstance(TransactionRunner.class);
     StoreDefinition.AppMetadataStore.create(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.ArtifactStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass

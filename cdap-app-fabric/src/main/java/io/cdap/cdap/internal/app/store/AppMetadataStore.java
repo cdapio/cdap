@@ -40,10 +40,12 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppMetaStore;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import io.cdap.cdap.internal.app.store.adapters.ApplicationMetaAdapter;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramRunCluster;
 import io.cdap.cdap.proto.ProgramRunClusterStatus;
@@ -163,6 +165,7 @@ public class AppMetadataStore {
       ProgramType.WORKER);
 
   private final StructuredTableContext context;
+  private final boolean appSpecReductionEnabled;
   private StructuredTable applicationSpecificationTable;
   private StructuredTable applicationEditTable;
   private StructuredTable workflowNodeStateTable;
@@ -170,6 +173,8 @@ public class AppMetadataStore {
   private StructuredTable workflowsTable;
   private StructuredTable programCountsTable;
   private StructuredTable subscriberStateTable;
+  private StructuredTable pluginDataTable;
+  private StructuredTable universalPluginDataTable;
 
   /**
    * Static method for creating an instance of {@link AppMetadataStore}.
@@ -180,6 +185,8 @@ public class AppMetadataStore {
 
   private AppMetadataStore(StructuredTableContext context) {
     this.context = context;
+    this.appSpecReductionEnabled = AppMetaStore.APPSPEC_REDUCTION_SUPPORTED_STORAGE_PROVIDERS.contains(
+        context.getStorageProvider());
   }
 
   private StructuredTable getApplicationSpecificationTable() {
@@ -259,6 +266,29 @@ public class AppMetadataStore {
       throw new RuntimeException(e);
     }
     return subscriberStateTable;
+  }
+
+  @VisibleForTesting
+  StructuredTable getPluginDataTable() {
+    try {
+      if (pluginDataTable == null) {
+        pluginDataTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      }
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    return pluginDataTable;
+  }
+
+  private StructuredTable getUniversalPluginDataTable() {
+    try {
+      if (universalPluginDataTable == null) {
+        universalPluginDataTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+      }
+    } catch (TableNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    return universalPluginDataTable;
   }
 
   /**
@@ -360,7 +390,8 @@ public class AppMetadataStore {
       boolean keepScanning = true;
       while (iterator.hasNext() && keepScanning && limit > 0) {
         StructuredRow row = iterator.next();
-        AppScanEntry scanEntry = new AppScanEntry(row);
+        AppScanEntry scanEntry = new AppScanEntry(row, getPluginDataTable(),
+            getUniversalPluginDataTable(), appSpecReductionEnabled);
         if (scanEntryPredicate.test(scanEntry)) {
           keepScanning = func.apply(scanEntry);
           limit--;
@@ -750,10 +781,10 @@ public class AppMetadataStore {
   void writeApplication(String namespaceId, String appId, String versionId,
       ApplicationSpecification spec, @Nullable ChangeDetail change,
       @Nullable SourceControlMeta sourceControlMeta, boolean markAsLatest) throws IOException {
+    ApplicationMeta meta = new ApplicationMeta(appId, spec, null, null);
+    String json = ApplicationMetaAdapter.toJson(meta, appSpecReductionEnabled);
     writeApplicationSerialized(namespaceId, appId, versionId,
-        GSON.toJson(
-            new ApplicationMeta(appId, spec, null, null)),
-        change, sourceControlMeta, markAsLatest);
+        json, change, sourceControlMeta, markAsLatest);
     updateApplicationEdit(namespaceId, appId);
   }
 
@@ -830,8 +861,9 @@ public class AppMetadataStore {
     }
     // creation time cannot be null  - will be written to app-spec but won't be added to table
     ApplicationMeta updated = new ApplicationMeta(existing.getId(), spec, null);
+    String json = ApplicationMetaAdapter.toJson(updated, appSpecReductionEnabled);
     updateApplicationSerialized(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
-        GSON.toJson(updated));
+        json);
   }
 
   /**
@@ -2648,6 +2680,7 @@ public class AppMetadataStore {
     deleteTable(getProgramCountsTable(), StoreDefinition.AppMetadataStore.COUNT_TYPE);
     deleteTable(getSubscriberStateTable(), StoreDefinition.AppMetadataStore.SUBSCRIBER_TOPIC);
     deleteTable(getApplicationEditTable(), StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
+    deleteTable(getPluginDataTable(), StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD);
   }
 
   private void deleteTable(StructuredTable table, String firstKey) throws IOException {
@@ -2832,9 +2865,12 @@ public class AppMetadataStore {
     String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
     Long creationTimeMillis = row.getLong(StoreDefinition.AppMetadataStore.CREATION_TIME_FIELD);
     Boolean latest = row.getBoolean(StoreDefinition.AppMetadataStore.LATEST_FIELD);
-    ApplicationMeta meta = GSON.fromJson(
+    String namespace = row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
+
+    ApplicationMeta meta = ApplicationMetaAdapter.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
-        ApplicationMeta.class);
+        ApplicationMeta.class, namespace, appSpecReductionEnabled,
+        getPluginDataTable(), getUniversalPluginDataTable());
     SourceControlMeta sourceControl = GSON.fromJson(
         row.getString(StoreDefinition.AppMetadataStore.SOURCE_CONTROL_META),
         SourceControlMeta.class);
@@ -3101,9 +3137,16 @@ public class AppMetadataStore {
     private final ChangeDetail changeDetail;
     @Nullable
     private final SourceControlMeta sourceControlMeta;
+    private final StructuredTable pluginDataTable;
+    private final StructuredTable universalPluginDataTable;
+    private final boolean appSpecReductionEnabled;
 
-    private AppScanEntry(StructuredRow row) {
+    private AppScanEntry(StructuredRow row, StructuredTable pluginDataTable,
+        StructuredTable universalPluginDataTable, boolean appSpecReductionEnabled) {
       this.appId = getApplicationIdFromRow(row);
+      this.pluginDataTable = pluginDataTable;
+      this.universalPluginDataTable = universalPluginDataTable;
+      this.appSpecReductionEnabled = appSpecReductionEnabled;
       this.rawAppMeta = row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
       String author = row.getString(StoreDefinition.AppMetadataStore.AUTHOR_FIELD);
       String changeSummary = row.getString(StoreDefinition.AppMetadataStore.CHANGE_SUMMARY_FIELD);
@@ -3132,7 +3175,9 @@ public class AppMetadataStore {
       if (meta != null) {
         return meta;
       }
-      ApplicationMeta tempMeta = GSON.fromJson(rawAppMeta, ApplicationMeta.class);
+      ApplicationMeta tempMeta = ApplicationMetaAdapter.fromJson(
+          rawAppMeta, ApplicationMeta.class, appId.getNamespace(),
+          appSpecReductionEnabled, pluginDataTable, universalPluginDataTable);
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);
       return meta;
