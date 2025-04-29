@@ -18,11 +18,14 @@ package io.cdap.cdap.security.authorization;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
@@ -45,6 +48,8 @@ public class AuthorizationTestModule extends PrivateModule {
     bind(RoleController.class).to(DelegatingRoleController.class).in(Scopes.SINGLETON);;
     expose(RoleController.class);
     install(new NoOpAuditLogModule());
+    bind(AeadCipher.class).annotatedWith(Names.named("UserCredentialEncryption")).to(NoOpAeadCipher.class);
+    expose(AeadCipher.class).annotatedWith(Names.named("UserCredentialEncryption"));
     expose(AuditLogWriter.class);
   }
 }

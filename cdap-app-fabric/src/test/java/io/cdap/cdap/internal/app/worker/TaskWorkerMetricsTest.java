@@ -27,6 +27,8 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
@@ -84,10 +86,11 @@ public class TaskWorkerMetricsTest {
 
     mockMetricsCollector.startAndWait();
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    AeadCipher aeadCipher = new NoOpAeadCipher();
     taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
                                               mockMetricsCollector,
                                               new CommonNettyHttpServiceFactory(cConf, mockMetricsCollector,
-                                                                                auditLogContexts -> {}));
+                                                                                auditLogContexts -> {}, aeadCipher));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
     taskWorkerService.startAndWait();

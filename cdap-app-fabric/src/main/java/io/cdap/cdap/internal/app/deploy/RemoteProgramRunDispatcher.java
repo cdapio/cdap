@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.deploy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -38,6 +39,8 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric.RemoteExecution;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.common.service.Retries;
@@ -101,7 +104,8 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
       RemoteClientFactory remoteClientFactory, Store store,
       ProgramRunnerFactory programRunnerFactory, TwillRunnerService twillRunnerService,
       @RemoteExecution ProgramRunnerFactory remoteProgramRunnerFactory,
-      @RemoteExecution TwillRunnerService remoteTwillRunnerService) {
+      @RemoteExecution TwillRunnerService remoteTwillRunnerService,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     this.store = store;
     this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
@@ -114,7 +118,7 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
     this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
         remoteClientFactory,
-        RemoteTaskExecutor.Type.SYSTEM_WORKER, httpRequestConfig);
+        RemoteTaskExecutor.Type.SYSTEM_WORKER, httpRequestConfig, userEncryptionAeadCipher);
   }
 
   @Override

@@ -33,7 +33,6 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
@@ -41,6 +40,7 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -92,7 +92,6 @@ import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -158,6 +157,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         new AuthorizationModule(),
         new AuthorizationEnforcementModule().getMasterModule(),
         new AuditLogWriterModule(cConf).getDistributedModules(),
+        new UserCredentialAeadEncryptionModule(),
         Modules.override(new AppFabricServiceRuntimeModule(cConf, AppFabricServiceRuntimeModule.ALL_SERVICE_TYPES)
             .getDistributedModules())
             .with(new AbstractModule() {

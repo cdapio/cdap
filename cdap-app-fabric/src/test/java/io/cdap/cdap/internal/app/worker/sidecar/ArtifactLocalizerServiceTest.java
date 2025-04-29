@@ -23,6 +23,7 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
@@ -85,7 +86,8 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     ArtifactLocalizerService artifactLocalizerService = new ArtifactLocalizerService(
       cConf, new ArtifactLocalizer(cConf, remoteClientFactory, (namespaceId, retryStrategy) -> {
       return new NoOpArtifactManager();
-    }), new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {}),
+    }), new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {},
+        new NoOpAeadCipher()),
         remoteClientFactory, new NoOpRemoteAuthenticator());
     // start the service
     artifactLocalizerService.startAndWait();

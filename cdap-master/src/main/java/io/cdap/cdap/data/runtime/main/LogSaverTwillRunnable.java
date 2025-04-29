@@ -24,6 +24,7 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -120,6 +121,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
         new AuthenticationContextModules().getMasterModule(),
         new DefaultMessagingClientModule(),
         new NoOpAuditLogModule(),
+        new UserCredentialAeadEncryptionModule(),
         new AbstractModule() {
           @Override
           protected void configure() {

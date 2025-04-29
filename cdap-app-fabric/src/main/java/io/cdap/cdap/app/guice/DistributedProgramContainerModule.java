@@ -22,12 +22,16 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -65,8 +69,8 @@ import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
-import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
+import io.cdap.cdap.messaging.guice.client.DefaultMessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
@@ -162,12 +166,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     List<Module> modules = new ArrayList<>();
 
-    modules.add(getAuditLogModules());
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new DFSLocationModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    modules.add(getMessagingModules());
     modules.add(new AuditModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());
@@ -201,6 +203,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     });
 
     addDataFabricModules(modules);
+    addServiceProgramModules(modules);
 
     switch (clusterMode) {
       case ON_PREMISE:
@@ -307,27 +310,27 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   /**
-   * Return distributed module only if the program is of SERVICE in SYSTEM namespace.
+   * Returned distributed modules if program is of SERVICE in SYSTEM namespace
+   * else return NoOp Modules
    */
-  private Module getAuditLogModules() {
+  private void addServiceProgramModules(List<Module> modules) {
     if (programRunId.getNamespaceId().equals(NamespaceId.SYSTEM)
-      && programRunId.getType().equals(ProgramType.SERVICE)) {
-      return new AuditLogWriterModule(cConf).getDistributedModules();
+        && programRunId.getType().equals(ProgramType.SERVICE)) {
+      modules.add(new AuditLogWriterModule(cConf).getDistributedModules());
+      modules.add(new MessagingServiceModule(cConf));
+      modules.add(new UserCredentialAeadEncryptionModule());
+    } else {
+      modules.add(new NoOpAuditLogModule());
+      modules.add(new DefaultMessagingClientModule());
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(AeadCipher.class)
+              .annotatedWith(Names.named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION))
+              .to(NoOpAeadCipher.class);
+        }
+      });
     }
-
-    return new NoOpAuditLogModule();
-  }
-
-  /**
-   * Return distributed module of Messaging service only if the program is of SERVICE in SYSTEM namespace.
-   */
-  private Module getMessagingModules() {
-    if (programRunId.getNamespaceId().equals(NamespaceId.SYSTEM)
-      && programRunId.getType().equals(ProgramType.SERVICE)) {
-      return new MessagingServiceModule(cConf);
-    }
-
-    return new DefaultMessagingClientModule();
   }
 
   /**

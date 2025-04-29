@@ -39,6 +39,7 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -61,9 +62,9 @@ import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -213,7 +214,8 @@ public class TetheringClientHandlerTest {
     CConfiguration conf = CConfiguration.create();
     serverHandler = new MockTetheringServerHandler();
     serverService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_server",
-                                                      new NoOpMetricsCollectionService(), auditLogContexts -> {})
+                                                      new NoOpMetricsCollectionService(), true,
+                                                      auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(serverHandler).build();
     serverService.start();
     serverConfig = ClientConfig.builder()
@@ -238,7 +240,8 @@ public class TetheringClientHandlerTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     clientService = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName() + "_client",
-                                                      new NoOpMetricsCollectionService(), auditLogContexts -> {})
+                                                      new NoOpMetricsCollectionService(), true,
+                                                      auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(new TetheringClientHandler(cConf, tetheringStore, contextAccessEnforcer, namespaceAdmin,
                                                   injector.getInstance(RemoteAuthenticator.class), messagingService),
                        new TetheringHandler(cConf, tetheringStore, messagingService, profileService))

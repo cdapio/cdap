@@ -47,6 +47,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
@@ -76,8 +77,8 @@ import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
@@ -314,6 +315,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             previewLevelDBTableService),
         new PreviewDataModules().getDataSetsModule(datasetFramework),
         new AuditLogWriterModule(previewCConf).getInMemoryModules(),
+        new UserCredentialAeadEncryptionModule(),
         new AuthenticationContextModules().getMasterModule(),
         new LocalLocationModule(),
         new PreviewDiscoveryRuntimeModule(discoveryServiceClient),

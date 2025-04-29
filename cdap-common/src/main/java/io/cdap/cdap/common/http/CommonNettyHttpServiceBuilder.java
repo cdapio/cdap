@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.common.http;
 
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
@@ -22,10 +23,12 @@ import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.auditlogging.AuditLogSetterHook;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.EncryptionExemptionHook;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
-import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.cdap.features.Feature;
+import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
@@ -44,12 +47,22 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier pipelineModifier;
   private ChannelPipelineModifier additionalModifier;
 
+  /**
+   * Parameterized constructor for CommonNettyHttpServiceBuilder
+   * @param cConf CConfiguration
+   * @param serviceName Name of the service
+   * @param metricsCollectionService MetricsCollectionService
+   * @param taskWorkerDecryptionEnabled flag to check if requests to this service are from task worker
+   * @param auditLogWriter Writer to publish audit log requests
+   * @param userEncryptionAeadCipher cipher used for decrypting user credentials
+   */
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-      MetricsCollectionService metricsCollectionService, AuditLogWriter auditLogWriter) {
+      MetricsCollectionService metricsCollectionService, boolean taskWorkerDecryptionEnabled,
+      AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-      boolean auditLoggingEnabled = Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider) ;
+      boolean auditLoggingEnabled = Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider);
 
       pipelineModifier = new ChannelPipelineModifier() {
         @Override
@@ -61,14 +74,16 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, auditLogWriter));
+                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, taskWorkerDecryptionEnabled,
+                                 auditLogWriter, userEncryptionAeadCipher));
         }
       };
     }
     this.setExceptionHandler(new HttpExceptionHandler());
     this.setHandlerHooks(Collections.unmodifiableList(
       Arrays.asList(new MetricsReporterHook(cConf, metricsCollectionService, serviceName),
-                    new AuditLogSetterHook(cConf, serviceName))));
+                    new AuditLogSetterHook(cConf, serviceName),
+                    new EncryptionExemptionHook(cConf, serviceName))));
   }
 
   /**

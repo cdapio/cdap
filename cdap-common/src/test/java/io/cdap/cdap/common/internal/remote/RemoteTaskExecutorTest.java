@@ -26,8 +26,10 @@ import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -55,6 +57,7 @@ public class RemoteTaskExecutorTest {
   private static CConfiguration cConf;
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
+  private static AeadCipher mockAeadCipher;
   Map<Map<String, String>, Map<String, Long>> metricCollectors;
   private MetricsCollectionService mockMetricsCollector;
   private Cancellable registered;
@@ -63,10 +66,11 @@ public class RemoteTaskExecutorTest {
   public static void init() throws Exception {
     cConf = CConfiguration.create();
     discoveryService = new InMemoryDiscoveryService();
+    mockAeadCipher = createMockAeadCipher();
     remoteClientFactory = new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator());
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(),
-                                                    auditLogContexts -> {})
+    httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), false,
+                                                    auditLogContexts -> {}, mockAeadCipher)
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
         }, new NoOpMetricsCollectionService())
@@ -88,6 +92,20 @@ public class RemoteTaskExecutorTest {
     mockMetricsCollector = createMockMetricsCollectionService();
     mockMetricsCollector.startAndWait();
     registered = discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
+  }
+
+  private static AeadCipher createMockAeadCipher() {
+    return new AeadCipher() {
+      @Override
+      public byte[] encrypt(byte[] plainData, byte[] associatedData) throws CipherException {
+        return new byte[0];
+      }
+
+      @Override
+      public byte[] decrypt(byte[] cipherData, byte[] associatedData) throws CipherException {
+        return new byte[0];
+      }
+    };
   }
 
   private MetricsCollectionService createMockMetricsCollectionService() {
@@ -178,7 +196,7 @@ public class RemoteTaskExecutorTest {
   @Test
   public void testFailedMetrics() throws Exception {
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
-                                                                   RemoteTaskExecutor.Type.TASK_WORKER);
+                                                                   RemoteTaskExecutor.Type.TASK_WORKER, mockAeadCipher);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(InValidRunnableClass.class.getName()).
       withParam("param").withNamespace("testNamespace").build();
     try {
@@ -202,7 +220,7 @@ public class RemoteTaskExecutorTest {
   @Test
   public void testSuccessMetrics() throws Exception {
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER);
+        RemoteTaskExecutor.Type.TASK_WORKER, mockAeadCipher);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").withNamespace("testNamespace").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
@@ -223,7 +241,7 @@ public class RemoteTaskExecutorTest {
     // Remove the service registration
     registered.cancel();
     RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(cConf, mockMetricsCollector, remoteClientFactory,
-        RemoteTaskExecutor.Type.TASK_WORKER);
+        RemoteTaskExecutor.Type.TASK_WORKER, mockAeadCipher);
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").withNamespace("testNamespace").build();
     try {

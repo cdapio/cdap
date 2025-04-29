@@ -1113,7 +1113,7 @@ public final class Constants {
       public static final String DEPENDENCY = "edep";
       public static final String ERROR_CODE_TYPE = "ecdtpe";
       public static final String ERROR_CODE = "ecd";
-      public static final String FROM_PLUGIN="frmplg";
+      public static final String FROM_PLUGIN = "frmplg";
     }
 
     /**
@@ -1952,6 +1952,12 @@ public final class Constants {
        */
       public static final String USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA
           = "UserCredentialEncryptionAD";
+
+      /**
+       * Associated data for task worker credential encryption.
+       */
+      public static final String TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA
+          = "TaskWorkerEncryptionAD";
     }
 
     /**

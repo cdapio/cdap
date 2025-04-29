@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
@@ -24,6 +25,8 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -83,6 +86,8 @@ public final class AppFabricTestModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(AeadCipher.class).annotatedWith(Names.named("UserCredentialEncryption")).to(
+        NoOpAeadCipher.class);
     install(new DataFabricModules().getInMemoryModules());
     install(new DataSetsModules().getStandaloneModules());
     install(new TransactionExecutorModule());

@@ -21,10 +21,15 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
-import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
+import io.cdap.cdap.common.conf.Constants.Security.Headers;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.LazyDelegateAeadCipher;
 import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Credential.CredentialType;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
@@ -37,8 +42,10 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AttributeKey;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 public class AuthenticationChannelHandlerTest {
@@ -46,19 +53,20 @@ public class AuthenticationChannelHandlerTest {
   private DefaultHttpRequest req;
   private AuthenticationChannelHandler handler;
   private ChannelHandlerContext ctx;
-
+  private AeadCipher mockAeadCipher;
 
   @Before
   public void initHandler() {
     boolean internalAuthEnabled = true;
-    handler = new AuthenticationChannelHandler(internalAuthEnabled, false, null);
+    mockAeadCipher = mock(AeadCipher.class);
+    handler = new AuthenticationChannelHandler(internalAuthEnabled, false, false, null, mockAeadCipher);
     ctx = mock(ChannelHandlerContext.class, RETURNS_DEEP_STUBS);
     req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "foo");
   }
 
   @Test(expected = UnauthenticatedException.class)
   public void testEmptyHeaderThrowsUnauthenticatedException() throws Exception {
-    req.headers().set(Constants.Security.Headers.RUNTIME_TOKEN, "");
+    req.headers().set(Headers.RUNTIME_TOKEN, "");
 
     handler.channelRead(ctx, req);
   }
@@ -67,7 +75,7 @@ public class AuthenticationChannelHandlerTest {
   public void testMalformedInvalidCredentialThrows() throws Exception {
     req
       .headers()
-      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.EXTERNAL_BEARER.getQualifiedName());
+      .set(Headers.RUNTIME_TOKEN, CredentialType.EXTERNAL_BEARER.getQualifiedName());
 
     handler.channelRead(ctx, req);
   }
@@ -76,7 +84,7 @@ public class AuthenticationChannelHandlerTest {
   public void testMalformedValidCredentialThrows() throws Exception {
     req
       .headers()
-      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName());
+      .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName());
 
     handler.channelRead(ctx, req);
   }
@@ -85,8 +93,8 @@ public class AuthenticationChannelHandlerTest {
   public void testWellFormedInvalidCredentialThrows() throws Exception {
     req
       .headers()
-      .set(Constants.Security.Headers.RUNTIME_TOKEN,
-           Credential.CredentialType.EXTERNAL_BEARER.getQualifiedName() + " token");
+      .set(Headers.RUNTIME_TOKEN,
+           CredentialType.EXTERNAL_BEARER.getQualifiedName() + " token");
 
     handler.channelRead(ctx, req);
   }
@@ -95,7 +103,7 @@ public class AuthenticationChannelHandlerTest {
   public void testWellFormedValidCredentialCallsFireChannelReader() throws Exception {
     req
       .headers()
-      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
+      .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName() + " token");
 
     handler.channelRead(ctx, req);
     verify(ctx, times(1)).fireChannelRead(any());
@@ -115,9 +123,9 @@ public class AuthenticationChannelHandlerTest {
   public void testCallOrderCreateNamespaceForAuditLog() throws Exception {
     req
       .headers()
-      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
-    AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+      .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName() + " token");
+    AuditLogWriter auditLogWriterMock = mock(AuditLogWriter.class);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, mockAeadCipher);
 
     //The ACH.channelRead.fireChannelRead , will trigger NamespaceHttpHandler and AuditLogSetterHook
     // So set AuditLogQueue and MetaData in SRC to simulate that.
@@ -175,9 +183,9 @@ public class AuthenticationChannelHandlerTest {
   public void testCallOrderAddArtifactForAuditLog() throws Exception {
     req
       .headers()
-      .set(Constants.Security.Headers.RUNTIME_TOKEN, Credential.CredentialType.INTERNAL.getQualifiedName() + " token");
-    AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+      .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName() + " token");
+    AuditLogWriter auditLogWriterMock = mock(AuditLogWriter.class);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, mockAeadCipher);
 
     //The ACH.channelRead.fireChannelRead , will trigger artifactHttpHandler and NOT AuditLogSetterHook
     // So set AuditLogQueue in SRC to simulate that.
@@ -235,8 +243,8 @@ public class AuthenticationChannelHandlerTest {
       .thenReturn("testuserIp");
     Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
                    .get()).thenReturn(getAuditLogRequestBuilder());
-    AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    AuditLogWriter auditLogWriterMock = mock(AuditLogWriter.class);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, mockAeadCipher);
     handler.write(ctx, "msg", new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
@@ -250,11 +258,63 @@ public class AuthenticationChannelHandlerTest {
       .thenReturn("testuserIp");
     Mockito.when(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.AUDIT_LOG_REQ_BUILDER_ATTR))
                    .get()).thenReturn(getAuditLogRequestBuilder());
-    AuditLogWriter auditLogWriterMock = Mockito.mock(AuditLogWriter.class);
-    handler = new AuthenticationChannelHandler(true, true, auditLogWriterMock);
+    AuditLogWriter auditLogWriterMock = mock(AuditLogWriter.class);
+    handler = new AuthenticationChannelHandler(true, true, false, auditLogWriterMock, mockAeadCipher);
     handler.close(ctx, new DefaultChannelPromise(ctx.channel()));
 
     verify(auditLogWriterMock, times(1)).publish(any());
+  }
+
+  @Test
+  public void testCredentialUnchangedIfServiceDecryptionDisabled() throws Exception {
+    req.headers()
+        .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName() + " token");
+    ArgumentCaptor<Credential> credentialArgumentCaptor = ArgumentCaptor.forClass(Credential.class);
+
+    handler.channelRead(ctx, req);
+
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.CDAP_USER_CREDENTIAL_ATTR)), times(1))
+        .set(credentialArgumentCaptor.capture());
+    Credential actualCredential = credentialArgumentCaptor.getValue();
+    Assert.assertEquals(Credential.CredentialType.INTERNAL, actualCredential.getType());
+    Assert.assertEquals("token", actualCredential.getValue());
+    verify(ctx, times(1)).fireChannelRead(any());
+  }
+
+  @Test
+  public void testCredentialGetsDecrypted() throws Exception {
+    mockAeadCipher = Mockito.mock(LazyDelegateAeadCipher.class);
+    handler = new AuthenticationChannelHandler(true, false, true, null, mockAeadCipher);
+    req.headers()
+        .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName() + " token");
+    ArgumentCaptor<Credential> credentialArgumentCaptor = ArgumentCaptor.forClass(Credential.class);
+
+    when(mockAeadCipher.decryptStringFromBase64("token", Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes()))
+        .thenReturn("decryptedToken");
+
+    handler.channelRead(ctx, req);
+
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.CDAP_USER_CREDENTIAL_ATTR)), times(1))
+        .set(credentialArgumentCaptor.capture());
+    Credential actualCredential = credentialArgumentCaptor.getValue();
+    Assert.assertEquals(Credential.CredentialType.INTERNAL, actualCredential.getType());
+    Assert.assertEquals("decryptedToken", actualCredential.getValue());
+    verify(ctx, times(1)).fireChannelRead(any());
+  }
+
+  @Test(expected = UnauthenticatedException.class)
+  public void testTaskWorkerCallFails() throws Exception {
+    mockAeadCipher = Mockito.mock(LazyDelegateAeadCipher.class);
+    handler = new AuthenticationChannelHandler(true, false, true, null, mockAeadCipher);
+    req.headers()
+        .set(Headers.RUNTIME_TOKEN, CredentialType.INTERNAL.getQualifiedName() + " token");
+    req.headers()
+        .set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "true");
+
+    when(mockAeadCipher.decryptStringFromBase64("token", Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes()))
+        .thenReturn("decryptedToken");
+
+    handler.channelRead(ctx, req);
   }
 
   private ChannelHandlerContext setAuditLogsInFireChannelRead() {

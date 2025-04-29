@@ -41,6 +41,7 @@ import io.cdap.cdap.common.MasterUtils;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.FileContextProvider;
@@ -541,6 +542,7 @@ public class MasterServiceMain extends DaemonMain {
         new DefaultMessagingClientModule(),
         new AuditModule(),
         new AuditLogWriterModule(cConf).getDistributedModules(),
+        new UserCredentialAeadEncryptionModule(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
         new AuthenticationContextModules().getMasterModule(),
         new AuthorizationModule(),

@@ -24,6 +24,7 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -105,6 +106,7 @@ public class SupportBundleTestModule extends AbstractModule {
     install(new MessagingServerRuntimeModule().getInMemoryModules());
     install(new MockProvisionerModule());
     install(new NoOpAuditLogModule());
+    install(new UserCredentialAeadEncryptionModule());
     // Needed by MonitorHandlerModuler
     bind(TwillRunner.class).to(NoopTwillRunnerService.class);
   }

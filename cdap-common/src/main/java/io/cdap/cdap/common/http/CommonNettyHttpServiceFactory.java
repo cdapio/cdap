@@ -17,36 +17,47 @@
 package io.cdap.cdap.common.http;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.auditlogging.AuditLogWriter;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 
 /**
  * Factory to create {@link CommonNettyHttpServiceBuilder} using {@link CConfiguration} and {@link
- * MetricsCollectionService}
+ * MetricsCollectionService}.
  */
 public class CommonNettyHttpServiceFactory {
 
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final AuditLogWriter auditLogWriter;
+  private final AeadCipher userEncryptionAeadCipher;
 
   @Inject
   public CommonNettyHttpServiceFactory(CConfiguration cConf,
                                        MetricsCollectionService metricsCollectionService,
-                                        AuditLogWriter auditLogWriter) {
+                                        AuditLogWriter auditLogWriter,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.auditLogWriter = auditLogWriter;
+    this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
 
   /**
-   * Creates a {@link CommonNettyHttpServiceBuilder} with serviceName
+   * Creates a {@link CommonNettyHttpServiceBuilder} with serviceName.
    *
    * @param serviceName Name of the service passed to {@link CommonNettyHttpServiceBuilder}
    * @return {@link CommonNettyHttpServiceBuilder}
    */
   public CommonNettyHttpServiceBuilder builder(String serviceName) {
-    return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService, auditLogWriter);
+    return builder(serviceName, true);
+  }
+
+  public CommonNettyHttpServiceBuilder builder(String serviceName, boolean taskWorkerDecryptionEnabled) {
+    return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService,
+        taskWorkerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher);
   }
 }

@@ -25,6 +25,8 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
@@ -68,6 +70,7 @@ public class RemoteClientAuthenticatorTest {
   public static void setup() throws Exception {
     mockRemoteAuthenticatorProvider = new MockRemoteAuthenticatorProvider();
 
+
     // Setup Guice injector.
     injector = Guice.createInjector(new ConfigModule(), new InMemoryDiscoveryModule(),
                                     new PrivateModule() {
@@ -75,16 +78,19 @@ public class RemoteClientAuthenticatorTest {
                                       protected void configure() {
                                         bind(RemoteAuthenticator.class).toProvider(mockRemoteAuthenticatorProvider);
                                         expose(RemoteAuthenticator.class);
+                                        bind(AeadCipher.class).to(NoOpAeadCipher.class);
+                                        expose(AeadCipher.class);
                                       }
                                     },
                                     new AuthenticationContextModules().getNoOpModule());
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
+    AeadCipher aeadCipher = injector.getInstance(AeadCipher.class);
 
     // Setup test HTTP handler and register the service.
     testHttpHandler = new TestHttpHandler();
-    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService(),
-                                                    auditLogContexts -> {})
+    httpService = new CommonNettyHttpServiceBuilder(cConf, TEST_SERVICE, new NoOpMetricsCollectionService(), true,
+                                                    auditLogContexts -> {}, aeadCipher)
       .setHttpHandlers(testHttpHandler).build();
     httpService.start();
     discoveryService.register(new Discoverable(TEST_SERVICE, httpService.getBindAddress()));
