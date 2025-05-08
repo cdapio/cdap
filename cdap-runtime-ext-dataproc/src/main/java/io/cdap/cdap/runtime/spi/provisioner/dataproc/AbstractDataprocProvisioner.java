@@ -106,7 +106,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   @Override
-  public final ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster)
+  public ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster)
       throws Exception {
     Map<String, String> properties = createContextProperties(context);
     DataprocConf conf = DataprocConf.create(properties);
