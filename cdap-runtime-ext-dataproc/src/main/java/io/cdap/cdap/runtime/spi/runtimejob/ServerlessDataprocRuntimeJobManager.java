@@ -5,6 +5,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.Batch;
 import com.google.cloud.dataproc.v1.BatchControllerClient;
@@ -12,16 +13,13 @@ import com.google.cloud.dataproc.v1.BatchControllerSettings;
 import com.google.cloud.dataproc.v1.BatchOperationMetadata;
 import com.google.cloud.dataproc.v1.EnvironmentConfig;
 import com.google.cloud.dataproc.v1.ExecutionConfig;
-import com.google.cloud.dataproc.v1.Job;
 import com.google.cloud.dataproc.v1.JobControllerClient;
 import com.google.cloud.dataproc.v1.LocationName;
-import com.google.cloud.dataproc.v1.PeripheralsConfig;
 import com.google.cloud.dataproc.v1.RuntimeConfig;
 import com.google.cloud.dataproc.v1.SparkBatch;
-import com.google.cloud.dataproc.v1.SparkHistoryServerConfig;
-import com.google.cloud.dataproc.v1.SubmitJobRequest;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.longrunning.OperationsClient;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCodeType;
 import io.cdap.cdap.api.exception.ErrorUtils;
@@ -195,18 +193,18 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
         LocationName locationName = LocationName.newBuilder()
           .setProject(projectId).setLocation(region).build();
         OperationFuture<Batch, BatchOperationMetadata> submitJobAsOperationAsyncRequest =
-          getBatchControllerClient().createBatchAsync(locationName, batch, getJobId(runInfo));
+          getBatchControllerClient().createBatchAsync(locationName, batch, getBatchId(runInfo));
         LOG.warn("SANKET : afterjobsumbit");
         LOG.warn("Successfully submitted BATCH job {} to Serverless",
                  submitJobAsOperationAsyncRequest.get().getName());
       } catch (AlreadyExistsException ex) {
         //the job id already exists, ignore the job.
         LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
-                 getJobId(runInfo));
+                 getBatchId(runInfo));
       }
       DataprocUtils.emitMetric(provisionerContext, submitJobMetric.build());
     } catch (Exception e) {
-      String errorReason = String.format("Error while launching job %s on Serverless Dataproc.", getJobId(runInfo));
+      String errorReason = String.format("Error while launching job %s on Serverless Dataproc.", getBatchId(runInfo));
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGcsPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, submitJobMetric.setException(e).build());
@@ -244,7 +242,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
 
   @Override
   public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception {
-    String jobId = getJobId(programRunInfo);
+    String jobId = getBatchId(programRunInfo);
     try {
       LOG.warn(" SANKET : in  : jobId : {} : projectId : {} , region : {}", jobId, projectId, region);
 
@@ -453,6 +451,38 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
 
   }
 
+  @Override
+  public void kill(RuntimeJobDetail jobDetail) throws Exception {
+    LOG.error("SANKET : in kill ");
+    if (jobDetail == null) {
+      return;
+    }
+    LOG.error("SANKET : in kill 2");
+    RuntimeJobStatus status = jobDetail.getStatus();
+    if (status.isTerminated() || status == RuntimeJobStatus.STOPPING) {
+      return;
+    }
+
+    // stop dataproc job
+    stopJob(getBatchId(jobDetail.getRunInfo()));
+  }
+
+  /**
+   * Stops the dataproc job. Returns job object if it was stopped.
+   */
+  private void stopJob(String jobId) throws Exception {
+    LOG.error("SANKET : in stopJob 1");
+    Batch batch = getBatchControllerClient().getBatch(getFullBatchName(projectId, region, jobId));
+
+    try {
+      OperationsClient operationsClient = getBatchControllerClient().getOperationsClient();
+      String operationName = batch.getOperation();
+      LOG.info("Try to stop batch {} with operation name {}", batch.getName(), operationName);
+      operationsClient.cancelOperation(operationName);
+    } catch (Exception e) {
+      LOG.error("Encountered exception while stopping batch {}", batch.getName());
+    }
+  }
 
   /**
    * Returns a {@link JobControllerClient} to interact with Dataproc Job API.
@@ -478,7 +508,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
     return client;
   }
 
-  public static String getJobId(ProgramRunInfo runInfo) {
+  public static String getBatchId(ProgramRunInfo runInfo) {
     List<String> parts = ImmutableList.of(
       runInfo.getNamespace().substring(0,Math.min(runInfo.getNamespace().length(),5)).toLowerCase(),
       runInfo.getApplication().substring(0,Math.min(runInfo.getApplication().length(),15)).toLowerCase(),
