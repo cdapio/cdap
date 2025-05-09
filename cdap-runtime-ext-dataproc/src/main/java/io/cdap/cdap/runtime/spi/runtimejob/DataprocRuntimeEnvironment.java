@@ -113,7 +113,9 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     if (zkServer != null) {
       zkServer.stopAndWait();
     }
-    if (locationFactory != null) {
+    // TODO : skipping to test.
+//    if (locationFactory != null) {
+    if (false) {
       Location location = locationFactory.create("/");
       try {
         location.delete(true);
