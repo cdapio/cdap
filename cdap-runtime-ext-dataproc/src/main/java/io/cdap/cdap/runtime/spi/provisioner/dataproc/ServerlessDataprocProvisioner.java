@@ -144,30 +144,30 @@ public class ServerlessDataprocProvisioner extends AbstractDataprocProvisioner {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
   }
-
-  @Override
-  public ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
-    LOG.warn("SANKET here in deleteClusterWithStatus");
-    RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
-
-    if (jobManager != null) {
-      LOG.warn("SANKET here in deleteClusterWithStatus : jobManager");
-      try {
-        RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
-        if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
-          LOG.warn("SANKET : trying to cancel for running " );
-          jobManager.kill(jobDetail);
-        }
-      } catch (Exception e) {
-        LOG.warn(" Failed to cancel job ");
-        return ClusterStatus.RUNNING;
-      } finally {
-        jobManager.close();
-      }
-
-    }
-    return ClusterStatus.DELETING;
-  }
+//
+//  @Override
+//  public ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+//    LOG.warn("SANKET here in deleteClusterWithStatus");
+//    RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
+//
+//    if (jobManager != null) {
+//      LOG.warn("SANKET here in deleteClusterWithStatus : jobManager");
+//      try {
+//        RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
+//        if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
+//          LOG.warn("SANKET : trying to cancel for running " );
+//          jobManager.kill(jobDetail);
+//        }
+//      } catch (Exception e) {
+//        LOG.warn(" Failed to cancel job ");
+//        return ClusterStatus.RUNNING;
+//      } finally {
+//        jobManager.close();
+//      }
+//
+//    }
+//    return ClusterStatus.DELETING;
+//  }
 
   String getImageVersion(DataprocConf conf) {
     String imageVersion = conf.getImageVersion();
