@@ -508,6 +508,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
     return client;
   }
 
+  // Job name with  Joiner_Test fails.
   public static String getBatchId(ProgramRunInfo runInfo) {
     List<String> parts = ImmutableList.of(
       runInfo.getNamespace().substring(0,Math.min(runInfo.getNamespace().length(),5)).toLowerCase(),
