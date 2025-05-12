@@ -250,10 +250,15 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
       // how to handle this
 
       Batch batch = getBatchControllerClient().getBatch(getFullBatchName(projectId, region, jobId));
+
+      LOG.warn(" SANKET 2:");
+      LOG.warn(" SANKET 2: getRuntimeJobStatus :" + getRuntimeJobStatus(batch).name());
+      LOG.warn(" SANKET 2: getJobStatusDetails(batch), jobId) :" + getRuntimeJobStatus(batch).name());
       return Optional.of(new DataprocRuntimeJobDetail(getProgramRunInfo(batch),
                                                       getRuntimeJobStatus(batch),
                                                       getJobStatusDetails(batch), jobId));
     } catch (ApiException e) {
+      LOG.warn(" SANKET 3: " + e);
       /*
       LOG.warn(" SANKET : e.getStatusCode().getCode() : " + e.getStatusCode().getCode());
       if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND
@@ -265,6 +270,7 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
       LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId,
           region);*/
     }
+    LOG.warn(" SANKET 4:");
     return Optional.empty();
   }
 
