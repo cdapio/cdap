@@ -195,8 +195,8 @@ public class ServerlessDataprocRuntimeJobManager extends DataprocRuntimeJobManag
         OperationFuture<Batch, BatchOperationMetadata> submitJobAsOperationAsyncRequest =
           getBatchControllerClient().createBatchAsync(locationName, batch, getBatchId(runInfo));
         LOG.warn("SANKET : afterjobsumbit");
-        LOG.warn("Successfully submitted BATCH job {} to Serverless",
-                 submitJobAsOperationAsyncRequest.get().getName());
+//        LOG.warn("Successfully submitted BATCH job {} to Serverless",
+//                 submitJobAsOperationAsyncRequest.get().getName());
       } catch (AlreadyExistsException ex) {
         //the job id already exists, ignore the job.
         LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
