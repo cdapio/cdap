@@ -63,6 +63,10 @@ public class ServerlessDataprocSubmitter extends DistributedSparkSubmitter {
     // as WARN, which pollute the logs a lot if there are concurrent Spark job running (e.g. a fork in Workflow).
     config.put("spark.ui.port", "0");
 
+    //// TODO : error :  '-Xlog:gc*:file=<LOG_DIR>/gc.log:time,level,tags:filecount=10,filesize=1M', see error log for details.
+    config.put("spark.driver.extraJavaOptions", "-XX:+UseG1GC -verbose:gc -Xlog:gc*:file=/tmp/gc.log:time,level,tags:filecount=10,filesize=1M -XX:+ExitOnOutOfMemoryError -Dstreaming.checkpoint.rewrite.enabled=true");
+    config.put("spark.executor.extraJavaOptions","-XX:+UseG1GC -verbose:gc -Xlog:gc*:file=/tmp/gc.log:time,level,tags:filecount=10,filesize=1M -XX:+ExitOnOutOfMemoryError -Dstreaming.checkpoint.rewrite.enabled=true");
+
     return config;
   }
 
