@@ -44,7 +44,7 @@ public class ServerlessDataprocSubmitter extends DistributedSparkSubmitter {
         masterArg = "local[" + matcher.group(1) + "]";
       }
     }
-    argBuilder.add("--master").add(masterArg);
+//    argBuilder.add("--master").add(masterArg);
   }
 
   @Override
