@@ -223,6 +223,15 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   private List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
                                              List<LocalizeResource> resources, URI jobFile) throws Exception {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
+    LOG.warn("SANKET : createSubmitArguments : ALL LOCAL RESOURCE ");
+    for (LocalizeResource lr : resources) {
+      LOG.warn("SANKET : createSubmitArguments : LocalizeResource : " + lr.getURI().getPath());
+    }
+
+    LOG.warn("SANKET : createSubmitArguments : ALL CONFIGS ");
+    configs.entrySet().forEach(entry -> {
+      LOG.warn("SANKET : Key: " + entry.getKey() + ", Value: " + entry.getValue());
+    });
 
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     Iterable<LocalizeResource> archivesIterable = getArchives(resources);
@@ -234,6 +243,11 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     configs.putAll(generateSubmitConf(configs));
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
+
+    LOG.warn("SANKET : createSubmitArguments : ALL archives  ");
+    for (LocalizeResource lr : archivesIterable){
+      LOG.warn("SANKET : archivesIterable : " + lr.getURI());
+    }
 
     String archives = Joiner.on(',').join(Iterables.transform(archivesIterable,
                                                               getLocalizeResourceToURIFunc()));
