@@ -600,7 +600,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     ContainerLauncherGenerator.generateLauncherJar(
       Arrays.asList("org.apache.spark.deploy.yarn.ApplicationMaster",
                     "org.apache.spark.executor.CoarseGrainedExecutorBackend",
-                    "org.apache.spark.deploy.worker.Worker"),
+                    "org.apache.spark.executor.YarnCoarseGrainedExecutorBackend"),
       SparkContainerLauncher.class, jarFile);
     return jarFile;
   }
