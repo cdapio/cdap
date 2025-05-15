@@ -23,6 +23,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.spark.SparkSpecification;
@@ -35,6 +36,7 @@ import org.apache.spark.deploy.SparkSubmit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -244,13 +246,30 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     BiConsumer<String, String> confAdder = (k, v) -> builder.add("--conf").add(k + "=" + v);
     configs.forEach(confAdder);
 
+
+    String artifactTry = null;
     LOG.warn("SANKET : createSubmitArguments : ALL archives  ");
     for (LocalizeResource lr : archivesIterable){
       LOG.warn("SANKET : archivesIterable : " + lr.getURI());
+      if (lr.getURI().getPath().contains("artifacts_archive")){
+        LOG.warn("SANKET : archivesIterable : COPYING : " + lr.getURI());
+        File tmpDir = Files.createTempDir();
+        File artifacts_archive_jar = tmpDir.toPath().resolve("artifacts_archive.jar").toFile();
+        File file = new File(lr.getURI());
+        Files.copy(file, artifacts_archive_jar);
+        LOG.warn("SANKET : archivesIterable : COPIED to  : " + artifacts_archive_jar.getAbsolutePath());
+        artifactTry = artifacts_archive_jar.getAbsolutePath();
+
+      }
     }
 
     String archives = Joiner.on(',').join(Iterables.transform(archivesIterable,
                                                               getLocalizeResourceToURIFunc()));
+
+    if (artifactTry != null){
+      archives = archives + ",file:" +artifactTry;
+    }
+
     String files = Joiner.on(',').join(Iterables.transform(filesIterable, getLocalizeResourceToURIFunc()));
 
     if (!Strings.isNullOrEmpty(archives)) {
