@@ -281,7 +281,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
     String files = Joiner.on(',').join(Iterables.transform(filesIterable, getLocalizeResourceToURIFunc()));
 
     if (!Strings.isNullOrEmpty(archives)) {
-      builder.add("--archives").add(archives);
+//      builder.add("--archives").add(archives);
     }
     if (!Strings.isNullOrEmpty(files)) {
       builder.add("--files").add(files);
