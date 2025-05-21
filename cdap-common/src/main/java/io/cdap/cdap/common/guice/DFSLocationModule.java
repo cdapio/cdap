@@ -95,8 +95,10 @@ public class DFSLocationModule extends PrivateModule {
 
       Path cachePath = Paths.get(locationCachePath).toAbsolutePath();
       long expiry = cConf.getLong(Constants.LOCATION_CACHE_EXPIRATION_MS);
+      long forceCleanupInterval = cConf.getLong(Constants.LOCATION_CACHE_FORCE_CLEANUP_MS);
       return new CachingLocationFactory(lf,
-          new DefaultCachingPathProvider(cachePath, expiry, TimeUnit.MILLISECONDS));
+          new DefaultCachingPathProvider(cachePath, expiry, TimeUnit.MILLISECONDS,
+              forceCleanupInterval));
     }
   }
 }
