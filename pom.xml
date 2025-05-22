@@ -175,7 +175,7 @@
     <jacoco.version>0.8.6</jacoco.version>
     <!-- Overwrite Apache Ivy version to 2.5.1 for remediating CVE-2022-37866-->
     <ivy.version>2.5.1</ivy.version>
-    <jgit.version>5.9.0.202009080501-r</jgit.version>
+    <jgit.version>7.2.1.202505142326-r</jgit.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
