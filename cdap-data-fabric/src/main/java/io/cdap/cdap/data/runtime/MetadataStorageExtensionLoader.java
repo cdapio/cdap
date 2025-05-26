@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 
-import static io.cdap.cdap.common.conf.Constants.Metadata.Metadata_Storage_EXT_DIR;
-
 /**
  * Extension loader for {@link MetadataStorage} implementations.
  */
@@ -26,7 +24,7 @@ public class MetadataStorageExtensionLoader extends AbstractExtensionLoader<Stri
     private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
     private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
 
-    private final CConfiguration cConf;
+    private final boolean ismetadatastorageEnabled;
 
     /**
      * Constructs a {@link MetadataStorageExtensionLoader} to manage the loading of SpannerMetadata
@@ -37,9 +35,10 @@ public class MetadataStorageExtensionLoader extends AbstractExtensionLoader<Stri
      */
     @Inject
     public MetadataStorageExtensionLoader(CConfiguration cConf) {
-        super(Metadata_Storage_EXT_DIR);
-        this.cConf=cConf;
-        LOG.debug("Metadata Storage extensions directory: {}", Metadata_Storage_EXT_DIR);
+        super(cConf.get(Constants.Metadata.Metadata_Storage_EXT_DIR));
+        this.ismetadatastorageEnabled = cConf.getBoolean(Constants.Metadata.Metadata_Storage_Enabled);
+        LOG.debug("Metadata Storage extensions directory: {}",
+                cConf.get(Constants.Metadata.Metadata_Storage_EXT_DIR));
     }
 
     private static Set<String> createAllowedResources() {
@@ -53,7 +52,7 @@ public class MetadataStorageExtensionLoader extends AbstractExtensionLoader<Stri
 
     @Override
     protected Set<String> getSupportedTypesForProvider(MetadataStorage metadataStorage) {
-        if (!cConf.getBoolean(Constants.Metadata.Metadata_Storage_Enabled)) {
+        if (ismetadatastorageEnabled) {
             LOG.info("metadataStorage is not Empty",Collections.singleton(metadataStorage.getName()));
             return Collections.singleton(metadataStorage.getName());
         }

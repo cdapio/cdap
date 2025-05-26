@@ -31,8 +31,8 @@ import io.cdap.cdap.common.metadata.MetadataEntityCodec;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.data2.metadata.MetadataCompatibility;
-import io.cdap.cdap.metadata.elastic.ScopedNameOfKindTypeAdapter;
-import io.cdap.cdap.metadata.elastic.ScopedNameTypeAdapter;
+import io.cdap.cdap.metadata.spanner.ScopedNameOfKindTypeAdapter;
+import io.cdap.cdap.metadata.spanner.ScopedNameTypeAdapter;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
@@ -361,7 +361,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       @Nullable @QueryParam("entityScope") String entityScope,
       @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
       throws Exception {
-
     SearchRequest searchRequest = getValidatedSearchRequest(scope, namespaces, searchQuery, targets,
         sort,
         offset, limit, numCursors, cursorRequested, cursor,

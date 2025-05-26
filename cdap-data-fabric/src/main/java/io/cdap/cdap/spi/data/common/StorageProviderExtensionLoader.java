@@ -30,7 +30,6 @@ import java.util.Set;
 /**
  * A extension loader for {@link StorageProvider}.
  */
-
 final class StorageProviderExtensionLoader extends
     AbstractExtensionLoader<String, StorageProvider> {
 

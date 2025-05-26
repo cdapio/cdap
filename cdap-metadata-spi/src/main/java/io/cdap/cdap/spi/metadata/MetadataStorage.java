@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.metadata;
 
 import io.cdap.cdap.api.annotation.Beta;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -28,63 +27,62 @@ import java.util.List;
 @Beta
 public interface MetadataStorage extends Closeable {
 
-    String getName();
+  /**
+   * Create all tables or indexes required for operations.
+   */
+  void createIndex() throws IOException;
 
-    default void initialize(MetadataStorageContext context) throws Exception {
-        // no-op
-    }
+  /**
+   * Drop all tables or indexes required for operations.
+   */
+  void dropIndex() throws IOException;
 
-    Object getDatasetMetadata(String datasetName);
+  /**
+   * Apply the given mutation to the metadata state.
+   *
+   * @param mutation the mutation to perform
+   * @return the change effected by this mutation
+   */
+  MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException;
 
-    /**
-     * Create all tables or indexes required for operations.
-     */
-    void createIndex() throws IOException;
+  /**
+   * Apply a batch of mutations to the metadata state.
+   *
+   * @param mutations the mutations to perform. They are applied in the order given by the
+   *     list.
+   * @return the changes effected by each of the mutations, in the same order as the batch of
+   *     mutations.
+   */
+  List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
+      throws IOException;
 
-    /**
-     * Drop all tables or indexes required for operations.
-     */
-    void dropIndex() throws IOException;
+  /**
+   * Retrieve the metadata for an entity.
+   *
+   * @param read the read operation to perform
+   * @return the metadata for the entity, never null.
+   */
+  Metadata read(Read read) throws IOException;
 
-    /**
-     * Apply the given mutation to the metadata state.
-     *
-     * @param mutation the mutation to perform
-     * @return the change effected by this mutation
-     */
-    MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException;
+  /**
+   * Search the metadata and return matching entities.
+   *
+   * @param request the search request
+   * @return the result of the search, never null.
+   */
+  SearchResponse search(SearchRequest request) throws IOException;
 
-    /**
-     * Apply a batch of mutations to the metadata state.
-     *
-     * @param mutations the mutations to perform. They are applied in the order given by the
-     *                  list.
-     * @return the changes effected by each of the mutations, in the same order as the batch of
-     * mutations.
-     */
-    List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
-            throws IOException;
+  /**
+   * Close the storage provider. Do not throw exceptions - this will be called when the Metadata
+   * service shuts down.
+   */
+  @Override
+  void close();
 
-    /**
-     * Retrieve the metadata for an entity.
-     *
-     * @param read the read operation to perform
-     * @return the metadata for the entity, never null.
-     */
-    Metadata read(Read read) throws IOException;
+  String getName();
+  Object getDatasetMetadata(String datasetName);
 
-    /**
-     * Search the metadata and return matching entities.
-     *
-     * @param request the search request
-     * @return the result of the search, never null.
-     */
-    SearchResponse search(SearchRequest request) throws IOException;
-
-    /**
-     * Close the storage provider. Do not throw exceptions - this will be called when the Metadata
-     * service shuts down.
-     */
-    @Override
-    void close();
+  default void initialize(MetadataStorageContext context) throws Exception {
+    // no-op
+  }
 }

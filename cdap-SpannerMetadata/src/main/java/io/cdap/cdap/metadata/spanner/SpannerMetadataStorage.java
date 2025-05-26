@@ -106,43 +106,9 @@ import static io.cdap.cdap.spi.metadata.MetadataConstants.KEYVALUE_SEPARATOR;
  */
 public class SpannerMetadataStorage implements MetadataStorage {
 
-
-    private static final Logger LOG = LoggerFactory.getLogger(SpannerMetadataStorage.class);
-
-    private  String instanceId = "instance";
-    private  String databaseId = "database";
-    private  String projectId = "project";
-    private volatile SpannerOptions options;
-    private volatile Spanner spanner;
-    private volatile DatabaseClient dbClient;
-    private volatile DatabaseAdminClient adminClient;
-
-    private static final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
-            .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
-            .create();
-
-
     @Override
     public void initialize(MetadataStorageContext context) throws Exception {
-        LOG.info("Initializing SpannerMetadataStorage...");
-        Map<String, String> conf = context.getConfiguration();
-        LOG.info(conf.toString());
-        projectId=getProjectId(conf);
-        databaseId=getDatabaseId(conf);
-        instanceId=getInstanceId(conf);
-        LOG.info(projectId,databaseId,instanceId);
-        try {
-            options = SpannerOptions.newBuilder().setProjectId(projectId).build();
-            spanner = options.getService();
-            dbClient = spanner.getDatabaseClient(DatabaseId.of(projectId, instanceId, databaseId));
-            adminClient = spanner.getDatabaseAdminClient();
-            LOG.info("Successfully initialized Spanner client for instance: {}, database: {}", instanceId, databaseId);
-        } catch (SpannerException e) {
-            LOG.error("Error initializing Spanner client: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to initialize Spanner client", e);
-        }
-        LOG.info("SpannerMetadataStorage initialized.");
+
     }
 
     @Override
@@ -213,16 +179,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
     @Override
     public Object getDatasetMetadata(String datasetName) {
         return Collections.emptyMap();
-    }
-
-    public String getProjectId(Map<String, String> conf){
-         return conf.get(projectId);
-    }
-    public String getDatabaseId(Map<String, String> conf){
-        return conf.get(databaseId);
-    }
-    public String getInstanceId(Map<String, String> conf){
-        return conf.get(instanceId);
     }
 
 }

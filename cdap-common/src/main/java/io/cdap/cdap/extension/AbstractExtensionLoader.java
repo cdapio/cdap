@@ -274,7 +274,6 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
     Iterator<EXTENSION> iterator = serviceLoader.iterator();
     // Cannot use for each loop here, because we want to catch exceptions during iterator.next().
-    LOG.info(iterator.toString());
     while (iterator.hasNext()) {
       try {
         EXTENSION extension = iterator.next();
@@ -284,6 +283,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
 
         for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
           if (extensions.containsKey(type)) {
+            LOG.info("Ignoring extension {} for type {}", extension, type);
           } else {
             extensions.put(type, extension);
           }
@@ -335,6 +335,7 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    */
   private ClassLoader getExtensionParentClassLoader() {
     FilterClassLoader.Filter filter = getExtensionParentClassLoaderFilter();
+
     // SLF4j resources are always coming from parent.
     return new FilterClassLoader(getClass().getClassLoader(), new FilterClassLoader.Filter() {
       @Override
