@@ -23,7 +23,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.hash.Hashing;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.io.ASMDatumWriterFactory.CacheKey;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
