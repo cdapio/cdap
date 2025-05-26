@@ -37,6 +37,7 @@ import com.google.cloud.spanner.ErrorCode;
 
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -95,6 +96,8 @@ import java.io.InputStream;
 
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static io.cdap.cdap.spi.metadata.MetadataConstants.KEYVALUE_SEPARATOR;
 
 /**
  * SpannerMetadataStorage implements the MetadataStorage interface
@@ -399,6 +402,9 @@ public class SpannerMetadataStorage implements MetadataStorage {
         if (!before.existing()) {
             return update(create.getEntity(), before, create.getMetadata());
         }
+        Mutation dummyMutations = writeToSpanner(create.getEntity(), before.getVersion(), create.getMetadata());
+        MetadataChange dummyChange = new MetadataChange(create.getEntity(), before.getMetadata(), create.getMetadata());
+        return new RequestandChange(dummyMutations, dummyChange);
     }
 
     /**
@@ -759,37 +765,47 @@ public class SpannerMetadataStorage implements MetadataStorage {
      * @return The constructed SQL query string.
      */
     private String buildSpannerQuery(SearchRequest request, @Nullable Cursor cursor) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM Metadata WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT * FROM metadata WHERE 1=1 ");
 
         if (cursor != null && cursor.getActualCursor() != null && !cursor.getActualCursor().isEmpty()) {
-            sql.append(" AND (namespace, name, entity_type) > ('").append(cursor.getActualCursor()).append("')");
+            sql.append(" AND (Namespace, Name, Entity_type) > ('").append(cursor.getActualCursor()).append("')");
         }
 
-        // Add filters from the SearchRequest (namespace, types, etc.)
         if (request.getNamespaces() != null && !request.getNamespaces().isEmpty()) {
-            sql.append(" AND namespace IN ('").append(String.join("','", request.getNamespaces())).append("')");
+            sql.append(" AND Namespace IN ('").append(String.join("','", request.getNamespaces())).append("')");
         }
 
         if (request.getTypes() != null && !request.getTypes().isEmpty()) {
-            sql.append(" AND entity_type IN ('").append(String.join("','", request.getTypes())).append("')");
-        } else {
-            sql.append(" AND entity_type = 'dataset'"); // Default to dataset if no type specified
+            sql.append(" AND Entity_type IN ('").append(String.join("','", request.getTypes())).append("')");
         }
 
-        // Main query (search terms)
         if (request.getQuery() != null && !request.getQuery().isEmpty() && !request.getQuery().equals("*")) {
-            List<String> searchConditions = processSearchQuery(request.getQuery());
-            if (!searchConditions.isEmpty()) {
-                sql.append(" AND (").append(String.join(" AND ", searchConditions)).append(")");
+            List<String> allSearchConditions = new ArrayList<>();
+            Iterable<String> terms = Splitter.on(SPACE_SEPARATOR_PATTERN)
+                    .omitEmptyStrings().trimResults().split(request.getQuery());
+
+            for (String rawTerm : terms) {
+                String cleanedTerm = rawTerm.replace("*", "");
+
+                List<String> termConditions = createSearchConditionsForTerm
+                        (request,cleanedTerm.replace("*", ""));
+                if (!termConditions.isEmpty()) {
+                    allSearchConditions.add("(" + String.join(" OR ", termConditions) + ")");
+                }
             }
+
+            if (!allSearchConditions.isEmpty()) {
+                sql.append(" AND (").append(String.join(" OR ", allSearchConditions)).append(")");
+            }
+        } else if (request.getTypes() == null || request.getTypes().isEmpty()) {
+            sql.append(" AND Entity_type = 'dataset'");
         }
 
-        // Add sorting from the SearchRequest
         if (request.getSorting() != null) {
             sql.append(" ORDER BY ").append(mapSortKey(request.getSorting().getKey().toLowerCase())).append(" ").
                     append(request.getSorting().getOrder().name());
         } else {
-            sql.append(" ORDER BY name, entity_type, text"); // Matching the index order
+            sql.append(" ORDER BY name, Entity_type, Text");
         }
 
         sql.append(" LIMIT ").append(request.getLimit());
@@ -797,23 +813,62 @@ public class SpannerMetadataStorage implements MetadataStorage {
         return sql.toString();
     }
 
-    private List<String> processSearchQuery(String query) {
+    private List<String> createSearchConditionsForTerm(SearchRequest request,String term) {
         List<String> conditions = new ArrayList<>();
-        String[] terms = SPACE_SEPARATOR_PATTERN.split(query);
 
-        for (String term : terms) {
-            String cleanedTerm = term.trim().toLowerCase().replace("*", "");
-                conditions.add(createSearchConditionForTerm(cleanedTerm));
+        String query = request.getQuery();
+
+        if (query.contains(KEYVALUE_SEPARATOR)) {
+            String[] split = query.split(KEYVALUE_SEPARATOR, 2);
+            if (split.length == 2) {
+                String field = split[0].trim().toLowerCase();
+                String spannerSql = getString(split, field);
+
+
+                LOG.info("Constructed Spanner Query (KeyValue Pattern): {}", spannerSql);
+                conditions.add(spannerSql);
             }
-
-            return conditions;
         }
-
-
-    private String createSearchConditionForTerm(String term) {
-       return "";
+        else {
+            if (request.getScope() == MetadataScope.USER) {
+                conditions.add(USERScopeSearchQuery(term));
+            }
+            else if(request.getScope() == MetadataScope.SYSTEM){
+                conditions.add(SYSTEMScopeSearchQuery(term));
+            }
+            else{
+                conditions.add(ScopeSearchQuery(term));
+            }
+        }
+        return conditions;
     }
 
+
+    private String getString(String[] split, String field) {
+        String value = split[1].trim().toLowerCase().replace("*", "%");
+
+        return String.format(
+                "EXISTS (SELECT 1 FROM UNNEST(JSON_QUERY_ARRAY(%s)) AS element " +
+                        "WHERE LOWER(JSON_VALUE(element, '$.name')) = '%s' " +
+                        "AND LOWER(JSON_VALUE(element, '$.value')) LIKE '%s')",
+                "properties",
+                field,
+                value
+        );
+    }
+
+    private String USERScopeSearchQuery(String value) {
+        return "SEARCH_NGRAMS(USER_Substrings, \"" + value + "\")";
+    }
+
+    private String SYSTEMScopeSearchQuery(String value) {
+        return "SEARCH_NGRAMS(SYSTEM_Substrings, \"" + value + "\")";
+    }
+
+    private String ScopeSearchQuery(String value) { /*Union All Logic*/
+        return "SEARCH_NGRAMS(USER_Substrings, \"" + value + "\") AND " +
+                "SEARCH_NGRAMS(SYSTEM_Substrings, \"" + value + "\")";
+    }
 
     private DatabaseClient getDbClient() {
         DatabaseClient client = this.dbClient;
