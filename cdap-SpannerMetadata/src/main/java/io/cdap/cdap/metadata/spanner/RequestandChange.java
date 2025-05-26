@@ -18,22 +18,24 @@ package io.cdap.cdap.metadata.spanner;
 import io.cdap.cdap.spi.metadata.MetadataChange;
 import com.google.cloud.spanner.Mutation;
 
+import java.util.List;
+
 /**
  * A simple class to pass around a Spanner Mutation, along with the metadata
  * change that it effects.
  */
 public class RequestandChange {
 
-    private final Mutation mutation;
+    private final List<Mutation> mutations;
     private final MetadataChange change;
 
-    public RequestandChange(Mutation mutation, MetadataChange change) {
-        this.mutation = mutation;
+    public RequestandChange(List<Mutation> mutations, MetadataChange change) {
+        this.mutations = mutations;
         this.change = change;
     }
 
-    public Mutation getMutation() {
-        return mutation;
+    public List<Mutation> getMutation() {
+        return mutations;
     }
 
     public MetadataChange getChange() {

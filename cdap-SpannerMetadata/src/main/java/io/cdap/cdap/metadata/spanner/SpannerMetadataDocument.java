@@ -96,42 +96,6 @@ public class SpannerMetadataDocument {
         return Objects.hash(entity, metadata, namespace, type, name, created, ttl, hidden, user, system, props);
     }
 
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Long getCreated() {
-        return created;
-    }
-
-    public Long getTtl() {
-        return ttl;
-    }
-
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public String getSystem() {
-        return system;
-    }
-
-    public Set<Property> getProps() {
-        return props;
-    }
-
     @Override
     public String toString() {
         return "MetadataDocument{" +
