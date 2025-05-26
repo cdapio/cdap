@@ -2836,6 +2836,18 @@
     <value>/opt/cdap/master/ext/log-publisher</value>
   </property>
 
+  <property>
+    <name>metadata.storage.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>metadata.storage.extensions.dir</name>
+    <value>/opt/cdap/master/ext/metadata-storage</value>
+  </property>
+
+
+
   <!-- Metrics Configuration -->
 
   <property>
