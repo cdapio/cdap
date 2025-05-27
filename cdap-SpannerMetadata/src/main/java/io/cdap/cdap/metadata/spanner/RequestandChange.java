@@ -26,16 +26,16 @@ import java.util.List;
  */
 public class RequestandChange {
 
-    private final List<Mutation> mutations;
+    private final Mutation mutation;
     private final MetadataChange change;
 
-    public RequestandChange(List<Mutation> mutations, MetadataChange change) {
-        this.mutations = mutations;
+    public RequestandChange(Mutation mutation, MetadataChange change) {
+        this.mutation = mutation;
         this.change = change;
     }
 
-    public List<Mutation> getMutation() {
-        return mutations;
+    public Mutation getMutation() {
+        return mutation;
     }
 
     public MetadataChange getChange() {

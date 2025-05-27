@@ -14,9 +14,10 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata.elastic;
+package io.cdap.cdap.spi.metadata;
 
 import io.cdap.cdap.spi.metadata.Metadata;
+
 import javax.annotation.Nullable;
 
 /**
@@ -24,30 +25,30 @@ import javax.annotation.Nullable;
  */
 public class VersionedMetadata {
 
-  private final Metadata metadata;
-  private final Long version;
+    private final Metadata metadata;
+    private final Long version;
 
-  static final VersionedMetadata NONE = new VersionedMetadata(Metadata.EMPTY, null);
+   public static final VersionedMetadata NONE = new VersionedMetadata(Metadata.EMPTY, null);
 
-  static VersionedMetadata of(Metadata metadata, long version) {
-    return new VersionedMetadata(metadata, version);
-  }
+    public static VersionedMetadata of(Metadata metadata, long version) {
+        return new VersionedMetadata(metadata, version);
+    }
 
-  private VersionedMetadata(Metadata metadata, @Nullable Long version) {
-    this.metadata = metadata;
-    this.version = version;
-  }
+    private VersionedMetadata(Metadata metadata, @Nullable Long version) {
+        this.metadata = metadata;
+        this.version = version;
+    }
 
-  public Metadata getMetadata() {
-    return metadata;
-  }
+    public Metadata getMetadata() {
+        return metadata;
+    }
 
-  public Long getVersion() {
-    return version;
-  }
+    public Long getVersion() {
+        return version;
+    }
 
-  public boolean existing() {
-    return version != null;
-  }
+    public boolean existing() {
+        return version != null;
+    }
 
 }
