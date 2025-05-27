@@ -31,7 +31,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +51,10 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
 
   private final LoadingCache<CacheKey, Path> cache;
   private final Path cacheDir;
+  private final ScheduledExecutorService cleanupExecutor;
 
-  public DefaultCachingPathProvider(Path cacheDir, long cacheExpiry, TimeUnit cacheExpiryUnit) {
+  public DefaultCachingPathProvider(Path cacheDir, long cacheExpiry, TimeUnit cacheExpiryUnit,
+      long forceCleanupIntervalMillis) {
     this.cacheDir = cacheDir;
     this.cache = CacheBuilder.newBuilder()
         .expireAfterAccess(cacheExpiry, cacheExpiryUnit)
@@ -81,6 +86,20 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
         });
 
     populateCache(cacheDir, cache);
+    // Cache is not automatically cleaned up and for low throughput caches this needs to be
+    // maintained: https://github.com/google/guava/wiki/CachesExplained#when-does-cleanup-happen
+    if (forceCleanupIntervalMillis > 0) {
+      // A non-positive value indicates that the cache should not be periodically cleaned up.
+      cleanupExecutor = Executors.newSingleThreadScheduledExecutor(
+          Threads.createDaemonThreadFactory("location-cache-cleanup"));
+      cleanupExecutor.scheduleAtFixedRate(() -> {
+        LOG.trace("Cleaning up location cache");
+        cache.cleanUp();
+      }, 0, forceCleanupIntervalMillis, TimeUnit.MILLISECONDS);
+    } else {
+      // If cleanup interval is <= 0 the executor is not initialized.
+      cleanupExecutor = null;
+    }
   }
 
   @Override

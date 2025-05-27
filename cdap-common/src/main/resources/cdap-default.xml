@@ -214,6 +214,15 @@
   </property>
 
   <property>
+    <name>location.cache.force.cleanup.ms</name>
+    <value>3600000</value>
+    <description>
+      Time duration after which the location cache is forced cleaned up. A
+      non-positive value indicates that the cache is never forced cleaned up.
+    </description>
+  </property>
+
+  <property>
     <name>thrift.max.read.buffer</name>
     <value>16777216</value>
     <description>

@@ -90,8 +90,10 @@ public class CachingLocationTest {
     Path cachePath = TEMP_FOLDER.newFolder().toPath();
     String message = "Testing message";
 
-    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1, TimeUnit.HOURS);
-    LocationFactory lf = new CachingLocationFactory(new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
+    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1,
+        TimeUnit.HOURS, 0);
+    LocationFactory lf = new CachingLocationFactory(
+        new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
 
     // Write out a location
     Location location = lf.create("test");
@@ -144,12 +146,53 @@ public class CachingLocationTest {
   }
 
   @Test
+  public void testForceCacheCleanup() throws IOException, InterruptedException {
+    Path cachePath = TEMP_FOLDER.newFolder().toPath();
+    String message = "Testing message force cleanup";
+
+    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1,
+        TimeUnit.SECONDS, 100);
+    LocationFactory lf = new CachingLocationFactory(
+        new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
+
+    // Write out a location
+    Location location = lf.create("test-cleanup");
+    try (OutputStream os = location.getOutputStream()) {
+      os.write(message.getBytes(StandardCharsets.UTF_8));
+    }
+    try (InputStream is = location.getInputStream()) {
+      Assert.assertEquals(message, new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
+    }
+
+    // Check if the cache file is there
+    long oldLastModified = location.lastModified();
+    Path cachedFile = cacheProvider.getCachePath(cacheProvider.getCacheName(location),
+        oldLastModified);
+    Assert.assertTrue(Files.exists(cachedFile));
+    try (InputStream is = Files.newInputStream(cachedFile)) {
+      Assert.assertEquals(message, new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
+    }
+
+    // Sleep 3 seconds to force expiry of cache(1 second) and force cleanup of cache(100ms) with
+    // some buffer for operations.
+    TimeUnit.SECONDS.sleep(3);
+
+    Path cacheFileDir = cacheProvider.getCachePath(cacheProvider.getCacheName(location),
+        location.lastModified()).getParent();
+    Assert.assertFalse(Files.exists(cacheFileDir));
+    // Entries should be cleaned up automatically.
+    Assert.assertEquals(0, cacheProvider.getCacheEntries().size());
+  }
+
+  @Test
   public void testCachePopulate() throws IOException {
     Path cachePath = TEMP_FOLDER.newFolder().toPath();
     String message = "Testing message";
 
-    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1, TimeUnit.HOURS);
-    LocationFactory lf = new CachingLocationFactory(new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
+    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1,
+        TimeUnit.HOURS, 0);
+    LocationFactory lf = new CachingLocationFactory(
+        new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
 
     // Write out a location
     Location location = lf.create("test");
@@ -163,7 +206,8 @@ public class CachingLocationTest {
 
     // Create a new preview cache provider from the same directory, it should
     // populate the cache.
-    Collection<Path> cacheEntries = new DefaultCachingPathProvider(cachePath, 1, TimeUnit.HOURS).getCacheEntries();
+    Collection<Path> cacheEntries = new DefaultCachingPathProvider(cachePath, 1, TimeUnit.HOURS,
+        0).getCacheEntries();
     Assert.assertTrue(cacheEntries.contains(cacheProvider.getCachePath(cacheProvider.getCacheName(location),
         location.lastModified())));
   }
@@ -175,7 +219,8 @@ public class CachingLocationTest {
 
     // Create a new cache provider from the same directory, it should
     // populate the cache.
-    DefaultCachingPathProvider cachingPathProvider = new DefaultCachingPathProvider(cachePath, 1, TimeUnit.HOURS);
+    DefaultCachingPathProvider cachingPathProvider = new DefaultCachingPathProvider(cachePath, 1,
+        TimeUnit.HOURS, 0);
     LocationFactory lf = new CachingLocationFactory(
       new LocalLocationFactory(TEMP_FOLDER.newFolder()), cachingPathProvider);
 
@@ -220,8 +265,10 @@ public class CachingLocationTest {
     Path cachePath = TEMP_FOLDER.newFolder().toPath();
     String message = "Testing message";
 
-    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1, TimeUnit.HOURS);
-    LocationFactory lf = new CachingLocationFactory(new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
+    DefaultCachingPathProvider cacheProvider = new DefaultCachingPathProvider(cachePath, 1,
+        TimeUnit.HOURS, 0);
+    LocationFactory lf = new CachingLocationFactory(
+        new LocalLocationFactory(TEMP_FOLDER.newFolder()), cacheProvider);
 
     // Write out a location
     Location location = lf.create("test");
