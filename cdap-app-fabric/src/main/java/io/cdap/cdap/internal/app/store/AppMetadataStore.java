@@ -34,6 +34,7 @@ import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.CountApplicationsRequest;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
@@ -410,6 +411,10 @@ public class AppMetadataStore {
         ImmutableList.of(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null),
             Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
     return getApplicationSpecificationTable().count(ranges, filterIndexes);
+  }
+
+  public long getApplicationCount(CountApplicationsRequest request) throws IOException {
+    
   }
 
   @Nullable

@@ -36,6 +36,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.app.store.CountApplicationsRequest;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
@@ -800,6 +801,11 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       return getApplicationSpec(getAppMetadataStore(context), id);
     });
+  }
+
+  @Override
+  public long countApplications(CountApplicationsRequest request) {
+
   }
 
   @Override

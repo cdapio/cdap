@@ -33,6 +33,7 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.CountApplicationsRequest;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
@@ -230,6 +231,34 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   }
 
   /**
+   * Returns the count of applications in a given namespace
+   */
+  @GET
+  @Path("/appsCount")
+  public void getAppsCount(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @QueryParam("artifactName") String artifactName,
+      @QueryParam("artifactVersion") String artifactVersion,
+      @QueryParam("nameFilter") String nameFilter,
+      @QueryParam("nameFilterType") NameFilterType nameFilterType,
+      @QueryParam("latestOnly") @DefaultValue("true") Boolean latestOnly)
+    throws Exception {
+
+    validateNamespace(namespaceId);
+
+    Set<String> artifactNames = new HashSet<>();
+    if (!Strings.isNullOrEmpty(artifactName)) {
+      for (String name : Splitter.on(',').split(artifactName)) {
+        artifactNames.add(name);
+      }
+    }
+
+    CountApplicationsRequest countRequest = getCountRequest(namespaceId, artifactVersion,
+        artifactNames, nameFilter, nameFilterType, latestOnly);
+    long applicationsCount = applicationLifecycleService.countApplications(countRequest);
+  }
+
+  /**
    * Returns a list of applications associated with a namespace.
    */
   @GET
@@ -291,6 +320,37 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
               d -> jsonListResponder.send(new ApplicationRecord(d)))
       );
     }
+  }
+
+  private CountApplicationsRequest getCountRequest(String namespaceId, String artifactVersion,
+      Set<String> artifactNames, String nameFilter, NameFilterType nameFilterType,
+      Boolean latestOnly) {
+    CountApplicationsRequest.Builder requestBuilder = CountApplicationsRequest.builder();
+    requestBuilder.setNamespaceId(new NamespaceId(namespaceId));
+    if (nameFilter != null && !nameFilter.isEmpty()) {
+      if (nameFilterType != null) {
+        switch (nameFilterType) {
+          case EQUALS:
+            requestBuilder.setApplicationReference(new ApplicationReference(namespaceId, nameFilter));
+            break;
+          case CONTAINS:
+            requestBuilder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+            break;
+          case EQUALS_IGNORE_CASE:
+            requestBuilder.addFilter(new ApplicationFilter.ApplicationIdEqualsFilter(nameFilter));
+        }
+      } else {
+        // if null, default to use contains
+        requestBuilder.addFilter(new ApplicationFilter.ApplicationIdContainsFilter(nameFilter));
+      }
+    }
+    requestBuilder.addFilters(applicationLifecycleService.getAppFilters(
+        artifactNames, artifactVersion));
+    if (latestOnly != null) {
+      requestBuilder.setLatestOnly(latestOnly);
+    }
+
+    return requestBuilder.build();
   }
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String artifactVersion,

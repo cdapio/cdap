@@ -476,6 +476,14 @@ public interface Store {
   ApplicationId getLatestApp(ApplicationReference appRef) throws ApplicationNotFoundException;
 
   /**
+   * Counts for applications according to the parameters passed in request.
+   *
+   * @param request  parameters defining the conditions for the counting.
+   * @return (long) the number of applications that satisfied the conditions.
+   */
+  long countApplications(CountApplicationsRequest request);
+
+  /**
    * Scans for the latest applications across all namespaces.
    *
    * @param txBatchSize maximum number of applications to scan in one transaction to

@@ -50,6 +50,7 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.CountApplicationsRequest;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
@@ -297,6 +298,25 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       return store.scanApplications(request, batchSize,
           (appId, appMeta) -> batchingConsumer.accept(new SimpleEntry<>(appId, appMeta)));
     }
+  }
+
+  /**
+   * Counts all applications in the specified namespace, filtered to only include applications.
+   * which satisfy the filters
+   *
+   * @param request application count request.
+   * @return (int) count of applications that satisfy the conditions.
+   * @throws IllegalArgumentException if count request does not have namespace specified
+   */
+  public long countApplications(CountApplicationsRequest request) {
+    NamespaceId namespace = request.getNamespaceId();
+    if (namespace == null) {
+      throw new IllegalStateException("Application count request without namespace");
+    }
+    accessEnforcer.enforceOnParent(EntityType.APPLICATION, namespace,
+        authenticationContext.getPrincipal(), StandardPermission.LIST);
+
+    return store.countApplications(request);
   }
 
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,
