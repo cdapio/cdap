@@ -67,6 +67,7 @@ public final class Constants {
   // Directory path for caching remove location content
   public static final String LOCATION_CACHE_PATH = "location.cache.path";
   public static final String LOCATION_CACHE_EXPIRATION_MS = "location.cache.expiration.ms";
+  public static final String LOCATION_CACHE_FORCE_CLEANUP_MS = "location.cache.force.cleanup.ms";
 
   public static final String CLUSTER_NAME = "cluster.name";
 
