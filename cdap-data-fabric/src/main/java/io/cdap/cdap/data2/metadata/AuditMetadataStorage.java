@@ -41,6 +41,7 @@ import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,16 @@ public class AuditMetadataStorage implements MetadataStorage {
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
+  }
+
+  @Override
+  public String getName(){
+    return "AuditMetadataStorage";
+  }
+
+  @Override
+  public Object getDatasetMetadata(String datasetName) {
+    return  Collections.emptyMap();
   }
 
   @Override

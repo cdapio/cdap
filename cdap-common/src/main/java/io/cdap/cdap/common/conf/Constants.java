@@ -2115,6 +2115,10 @@ public final class Constants {
     public static final String STORAGE_PROVIDER_NOSQL = "nosql";
     public static final String STORAGE_PROVIDER_ELASTICSEARCH = "elastic";
 
+   //Metadata configs
+    public static final String Metadata_Storage_Enabled = "metadata.storage.enabled";
+    public static final String Metadata_Storage_EXT_DIR = "metadata.storage.extensions.dir";
+
     public static final String METADATA_WRITER_SUBSCRIBER = "metadata.writer";
     public static final String METADATA_CONSUMER_WRITER_SUBSCRIBER = "metadata.consumer.writer";
   }

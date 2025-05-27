@@ -78,4 +78,11 @@ public interface MetadataStorage extends Closeable {
    */
   @Override
   void close();
+
+  String getName();
+  Object getDatasetMetadata(String datasetName);
+
+  default void initialize(MetadataStorageContext context) throws Exception {
+    // no-op
+  }
 }

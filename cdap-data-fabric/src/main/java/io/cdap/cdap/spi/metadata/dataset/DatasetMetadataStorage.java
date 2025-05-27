@@ -75,6 +75,16 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   @Override
+  public String getName(){
+    return "DatasetMetadataStorage";
+  }
+
+  @Override
+  public Object getDatasetMetadata(String datasetName) {
+    return  Collections.emptyMap();
+  }
+
+  @Override
   public void createIndex() throws IOException {
     createDatasets();
   }
