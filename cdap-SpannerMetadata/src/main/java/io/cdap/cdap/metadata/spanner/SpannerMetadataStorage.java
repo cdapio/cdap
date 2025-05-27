@@ -373,20 +373,32 @@ public class SpannerMetadataStorage implements MetadataStorage {
             }
         }
     }
-    private void executeMutation(TransactionContext transaction, MetadataEntity entity, Mutation mutation,
+    private void executeMutation(TransactionContext transaction, MetadataEntity entity, List<Mutation> mutations,
                                  MutationOptions options) throws IOException {
         try {
-            if (mutation.getOperation() == Mutation.Op.INSERT || mutation.getOperation() == Mutation.Op.UPDATE ||
-                    mutation.getOperation() == Mutation.Op.INSERT_OR_UPDATE) {
-                transaction.buffer(mutation);
-            } else if (mutation.getOperation() == Mutation.Op.DELETE) {
-                transaction.buffer(mutation);
-            } else {
-                throw new IllegalStateException("Unexpected Mutation operation: " + mutation.getOperation());
+            for (Mutation mutation : mutations) { // Iterate over the list of mutations
+                if (mutation.getOperation() == Mutation.Op.INSERT || mutation.getOperation() == Mutation.Op.UPDATE ||
+                        mutation.getOperation() == Mutation.Op.INSERT_OR_UPDATE) {
+                    transaction.buffer(mutation);
+                } else if (mutation.getOperation() == Mutation.Op.DELETE) {
+                    transaction.buffer(mutation);
+                } else {
+                    throw new IllegalStateException("Unexpected Mutation operation: " + mutation.getOperation());
+                }
             }
         } catch (SpannerException e) {
+            // The error handling logic here is for individual mutations within the list.
+            // If a transaction aborts, the outer 'apply' method's catch block will handle it.
+            // However, if an individual buffer call somehow throws (which is less common
+            // unless you're hitting limits or constraint violations *before* commit),
+            // then this inner catch block might trigger.
+            // It's generally better to let the TransactionRunner's error handling manage
+            // transactional conflicts (like ALREADY_EXISTS on unique keys or ABORTED).
             if (e.getErrorCode() == ErrorCode.ALREADY_EXISTS) {
                 LOG.debug("Encountered conflict in mutation for entity {}", entity);
+                // This might happen if a specific insert (not insert_or_update) targets an existing key.
+                // The outer transaction abort will typically catch this.
+                // If you want to differentiate, you can keep this.
                 throw new MetadataConflictException("Mutation conflict for entity", entity);
             } else if (e.getErrorCode() == ErrorCode.NOT_FOUND) {
                 // ignore entities that do not exist - only happens for deletes
@@ -395,7 +407,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
             throw new IOException("Spanner mutation failed for entity " + entity, e);
         }
     }
-
     private MetadataChange createMetadataChange(MetadataMutation mutation, Metadata existingMetadata,
                                                 Metadata updatedMetadata) {
         return new MetadataChange(mutation.getEntity(), existingMetadata, updatedMetadata);
@@ -627,7 +638,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
      */
 
     private RequestandChange drop(MetadataEntity entity, VersionedMetadata before) {
-        return new RequestandChange(deleteFromSpanner(entity, before.getVersion()),
+        return new RequestandChange(deleteFromSpanner(entity),
                 new MetadataChange(entity, before.getMetadata(), Metadata.EMPTY));
     }
 
@@ -635,15 +646,18 @@ public class SpannerMetadataStorage implements MetadataStorage {
      * Create a Spanner Delete Request for removing an row in the table. The request must be
      * executed by the caller.
      */
-    private Mutation deleteFromSpanner(MetadataEntity entity, Long existingVersion) {
-        return Mutation.delete(
-                "Metadata",
+    private List<Mutation> deleteFromSpanner(MetadataEntity entity) {
+        List<Mutation> mutations = new ArrayList<>();
+        mutations.add(Mutation.delete(
+                "metadata",
                 Key.of(
                         entity.getValue(MetadataEntity.NAMESPACE),
                         entity.getType(),
                         entity.getValue(entity.getType())
                 )
-        );
+        ));
+
+        return mutations;
     }
 
     /**
@@ -688,9 +702,18 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 new MetadataChange(remove.getEntity(), before.getMetadata(), after));
     }
 
+    private Mutation.WriteBuilder newPropsInsertBuilder(String metadataId,
+                                                        String propsName, String propsScope, String propsValue) {
+        return Mutation.newInsertBuilder("metadata_props")
+                .set("metadata_id").to(metadataId)
+                .set("props_name").to(propsName)
+                .set("props_scope").to(propsScope)
+                .set("props_value").to(propsValue);
+    }
 
-    public Mutation writeToSpanner(MetadataEntity entity, Long expectVersion, Metadata metadata) throws IOException {
-        Mutation.WriteBuilder mutationBuilder = Mutation.newInsertOrUpdateBuilder("Metadata")
+    public List<Mutation> writeToSpanner(MetadataEntity entity, Long expectVersion, Metadata metadata) throws
+            IOException {
+        Mutation.WriteBuilder mainMetadataMutationBuilder = Mutation.newInsertOrUpdateBuilder("metadata")
                 .set("metadata_id").to(toDocumentId(entity))
                 .set("Namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
                 .set("Entity_type").to(entity.getType())
@@ -703,73 +726,73 @@ public class SpannerMetadataStorage implements MetadataStorage {
         Set<String> userTags = metadata.getTags(MetadataScope.USER);
         Set<String> systemTags = metadata.getTags(MetadataScope.SYSTEM);
 
-        StringBuilder userStringBuilder = new StringBuilder();
-        StringBuilder systemStringBuilder = new StringBuilder();
-        StringBuilder textBuilder = new StringBuilder();
+        StringBuilder userSearchStringBuilder = new StringBuilder();
+        StringBuilder systemSearchStringBuilder = new StringBuilder();
+        StringBuilder textSearchStringBuilder = new StringBuilder();
 
-        List<Map<String, String>> propsList = new ArrayList<>();
+        // This list is for the 'properties' JSON column in the 'metadata' table.
+        // It should contain individual property/tag entries as seen in your example "props".
+        List<Map<String, String>> metadataTablePropsJsonList = new ArrayList<>();
 
-        // --- Handle USER scope ---
-        // User tags
+        // This map collects all the individual string parts for each unique Metadata_Properties row.
+        // The key is "metadataId:scope:name", and the value is a list of strings that will be joined.
+        Map<String, List<String>> metadataPropertiesAggregatedParts = new LinkedHashMap<>();
+        String currentMetadataId = toDocumentId(entity); // Use a distinct variable name
+
+        // --- Helper to add individual property/tag entries to metadataTablePropsJsonList ---
+        // And to add parts to metadataPropertiesAggregatedParts for Metadata_Properties table
+        // (This helper will be defined below the main `writeToSpanner` method)
+
+        // --- Process Tags ---
+        // Tags need special handling as they are sets but become properties.
         if (!userTags.isEmpty()) {
-            Map<String, String> userTagsProp = new HashMap<>();
-            userTagsProp.put("scope", MetadataScope.USER.name());
-            userTagsProp.put("name", "tags");
-            userTagsProp.put("value", String.join(" ", userTags).toLowerCase());
-            propsList.add(userTagsProp);
+            String userTagsCombined = String.join(" ", userTags).toLowerCase();
+            addPropertyEntryAndPart(currentMetadataId, "tags", MetadataScope.USER.name(), userTagsCombined,
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+            userSearchStringBuilder.append(userTagsCombined).append(" ");
         }
-        // User properties (individual entries)
-        for (Map.Entry<String, String> entry : userProperties.entrySet()) {
-            Map<String, String> userProp = new HashMap<>();
-            userProp.put("scope", MetadataScope.USER.name());
-            userProp.put("name", entry.getKey().toLowerCase());
-            userProp.put("value", entry.getValue().toLowerCase());
-            propsList.add(userProp);
-        }
-        // User properties summary
-        if (!userProperties.isEmpty()) {
-            Map<String, String> userPropsSummary = new HashMap<>();
-            userPropsSummary.put("scope", MetadataScope.USER.name());
-            userPropsSummary.put("name", "properties");
-            userPropsSummary.put("value", String.join(" ", userProperties.keySet()).toLowerCase());
-            propsList.add(userPropsSummary);
-        }
-
-        // --- Handle SYSTEM scope ---
-        // System tags
         if (!systemTags.isEmpty()) {
-            Map<String, String> systemTagsProp = new HashMap<>();
-            systemTagsProp.put("scope", MetadataScope.SYSTEM.name());
-            systemTagsProp.put("name", "tags");
-            systemTagsProp.put("value", String.join(" ", systemTags).toLowerCase());
-            propsList.add(systemTagsProp);
+            String systemTagsCombined = String.join(" ", systemTags).toLowerCase();
+            addPropertyEntryAndPart(currentMetadataId, "tags", MetadataScope.SYSTEM.name(), systemTagsCombined,
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+            systemSearchStringBuilder.append(systemTagsCombined).append(" ");
         }
-        // System properties (individual entries)
-        for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
-            String key = entry.getKey().toLowerCase();
-            String value = entry.getValue();
-            Map<String, String> systemProp = new HashMap<>();
-            systemProp.put("scope", MetadataScope.SYSTEM.name());
-            systemProp.put("name", key);
-            systemProp.put("value", value);
-            propsList.add(systemProp);
 
-            // Handle special case for schema value extraction
-            if (key.equals("schema")) {
+        // --- Process User Properties ---
+        for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+            String name = entry.getKey().toLowerCase();
+            String value = entry.getValue().toLowerCase(); // Convert to lowercase for searchability
+            addPropertyEntryAndPart(currentMetadataId, name, MetadataScope.USER.name(), value,
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+            userSearchStringBuilder.append(name).append(":").append(value).append(" ");
+        }
+
+        // --- Process System Properties ---
+        for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
+            String name = entry.getKey().toLowerCase();
+            String value = entry.getValue(); // Value might be JSON, so don't lowercase immediately
+
+            // Add the primary value of the system property
+            addPropertyEntryAndPart(currentMetadataId, name, MetadataScope.SYSTEM.name(), value,
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+
+            // Special handling for 'schema' property for Metadata_Properties table
+            if (name.equals("schema")) {
                 try {
                     JsonObject schemaJson = gson.fromJson(value, JsonObject.class);
-                    JsonElement nameElement = schemaJson.get("name");
-                    if (nameElement != null && nameElement.isJsonPrimitive()) {
-                        Map<String, String> schemaNameProp = new HashMap<>();
-                        schemaNameProp.put("scope", MetadataScope.SYSTEM.name());
-                        schemaNameProp.put("name", "schema");
-                        schemaNameProp.put("value", nameElement.getAsString().toLowerCase());
-                        propsList.add(schemaNameProp);
+
+                    // Add schema name as a distinct part to the 'schema' aggregated value
+                    JsonElement schemaNameElement = schemaJson.get("name");
+                    if (schemaNameElement != null && schemaNameElement.isJsonPrimitive()) {
+                        // For the Metadata_Properties.Value, we might want prefixes for clarity
+                        addPropertyPartOnly(currentMetadataId, "schema", MetadataScope.SYSTEM.name(),
+                                "schema_name:" + schemaNameElement.getAsString().toLowerCase(),
+                                metadataPropertiesAggregatedParts);
                     }
-                    // Basic extraction of field names and types (first level)
+
+                    // Add field names and types as parts of the 'schema' aggregated value
                     JsonArray fields = schemaJson.getAsJsonArray("fields");
                     if (fields != null) {
-                        StringBuilder schemaFieldsValue = new StringBuilder();
                         for (JsonElement fieldElement : fields) {
                             if (fieldElement.isJsonObject()) {
                                 JsonObject fieldObject = fieldElement.getAsJsonObject();
@@ -777,94 +800,115 @@ public class SpannerMetadataStorage implements MetadataStorage {
                                 JsonElement fieldTypeElement = fieldObject.get("type");
                                 if (fieldNameElement != null && fieldNameElement.isJsonPrimitive() &&
                                         fieldTypeElement != null && fieldTypeElement.isJsonPrimitive()) {
-                                    schemaFieldsValue.append(fieldNameElement.getAsString().toLowerCase()).append(":")
-                                            .append(fieldTypeElement.getAsString().toLowerCase()).append(" ");
+                                    String fieldInfo = fieldNameElement.getAsString().toLowerCase() + ":" +
+                                            fieldTypeElement.getAsString().toLowerCase();
+                                    // Add as part of the 'schema' aggregated value
+                                    addPropertyPartOnly(currentMetadataId, "schema", MetadataScope.SYSTEM.name(),
+                                            "field:" + fieldInfo,
+                                            metadataPropertiesAggregatedParts);
                                 }
                             }
                         }
-                        if (schemaFieldsValue.length() > 0) {
-                            Map<String, String> schemaFieldsProp = new HashMap<>();
-                            schemaFieldsProp.put("scope", MetadataScope.SYSTEM.name());
-                            schemaFieldsProp.put("name", "schema");
-                            schemaFieldsProp.put("value", schemaFieldsValue.toString().trim());
-                            propsList.add(schemaFieldsProp);
-                        }
                     }
                 } catch (Exception e) {
-                    System.out.println("Error parsing schema JSON for props: " + e.getMessage());
+                    System.out.println("Error parsing schema JSON for Metadata_Properties aggregation: " +
+                            e.getMessage());
                 }
             }
         }
-        // System properties summary
+
+        // --- Entity Information ---
+        // The main entity name should also be a system property.
+        String entityNameValue = entity.getValue(entity.getType());
+        if (entityNameValue != null) {
+            addPropertyEntryAndPart(currentMetadataId, "entity-name", MetadataScope.SYSTEM.name(),
+                    entityNameValue.toLowerCase(),
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+        }
+        // Also add "dataset" if applicable, based on your example output.
+        // Assuming dataset comes from entity.getValue("dataset") or is derived from entity.getType()
+        // For now, let's assume it's derived from entity.getValue(MetadataEntity.NAMESPACE)
+        String namespace = entity.getValue(MetadataEntity.NAMESPACE);
+        if (namespace != null && namespace.contains("dataset=")) {
+            String datasetName = namespace.substring(namespace.indexOf("dataset=") + 8);
+            addPropertyEntryAndPart(currentMetadataId, "dataset", MetadataScope.SYSTEM.name(), datasetName.
+                            toLowerCase(),
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+        }
+
+
+        // --- Special: Add "properties" property to metadataTablePropsJsonList and Metadata_Properties ---
+        // This aggregates the names of all other properties under a "properties" property.
+        // For USER properties:
+        if (!userProperties.isEmpty()) {
+            String userPropNames = userProperties.keySet().stream()
+                    .map(String::toLowerCase)
+                    .collect(Collectors.joining(" "));
+            addPropertyEntryAndPart(currentMetadataId, "properties", MetadataScope.USER.name(), userPropNames,
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
+        }
+        // For SYSTEM properties:
         if (!systemProperties.isEmpty()) {
-            Map<String, String> systemPropsSummary = new HashMap<>();
-            systemPropsSummary.put("scope", MetadataScope.SYSTEM.name());
-            systemPropsSummary.put("name", "properties");
-            systemPropsSummary.put("value", String.join(" ", systemProperties.keySet()).toLowerCase());
-            propsList.add(systemPropsSummary);
+            String systemPropNames = systemProperties.keySet().stream()
+                    .map(String::toLowerCase)
+                    .collect(Collectors.joining(" "));
+            addPropertyEntryAndPart(currentMetadataId, "properties", MetadataScope.SYSTEM.name(), systemPropNames,
+                    metadataTablePropsJsonList, metadataPropertiesAggregatedParts);
         }
 
-        // --- Handle Entity Information ---
-        // Entity name
-        if (entity.getValue(entity.getType()) != null) {
-            Map<String, String> entityNameProp = new HashMap<>();
-            entityNameProp.put("scope", MetadataScope.SYSTEM.name());
-            entityNameProp.put("name", "entity-name");
-            entityNameProp.put("value", entity.getValue(entity.getType()).toLowerCase());
-            propsList.add(entityNameProp);
-        }
 
-        // Populate the 'properties' column with the restructured JSON
-        if (!propsList.isEmpty()) {
-            mutationBuilder.set("properties").to(gson.toJson(propsList));
+        // Populate the 'properties' column in the main 'metadata' table
+        if (!metadataTablePropsJsonList.isEmpty()) {
+            mainMetadataMutationBuilder.set("properties").to(gson.toJson(metadataTablePropsJsonList));
+        } else {
+            mainMetadataMutationBuilder.set("properties").to(Value.json(null));
         }
 
         // Extract and populate 'creation_time' from system properties
-        String createdString = systemProperties.get("creation-time"); // From SYSTEM properties
+        String createdString = systemProperties.get("Creation-Time");
         if (createdString != null) {
             try {
                 long created = Long.parseLong(createdString);
-                mutationBuilder.set("creation_time").to(created);
+                mainMetadataMutationBuilder.set("Creation_Time").to(created);
+                // 'Creation-Time' was already added via system properties loop
             } catch (NumberFormatException e) {
-                System.out.println("Invalid creation_time value: " + createdString);
+                System.out.println("Invalid creation_time value for 'Creation_Time' column: " + createdString);
             }
+        } else {
+            mainMetadataMutationBuilder.set("Creation_Time").to(Value.int64(null));
         }
 
-        // Populate 'user' column as a string (matching ES)
-        if (!userTags.isEmpty()) {
-            userStringBuilder.append(String.join(" ", userTags).toLowerCase()).append(" "); // USER tags
-        }
-        if (!userProperties.isEmpty()) {
-            for (Map.Entry<String, String> entry : userProperties.entrySet()) {
-                userStringBuilder.append(entry.getKey().toLowerCase()).append(":").append(entry.getValue().
-                        toLowerCase()).append(" "); // USER properties (key:value)
-            }
-        }
-        mutationBuilder.set("user").to(userStringBuilder.toString().trim());
+        // Populate 'USER' column for full-text search
+        mainMetadataMutationBuilder.set("USER").to(userSearchStringBuilder.toString().trim());
 
-        // Populate 'system' column as a string (matching ES)
-        String entityType = systemProperties.get("type");
-        if (entityType != null) {
-            systemStringBuilder.append(entityType.toLowerCase()).append(" "); // Entity Type
+        // Populate 'SYSTEM' column for full-text search
+        String entityTypeInSystem = systemProperties.get("type"); // Use this for system string
+        if (entityTypeInSystem != null) {
+            systemSearchStringBuilder.append(entityTypeInSystem.toLowerCase()).append(" ");
+        } else {
+            systemSearchStringBuilder.append(entity.getType().toLowerCase()).append(" ");
         }
-        String entityName = systemProperties.get("entity-name"); // From SYSTEM properties
-        if (entityName != null) {
-            systemStringBuilder.append(entityName.toLowerCase()).append(" ").append(entityName.toLowerCase()).
-                    append(" ");
+
+        String entityNameInSystem = systemProperties.get("entity-name"); // Use this for system string
+        if (entityNameInSystem != null) {
+            systemSearchStringBuilder.append(entityNameInSystem.toLowerCase()).append(" ");
+        } else if (entity.getValue(entity.getType()) != null) {
+            systemSearchStringBuilder.append(entity.getValue(entity.getType()).toLowerCase()).append(" ");
         }
-        if (!systemTags.isEmpty()) {
-            systemStringBuilder.append(String.join(" ", systemTags).toLowerCase()).append(" "); // SYSTEM tags
-        }
+        systemSearchStringBuilder.append(systemTags.stream().map(String::toLowerCase).collect(Collectors.
+                joining(" "))).append(" ");
+
         if (createdString != null) {
-            systemStringBuilder.append(createdString).append(" "); // SYSTEM creation-time
+            systemSearchStringBuilder.append(createdString).append(" ");
         }
-        String schema = systemProperties.get("schema"); // From SYSTEM properties
-        if (schema != null) {
+
+        String schemaForSystemColumn = systemProperties.get("schema"); // Original schema JSON for text column
+        if (schemaForSystemColumn != null) {
             try {
-                JsonObject schemaJson = gson.fromJson(schema, JsonObject.class);
+                JsonObject schemaJson = gson.fromJson(schemaForSystemColumn, JsonObject.class);
                 JsonElement schemaNameElement = schemaJson.get("name");
                 if (schemaNameElement != null && schemaNameElement.isJsonPrimitive()) {
-                    systemStringBuilder.append(schemaNameElement.getAsString().toLowerCase()).append(" ");
+                    systemSearchStringBuilder.append(schemaNameElement.getAsString().toLowerCase()).append(" ");
                 }
                 JsonArray fields = schemaJson.getAsJsonArray("fields");
                 if (fields != null) {
@@ -873,24 +917,44 @@ public class SpannerMetadataStorage implements MetadataStorage {
                             JsonObject fieldObject = fieldElement.getAsJsonObject();
                             JsonElement nameElement = fieldObject.get("name");
                             JsonElement typeElement = fieldObject.get("type");
-                            if (typeElement != null && typeElement.isJsonPrimitive()) {
-                                systemStringBuilder.append(nameElement.getAsString().toLowerCase()).append(":")
+                            if (nameElement != null && nameElement.isJsonPrimitive() &&
+                                    typeElement != null && typeElement.isJsonPrimitive()) {
+                                systemSearchStringBuilder.append(nameElement.getAsString().toLowerCase()).append(":")
                                         .append(typeElement.getAsString().toLowerCase()).append(" ");
                             }
                         }
                     }
                 }
             } catch (Exception e) {
-                System.out.println("Error parsing schema JSON for system string: " + e.getMessage());
+                System.out.println("Error parsing schema JSON for SYSTEM string: " + e.getMessage());
             }
         }
-        mutationBuilder.set("system").to(systemStringBuilder.toString().trim());
+        mainMetadataMutationBuilder.set("SYSTEM").to(systemSearchStringBuilder.toString().trim());
 
-        // Populate 'text' column by combining 'user' and 'system' strings
-        textBuilder.append(userStringBuilder).append(" ").append(systemStringBuilder);
-        mutationBuilder.set("text").to(textBuilder.toString().trim());
+        // Populate 'Text' column by combining 'USER' and 'SYSTEM' strings
+        textSearchStringBuilder.append(userSearchStringBuilder).append(" ").append(systemSearchStringBuilder);
+        mainMetadataMutationBuilder.set("Text").to(textSearchStringBuilder.toString().trim());
 
-        return mutationBuilder.build();
+        List<Mutation> allMutations = new ArrayList<>();
+        allMutations.add(mainMetadataMutationBuilder.build());
+
+        // --- Final Step: Convert aggregated property parts into actual Spanner Mutations for Metadata_Properties ---
+        for (Map.Entry<String, List<String>> entry : metadataPropertiesAggregatedParts.entrySet()) {
+            String[] parts = entry.getKey().split(":", 3);
+            if (parts.length != 3) {
+                System.err.println("Unexpected mapKey format when building Metadata_Properties mutations: " +
+                        entry.getKey());
+                continue;
+            }
+            String entryMetadataId = parts[0];
+            String scope = parts[1];
+            String name = parts[2];
+            String finalValue = String.join(" ", entry.getValue()).trim(); // Trim extra spaces
+
+            allMutations.add(newPropsInsertBuilder(entryMetadataId, name, scope, finalValue).build());
+        }
+
+        return allMutations;
     }
 
     // --- PRIVATE HELPER METHOD: addPropertyEntryAndPart ---
@@ -912,6 +976,30 @@ public class SpannerMetadataStorage implements MetadataStorage {
                                      Map<String, List<String>> metadataPropertiesAggregatedParts) {
         String mapKey = metadataId + ":" + scope + ":" + name;
         metadataPropertiesAggregatedParts.computeIfAbsent(mapKey, k -> new ArrayList<>()).add(valuePart);
+    }
+
+    // --- PRIVATE HELPER METHOD: addPropertyPart ---
+// This method collects individual string parts for a given property (metadata_id, name, scope).
+// It adds the part to a list that will eventually be joined into a single string for the Spanner 'Value' column.
+    private void addPropertyPart(String metadataId, String name, String scope, String valuePart,
+                                 Map<String, List<String>> aggregatedPropertyParts,
+                                 List<Map<String, String>> propsJsonList) {
+
+        // The mapKey represents the full primary key of the Metadata_Properties table.
+        String mapKey = metadataId + ":" + scope + ":" + name;
+
+        // Get or create the list of parts for this specific property.
+        // This is where all parts for a single property row are accumulated.
+        aggregatedPropertyParts.computeIfAbsent(mapKey, k -> new ArrayList<>()).add(valuePart);
+
+        // Also add to the propsJsonList for the 'properties' JSON column in the 'metadata' table.
+        // For this list, we typically want to store the *individual* value parts as they were provided,
+        // allowing the JSON structure to reflect the distinct components.
+        Map<String, String> propMap = new HashMap<>();
+        propMap.put("scope", scope);
+        propMap.put("name", name);
+        propMap.put("value", valuePart); // Store the individual value part here
+        propsJsonList.add(propMap);
     }
 
 

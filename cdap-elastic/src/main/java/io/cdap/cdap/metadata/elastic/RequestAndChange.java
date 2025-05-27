@@ -25,19 +25,19 @@ import org.elasticsearch.action.support.WriteRequest;
  */
 public class RequestAndChange {
 
-  private final WriteRequest<?> request;
-  private final MetadataChange change;
+    private final WriteRequest<?> request;
+    private final MetadataChange change;
 
-  public RequestAndChange(WriteRequest<?> request, MetadataChange change) {
-    this.request = request;
-    this.change = change;
-  }
+    public RequestAndChange(WriteRequest<?> request, MetadataChange change) {
+        this.request = request;
+        this.change = change;
+    }
 
-  public WriteRequest<?> getRequest() {
-    return request;
-  }
+    public WriteRequest<?> getRequest() {
+        return request;
+    }
 
-  public MetadataChange getChange() {
-    return change;
-  }
+    public MetadataChange getChange() {
+        return change;
+    }
 }
