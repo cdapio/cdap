@@ -218,6 +218,11 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   @Override
+  public String getName() {
+    return getClass().getSimpleName();
+  }
+
+  @Override
   public void close() {
     Closeables.closeQuietly(client);
   }

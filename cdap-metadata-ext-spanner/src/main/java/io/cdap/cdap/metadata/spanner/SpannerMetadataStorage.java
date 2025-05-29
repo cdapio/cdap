@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2025 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,65 +14,68 @@
  * the License.
  */
 
-package io.cdap.cdap.spi.metadata.noop;
+package io.cdap.cdap.metadata.spanner;
 
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataChange;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MetadataStorageContext;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Metadata storage provider that does nothing.
+ * A metadata storage provider that delegates to Spanner.
  */
-public class NoopMetadataStorage implements MetadataStorage {
+public class SpannerMetadataStorage implements MetadataStorage {
 
   @Override
-  public String getName() {
-    return getClass().getSimpleName();
-  }
-
-  @Override
-  public void createIndex() throws IOException {
-    // no-op
-  }
-
-  @Override
-  public void dropIndex() throws IOException {
-    // no-op
-  }
-
-  @Override
-  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) {
-    return new MetadataChange(mutation.getEntity(), Metadata.EMPTY, Metadata.EMPTY);
-  }
-
-  @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
-      MutationOptions options) {
-    return mutations.stream().map(mutation -> apply(mutation, options))
-        .collect(Collectors.toList());
-  }
-
-  @Override
-  public Metadata read(Read read) {
-    return Metadata.EMPTY;
-  }
-
-  @Override
-  public SearchResponse search(SearchRequest request) {
-    return new SearchResponse(request, null, 0, 0, 0, Collections.emptyList());
+  public void initialize(MetadataStorageContext context) throws Exception {
+    throw new IOException("NOT IMPLEMENTED");
   }
 
   @Override
   public void close() {
-    // no-op
+  }
+
+  @Override
+  public void createIndex() throws IOException {
+    throw new IOException("NOT IMPLEMENTED");
+  }
+
+  @Override
+  public String getName() {
+    return "gcp-spanner";
+  }
+
+  @Override
+  public void dropIndex() throws IOException {
+    throw new IOException("NOT IMPLEMENTED");
+  }
+
+  @Override
+  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
+    throw new IOException("NOT IMPLEMENTED");
+  }
+
+  @Override
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
+    throws IOException {
+    throw new IOException("NOT IMPLEMENTED");
+  }
+
+  @Override
+  public Metadata read(Read read) throws IOException {
+    throw new IOException("NOT IMPLEMENTED");
+  }
+
+  @Override
+  public SearchResponse search(SearchRequest request) throws IOException {
+    throw new IOException("NOT IMPLEMENTED");
   }
 }
+
