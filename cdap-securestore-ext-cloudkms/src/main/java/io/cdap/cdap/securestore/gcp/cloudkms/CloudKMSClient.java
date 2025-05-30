@@ -30,6 +30,8 @@ import com.google.api.services.cloudkms.v1.model.DecryptResponse;
 import com.google.api.services.cloudkms.v1.model.EncryptRequest;
 import com.google.api.services.cloudkms.v1.model.EncryptResponse;
 import com.google.api.services.cloudkms.v1.model.KeyRing;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import java.io.Closeable;
 import java.io.File;
@@ -40,7 +42,10 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -59,12 +64,17 @@ class CloudKMSClient implements Closeable {
   private static final String CLOUD_KMS = "cloudkms";
   private static final String PROJECT_ID = "project.id";
   private static final String SERVICE_ACCOUNT_FILE = "service.account.file";
+  private static final String ENABLE_KEY_ROTATION = "key.rotation.enabled";
+  private static final String KEY_ROTATION_PERIOD_DAYS = "key.rotation.period.days";
   private static final String METADATA_SERVER_API = "metadata.server.api";
   private static final String DEFAULT_METADATA_SERVER_API =
       "http://metadata.google.internal/computeMetadata"
           + "/v1/project/project-id";
   private static final String KEYRING_ID = "keyring.id";
   private static final String DEFAULT_KEYRING_ID = "cdap";
+  private static final String KEY_RING_FORMAT = "projects/%s/locations/%s/keyRings/%s";
+  private static final String CRYPTO_KEY_FORMAT = KEY_RING_FORMAT + "/cryptoKeys/%s";
+  private static final String DEFAULT_KEY_ROTATION_PERIOD_DAYS = "90";
 
 
   private final CloudKMS cloudKMS;
@@ -72,6 +82,8 @@ class CloudKMSClient implements Closeable {
   private final String keyringId;
   // In-memory cache to hold created crypto keys, this is to avoid checking if a given crypto key exists.
   private final Set<String> knownCryptoKeys;
+  private final Boolean enableKeyRotation;
+  private final Long keyRotationPeriod;
 
   /**
    * Constructs Cloud KMS client.
@@ -87,6 +99,22 @@ class CloudKMSClient implements Closeable {
     this.cloudKMS = createCloudKMS(serviceAccountFile);
     this.keyringId = properties.getOrDefault(KEYRING_ID, DEFAULT_KEYRING_ID);
     this.knownCryptoKeys = new HashSet<>();
+    this.enableKeyRotation = Boolean.parseBoolean(
+        properties.get(ENABLE_KEY_ROTATION));
+    this.keyRotationPeriod = initializeKeyRotationPeriod(properties);
+  }
+
+  private long initializeKeyRotationPeriod(Map<String, String> properties) {
+    long rotationPeriod = Long.parseLong(
+        properties.getOrDefault(KEY_ROTATION_PERIOD_DAYS, DEFAULT_KEY_ROTATION_PERIOD_DAYS));
+    if (rotationPeriod < 1) {
+      LOG.warn(
+          "Configured value for '{}' is {} which is less than minimum requirement of "
+              + "1 day. Falling back to the default of {} days.",
+          KEY_ROTATION_PERIOD_DAYS, rotationPeriod, DEFAULT_KEY_ROTATION_PERIOD_DAYS);
+      rotationPeriod = Long.parseLong(DEFAULT_KEY_ROTATION_PERIOD_DAYS);
+    }
+    return rotationPeriod;
   }
 
   /**
@@ -115,7 +143,8 @@ class CloudKMSClient implements Closeable {
    * @return an authorized CloudKMS client
    * @throws IOException if credentials can not be created in current environment
    */
-  private CloudKMS createCloudKMS(String serviceAccountFile) throws IOException {
+   @VisibleForTesting
+   CloudKMS createCloudKMS(String serviceAccountFile) throws IOException {
     HttpTransport transport = new NetHttpTransport();
     JsonFactory jsonFactory = new JacksonFactory();
     GoogleCredential credential;
@@ -163,6 +192,56 @@ class CloudKMSClient implements Closeable {
     }
   }
 
+   void enableKeyRotationIfNeeded() throws IOException {
+    if (!this.enableKeyRotation) {
+      return;
+    }
+
+    String keyRingName = String.format(KEY_RING_FORMAT, projectId, LOCATION_ID, keyringId);
+    try {
+      List<CryptoKey> cryptoKeys = cloudKMS.projects().locations().keyRings().cryptoKeys()
+          .list(keyRingName).execute().getCryptoKeys();
+      if (cryptoKeys == null || cryptoKeys.isEmpty()) {
+        LOG.info("No existing crypto keys found in keyring {}.", keyringId);
+        return;
+      }
+
+      for (CryptoKey cryptoKey : cryptoKeys) {
+        String cryptoKeyName = cryptoKey.getName();
+        String cryptoKeyId = cryptoKeyName.substring(
+            cryptoKeyName.lastIndexOf('/') + 1);
+
+        if (Strings.isNullOrEmpty(cryptoKey.getRotationPeriod())) {
+          CryptoKey updateRequest = new CryptoKey();
+          // Setting rotation period to 90 days for KMS keys.
+          long rotationInSeconds = Duration.ofDays(this.keyRotationPeriod).getSeconds();
+          updateRequest.setRotationPeriod(rotationInSeconds + "s");
+          // Setting nextRotationTime to 1 day after the key is updated.
+          Instant nextRotationTime = Instant.now().plus(Duration.ofDays(1));
+          updateRequest.setNextRotationTime(nextRotationTime.toString());
+
+          String resourceName = String.format(CRYPTO_KEY_FORMAT, projectId, LOCATION_ID, keyringId, cryptoKeyId);
+          try {
+            cloudKMS.projects().locations().keyRings().cryptoKeys()
+                .patch(resourceName, updateRequest)
+                .setUpdateMask(
+                    "rotation_period,next_rotation_time")
+                .execute();
+            LOG.info("Successfully updated rotation period for crypto key {}.", cryptoKeyId);
+          } catch (GoogleJsonResponseException e) {
+            throw new IOException(
+                String.format("Failed to update rotation period for crypto key %s", cryptoKeyId),
+                e);
+          }
+        }
+      }
+    } catch (GoogleJsonResponseException e) {
+      throw new IOException(
+          String.format("Exception occurred while listing crypto keys in keyring %s", keyringId),
+          e);
+    }
+  }
+
   /**
    * Creates a new crypto key on google cloud kms with the given id.
    *
@@ -175,14 +254,20 @@ class CloudKMSClient implements Closeable {
       return;
     }
 
-    String parent = String.format("projects/%s/locations/%s/keyRings/%s", projectId, LOCATION_ID,
-        keyringId);
-
     CryptoKey cryptoKey = new CryptoKey();
     // This will allow the API access to the key for symmetric encryption and decryption.
     cryptoKey.setPurpose(ENCRYPT_DECRYPT);
 
+    if (this.enableKeyRotation) {
+      long rotationInSeconds = Duration.ofDays(this.keyRotationPeriod).getSeconds();
+      cryptoKey.setRotationPeriod(rotationInSeconds + "s");
+
+      Instant nextRotationTime = Instant.now().plus(Duration.ofDays(1));
+      cryptoKey.setNextRotationTime(nextRotationTime.toString());
+    }
+
     try {
+      String parent = String.format(KEY_RING_FORMAT, projectId, LOCATION_ID, keyringId);
       cloudKMS.projects().locations().keyRings().cryptoKeys()
           .create(parent, cryptoKey)
           .setCryptoKeyId(cryptoKeyId)
@@ -210,8 +295,7 @@ class CloudKMSClient implements Closeable {
    * @throws IOException there's an error in encrypting secret
    */
   byte[] encrypt(String cryptoKeyId, byte[] secret) throws IOException {
-    String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
-        projectId, LOCATION_ID,
+    String resourceName = String.format(CRYPTO_KEY_FORMAT, projectId, LOCATION_ID,
         keyringId, cryptoKeyId);
     // secret must not be longer than 64KiB.
     EncryptRequest request = new EncryptRequest().encodePlaintext(secret);
@@ -236,8 +320,8 @@ class CloudKMSClient implements Closeable {
    * @throws IOException there's an error in decrypting secret
    */
   byte[] decrypt(String cryptoKeyId, byte[] encryptedSecret) throws IOException {
-    String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
-        projectId, LOCATION_ID, keyringId, cryptoKeyId);
+    String resourceName = String.format(CRYPTO_KEY_FORMAT, projectId, LOCATION_ID, keyringId,
+        cryptoKeyId);
 
     DecryptRequest request = new DecryptRequest().encodeCiphertext(encryptedSecret);
     DecryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
