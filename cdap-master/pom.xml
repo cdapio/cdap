@@ -93,6 +93,11 @@
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>io.cdap.cdap</groupId>-->
+<!--      <artifactId>cdap-export-import</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-security</artifactId>
