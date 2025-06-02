@@ -32,7 +32,8 @@ import com.google.cloud.spanner.Struct;
 import com.google.cloud.spanner.Key;
 import com.google.cloud.spanner.ReadOnlyTransaction;
 import com.google.cloud.spanner.ErrorCode;
-import com.google.cloud.spanner.Value;
+
+
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -50,13 +51,24 @@ import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataConflictException;
 import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
-import io.cdap.cdap.spi.metadata.*;
-
-
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MetadataStorageContext;
+import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MutationOptions;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.MetadataDirective;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.SearchRequest;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
+import io.cdap.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.spi.metadata.VersionedMetadata;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.Set;
@@ -67,15 +79,9 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-
-
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-
-
 import java.io.IOException;
-
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -106,9 +112,9 @@ public class SpannerMetadataStorage implements MetadataStorage {
     private static final String NESTED_SCOPE_FIELD = "Props_Scope"; // contains the scope in nested props
     private static final String NESTED_VALUE_FIELD = "Props_Value"; // contains the value in nested props
 
-    private  String instanceId = "instance";
-    private  String databaseId = "database";
-    private  String projectId = "project";
+    private String instanceId = "instance";
+    private String databaseId = "database";
+    private String projectId = "project";
     private volatile SpannerOptions options;
     private volatile Spanner spanner;
     private volatile DatabaseClient dbClient;
@@ -124,7 +130,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
     private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
 
 
-
     private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
             .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
@@ -136,10 +141,10 @@ public class SpannerMetadataStorage implements MetadataStorage {
         LOG.info("Initializing SpannerMetadataStorage...");
         Map<String, String> conf = context.getConfiguration();
         LOG.info(conf.toString());
-        projectId=getProjectId(conf);
-        databaseId=getDatabaseId(conf);
-        instanceId=getInstanceId(conf);
-        LOG.info(projectId,databaseId,instanceId);
+        projectId = getProjectId(conf);
+        databaseId = getDatabaseId(conf);
+        instanceId = getInstanceId(conf);
+        LOG.info(projectId, databaseId, instanceId);
         try {
             options = SpannerOptions.newBuilder().setProjectId(projectId).build();
             spanner = options.getService();
@@ -239,7 +244,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         LOG.info("Generating create table DDL statement.");
         return String.format(
                 "CREATE TABLE IF NOT EXISTS %s (" +
-                        "metadata_id STRING(MAX) NOT NULL,"+
+                        "metadata_id STRING(MAX) NOT NULL," +
                         "%s STRING(MAX) NOT NULL," + // namespace
                         "%s STRING(MAX) NOT NULL," + // entity_type
                         "%s STRING(MAX) NOT NULL," + // name
@@ -253,9 +258,9 @@ public class SpannerMetadataStorage implements MetadataStorage {
                         "metadata_column JSON," + // metadata
                         "VERSION INT64 NOT NULL," +
                         "USER_Substrings TOKENLIST AS " +
-                        "(TOKENIZE_SUBSTRING(USER, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN,"+
+                        "(TOKENIZE_SUBSTRING(USER, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
                         "SYSTEM_Substrings TOKENLIST AS " +
-                        "(TOKENIZE_SUBSTRING(SYSTEM, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN,"+
+                        "(TOKENIZE_SUBSTRING(SYSTEM, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
                         ")PRIMARY KEY (metadata_id) ", // primary key
                 METADATA_TABLE,
                 NAMESPACE_FIELD,
@@ -274,14 +279,14 @@ public class SpannerMetadataStorage implements MetadataStorage {
         LOG.info("Generating Metadata_props table DDL statement.");
         return String.format(
                 "CREATE TABLE IF NOT EXISTS %s (" +
-                        "metadata_id STRING(MAX) NOT NULL,"+
+                        "metadata_id STRING(MAX) NOT NULL," +
                         "%s STRING(MAX) NOT NULL," + // name
                         "%s STRING(MAX)," + // scope
                         "%s STRING(MAX)," + // value
                         "Value_Substrings TOKENLIST AS " +
-                        "(TOKENIZE_SUBSTRING(Props_Value, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN,"+
-                        ")PRIMARY KEY (metadata_id, %s, %s) ,"+ // primary key
-                         "INTERLEAVE IN PARENT metadata ON DELETE CASCADE",
+                        "(TOKENIZE_SUBSTRING(Props_Value, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
+                        ")PRIMARY KEY (metadata_id, %s, %s) ," + // primary key
+                        "INTERLEAVE IN PARENT metadata ON DELETE CASCADE",
                 METADATA_PROPS_TABLE,
                 NESTED_NAME_FIELD,
                 NESTED_SCOPE_FIELD,
@@ -360,16 +365,18 @@ public class SpannerMetadataStorage implements MetadataStorage {
             }
         }
     }
-    private void executeMutation(TransactionContext transaction, MetadataEntity entity, Mutation mutation,
+    private void executeMutation(TransactionContext transaction, MetadataEntity entity, List<Mutation> mutations,
                                  MutationOptions options) throws IOException {
         try {
-            if (mutation.getOperation() == Mutation.Op.INSERT || mutation.getOperation() == Mutation.Op.UPDATE ||
-                    mutation.getOperation() == Mutation.Op.INSERT_OR_UPDATE) {
-                transaction.buffer(mutation);
-            } else if (mutation.getOperation() == Mutation.Op.DELETE) {
-                transaction.buffer(mutation);
-            } else {
-                throw new IllegalStateException("Unexpected Mutation operation: " + mutation.getOperation());
+            for (Mutation mutation : mutations) { // Iterate over the list of mutations
+                if (mutation.getOperation() == Mutation.Op.INSERT || mutation.getOperation() == Mutation.Op.UPDATE ||
+                        mutation.getOperation() == Mutation.Op.INSERT_OR_UPDATE) {
+                    transaction.buffer(mutation);
+                } else if (mutation.getOperation() == Mutation.Op.DELETE) {
+                    transaction.buffer(mutation);
+                } else {
+                    throw new IllegalStateException("Unexpected Mutation operation: " + mutation.getOperation());
+                }
             }
         } catch (SpannerException e) {
             if (e.getErrorCode() == ErrorCode.ALREADY_EXISTS) {
@@ -622,16 +629,25 @@ public class SpannerMetadataStorage implements MetadataStorage {
      * Create a Spanner Delete Request for removing an row in the table. The request must be
      * executed by the caller.
      */
-    private Mutation deleteFromSpanner(MetadataEntity entity, Long existingVersion) {
-        return Mutation.delete(
-                "Metadata",
-                Key.of(
-                        entity.getValue(MetadataEntity.NAMESPACE),
-                        entity.getType(),
-                        entity.getValue(entity.getType())
-                )
-        );
+    private List<Mutation> deleteFromSpanner(MetadataEntity entity, Long existingVersion) {
+        List<Mutation> mutations = new ArrayList<>();
+
+        String metadataId = toDocumentId(entity); // Get the metadata_id for the entity
+
+        if (existingVersion == null) {
+            throw new IllegalArgumentException("existingVersion cannot be null when deleting a " +
+                    "specific version of a metadata entity.");
+        }
+
+        // --- Delete from Metadata table ---
+        // The primary key for Metadata table is (metadata_id, VERSION)
+        mutations.add(Mutation.delete(
+                "Metadata", // Your parent table name
+                Key.of(metadataId, existingVersion) // Provide both components of the primary key
+        ));
+        return mutations;
     }
+
 
     /**
      * Creates the Spanner request for updating the metadata of an entity. This updates or
@@ -675,13 +691,18 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 new MetadataChange(remove.getEntity(), before.getMetadata(), after));
     }
 
-    public Mutation writeToSpanner(MetadataEntity entity, Long expectVersion, Metadata metadata) throws IOException {
-        Mutation.WriteBuilder mutationBuilder = Mutation.newInsertOrUpdateBuilder("Metadata")
+    public List<Mutation> writeToSpanner(MetadataEntity entity, Long expectVersion, Metadata metadata) throws
+            IOException {
+        List<Mutation> mutations = new ArrayList<>();
+
+        // --- Parent Metadata Table Mutation ---
+        // The parent table still uses 'VERSION' as part of its primary key or for optimistic concurrency
+        Mutation.WriteBuilder parentMutationBuilder = Mutation.newInsertOrUpdateBuilder("Metadata")
                 .set("metadata_id").to(toDocumentId(entity))
                 .set("Namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
                 .set("Entity_type").to(entity.getType())
                 .set("Name").to(entity.getValue(entity.getType()))
-                .set("metadata_column").to(gson.toJson(metadata))
+                .set("metadata_column").to(gson.toJson(metadata)) // Still store full metadata JSON if needed
                 .set("VERSION").to(expectVersion == null ? 1L : expectVersion + 1);
 
         Map<String, String> systemProperties = metadata.getProperties(MetadataScope.SYSTEM);
@@ -689,68 +710,85 @@ public class SpannerMetadataStorage implements MetadataStorage {
         Set<String> userTags = metadata.getTags(MetadataScope.USER);
         Set<String> systemTags = metadata.getTags(MetadataScope.SYSTEM);
 
+        // StringBuilders for 'user', 'system', 'text' columns in the parent Metadata table
         StringBuilder userStringBuilder = new StringBuilder();
         StringBuilder systemStringBuilder = new StringBuilder();
         StringBuilder textBuilder = new StringBuilder();
 
-        List<Map<String, String>> propsList = new ArrayList<>();
+        // The parent's metadata_id will be used as the interleaving key for child mutations
+        String parentMetadataId = toDocumentId(entity);
+        long parentVersion = expectVersion == null ? 1L : expectVersion + 1; // The version of the parent record
 
-        // --- Handle USER scope ---
-        // User tags
+        // --- Prepare data for metadata_props (interleaved table) ---
+
+        // User tags for metadata_props
         if (!userTags.isEmpty()) {
-            Map<String, String> userTagsProp = new HashMap<>();
-            userTagsProp.put("scope", MetadataScope.USER.name());
-            userTagsProp.put("name", "tags");
-            userTagsProp.put("value", String.join(" ", userTags).toLowerCase());
-            propsList.add(userTagsProp);
+            Mutation childTagMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key (interleaving key)
+                    .set(NESTED_NAME_FIELD).to("tags") // props_name
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.USER.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(String.join(" ", userTags).toLowerCase()) // props_value
+                    .build();
+            mutations.add(childTagMutation);
         }
-        // User properties (individual entries)
+        // User properties (individual entries) for metadata_props
         for (Map.Entry<String, String> entry : userProperties.entrySet()) {
-            Map<String, String> userProp = new HashMap<>();
-            userProp.put("scope", MetadataScope.USER.name());
-            userProp.put("name", entry.getKey().toLowerCase());
-            userProp.put("value", entry.getValue().toLowerCase());
-            propsList.add(userProp);
+            Mutation childPropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key
+                    .set(NESTED_NAME_FIELD).to(entry.getKey().toLowerCase()) // props_name
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.USER.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(entry.getValue().toLowerCase()) // props_value
+                    .build();
+            mutations.add(childPropMutation);
         }
-        // User properties summary
+        // User properties summary for metadata_props (if desired as a separate entry)
         if (!userProperties.isEmpty()) {
-            Map<String, String> userPropsSummary = new HashMap<>();
-            userPropsSummary.put("scope", MetadataScope.USER.name());
-            userPropsSummary.put("name", "properties");
-            userPropsSummary.put("value", String.join(" ", userProperties.keySet()).toLowerCase());
-            propsList.add(userPropsSummary);
+            Mutation childPropSummaryMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key
+                    .set(NESTED_NAME_FIELD).to("properties") // props_name
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.USER.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(String.join(" ", userProperties.keySet()).toLowerCase())
+                    // props_value
+                    .build();
+            mutations.add(childPropSummaryMutation);
         }
 
         // --- Handle SYSTEM scope ---
-        // System tags
+        // System tags for metadata_props
         if (!systemTags.isEmpty()) {
-            Map<String, String> systemTagsProp = new HashMap<>();
-            systemTagsProp.put("scope", MetadataScope.SYSTEM.name());
-            systemTagsProp.put("name", "tags");
-            systemTagsProp.put("value", String.join(" ", systemTags).toLowerCase());
-            propsList.add(systemTagsProp);
+            Mutation childTagMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key
+                    .set(NESTED_NAME_FIELD).to("tags") // props_name
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(String.join(" ", systemTags).toLowerCase()) // props_value
+                    .build();
+            mutations.add(childTagMutation);
         }
-        // System properties (individual entries)
+        // System properties (individual entries) for metadata_props
         for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
             String key = entry.getKey().toLowerCase();
-            String value = entry.getValue();
-            Map<String, String> systemProp = new HashMap<>();
-            systemProp.put("scope", MetadataScope.SYSTEM.name());
-            systemProp.put("name", key);
-            systemProp.put("value", value);
-            propsList.add(systemProp);
+            String value = entry.getValue(); // Use original value for complex types like schema
+            Mutation childPropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key
+                    .set(NESTED_NAME_FIELD).to(key) // props_name
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(value) // props_value
+                    .build();
+            mutations.add(childPropMutation);
 
-            // Handle special case for schema value extraction
+            // Handle special case for schema value extraction for additional props_name entries
             if (key.equals("schema")) {
                 try {
                     JsonObject schemaJson = gson.fromJson(value, JsonObject.class);
                     JsonElement nameElement = schemaJson.get("name");
                     if (nameElement != null && nameElement.isJsonPrimitive()) {
-                        Map<String, String> schemaNameProp = new HashMap<>();
-                        schemaNameProp.put("scope", MetadataScope.SYSTEM.name());
-                        schemaNameProp.put("name", "schema");
-                        schemaNameProp.put("value", nameElement.getAsString().toLowerCase());
-                        propsList.add(schemaNameProp);
+                        Mutation schemaNamePropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                                .set("metadata_id").to(parentMetadataId)
+                                .set(NESTED_NAME_FIELD).to("schema_name") // props_name for schema name
+                                .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
+                                .set(NESTED_VALUE_FIELD).to(nameElement.getAsString().toLowerCase())
+                                .build();
+                        mutations.add(schemaNamePropMutation);
                     }
                     // Basic extraction of field names and types (first level)
                     JsonArray fields = schemaJson.getAsJsonArray("fields");
@@ -769,11 +807,13 @@ public class SpannerMetadataStorage implements MetadataStorage {
                             }
                         }
                         if (schemaFieldsValue.length() > 0) {
-                            Map<String, String> schemaFieldsProp = new HashMap<>();
-                            schemaFieldsProp.put("scope", MetadataScope.SYSTEM.name());
-                            schemaFieldsProp.put("name", "schema");
-                            schemaFieldsProp.put("value", schemaFieldsValue.toString().trim());
-                            propsList.add(schemaFieldsProp);
+                            Mutation schemaFieldsPropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                                    .set("metadata_id").to(parentMetadataId)
+                                    .set(NESTED_NAME_FIELD).to("schema_fields") // props_name for schema fields
+                                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
+                                    .set(NESTED_VALUE_FIELD).to(schemaFieldsValue.toString().trim()) // props_value
+                                    .build();
+                            mutations.add(schemaFieldsPropMutation);
                         }
                     }
                 } catch (Exception e) {
@@ -781,70 +821,64 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 }
             }
         }
-        // System properties summary
+        // System properties summary for metadata_props (if desired as a separate entry)
         if (!systemProperties.isEmpty()) {
-            Map<String, String> systemPropsSummary = new HashMap<>();
-            systemPropsSummary.put("scope", MetadataScope.SYSTEM.name());
-            systemPropsSummary.put("name", "properties");
-            systemPropsSummary.put("value", String.join(" ", systemProperties.keySet()).toLowerCase());
-            propsList.add(systemPropsSummary);
+            Mutation childPropSummaryMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key
+                    .set(NESTED_NAME_FIELD).to("properties_summary") // props_name for summary
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(String.join(" ", systemProperties.keySet()).toLowerCase())
+                    // props_value
+                    .build();
+            mutations.add(childPropSummaryMutation);
         }
 
-        // --- Handle Entity Information ---
+        // --- Handle Entity Information for metadata_props ---
         // Entity name
         if (entity.getValue(entity.getType()) != null) {
-            Map<String, String> entityNameProp = new HashMap<>();
-            entityNameProp.put("scope", MetadataScope.SYSTEM.name());
-            entityNameProp.put("name", "entity-name");
-            entityNameProp.put("value", entity.getValue(entity.getType()).toLowerCase());
-            propsList.add(entityNameProp);
+            Mutation entityNamePropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
+                    .set("metadata_id").to(parentMetadataId) // Parent's primary key
+                    .set(NESTED_NAME_FIELD).to("entity-name") // props_name
+                    .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
+                    .set(NESTED_VALUE_FIELD).to(entity.getValue(entity.getType()).toLowerCase()) // props_value
+                    .build();
+            mutations.add(entityNamePropMutation);
         }
 
-        // Populate the 'properties' column with the restructured JSON
-        if (!propsList.isEmpty()) {
-            mutationBuilder.set("properties").to(gson.toJson(propsList));
-        }
-
-        // Extract and populate 'creation_time' from system properties
+        // --- Parent Metadata Table updates for 'user', 'system', 'text' columns ---
+        // These still populate the parent table's columns for full-text search strings,
+        // as they are typically used for broader textual search across metadata.
         String createdString = systemProperties.get("creation-time"); // From SYSTEM properties
-        if (createdString != null) {
-            try {
-                long created = Long.parseLong(createdString);
-                mutationBuilder.set("creation_time").to(created);
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid creation_time value: " + createdString);
-            }
-        }
 
-        // Populate 'user' column as a string (matching ES)
+        // Populate 'user' column
         if (!userTags.isEmpty()) {
-            userStringBuilder.append(String.join(" ", userTags).toLowerCase()).append(" "); // USER tags
+            userStringBuilder.append(String.join(" ", userTags).toLowerCase()).append(" ");
         }
         if (!userProperties.isEmpty()) {
             for (Map.Entry<String, String> entry : userProperties.entrySet()) {
-                userStringBuilder.append(entry.getKey().toLowerCase()).append(":").append(entry.getValue().
-                        toLowerCase()).append(" "); // USER properties (key:value)
+                userStringBuilder.append(entry.getKey().toLowerCase()).append(":").
+                        append(entry.getValue().toLowerCase()).append(" ");
             }
         }
-        mutationBuilder.set("user").to(userStringBuilder.toString().trim());
+        parentMutationBuilder.set("user").to(userStringBuilder.toString().trim());
 
-        // Populate 'system' column as a string (matching ES)
+        // Populate 'system' column
         String entityType = systemProperties.get("type");
         if (entityType != null) {
-            systemStringBuilder.append(entityType.toLowerCase()).append(" "); // Entity Type
+            systemStringBuilder.append(entityType.toLowerCase()).append(" ");
         }
-        String entityName = systemProperties.get("entity-name"); // From SYSTEM properties
-        if (entityName != null) {
-            systemStringBuilder.append(entityName.toLowerCase()).append(" ").append(entityName.toLowerCase()).
-                    append(" ");
+        String entityNameFromSystemProps = systemProperties.get("entity-name");
+        if (entityNameFromSystemProps != null) {
+            systemStringBuilder.append(entityNameFromSystemProps.toLowerCase()).append(" ").
+                    append(entityNameFromSystemProps.toLowerCase()).append(" ");
         }
         if (!systemTags.isEmpty()) {
-            systemStringBuilder.append(String.join(" ", systemTags).toLowerCase()).append(" "); // SYSTEM tags
+            systemStringBuilder.append(String.join(" ", systemTags).toLowerCase()).append(" ");
         }
         if (createdString != null) {
-            systemStringBuilder.append(createdString).append(" "); // SYSTEM creation-time
+            systemStringBuilder.append(createdString).append(" ");
         }
-        String schema = systemProperties.get("schema"); // From SYSTEM properties
+        String schema = systemProperties.get("schema");
         if (schema != null) {
             try {
                 JsonObject schemaJson = gson.fromJson(schema, JsonObject.class);
@@ -870,35 +904,19 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 System.out.println("Error parsing schema JSON for system string: " + e.getMessage());
             }
         }
-        mutationBuilder.set("system").to(systemStringBuilder.toString().trim());
+        parentMutationBuilder.set("system").to(systemStringBuilder.toString().trim());
 
-        // Populate 'text' column by combining 'user' and 'system' strings
+        // Populate 'text' column
         textBuilder.append(userStringBuilder).append(" ").append(systemStringBuilder);
-        mutationBuilder.set("text").to(textBuilder.toString().trim());
+        parentMutationBuilder.set("text").to(textBuilder.toString().trim());
 
-        return mutationBuilder.build();
+        // --- Add parent mutation to the list of mutations ---
+        // It's good practice to add the parent mutation first, although Spanner handles atomicity.
+        mutations.add(0, parentMutationBuilder.build());
+
+        return mutations;
     }
 
-    // --- PRIVATE HELPER METHOD: addPropertyEntryAndPart ---
-    private void addPropertyEntryAndPart(String metadataId, String name, String scope, String value,
-                                         List<Map<String, String>> metadataTablePropsJsonList,
-                                         Map<String, List<String>> metadataPropertiesAggregatedParts) {
-        Map<String, String> propMap = new HashMap<>();
-        propMap.put("scope", scope);
-        propMap.put("name", name);
-        propMap.put("value", value);
-        metadataTablePropsJsonList.add(propMap);
-
-        String mapKey = metadataId + ":" + scope + ":" + name;
-        metadataPropertiesAggregatedParts.computeIfAbsent(mapKey, k -> new ArrayList<>()).add(value);
-    }
-
-    // --- PRIVATE HELPER METHOD: addPropertyPartOnly ---
-    private void addPropertyPartOnly(String metadataId, String name, String scope, String valuePart,
-                                     Map<String, List<String>> metadataPropertiesAggregatedParts) {
-        String mapKey = metadataId + ":" + scope + ":" + name;
-        metadataPropertiesAggregatedParts.computeIfAbsent(mapKey, k -> new ArrayList<>()).add(valuePart);
-    }
 
     @Override
     public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)

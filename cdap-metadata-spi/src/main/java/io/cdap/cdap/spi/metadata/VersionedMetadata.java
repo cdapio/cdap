@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.spi.metadata;
 
-import io.cdap.cdap.spi.metadata.Metadata;
 
 import javax.annotation.Nullable;
 
