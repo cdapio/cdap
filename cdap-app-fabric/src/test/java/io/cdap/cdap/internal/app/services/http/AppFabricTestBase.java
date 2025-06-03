@@ -117,6 +117,7 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushAppRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
+import io.cdap.cdap.proto.upgrade.ListUpgradeResponse;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -789,6 +790,13 @@ public abstract class AppFabricTestBase {
     assertResponseCode(200, response);
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
     return readResponse(response, SET_STRING_TYPE);
+  }
+
+  protected ListUpgradeResponse listApplicationUpgrade(String namespace) throws Exception{
+    HttpResponse response = doPost(getVersionedApiPath("upgrade/list",
+        Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return readResponse(response, ListUpgradeResponse.class);
   }
 
   /**
