@@ -1,0 +1,1300 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-data-fabric-tests:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: org.apache.hadoop:hadoop-minicluster:jar -> duplicate declaration of version (?) @ line 93, column 17
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-tms-tests:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-cli-tests:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-client-tests:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-app-fabric-tests:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-e2e-tests:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-common-unit-test:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-api-common:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-api-spark3_2.12:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-formats:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-features:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-elastic:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-error-api:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-kubernetes:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-docs-gen:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-kafka:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-watchdog:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-spark-core3_2.12:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-spark-python:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'dependencies.dependency.(groupId:artifactId:type:classifier)' must be unique: javax.servlet:javax.servlet-api:jar -> duplicate declaration of version (?) @ line 116, column 17
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-storage-ext-spanner:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-system-app-api:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ line 61, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-system-app-unit-test:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-messaging-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-messaging-ext-spanner:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-gateway:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-unit-test:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-unit-test-spark3_2.12:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-kms:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-master-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-master:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-credential-ext-gcp-wi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-runtime-ext-dataproc:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-runtime-ext-emr:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-runtime-ext-remote-hadoop:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-securestore-ext-cloudkms:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-securestore-ext-gcp-secretstore:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-securestore-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-support-bundle:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-operational-stats-core:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-client:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-cli:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-distributions:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-test:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-integration-test:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-ui:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-event-common-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-event-writer-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-event-reader-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-authenticator-ext-gcp:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-source-control:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-encryption-ext-tink:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-log-publisher-spi:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap-export-import:jar:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ io.cdap.cdap:cdap:6.12.0-SNAPSHOT, /usr/local/google/home/adrikagupta/cdap/pom.xml, line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] Some problems were encountered while building the effective model for io.cdap.cdap:cdap:pom:6.12.0-SNAPSHOT
+[[1;33mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ line 1717, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] It is highly recommended to fix these problems because they threaten the stability of your build.
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] For this reason, future Maven versions might no longer support building such malformed projects.
+[[1;33mWARNING[m] 
+[[1;34mINFO[m] Inspecting build with total of 1 modules...
+[[1;34mINFO[m] Installing Nexus Staging features:
+[[1;34mINFO[m]   ... total of 1 executions of maven-deploy-plugin replaced with nexus-staging-maven-plugin
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m----------------------< [0;36mio.cdap.cdap:cdap-master[0;1m >----------------------[m
+[[1;34mINFO[m] [1mBuilding CDAP Master 6.12.0-SNAPSHOT[m
+[[1;34mINFO[m]   from pom.xml
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-master-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-master-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-master-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 1.5 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 779 B                   Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap/6.12.0-SNAPSHOT/maven-metadata.xml[90m (779 B at 1.7 kB/s)[0m
+[[1;34mINFO[m] Artifact org.junit:junit-bom:pom:5.11.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [apache (https://repository.apache.org/content/repositories/public/, default, releases), sonatype (https://oss.sonatype.org/content/repositories/snapshots/, default, snapshots), snapshot (https://repository.apache.org/content/repositories/snapshots/, default, snapshots), central (https://repo.maven.apache.org/maven2, default, releases), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[[1;34mINFO[m] Artifact org.junit:junit-bom:pom:5.11.4 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [apache (https://repository.apache.org/content/repositories/public/, default, releases), sonatype (https://oss.sonatype.org/content/repositories/snapshots/, default, snapshots), snapshot (https://repository.apache.org/content/repositories/snapshots/, default, snapshots), central (https://repo.maven.apache.org/maven2, default, releases), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[90mDownloading from [0mapache[90m: https://repository.apache.org/content/repositories/public/[0morg/junit/junit-bom/5.11.4/junit-bom-5.11.4.pom
+[90mDownloading from [0mcentral[90m: https://repo.maven.apache.org/maven2/[0morg/junit/junit-bom/5.11.4/junit-bom-5.11.4.pom
+Downloaded[90m from [0mcentral[90m: https://repo.maven.apache.org/maven2/[0morg/junit/junit-bom/5.11.4/junit-bom-5.11.4.pom[90m (0 B at 0 B/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-api/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-api/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.5 kB/s)[0m
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-api-common/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-api-common/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-api-common/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-common/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-common/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-common/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.5 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-system-app-api/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-system-app-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-system-app-api/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.5 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-security-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-security-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-security-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-proto/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-proto/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-proto/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.5 kB/s)[0m
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-runtime-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-runtime-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-runtime-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-error-api/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-error-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-error-api/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.5 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-storage-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-storage-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-storage-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-features/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-features/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-features/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-watchdog-api/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-watchdog-api/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-watchdog-api/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-formats/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-formats/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-formats/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-data-fabric/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-data-fabric/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-data-fabric/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-metadata-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-metadata-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-metadata-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-elastic/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-elastic/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-elastic/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-security/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-security/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-security/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-securestore-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-securestore-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-securestore-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-tms/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-tms/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.4 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-tms/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.4 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-messaging-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-messaging-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-messaging-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-gateway/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-gateway/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-gateway/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-watchdog/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-watchdog/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-watchdog/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-log-publisher-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-log-publisher-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-log-publisher-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-app-fabric/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-app-fabric/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.5 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-app-fabric/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.5 kB at 5.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-writer-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-writer-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-writer-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-common-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-common-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-common-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-client/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-client/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-client/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-source-control/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-source-control/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-source-control/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-reader-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-reader-spi/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-event-reader-spi/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-support-bundle/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-support-bundle/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-support-bundle/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[90mDownloading from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-messaging-ext-spanner/6.12.0-SNAPSHOT/maven-metadata.xml
+[90mDownloading from [0msnapshot[90m: https://repository.apache.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-messaging-ext-spanner/6.12.0-SNAPSHOT/maven-metadata.xml
+Progress (1): 2.0 kB                    Downloaded[90m from [0msonatype[90m: https://oss.sonatype.org/content/repositories/snapshots/[0mio/cdap/cdap/cdap-messaging-ext-spanner/6.12.0-SNAPSHOT/maven-metadata.xml[90m (2.0 kB at 4.6 kB/s)[0m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mdependency:3.7.0:tree[m [1m(default-cli)[m @ [36mcdap-master[0;1m ---[m
+[[1;34mINFO[m] Artifact org.apache.httpcomponents:httpcore:jar:4.4.14 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[[1;34mINFO[m] Artifact commons-codec:commons-codec:jar:1.16.1 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[[1;34mINFO[m] Artifact org.apache.httpcomponents:httpcore:jar:4.4.14 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[[1;34mINFO[m] Artifact commons-codec:commons-codec:jar:1.16.1 is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[90mDownloading from [0mcentral[90m: https://repo.maven.apache.org/maven2/[0morg/apache/httpcomponents/httpcore/4.4.14/httpcore-4.4.14.jar
+Downloaded[90m from [0mcentral[90m: https://repo.maven.apache.org/maven2/[0morg/apache/httpcomponents/httpcore/4.4.14/httpcore-4.4.14.jar[90m (0 B at 0 B/s)[0m
+[90mDownloading from [0mcentral[90m: https://repo.maven.apache.org/maven2/[0mcommons-codec/commons-codec/1.16.1/commons-codec-1.16.1.jar
+Downloaded[90m from [0mcentral[90m: https://repo.maven.apache.org/maven2/[0mcommons-codec/commons-codec/1.16.1/commons-codec-1.16.1.jar[90m (0 B at 0 B/s)[0m
+[[1;34mINFO[m] io.cdap.cdap:cdap-master:jar:6.12.0-SNAPSHOT
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-master-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- org.slf4j:slf4j-api:jar:1.7.15:compile (version managed from 1.7.15)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  \- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] +- ch.qos.logback:logback-core:jar:1.2.11:compile
+[[1;34mINFO[m] +- ch.qos.logback:logback-classic:jar:1.2.11:compile
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-core:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.32; omitted for duplicate)
+[[1;34mINFO[m] +- com.google.guava:guava:jar:13.0.1:compile
+[[1;34mINFO[m] +- com.google.cloud:google-cloud-storage:jar:2.52.3:compile
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 33.4.0-jre; omitted for duplicate)
+[[1;34mINFO[m] |  +- com.google.guava:failureaccess:jar:1.0.2:compile
+[[1;34mINFO[m] |  +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
+[[1;34mINFO[m] |  +- com.google.errorprone:error_prone_annotations:jar:2.38.0:compile
+[[1;34mINFO[m] |  +- com.google.j2objc:j2objc-annotations:jar:3.0.0:compile
+[[1;34mINFO[m] |  +- com.google.http-client:google-http-client:jar:1.47.0:compile (version managed from 1.47.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-context:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.opencensus:opencensus-contrib-http-util:jar:0.31.1:compile
+[[1;34mINFO[m] |  +- com.google.http-client:google-http-client-jackson2:jar:1.47.0:compile (version managed from 1.47.0)
+[[1;34mINFO[m] |  +- com.google.http-client:google-http-client-gson:jar:1.47.0:compile (version managed from 1.47.0)
+[[1;34mINFO[m] |  +- com.google.api-client:google-api-client:jar:2.7.2:compile (version managed from 2.7.2)
+[[1;34mINFO[m] |  +- commons-codec:commons-codec:jar:1.18.0:compile (scope not updated to compile)
+[[1;34mINFO[m] |  +- com.google.oauth-client:google-oauth-client:jar:1.37.0:compile (version managed from 1.37.0)
+[[1;34mINFO[m] |  +- com.google.http-client:google-http-client-apache-v2:jar:1.47.0:compile (version managed from 1.47.0)
+[[1;34mINFO[m] |  +- com.google.apis:google-api-services-storage:jar:v1-rev20250509-2.0.0:compile
+[[1;34mINFO[m] |  +- com.google.code.gson:gson:jar:2.3.1:compile (version managed from 2.12.1)
+[[1;34mINFO[m] |  +- com.google.cloud:google-cloud-core:jar:2.56.0:compile (version managed from 2.56.0)
+[[1;34mINFO[m] |  +- com.google.auto.value:auto-value-annotations:jar:1.11.0:compile (version managed from 1.11.0)
+[[1;34mINFO[m] |  +- com.google.cloud:google-cloud-core-http:jar:2.56.0:compile (version managed from 2.56.0)
+[[1;34mINFO[m] |  +- com.google.http-client:google-http-client-appengine:jar:1.47.0:compile (version managed from 1.47.0)
+[[1;34mINFO[m] |  +- com.google.api:gax-httpjson:jar:2.66.0:compile (version managed from 2.66.0)
+[[1;34mINFO[m] |  +- com.google.cloud:google-cloud-core-grpc:jar:2.56.0:compile (version managed from 2.56.0)
+[[1;34mINFO[m] |  +- com.google.api:gax:jar:2.66.0:compile (version managed from 2.66.0)
+[[1;34mINFO[m] |  +- com.google.api:gax-grpc:jar:2.66.0:compile (version managed from 2.66.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-inprocess:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-alts:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-grpclb:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- org.conscrypt:conscrypt-openjdk-uber:jar:2.5.2:compile
+[[1;34mINFO[m] |  +- io.grpc:grpc-auth:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- com.google.auth:google-auth-library-credentials:jar:1.35.0:compile (version managed from 1.35.0)
+[[1;34mINFO[m] |  +- com.google.auth:google-auth-library-oauth2-http:jar:1.35.0:compile (version managed from 1.35.0)
+[[1;34mINFO[m] |  +- com.google.api:api-common:jar:2.49.0:compile (version managed from 2.49.0)
+[[1;34mINFO[m] |  +- javax.annotation:javax.annotation-api:jar:1.3.2:compile
+[[1;34mINFO[m] |  +- io.opencensus:opencensus-api:jar:0.31.1:compile
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-context:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- com.google.api.grpc:proto-google-iam-v1:jar:1.52.0:compile (version managed from 1.52.0)
+[[1;34mINFO[m] |  +- com.google.protobuf:protobuf-java:jar:4.29.4:compile (version managed from 3.25.5)
+[[1;34mINFO[m] |  +- com.google.protobuf:protobuf-java-util:jar:4.29.4:compile (version managed from 3.25.5)
+[[1;34mINFO[m] |  +- io.grpc:grpc-core:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- com.google.android:annotations:jar:4.1.1.4:runtime
+[[1;34mINFO[m] |  +- org.codehaus.mojo:animal-sniffer-annotations:jar:1.24:compile
+[[1;34mINFO[m] |  +- io.perfmark:perfmark-api:jar:0.27.0:runtime
+[[1;34mINFO[m] |  +- io.grpc:grpc-protobuf:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-protobuf-lite:jar:1.70.0:runtime (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- com.google.api.grpc:proto-google-common-protos:jar:2.57.0:compile (version managed from 2.57.0)
+[[1;34mINFO[m] |  +- org.threeten:threetenbp:jar:1.7.0:compile
+[[1;34mINFO[m] |  +- com.google.api.grpc:proto-google-cloud-storage-v2:jar:2.52.3:compile (version managed from 2.52.3)
+[[1;34mINFO[m] |  +- com.google.api.grpc:grpc-google-cloud-storage-v2:jar:2.52.3:compile (version managed from 2.52.3)
+[[1;34mINFO[m] |  +- com.google.api.grpc:gapic-google-cloud-storage-v2:jar:2.52.3:compile (version managed from 2.52.3)
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-sdk:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-sdk-trace:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-sdk-logs:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.grpc:grpc-opentelemetry:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-api:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-sdk-metrics:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-sdk-common:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:jar:1.47.0:compile
+[[1;34mINFO[m] |  +- io.opentelemetry.semconv:opentelemetry-semconv:jar:1.29.0-alpha:compile
+[[1;34mINFO[m] |  +- com.google.cloud.opentelemetry:exporter-metrics:jar:0.33.0:compile
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 2.0.16; omitted for duplicate)
+[[1;34mINFO[m] |  +- com.google.cloud:google-cloud-monitoring:jar:3.64.0:compile (version managed from 3.52.0)
+[[1;34mINFO[m] |  +- com.google.api.grpc:proto-google-cloud-monitoring-v3:jar:3.64.0:compile (version managed from 3.52.0)
+[[1;34mINFO[m] |  +- com.google.cloud.opentelemetry:shared-resourcemapping:jar:0.33.0:runtime
+[[1;34mINFO[m] |  +- io.opentelemetry.contrib:opentelemetry-gcp-resources:jar:1.37.0-alpha:compile
+[[1;34mINFO[m] |  +- com.google.cloud.opentelemetry:detector-resources-support:jar:0.33.0:compile (scope not updated to compile)
+[[1;34mINFO[m] |  +- org.checkerframework:checker-qual:jar:3.49.0:compile
+[[1;34mINFO[m] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.15.1:compile (version managed from 2.18.2)
+[[1;34mINFO[m] |  +- com.google.code.findbugs:jsr305:jar:2.0.1:compile (version managed from 3.0.2)
+[[1;34mINFO[m] |  +- io.grpc:grpc-api:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-netty-shaded:jar:1.70.0:compile (version managed from 1.70.0; scope not updated to compile)
+[[1;34mINFO[m] |  +- io.grpc:grpc-util:jar:1.70.0:runtime (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-stub:jar:1.70.0:compile (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-googleapis:jar:1.70.0:runtime (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-xds:jar:1.70.0:runtime (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- io.grpc:grpc-services:jar:1.70.0:runtime (version managed from 1.70.0)
+[[1;34mINFO[m] |  +- com.google.re2j:re2j:jar:1.7:compile (scope not updated to compile)
+[[1;34mINFO[m] |  \- io.grpc:grpc-rls:jar:1.70.0:runtime (version managed from 1.70.0)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-api-common:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.3.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.3.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  \- javax.ws.rs:javax.ws.rs-api:jar:2.0:compile (version managed from 2.0)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-system-app-api:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-features:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-formats:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  \- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.cdap.cdap:cdap-error-api:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  \- (io.cdap.cdap:cdap-api-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (javax.ws.rs:javax.ws.rs-api:jar:2.0:compile - version managed from 2.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.http:netty-http:jar:1.7.0:compile (version managed from 1.7.0)
+[[1;34mINFO[m] |  |  +- (javax.ws.rs:javax.ws.rs-api:jar:2.0:compile - version managed from 2.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.5; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- commons-beanutils:commons-beanutils-core:jar:1.8.3:compile
+[[1;34mINFO[m] |  +- io.netty:netty-all:jar:4.1.75.Final:compile (version managed from 4.1.75.Final)
+[[1;34mINFO[m] |  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-dns:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-haproxy:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- (io.netty:netty-codec-http:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-http2:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-memcache:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-mqtt:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-redis:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-smtp:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-socks:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-stomp:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-codec-xml:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-common:jar:4.1.75.Final:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- (io.netty:netty-handler:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-handler-proxy:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-resolver:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-resolver-dns:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport:jar:4.1.75.Final:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-rxtx:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-sctp:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-udt:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.75.Final:runtime
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.75.Final:runtime
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.75.Final:runtime
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.75.Final:runtime
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.75.Final:runtime
+[[1;34mINFO[m] |  |  |  \- (io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.75.Final:runtime
+[[1;34mINFO[m] |  |     \- (io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  +- com.google.inject:guice:jar:4.0:compile (version managed from 4.0)
+[[1;34mINFO[m] |  |  +- javax.inject:javax.inject:jar:1:compile
+[[1;34mINFO[m] |  |  +- aopalliance:aopalliance:jar:1.0:compile
+[[1;34mINFO[m] |  |  \- (com.google.guava:guava:jar:13.0.1:compile - version managed from 16.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- com.google.inject.extensions:guice-multibindings:jar:4.0:compile (version managed from 4.0)
+[[1;34mINFO[m] |  |  \- (com.google.inject:guice:jar:4.0:compile - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- com.google.inject.extensions:guice-assistedinject:jar:4.0:compile (version managed from 4.0)
+[[1;34mINFO[m] |  |  \- (com.google.inject:guice:jar:4.0:compile - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.ow2.asm:asm-commons:jar:7.1:compile (version managed from 7.1)
+[[1;34mINFO[m] |  |  +- (org.ow2.asm:asm:jar:7.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.ow2.asm:asm-tree:jar:7.1:compile
+[[1;34mINFO[m] |  |  |  \- (org.ow2.asm:asm:jar:7.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- org.ow2.asm:asm-analysis:jar:7.1:compile
+[[1;34mINFO[m] |  |     \- (org.ow2.asm:asm-tree:jar:7.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.thrift:libthrift:jar:0.9.3:compile (version managed from 0.9.3)
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.12; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-common:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-yarn:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-zookeeper:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-common:jar:3.3.6:compile (version managed from 3.3.6)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop.thirdparty:hadoop-shaded-protobuf_3_7:jar:1.1.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (commons-cli:commons-cli:jar:1.2:compile - version managed from 1.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.commons:commons-math3:jar:3.1.1:compile
+[[1;34mINFO[m] |  |  +- org.apache.httpcomponents:httpclient:jar:4.5.13:compile
+[[1;34mINFO[m] |  |  |  +- (org.apache.httpcomponents:httpcore:jar:4.4.13:compile - omitted for conflict with 4.4.4)
+[[1;34mINFO[m] |  |  |  \- (commons-codec:commons-codec:jar:1.11:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  |  +- (commons-codec:commons-codec:jar:1.15:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  |  +- (commons-io:commons-io:jar:2.8.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- commons-net:commons-net:jar:3.9.0:compile
+[[1;34mINFO[m] |  |  +- commons-collections:commons-collections:jar:3.2.2:compile (version managed from 3.2.2)
+[[1;34mINFO[m] |  |  +- (javax.servlet:javax.servlet-api:jar:3.1.0:compile - version managed from 3.1.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- jakarta.activation:jakarta.activation-api:jar:1.2.1:runtime (scope not updated to runtime)
+[[1;34mINFO[m] |  |  +- (org.eclipse.jetty:jetty-server:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.eclipse.jetty:jetty-servlet:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |  |  |  +- (org.eclipse.jetty:jetty-security:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.eclipse.jetty:jetty-util-ajax:jar:9.4.51.v20230217:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.eclipse.jetty:jetty-webapp:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |  |  |  +- org.eclipse.jetty:jetty-xml:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |  |  |  |  \- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.eclipse.jetty:jetty-servlet:jar:9.4.51.v20230217:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.sun.jersey:jersey-servlet:jar:1.19.4:compile
+[[1;34mINFO[m] |  |  +- (com.github.pjfanning:jersey-json:jar:1.20:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (ch.qos.reload4j:reload4j:jar:1.2.22:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- commons-beanutils:commons-beanutils:jar:1.9.4:compile
+[[1;34mINFO[m] |  |  |  \- (commons-collections:commons-collections:jar:3.2.2:compile - version managed from 3.2.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.commons:commons-configuration2:jar:2.8.0:compile
+[[1;34mINFO[m] |  |  |  \- (org.apache.commons:commons-text:jar:1.9:compile - omitted for conflict with 1.10.0)
+[[1;34mINFO[m] |  |  +- (org.apache.commons:commons-lang3:jar:3.5:compile - version managed from 3.12.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.commons:commons-text:jar:1.10.0:compile
+[[1;34mINFO[m] |  |  |  \- (org.apache.commons:commons-lang3:jar:3.5:compile - version managed from 3.12.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.re2j:re2j:jar:1.1:compile - omitted for conflict with 1.7)
+[[1;34mINFO[m] |  |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.9.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-auth:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.jcraft:jsch:jar:0.1.54:compile - version managed from 0.1.55; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.curator:curator-client:jar:5.2.0:compile
+[[1;34mINFO[m] |  |  +- org.apache.curator:curator-recipes:jar:5.2.0:compile
+[[1;34mINFO[m] |  |  |  \- (org.apache.curator:curator-framework:jar:5.2.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.dropwizard.metrics:metrics-core:jar:3.1.2:compile - version managed from 3.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.commons:commons-compress:jar:1.22:compile - version managed from 1.21; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.kerby:kerb-core:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  \- org.apache.kerby:kerby-pkix:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |     +- org.apache.kerby:kerby-asn1:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |     \- org.apache.kerby:kerby-util:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  +- org.codehaus.woodstox:stax2-api:jar:4.2.1:compile
+[[1;34mINFO[m] |  |  +- com.fasterxml.woodstox:woodstox-core:jar:5.4.0:compile
+[[1;34mINFO[m] |  |  |  \- (org.codehaus.woodstox:stax2-api:jar:4.2:compile - omitted for conflict with 4.2.1)
+[[1;34mINFO[m] |  |  +- dnsjava:dnsjava:jar:2.1.7:compile
+[[1;34mINFO[m] |  |  \- (org.xerial.snappy:snappy-java:jar:1.1.1.7:compile - version managed from 1.1.8.2; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.bouncycastle:bcprov-jdk15on:jar:1.70:compile (version managed from 1.70)
+[[1;34mINFO[m] |  +- org.bouncycastle:bcpkix-jdk15on:jar:1.70:compile (version managed from 1.70)
+[[1;34mINFO[m] |  |  +- (org.bouncycastle:bcprov-jdk15on:jar:1.70:compile - version managed from 1.70; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- org.bouncycastle:bcutil-jdk15on:jar:1.70:compile
+[[1;34mINFO[m] |  |     \- (org.bouncycastle:bcprov-jdk15on:jar:1.70:compile - version managed from 1.70; omitted for duplicate)
+[[1;34mINFO[m] |  +- javax.servlet:javax.servlet-api:jar:3.1.0:compile (version managed from 3.1.0; scope not updated to compile)
+[[1;34mINFO[m] |  +- io.cdap.common:common-http:jar:0.13.1:compile (version managed from 0.13.1)
+[[1;34mINFO[m] |  |  +- (io.cdap.common:common-io:jar:0.13.1:compile - version managed from 0.13.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.5; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.common:common-io:jar:0.13.1:compile (version managed from 0.13.1)
+[[1;34mINFO[m] |  |  +- io.cdap.common:common-lang:jar:0.13.1:compile
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.5; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.ow2.asm:asm-commons:jar:7.1:compile - version managed from 7.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.5; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.inject:guice:jar:4.0:compile - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (org.ow2.asm:asm-commons:jar:7.1:compile - version managed from 7.1; omitted for duplicate)
+[[1;34mINFO[m] |  \- com.jcraft:jsch:jar:0.1.54:compile (version managed from 0.1.54)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-data-fabric:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-formats:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-metadata-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  \- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-elastic:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-metadata-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.3.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.elasticsearch.client:elasticsearch-rest-high-level-client:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  +- org.elasticsearch:elasticsearch:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  |  +- org.elasticsearch:elasticsearch-core:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  |  +- org.elasticsearch:elasticsearch-secure-sm:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  |  +- org.elasticsearch:elasticsearch-x-content:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  |  |  +- (org.elasticsearch:elasticsearch-core:jar:6.5.3:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  +- org.yaml:snakeyaml:jar:1.17:compile
+[[1;34mINFO[m] |  |  |  |  |  +- (com.fasterxml.jackson.core:jackson-core:jar:2.15.1:compile - version managed from 2.8.11; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-smile:jar:2.8.11:compile
+[[1;34mINFO[m] |  |  |  |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.8.11:compile
+[[1;34mINFO[m] |  |  |  |  |  \- com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:jar:2.15.1:compile (version managed from 2.8.11)
+[[1;34mINFO[m] |  |  |  |  |     \- com.fasterxml.jackson.core:jackson-databind:jar:2.15.1:compile (version managed from 2.15.1)
+[[1;34mINFO[m] |  |  |  |  |        \- (com.fasterxml.jackson.core:jackson-annotations:jar:2.15.1:compile - version managed from 2.15.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-core:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-analyzers-common:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-backward-codecs:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-grouping:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-highlighter:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-join:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-memory:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-misc:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-queries:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-queryparser:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-sandbox:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-spatial:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-spatial-extras:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-spatial3d:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.lucene:lucene-suggest:jar:7.5.0:compile
+[[1;34mINFO[m] |  |  |  |  +- org.elasticsearch:elasticsearch-cli:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  |  |  +- (net.sf.jopt-simple:jopt-simple:jar:5.0.2:compile - omitted for conflict with 3.2)
+[[1;34mINFO[m] |  |  |  |  |  \- (org.elasticsearch:elasticsearch-core:jar:6.5.3:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  +- com.carrotsearch:hppc:jar:0.7.1:compile
+[[1;34mINFO[m] |  |  |  |  +- joda-time:joda-time:jar:2.10.1:compile
+[[1;34mINFO[m] |  |  |  |  +- com.tdunning:t-digest:jar:3.2:compile
+[[1;34mINFO[m] |  |  |  |  +- org.hdrhistogram:HdrHistogram:jar:2.1.9:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.logging.log4j:log4j-api:jar:2.11.1:compile
+[[1;34mINFO[m] |  |  |  |  \- org.elasticsearch:jna:jar:4.5.1:compile
+[[1;34mINFO[m] |  |  |  +- org.elasticsearch.client:elasticsearch-rest-client:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  |  +- (org.apache.httpcomponents:httpclient:jar:4.5.2:compile - omitted for conflict with 4.5.13)
+[[1;34mINFO[m] |  |  |  |  +- (org.apache.httpcomponents:httpcore:jar:4.4.5:compile - omitted for conflict with 4.4.4)
+[[1;34mINFO[m] |  |  |  |  +- org.apache.httpcomponents:httpasyncclient:jar:4.1.2:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.httpcomponents:httpcore-nio:jar:4.4.5:compile
+[[1;34mINFO[m] |  |  |  |  +- (commons-codec:commons-codec:jar:1.10:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  |  |  |  \- commons-logging:commons-logging:jar:1.1.3:compile
+[[1;34mINFO[m] |  |  |  +- org.elasticsearch.plugin:parent-join-client:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  +- org.elasticsearch.plugin:aggs-matrix-stats-client:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  +- org.elasticsearch.plugin:rank-eval-client:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |  \- org.elasticsearch.plugin:lang-mustache-client:jar:6.5.3:compile
+[[1;34mINFO[m] |  |  |     \- com.github.spullara.mustache.java:compiler:jar:0.9.3:compile
+[[1;34mINFO[m] |  |  +- org.apache.httpcomponents:httpcore:jar:4.4.4:compile
+[[1;34mINFO[m] |  |  \- (org.apache.httpcomponents:httpclient:jar:4.5.2:compile - omitted for conflict with 4.5.13)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-tms:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-core:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.http:netty-http:jar:1.7.0:compile - version managed from 1.7.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-all:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.thrift:libthrift:jar:0.9.3:compile - version managed from 0.9.3; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-mapreduce-client-core:jar:3.3.6:compile (version managed from 3.3.6)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-hdfs-client:jar:3.3.6:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.avro:avro:jar:1.11.4:compile - version managed from 1.7.7; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- io.netty:netty:jar:3.10.6.Final:compile
+[[1;34mINFO[m] |  +- org.iq80.leveldb:leveldb:jar:uber:0.12:compile (version managed from 0.12)
+[[1;34mINFO[m] |  |  +- org.iq80.leveldb:leveldb-api:jar:0.12:compile
+[[1;34mINFO[m] |  |  \- (com.google.guava:guava:jar:13.0.1:compile - version managed from 21.0; omitted for duplicate)
+[[1;34mINFO[m] |  \- org.apache.commons:commons-dbcp2:jar:2.9.0:compile (version managed from 2.9.0)
+[[1;34mINFO[m] |     \- org.apache.commons:commons-pool2:jar:2.10.0:compile
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-gateway:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-core:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-data-fabric:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-app-fabric:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.http:netty-http:jar:1.7.0:compile - version managed from 1.7.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.netty:netty-buffer:jar:4.1.75.Final:compile (version managed from 4.1.75.Final; scope not updated to compile)
+[[1;34mINFO[m] |  |  \- (io.netty:netty-common:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.netty:netty-codec-http:jar:4.1.75.Final:compile (version managed from 4.1.75.Final)
+[[1;34mINFO[m] |  |  +- (io.netty:netty-common:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.netty:netty-transport:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.netty:netty-codec:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.netty:netty-handler:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  \- io.netty:netty-handler:jar:4.1.75.Final:compile
+[[1;34mINFO[m] |     +- (io.netty:netty-common:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.netty:netty-resolver:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.netty:netty-buffer:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.netty:netty-transport:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |     \- (io.netty:netty-codec:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-watchdog:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-log-publisher-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  \- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-data-fabric:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.http:netty-http:jar:1.7.0:compile - version managed from 1.7.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-all:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-core:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.avro:avro:jar:1.11.4:compile (version managed from 1.11.4)
+[[1;34mINFO[m] |  |  \- (org.apache.commons:commons-compress:jar:1.22:compile - version managed from 1.26.2; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  \- org.xerial.snappy:snappy-java:jar:1.1.1.7:compile (version managed from 1.1.1.7)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-app-fabric:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-data-fabric:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-system-app-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-master-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-tms:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-event-writer-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- io.cdap.cdap:cdap-event-common-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |     \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-features:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-core:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.quartz-scheduler:quartz:jar:2.2.0:compile (version managed from 2.2.0)
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.6.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.quartz-scheduler:quartz-jobs:jar:2.2.0:compile (version managed from 2.2.0)
+[[1;34mINFO[m] |  +- com.ning:async-http-client:jar:1.9.40:compile (version managed from 1.9.40)
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.12; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-yarn:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-client:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- commons-lang:commons-lang:jar:2.6:compile
+[[1;34mINFO[m] |  |  \- io.cdap.cdap:cdap-authentication-client:jar:1.4.0:compile (version managed from 1.4.0)
+[[1;34mINFO[m] |  |     +- (io.cdap.common:common-http:jar:0.13.1:compile - version managed from 0.12.0; omitted for duplicate)
+[[1;34mINFO[m] |  |     +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.5; omitted for duplicate)
+[[1;34mINFO[m] |  |     +- (commons-lang:commons-lang:jar:2.5:compile - omitted for conflict with 2.6)
+[[1;34mINFO[m] |  |     +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  |     +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  |     \- (commons-codec:commons-codec:jar:1.6:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-mapreduce-client-common:jar:3.3.6:compile (version managed from 3.3.6)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-mapreduce-client-core:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.avro:avro:jar:1.11.4:compile - version managed from 1.7.7; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.netty:netty:jar:3.10.6.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-mapreduce-client-jobclient:jar:3.3.6:compile (version managed from 3.3.6)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-mapreduce-client-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.avro:avro:jar:1.11.4:compile - version managed from 1.7.7; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.inject.extensions:guice-servlet:jar:4.0:compile
+[[1;34mINFO[m] |  |  |  \- (com.google.inject:guice:jar:4.0:compile - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.netty:netty:jar:3.10.6.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-mapreduce-client-app:jar:3.3.6:compile (version managed from 3.3.6)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-mapreduce-client-common:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.avro:avro:jar:1.11.4:compile - version managed from 1.7.7; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:compile - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.inject.extensions:guice-servlet:jar:4.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.netty:netty:jar:3.10.6.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.commons:commons-compress:jar:1.22:compile (version managed from 1.22)
+[[1;34mINFO[m] |  +- (com.jcraft:jsch:jar:0.1.54:compile - version managed from 0.1.54; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.avro:avro:jar:1.11.4:compile - version managed from 1.11.4; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:jul-to-slf4j:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.slf4j:log4j-over-slf4j:jar:1.7.15:compile (version managed from 1.7.15)
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-source-control:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- org.eclipse.jgit:org.eclipse.jgit:jar:5.9.0.202009080501-r:compile (version managed from 5.9.0.202009080501-r)
+[[1;34mINFO[m] |  |  |  +- com.googlecode.javaewah:JavaEWAH:jar:1.1.7:compile
+[[1;34mINFO[m] |  |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  \- io.cdap.cdap:cdap-event-reader-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |     +- (io.cdap.cdap:cdap-event-common-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |     \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- io.cdap.cdap:cdap-securestore-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-core:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-zookeeper:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (javax.servlet:javax.servlet-api:jar:3.1.0:compile - version managed from 3.1.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.eclipse.jetty:jetty-server:jar:9.4.51.v20230217:compile (version managed from 9.4.51.v20230217)
+[[1;34mINFO[m] |  |  +- (javax.servlet:javax.servlet-api:jar:3.1.0:compile - version managed from 3.1.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.eclipse.jetty:jetty-http:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |  |  |  +- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.eclipse.jetty:jetty-io:jar:9.4.51.v20230217:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- org.eclipse.jetty:jetty-io:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |  |     \- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.eclipse.jetty:jetty-security:jar:9.4.51.v20230217:compile (version managed from 9.4.51.v20230217)
+[[1;34mINFO[m] |  |  \- (org.eclipse.jetty:jetty-server:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile (version managed from 9.4.51.v20230217)
+[[1;34mINFO[m] |  +- org.eclipse.jetty:jetty-jaspi:jar:9.4.51.v20230217:compile (version managed from 9.4.51.v20230217)
+[[1;34mINFO[m] |  |  +- (org.eclipse.jetty:jetty-security:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- org.eclipse.jetty.orbit:javax.security.auth.message:jar:1.0.0.v201108011116:compile
+[[1;34mINFO[m] |  +- org.eclipse.jetty:jetty-jaas:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |  |  +- (org.eclipse.jetty:jetty-security:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.directory.api:api-ldap-model:jar:2.1.2:compile
+[[1;34mINFO[m] |  |  |  +- (org.apache.directory.api:api-util:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.apache.directory.api:api-asn1-api:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- org.apache.directory.api:api-asn1-ber:jar:2.1.2:compile
+[[1;34mINFO[m] |  |  |  |  +- (org.apache.directory.api:api-i18n:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  +- (org.apache.directory.api:api-asn1-api:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  +- (org.apache.directory.api:api-util:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- org.apache.directory.api:api-i18n:jar:2.1.2:compile
+[[1;34mINFO[m] |  |  |  +- org.apache.servicemix.bundles:org.apache.servicemix.bundles.antlr:jar:2.7.7_5:compile
+[[1;34mINFO[m] |  |  |  +- (org.apache.commons:commons-lang3:jar:3.5:compile - version managed from 3.12.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- org.apache.commons:commons-collections4:jar:4.4:compile
+[[1;34mINFO[m] |  |  |  \- (commons-codec:commons-codec:jar:1.15:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  |  +- org.apache.directory.api:api-util:jar:2.1.2:compile
+[[1;34mINFO[m] |  |  |  +- (org.apache.directory.api:api-i18n:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- org.apache.directory.api:api-asn1-api:jar:2.1.2:compile
+[[1;34mINFO[m] |  |     \- (org.apache.directory.api:api-i18n:jar:2.1.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.geronimo.components:geronimo-jaspi:jar:2.0.0:compile (version managed from 2.0.0)
+[[1;34mINFO[m] |  |  +- org.apache.geronimo.specs:geronimo-jaspic_1.0_spec:jar:1.1:compile
+[[1;34mINFO[m] |  |  \- org.apache.xbean:xbean-reflect:jar:3.6:compile
+[[1;34mINFO[m] |  +- org.jboss.resteasy:resteasy-servlet-initializer:jar:3.0.8.Final:compile (version managed from 3.0.8.Final)
+[[1;34mINFO[m] |  |  +- org.jboss.resteasy:resteasy-jaxrs:jar:3.0.8.Final:compile
+[[1;34mINFO[m] |  |  |  +- (org.jboss.resteasy:jaxrs-api:jar:3.0.8.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- org.jboss.spec.javax.annotation:jboss-annotations-api_1.1_spec:jar:1.0.1.Final:compile
+[[1;34mINFO[m] |  |  |  +- javax.activation:activation:jar:1.1:compile
+[[1;34mINFO[m] |  |  |  +- (org.apache.httpcomponents:httpclient:jar:4.2.1:compile - omitted for conflict with 4.5.13)
+[[1;34mINFO[m] |  |  |  +- (commons-io:commons-io:jar:2.1:compile - omitted for conflict with 2.8.0)
+[[1;34mINFO[m] |  |  |  \- net.jcip:jcip-annotations:jar:1.0:compile
+[[1;34mINFO[m] |  |  +- org.jboss.resteasy:async-http-servlet-3.0:jar:3.0.8.Final:compile
+[[1;34mINFO[m] |  |  \- org.jboss.resteasy:jaxrs-api:jar:3.0.8.Final:compile
+[[1;34mINFO[m] |  \- org.jboss.resteasy:resteasy-guice:jar:3.0.8.Final:compile (version managed from 3.0.8.Final)
+[[1;34mINFO[m] |     +- (com.google.inject:guice:jar:4.0:compile - version managed from 3.0; omitted for duplicate)
+[[1;34mINFO[m] |     +- (org.jboss.resteasy:resteasy-jaxrs:jar:3.0.8.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |     \- javax.annotation:jsr250-api:jar:1.0:compile
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-support-bundle:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-app-fabric:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-master-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-tms:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.common:common-http:jar:0.13.1:compile - version managed from 0.13.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.3.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-core:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.iq80.leveldb:leveldb:jar:uber:0.12:compile - version managed from 0.12; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.avro:avro:jar:1.11.4:compile - version managed from 1.11.4; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  \- io.cdap.cdap:cdap-messaging-spi:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |     +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |     \- (io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-messaging-ext-spanner:jar:6.12.0-SNAPSHOT:compile
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-messaging-spi:jar:6.12.0-SNAPSHOT:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- com.google.cloud:google-cloud-spanner:jar:6.94.0:compile (version managed from 6.87.0)
+[[1;34mINFO[m] |  |  +- com.google.cloud:grpc-gcp:jar:1.6.1:compile (version managed from 1.6.1)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-api:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-auth:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-inprocess:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-core:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.android:annotations:jar:4.1.1.4:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.codehaus.mojo:animal-sniffer-annotations:jar:1.24:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.perfmark:perfmark-api:jar:0.27.0:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-context:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-netty-shaded:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-util:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-protobuf:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-protobuf-lite:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-stub:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-opentelemetry:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.auto.value:auto-value-annotations:jar:1.11.0:compile - version managed from 1.11.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api:api-common:jar:2.49.0:compile - version managed from 2.49.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.protobuf:protobuf-java:jar:4.29.4:compile - version managed from 3.25.5; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.protobuf:protobuf-java-util:jar:4.29.4:compile - version managed from 3.25.5; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api.grpc:proto-google-common-protos:jar:2.57.0:compile - version managed from 2.57.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:grpc-google-common-protos:jar:2.57.0:compile (version managed from 2.57.0)
+[[1;34mINFO[m] |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api.grpc:proto-google-iam-v1:jar:1.52.0:compile - version managed from 1.52.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.cloud:google-cloud-core:jar:2.56.0:compile - version managed from 2.56.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.http-client:google-http-client-gson:jar:1.47.0:compile - version managed from 1.47.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.cloud:google-cloud-core-grpc:jar:2.56.0:compile - version managed from 2.56.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opencensus:opencensus-api:jar:0.31.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- io.opencensus:opencensus-contrib-grpc-util:jar:0.31.1:compile
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-api:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-context:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-sdk:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-sdk-trace:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-sdk-logs:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-sdk-common:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.opentelemetry:opentelemetry-sdk-metrics:jar:1.47.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.cloud.opentelemetry:detector-resources-support:jar:0.33.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.cloud:google-cloud-monitoring:jar:3.64.0:compile - version managed from 3.63.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-grpclb:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.conscrypt:conscrypt-openjdk-uber:jar:2.5.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-xds:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-services:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.re2j:re2j:jar:1.7:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.httpcomponents:httpclient:jar:4.5.14:compile - omitted for conflict with 4.5.13)
+[[1;34mINFO[m] |  |  +- (commons-codec:commons-codec:jar:1.18.0:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.apache.httpcomponents:httpcore:jar:4.4.16:compile - omitted for conflict with 4.4.4)
+[[1;34mINFO[m] |  |  +- (io.opencensus:opencensus-contrib-http-util:jar:0.31.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api.grpc:proto-google-cloud-monitoring-v3:jar:3.64.0:compile - version managed from 3.63.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.auth:google-auth-library-oauth2-http:jar:1.35.0:compile - version managed from 1.35.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.http-client:google-http-client:jar:1.47.0:compile - version managed from 1.47.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:proto-google-cloud-spanner-admin-instance-v1:jar:6.94.0:compile (version managed from 6.94.0)
+[[1;34mINFO[m] |  |  |  +- (com.google.auto.value:auto-value-annotations:jar:1.11.0:compile - version managed from 1.11.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (javax.annotation:javax.annotation-api:jar:1.3.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:proto-google-cloud-spanner-v1:jar:6.94.0:compile (version managed from 6.94.0)
+[[1;34mINFO[m] |  |  |  +- (com.google.auto.value:auto-value-annotations:jar:1.11.0:compile - version managed from 1.11.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (javax.annotation:javax.annotation-api:jar:1.3.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:proto-google-cloud-spanner-admin-database-v1:jar:6.94.0:compile (version managed from 6.94.0)
+[[1;34mINFO[m] |  |  |  +- (com.google.auto.value:auto-value-annotations:jar:1.11.0:compile - version managed from 1.11.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (javax.annotation:javax.annotation-api:jar:1.3.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:grpc-google-cloud-spanner-admin-instance-v1:jar:6.94.0:compile (version managed from 6.94.0)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.codehaus.mojo:animal-sniffer-annotations:jar:1.24:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.grpc:grpc-protobuf-lite:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.api:api-common:jar:2.49.0:compile - version managed from 2.49.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:grpc-google-cloud-spanner-v1:jar:6.94.0:compile (version managed from 6.94.0)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.codehaus.mojo:animal-sniffer-annotations:jar:1.24:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.api.grpc:proto-google-common-protos:jar:2.57.0:compile - version managed from 2.57.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.grpc:grpc-protobuf-lite:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.api:api-common:jar:2.49.0:compile - version managed from 2.49.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.google.api.grpc:grpc-google-cloud-spanner-admin-database-v1:jar:6.94.0:compile (version managed from 6.94.0)
+[[1;34mINFO[m] |  |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.errorprone:error_prone_annotations:jar:2.38.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.codehaus.mojo:animal-sniffer-annotations:jar:1.24:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (io.grpc:grpc-protobuf-lite:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.api:api-common:jar:2.49.0:compile - version managed from 2.49.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:failureaccess:jar:1.0.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  +- (org.checkerframework:checker-qual:jar:3.49.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (com.google.j2objc:j2objc-annotations:jar:3.0.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 33.4.0-jre; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api:gax:jar:2.66.0:compile - version managed from 2.66.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api:gax-grpc:jar:2.66.0:compile - version managed from 2.66.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.api:gax-httpjson:jar:2.66.0:compile - version managed from 2.66.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.threeten:threetenbp:jar:1.7.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 3.0.2; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.12.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (com.google.auth:google-auth-library-credentials:jar:1.35.0:compile - version managed from 1.35.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-alts:jar:1.70.0:compile - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-googleapis:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.grpc:grpc-rls:jar:1.70.0:runtime - version managed from 1.70.0; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (javax.annotation:javax.annotation-api:jar:1.3.2:compile - omitted for duplicate)
+[[1;34mINFO[m] |  \- (com.google.api:gax:jar:2.66.0:compile - version managed from 2.61.0; omitted for duplicate)
+[[1;34mINFO[m] +- org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile
+[[1;34mINFO[m] +- org.apache.tephra:tephra-core:jar:0.15.0-incubating:compile
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:compile - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.inject:guice:jar:4.0:compile - version managed from 3.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.inject.extensions:guice-assistedinject:jar:4.0:compile - version managed from 3.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.0.9; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-core:jar:1.2.11:compile - version managed from 1.0.9; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.5; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.thrift:libthrift:jar:0.9.3:compile - version managed from 0.9.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- it.unimi.dsi:fastutil:jar:6.5.6:compile (version managed from 6.5.6)
+[[1;34mINFO[m] |  \- io.dropwizard.metrics:metrics-core:jar:3.1.2:compile (version managed from 3.1.0)
+[[1;34mINFO[m] |     \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.7; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.twill:twill-discovery-api:jar:1.4.0:compile
+[[1;34mINFO[m] |  \- (io.cdap.twill:twill-common:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.twill:twill-discovery-core:jar:1.4.0:compile
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-zookeeper:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  \- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.2.4; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.twill:twill-zookeeper:jar:1.4.0:compile
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-common:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.zookeeper:zookeeper:jar:3.4.5:provided (version managed from 3.4.5; scope managed from compile)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.30; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-core:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  \- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.twill:twill-yarn:jar:1.4.0:compile
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.30; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.slf4j:jcl-over-slf4j:jar:1.7.15:compile (version managed from 1.7.2)
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-common:jar:3.3.6:compile - version managed from 2.6.5; omitted for duplicate)
+[[1;34mINFO[m] |  \- org.apache.hadoop:hadoop-hdfs:jar:3.3.6:compile (version managed from 2.6.5)
+[[1;34mINFO[m] |     +- (org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (org.eclipse.jetty:jetty-server:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |     +- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |     +- org.eclipse.jetty:jetty-util-ajax:jar:9.4.51.v20230217:compile
+[[1;34mINFO[m] |     |  \- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:compile - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |     +- (commons-cli:commons-cli:jar:1.2:compile - version managed from 1.2; omitted for duplicate)
+[[1;34mINFO[m] |     +- (commons-codec:commons-codec:jar:1.15:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |     +- (commons-io:commons-io:jar:2.8.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (ch.qos.reload4j:reload4j:jar:1.2.22:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (javax.servlet:javax.servlet-api:jar:3.1.0:compile - version managed from 3.1.0; omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.netty:netty:jar:3.10.6.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |     +- (io.netty:netty-all:jar:4.1.75.Final:compile - version managed from 4.1.89.Final; omitted for duplicate)
+[[1;34mINFO[m] |     \- org.fusesource.leveldbjni:leveldbjni-all:jar:1.8:compile
+[[1;34mINFO[m] +- io.cdap.twill:twill-api:jar:1.4.0:compile
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-common:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.twill:twill-common:jar:1.4.0:compile
+[[1;34mINFO[m] |  +- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - version managed from 2.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.30; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.twill:twill-core:jar:1.4.0:compile
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-zookeeper:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-core:jar:1.4.0:compile - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:compile - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.code.gson:gson:jar:2.3.1:compile - version managed from 2.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-buffer:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-codec-http:jar:4.1.75.Final:compile - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-handler:jar:4.1.75.Final:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.xerial.snappy:snappy-java:jar:1.1.1.7:compile - version managed from 1.0.5; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.ow2.asm:asm:jar:7.1:compile
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.30; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-core:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (ch.qos.logback:logback-classic:jar:1.2.11:compile - version managed from 1.2.11; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.kafka:kafka_2.12:jar:0.10.2.2:compile - version managed from 0.10.2.2; omitted for duplicate)
+[[1;34mINFO[m] |  \- net.sf.jopt-simple:jopt-simple:jar:3.2:compile
+[[1;34mINFO[m] +- org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:provided (scope not updated to compile)
+[[1;34mINFO[m] |  +- org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:compile
+[[1;34mINFO[m] |  +- javax.xml.bind:jaxb-api:jar:2.2.11:provided
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-annotations:jar:3.3.6:compile (version managed from 3.3.6; scope not updated to compile)
+[[1;34mINFO[m] |  +- org.apache.hadoop.thirdparty:hadoop-shaded-protobuf_3_7:jar:1.1.1:compile
+[[1;34mINFO[m] |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.15.1:compile (version managed from 2.12.7)
+[[1;34mINFO[m] +- org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:provided (scope not updated to compile)
+[[1;34mINFO[m] |  +- (org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:provided - omitted for duplicate)
+[[1;34mINFO[m] |  +- (commons-cli:commons-cli:jar:1.2:provided - version managed from 1.2; omitted for duplicate)
+[[1;34mINFO[m] |  +- ch.qos.reload4j:reload4j:jar:1.2.22:compile (scope not updated to compile)
+[[1;34mINFO[m] |  +- org.eclipse.jetty.websocket:websocket-client:jar:9.4.51.v20230217:provided
+[[1;34mINFO[m] |  |  +- org.eclipse.jetty:jetty-client:jar:9.4.51.v20230217:provided
+[[1;34mINFO[m] |  |  |  +- (org.eclipse.jetty:jetty-http:jar:9.4.51.v20230217:provided - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  \- (org.eclipse.jetty:jetty-io:jar:9.4.51.v20230217:provided - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:provided - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (org.eclipse.jetty:jetty-io:jar:9.4.51.v20230217:provided - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- org.eclipse.jetty.websocket:websocket-common:jar:9.4.51.v20230217:provided
+[[1;34mINFO[m] |  |     +- org.eclipse.jetty.websocket:websocket-api:jar:9.4.51.v20230217:provided
+[[1;34mINFO[m] |  |     +- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:provided - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  |     \- (org.eclipse.jetty:jetty-io:jar:9.4.51.v20230217:provided - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:provided - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:provided - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:provided - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  \- org.jline:jline:jar:3.9.0:provided
+[[1;34mINFO[m] +- org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:provided (scope not updated to compile)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-hdfs-client:jar:3.3.6:compile
+[[1;34mINFO[m] |  |  +- com.squareup.okhttp3:okhttp:jar:4.9.3:compile
+[[1;34mINFO[m] |  |  |  \- com.squareup.okio:okio:jar:2.8.0:compile
+[[1;34mINFO[m] |  |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.4.10:compile
+[[1;34mINFO[m] |  |  |  \- (org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.4.10:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.4.10:compile
+[[1;34mINFO[m] |  |  \- (com.fasterxml.jackson.core:jackson-annotations:jar:2.15.1:compile - version managed from 2.12.7; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:provided - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.apache.hadoop:hadoop-auth:jar:3.3.6:compile (version managed from 3.3.6; scope not updated to compile)
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (commons-codec:commons-codec:jar:1.15:compile - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  |  +- (ch.qos.reload4j:reload4j:jar:1.2.22:runtime - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- com.nimbusds:nimbus-jose-jwt:jar:9.8.1:compile
+[[1;34mINFO[m] |  |  |  \- com.github.stephenc.jcip:jcip-annotations:jar:1.0-1:compile
+[[1;34mINFO[m] |  |  +- (org.apache.zookeeper:zookeeper:jar:3.4.5:provided - version managed from 3.6.3; scope managed from compile; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- (io.dropwizard.metrics:metrics-core:jar:3.1.2:compile - version managed from 3.2.4; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.curator:curator-framework:jar:5.2.0:compile
+[[1;34mINFO[m] |  |  |  \- (org.apache.curator:curator-client:jar:5.2.0:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  +- org.apache.kerby:kerb-simplekdc:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  +- org.apache.kerby:kerb-client:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  |  +- org.apache.kerby:kerby-config:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.25; omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  +- (org.apache.kerby:kerb-core:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  +- org.apache.kerby:kerb-common:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  |  |  +- (org.apache.kerby:kerby-config:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  +- org.apache.kerby:kerb-crypto:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  |  |  |  +- (org.apache.kerby:kerby-util:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  |  \- (org.apache.kerby:kerb-core:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  \- (commons-io:commons-io:jar:2.5:compile - omitted for conflict with 2.8.0)
+[[1;34mINFO[m] |  |  |  |  +- org.apache.kerby:kerb-util:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  |  |  +- (org.apache.kerby:kerby-config:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  +- (org.apache.kerby:kerb-core:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  |  \- (org.apache.kerby:kerb-crypto:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |  \- org.apache.kerby:token-provider:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |  |     +- (org.apache.kerby:kerb-core:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |  |     \- (com.nimbusds:nimbus-jose-jwt:jar:3.10:compile - omitted for conflict with 9.8.1)
+[[1;34mINFO[m] |  |  |  \- org.apache.kerby:kerb-admin:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |     +- org.apache.kerby:kerb-server:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |     |  +- (org.apache.kerby:kerb-common:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |     |  \- org.apache.kerby:kerb-identity:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  |     |     +- (org.apache.kerby:kerby-config:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |     |     \- (org.apache.kerby:kerb-core:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |     +- (org.apache.kerby:kerb-util:jar:1.0.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  |  |     \- org.apache.kerby:kerby-xdr:jar:1.0.1:compile
+[[1;34mINFO[m] |  |  \- (org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:compile - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.commons:commons-compress:jar:1.22:provided - version managed from 1.21; omitted for duplicate)
+[[1;34mINFO[m] |  +- (javax.servlet:javax.servlet-api:jar:3.1.0:provided - version managed from 3.1.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (commons-codec:commons-codec:jar:1.15:provided - omitted for conflict with 1.18.0)
+[[1;34mINFO[m] |  +- (org.eclipse.jetty:jetty-util:jar:9.4.51.v20230217:provided - version managed from 9.4.51.v20230217; omitted for duplicate)
+[[1;34mINFO[m] |  +- com.sun.jersey:jersey-client:jar:1.19.4:provided
+[[1;34mINFO[m] |  +- (org.apache.hadoop.thirdparty:hadoop-shaded-guava:jar:1.1.1:provided - omitted for duplicate)
+[[1;34mINFO[m] |  +- (commons-cli:commons-cli:jar:1.2:provided - version managed from 1.2; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:slf4j-api:jar:1.7.15:provided - version managed from 1.7.36; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-annotations:jar:3.3.6:provided - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- commons-io:commons-io:jar:2.8.0:compile (scope not updated to compile)
+[[1;34mINFO[m] |  +- (com.google.inject:guice:jar:4.0:provided - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- com.github.pjfanning:jersey-json:jar:1.20:compile (scope not updated to compile)
+[[1;34mINFO[m] |  |  +- org.codehaus.jettison:jettison:jar:1.1:compile
+[[1;34mINFO[m] |  |  \- com.sun.xml.bind:jaxb-impl:jar:2.2.3-1:compile
+[[1;34mINFO[m] |  +- (ch.qos.reload4j:reload4j:jar:1.2.22:provided - omitted for duplicate)
+[[1;34mINFO[m] |  +- com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.12.7:provided
+[[1;34mINFO[m] |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.15.1:provided - version managed from 2.12.7; omitted for duplicate)
+[[1;34mINFO[m] |  |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.2:provided
+[[1;34mINFO[m] |  |  |  \- (jakarta.activation:jakarta.activation-api:jar:1.2.1:provided - omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (jakarta.activation:jakarta.activation-api:jar:1.2.1:provided - omitted for duplicate)
+[[1;34mINFO[m] |  \- com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.12.7:provided
+[[1;34mINFO[m] |     +- com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.12.7:provided
+[[1;34mINFO[m] |     \- (com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.12.7:provided - omitted for duplicate)
+[[1;34mINFO[m] +- org.slf4j:jul-to-slf4j:jar:1.7.15:compile
+[[1;34mINFO[m] |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] +- org.apache.kafka:kafka_2.12:jar:0.10.2.2:compile
+[[1;34mINFO[m] |  +- org.apache.kafka:kafka-clients:jar:0.10.2.2:compile (version managed from 0.10.2.2)
+[[1;34mINFO[m] |  |  +- net.jpountz.lz4:lz4:jar:1.3.0:compile
+[[1;34mINFO[m] |  |  +- (org.xerial.snappy:snappy-java:jar:1.1.1.7:compile - version managed from 1.1.2.6; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.21; omitted for duplicate)
+[[1;34mINFO[m] |  +- (net.sf.jopt-simple:jopt-simple:jar:5.0.3:compile - omitted for conflict with 3.2)
+[[1;34mINFO[m] |  +- com.yammer.metrics:metrics-core:jar:2.2.0:compile
+[[1;34mINFO[m] |  |  \- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.7.2; omitted for duplicate)
+[[1;34mINFO[m] |  +- org.scala-lang:scala-library:jar:2.12.15:compile (version managed from 2.12.1)
+[[1;34mINFO[m] |  +- com.101tec:zkclient:jar:0.10:compile
+[[1;34mINFO[m] |  |  +- (org.slf4j:slf4j-api:jar:1.7.15:compile - version managed from 1.6.1; omitted for duplicate)
+[[1;34mINFO[m] |  |  \- (org.apache.zookeeper:zookeeper:jar:3.4.5:provided - version managed from 3.4.8; scope managed from compile; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.zookeeper:zookeeper:jar:3.4.5:provided - version managed from 3.4.9; scope managed from compile; omitted for duplicate)
+[[1;34mINFO[m] |  \- org.scala-lang.modules:scala-parser-combinators_2.12:jar:1.0.4:compile
+[[1;34mINFO[m] |     \- (org.scala-lang:scala-library:jar:2.12.15:compile - version managed from 2.12.0; omitted for duplicate)
+[[1;34mINFO[m] +- commons-cli:commons-cli:jar:1.2:compile
+[[1;34mINFO[m] +- junit:junit:jar:4.11:test
+[[1;34mINFO[m] |  \- org.hamcrest:hamcrest-core:jar:2.2:test (version managed from 1.3; scope managed from compile)
+[[1;34mINFO[m] |     \- org.hamcrest:hamcrest:jar:2.2:test
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-app-fabric:test-jar:tests:6.12.0-SNAPSHOT:test
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-data-fabric:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-system-app-api:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-master-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-tms:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-event-writer-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-features:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:test - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-core:jar:0.15.0-incubating:test - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.guava:guava:jar:13.0.1:test - version managed from 13.0.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.quartz-scheduler:quartz:jar:2.2.0:test - version managed from 2.2.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.quartz-scheduler:quartz-jobs:jar:2.2.0:test - version managed from 2.2.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.ning:async-http-client:jar:1.9.40:test - version managed from 1.9.40; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-yarn:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-client:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-mapreduce-client-common:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-mapreduce-client-jobclient:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-mapreduce-client-app:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.commons:commons-compress:jar:1.22:test - version managed from 1.22; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.jcraft:jsch:jar:0.1.54:test - version managed from 0.1.54; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.avro:avro:jar:1.11.4:test - version managed from 1.11.4; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:jul-to-slf4j:jar:1.7.15:test - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.slf4j:log4j-over-slf4j:jar:1.7.15:test - version managed from 1.7.15; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-source-control:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  \- (io.cdap.cdap:cdap-event-reader-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-data-fabric:test-jar:tests:6.12.0-SNAPSHOT:test
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-common:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-formats:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-storage-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-metadata-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-elastic:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-tms:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-core:jar:0.15.0-incubating:test - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.http:netty-http:jar:1.7.0:test - version managed from 1.7.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-all:jar:4.1.75.Final:test - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.thrift:libthrift:jar:0.9.3:test - version managed from 0.9.3; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-core:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-common:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-mapreduce-client-core:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.iq80.leveldb:leveldb:jar:uber:0.12:test - version managed from 0.12; omitted for duplicate)
+[[1;34mINFO[m] |  \- (org.apache.commons:commons-dbcp2:jar:2.9.0:test - version managed from 2.9.0; omitted for duplicate)
+[[1;34mINFO[m] +- io.cdap.cdap:cdap-common:test-jar:tests:6.12.0-SNAPSHOT:test
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-api:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-system-app-api:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-features:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-watchdog-api:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-formats:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-proto:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-security-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.cdap:cdap-runtime-spi:jar:6.12.0-SNAPSHOT:test - omitted for duplicate)
+[[1;34mINFO[m] |  +- (javax.ws.rs:javax.ws.rs-api:jar:2.0:test - version managed from 2.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.http:netty-http:jar:1.7.0:test - version managed from 1.7.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.netty:netty-all:jar:4.1.75.Final:test - version managed from 4.1.75.Final; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.inject:guice:jar:4.0:test - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.inject.extensions:guice-multibindings:jar:4.0:test - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (com.google.inject.extensions:guice-assistedinject:jar:4.0:test - version managed from 4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.ow2.asm:asm-commons:jar:7.1:test - version managed from 7.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.thrift:libthrift:jar:0.9.3:test - version managed from 0.9.3; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.tephra:tephra-api:jar:0.15.0-incubating:test - version managed from 0.15.0-incubating; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-api:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-discovery-core:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-common:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-yarn:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-core:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-api:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.twill:twill-zookeeper:jar:1.4.0:test - version managed from 1.4.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-common:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-api:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-client:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.apache.hadoop:hadoop-yarn-common:jar:3.3.6:test - version managed from 3.3.6; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.bouncycastle:bcprov-jdk15on:jar:1.70:test - version managed from 1.70; omitted for duplicate)
+[[1;34mINFO[m] |  +- (org.bouncycastle:bcpkix-jdk15on:jar:1.70:test - version managed from 1.70; omitted for duplicate)
+[[1;34mINFO[m] |  +- (javax.servlet:javax.servlet-api:jar:3.1.0:test - version managed from 3.1.0; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.common:common-http:jar:0.13.1:test - version managed from 0.13.1; omitted for duplicate)
+[[1;34mINFO[m] |  +- (io.cdap.common:common-io:jar:0.13.1:test - version managed from 0.13.1; omitted for duplicate)
+[[1;34mINFO[m] |  \- (com.jcraft:jsch:jar:0.1.54:test - version managed from 0.1.54; omitted for duplicate)
+[[1;34mINFO[m] +- org.mockito:mockito-core:jar:3.9.0:test
+[[1;34mINFO[m] |  +- net.bytebuddy:byte-buddy:jar:1.10.20:test
+[[1;34mINFO[m] |  +- net.bytebuddy:byte-buddy-agent:jar:1.10.20:test
+[[1;34mINFO[m] |  \- org.objenesis:objenesis:jar:3.2:test
+[[1;34mINFO[m] +- org.apache.commons:commons-lang3:jar:3.5:compile
+[[1;34mINFO[m] \- jakarta.servlet:jakarta.servlet-api:jar:4.0.3:test
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;32mBUILD SUCCESS[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  18.768 s
+[[1;34mINFO[m] Finished at: 2025-06-03T18:33:11Z
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m

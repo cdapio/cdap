@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap;
 
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -23,60 +24,89 @@ import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.IOModule;
-import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
-import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
-import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
-import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
-import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
-import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.store.NamespaceTable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.cdap.cdap.proto.NamespaceMeta;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 
 public class ExportJobMain
 {
     private final static Logger LOG = LoggerFactory.getLogger(ExportJobMain.class);
-    public void exportNamespaces() {
-        CConfiguration cConf = CConfiguration.create();
-        List<Module> modules = new ArrayList<>(Arrays.asList(
-            new ConfigModule(cConf),
-            new StorageModule(),
-            new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
-                        .in(Scopes.SINGLETON);
-                }
-            }
-        ));
-        Injector injector = Guice.createInjector(modules);
-        TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    private static final Gson GSON = new Gson();
+    public void exportNamespaces(TransactionRunner transactionRunner, String bucketName, Storage gcsClient) {
         LOG.debug("Starting export of namespaces");
-        TransactionRunners.run(transactionRunner, context -> {
-            NamespaceTable namespaceTable = new NamespaceTable(context);
-            List<NamespaceMeta> namespaces = namespaceTable.list();
-            LOG.debug("Found {} namespaces: {}", namespaces.size(), namespaces);
-        });
+
+        try {
+            TransactionRunners.run(transactionRunner, context -> {
+                NamespaceTable namespaceTable = new NamespaceTable(context);
+                List<NamespaceMeta> namespaces = namespaceTable.list();
+                LOG.info("Found {} namespaces to export.", namespaces.size());
+
+                for (NamespaceMeta namespace : namespaces) {
+                    String namespaceId = namespace.getName();
+                    LOG.debug("Processing namespace '{}'...", namespaceId);
+
+                    String namespaceJson = GSON.toJson(namespace);
+
+                    String gcsObjectPath = String.format("cdap/namespaces/%s/namespaceMeta", namespaceId);
+
+                    // Prepare the object for upload.
+                    BlobId blobId = BlobId.of(bucketName, gcsObjectPath);
+                    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/json").build();
+
+                    // Upload the JSON content as bytes.
+                    gcsClient.create(blobInfo, namespaceJson.getBytes(StandardCharsets.UTF_8));
+
+                    LOG.info("Successfully exported namespace '{}' to gs://{}/{}",
+                        namespaceId, bucketName, gcsObjectPath);
+                }
+            }, Exception.class);
+        } catch (Exception e) {
+            LOG.error("Failed to export namespaces due to an unexpected transaction error.", e);
+            throw new RuntimeException("Namespace export failed", e);
+        }
         LOG.debug("Finished exporting namespaces.");
     }
     public static void main( String[] args )
     {
-        LOG.debug("Args: {}", args);
+      LOG.debug("Args: {}", args);
+      CConfiguration cConf = CConfiguration.create();
+      List<Module> modules = new ArrayList<>(Arrays.asList(
+          new ConfigModule(cConf),
+          new StorageModule(),
+          new AbstractModule() {
+            @Override
+            protected void configure() {
+              bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
+                  .in(Scopes.SINGLETON);
+            }
+          }
+      ));
+      Injector injector = Guice.createInjector(modules);
+      TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+        String gcsBucket = args[0];
+        Storage gcsClient;
+        try {
+            gcsClient = StorageOptions.getDefaultInstance().getService();
+            LOG.info("Successfully initialized Google Cloud Storage client.");
+        } catch (Exception e) {
+            LOG.error("Failed to initialize GCS client. Please check authentication.", e);
+            return;
+        }
         ExportJobMain exportJob = new ExportJobMain();
-        exportJob.exportNamespaces();
+        exportJob.exportNamespaces(transactionRunner, gcsBucket, gcsClient);
         System.out.println("Job finished.");
     }
 }
