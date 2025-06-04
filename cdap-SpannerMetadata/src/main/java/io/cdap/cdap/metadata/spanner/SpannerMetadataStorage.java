@@ -107,7 +107,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
     private static final String HIDDEN_FIELD = "Hidden"; // Hidden flag
     private static final String User_FIELD = "USER"; // User-scoped text data
     private static final String SYSTEM_FIELD = "SYSTEM"; // System-scoped text data
-    private static final String TEXT_FIELD = "Text"; // storing all searchable values
     private static final String NESTED_NAME_FIELD = "Props_Name"; // contains the property name in nested props
     private static final String NESTED_SCOPE_FIELD = "Props_Scope"; // contains the scope in nested props
     private static final String NESTED_VALUE_FIELD = "Props_Value"; // contains the value in nested props
@@ -235,6 +234,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         ddlStatements.add(Metadata_propsTableDDLStatement());
         ddlStatements.add(getUSERSearchIndexDDLStatement());
         ddlStatements.add(getSYSTEMSearchIndexDDLStatement());
+        ddlStatements.add(getTEXTSearchIndexDDLStatement());
         ddlStatements.add(getValueSearchIndexDDLStatement());
         executeCreateDDLStatements(ddlStatements);
         LOG.info("Metadata table creation completed.");
@@ -253,14 +253,14 @@ public class SpannerMetadataStorage implements MetadataStorage {
                         "%s BOOL," + // hidden
                         "%s STRING(MAX)," + // user
                         "%s STRING(MAX)," + // system
-                        "%s STRING(MAX)," + // text
-                        "properties JSON," + // properties as JSON
                         "metadata_column JSON," + // metadata
                         "VERSION INT64 NOT NULL," +
-                        "USER_Substrings TOKENLIST AS " +
+                        "User_Tokens TOKENLIST AS " +
                         "(TOKENIZE_SUBSTRING(USER, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
-                        "SYSTEM_Substrings TOKENLIST AS " +
+                        "System_Tokens TOKENLIST AS " +
                         "(TOKENIZE_SUBSTRING(SYSTEM, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
+                        "Text_Tokens TOKENLIST AS " +
+                        "(TOKENLIST_CONCAT([User_Tokens, System_Tokens]) HIDDEN," +
                         ")PRIMARY KEY (metadata_id) ", // primary key
                 METADATA_TABLE,
                 NAMESPACE_FIELD,
@@ -270,8 +270,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 TTL_FIELD,
                 HIDDEN_FIELD,
                 User_FIELD,
-                SYSTEM_FIELD,
-                TEXT_FIELD
+                SYSTEM_FIELD
         );
     }
 
@@ -283,7 +282,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                         "%s STRING(MAX) NOT NULL," + // name
                         "%s STRING(MAX)," + // scope
                         "%s STRING(MAX)," + // value
-                        "Value_Substrings TOKENLIST AS " +
+                        "Value_Tokens TOKENLIST AS " +
                         "(TOKENIZE_SUBSTRING(Props_Value, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
                         ")PRIMARY KEY (metadata_id, %s, %s) ," + // primary key
                         "INTERLEAVE IN PARENT metadata ON DELETE CASCADE",
@@ -297,15 +296,20 @@ public class SpannerMetadataStorage implements MetadataStorage {
     }
 
     private String getUSERSearchIndexDDLStatement() {
-        return String.format("CREATE SEARCH INDEX USERNgramIndex ON %s(USER_Substrings)", METADATA_TABLE);
+        return String.format("CREATE SEARCH INDEX USERNgramIndex ON %s(User_Tokens)", METADATA_TABLE);
     }
 
     private String getSYSTEMSearchIndexDDLStatement() {
-        return String.format("CREATE SEARCH INDEX SYSTEMNgramIndex ON %s(SYSTEM_Substrings)", METADATA_TABLE);
+        return String.format("CREATE SEARCH INDEX SYSTEMNgramIndex ON %s(System_Tokens)", METADATA_TABLE);
     }
 
+    private String getTEXTSearchIndexDDLStatement() {
+        return String.format("CREATE SEARCH INDEX TEXTNgramIndex ON %s(Text_Tokens)", METADATA_TABLE);
+    }
+
+
     private String getValueSearchIndexDDLStatement() {
-        return String.format("CREATE SEARCH INDEX ValueNgramIndex ON %s(Value_Substrings)", METADATA_PROPS_TABLE);
+        return String.format("CREATE SEARCH INDEX ValueNgramIndex ON %s(Value_Tokens)", METADATA_PROPS_TABLE);
     }
 
     private void executeCreateDDLStatements(List<String> ddlStatements) throws IOException {
@@ -713,7 +717,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
         // StringBuilders for 'user', 'system', 'text' columns in the parent Metadata table
         StringBuilder userStringBuilder = new StringBuilder();
         StringBuilder systemStringBuilder = new StringBuilder();
-        StringBuilder textBuilder = new StringBuilder();
 
         // The parent's metadata_id will be used as the interleaving key for child mutations
         String parentMetadataId = toDocumentId(entity);
@@ -784,7 +787,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                     if (nameElement != null && nameElement.isJsonPrimitive()) {
                         Mutation schemaNamePropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
                                 .set("metadata_id").to(parentMetadataId)
-                                .set(NESTED_NAME_FIELD).to("schema_name") // props_name for schema name
+                                .set(NESTED_NAME_FIELD).to("schema") // props_name for schema name
                                 .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
                                 .set(NESTED_VALUE_FIELD).to(nameElement.getAsString().toLowerCase())
                                 .build();
@@ -809,7 +812,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                         if (schemaFieldsValue.length() > 0) {
                             Mutation schemaFieldsPropMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
                                     .set("metadata_id").to(parentMetadataId)
-                                    .set(NESTED_NAME_FIELD).to("schema_fields") // props_name for schema fields
+                                    .set(NESTED_NAME_FIELD).to("schema") // props_name for schema fields
                                     .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
                                     .set(NESTED_VALUE_FIELD).to(schemaFieldsValue.toString().trim()) // props_value
                                     .build();
@@ -825,7 +828,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         if (!systemProperties.isEmpty()) {
             Mutation childPropSummaryMutation = Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
                     .set("metadata_id").to(parentMetadataId) // Parent's primary key
-                    .set(NESTED_NAME_FIELD).to("properties_summary") // props_name for summary
+                    .set(NESTED_NAME_FIELD).to("properties") // props_name for summary
                     .set(NESTED_SCOPE_FIELD).to(MetadataScope.SYSTEM.name()) // props_scope
                     .set(NESTED_VALUE_FIELD).to(String.join(" ", systemProperties.keySet()).toLowerCase())
                     // props_value
@@ -845,7 +848,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
             mutations.add(entityNamePropMutation);
         }
 
-        // --- Parent Metadata Table updates for 'user', 'system', 'text' columns ---
+        // --- Parent Metadata Table updates for 'user', 'system' columns ---
         // These still populate the parent table's columns for full-text search strings,
         // as they are typically used for broader textual search across metadata.
         String createdString = systemProperties.get("creation-time"); // From SYSTEM properties
@@ -901,14 +904,10 @@ public class SpannerMetadataStorage implements MetadataStorage {
                     }
                 }
             } catch (Exception e) {
-                System.out.println("Error parsing schema JSON for system string: " + e.getMessage());
+                LOG.info("Error parsing schema JSON for system string: " + e.getMessage());
             }
         }
         parentMutationBuilder.set("system").to(systemStringBuilder.toString().trim());
-
-        // Populate 'text' column
-        textBuilder.append(userStringBuilder).append(" ").append(systemStringBuilder);
-        parentMutationBuilder.set("text").to(textBuilder.toString().trim());
 
         // --- Add parent mutation to the list of mutations ---
         // It's good practice to add the parent mutation first, although Spanner handles atomicity.
@@ -1238,7 +1237,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
             sql.append(" ORDER BY ").append(mapSortKey(request.getSorting().getKey().toLowerCase())).append(" ").
                     append(request.getSorting().getOrder().name());
         } else {
-            sql.append(" ORDER BY name, Entity_type, Text");
+            sql.append(" ORDER BY name, Entity_type");
         }
 
         sql.append(" LIMIT ").append(request.getLimit());
