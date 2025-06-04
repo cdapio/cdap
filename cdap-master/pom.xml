@@ -31,6 +31,18 @@
   <name>CDAP Master</name>
   <packaging>jar</packaging>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>libraries-bom</artifactId>
+        <version>26.61.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -47,6 +59,10 @@
     </dependency>
 
     <!-- Added to override the embedded guava class in hive-exec -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
@@ -390,6 +406,29 @@
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
             <executions>
+<!--              &lt;!&ndash; METHOD 2:Creating a fat jar of cdap-export-import module and putting it in a diff dir &ndash;&gt;-->
+<!--              <execution>-->
+<!--                <id>copy-export-import-tool</id>-->
+<!--                <phase>process-resources</phase>-->
+<!--                <goals>-->
+<!--                  <goal>copy-resources</goal>-->
+<!--                </goals>-->
+<!--                <configuration>-->
+<!--                  &lt;!&ndash; Define a new directory for standalone tools &ndash;&gt;-->
+<!--                  <outputDirectory>${stage.opt.dir}/tools</outputDirectory>-->
+<!--                  <resources>-->
+<!--                    <resource>-->
+<!--                      <directory>-->
+<!--                        ${project.parent.basedir}/cdap-export-import/target-->
+<!--                      </directory>-->
+<!--                      <includes>-->
+<!--                        &lt;!&ndash; Include only the fat JAR, not the original thin one &ndash;&gt;-->
+<!--                        <include>cdap-export-import-*.jar</include>-->
+<!--                      </includes>-->
+<!--                    </resource>-->
+<!--                  </resources>-->
+<!--                </configuration>-->
+<!--              </execution>-->
               <execution>
                 <id>copy-pipelines-spark3_2.12</id>
                 <phase>process-resources</phase>
@@ -937,7 +976,69 @@
               </execution>
             </executions>
           </plugin>
-        </plugins>
+<!--          &lt;!&ndash; METHOD 1: SHADING &ndash;&gt;-->
+<!--          <plugin>-->
+<!--            <groupId>org.apache.maven.plugins</groupId>-->
+<!--            <artifactId>maven-shade-plugin</artifactId>-->
+<!--            <version>3.2.4</version> &lt;!&ndash; A standard, stable version &ndash;&gt;-->
+<!--            <executions>-->
+<!--              <execution>-->
+<!--                <phase>package</phase>-->
+<!--                <goals>-->
+<!--                  <goal>shade</goal>-->
+<!--                </goals>-->
+<!--                <configuration>-->
+<!--                  <artifactSet>-->
+<!--                    &lt;!&ndash;-->
+<!--                      This is crucial. We are telling the plugin to ONLY shade-->
+<!--                      the Google Cloud Storage library and its core dependencies.-->
+<!--                      We do NOT want to shade all of cdap-master's dependencies.-->
+<!--                    &ndash;&gt;-->
+<!--                    <includes>-->
+<!--                      <include>com.google.cloud:google-cloud-storage</include>-->
+<!--                      <include>com.google.guava:guava</include>-->
+<!--                      <include>com.google.api:gax</include>-->
+<!--                      <include>com.google.api:api-common</include>-->
+<!--                      <include>com.google.api.grpc:proto-google-common-protos</include>-->
+<!--                      <include>com.google.auth:google-auth-library-oauth2-http</include>-->
+<!--                      <include>com.google.http-client:google-http-client</include>-->
+<!--                      <include>org.threeten:threetenbp</include>-->
+<!--                    </includes>-->
+<!--                  </artifactSet>-->
+
+<!--                  <relocations>-->
+<!--                    &lt;!&ndash;-->
+<!--                      This is the "magic". We find every class in the original Java package-->
+<!--                      and rename it to a new, private package path.-->
+<!--                    &ndash;&gt;-->
+<!--                    <relocation>-->
+<!--                      <pattern>com.google.common</pattern>-->
+<!--                      <shadedPattern>cdap.shaded.com.google.common</shadedPattern>-->
+<!--                    </relocation>-->
+<!--                    <relocation>-->
+<!--                      <pattern>com.google.api</pattern>-->
+<!--                      <shadedPattern>cdap.shaded.com.google.api</shadedPattern>-->
+<!--                    </relocation>-->
+<!--                    <relocation>-->
+<!--                      <pattern>com.google.auth</pattern>-->
+<!--                      <shadedPattern>cdap.shaded.com.google.auth</shadedPattern>-->
+<!--                    </relocation>-->
+<!--                    <relocation>-->
+<!--                      <pattern>org.threeten.bp</pattern>-->
+<!--                      <shadedPattern>cdap.shaded.org.threeten.bp</shadedPattern>-->
+<!--                    </relocation>-->
+<!--                  </relocations>-->
+
+<!--                  &lt;!&ndash; This transformer merges service loader files to prevent plugins from breaking &ndash;&gt;-->
+<!--                  <transformers>-->
+<!--                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>-->
+<!--                  </transformers>-->
+
+<!--                </configuration>-->
+<!--              </execution>-->
+<!--            </executions>-->
+<!--          </plugin>-->
+      </plugins>
       </build>
     </profile>
 

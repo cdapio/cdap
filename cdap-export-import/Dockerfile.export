@@ -1,0 +1,9 @@
+# Dockerfile located inside cdap-export-import/
+
+FROM eclipse-temurin:8-jre-focal
+WORKDIR /opt/app
+
+# The path is now relative to the cdap-export-import directory
+COPY target/cdap-export-import-*.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
