@@ -60,6 +60,7 @@ import io.cdap.cdap.internal.app.store.state.AppStateKey;
 import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
@@ -76,6 +77,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.upgrade.ListUpgradeResponse;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -1619,6 +1621,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     result = getAppCount(TEST_NAMESPACE1);
     Assert.assertEquals(0, result);
+  }
+
+  @Test
+  public void testListUpgradeSuccess() throws Exception {
+    // TODO(CDAP-21168): Add detailed test cases once logic is added.
+    ListUpgradeResponse response = listApplicationUpgrade("default");
+    Assert.assertEquals(new ListUpgradeResponse(new ArrayList<>()), response);
   }
 
   @After
