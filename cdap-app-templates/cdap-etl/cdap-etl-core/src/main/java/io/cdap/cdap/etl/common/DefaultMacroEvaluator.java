@@ -42,17 +42,16 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
 
   public DefaultMacroEvaluator(BasicArguments arguments, long logicalStartTime,
       SecureStore secureStore, ServiceDiscoverer serviceDiscoverer, String namespace) {
-    this(arguments, ImmutableMap.of(
-        LogicalStartTimeMacroEvaluator.FUNCTION_NAME,
-        new LogicalStartTimeMacroEvaluator(logicalStartTime),
-        SecureStoreMacroEvaluator.FUNCTION_NAME,
-        new SecureStoreMacroEvaluator(namespace, secureStore),
-        OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer),
-        OAuthAccessTokenMacroEvaluator.FUNCTION_NAME,
-        new OAuthAccessTokenMacroEvaluator(serviceDiscoverer),
-        ConnectionMacroEvaluator.FUNCTION_NAME,
-        new ConnectionMacroEvaluator(namespace, serviceDiscoverer)
-    ), MAP_FUNCTIONS);
+    this(arguments,
+        ImmutableMap.<String, MacroEvaluator>builder()
+        .put(LogicalStartTimeMacroEvaluator.FUNCTION_NAME, new LogicalStartTimeMacroEvaluator(logicalStartTime))
+        .put(SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, secureStore))
+        .put(OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer))
+        .put(OAuthAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthAccessTokenMacroEvaluator(serviceDiscoverer))
+        .put(ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, serviceDiscoverer))
+        .put(OAuthStaticAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthStaticAccessTokenMacroEvaluator(secureStore))
+        .build(),
+        MAP_FUNCTIONS);
   }
 
   public DefaultMacroEvaluator(BasicArguments arguments,

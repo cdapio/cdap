@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthAccessTokenMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
+import io.cdap.cdap.etl.common.OAuthStaticAccessTokenMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
@@ -93,7 +94,9 @@ public class RemoteValidationTask implements RunnableTask {
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, systemAppContext),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(systemAppContext),
       ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, systemAppContext),
-      OAuthAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthAccessTokenMacroEvaluator(systemAppContext)
+      OAuthAccessTokenMacroEvaluator.FUNCTION_NAME, new OAuthAccessTokenMacroEvaluator(systemAppContext),
+      OAuthStaticAccessTokenMacroEvaluator.FUNCTION_NAME,
+        new OAuthStaticAccessTokenMacroEvaluator(namespace, systemAppContext)
     );
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators,
                                                               DefaultMacroEvaluator.MAP_FUNCTIONS);
