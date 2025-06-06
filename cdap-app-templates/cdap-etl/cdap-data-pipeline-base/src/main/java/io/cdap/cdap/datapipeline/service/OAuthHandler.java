@@ -26,6 +26,7 @@ import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.datapipeline.oauth.CredentialIsValidResponse;
 import io.cdap.cdap.datapipeline.oauth.GetAccessTokenResponse;
+import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthClientCredentials;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider.CredentialEncodingStrategy;
@@ -208,21 +209,44 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON: " + e.getMessage(), e);
       }
 
-      if (refreshTokenResponse.getRefreshToken() == null || refreshTokenResponse.getRefreshToken().isEmpty()) {
+      boolean hasRefreshToken = refreshTokenResponse.getRefreshToken() != null
+          && !refreshTokenResponse.getRefreshToken().isEmpty();
+      boolean hasAccessToken = refreshTokenResponse.getAccessToken() != null
+          && !refreshTokenResponse.getAccessToken().isEmpty();
+
+      if (!hasAccessToken && !hasRefreshToken) {
         throw new OAuthServiceException(
-            HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body did not contain refresh token");
+            HttpURLConnection.HTTP_INTERNAL_ERROR,
+            "Refresh token response body did not contain a refresh token or access token");
       }
 
-      try {
-        OAuthRefreshToken refreshToken = OAuthRefreshToken.newBuilder()
-            .withRefreshToken(refreshTokenResponse.getRefreshToken())
-            .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
-            .build();
-        oauthStore.writeRefreshToken(provider, credentialId, refreshToken);
-      } catch (NullPointerException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage(), e);
-      } catch (OAuthStoreException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to write refresh token", e);
+      if (hasRefreshToken) {
+        try {
+          OAuthRefreshToken refreshToken = OAuthRefreshToken.newBuilder()
+              .withRefreshToken(refreshTokenResponse.getRefreshToken())
+              .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
+              .build();
+          oauthStore.writeRefreshToken(provider, credentialId, refreshToken);
+        } catch (NullPointerException e) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage(), e);
+        } catch (OAuthStoreException e) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to write refresh token", e);
+        }
+      } else {
+        // Refresh token call gave us an access token without a refresh token.
+        // Store the access token instead.
+
+        try {
+          OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
+              .withAccessToken(refreshTokenResponse.getAccessToken())
+              .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
+              .build();
+          oauthStore.writeAccessToken(provider, credentialId, accessToken);
+        } catch (NullPointerException e) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage(), e);
+        } catch (OAuthStoreException e) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to write access token", e);
+        }
       }
 
       responder.sendStatus(HttpURLConnection.HTTP_OK);
