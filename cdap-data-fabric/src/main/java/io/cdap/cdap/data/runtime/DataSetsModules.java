@@ -45,6 +45,7 @@ import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.data2.registry.UsageWriter;
 import io.cdap.cdap.metadata.elastic.ElasticsearchMetadataStorage;
 import io.cdap.cdap.security.impersonation.OwnerStore;
+import io.cdap.cdap.spi.metadata.DelegatingMetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
@@ -178,11 +179,21 @@ class MetadataStorageProvider implements Provider<MetadataStorage> {
     if (Constants.Metadata.STORAGE_PROVIDER_NOSQL.equalsIgnoreCase(config)) {
       return injector.getInstance(DatasetMetadataStorage.class);
     }
+
+    // TODO (CDAP-21173): Load elastic search implementation using DelegatingMetadataStorage
     if (Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH.equalsIgnoreCase(config)) {
       return injector.getInstance(ElasticsearchMetadataStorage.class);
     }
-    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '"
-        + Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '"
-        + Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
+    if (Constants.Metadata.STORAGE_PROVIDER_SPANNER.equalsIgnoreCase(config)) {
+      return injector.getInstance(DelegatingMetadataStorage.class);
+    }
+    String errorMessage = String.format(
+      "Unsupported MetadataStorage '%s'. Only '%s', '%s' and '%s' are allowed.",
+      config,
+      Constants.Metadata.STORAGE_PROVIDER_NOSQL,
+      Constants.Metadata.STORAGE_PROVIDER_SPANNER,
+      Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH
+    );
+    throw new IllegalArgumentException(errorMessage);
   }
 }
