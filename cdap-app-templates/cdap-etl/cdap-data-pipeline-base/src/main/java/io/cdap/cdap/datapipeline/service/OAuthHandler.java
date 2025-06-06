@@ -288,9 +288,32 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       } catch (JsonSyntaxException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
       }
-      if (refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty()) {
+
+      boolean hasRefreshToken = refreshTokenResponse.getRefreshToken() != null
+          && !refreshTokenResponse.getRefreshToken().isEmpty();
+      boolean hasAccessToken = refreshTokenResponse.getAccessToken() != null
+          && !refreshTokenResponse.getAccessToken().isEmpty();
+
+      if (!hasAccessToken) {
         throw new OAuthServiceException(
-            HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body does not have refresh token");
+            HttpURLConnection.HTTP_BAD_REQUEST,
+            String.format("Access token response body does not have access token. The actual response received : %s",
+                response.getResponseBodyAsString()));
+      }
+
+      // API has given us a new refresh token
+      if (hasRefreshToken && !refreshToken.getRefreshToken().equals(refreshTokenResponse.getRefreshToken())) {
+        OAuthRefreshToken newRefreshToken = OAuthRefreshToken.newBuilder()
+                .withRefreshToken(refreshTokenResponse.getRefreshToken())
+                .withRedirectURI(refreshToken.getRedirectURI())
+                .build();
+
+        try {
+          oauthStore.writeRefreshToken(provider, credentialId, newRefreshToken);
+        } catch (OAuthStoreException e) {
+          throw new OAuthServiceException(
+              HttpURLConnection.HTTP_INTERNAL_ERROR, "An error occurred while writing the new refresh token");
+        }
       }
 
       responder.sendString(GSON.toJson(
