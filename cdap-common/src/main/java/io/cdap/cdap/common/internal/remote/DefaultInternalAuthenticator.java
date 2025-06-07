@@ -22,12 +22,15 @@ import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import java.util.function.BiConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A class which sets internal authenticated headers for the remote client using an {@link
  * AuthenticationContext} as the source.
  */
 public class DefaultInternalAuthenticator implements InternalAuthenticator {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultInternalAuthenticator.class);
 
   private final AuthenticationContext authenticationContext;
 
@@ -38,7 +41,9 @@ public class DefaultInternalAuthenticator implements InternalAuthenticator {
 
   @Override
   public void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter) {
+    LOG.info("Inside DefaultInternalAuthenticator applyInternalAuthenticationHeaders");
     Principal principal = authenticationContext.getPrincipal();
+    LOG.info("DefaultInternalAuthenticator applyInternalAuthenticationHeaders principal: {}", principal);
     String userID = null;
     Credential internalCredentials = null;
     if (principal != null) {
@@ -53,5 +58,6 @@ public class DefaultInternalAuthenticator implements InternalAuthenticator {
     if (userID != null) {
       headerSetter.accept(Constants.Security.Headers.USER_ID, userID);
     }
+    LOG.info("DefaultInternalAuthenticator applyInternalAuthenticationHeaders headerSetter: {}", headerSetter);
   }
 }

@@ -135,7 +135,9 @@ public class RemoteClientFactory {
   public RemoteClient createRemoteClient(String discoverableServiceName,
       HttpRequestConfig httpRequestConfig, String basePath,
       InternalAuthenticator internalAuthenticator) {
+    LOG.info("Inside createRemoteClient(), discoverableServiceName: {}, httpRequestConfig: {}, basePath:{}, internalAuthenticator:{}", discoverableServiceName, httpRequestConfig, basePath, internalAuthenticator);
     basePath = basePath.startsWith("/") ? pathPrefix + basePath : pathPrefix + "/" + basePath;
+    LOG.info("internalRouterEnabled: {}", internalRouterEnabled);
     if (this.internalRouterEnabled) {
       return getClientForInternalRouter(discoverableServiceName,
           httpRequestConfig, basePath, internalAuthenticator);
@@ -148,12 +150,13 @@ public class RemoteClientFactory {
   private RemoteClient getClientForInternalRouter(String destinationServiceName,
       HttpRequestConfig httpRequestConfig, String basePath,
       InternalAuthenticator internalAuthenticator) {
-    LOG.trace(
+    LOG.info(
         "Creating client for service '{}' which routes through service '{}'.",
         destinationServiceName, Service.INTERNAL_ROUTER);
     String internalRouterPath = String.format("/%s/router/services/%s%s",
         Constants.Gateway.INTERNAL_API_VERSION_3, destinationServiceName,
         basePath);
+    LOG.info("internalRouterPath: {}", internalRouterPath);
     return new RemoteClient(internalAuthenticator, discoveryClient,
         Service.INTERNAL_ROUTER, httpRequestConfig, internalRouterPath,
         remoteAuthenticator);

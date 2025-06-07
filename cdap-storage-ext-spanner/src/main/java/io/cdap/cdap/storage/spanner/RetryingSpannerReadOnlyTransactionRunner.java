@@ -31,19 +31,19 @@ import org.slf4j.LoggerFactory;
 /**
  * Retries Cloud Spanner operations in case they fail due to retryable errors.
  */
-public class RetryingSpannerTransactionRunner implements TransactionRunner {
+public class RetryingSpannerReadOnlyTransactionRunner implements TransactionRunner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RetryingSpannerReadOnlyTransactionRunner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RetryingSpannerTransactionRunner.class);
   static final String MAX_RETRIES = "tx.runner.max.retries";
   static final String INITIAL_DELAY_MILLIS = "tx.runner.initial.delay.ms";
   private final int maxRetries;
   private final int initialDelayMs;
-  private final SpannerTransactionRunner transactionRunner;
+  private final SpannerReadOnlyTransactionRunner transactionRunner;
 
-  RetryingSpannerTransactionRunner(Map<String, String> conf, SpannerStructuredTableAdmin admin) {
+  RetryingSpannerReadOnlyTransactionRunner(Map<String, String> conf, SpannerStructuredTableAdmin admin) {
     this.maxRetries = Integer.parseInt(conf.get(MAX_RETRIES));
     this.initialDelayMs = Integer.parseInt(conf.get(INITIAL_DELAY_MILLIS));
-    this.transactionRunner = new SpannerTransactionRunner(admin);
+    this.transactionRunner = new SpannerReadOnlyTransactionRunner(admin);
   }
 
   @Override
@@ -55,6 +55,7 @@ public class RetryingSpannerTransactionRunner implements TransactionRunner {
     while (counter < maxRetries) {
       counter++;
       try {
+        LOG.info("Using Spanner Read only tx...");
         transactionRunner.run(runnable);
         return;
       } catch (TransactionException e) {

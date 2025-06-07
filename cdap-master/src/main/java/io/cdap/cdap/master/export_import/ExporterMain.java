@@ -3,158 +3,263 @@ package io.cdap.cdap.master.export_import;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
-import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
+import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import java.io.File;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import kafka.utils.Json;
-import com.google.inject.Guice;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.cdap.cdap.common.conf.CConfiguration;
-import com.google.inject.Injector;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import io.cdap.cdap.proto.NamespaceMeta;
 
+/**
+ * Main class for the export job, which exports namespaces and pipelines via internal HTTP APIs.
+ */
 public class ExporterMain {
+  private static final Logger LOG = LoggerFactory.getLogger(ExporterMain.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+      new GsonBuilder().setPrettyPrinting()).create();
 
-  private static final Logger LOG = (Logger) LoggerFactory.getLogger(ExporterMain.class);
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+  public static void main(String[] args) throws IOException {
+    long jobStartTime = System.currentTimeMillis();
+    if (args.length < 1) {
+      LOG.error("Usage: ExporterMain <gcs-bucket-uri>");
+      System.exit(1);
+    }
+    String gcsBackupPath = "gs://" + args[0] + "/";
+    JobReport report = new JobReport(JobReport.JobType.EXPORT);
+    MasterEnvironment masterEnv = null;
+    TokenManager tokenManager = null;
 
-  public static void main(String[] args) {
-    LOG.info("Starting CDAP Namespace Export Job using LocationFactory...");
-    // LOG.debug("Received arguments: {}", Arrays.toString(args));
+    long namespaceTime = 0, pipelineTime = 0;
+    AtomicInteger namespaceCount = new AtomicInteger(0);
+    AtomicInteger pipelineCount = new AtomicInteger(0);
 
-    // if (args.length < 1) {
-    //   LOG.error("Usage: ExportJobMain <gcs-bucket-uri>");
-    //   LOG.error("Example: ExportJobMain gs://my-backup-bucket/run-123");
-    //   System.exit(1);
-    // }
+    // LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+    //     Constants.Logging.COMPONENT_NAME,
+    //     Service.EXPORTER));
 
     try {
-      Injector injector = initializeInjector();
-      // TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+      CConfiguration cConf = CConfiguration.create();
+      Configuration hConf = new Configuration();
+      File hConfFile = new File("/etc/hadoop/conf/core-site.xml");
+      if (hConfFile.exists()) {
+        hConf.addResource(hConfFile.toURI().toURL());
+      }
+
+      masterEnv = MasterEnvironments.setMasterEnvironment(MasterEnvironments.create(cConf, "k8s"));
+      MasterEnvironmentContext masterEnvContext = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+      masterEnv.initialize(masterEnvContext);
+
+      Injector injector = initializeInjector(cConf, hConf, masterEnv);
+
+      // Start the token manager to ensure internal authentication is initialized.
+      tokenManager = injector.getInstance(TokenManager.class);
+      LOG.info("Starting TokenManager service...");
+      tokenManager.startAndWait();
+      LOG.info("TokenManager service started successfully.");
+
       LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+      RemoteFetchDataClient cdapClient = injector.getInstance(RemoteFetchDataClient.class);
 
-      // --- Execute the Export Logic ---
-      // exportNamespaces(transactionRunner, locationFactory, gcsBackupPath);
-      exportNamespaces(locationFactory);
+      report.open(locationFactory, gcsBackupPath);
 
-      LOG.info("Job finished successfully.");
+      // Export Namespaces
+      long startTime = System.currentTimeMillis();
+      List<NamespaceMeta> allNamespaces = exportNamespaces(cdapClient, locationFactory, gcsBackupPath,
+          report, namespaceCount);
+      namespaceTime = System.currentTimeMillis() - startTime;
+
+      // Export Pipelines with pagination
+      startTime = System.currentTimeMillis();
+      exportPipelines(allNamespaces, cdapClient, locationFactory, gcsBackupPath,
+          report, pipelineCount);
+      pipelineTime = System.currentTimeMillis() - startTime;
+
     } catch (Exception e) {
       LOG.error("Job failed with an unrecoverable error.", e);
       System.exit(1);
+    } finally {
+      if (tokenManager != null && tokenManager.isRunning()) {
+        LOG.info("Stopping TokenManager service...");
+        tokenManager.stopAndWait();
+      }
+      if (masterEnv != null) {
+        masterEnv.destroy();
+      }
+      long jobEndTime = System.currentTimeMillis();
+      if (report.isOpen()) {
+        Map<String, String> summaryData = new LinkedHashMap<>();
+        summaryData.put("Total Job Time (seconds)", String.format("%.2f", (jobEndTime - jobStartTime) / 1000.0));
+        summaryData.put("---", "---");
+        summaryData.put("Namespace Export Time (seconds)", String.format("%.2f", namespaceTime / 1000.0));
+        summaryData.put("Namespace Count", namespaceCount.toString());
+        summaryData.put("Pipeline Export Time (seconds)", String.format("%.2f", pipelineTime / 1000.0));
+        summaryData.put("Pipeline Version Count", pipelineCount.toString());
+        report.writeSummaryReport(summaryData);
+      }
+      report.close();
+      LOG.info("==================== EXPORT SUMMARY ====================");
+      LOG.info(String.format("Namespace Export: %.2f seconds for %d namespaces",
+          namespaceTime / 1000.0, namespaceCount.get()));
+      LOG.info(String.format("Pipeline Export:  %.2f seconds for %d pipeline versions",
+          pipelineTime / 1000.0, pipelineCount.get()));
+      LOG.info("------------------------------------------------------");
+      LOG.info(String.format("Total Job Time:     %.2f seconds", (jobEndTime - jobStartTime) / 1000.0));
+      LOG.info("========================================================");
     }
   }
 
-  /**
-   * Sets up the Guice injector with all necessary modules.
-   */
-  private static Injector initializeInjector() throws MalformedURLException {
-    LOG.info("Initializing Guice injector...");
-
-    CConfiguration cConf = CConfiguration.create();
-    Configuration hConf = new Configuration();
-    File hConfFile = new File("/etc/hadoop/conf/core-site.xml");
-    if (hConfFile.exists()) {
-      hConf.addResource(hConfFile.toURI().toURL());
-      LOG.info("Loaded hConf from {}", hConfFile.getAbsolutePath());
-    }
-
-    // --- FIX: Programmatically set the GCS connector properties ---
-    // This ensures Hadoop knows how to handle the "gs://" scheme, even if
-    // the mounted core-site.xml is missing these properties.
-    hConf.set("fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem");
+  private static Injector initializeInjector(CConfiguration cConf, Configuration hConf, MasterEnvironment masterEnv)
+      throws MalformedURLException {
     hConf.set("fs.AbstractFileSystem.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFS");
-    // The following property is needed to enable service account authentication via Workload Identity.
     hConf.setBoolean("fs.gs.auth.service.account.enable", true);
+
     List<Module> modules = new ArrayList<>(Arrays.asList(
-        new ConfigModule(cConf,hConf),
-        new StorageModule(),
+        new ConfigModule(cConf, hConf),
+        new IOModule(),
         new DFSLocationModule(),
+        new AuthenticationContextModules().getMasterModule(),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
-                .in(Scopes.SINGLETON);
+            bind(DiscoveryService.class)
+                .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+            bind(DiscoveryServiceClient.class)
+                .toProvider(
+                    new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+            bind(RemoteFetchDataClient.class).in(Scopes.SINGLETON);
           }
         }
     ));
-    // Injector injector = Guice.createInjector(
-    //     new DataFabricModules().getStandaloneModules(),
-    //     new DataSetServiceModules().getStandaloneModules(),
-    //     new TransactionExecutorModule(),
-    //     new DFSLocationModule(), // <-- This module provides the LocationFactory
-    //     binder -> {
-    //       binder.bind(CConfiguration.class).toInstance(cConf);
-    //       binder.bind(Configuration.class).toInstance(hConf);
-    //     }
-    // );
-    Injector injector = Guice.createInjector(modules);
-
-    LOG.info("Guice injector created successfully.");
-    return injector;
+    return Guice.createInjector(modules);
   }
 
-  /**
-   * Fetches all namespaces and uploads their metadata to a GCS location.
-   */
-  public static void exportNamespaces(LocationFactory locationFactory) throws Exception {
-    String backupPath = "gs://useast1-temp-bucket/";
-    LOG.info("Starting export of namespaces to base path: {}", backupPath);
-    System.out.println("Starting export");
-
-    // List<NamespaceMeta> namespaces = TransactionRunners.run(transactionRunner, context -> {
-    //   NamespaceTable namespaceTable = new NamespaceTable(context);
-    //   return namespaceTable.list();
-    // });
-    //
-    // LOG.info("Found {} namespaces to export.", namespaces.size());
-
-    // Create the base location from the argument string
+  public static List<NamespaceMeta> exportNamespaces(RemoteFetchDataClient cdapClient, LocationFactory locationFactory,
+      String backupPath, JobReport report, AtomicInteger namespaceCounter)
+      throws Exception {
+    LOG.info("Starting export of all namespaces...");
+    List<NamespaceMeta> namespaces = cdapClient.listNamespaces();
     Location baseLocation = locationFactory.create(backupPath);
-    baseLocation.mkdirs(); // Ensure base directory exists
+    baseLocation.mkdirs();
+    Location namespacesDir = baseLocation.append("namespaces");
 
-    // for (NamespaceMeta namespace : namespaces) {
-    //   String namespaceId = namespace.getName();
-    //   LOG.debug("Processing namespace '{}'...", namespaceId);
-
-      // Get a child location for this specific namespace's metadata
-    NamespaceMeta dummyNamespace = new NamespaceMeta.Builder()
-        .setName("dummyNamespace")
-        .setDescription("This is a dummy namespace for the export POC.")
-        .build();
-      Location namespaceLocation = baseLocation.append(dummyNamespace.getName()).append("namespaceMeta.json");
-
-      // Use try-with-resources to automatically close the stream
-      try (OutputStream outputStream = namespaceLocation.getOutputStream();
-          Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-
-        // Convert the NamespaceMeta object to a JSON string and write it
-
-        GSON.toJson(dummyNamespace, writer);
+    for (NamespaceMeta namespace : namespaces) {
+      namespaceCounter.incrementAndGet();
+      String namespaceId = namespace.getName();
+      try {
+        Location namespaceLocation = namespacesDir.append(namespaceId).append("namespaceMeta.json");
+        try (Writer writer = new OutputStreamWriter(namespaceLocation.getOutputStream(), StandardCharsets.UTF_8)) {
+          GSON.toJson(namespace, writer);
+        }
+        report.addSuccess("Namespace", namespaceId, "N/A", namespaceLocation.toURI().toString());
+      } catch (Exception e) {
+        LOG.error("Failed to export namespace '{}'", namespaceId, e);
+        report.addFailure("Namespace", namespaceId, "N/A", e.getMessage());
       }
-
-      LOG.info("Successfully exported namespace '{}' to {}", dummyNamespace, namespaceLocation.toURI());
-    // }
-
-    LOG.info("Finished exporting all namespaces.");
+    }
+    LOG.info("Finished exporting {} namespaces.", namespaceCounter.get());
+    return namespaces;
   }
 
+  public static void exportPipelines(List<NamespaceMeta> allNamespaces, RemoteFetchDataClient cdapClient,
+      LocationFactory locationFactory, String backupPath, JobReport report,
+      AtomicInteger pipelineCounter) {
+    LOG.info("Starting export of all pipeline versions with pagination...");
+    for (NamespaceMeta namespace : allNamespaces) {
+      String namespaceName = namespace.getName();
+      LOG.info("Starting pipeline export for namespace '{}'.", namespaceName);
+      try {
+        String nextPageToken = null;
+        boolean hasMorePages = true;
+
+        while (hasMorePages) {
+          LOG.debug("Fetching page of applications from namespace '{}' with token '{}'", namespaceName, nextPageToken);
+          // Fetch one page of applications.
+          RemoteFetchDataClient.PaginatedAppResponse response = cdapClient.listApplications(namespaceName, nextPageToken);
+          List<ApplicationRecord> appRecords = response.getApplications();
+          LOG.debug("Fetched {} applications in this page.", appRecords.size());
+
+          for (ApplicationRecord appRecord : appRecords) {
+            String appName = appRecord.getName();
+            String appVersion = appRecord.getAppVersion();
+            try {
+              // Get the full detail for this specific version.
+              ApplicationDetail appDetail = cdapClient.getApplicationDetail(namespaceName, appName, appVersion);
+
+              // Per your excellent suggestion, we will export the ApplicationDetail object directly.
+              // This is the correct approach as it contains all necessary information for the import
+              // and avoids the bug of trying to access a non-existent AppSpecification.
+              Location pipelineVersionDir = locationFactory.create(backupPath)
+                  .append("namespaces").append(namespaceName)
+                  .append("pipelines").append(appName).append(appVersion);
+              pipelineVersionDir.mkdirs();
+
+              Location pipelineFile = pipelineVersionDir.append("pipeline.json");
+              try (Writer writer = new OutputStreamWriter(pipelineFile.getOutputStream(), StandardCharsets.UTF_8)) {
+                GSON.toJson(appDetail, writer);
+              }
+
+              pipelineCounter.incrementAndGet();
+              String pipelineIdForReport = String.format("%s (v%s)", appName, appVersion);
+              report.addSuccess("Pipeline", pipelineIdForReport, namespaceName, pipelineFile.toURI().toString());
+            } catch (Exception e) {
+              LOG.error("Failed to export pipeline '{}/{}'", appName, appVersion, e);
+              report.addFailure("Pipeline", String.format("%s (v%s)", appName, appVersion),
+                  namespaceName, e.getMessage());
+            }
+          }
+
+          // Prepare for the next iteration.
+          nextPageToken = response.getNextPageToken();
+          if (nextPageToken == null || nextPageToken.isEmpty()) {
+            hasMorePages = false;
+          }
+        }
+      } catch (Exception e) {
+        LOG.error("Failed to list applications for namespace '{}'", namespaceName, e);
+        report.addFailure("Pipeline-Batch", "ALL", namespaceName, e.getMessage());
+      }
+    }
+    LOG.info("Finished exporting {} pipeline versions.", pipelineCounter.get());
+  }
 }

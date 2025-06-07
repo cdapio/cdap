@@ -51,6 +51,7 @@ public final class MasterEnvironments {
     if (masterEnv == null) {
       throw new NotFoundException("Master environment of name " + envName + " does not exist");
     }
+
     return masterEnv;
   }
 

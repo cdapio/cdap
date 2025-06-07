@@ -663,7 +663,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
    * {@link
    * UnsupportedUGIProvider} will be used.
    */
-  private static final class UgiProviderProvider implements Provider<UGIProvider> {
+  public static final class UgiProviderProvider implements Provider<UGIProvider> {
 
     private final Injector injector;
     private final CConfiguration cConf;

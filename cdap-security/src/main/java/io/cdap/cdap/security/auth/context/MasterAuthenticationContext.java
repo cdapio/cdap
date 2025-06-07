@@ -23,6 +23,8 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import java.io.IOException;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An {@link AuthenticationContext} for HTTP requests in the Master. The authentication details in
@@ -37,19 +39,23 @@ import org.apache.hadoop.security.UserGroupInformation;
  * @see UserGroupInformation
  */
 public class MasterAuthenticationContext implements AuthenticationContext {
+  private static final Logger LOG = LoggerFactory.getLogger(MasterAuthenticationContext.class);
 
   @Override
   public Principal getPrincipal() {
     // When requests come in via rest endpoints, the userId is updated inside SecurityRequestContext, so give that
     // precedence.
     String userId = SecurityRequestContext.getUserId();
+    LOG.info("MasterAuthenticationContext userId: {}", userId);
     Credential userCredential = SecurityRequestContext.getUserCredential();
+    LOG.info("MasterAuthenticationContext Credential userCredential: {}", userCredential);
     // This userId can be null, when the master itself is asynchoronously updating the policy cache, since
     // during that process the router will not set the SecurityRequestContext. In that case, obtain the userId from
     // the UserGroupInformation, which will be the user that the master is running as.
     if (userId == null) {
       try {
         userId = UserGroupInformation.getCurrentUser().getShortUserName();
+        LOG.info("UserGroupInformation.getCurrentUser().getShortUserName() userId: {}", userId);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

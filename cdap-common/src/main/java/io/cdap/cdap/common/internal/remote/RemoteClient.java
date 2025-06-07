@@ -52,6 +52,8 @@ import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
@@ -66,6 +68,7 @@ public class RemoteClient {
   private final String discoverableServiceName;
   private final String basePath;
   private final RemoteAuthenticator remoteAuthenticator;
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
       String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
@@ -266,6 +269,7 @@ public class RemoteClient {
     }
 
     URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
+
     try {
       return rewriteUrl(uri.toURL());
     } catch (MalformedURLException e) {

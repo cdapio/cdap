@@ -66,7 +66,9 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     // receiving request.
 
     String userId = SecurityRequestContext.getUserId();
+    LOG.info("Inside getPrincipal of SystemAuthenticationContext:userId: {}", userId);
     Credential userCredential = SecurityRequestContext.getUserCredential();
+    LOG.info("Inside getPrincipal of SystemAuthenticationContext:userCredential: {}", userCredential);
     if (userId != null && userCredential != null) {
       return new Principal(userId, Principal.PrincipalType.USER, userCredential);
     } else if (userId != null && userCredential == null) {
@@ -79,6 +81,7 @@ public class SystemAuthenticationContext implements AuthenticationContext {
 
     try {
       userId = UserGroupInformation.getCurrentUser().getShortUserName();
+      LOG.info("serGroupInformation.getCurrentUser().getShortUserName(); userId: {}", userId);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -86,12 +89,15 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     UserIdentity identity = new UserIdentity(userId, UserIdentity.IdentifierType.INTERNAL,
         Collections.emptyList(), currentTimestamp,
         currentTimestamp + DEFAULT_EXPIRATION);
+    LOG.info("UserIdentity identity: {}", identity);
     AccessToken accessToken = tokenManager.signIdentifier(identity);
+    LOG.info("AccessToken accessToken: {}", accessToken);
     String encodedAccessToken;
     try {
       encodedAccessToken = Base64.getEncoder().encodeToString(accessTokenCodec.encode(accessToken));
       Credential credential = new Credential(encodedAccessToken,
           Credential.CredentialType.INTERNAL);
+      LOG.info("Credential credential: {}", credential);
       return new Principal(userId, Principal.PrincipalType.USER, credential);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected failure while creating internal system identity", e);

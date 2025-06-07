@@ -121,6 +121,8 @@ public final class Constants {
    */
   public static final class Service {
 
+    public static final String EXPORTER = "export";
+    public static final String IMPORTER = "import";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String APP_FABRIC_PROCESSOR = "appfabric.processor";
     public static final String TRANSACTION = "transaction";

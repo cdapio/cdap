@@ -28,6 +28,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link StorageProvider} implementation that uses Google Cloud Spanner as the storage engine.
@@ -52,10 +54,12 @@ public class SpannerStorageProvider implements StorageProvider {
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
   public static final String COMPRESSION_CONFIG = "compression.config";
+  public static final String USE_READ_ONLY_TX = "use.read.only.tx";
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerStorageProvider.class);
 
   private Spanner spanner;
   private SpannerStructuredTableAdmin admin;
-  private RetryingSpannerTransactionRunner txRunner;
+  private TransactionRunner txRunner;
 
   @Override
   public void initialize(StorageProviderContext context) throws Exception {
@@ -91,7 +95,15 @@ public class SpannerStorageProvider implements StorageProvider {
 
     this.spanner = options.getService();
     this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
-    this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+    LOG.info("Value of use.read.only.tx is {}", Boolean.parseBoolean(conf.get(USE_READ_ONLY_TX)));
+    if (Boolean.parseBoolean(conf.get(USE_READ_ONLY_TX))) {
+      LOG.info("We are using read only tx");
+      this.txRunner = new RetryingSpannerReadOnlyTransactionRunner(conf, admin);
+    }
+    else{
+      LOG.info("We are using readandwrite tx");
+      this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+    }
   }
 
   @Override

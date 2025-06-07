@@ -255,6 +255,11 @@
       <version>4.0.3</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-runtime-ext-dataproc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <profiles>
