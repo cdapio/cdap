@@ -62,7 +62,9 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.8.1</version>
             <executions>
               <execution>
                 <configuration combine.self="override">
@@ -81,8 +83,6 @@
                 <phase>prepare-package</phase>
               </execution>
             </executions>
-            <groupId>org.apache.maven.plugins</groupId>
-            <version>2.8</version>
           </plugin>
           <plugin>
             <artifactId>maven-jar-plugin</artifactId>
