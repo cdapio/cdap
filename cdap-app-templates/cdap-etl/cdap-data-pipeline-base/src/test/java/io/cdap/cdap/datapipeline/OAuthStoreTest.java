@@ -122,4 +122,19 @@ public class OAuthStoreTest {
     verify(mockSecureStoreManager, times(1))
         .put(eq("system"), eq("oauthaccesstoken-provider-id0"), any(), eq("OAuth access token"), any());
   }
+
+  @Test
+  public void testWriteRefreshAndAccessToken() throws Exception {
+    doNothing().when(mockSecureStoreManager).put(anyString(), anyString(), any(), anyString(), any());
+
+    OAuthAccessToken token = OAuthAccessToken.newBuilder()
+        .withAccessToken("badtoken")
+        .withRefreshToken("muhtoken")
+        .withRedirectURI("uri")
+        .build();
+    oauthStore.writeAccessToken("Provider", "ID0", token);
+
+    verify(mockSecureStoreManager, times(1))
+        .put(eq("system"), eq("oauthrefreshtoken-provider-id0"), any(), eq("OAuth refresh token"), any());
+  }
 }
