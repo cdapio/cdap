@@ -26,17 +26,17 @@ public class ApplicationUpgradeDetail {
 
   private final String name;
   private final ArtifactUpgradeDetail applicationArtifactUpgradeDetail;
-  private final List<ArtifactUpgradeDetail> pluginUpgradeDetail;
+  private final List<PluginUpgradeDetail> pluginUpgradeDetails;
   private final boolean upgradable;
 
 
   public ApplicationUpgradeDetail(String name, ArtifactUpgradeDetail applicationArtifactUpgradeDetail,
-      List<ArtifactUpgradeDetail> pluginUpgradeDetail) {
+      List<PluginUpgradeDetail> pluginUpgradeDetails) {
     this.name = name;
     this.applicationArtifactUpgradeDetail = applicationArtifactUpgradeDetail;
-    this.pluginUpgradeDetail = pluginUpgradeDetail;
+    this.pluginUpgradeDetails = pluginUpgradeDetails;
     this.upgradable =
-        applicationArtifactUpgradeDetail.isUpgradable() || pluginUpgradeDetail.stream()
+        applicationArtifactUpgradeDetail.isUpgradable() || pluginUpgradeDetails.stream()
             .anyMatch(ArtifactUpgradeDetail::isUpgradable);
   }
 
@@ -48,8 +48,8 @@ public class ApplicationUpgradeDetail {
     return applicationArtifactUpgradeDetail;
   }
 
-  public List<ArtifactUpgradeDetail> getPluginUpgradeDetails() {
-    return pluginUpgradeDetail;
+  public List<PluginUpgradeDetail> getPluginUpgradeDetails() {
+    return pluginUpgradeDetails;
   }
 
   public boolean isUpgradable() {
@@ -67,12 +67,12 @@ public class ApplicationUpgradeDetail {
     ApplicationUpgradeDetail that = (ApplicationUpgradeDetail) o;
     return upgradable == that.upgradable && Objects.equals(name, that.name)
         && Objects.equals(applicationArtifactUpgradeDetail,
-        that.applicationArtifactUpgradeDetail) && Objects.equals(pluginUpgradeDetail,
-        that.pluginUpgradeDetail);
+        that.applicationArtifactUpgradeDetail) && Objects.equals(pluginUpgradeDetails,
+        that.pluginUpgradeDetails);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, applicationArtifactUpgradeDetail, pluginUpgradeDetail, upgradable);
+    return Objects.hash(name, applicationArtifactUpgradeDetail, pluginUpgradeDetails, upgradable);
   }
 }
