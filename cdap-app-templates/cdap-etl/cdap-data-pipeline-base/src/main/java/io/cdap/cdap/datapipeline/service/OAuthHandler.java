@@ -217,8 +217,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       if (!hasAccessToken && !hasRefreshToken) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_BAD_REQUEST,
-            "Refresh token response body did not contain a refresh token or access token. \n" +
-                refreshTokenResponse
+            String.format("Refresh token response is missing the required access token or refresh token. See the full response body: %s", refreshTokenResponse);
         );
       }
 
