@@ -154,6 +154,7 @@ public final class Constants {
     public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
     public static final String PREVIEW_HTTP = "preview";
+    public static final String PREVIEW_RUNNER_HTTP = "preview.runner";
     public static final String SECURE_STORE_SERVICE = "secure.store.service";
     public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
@@ -446,6 +447,8 @@ public final class Constants {
      */
     public static final String ADDRESS = "preview.bind.address";
     public static final String PORT = "preview.bind.port";
+    public static final String RUNNER_ADDRESS = "preview.runner.bind.address";
+    public static final String RUNNER_PORT = "preview.runner.bind.port";
     public static final String BACKLOG_CONNECTIONS = "preview.connection.backlog";
     public static final String EXEC_THREADS = "preview.exec.threads";
     public static final String BOSS_THREADS = "preview.boss.threads";
