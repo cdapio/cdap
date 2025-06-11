@@ -254,7 +254,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                         "System_Tokens TOKENLIST AS " +
                         "(TOKENIZE_SUBSTRING(SYSTEM, ngram_size_min=>1, ngram_size_max=>3)) HIDDEN," +
                         "Text_Tokens TOKENLIST AS " +
-                        "(TOKENLIST_CONCAT([User_Tokens, System_Tokens]) HIDDEN," +
+                        "(TOKENLIST_CONCAT([User_Tokens, System_Tokens])) HIDDEN," +
                         ")PRIMARY KEY (metadata_id) ", // primary key
                 METADATA_TABLE,
                 NAMESPACE_FIELD,
