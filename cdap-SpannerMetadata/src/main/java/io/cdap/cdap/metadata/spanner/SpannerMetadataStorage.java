@@ -467,6 +467,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
     private Metadata createMetadataFromJson(String json) {
         Gson gson = new Gson();
+        // Use a TypeToken to represent Map<String, Object> for the top-level structure
         TypeToken<Map<String, Object>> typeToken = new TypeToken<Map<String, Object>>() {};
         Map<String, Object> map = gson.fromJson(json, typeToken.getType());
 
@@ -476,39 +477,65 @@ public class SpannerMetadataStorage implements MetadataStorage {
         if (map != null) {
             // Parse tags as a list of strings
             if (map.containsKey("tags") && map.get("tags") instanceof List) {
-                List<String> tagList = (List<String>) map.get("tags");
-                for (String tag : tagList) {
-                    // Assuming your tags are of the format "scope:name"
-                    String[] parts = tag.split(":");
-                    if (parts.length == 2) {
-                        try {
-                            tags.add(new ScopedName(MetadataScope.valueOf(parts[0]), parts[1]));
-                        } catch (IllegalArgumentException e) {
-                            // Handle invalid scope names if necessary
-                            System.err.println("Invalid scope name: " + parts[0]);
+                // Cast to List<?> first, then iterate and check each element
+                List<?> tagListRaw = (List<?>) map.get("tags");
+                for (Object tagObj : tagListRaw) {
+                    if (tagObj instanceof String) { // Ensure the tag is actually a string
+                        String tag = (String) tagObj;
+                        String[] parts = tag.split(":");
+                        if (parts.length == 2) {
+                            try {
+                                tags.add(new ScopedName(MetadataScope.valueOf(parts[0].toUpperCase()), parts[1]));
+                            } catch (IllegalArgumentException e) {
+                                // Log or handle invalid scope names if necessary
+                                System.err.println("Invalid metadata scope for tag: '" + parts[0] + "'. " +
+                                                     "Ignoring tag: " + tag);
+                            }
+                        } else {
+                            System.err.println("Tag does not conform to 'SCOPE:name' format: " + tag);
                         }
+                    } else {
+                        System.err.println("Tag is not a string: " + tagObj.getClass().getName() + " value: " + tagObj);
                     }
                 }
             }
 
-            // Parse properties as a map of strings to strings
+            // Parse properties
             if (map.containsKey("properties") && map.get("properties") instanceof Map) {
-                Map<String, String> propMap = (Map<String, String>) map.get("properties");
-                for (Map.Entry<String, String> entry : propMap.entrySet()) {
-                    // Assuming your properties are of the format "scope:name"
-                    String[] parts = entry.getKey().split(":");
+                // Crucial change: properties map values can be any Object
+                Map<String, Object> propMapRaw = (Map<String, Object>) map.get("properties");
+
+                for (Map.Entry<String, Object> entry : propMapRaw.entrySet()) {
+                    String key = entry.getKey();
+                    Object value = entry.getValue(); // This could be a String, LinkedTreeMap, ArrayList, etc.
+
+                    String stringValue;
+                    if (value instanceof String) {
+                        stringValue = (String) value;
+                    } else if (value != null) {
+                        // If the value is not a String (e.g., LinkedTreeMap from the "SYSTEM:schema" JSON),
+                        // convert it back to its JSON string representation.
+                        stringValue = gson.toJson(value);
+                    } else {
+                        stringValue = null; // Handle null values explicitly if needed
+                    }
+
+                    String[] parts = key.split(":");
                     if (parts.length == 2) {
                         try {
-                            properties.put(new ScopedName(MetadataScope.valueOf(parts[0]), parts[1]), entry.getValue());
+                            properties.put(new ScopedName(MetadataScope.valueOf(parts[0].toUpperCase()),
+                                                          parts[1]), stringValue);
                         } catch (IllegalArgumentException e) {
-                            // Handle invalid scope names if necessary
-                            System.err.println("Invalid scope name: " + parts[0]);
+                            // Log or handle invalid scope names for properties
+                            System.err.println("Invalid metadata scope for property key: '" + parts[0] + "'. " +
+                                                 "Ignoring property: " + key);
                         }
+                    } else {
+                        System.err.println("Property key does not conform to 'SCOPE:name' format: " + key);
                     }
                 }
             }
         }
-
         return new Metadata(tags, properties);
     }
 
