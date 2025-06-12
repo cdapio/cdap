@@ -686,12 +686,32 @@ public class SpannerMetadataStorage implements MetadataStorage {
                                     Metadata updates) {
         Set<ScopedName> tags = new HashSet<>(before.getMetadata().getTags());
         tags.addAll(updates.getTags());
+
+        // --- Start of Changed Logic ---
         Map<ScopedName, String> properties = new HashMap<>(before.getMetadata().getProperties());
-        properties.putAll(updates.getProperties());
+
+        // Instead of putAll, iterate and apply the append logic
+        for (Map.Entry<ScopedName, String> updateEntry : updates.getProperties().entrySet()) {
+            ScopedName propertyName = updateEntry.getKey();
+            String newValue = updateEntry.getValue();
+
+            // Check if the property already exists and the value is different
+            if (properties.containsKey(propertyName) && !properties.get(propertyName).equals(newValue)) {
+                // It exists and is different, so append.
+              properties.compute(propertyName, (k,
+                                                existingValue) -> existingValue + "," + newValue);
+            } else if (!properties.containsKey(propertyName)) {
+                // It's a new property, so just add it.
+                properties.put(propertyName, newValue);
+            }
+            // If the property exists and the value is the same, we do nothing.
+        }
+        // --- End of Changed Logic ---
+
         Metadata after = new Metadata(tags, properties);
         try {
             return new RequestandChange(writeToSpanner(entity, before.getVersion(), after),
-                    new MetadataChange(entity, before.getMetadata(), after));
+                                        new MetadataChange(entity, before.getMetadata(), after));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
