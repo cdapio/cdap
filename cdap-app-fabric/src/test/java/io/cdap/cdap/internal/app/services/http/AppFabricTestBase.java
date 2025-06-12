@@ -794,7 +794,7 @@ public abstract class AppFabricTestBase {
 
   protected ListUpgradeResponse listApplicationUpgrade(String namespace) throws Exception{
     HttpResponse response = doPost(getVersionedApiPath("upgrade/list",
-        Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+        Constants.Gateway.API_VERSION_3_TOKEN, namespace), "{}");
     assertResponseCode(200, response);
     return readResponse(response, ListUpgradeResponse.class);
   }

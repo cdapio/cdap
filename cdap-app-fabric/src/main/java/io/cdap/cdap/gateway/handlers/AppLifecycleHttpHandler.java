@@ -648,23 +648,23 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
    *
    * <p>
    * The response will be of type {@link ListUpgradeResponse} which contains a list of
-   * {@link io.cdap.cdap.proto.upgrade.PipelineUpgradeDetail} containing pipeline and plugin upgrade
-   * details.
+   * {@link io.cdap.cdap.proto.upgrade.ApplicationUpgradeDetail} containing pipeline and plugin
+   * upgrade details.
    * </p>
    */
   @POST
   @Path("/upgrade/list")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void listApplicationUpgrades(FullHttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespaceId) {
+      @PathParam("namespace-id") String namespace) throws Exception {
+    NamespaceId namespaceId = validateNamespace(namespace);
     ListUpgradeRequest upgradeRequest =
         DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
             new TypeToken<ListUpgradeRequest>() {
             }.getType());
     LOG.info("received list upgrade request {}", upgradeRequest);
-    // TODO(CDAP-21168): Add logic to fetch upgrade details.
     responder.sendJson(HttpResponseStatus.OK,
-        GSON.toJson(new ListUpgradeResponse(new ArrayList<>())));
+        GSON.toJson(applicationLifecycleService.listUpgradeResponse(namespaceId)));
   }
 
   /**

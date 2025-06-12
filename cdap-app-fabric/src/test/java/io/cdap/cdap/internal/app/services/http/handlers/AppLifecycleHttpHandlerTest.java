@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
@@ -29,20 +31,28 @@ import io.cdap.cdap.AppWithDatasetDuplicate;
 import io.cdap.cdap.AppWithNoServices;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.ConfigTestApp;
+import io.cdap.cdap.WorkflowAppWithPlugins;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.app.upgrade.UpgradeManager;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.id.Id.Artifact;
+import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
@@ -60,7 +70,6 @@ import io.cdap.cdap.internal.app.store.state.AppStateKey;
 import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.messaging.spi.MessagingService;
-import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
@@ -73,11 +82,15 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.profile.Profile;
+import io.cdap.cdap.proto.upgrade.ApplicationUpgradeDetail;
+import io.cdap.cdap.proto.upgrade.ArtifactUpgradeDetail;
 import io.cdap.cdap.proto.upgrade.ListUpgradeResponse;
+import io.cdap.cdap.proto.upgrade.PluginUpgradeDetail;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -85,6 +98,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -95,6 +109,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.After;
@@ -145,12 +161,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MetadataServiceClient metadataServiceClient,
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
-          CapabilityReader capabilityReader) {
+          CapabilityReader capabilityReader, UpgradeManager upgradeManager) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduleManager,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(),
+            upgradeManager));
       }
     });
   }
@@ -1625,9 +1642,111 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testListUpgradeSuccess() throws Exception {
-    // TODO(CDAP-21168): Add detailed test cases once logic is added.
-    ListUpgradeResponse response = listApplicationUpgrade("default");
-    Assert.assertEquals(new ListUpgradeResponse(new ArrayList<>()), response);
+    String ns1AppName = WorkflowAppWithPlugins.NAME;
+    Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+    Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, WorkflowAppWithPlugins.class.getSimpleName(),
+        "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(ns1ArtifactId, WorkflowAppWithPlugins.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    Id.Artifact pluginArtifact = deployPluginArtifact(ns1, ns1ArtifactId,
+        WorkflowAppWithPlugins.class,
+        "app-plugin", "1.0.0");
+    Id.Application appId = Id.Application.from(ns1, ns1AppName);
+    response = deploy(appId,
+        new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+    Assert.assertEquals(200, response.getResponseCode());
+    // Wait for metadata to propagate.
+    Tasks.waitFor(false,
+        () -> getMetadataProperties(
+            new PluginId(TEST_NAMESPACE1, "app-plugin", "1.0.0", "testplugin-1",
+                "testplugin").toMetadataEntity(), MetadataScope.SYSTEM).isEmpty(),
+        10, TimeUnit.SECONDS);
+    ListUpgradeResponse expected = new ListUpgradeResponse(ImmutableList.of(
+        new ApplicationUpgradeDetail("WorkflowAppWithPlugins",
+            new ArtifactUpgradeDetail("WorkflowAppWithPlugins", "1.0.0-SNAPSHOT", "1.0.0-SNAPSHOT"),
+            ImmutableList.of(
+                new PluginUpgradeDetail(new ArtifactUpgradeDetail("app-plugin", "1.0.0", "1.0.0"),
+                    "testplugin-1", "testplugin")))));
+
+    ListUpgradeResponse actual = listApplicationUpgrade(TEST_NAMESPACE1);
+
+    Assert.assertEquals(new HashSet<>(expected.getApplicationUpgradeDetails()),
+        new HashSet<>(actual.getApplicationUpgradeDetails()));
+
+    deleteArtifact(ns1ArtifactId, 200);
+    deleteArtifact(pluginArtifact, 200);
+  }
+
+  @Test
+  public void testListUpgradeWithArtifactAndPluginUpgradable() throws Exception {
+    String ns1AppName = WorkflowAppWithPlugins.NAME;
+    Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+    Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, WorkflowAppWithPlugins.class.getSimpleName(),
+        "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(ns1ArtifactId, WorkflowAppWithPlugins.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    // Deploying a newer version of application artifact.
+    Id.Artifact latestAppArtifact = Id.Artifact.from(ns1,
+        WorkflowAppWithPlugins.class.getSimpleName(),
+        "1.0.1");
+    response = addAppArtifact(latestAppArtifact, WorkflowAppWithPlugins.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    Id.Artifact pluginArtifact = deployPluginArtifact(ns1, ns1ArtifactId,
+        WorkflowAppWithPlugins.class, "app-plugin", "1.0.0");
+    Id.Application appId = Id.Application.from(ns1, ns1AppName);
+    response = deploy(appId,
+        new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+    Assert.assertEquals(200, response.getResponseCode());
+    // Deploy a newer version of the plugin artifact.
+    Id.Artifact latestPluginArtifact = deployPluginArtifact(ns1, ns1ArtifactId,
+        WorkflowAppWithPlugins.class, "app-plugin", "1.0.1");
+
+    // Wait for metadata to propagate since metadata writes are async.
+    Tasks.waitFor(false,
+        () -> getMetadataProperties(
+            new PluginId(TEST_NAMESPACE1, "app-plugin", "1.0.0", "testplugin-1",
+                "testplugin").toMetadataEntity(), MetadataScope.SYSTEM).isEmpty(),
+        10, TimeUnit.SECONDS);
+    ListUpgradeResponse expected = new ListUpgradeResponse(ImmutableList.of(
+        new ApplicationUpgradeDetail("WorkflowAppWithPlugins",
+            new ArtifactUpgradeDetail("WorkflowAppWithPlugins", "1.0.0-SNAPSHOT", "1.0.1"),
+            ImmutableList.of(
+                new PluginUpgradeDetail(new ArtifactUpgradeDetail("app-plugin", "1.0.0", "1.0.1"),
+                    "testplugin-1", "testplugin")))));
+
+    ListUpgradeResponse actual = listApplicationUpgrade(TEST_NAMESPACE1);
+
+    Assert.assertEquals(
+        String.format("Assertion failed. Expected : %s, Actual: %s", GSON.toJson(expected),
+            GSON.toJson(actual)), new HashSet<>(expected.getApplicationUpgradeDetails()),
+        new HashSet<>(actual.getApplicationUpgradeDetails()));
+
+    deleteArtifact(ns1ArtifactId, 200);
+    deleteArtifact(latestAppArtifact, 200);
+    deleteArtifact(pluginArtifact, 200);
+    deleteArtifact(latestPluginArtifact, 200);
+  }
+
+  private Artifact deployPluginArtifact(Namespace namespace, Artifact artifact, Class<?> claszz,
+      String artifactName, String version)
+      throws Exception {
+    Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
+        namespace.getId(), artifact.getName(),
+        artifact.getVersion(), true,
+        artifact.getVersion(), true));
+
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(
+        ManifestFields.EXPORT_PACKAGE, claszz.getPackage().getName());
+    Id.Artifact pluginArtifact = Id.Artifact.fromEntityId(
+        namespace.toEntityId().artifact(artifactName, version));
+    Assert.assertEquals(HttpResponseStatus.OK.code(),
+        addPluginArtifact(pluginArtifact, claszz, manifest,
+            parents).getResponseCode());
+    return pluginArtifact;
   }
 
   @After

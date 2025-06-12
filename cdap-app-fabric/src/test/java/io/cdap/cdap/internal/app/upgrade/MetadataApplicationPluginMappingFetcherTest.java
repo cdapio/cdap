@@ -137,9 +137,11 @@ public class MetadataApplicationPluginMappingFetcherTest {
   public void testFetchApplicationPluginMapping() throws Exception {
     // Arrange
     SearchRequest userPluginRequest = SearchRequest.of("*").addType("plugin")
+        .setLimit(Integer.MAX_VALUE)
         .addNamespace(NamespaceId.DEFAULT.getNamespace())
         .build();
     SearchRequest systemPluginRequest = SearchRequest.of("*").addType("plugin")
+        .setLimit(Integer.MAX_VALUE)
         .addNamespace(NamespaceId.SYSTEM.getNamespace()).build();
 
     when(metadataAdmin.search(eq(userPluginRequest))).thenReturn(params.userResponse);

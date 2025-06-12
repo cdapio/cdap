@@ -96,7 +96,9 @@ public class MetadataApplicationPluginMappingFetcher implements ApplicationPlugi
 
   private SearchRequest buildSearchRequest(MetadataScope scope, NamespaceId namespaceId) {
     SearchRequest.Builder builder = SearchRequest.of("*").
-        addType(MetadataEntity.PLUGIN);
+        addType(MetadataEntity.PLUGIN).
+        // Fetching all records is ok here since it will be equal to number of plugins.
+        setLimit(Integer.MAX_VALUE);
     if (MetadataScope.SYSTEM == scope) {
       builder.addNamespace(scope.toString().toLowerCase());
     } else {
