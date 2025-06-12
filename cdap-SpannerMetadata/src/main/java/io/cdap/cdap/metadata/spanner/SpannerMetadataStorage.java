@@ -576,9 +576,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
      */
     private RequestandChange create(VersionedMetadata before, MetadataMutation.Create create) throws IOException {
         // if the entity did not exist before, none of the directives apply and this is equivalent to update()
-        if (!before.existing()) {
-            return update(create.getEntity(), before, create.getMetadata());
-        }
         Metadata meta = create.getMetadata();
         Map<ScopedNameOfKind, MetadataDirective> directives = create.getDirectives();
         // determine the scopes that this mutation applies to (scopes that do not occur in the metadata are no changed)
@@ -686,32 +683,12 @@ public class SpannerMetadataStorage implements MetadataStorage {
                                     Metadata updates) {
         Set<ScopedName> tags = new HashSet<>(before.getMetadata().getTags());
         tags.addAll(updates.getTags());
-
-        // --- Start of Changed Logic ---
         Map<ScopedName, String> properties = new HashMap<>(before.getMetadata().getProperties());
-
-        // Instead of putAll, iterate and apply the append logic
-        for (Map.Entry<ScopedName, String> updateEntry : updates.getProperties().entrySet()) {
-            ScopedName propertyName = updateEntry.getKey();
-            String newValue = updateEntry.getValue();
-
-            // Check if the property already exists and the value is different
-            if (properties.containsKey(propertyName) && !properties.get(propertyName).equals(newValue)) {
-                // It exists and is different, so append.
-              properties.compute(propertyName, (k,
-                                                existingValue) -> existingValue + "," + newValue);
-            } else if (!properties.containsKey(propertyName)) {
-                // It's a new property, so just add it.
-                properties.put(propertyName, newValue);
-            }
-            // If the property exists and the value is the same, we do nothing.
-        }
-        // --- End of Changed Logic ---
-
+        properties.putAll(updates.getProperties());
         Metadata after = new Metadata(tags, properties);
         try {
             return new RequestandChange(writeToSpanner(entity, before.getVersion(), after),
-                                        new MetadataChange(entity, before.getMetadata(), after));
+                    new MetadataChange(entity, before.getMetadata(), after));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -915,7 +892,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         String documentId = resultSet.getString("metadata_id");
         Struct row = resultSet.getCurrentRowAsStruct();
         LOG.info(row.toString());
-        String metadataString = row.getJson(11);
+        String metadataString = row.getJson(9);
         Metadata metadata = parseMetadataFromJson(metadataString);
         MetadataEntity entity = toMetadataEntity(documentId);
 
