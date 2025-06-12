@@ -23,22 +23,21 @@ import java.util.Objects;
  */
 public class ArtifactUpgradeDetail {
 
-  private final String name;
+  private final String artifactName;
   private final String currentVersion;
   private final String latestVersion;
   private final boolean upgradable;
-
-
-  public ArtifactUpgradeDetail(String name, String currentVersion,
-      String upgradeVersion) {
-    this.name = name;
+  
+  public ArtifactUpgradeDetail(String artifactName, String currentVersion,
+      String latestVersion) {
+    this.artifactName = artifactName;
     this.currentVersion = currentVersion;
-    this.latestVersion = upgradeVersion;
+    this.latestVersion = latestVersion;
     this.upgradable = !latestVersion.equalsIgnoreCase(currentVersion);
   }
 
-  public String getName() {
-    return name;
+  public String getArtifactName() {
+    return artifactName;
   }
 
   public String getCurrentVersion() {
@@ -62,13 +61,13 @@ public class ArtifactUpgradeDetail {
       return false;
     }
     ArtifactUpgradeDetail that = (ArtifactUpgradeDetail) o;
-    return upgradable == that.upgradable && Objects.equals(name, that.name)
+    return upgradable == that.upgradable && Objects.equals(artifactName, that.artifactName)
         && Objects.equals(currentVersion, that.currentVersion) && Objects.equals(
         latestVersion, that.latestVersion);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, currentVersion, latestVersion, upgradable);
+    return Objects.hash(artifactName, currentVersion, latestVersion, upgradable);
   }
 }
