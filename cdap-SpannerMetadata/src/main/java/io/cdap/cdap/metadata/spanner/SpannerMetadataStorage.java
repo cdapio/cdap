@@ -41,6 +41,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
@@ -406,12 +407,12 @@ public class SpannerMetadataStorage implements MetadataStorage {
     public VersionedMetadata readFromSpanner(MetadataEntity entity, TransactionContext transaction) throws IOException {
         try {
             Statement statement = Statement.newBuilder(
-                            "SELECT metadata_column, VERSION FROM metadata " +
-                                    "WHERE Namespace = @namespace AND Entity_type = @Type AND Name = @name")
-                    .bind("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
-                    .bind("Type").to(entity.getType())
-                    .bind("name").to(entity.getValue(entity.getType()))
-                    .build();
+                "SELECT metadata_column, VERSION FROM metadata " +
+                  "WHERE Namespace = @namespace AND Entity_type = @Type AND Name = @name")
+              .bind("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
+              .bind("Type").to(entity.getType())
+              .bind("name").to(entity.getValue(entity.getType()))
+              .build();
 
             ResultSet resultSet = transaction.executeQuery(statement);
 
@@ -419,32 +420,34 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 Struct row = resultSet.getCurrentRowAsStruct();
                 LOG.info("Row Struct: {}", row);
 
-                // Get the JSON string from the first column of the Struct.
-                String metadataString = row.getJson(0);
+                // Get the JSON string from the Spanner JSON column
+                String metadataString = row.getJson(0).toString(); // Convert Spanner JSON to String
 
                 long version = row.getLong(1);
 
-                Metadata metadata = createMetadataFromJson(metadataString);
+                // --- IMPORTANT: Use the configured 'gson' instance for direct deserialization ---
+                Metadata metadata = gson.fromJson(metadataString, Metadata.class);
+
                 return VersionedMetadata.of(metadata, version);
             } else {
                 return VersionedMetadata.NONE;
             }
-        } catch (SpannerException e) {
-            LOG.error("Spanner exception during batch:", e);
+        } catch (SpannerException | JsonParseException e) { // Add JsonParseException to catch possible issues
+            LOG.error("Spanner exception or JSON parsing error during read:", e);
             throw new IOException("Failed to read from Spanner for entity " + entity, e);
         }
     }
 
-    public VersionedMetadata readFromSpanner(MetadataEntity entity, ReadOnlyTransaction transaction) throws IOException
-    {
+    public VersionedMetadata readFromSpanner(MetadataEntity entity, ReadOnlyTransaction transaction) throws
+      IOException {
         try {
             Statement statement = Statement.newBuilder(
-                            "SELECT metadata_column, VERSION FROM metadata " +
-                                    "WHERE Namespace = @namespace AND Entity_type = @Type AND Name = @name")
-                    .bind("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
-                    .bind("Type").to(entity.getType())
-                    .bind("name").to(entity.getValue(entity.getType()))
-                    .build();
+                "SELECT metadata_column, VERSION FROM metadata " +
+                  "WHERE Namespace = @namespace AND Entity_type = @Type AND Name = @name")
+              .bind("namespace").to(entity.getValue(MetadataEntity.NAMESPACE))
+              .bind("Type").to(entity.getType())
+              .bind("name").to(entity.getValue(entity.getType()))
+              .build();
 
             ResultSet resultSet = transaction.executeQuery(statement);
 
@@ -452,124 +455,24 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 Struct row = resultSet.getCurrentRowAsStruct();
                 LOG.info("Row Struct: {}", row);
 
-                // Get the JSON string from the first column of the Struct.
-                String metadataString = row.getJson(0);
+                // Get the JSON string from the Spanner JSON column
+                String metadataString = row.getJson(0).toString(); // Convert Spanner JSON to String
 
                 long version = row.getLong(1);
 
-                Metadata metadata = createMetadataFromJson(metadataString);
+                // --- IMPORTANT: Use the configured 'gson' instance for direct deserialization ---
+                Metadata metadata = gson.fromJson(metadataString, Metadata.class);
+
                 return VersionedMetadata.of(metadata, version);
             } else {
                 return VersionedMetadata.NONE;
             }
-        } catch (SpannerException e) {
-            LOG.error("Spanner exception during batch:", e);
+        } catch (SpannerException | JsonParseException e) { // Add JsonParseException to catch possible issues
+            LOG.error("Spanner exception or JSON parsing error during read:", e);
             throw new IOException("Failed to read from Spanner for entity " + entity, e);
         }
     }
 
-    private Metadata createMetadataFromJson(String json) {
-        Gson gson = new Gson();
-        TypeToken<Map<String, Object>> typeToken = new TypeToken<Map<String, Object>>() {};
-        Map<String, Object> map = gson.fromJson(json, typeToken.getType());
-
-        Set<ScopedName> tags = new HashSet<>();
-        Map<ScopedName, String> properties = new HashMap<>();
-
-        if (map != null) {
-            // Parse tags
-            if (map.containsKey("tags") && map.get("tags") instanceof List) {
-                List<?> tagListRaw = (List<?>) map.get("tags");
-                for (Object tagObj : tagListRaw) {
-                    if (tagObj instanceof String) {
-                        String tag = (String) tagObj;
-                        String[] parts = tag.split(":");
-                        if (parts.length == 2) {
-                            try {
-                                tags.add(new ScopedName(MetadataScope.valueOf(parts[0].toUpperCase()), parts[1]));
-                            } catch (IllegalArgumentException e) {
-                                System.err.println("Invalid metadata scope for tag: '" + parts[0] + "'. " +
-                                                     "Ignoring tag: " + tag);
-                            }
-                        } else {
-                            System.err.println("Tag does not conform to 'SCOPE:name' format: " + tag);
-                        }
-                    } else if (tagObj instanceof Map) {
-                        Map<?, ?> tagMap = (Map<?, ?>) tagObj;
-                        String name = (String) tagMap.get("name");
-                        String scopeStr = (String) tagMap.get("scope");
-
-                        if (name != null && scopeStr != null) {
-                            try {
-                                tags.add(new ScopedName(MetadataScope.valueOf(scopeStr.toUpperCase()), name));
-                            } catch (IllegalArgumentException e) {
-                                System.err.println("Invalid metadata scope for tag object: '" + scopeStr + "'. " +
-                                                     "Ignoring tag: " + tagObj);
-                            }
-                        } else {
-                            System.err.println("Tag object missing 'name' or 'scope' fields: " + tagObj);
-                        }
-                    } else {
-                        System.err.println("Tag is not a string or a map: " + tagObj.getClass().getName() + " " +
-                                             "value: " + tagObj);
-                    }
-                }
-            }
-
-            // Parse properties
-            if (map.containsKey("properties") && map.get("properties") instanceof Map) {
-                Map<String, Object> propMapRaw = (Map<String, Object>) map.get("properties");
-
-                for (Map.Entry<String, Object> entry : propMapRaw.entrySet()) {
-                    String originalKey = entry.getKey(); // e.g., "SYSTEM:Spark:phase-1"
-                    Object originalJsonValue = entry.getValue(); // e.g., "phase-1"
-
-                    String determinedScope = null;
-                    String determinedName = null;
-                    String determinedValue = null;
-
-                    // Find the first colon for scope
-                    int firstColonIndex = originalKey.indexOf(":");
-                    if (firstColonIndex != -1) {
-                        determinedScope = originalKey.substring(0, firstColonIndex).toUpperCase();
-
-                        // Find the last colon for value extraction from key
-                        int lastColonIndex = originalKey.lastIndexOf(":");
-
-                        if (firstColonIndex != lastColonIndex) {
-                            // If there are at least two colons (firstColonIndex != lastColonIndex),
-                            // then the part after the last colon is the value from the key.
-                            // The name is between the first and last colon.
-                            determinedName = originalKey.substring(firstColonIndex + 1, lastColonIndex);
-                            determinedValue = originalKey.substring(lastColonIndex + 1);
-                        } else {
-                            // Only one colon, so the rest is the name, and the value comes from JSON.
-                            determinedName = originalKey.substring(firstColonIndex + 1);
-                            if (originalJsonValue instanceof String) {
-                                determinedValue = (String) originalJsonValue;
-                            } else if (originalJsonValue != null) {
-                                determinedValue = gson.toJson(originalJsonValue);
-                            }
-                        }
-                    }
-
-                    if (determinedScope != null && determinedName != null) {
-                        try {
-                            properties.put(new ScopedName(MetadataScope.valueOf(determinedScope),
-                                                          determinedName), determinedValue);
-                        } catch (IllegalArgumentException e) {
-                            System.err.println("Invalid metadata scope for property key: '" + determinedScope +
-                                                 "'. Ignoring property: " + originalKey);
-                        }
-                    } else {
-                        System.err.println("Property key does not conform to 'SCOPE:name[:value_from_key_optional]' " +
-                                             "format: " + originalKey);
-                    }
-                }
-            }
-        }
-        return new Metadata(tags, properties);
-    }
     /**
      * Creates a Spanner request that corresponds to the given mutation, along with the change
      * effected by this mutation. The request must be executed by the caller.
