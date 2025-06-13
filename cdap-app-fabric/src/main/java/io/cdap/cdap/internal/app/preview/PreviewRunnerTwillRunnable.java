@@ -31,6 +31,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
@@ -69,6 +70,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.messaging.guice.client.PreviewRunnerMessagingClientModule;
+import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -79,6 +81,7 @@ import io.cdap.cdap.spi.data.StorageProvider;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.apache.hadoop.conf.Configuration;
@@ -103,6 +106,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   private PreviewRunnerManager previewRunnerManager;
   private PreviewRunnerHttpService previewRunner;
   private LogAppenderInitializer logAppenderInitializer;
+  private MetricsCollectionService metricsCollectionService;
   private StorageProvider storageProvider;
 
   public PreviewRunnerTwillRunnable(String cConfFileName, String hConfFileName) {
@@ -172,6 +176,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping preview runner manager");
+    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
     previewRunnerManager.stop();
     previewRunner.stop();
   }
@@ -211,6 +216,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     // Initialize logging context
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
+
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,
@@ -276,6 +284,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
     modules.add(new AuditLogWriterModule(cConf).getInMemoryModules());
     modules.add(new UserCredentialAeadEncryptionModule());
+    // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
+    // save threads for reading metrics from TMS, as there won't be metrics in TMS.
+    modules.add(new MetricsClientRuntimeModule().getInMemoryModules());
 
     byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
     modules.add(new AbstractModule() {
