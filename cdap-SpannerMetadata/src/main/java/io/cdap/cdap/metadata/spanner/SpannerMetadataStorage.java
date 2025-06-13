@@ -477,60 +477,99 @@ public class SpannerMetadataStorage implements MetadataStorage {
         Map<ScopedName, String> properties = new HashMap<>();
 
         if (map != null) {
-            // Parse tags as a list of strings
+            // Parse tags
             if (map.containsKey("tags") && map.get("tags") instanceof List) {
-                List<String> tagList = (List<String>) map.get("tags");
-                for (String tag : tagList) {
-                    // Assuming your tags are of the format "scope:name"
-                    String[] parts = tag.split(":");
-                    if (parts.length == 2) {
-                        try {
-                            tags.add(new ScopedName(MetadataScope.valueOf(parts[0]), parts[1]));
-                        } catch (IllegalArgumentException e) {
-                            // Handle invalid scope names if necessary
-                            System.err.println("Invalid scope name: " + parts[0]);
+                List<?> tagListRaw = (List<?>) map.get("tags");
+                for (Object tagObj : tagListRaw) {
+                    if (tagObj instanceof String) {
+                        String tag = (String) tagObj;
+                        String[] parts = tag.split(":");
+                        if (parts.length == 2) {
+                            try {
+                                tags.add(new ScopedName(MetadataScope.valueOf(parts[0].toUpperCase()), parts[1]));
+                            } catch (IllegalArgumentException e) {
+                                System.err.println("Invalid metadata scope for tag: '" + parts[0] + "'. " +
+                                                     "Ignoring tag: " + tag);
+                            }
+                        } else {
+                            System.err.println("Tag does not conform to 'SCOPE:name' format: " + tag);
                         }
+                    } else if (tagObj instanceof Map) {
+                        Map<?, ?> tagMap = (Map<?, ?>) tagObj;
+                        String name = (String) tagMap.get("name");
+                        String scopeStr = (String) tagMap.get("scope");
+
+                        if (name != null && scopeStr != null) {
+                            try {
+                                tags.add(new ScopedName(MetadataScope.valueOf(scopeStr.toUpperCase()), name));
+                            } catch (IllegalArgumentException e) {
+                                System.err.println("Invalid metadata scope for tag object: '" + scopeStr + "'. " +
+                                                     "Ignoring tag: " + tagObj);
+                            }
+                        } else {
+                            System.err.println("Tag object missing 'name' or 'scope' fields: " + tagObj);
+                        }
+                    } else {
+                        System.err.println("Tag is not a string or a map: " + tagObj.getClass().getName() + " " +
+                                             "value: " + tagObj);
                     }
                 }
             }
 
-            // Parse properties as a map of strings to strings
+            // Parse properties
             if (map.containsKey("properties") && map.get("properties") instanceof Map) {
                 Map<String, Object> propMapRaw = (Map<String, Object>) map.get("properties");
 
                 for (Map.Entry<String, Object> entry : propMapRaw.entrySet()) {
-                    String key = entry.getKey();
-                    Object value = entry.getValue();
+                    String originalKey = entry.getKey(); // e.g., "SYSTEM:Spark:phase-1"
+                    Object originalJsonValue = entry.getValue(); // e.g., "phase-1"
 
-                    String stringValue;
-                    if (value instanceof String) {
-                        stringValue = (String) value;
-                    } else if (value != null) {
-                        // If the value is not a String
-                        // convert it back to its JSON string representation.
-                        stringValue = gson.toJson(value);
-                    } else {
-                        stringValue = null;
+                    String determinedScope = null;
+                    String determinedName = null;
+                    String determinedValue = null;
+
+                    // Find the first colon for scope
+                    int firstColonIndex = originalKey.indexOf(":");
+                    if (firstColonIndex != -1) {
+                        determinedScope = originalKey.substring(0, firstColonIndex).toUpperCase();
+
+                        // Find the last colon for value extraction from key
+                        int lastColonIndex = originalKey.lastIndexOf(":");
+
+                        if (firstColonIndex != lastColonIndex) {
+                            // If there are at least two colons (firstColonIndex != lastColonIndex),
+                            // then the part after the last colon is the value from the key.
+                            // The name is between the first and last colon.
+                            determinedName = originalKey.substring(firstColonIndex + 1, lastColonIndex);
+                            determinedValue = originalKey.substring(lastColonIndex + 1);
+                        } else {
+                            // Only one colon, so the rest is the name, and the value comes from JSON.
+                            determinedName = originalKey.substring(firstColonIndex + 1);
+                            if (originalJsonValue instanceof String) {
+                                determinedValue = (String) originalJsonValue;
+                            } else if (originalJsonValue != null) {
+                                determinedValue = gson.toJson(originalJsonValue);
+                            }
+                        }
                     }
 
-                    String[] parts = key.split(":");
-                    if (parts.length == 2) {
+                    if (determinedScope != null && determinedName != null) {
                         try {
-                            properties.put(new ScopedName(MetadataScope.valueOf(parts[0].toUpperCase()),
-                                                          parts[1]), stringValue);
+                            properties.put(new ScopedName(MetadataScope.valueOf(determinedScope),
+                                                          determinedName), determinedValue);
                         } catch (IllegalArgumentException e) {
-                            System.err.println("Invalid metadata scope for property key: '" +
-                                                 parts[0] + "'. Ignoring property: " + key);
+                            System.err.println("Invalid metadata scope for property key: '" + determinedScope +
+                                                 "'. Ignoring property: " + originalKey);
                         }
                     } else {
-                        System.err.println("Property key does not conform to 'SCOPE:name' format: " + key);
+                        System.err.println("Property key does not conform to 'SCOPE:name[:value_from_key_optional]' " +
+                                             "format: " + originalKey);
                     }
                 }
             }
         }
         return new Metadata(tags, properties);
     }
-
     /**
      * Creates a Spanner request that corresponds to the given mutation, along with the change
      * effected by this mutation. The request must be executed by the caller.
@@ -1294,7 +1333,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 "EXISTS (SELECT 1 FROM UNNEST(JSON_QUERY_ARRAY(%s)) AS element " +
                         "WHERE LOWER(JSON_VALUE(element, '$.name')) = '%s' " +
                         "AND LOWER(JSON_VALUE(element, '$.value')) LIKE '%s')",
-                "properties",
+                "metadata",
                 field,
                 value
         );
