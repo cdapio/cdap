@@ -190,7 +190,9 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         LOG.warn("Exception raised when closing storage provider", e);
       }
     }
-    logAppenderInitializer.close();
+    if (logAppenderInitializer != null) {
+      logAppenderInitializer.close();
+    }
   }
 
   private void doInitialize(TwillContext context) throws Exception {
