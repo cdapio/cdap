@@ -37,8 +37,8 @@ public class ApplicationMeta {
   @Nullable
   private final SourceControlMeta sourceControlMeta;
 
-  public ApplicationMeta(String id, ApplicationSpecification spec,
-      @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta) {
+  public ApplicationMeta(String id, ApplicationSpecification spec, @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta) {
     this.id = id;
     this.spec = spec;
     this.change = change;
@@ -75,5 +75,25 @@ public class ApplicationMeta {
         .add("change", change)
         .add("sourceControlMeta", sourceControlMeta)
         .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ApplicationMeta)) {
+      return false;
+    }
+    ApplicationMeta that = (ApplicationMeta) o;
+    return Objects.equal(id, that.id)
+        && Objects.equal(spec, that.spec)
+        && Objects.equal(change, that.change)
+        && Objects.equal(sourceControlMeta, that.sourceControlMeta);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id, spec, change, sourceControlMeta);
   }
 }
