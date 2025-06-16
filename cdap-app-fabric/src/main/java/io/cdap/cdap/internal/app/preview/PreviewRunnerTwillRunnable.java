@@ -30,7 +30,6 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.name.Names;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.Configurator;
@@ -55,11 +54,6 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
-import io.cdap.cdap.data.runtime.DataSetsModules;
-import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -225,9 +219,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
-
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,
         PreviewRunnerTwillApplication.NAME);
@@ -315,12 +306,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
         // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
-        bind(DatasetDefinitionRegistryFactory.class)
-            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
-
-        bind(DatasetFramework.class)
-            .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-            .to(RemoteDatasetFramework.class);
       }
     });
 

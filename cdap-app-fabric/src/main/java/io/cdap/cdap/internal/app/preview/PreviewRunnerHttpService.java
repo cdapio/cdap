@@ -25,7 +25,6 @@ import io.cdap.cdap.common.conf.Constants.Service;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -49,8 +48,7 @@ public class PreviewRunnerHttpService extends AbstractIdleService {
 
   @Inject
   PreviewRunnerHttpService(CConfiguration cConf, SConfiguration sConf,
-      DiscoveryService discoveryService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      DiscoveryService discoveryService) {
     this.discoveryService = discoveryService;
 
 //    // set workdir location in cConf
@@ -60,8 +58,8 @@ public class PreviewRunnerHttpService extends AbstractIdleService {
 //      cConf.set(TaskWorker.WORK_DIR, workDir);
 //    }
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
-            Service.PREVIEW_RUNNER_HTTP, false).setHost(cConf.get(Preview.RUNNER_ADDRESS))
+    NettyHttpService.Builder builder = NettyHttpService.builder(
+            Service.PREVIEW_RUNNER_HTTP).setHost(cConf.get(Preview.RUNNER_ADDRESS))
         .setPort(cConf.getInt(Preview.RUNNER_PORT))
         .setExecThreadPoolSize(cConf.getInt(Constants.Preview.EXEC_THREADS))
         .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
