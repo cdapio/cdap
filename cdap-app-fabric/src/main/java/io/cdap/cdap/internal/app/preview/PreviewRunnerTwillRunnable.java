@@ -70,7 +70,6 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.messaging.guice.client.PreviewRunnerMessagingClientModule;
-import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -283,9 +282,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
     modules.add(new AuditLogWriterModule(cConf).getInMemoryModules());
     modules.add(new UserCredentialAeadEncryptionModule());
-    // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
-    // save threads for reading metrics from TMS, as there won't be metrics in TMS.
-    modules.add(new MetricsClientRuntimeModule().getInMemoryModules());
 
     byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
     modules.add(new AbstractModule() {
