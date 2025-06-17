@@ -105,7 +105,6 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   private PreviewRunnerManager previewRunnerManager;
   private PreviewRunnerHttpService previewRunner;
   private LogAppenderInitializer logAppenderInitializer;
-  private MetricsCollectionService metricsCollectionService;
   private StorageProvider storageProvider;
 
   public PreviewRunnerTwillRunnable(String cConfFileName, String hConfFileName) {
@@ -141,6 +140,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
     LOG.debug("Starting preview runner manager");
     previewRunnerManager.start();
+    LOG.debug("sidhdirenge - Starting preview runner");
+    previewRunner.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -160,22 +161,11 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         future.completeExceptionally(failure);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
-
-    LOG.debug("sidhdirenge - Starting preview runner");
-    previewRunner.start();
-
-    try {
-      Uninterruptibles.getUninterruptibly(future);
-      LOG.debug("Preview runner stopped");
-    } catch (ExecutionException e) {
-      LOG.warn("Preview runner stopped with exception", e);
-    }
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping preview runner manager");
-    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
     previewRunnerManager.stop();
     previewRunner.stop();
   }
