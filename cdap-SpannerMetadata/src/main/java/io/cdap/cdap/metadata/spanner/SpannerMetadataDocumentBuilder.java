@@ -79,7 +79,7 @@ public class SpannerMetadataDocumentBuilder {
       String propValueForPropsTable = value;  // Value for individual property rows (can be original case or formatted)
 
       // Special handling for 'schema' property: format for main props value, and extract for search
-      if (MetadataConstants.SCHEMA_KEY.equals(key)) {
+      if (MetadataConstants.SCHEMA_KEY.equals(key.getName())) { // Check name, not the whole ScopedName
         // For the main 'schema' property value in metadata_props, use the concise format
         propValueForPropsTable = formatSchemaConcise(value);
         // For the full-text search string, we might still want a more verbose, searchable format
@@ -96,9 +96,13 @@ public class SpannerMetadataDocumentBuilder {
       propertiesForSpannerPropsTable.add(new Property(key.getScope().name(), propName, propValueForPropsTable));
 
       // Check for built-in long properties like creation time and TTL
-      checkForBuiltInLong(ScopedName.fromString(MetadataConstants.CREATION_TIME_KEY), key,
-                          value).ifPresent(x -> created = x);
-      checkForBuiltInLong(ScopedName.fromString(MetadataConstants.TTL_KEY), key, value).ifPresent(x -> ttl = x);
+      // Construct ScopedName strings with SYSTEM scope explicitly
+      checkForBuiltInLong(ScopedName.fromString(MetadataScope.SYSTEM.name() + MetadataConstants.KEYVALUE_SEPARATOR +
+                                                  MetadataConstants.CREATION_TIME_KEY),
+                          key, value).ifPresent(x -> created = x);
+      checkForBuiltInLong(ScopedName.fromString(MetadataScope.SYSTEM.name() + MetadataConstants.KEYVALUE_SEPARATOR +
+                                                  MetadataConstants.TTL_KEY),
+                          key, value).ifPresent(x -> ttl = x);
     }
 
     // Process tags

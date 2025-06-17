@@ -583,29 +583,30 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 new MetadataChange(entity, before.getMetadata(), Metadata.EMPTY));
     }
 
-    /**
-     * Create a Spanner Delete Request for removing an row in the table. The request must be
-     * executed by the caller.
-     */
     private List<Mutation> deleteFromSpanner(MetadataEntity entity, Long existingVersion) {
         List<Mutation> mutations = new ArrayList<>();
+        String metadataId = toDocumentId(entity);
 
-        String metadataId = toDocumentId(entity); // Get the metadata_id for the entity
+        if (existingVersion != null) {
+            // If a specific version is provided, delete only that version.
+            // This is useful for cleanup or very specific version management.
+            mutations.add(Mutation.delete(
+              "Metadata", // Your table name
+              Key.of(metadataId, existingVersion)
+            ));
+        } else {
+            // If existingVersion is null, it implies a complete drop of the entity.
+            // Delete all rows for this metadata_id across all versions.
+            // You would usually define the primary key range based on the 'metadata_id'
+            // if your table's primary key is (metadata_id, version).
 
-        if (existingVersion == null) {
-            throw new IllegalArgumentException("existingVersion cannot be null when deleting a " +
-                    "specific version of a metadata entity.");
+            mutations.add(Mutation.delete(
+              "Metadata", // Your table name
+              KeySet.range(KeyRange.prefix(Key.of(metadataId))) // Deletes all rows where metadata_id matches
+            ));
         }
-
-        // --- Delete from Metadata table ---
-        // The primary key for Metadata table is (metadata_id, VERSION)
-        mutations.add(Mutation.delete(
-                "Metadata", // Your parent table name
-                Key.of(metadataId, existingVersion) // Provide both components of the primary key
-        ));
         return mutations;
     }
-
 
     /**
      * Creates the Spanner request for updating the metadata of an entity. This updates or
