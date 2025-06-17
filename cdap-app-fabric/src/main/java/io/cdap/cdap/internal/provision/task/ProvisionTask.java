@@ -23,6 +23,7 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
+import io.cdap.cdap.internal.provision.ProvisionerStore;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -77,8 +78,9 @@ public class ProvisionTask extends ProvisioningTask {
   public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
       Provisioner provisioner, ProvisionerContext provisionerContext,
       ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
-      int retryTimeLimitSecs) {
-    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, retryTimeLimitSecs);
+      ProvisionerStore provisionerStore, int retryTimeLimitSecs) {
+    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, provisionerStore,
+        retryTimeLimitSecs);
     this.provisionerNotifier = provisionerNotifier;
     this.programStateWriter = programStateWriter;
   }
