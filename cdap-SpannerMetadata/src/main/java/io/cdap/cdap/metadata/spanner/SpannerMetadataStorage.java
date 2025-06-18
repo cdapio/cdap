@@ -585,28 +585,23 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
     private List<Mutation> deleteFromSpanner(MetadataEntity entity, Long existingVersion) {
         List<Mutation> mutations = new ArrayList<>();
-        String metadataId = toDocumentId(entity);
 
-        if (existingVersion != null) {
-            // If a specific version is provided, delete only that version.
-            // This is useful for cleanup or very specific version management.
-            mutations.add(Mutation.delete(
-              "Metadata", // Your table name
-              Key.of(metadataId, existingVersion)
-            ));
-        } else {
-            // If existingVersion is null, it implies a complete drop of the entity.
-            // Delete all rows for this metadata_id across all versions.
-            // You would usually define the primary key range based on the 'metadata_id'
-            // if your table's primary key is (metadata_id, version).
+        String metadataId = toDocumentId(entity); // Get the metadata_id for the entity
 
-            mutations.add(Mutation.delete(
-              "metadata", // Your table name
-              KeySet.range(KeyRange.prefix(Key.of(metadataId))) // Deletes all rows where metadata_id matches
-            ));
+        if (existingVersion == null) {
+            throw new IllegalArgumentException("existingVersion cannot be null when deleting a " +
+                    "specific version of a metadata entity.");
         }
+
+        // --- Delete from metadata table ---
+        // The primary key for Metadata table is (metadata_id)
+        mutations.add(Mutation.delete(
+                "metadata", // Your parent table name
+                Key.of(metadataId) // Provide both components of the primary key
+        ));
         return mutations;
     }
+
 
     /**
      * Creates the Spanner request for updating the metadata of an entity. This updates or
@@ -617,7 +612,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
      */
     private RequestandChange update(MetadataEntity entity,
                                     VersionedMetadata before,
-                                    Metadata updates) {
+                                    Metadata updates) throws IOException {
         Set<ScopedName> tags = new HashSet<>(before.getMetadata().getTags());
         tags.addAll(updates.getTags());
         Map<ScopedName, String> properties = new HashMap<>(before.getMetadata().getProperties());
@@ -671,6 +666,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         return mutations;
     }
 
+
     /**
      * Creates the Mutation for the main metadata table.
      * This method takes the pre-processed data from the SpannerMetadataDocumentBuilder.
@@ -685,14 +681,12 @@ public class SpannerMetadataStorage implements MetadataStorage {
           .set(NAME_FIELD).to(docBuilder.getName())
           .set(User_FIELD).to(docBuilder.getUserText())
           .set(SYSTEM_FIELD).to(docBuilder.getSystemText())
-          .set("metadata_column").to(gson.toJson(metadata)); // Store raw metadata JSON
+          .set("metadata_column").to(gson.toJson(metadata)) // Store raw metadata JSON
+        .set("VERSION").to(expectVersion == null ? 1L : expectVersion + 1);
 
         docBuilder.getCreated().ifPresent(c -> writeBuilder.set(CREATED_FIELD).to(c));
         docBuilder.getTtl().ifPresent(t -> writeBuilder.set(TTL_FIELD).to(t));
 
-        // Handle versioning for the main table
-        long newVersion = (expectVersion == null) ? 1L : expectVersion + 1;
-        writeBuilder.set("VERSION").to(newVersion);
         return writeBuilder.build();
     }
 
@@ -1090,7 +1084,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
                 "EXISTS (SELECT 1 FROM UNNEST(JSON_QUERY_ARRAY(%s)) AS element " +
                         "WHERE LOWER(JSON_VALUE(element, '$.name')) = '%s' " +
                         "AND LOWER(JSON_VALUE(element, '$.value')) LIKE '%s')",
-                "metadata",
+                "metadata_column",
                 field,
                 value
         );
