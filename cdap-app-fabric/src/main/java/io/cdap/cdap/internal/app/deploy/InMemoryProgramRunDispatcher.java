@@ -189,19 +189,28 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       throws Exception {
     RunId runId = dispatcherContext.getRunId();
     LOG.debug("Preparing to dispatch program run: {}", runId);
+    LOG.debug("dispatcherContext: {}", dispatcherContext.toString());
     ProgramDescriptor programDescriptor = dispatcherContext.getProgramDescriptor();
+    LOG.debug("programDescriptor:{}", programDescriptor.toString());
     ProgramOptions options = dispatcherContext.getProgramOptions();
+    LOG.debug("options:{}", options.toString());
     boolean isDistributed = dispatcherContext.isDistributed();
+    LOG.debug("isDistributed:{}", isDistributed);
     ProgramId programId = programDescriptor.getProgramId();
+    LOG.debug("programId:{}", programId);
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
+    LOG.debug("clusterMode:{}", clusterMode);
     boolean tetheredRun = options.getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
+    LOG.debug("tetheredRun:{}", tetheredRun);
     ProgramRunnerFactory progRunnerFactory = programRunnerFactory;
     if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
       progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
           .orElseThrow(UnsupportedOperationException::new);
     }
     ArtifactRepository artifactRepository = noAuthArtifactRepository;
+    LOG.debug("artifactRepository:{}", artifactRepository);
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
+    LOG.debug("peer:{}", isDistributed);
     if (peer != null) {
       RemoteClient client = getRemoteClientForTetheredRun(peer);
       RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(
@@ -209,6 +218,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
           client);
       artifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader);
     }
+    LOG.debug("artifactRepository:{}", artifactRepository);
 
     // Creates the ProgramRunner based on the cluster mode
     ProgramRunner runner = progRunnerFactory.create(programId.getType());
@@ -219,11 +229,17 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     // Get the artifact details and save it into the program options.
     ArtifactId artifactId = programDescriptor.getArtifactId();
+    LOG.debug("artifactId:{}", artifactId.toString());
     ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
+    LOG.debug("artifactDetail:{}", artifactDetail.toString());
     ApplicationSpecification appSpec = programDescriptor.getApplicationSpecification();
+    LOG.debug("appSpec:{}", appSpec.toString());
     ProgramDescriptor newProgramDescriptor = programDescriptor;
     ProgramOptions updatedOptions = options;
     if (tetheredRun) {
+      LOG.debug(
+          "artifactId: {}, programId: {}, options: {}, runId: {}, clusterMode: {}, artifactDetail: {}",
+          artifactId, programId, options, runId, clusterMode, artifactDetail);
       updatedOptions = updateProgramOptions(artifactId, programId, options, runId, clusterMode,
           Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
               null),

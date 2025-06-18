@@ -2628,6 +2628,7 @@
         <module>cdap-source-control</module>
         <module>cdap-encryption-ext-tink</module>
         <module>cdap-log-publisher-spi</module>
+        <module>cdap-export-import</module>
       </modules>
     </profile>
     <profile>
