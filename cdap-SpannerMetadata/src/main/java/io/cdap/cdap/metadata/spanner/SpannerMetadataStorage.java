@@ -601,7 +601,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
             // if your table's primary key is (metadata_id, version).
 
             mutations.add(Mutation.delete(
-              "Metadata", // Your table name
+              "metadata", // Your table name
               KeySet.range(KeyRange.prefix(Key.of(metadataId))) // Deletes all rows where metadata_id matches
             ));
         }
@@ -693,16 +693,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
         // Handle versioning for the main table
         long newVersion = (expectVersion == null) ? 1L : expectVersion + 1;
         writeBuilder.set("VERSION").to(newVersion);
-        // Assuming your Spanner schema uses expect_version for optimistic locking check during write
-        // If not, you might rely purely on the transaction runner's ABORTED retry.
-        if (expectVersion != null) {
-            // This is a common pattern for optimistic locking at the application level
-            // where the database checks this value. If Spanner handles versioning purely
-            // through transaction retries, this specific column might not be needed.
-            // Check your Spanner DDL and existing logic.
-            // For now, retaining as it was in your original code.
-            writeBuilder.set("expect_version").to(expectVersion);
-        }
         return writeBuilder.build();
     }
 
@@ -767,7 +757,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
         }
 
         // Spanner Batch Processing (No Duplicates) with Retry
-        return retrySpannerBatch(mutationMap, options);
+        return retrySpannerBatch(mutationMap,options);
     }
 
 
