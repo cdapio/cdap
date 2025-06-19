@@ -1102,6 +1102,49 @@ public abstract class AppMetadataStoreTest {
   }
 
   @Test
+  public void testGetApplicationCount() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+    NamespaceId customNamespace = new NamespaceId("custom");
+    createMultipleApplications(NamespaceId.DEFAULT, "test-default", 20, appSpec);
+    createMultipleApplications(NamespaceId.SYSTEM, "test-system", 5, appSpec);
+    createMultipleApplications(customNamespace, "test-custom", 15, appSpec);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      long count = store.getApplicationCount();
+      // System apps are not included in the count. Default(20) and custom(15) are included.
+      Assert.assertEquals(35, count);
+    });
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      // System namespace has 20 applications.
+      long count = store.getNamespaceApplicationCount(NamespaceId.DEFAULT);
+      Assert.assertEquals(20, count);
+      // System namespace has 5 applications.
+      count = store.getNamespaceApplicationCount(NamespaceId.SYSTEM);
+      Assert.assertEquals(5, count);
+      // Custom namespace has 15 applications.
+      count = store.getNamespaceApplicationCount(customNamespace);
+      Assert.assertEquals(15, count);
+    });
+
+  }
+
+  private void createMultipleApplications(NamespaceId namespaceId, String appPrefix, int count,
+      ApplicationSpecification appSpec) {
+    for (int i = 0; i < count; i++) {
+      String appName = appPrefix + i;
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(namespaceId.getNamespace(), appName, ApplicationId.DEFAULT_VERSION,
+            appSpec,
+            new ChangeDetail(null, null, null, creationTimeMillis), null);
+      });
+    }
+  }
+
+  @Test
   public void testScanApplications() {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
