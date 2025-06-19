@@ -299,6 +299,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
+  /**
+   * Get application count of the latest versions in the namespace.
+   *
+   * @param namespace namespace for which count is to be returned.
+   * @return Count of the applications in the namespace.
+   */
+  public long getApplicationsCount(NamespaceId namespace) {
+    if (namespace == null) {
+      throw new IllegalStateException("Application scan request without namespace");
+    }
+    // Get count should have the same permissions as list apps since its used in tandem.
+    accessEnforcer.enforceOnParent(EntityType.APPLICATION, namespace,
+        authenticationContext.getPrincipal(), StandardPermission.LIST);
+    return store.getApplicationCount(namespace);
+  }
+
   private void processApplications(List<Map.Entry<ApplicationId, ApplicationMeta>> list,
       Consumer<ApplicationDetail> consumer) {
 

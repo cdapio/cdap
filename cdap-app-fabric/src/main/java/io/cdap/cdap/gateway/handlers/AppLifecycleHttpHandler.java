@@ -496,6 +496,20 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   }
 
   /**
+   * Gets count for all application the namespace.
+   *
+   * <p>This API returns the count for latest applications only.</>
+   */
+  @GET
+  @Path("/apps/count")
+  public void getAppsCount(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    NamespaceId namespace = validateNamespace(namespaceId);
+    long count = applicationLifecycleService.getApplicationsCount(namespace);
+    responder.sendString(HttpResponseStatus.OK, String.valueOf(count));
+  }
+
+  /**
    * Updates an existing application.
    * Deprecated : Unused - just another deploy action after introduction of edit versions
    */

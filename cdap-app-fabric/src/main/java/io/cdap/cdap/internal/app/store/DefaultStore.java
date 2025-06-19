@@ -1179,6 +1179,14 @@ public class DefaultStore implements Store {
     }, ApplicationNotFoundException.class);
   }
 
+  @Override
+  public long getApplicationCount(NamespaceId namespaceId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+          return getAppMetadataStore(context).getNamespaceApplicationCount(namespaceId);
+        }
+    );
+  }
+
   private AppStateTable getAppStateTable(StructuredTableContext context)
       throws TableNotFoundException {
     return new AppStateTable(context);

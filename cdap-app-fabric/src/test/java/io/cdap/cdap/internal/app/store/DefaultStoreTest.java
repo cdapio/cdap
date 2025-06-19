@@ -1446,6 +1446,23 @@ public abstract class DefaultStoreTest {
     Assert.assertEquals(latestAppId.get(), actualApps.get(0));
   }
 
+  @Test
+  public void testGetApplicationCount() throws ConflictException {
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    NamespaceId namespaceId = new NamespaceId("custom");
+    ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()));
+    for (int i = 0; i < 5; i++) {
+      ApplicationId appId = namespaceId.app("application" + i);
+      store.addLatestApplication(appId, appMeta);
+      Assert.assertNotNull(store.getApplication(appId));
+    }
+    long result = store.getApplicationCount(namespaceId);
+
+    Assert.assertEquals(5, result);
+  }
+
   private void writeStartRecord(ProgramRunId run, ArtifactId artifactId) {
     setStartAndRunning(run, artifactId);
     Assert.assertNotNull(store.getRun(run));
