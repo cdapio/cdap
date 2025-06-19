@@ -434,13 +434,29 @@ public class AppMetadataStore {
             Range.Bound.EXCLUSIVE),
         Range.create(fields, Range.Bound.EXCLUSIVE, null,
             Range.Bound.INCLUSIVE));
-    // Count the latest version of app,
-    // we treat latest=["true",null] as latest for backward compatibility.
+    return getApplicationSpecificationTable().count(ranges, createLatestFilterIndex());
+  }
+
+  /**
+   * Returns the number of applications in the given namespace.
+   *
+   * @param namespaceId namespace ID for which to count.
+   * @return the count of application in the namespace.
+   * @throws IOException if the count fails.
+   */
+  public long getNamespaceApplicationCount(NamespaceId namespaceId) throws IOException {
+    Collection<Range> ranges = ImmutableList.of(Range.singleton(
+        ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
+            namespaceId.getNamespace()))));
+    return getApplicationSpecificationTable().count(ranges, createLatestFilterIndex());
+  }
+
+  private Collection<Field<?>> createLatestFilterIndex() {
+    // We treat latest=["true",null] as latest for backward compatibility.
     // Prior to 6.8, all versions of an application were returned in the list apps api, not just the latest version.
-    Collection<Field<?>> filterIndexes =
-        ImmutableList.of(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null),
-            Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
-    return getApplicationSpecificationTable().count(ranges, filterIndexes);
+    return ImmutableList.of(
+        Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null),
+        Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
   }
 
   @Nullable
