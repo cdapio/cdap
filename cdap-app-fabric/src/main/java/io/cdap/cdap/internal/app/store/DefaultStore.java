@@ -39,7 +39,6 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
@@ -1190,6 +1189,14 @@ public class DefaultStore implements Store {
       verifyApplicationExists(context, namespaceId, appName);
       getAppStateTable(context).deleteAll(namespaceId, appName);
     }, ApplicationNotFoundException.class);
+  }
+
+  @Override
+  public long getApplicationCount(NamespaceId namespaceId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+          return getAppMetadataStore(context).getNamespaceApplicationCount(namespaceId);
+        }
+    );
   }
 
   private AppStateTable getAppStateTable(StructuredTableContext context)
