@@ -651,6 +651,14 @@ public abstract class AppFabricTestBase {
     return readResponse(response, LIST_JSON_OBJECT_TYPE);
   }
 
+  protected long getAppCount(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedApiPath("apps/count",
+        Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    assertResponseCode(200, response);
+    return Long.parseLong(response.getResponseBodyAsString());
+  }
+
+
   protected List<JsonObject> getAppListForNegativePaginatedApi(String namespace, int pageSize) throws Exception {
     String uri = "apps/?pageSize=" + pageSize;
 
