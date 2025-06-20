@@ -34,6 +34,7 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.io.Locations;
@@ -842,6 +843,24 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
             "commitId")
     );
   }
+
+  @Test
+  public void testGetApplicationCount() throws Exception {
+    createNamespace("customNS");
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, "customNS");
+    deploy(ConfigTestApp.class, 200, Gateway.API_VERSION_3_TOKEN, "customNS");
+
+    long count = applicationLifecycleService.getApplicationsCount(new NamespaceId("customNS"));
+
+    Assert.assertEquals(2, count);
+    deleteNamespace("customNS");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testGetApplicationCountNullNamespace() {
+    applicationLifecycleService.getApplicationsCount(null);
+  }
+
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {
     Tasks.waitFor(expected, () -> getProgramRuns(Id.Program.fromEntityId(programId), status).size(),

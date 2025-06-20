@@ -1594,6 +1594,33 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     deleteArtifact(artifactId, 200);
   }
 
+  @Test
+  public void testGetApplicationCount() throws Exception {
+    for (int i = 0; i < 10; i++) {
+      String ns1AppName = AllProgramsApp.NAME + i;
+      Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
+      Id.Artifact ns1ArtifactId = Id.Artifact.from(ns1, AllProgramsApp.class.getSimpleName(),
+          "1.0.0-SNAPSHOT");
+
+      HttpResponse response = addAppArtifact(ns1ArtifactId, AllProgramsApp.class);
+      Assert.assertEquals(200, response.getResponseCode());
+      Id.Application appId = Id.Application.from(ns1, ns1AppName);
+      response = deploy(appId,
+          new AppRequest<>(ArtifactSummary.from(ns1ArtifactId.toArtifactId())));
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
+    long result = getAppCount(TEST_NAMESPACE1);
+    Assert.assertEquals(10, result);
+
+    HttpResponse response = doDelete(getVersionedApiPath("apps/",
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+
+    result = getAppCount(TEST_NAMESPACE1);
+    Assert.assertEquals(0, result);
+  }
+
   @After
   public void cleanup() throws Exception {
     setLCMFlag(false);

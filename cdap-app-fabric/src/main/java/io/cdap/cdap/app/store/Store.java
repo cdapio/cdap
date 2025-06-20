@@ -729,6 +729,14 @@ public interface Store {
   void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException;
 
   /**
+   * Get the count of latest applications in the namespace.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @return the count of applications in the namespace
+   */
+  long getApplicationCount(NamespaceId namespaceId);
+
+  /**
    * Ensures the given program exists in the given application spec.
    *
    * @throws NotFoundException if the program does not exists.
