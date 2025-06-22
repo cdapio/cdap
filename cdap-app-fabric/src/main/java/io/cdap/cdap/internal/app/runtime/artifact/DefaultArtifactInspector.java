@@ -241,13 +241,19 @@ final class DefaultArtifactInspector implements ArtifactInspector {
         return builder;
       }
 
-      Application app = (Application) mainClass.newInstance();
+      //If it's application assignable class, then ensure it has a public no-arg constructor
+      try {
+        mainClass.getConstructor();
+      } catch (NoSuchMethodException e) {
+        throw new InvalidArtifactException(String.format(
+          "Application class %s in artifact %s must have a public no-arg constructor.", mainClassName, artifactId));
+      }
 
       java.lang.reflect.Type configType;
       // if the user parameterized their application, like 'xyz extends Application<T>',
       // we can deserialize the config into that object. Otherwise it'll just be a Config
       try {
-        configType = Artifacts.getConfigType(app.getClass());
+        configType = Artifacts.getConfigType(mainClass);
       } catch (Exception e) {
         throw new InvalidArtifactException(String.format(
             "Could not resolve config type for Application class %s in artifact %s. "
@@ -258,7 +264,7 @@ final class DefaultArtifactInspector implements ArtifactInspector {
       Schema configSchema =
           configType == Config.class ? null : schemaGenerator.generate(configType);
       builder.addApp(new ApplicationClass(mainClassName, "", configSchema,
-          getArtifactRequirements(app.getClass())));
+          getArtifactRequirements(mainClass)));
     } catch (ClassNotFoundException e) {
       throw new InvalidArtifactException(String.format(
           "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
@@ -267,10 +273,6 @@ final class DefaultArtifactInspector implements ArtifactInspector {
           "Config for Application %s in artifact %s has an unsupported schema. "
               + "The type must extend Config and cannot be parameterized.", mainClassName,
           artifactId));
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new InvalidArtifactException(String.format(
-          "Could not instantiate Application class %s in artifact %s.", mainClassName, artifactId),
-          e);
     }
 
     return builder;
