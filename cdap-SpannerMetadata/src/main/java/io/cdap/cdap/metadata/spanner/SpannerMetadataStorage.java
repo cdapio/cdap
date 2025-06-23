@@ -716,111 +716,41 @@ public class SpannerMetadataStorage implements MetadataStorage {
         return propMutations;
     }
 
-
-
     @Override
     public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
-            throws IOException {
+      throws IOException {
+        // Handle trivial cases for efficiency
         if (mutations.isEmpty()) {
             return Collections.emptyList();
         }
 
         if (mutations.size() == 1) {
+            // Delegate to the 'apply' method for a single mutation
             return Collections.singletonList(apply(mutations.get(0), options));
         }
 
-        Set<MetadataEntity> entities = new HashSet<>();
-        LinkedHashMap<MetadataEntity, MetadataMutation> mutationMap = new LinkedHashMap<>(mutations.size());
-        boolean duplicate = false;
-
-        for (MetadataMutation mutation : mutations) {
-            if (!entities.add(mutation.getEntity())) {
-                duplicate = true;
-                break;
-            }
-            mutationMap.put(mutation.getEntity(), mutation);
-        }
-
-        if (duplicate) {
-            // If there are multiple mutations for the same entity, execute all in sequence
-            List<MetadataChange> changes = new ArrayList<>(mutations.size());
-            for (MetadataMutation mutation : mutations) {
-                changes.add(apply(mutation, options));
-            }
-            return changes;
-        }
-
-        // Spanner Batch Processing (No Duplicates) with Retry
-        return retrySpannerBatch(mutationMap,options);
-    }
-
-
-    private List<MetadataChange> retrySpannerBatch(LinkedHashMap<MetadataEntity, MetadataMutation> mutations,
-                                                   MutationOptions options) throws IOException {
-        int maxRetries = 50; // Set a maximum number of retries
-        int retryDelayMillis = 100; // Set an initial retry delay
-
-        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
-            try {
-                return doSpannerBatch(mutations);
-            } catch (SpannerException e) {
-                if (e.getErrorCode() == ErrorCode.ABORTED) {
-                    LOG.warn("Spanner transaction aborted, retrying (attempt {}/{}): {}", retryCount + 1,
-                            maxRetries, e.getMessage());
-                    try {
-                        Thread.sleep(retryDelayMillis);
-                        // Exponential backoff with a maximum delay of 5 seconds
-                        retryDelayMillis = Math.min(retryDelayMillis * 2, 5000);
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt(); // Restore interrupted state.
-                        throw new IOException("Retry interrupted", ex);
-                    }
-                } else {
-                    LOG.error("Spanner exception during batch: {}", e.getMessage(), e);
-                    throw new IOException("Spanner exception during batch", e);
-                }
-            }
-        }
-
-        throw new MetadataConflictException("Spanner batch failed after " + maxRetries + " retries",
-                new ArrayList<>(mutations.keySet()));
-    }
-
-
-    private List<MetadataChange> doSpannerBatch(LinkedHashMap<MetadataEntity, MetadataMutation> mutations
-                                                ) throws IOException {
         List<MetadataChange> changes = new ArrayList<>(mutations.size());
-        try {
-            TransactionRunner runner = dbClient.readWriteTransaction();
-            runner.run(transaction -> {
-                for (MetadataMutation mutation : mutations.values()) {
-                    MetadataEntity entity = mutation.getEntity();
+        TransactionRunner runner = dbClient.readWriteTransaction();
 
-                    // Use the existing read-write transaction for read operations
-                    VersionedMetadata existingMetadata = readFromSpanner(entity, transaction);
+        // Execute all mutations within a single read-write transaction.
+        runner.run(transaction -> {
+            for (MetadataMutation mutation : mutations) {
+                MetadataEntity entity = mutation.getEntity();
 
-                    Metadata updatedMetadata;
-                    if (existingMetadata != null) {
-                        RequestandChange requestAndChange = applyMutation(existingMetadata, mutation);
-                        updatedMetadata = requestAndChange.getChange().getAfter();
-                    } else {
-                        if (mutation instanceof MetadataMutation.Create) {
-                            updatedMetadata = ((MetadataMutation.Create) mutation).getMetadata();
-                            existingMetadata = VersionedMetadata.of(Metadata.EMPTY, System.currentTimeMillis());
-                        } else {
-                            LOG.warn("Metadata not found, skipping mutation of type: {}", mutation.getType());
-                            continue;
-                        }
-                    }
+                // Read the existing metadata within the transaction.
+                VersionedMetadata existingMetadata = readFromSpanner(entity, transaction);
+                Metadata updatedMetadata;
+                // Apply the mutation to the metadata that was read from Spanner.
+                RequestandChange requestAndChange = applyMutation(existingMetadata, mutation);
+                updatedMetadata = requestAndChange.getChange().getAfter();
+                // Buffer the write operation. It will be committed with the transaction.
+                transaction.buffer(writeToSpanner(entity, existingMetadata.getVersion(), updatedMetadata));
+                // Record the change to be returned to the caller.
+                changes.add(new MetadataChange(mutation.getEntity(), existingMetadata.getMetadata(), updatedMetadata));
+            }
+            return null; // Return value is required by the TransactionRunner API.
+        });
 
-                    transaction.buffer(writeToSpanner(entity, existingMetadata.getVersion(), updatedMetadata));
-                    changes.add(createMetadataChange(mutation, existingMetadata.getMetadata(), updatedMetadata));
-                }
-                return null;
-            });
-        } catch (SpannerException e) {
-            throw e;
-        }
         return changes;
     }
 
