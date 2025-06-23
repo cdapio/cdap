@@ -16,9 +16,13 @@
 
 package io.cdap.cdap.internal.app.preview;
 
+import static io.cdap.cdap.common.conf.Constants.Service.PREVIEW_HTTP;
+import static io.cdap.cdap.common.conf.Constants.Service.PREVIEW_RUNNER_HTTP;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -53,6 +57,9 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -107,6 +114,9 @@ import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -126,6 +136,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
 
+  private static final Gson GSON = new Gson();
   private final AccessControllerInstantiator accessControllerInstantiator;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
@@ -142,6 +153,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final MessagingService messagingService;
   private final PreviewDataCleanupService previewDataCleanupService;
   private final MetricsCollectionService metricsCollectionService;
+  private final RemoteClient previewRunnerClient;
   private Injector previewInjector;
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
@@ -161,7 +173,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
       PreviewRunStopper previewRunStopper, MessagingService messagingService,
       PreviewDataCleanupService previewDataCleanupService,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      RemoteClientFactory remoteClientFactory
+  ) {
     this.authenticationContext = authenticationContext;
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
@@ -175,6 +189,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.previewRequestQueue = previewRequestQueue;
     this.previewStore = previewStore;
     this.previewRunStopper = previewRunStopper;
+    this.previewRunnerClient = remoteClientFactory.createRemoteClient(PREVIEW_RUNNER_HTTP,
+        new DefaultHttpRequestConfig(false),
+        Constants.Gateway.INTERNAL_API_VERSION_3);
     this.messagingService = messagingService;
     this.previewDataCleanupService = previewDataCleanupService;
     this.metricsCollectionService = metricsCollectionService;
@@ -190,7 +207,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     LoggingContextAccessor.setLoggingContext(
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
-            Constants.Service.PREVIEW_HTTP));
+            PREVIEW_HTTP));
     logSubscriberService = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
     logSubscriberService.startAndWait();
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
@@ -225,6 +242,15 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     }
 
     previewRequestQueue.add(previewRequest);
+    LOG.info("sidhdirenge - start preview");
+    // Start run here.
+    HttpRequest.Builder requestBuilder = previewRunnerClient
+        .requestBuilder(HttpMethod.POST, "/preview-runner/run")
+        .withBody(GSON.toJson(previewRequest));
+    HttpRequest httpRequest = requestBuilder.build();
+    HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
+
+    LOG.info("sidhdirenge - preview response {}", httpResponse.toString());
     return previewApp;
   }
 
