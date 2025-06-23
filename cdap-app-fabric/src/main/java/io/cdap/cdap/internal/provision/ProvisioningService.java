@@ -117,7 +117,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Service for provisioning related operations.
  *
- * TODO (CDAP-21111): Split ProvisioningService for Appfabric Server and Appfabric Processor.
+ * <p>TODO (CDAP-21111): Split ProvisioningService for Appfabric Server and Appfabric
+ * Processor.</p>
  */
 public class ProvisioningService extends AbstractIdleService {
 
@@ -202,10 +203,10 @@ public class ProvisioningService extends AbstractIdleService {
   /**
    * Returns the {@link ClusterStatus} for the cluster being used to execute the given program run.
    *
-   * @param programRunId the program run id for checking the cluster status
+   * @param programRunId   the program run id for checking the cluster status
    * @param programOptions the program options for the given run
-   * @param cluster the {@link Cluster} information for the given run
-   * @param userId the user id to use for {@link SecureStore} operation.
+   * @param cluster        the {@link Cluster} information for the given run
+   * @param userId         the user id to use for {@link SecureStore} operation.
    * @return the {@link ClusterStatus}
    * @throws Exception if non-retryable exception is encountered when querying cluster status
    */
@@ -356,7 +357,7 @@ public class ProvisioningService extends AbstractIdleService {
    * using their own executor.
    *
    * @param provisionRequest the provision request
-   * @param context context for the transaction
+   * @param context          context for the transaction
    * @return runnable that will actually execute the cluster provisioning
    */
   public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context)
@@ -418,8 +419,7 @@ public class ProvisioningService extends AbstractIdleService {
             programOptions,
             properties, name, provisionRequest.getUser(), provisioningOp,
             createKeysDirectory(programRunId).toURI(), null);
-    ProvisionerTable provisionerTable = new ProvisionerTable(context);
-    provisionerTable.putTaskInfo(provisioningTaskInfo);
+    provisionerStore.putTaskInfo(provisioningTaskInfo);
     return createProvisionTask(provisioningTaskInfo, provisioner);
   }
 
@@ -506,8 +506,7 @@ public class ProvisioningService extends AbstractIdleService {
         ProvisioningOp.Status.REQUESTING_DELETE);
     ProvisioningTaskInfo provisioningTaskInfo = new ProvisioningTaskInfo(existing, provisioningOp,
         existing.getCluster());
-    ProvisionerTable provisionerTable = new ProvisionerTable(context);
-    provisionerTable.putTaskInfo(provisioningTaskInfo);
+    provisionerStore.putTaskInfo(provisioningTaskInfo);
 
     return createDeprovisionTask(provisioningTaskInfo, provisioner, taskCleanup);
   }
@@ -713,7 +712,7 @@ public class ProvisioningService extends AbstractIdleService {
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
     ProvisioningTask task = new ProvisionTask(taskInfo, transactionRunner, provisioner, context,
-        provisionerNotifier, programStateWriter, 300);
+        provisionerNotifier, programStateWriter, provisionerStore, 300);
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId,
         ProvisioningOp.Type.PROVISION);
@@ -773,7 +772,7 @@ public class ProvisioningService extends AbstractIdleService {
       };
     }
     DeprovisionTask task = new DeprovisionTask(taskInfo, transactionRunner, 300,
-        provisioner, context, provisionerNotifier, locationFactory);
+        provisioner, provisionerStore, context, provisionerNotifier, locationFactory);
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId,
         ProvisioningOp.Type.DEPROVISION);
 

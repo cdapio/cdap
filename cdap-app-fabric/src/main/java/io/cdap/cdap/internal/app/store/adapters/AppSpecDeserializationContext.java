@@ -48,7 +48,7 @@ public class AppSpecDeserializationContext {
 
   private static final Gson GSON = new Gson();
   private ArtifactId rootArtifact;
-  private final String namespace;
+  private String namespace;
   private final StructuredTable pluginDataTable;
   private final StructuredTable universalPluginDataTable;
   private final LoadingCache<PluginKey, PluginClass> pluginCache;
@@ -151,6 +151,13 @@ public class AppSpecDeserializationContext {
    */
   public String getNamespace() {
     return namespace;
+  }
+
+  /**
+   * Sets the primary namespace for the current deserialization.
+   */
+  public void setNamespace(String namespace) {
+    this.namespace = namespace;
   }
 
   /**
