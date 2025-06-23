@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * TODO: Move to cdap-proto
  */
-final class ApplicationSpecificationCodec extends
+public final class ApplicationSpecificationCodec extends
     AbstractSpecificationCodec<ApplicationSpecification> {
 
   @Override

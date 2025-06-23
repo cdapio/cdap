@@ -32,8 +32,15 @@ public interface StructuredTableContext {
    * @param tableId the table id
    * @return An instance of the specified table, never null
    * @throws StructuredTableInstantiationException if the table cannot be instantiated
-   * @throws TableNotFoundException if the table is not found
+   * @throws TableNotFoundException                if the table is not found
    */
   StructuredTable getTable(StructuredTableId tableId)
       throws StructuredTableInstantiationException, TableNotFoundException;
+
+  /**
+   * Get type of storage provider for the current instance.
+   */
+  default String getStorageProvider() {
+    return "";
+  }
 }
