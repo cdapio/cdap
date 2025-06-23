@@ -51,13 +51,12 @@ public class SpannerMetadataDocumentBuilder {
     this.metadata = metadata;
 
     // Initialize core entity fields
-    this.namespace = entity.containsKey("namespace") ? entity.getValue("namespace").toLowerCase() : null;
-    this.type = entity.getType().toLowerCase();
-    this.name = entity.getValue(entity.getType()).toLowerCase();
+    this.namespace = entity.containsKey("namespace") ? entity.getValue("namespace") : null;
+    this.type = entity.getType();
+    this.name = entity.getValue(entity.getType());
 
     // Add entity type and name to system text for general search
     systemText.append(' ').append(this.type);
-    systemText.append(' ').append(this.name);
     // Optionally, also add as a property for structured querying on entity type/name
     propertiesForSpannerPropsTable.add(new Property(MetadataScope.SYSTEM.name(), this.type, this.name));
 
@@ -70,33 +69,31 @@ public class SpannerMetadataDocumentBuilder {
    * to populate the builder's internal fields (text, properties for child table).
    */
   private void processMetadata() {
+    // --- START OF CHANGE 1: Prepare to collect property names ---
+    // A Set is used to automatically handle any duplicate property names.
+    Set<String> propertyNames = new HashSet<>();
+
     // Process properties
     for (Map.Entry<ScopedName, String> entry : metadata.getProperties().entrySet()) {
       ScopedName key = entry.getKey();
       String value = entry.getValue();
       String propName = key.getName().toLowerCase();
-      String propValueForText = value.toLowerCase(); // Value for concatenated text fields
-      String propValueForPropsTable = value;  // Value for individual property rows (can be original case or formatted)
+      String propValueForText = value.toLowerCase();
+      String propValueForPropsTable = value;
 
-      // Special handling for 'schema' property: format for main props value, and extract for search
-      if (MetadataConstants.SCHEMA_KEY.equals(key.getName())) { // Check name, not the whole ScopedName
-        // For the main 'schema' property value in metadata_props, use the concise format
+      // --- START OF CHANGE 2: Collect the property name ---
+      propertyNames.add(propName);
+
+      // Special handling for 'schema' property
+      if (MetadataConstants.SCHEMA_KEY.equals(key.getName())) {
         propValueForPropsTable = formatSchemaConcise(value);
-        // For the full-text search string, we might still want a more verbose, searchable format
-        propValueForText = parseSchemaForSearch(value);
-
-        // Additionally, extract 'schema_name' and 'schema_fields' as separate properties for detailed querying
-        extractSchemaDerivedProperties(value);
+        propValueForText = propValueForPropsTable;
+        // The call to extractSchemaDerivedProperties() is removed as per your previous request.
       }
 
-      // Append to user/system text builders for full-text search
       (MetadataScope.USER == key.getScope() ? userText : systemText).append(' ').append(propValueForText);
-
-      // Add to properties set for spanner_props table
       propertiesForSpannerPropsTable.add(new Property(key.getScope().name(), propName, propValueForPropsTable));
 
-      // Check for built-in long properties like creation time and TTL
-      // Construct ScopedName strings with SYSTEM scope explicitly
       checkForBuiltInLong(ScopedName.fromString(MetadataScope.SYSTEM.name() + MetadataConstants.KEYVALUE_SEPARATOR +
                                                   MetadataConstants.CREATION_TIME_KEY),
                           key, value).ifPresent(x -> created = x);
@@ -108,10 +105,19 @@ public class SpannerMetadataDocumentBuilder {
     // Process tags
     for (ScopedName tag : metadata.getTags()) {
       String tagName = tag.getName().toLowerCase();
-      // Append tags to appropriate text builder for full-text search
       (MetadataScope.USER == tag.getScope() ? userText : systemText).append(' ').append(tagName);
-      // Add tags as individual properties to the props table (useful for structured tag queries)
       propertiesForSpannerPropsTable.add(new Property(tag.getScope().name(), MetadataConstants.TAGS_KEY, tagName));
+    }
+
+    // --- START OF CHANGE 3: Create and add the summary 'properties' property ---
+    // After processing all properties, if any were found, create the summary entry.
+    if (!propertyNames.isEmpty()) {
+      String allPropertiesValue = String.join(" ", propertyNames);
+      propertiesForSpannerPropsTable.add(new Property(
+        MetadataScope.SYSTEM.name(), // This is system-generated metadata
+        MetadataConstants.PROPERTIES_KEY, // Assuming this constant is 'properties'
+        allPropertiesValue
+      ));
     }
   }
 
@@ -147,15 +153,33 @@ public class SpannerMetadataDocumentBuilder {
             JsonElement fieldNameElement = fieldObject.get("name");
             JsonElement fieldTypeElement = fieldObject.get("type");
 
-            if (fieldNameElement != null && fieldNameElement.isJsonPrimitive() &&
-              fieldTypeElement != null && fieldTypeElement.isJsonPrimitive()) {
-              if (!firstField) {
-                formattedSchemaBuilder.append(" ");
+            if (fieldNameElement != null && fieldNameElement.isJsonPrimitive() && fieldTypeElement != null) {
+              String fieldTypeName = "";
+              // --- START OF FIX ---
+              // Handle both primitive types (e.g., "string") and union types (e.g., ["string", "null"])
+              if (fieldTypeElement.isJsonPrimitive()) {
+                fieldTypeName = fieldTypeElement.getAsString();
+              } else if (fieldTypeElement.isJsonArray()) {
+                // For a union type, find the first non-null type
+                for (JsonElement typeInArray : fieldTypeElement.getAsJsonArray()) {
+                  if (typeInArray.isJsonPrimitive() && !"null".equalsIgnoreCase(typeInArray.getAsString())) {
+                    fieldTypeName = typeInArray.getAsString();
+                    break; // Found the type, exit the inner loop
+                  }
+                }
               }
-              formattedSchemaBuilder.append(fieldNameElement.getAsString().toLowerCase())
-                .append(":")
-                .append(fieldTypeElement.getAsString().toUpperCase());
-              firstField = false;
+              // --- END OF FIX ---
+
+              // Only append if we successfully determined a type name
+              if (!fieldTypeName.isEmpty()) {
+                if (!firstField) {
+                  formattedSchemaBuilder.append(" ");
+                }
+                formattedSchemaBuilder.append(fieldNameElement.getAsString().toLowerCase())
+                  .append(":")
+                  .append(fieldTypeName.toUpperCase());
+                firstField = false;
+              }
             }
           }
         }
@@ -165,75 +189,6 @@ public class SpannerMetadataDocumentBuilder {
       LOG.warn("Error formatting schema '{}' into concise string. Falling back to original. Error: {}",
                schemaStr, e.getMessage());
       return schemaStr; // Fallback to original JSON string on error
-    }
-  }
-
-  /**
-   * Parses the schema JSON and flattens it into a searchable text string.
-   * Example: "etlSchemaBody record body string"
-   */
-  private String parseSchemaForSearch(String schemaStr) {
-    try {
-      Schema schema = Schema.parseJson(schemaStr);
-      StringBuilder builder = new StringBuilder();
-      // Add schema name and top-level type for search
-      if (schema.getRecordName() != null) {
-        builder.append(schema.getRecordName().toLowerCase()).append(" ");
-      }
-      builder.append(schema.getType().toString().toLowerCase()).append(" ");
-
-      SchemaWalker.walk(schema, (field, subSchema) -> {
-        if (field != null) {
-          String type = (subSchema.isNullable() ? subSchema.getNonNullable() : subSchema).getType().toString();
-          // Append both field name and fieldName:fieldType for broader search
-          builder.append(field).append(" ").append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).
-            append(type).append(" ");
-        }
-      });
-      return builder.toString().trim().toLowerCase();
-    } catch (Exception e) {
-      LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text for search. Error: {}",
-               schemaStr, entity, e.getMessage());
-      return schemaStr.toLowerCase(); // Fallback to plain text, lowercased
-    }
-  }
-
-  /**
-   * Extracts derived schema properties like 'schema_name' and 'schema_fields'
-   * and adds them to the set of properties for the metadata_props table.
-   */
-  private void extractSchemaDerivedProperties(String schemaStr) {
-    try {
-      JsonObject schemaJson = GSON.fromJson(schemaStr, JsonObject.class);
-      JsonElement nameElement = schemaJson.get("name");
-      if (nameElement != null && nameElement.isJsonPrimitive()) {
-        propertiesForSpannerPropsTable.add(new Property(MetadataScope.SYSTEM.name(), "schema_name",
-                                                        nameElement.getAsString().toLowerCase()));
-      }
-
-      JsonArray fields = schemaJson.getAsJsonArray("fields");
-      if (fields != null) {
-        StringBuilder schemaFieldsValue = new StringBuilder();
-        for (JsonElement fieldElement : fields) {
-          if (fieldElement.isJsonObject()) {
-            JsonObject fieldObject = fieldElement.getAsJsonObject();
-            JsonElement fieldNameElement = fieldObject.get("name");
-            JsonElement fieldTypeElement = fieldObject.get("type");
-            if (fieldNameElement != null && fieldNameElement.isJsonPrimitive() &&
-              fieldTypeElement != null && fieldTypeElement.isJsonPrimitive()) {
-              schemaFieldsValue.append(fieldNameElement.getAsString().toLowerCase()).append(":")
-                .append(fieldTypeElement.getAsString().toLowerCase()).append(" ");
-            }
-          }
-        }
-        if (schemaFieldsValue.length() > 0) {
-          propertiesForSpannerPropsTable.add(new Property(MetadataScope.SYSTEM.name(), "schema_fields",
-                                                          schemaFieldsValue.toString().trim()));
-        }
-      }
-    } catch (Exception e) {
-      LOG.warn("Error extracting derived schema properties from '{}'. Error: {}", schemaStr, e.getMessage());
-      // No need to throw, just log and continue
     }
   }
 
@@ -299,7 +254,7 @@ public class SpannerMetadataDocumentBuilder {
 
     @Override
     public String toString() {
-      return scope + ':' + name + '=' + value;
+      return scope + ':' + name + ':' + value;
     }
   }
 }

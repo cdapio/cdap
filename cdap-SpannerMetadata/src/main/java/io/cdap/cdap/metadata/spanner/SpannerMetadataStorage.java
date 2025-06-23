@@ -394,11 +394,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
         }
     }
 
-    private MetadataChange createMetadataChange(MetadataMutation mutation, Metadata existingMetadata,
-                                                Metadata updatedMetadata) {
-        return new MetadataChange(mutation.getEntity(), existingMetadata, updatedMetadata);
-    }
-
     /**
      * Reads the existing metadata for an entity from the index.
      *
