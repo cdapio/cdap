@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata.spanner;
 
+import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.DISCARD;
 import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.GSON;
 import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.METADATA_PROPS_TABLE;
 import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.METADATA_TABLE;
@@ -189,10 +190,6 @@ public class MetadataMutator {
   private static ChangeRequest drop(MetadataEntity entity, VersionedMetadata before) {
     List<Mutation> mutations = new ArrayList<>();
     String metadataId = toMetadataId(entity);
-    if (before.getVersion() == null) {
-      throw new IllegalArgumentException("existingVersion cannot be null when deleting a "
-                                           + "specific version of a metadata entity.");
-    }
     mutations.add(Mutation.delete(METADATA_TABLE, Key.of(metadataId)));
     return new ChangeRequest(mutations, new MetadataChange(entity, before.getMetadata(), Metadata.EMPTY));
   }
@@ -225,7 +222,7 @@ public class MetadataMutator {
    * @return the list of mutations to execute and the change caused by the mutation
    */
   private static ChangeRequest remove(VersionedMetadata before, MetadataMutation.Remove remove) throws IOException {
-    Metadata after = filterMetadata(before.getMetadata(), false,
+    Metadata after = filterMetadata(before.getMetadata(), DISCARD,
                                     remove.getKinds(), remove.getScopes(), remove.getRemovals());
     return new ChangeRequest(bufferWrites(remove.getEntity(), before.getVersion(), after),
                              new MetadataChange(remove.getEntity(), before.getMetadata(), after));
@@ -288,8 +285,6 @@ public class MetadataMutator {
     for (FormattedMetadata.Property prop : formattedMetadata.getMetadataProps()) {
       propMutations.add(Mutation.newInsertOrUpdateBuilder(METADATA_PROPS_TABLE)
                           .set(Tables.MetadataProps.METADATA_ID_FIELD).to(entityId)
-                          .set(Tables.MetadataProps.NAMESPACE_FIELD).to(formattedMetadata.getNamespace())
-                          .set(Tables.MetadataProps.TYPE_FIELD).to(formattedMetadata.getType())
                           .set(Tables.MetadataProps.NESTED_SCOPE_FIELD).to(prop.getScope())
                           .set(Tables.MetadataProps.NESTED_NAME_FIELD).to(prop.getName())
                           .set(Tables.MetadataProps.NESTED_VALUE_FIELD).to(prop.getValue())

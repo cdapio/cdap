@@ -33,9 +33,11 @@ import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Struct;
 import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.TransactionRunner;
+import com.google.cloud.spanner.Value;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -44,11 +46,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataRecord;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageContext;
 import io.cdap.cdap.spi.metadata.MutationOptions;
@@ -58,18 +63,23 @@ import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.ScopedNameTypeAdapter;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
+import io.cdap.cdap.spi.metadata.Sorting;
 import io.cdap.cdap.spi.metadata.VersionedMetadata;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,6 +110,20 @@ public class SpannerMetadataStorage implements MetadataStorage {
   private Spanner spanner;
   private DatabaseClient dbClient;
   private DatabaseAdminClient adminClient;
+
+  // Define the wildcard characters for regex matching
+  private static final String SQL_WILDCARD_ANY_STRING = "*";
+  private static final String SQL_WILDCARD_ANY_CHAR = "?";
+
+  private static final Map<String, String> SORT_KEY_MAP = ImmutableMap.of(
+    "entity-name", Tables.Metadata.NAME_FIELD,
+    "creation-time", Tables.Metadata.CREATED_FIELD
+  );
+
+  @VisibleForTesting
+  static final boolean KEEP = true;
+  @VisibleForTesting
+  static final boolean DISCARD = false;
 
   @Override
   public void initialize(MetadataStorageContext context) throws Exception {
@@ -180,12 +204,12 @@ public class SpannerMetadataStorage implements MetadataStorage {
         + "%s STRING(MAX),"  // system
         + "%s JSON,"  // metadata_column
         + "%s INT64 NOT NULL,"  // version
-        + "user_tokens TOKENLIST AS "  // user_tokens list
+        + "%s TOKENLIST AS "  // user_tokens list
         + "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN,"
-        + "system_tokens TOKENLIST AS "  // system_tokens list
+        + "%s TOKENLIST AS "  // system_tokens list
         + "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN,"
-        + "text_tokens TOKENLIST AS "  // text_tokens list
-        + "(TOKENLIST_CONCAT([User_Tokens, System_Tokens])) HIDDEN,"
+        + "%s TOKENLIST AS "  // text_tokens list
+        + "(TOKENLIST_CONCAT([%s, %s])) HIDDEN,"
         + ") PRIMARY KEY (%s) ", // metadata_id
       METADATA_TABLE,
       Tables.Metadata.METADATA_ID_FIELD,
@@ -197,8 +221,13 @@ public class SpannerMetadataStorage implements MetadataStorage {
       Tables.Metadata.SYSTEM_FIELD,
       Tables.Metadata.METADATA_COLUMN_FIELD,
       Tables.Metadata.VERSION,
+      Tables.Metadata.USER_TOKEN_FIELD,
       Tables.Metadata.USER_FIELD,
+      Tables.Metadata.SYSTEM_TOKEN_FIELD,
       Tables.Metadata.SYSTEM_FIELD,
+      Tables.Metadata.TEXT_TOKEN_FIELD,
+      Tables.Metadata.USER_TOKEN_FIELD,
+      Tables.Metadata.SYSTEM_TOKEN_FIELD,
       Tables.Metadata.METADATA_ID_FIELD
     );
   }
@@ -231,22 +260,19 @@ public class SpannerMetadataStorage implements MetadataStorage {
     return String.format(
       "CREATE TABLE IF NOT EXISTS %s ("
         + "%s STRING(MAX) NOT NULL,"  // metadata_id
-        + "%s STRING(MAX) NOT NULL," // namespace
-        + "%s STRING(MAX) NOT NULL," // entity_type
         + "%s STRING(MAX) NOT NULL," // name
         + "%s STRING(MAX)," // scope
         + "%s STRING(MAX)," // value
-        + "value_tokens TOKENLIST AS " // value_tokens list
+        + "%s TOKENLIST AS " // value_tokens list
         + "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN,"
         + ") PRIMARY KEY (%s, %s, %s) ," // metadata_id, name, scope
         + "INTERLEAVE IN PARENT %s ON DELETE CASCADE",
       METADATA_PROPS_TABLE,
       Tables.MetadataProps.METADATA_ID_FIELD,
-      Tables.MetadataProps.NAMESPACE_FIELD,
-      Tables.MetadataProps.TYPE_FIELD,
       Tables.MetadataProps.NESTED_NAME_FIELD,
       Tables.MetadataProps.NESTED_SCOPE_FIELD,
       Tables.MetadataProps.NESTED_VALUE_FIELD,
+      Tables.MetadataProps.NESTED_VALUE_TOKEN_FIELD,
       Tables.MetadataProps.NESTED_VALUE_FIELD,
       Tables.MetadataProps.METADATA_ID_FIELD,
       Tables.MetadataProps.NESTED_NAME_FIELD,
@@ -313,7 +339,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
   public Metadata read(Read read) throws IOException {
     try (ReadOnlyTransaction transaction = dbClient.readOnlyTransaction()) {
       Metadata metadata = readVersionedMetadata(read.getEntity(), transaction).getMetadata();
-      return filterMetadata(metadata, true, read.getKinds(),
+      return filterMetadata(metadata, KEEP, read.getKinds(),
                             read.getScopes(), read.getSelection());
     } catch (SpannerException e) {
       throw new IOException("Error reading from Spanner", e);
@@ -441,6 +467,8 @@ public class SpannerMetadataStorage implements MetadataStorage {
           changes.add(change);
         }
         return null;
+
+
       });
     } catch (SpannerException e) {
       throw new IOException("Error applying batch mutations to Spanner", e);
@@ -487,15 +515,482 @@ public class SpannerMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public SearchResponse search(SearchRequest request) throws IOException {
-    throw new IOException("NOT IMPLEMENTED");
+  public SearchResponse search(SearchRequest request)  {
+    Cursor cursor = Optional.ofNullable(request.getCursor())
+      .filter(s -> !s.isEmpty())
+      .map(Cursor::fromString)
+      .orElse(null);
+
+    return doSearch(request, cursor);
   }
+
+  /**
+   * Executes a metadata search query against Spanner, handling query building,
+   * parameter binding, and result mapping.
+   *
+   * @param request       The {@link SearchRequest} containing search criteria.
+   * @param requestCursor An optional {@link Cursor} for pagination, providing the start point for the results.
+   * @return A {@link SearchResponse} containing the search results and a cursor for the next page, if any.
+   */
+  private SearchResponse doSearch(SearchRequest request,
+                                              @Nullable Cursor requestCursor) {
+    try (ReadOnlyTransaction transaction = dbClient.readOnlyTransaction()) {
+      QueryBuildResult queryResult = buildQuery(request, requestCursor);
+      String sqlTemplate = queryResult.getSql();
+      Map<String, Value> params = queryResult.getParams();
+      List<String> sortColumns = queryResult.getSortColumns();
+      Statement.Builder statementBuilder = Statement.newBuilder(sqlTemplate);
+      params.forEach((key, value) -> statementBuilder.bind(key).to(value));
+      Statement statement = statementBuilder.build();
+
+      LOG.info("Executing Spanner SQL Template: {}", statement.getSql());
+      LOG.info("With Parameters: {}", statement.getParameters());
+
+      ResultSet resultSet = transaction.executeQuery(statement);
+      List<MetadataRecord> results = new ArrayList<>();
+      String nextActualCursor = null;
+
+      while (resultSet.next()) {
+        results.add(mapResult(resultSet));
+        nextActualCursor = createNextCursorKey(resultSet, sortColumns);
+      }
+
+      LOG.info("Found {} results.", results.size());
+
+      return createSearchResponse(request, results, nextActualCursor);
+    }
+  }
+
+  /**
+   * Main query builder that orchestrates calls to helper methods.
+   */
+  private QueryBuildResult buildQuery(SearchRequest request, @Nullable Cursor requestCursor) {
+    StringBuilder sql = new StringBuilder("SELECT * FROM metadata");
+    Map<String, Value> params = new HashMap<>();
+    SortDetailsResult sortDetails = getSortDetails(request);
+    List<String> sortColumns = sortDetails.getColumns();
+    List<Sorting.Order> sortOrders = sortDetails.getOrders();
+
+    // Add standard filter conditions (namespaces, types, etc.) to the WHERE clause.
+    List<String> conditions = appendFilterConditions(request, params);
+
+    // Add the special WHERE condition for keyset pagination if a cursor exists.
+    appendCursorCondition(requestCursor, sortColumns, sortOrders, conditions, params);
+    if (!conditions.isEmpty()) {
+      sql.append(" WHERE ").append(String.join(" AND ", conditions));
+    }
+
+    // Add the ORDER BY clause.
+    List<String> orderByClauses = new ArrayList<>();
+    for (int i = 0; i < sortColumns.size(); i++) {
+      orderByClauses.add(sortColumns.get(i) + " " + sortOrders.get(i).name());
+    }
+    sql.append(" ORDER BY ").append(String.join(", ", orderByClauses));
+
+    // Add the LIMIT clause with a parameter.
+    sql.append(" LIMIT @limit");
+    params.put("limit", Value.int64(request.getLimit()));
+
+    return new QueryBuildResult(sql.toString(), params, sortColumns);
+  }
+
+  /**
+   * Determines the final list of columns and directions for the ORDER BY clause,
+   * ensuring a unique tie-breaker is always present.
+   * @returns A type-safe SortDetailsResult.
+   */
+  private SortDetailsResult getSortDetails(SearchRequest request) {
+    List<String> columns = new ArrayList<>();
+    List<Sorting.Order> orders = new ArrayList<>();
+
+    if (request.getSorting() != null) {
+      columns.add(mapSortKey(request.getSorting().getKey()));
+      orders.add(request.getSorting().getOrder());
+    } else {
+      // Default sort order if none is provided in the request
+      columns.add(Tables.Metadata.NAME_FIELD);
+      orders.add(Sorting.Order.ASC);
+    }
+
+    // VITAL: Add a unique tie-breaker to prevent inconsistent ordering and broken pagination.
+    String primaryKey = Tables.Metadata.METADATA_ID_FIELD;
+    if (!columns.contains(primaryKey)) {
+      columns.add(primaryKey);
+      orders.add(Sorting.Order.ASC);
+    }
+
+    return new SortDetailsResult(columns, orders);
+  }
+
+  /**
+   * Appends standard WHERE conditions and their parameters for filtering the search.
+   */
+  private List<String> appendFilterConditions(SearchRequest request, Map<String, Value> params) {
+    List<String> conditions = new ArrayList<>();
+
+    if (request.getNamespaces() != null && !request.getNamespaces().isEmpty()) {
+      conditions.add("namespace IN UNNEST(@namespaces)");
+      params.put("namespaces", Value.stringArray(request.getNamespaces()));
+    }
+
+    if (request.getTypes() != null && !request.getTypes().isEmpty()) {
+      conditions.add("entity_type IN UNNEST(@types)");
+      params.put("types", Value.stringArray(request.getTypes()));
+    }
+
+    String query = request.getQuery().toLowerCase();
+    if (query.isEmpty() || query.equals("*")) {
+      return conditions;
+    }
+
+    if (query.contains(":")) {
+      conditions.add(buildKeyValueSearchCondition(query, params));
+    } else {
+      conditions.add(buildScopedSearchCondition(query, request.getScope(), params));
+    }
+
+    return conditions;
+  }
+
+  /**
+   * Builds the condition for a key:value search (e.g., "tags:retail").
+   * Now uses the precise SEARCH_SUBSTRING syntax for the value part.
+   *
+   * @param term  The full query string, like "a:b"
+   * @param params The map to add bind parameters to.
+   * @return The parameterized SQL condition string.
+   */
+  private String buildKeyValueSearchCondition(String term, Map<String, Value> params) {
+    String[] parts = term.split(MetadataConstants.KEYVALUE_SEPARATOR, 2);
+    String key = parts[0].trim();
+    String value = parts[1].trim();
+
+    String keyParam = "propKey_" + params.size();
+    params.put(keyParam, Value.string(key));
+    if (isWildcardPattern(value)) {
+      String regexPattern = convertToRegexpPattern(value);
+      String valueParam = "propValueRegex_" + params.size();
+      params.put(valueParam, Value.string(regexPattern));
+
+      return String.format(
+        "EXISTS (SELECT 1 FROM %s "
+          + "WHERE %s = %s.%s "
+          + "AND %s = @%s "
+          + "AND REGEXP_CONTAINS(%s, @%s))",
+        METADATA_PROPS_TABLE,
+        Tables.MetadataProps.METADATA_ID_FIELD,
+        METADATA_TABLE,
+        Tables.Metadata.METADATA_ID_FIELD,
+        Tables.MetadataProps.NESTED_NAME_FIELD,
+        keyParam,
+        Tables.MetadataProps.NESTED_VALUE_FIELD,
+        valueParam
+      );
+    } else {
+      String valueParam = "propValueExact_" + params.size();
+      params.put(valueParam, Value.string(value));
+      return String.format(
+        "EXISTS (SELECT 1 FROM %s "
+          + "WHERE %s = %s.%s "
+          + "AND %s = @%s "
+          + "AND SEARCH_SUBSTRING(%s, @%s, relative_search_type=>'word_prefix'))",
+        METADATA_PROPS_TABLE,
+        Tables.MetadataProps.METADATA_ID_FIELD,
+        METADATA_TABLE,
+        Tables.Metadata.METADATA_ID_FIELD,
+        Tables.MetadataProps.NESTED_NAME_FIELD,
+        keyParam,
+        Tables.MetadataProps.NESTED_VALUE_TOKEN_FIELD,
+        valueParam
+      );
+    }
+  }
+
+  /**
+   * Checks if a given string contains SQL-style wildcard characters.
+   *
+   * @param s The string to check.
+   * @return true if '*' or '?' are present, false otherwise.
+   */
+  private boolean isWildcardPattern(String s) {
+    return s.contains(SQL_WILDCARD_ANY_STRING) || s.contains(SQL_WILDCARD_ANY_CHAR);
+  }
+
+  /**
+   * Converts a search pattern containing SQL-style wildcards into a format usable by regular expression matching.
+   * This means:
+   * <ul>
+   * <li>'*' (matches any sequence of characters) becomes '.*'</li>
+   * <li>'?' (matches any single character) becomes '.'</li>
+   * </ul>
+   * Other special characters in the pattern are treated as literal text.
+   *
+   * @param sqlWildcardPattern The input pattern (e.g., "la*si?").
+   * @return The converted regular expression (e.g., "la.*si.").
+   */
+  private String convertToRegexpPattern(String sqlWildcardPattern) {
+    if (sqlWildcardPattern == null) {
+      return null;
+    }
+    StringBuilder re2Pattern = new StringBuilder();
+    for (char c : sqlWildcardPattern.toCharArray()) {
+      switch (c) {
+        case '*':
+          re2Pattern.append(".*");
+          break;
+        case '?':
+          re2Pattern.append(".");
+          break;
+        default:
+          re2Pattern.append(c);
+          break;
+      }
+    }
+    return re2Pattern.toString();
+  }
+
+  /**
+   * Builds the condition for a simple term search based on the provided scope.
+   *
+   * @param searchTerm The term to search for.
+   * @param scope      The scope from the search request (USER, SYSTEM, or null).
+   * @param params     The map to add bind parameters to.
+   * @return The parameterized SQL condition string.
+   */
+  private String buildScopedSearchCondition(String searchTerm, @Nullable MetadataScope scope,
+                                            Map<String, Value> params) {
+    String searchColumn;
+
+    if (scope == MetadataScope.USER) {
+      searchColumn = Tables.Metadata.USER_TOKEN_FIELD;
+    } else if (scope == MetadataScope.SYSTEM) {
+      searchColumn = Tables.Metadata.SYSTEM_TOKEN_FIELD;
+    } else {
+      searchColumn = Tables.Metadata.TEXT_TOKEN_FIELD;
+    }
+
+    String termParam = "searchTerm_" + params.size();
+    params.put(termParam, Value.string(searchTerm));
+
+    return String.format(
+      "SEARCH_SUBSTRING(%s, @%s, relative_search_type=>'word_prefix')",
+      searchColumn,
+      termParam
+    );
+  }
+
+  /**
+   * Appends the complex WHERE condition for keyset pagination if a cursor is provided.
+   */
+  private void appendCursorCondition(@Nullable Cursor requestCursor, List<String> sortColumns,
+                                     List<Sorting.Order> sortOrders, List<String> conditions,
+                                     Map<String, Value> params) {
+    if (requestCursor == null || requestCursor.getActualCursor() == null) {
+      return;
+    }
+    String[] cursorValues = requestCursor.getActualCursor().split(",", -1);
+    if (cursorValues.length != sortColumns.size()) {
+      LOG.warn("Cursor values count ({}) does not match sort columns count ({}). Ignoring cursor.",
+               cursorValues.length, sortColumns.size());
+      return;
+    }
+
+    // Build the OR clauses for each level of sorting declaratively.
+    List<String> combinedRowConditions = IntStream.range(0, sortColumns.size())
+      .mapToObj(i -> {
+        // For each sort column, create a clause like: (colA = valA AND colB > valB)
+        List<String> clauseParts = new ArrayList<>();
+
+        // Add equality conditions for all preceding sort columns (the "prefix")
+        IntStream.range(0, i)
+          .forEach(j -> clauseParts.add(
+            buildCursorSubCondition(sortColumns.get(j), "=", cursorValues[j], params)));
+
+        // Add the boundary condition ('>' or '<') for the current sort column
+        String operator = (sortOrders.get(i) == Sorting.Order.ASC) ? ">" : "<";
+        clauseParts.add(
+          buildCursorSubCondition(sortColumns.get(i), operator, cursorValues[i], params));
+
+        return "(" + String.join(" AND ", clauseParts) + ")";
+      })
+      .collect(Collectors.toList());
+
+    if (!combinedRowConditions.isEmpty()) {
+      conditions.add("(" + String.join(" OR ", combinedRowConditions) + ")");
+    }
+  }
+
+  /**
+   * Helper method to create a single parameterized SQL condition for the cursor.
+   * Example: "name = @cursor_param_name" or "created > @cursor_param_created"
+   */
+  private String buildCursorSubCondition(String column, String operator, String value, Map<String, Value> params) {
+    String paramName = "cursor_param_" + column + "_" + params.size();
+    params.put(paramName, Value.string(value));
+    return String.format("%s %s @%s", column, operator, paramName);
+  }
+
+  /**
+   * Creates the "actualCursor" part of the next cursor.
+   */
+  private String createNextCursorKey(ResultSet resultSet, List<String> sortColumns) {
+    String[] cursorValues = new String[sortColumns.size()];
+
+    for (int i = 0; i < sortColumns.size(); i++) {
+      String columnName = sortColumns.get(i);
+      if (columnName.equals("create_time")) {
+        cursorValues[i] = String.valueOf(resultSet.getLong(columnName));
+      } else {
+        cursorValues[i] = resultSet.getString(columnName);
+      }
+    }
+    return String.join(",", cursorValues);
+  }
+
+  /**
+   * Creates the final SearchResponse, packaging the next cursor string.
+   */
+  private SearchResponse createSearchResponse(SearchRequest request, List<MetadataRecord> results,
+                                              String nextActualCursor) {
+    String finalCursorString = (nextActualCursor != null) ?
+      getCursor(request, results, nextActualCursor).toString() : null;
+    return new SearchResponse(request, finalCursorString, request.getOffset(),
+                              request.getLimit(), results.size(), results);
+  }
+
+  /**
+   * Creates a pagination cursor for the next set of search results.
+   *
+   * @param request          The original search request.
+   * @param results          The list of metadata records returned in the current page.
+   * @param nextActualCursor The database-specific cursor string for the next page.
+   * @return A {@link Cursor} object representing the next page's starting point.
+   */
+  private Cursor getCursor(SearchRequest request, List<MetadataRecord> results, String nextActualCursor) {
+    int nextOffset = request.getOffset() + results.size();
+    String sortingString = Optional.ofNullable(request.getSorting())
+      .map(sorting -> sorting.getKey() + MetadataConstants.KEYVALUE_SEPARATOR + sorting.getOrder().name())
+      .orElse(null);
+
+    return new Cursor(
+      nextOffset,
+      request.getLimit(),
+      false,
+      request.getScope(),
+      request.getNamespaces(),
+      request.getTypes(),
+      sortingString,
+      nextActualCursor,
+      request.getQuery()
+    );
+  }
+
+  /**
+   * Maps a Spanner {@link ResultSet} row to a {@link MetadataRecord}.
+   * Extracts the metadata entity ID and JSON metadata from the result set.
+   *
+   * @param resultSet The Spanner result set, positioned at the current row.
+   * @return A {@link MetadataRecord} representing the current row's data.
+   */
+  private MetadataRecord mapResult(ResultSet resultSet) {
+    String metadataId = resultSet.getString(Tables.Metadata.METADATA_ID_FIELD);
+    Struct row = resultSet.getCurrentRowAsStruct();
+    String metadataJson = row.getJson(7);
+    Metadata metadata = GSON.fromJson(metadataJson, Metadata.class);
+    MetadataEntity entity = toMetadataEntity(metadataId);
+    return new MetadataRecord(entity, metadata);
+  }
+
+  /**
+   * Maps a user-provided sort key string to its corresponding Spanner column name.
+   *
+   * @param key The user-provided sort key (e.g., "name", "namespace", "entity_type").
+   * @return The Spanner database column name for the given sort key.
+   * @throws IllegalArgumentException if the sort key is not supported.
+   */
+  private static String mapSortKey(String key) {
+    String newKey = SORT_KEY_MAP.get(key);
+    if (newKey != null) {
+      return newKey;
+    }
+
+    throw new IllegalArgumentException("Unsupported sort key: " + key);
+  }
+
+  /**
+   * Translate a metadata id in the index into a metadata entity.
+   */
+  private static MetadataEntity toMetadataEntity(String metadataId) {
+    int index = metadataId.indexOf(':');
+    if (index < 0) {
+      throw new IllegalArgumentException(
+        "Metadata Id must be of the form 'type:k=v,...' but is " + metadataId);
+    }
+    String type = metadataId.substring(0, index);
+    MetadataEntity.Builder builder = MetadataEntity.builder();
+    for (String part : metadataId.substring(index + 1).split(",")) {
+      String[] parts = part.split("=", 2);
+      if (parts[0].equals(type)) {
+        builder.appendAsType(parts[0], parts[1]);
+      } else {
+        builder.append(parts[0], parts[1]);
+      }
+    }
+
+    // if it is a versioned entity then add the default version
+    return MetadataUtil.addVersionIfNeeded(builder.build());
+  }
+
 
   @Override
   public synchronized void close() {
     if (spanner != null) {
       spanner.close();
       spanner = null;
+    }
+  }
+
+  // Define a class to encapsulate the results of buildQuery
+  static class QueryBuildResult {
+    private final String sql;
+    private final Map<String, Value> params;
+    private final List<String> sortColumns;
+
+    public QueryBuildResult(String sql, Map<String, Value> params, List<String> sortColumns) {
+      this.sql = sql;
+      this.params = params;
+      this.sortColumns = sortColumns;
+    }
+
+    public String getSql() {
+      return sql;
+    }
+
+    public Map<String, Value> getParams() {
+      return params;
+    }
+
+    public List<String> getSortColumns() {
+      return sortColumns;
+    }
+  }
+
+  // Define a class to encapsulate the results of getSortDetails
+  static class SortDetailsResult {
+    private final List<String> columns;
+    private final List<Sorting.Order> orders;
+
+    public SortDetailsResult(List<String> columns, List<Sorting.Order> orders) {
+      this.columns = columns;
+      this.orders = orders;
+    }
+
+    public List<String> getColumns() {
+      return columns;
+    }
+
+    public List<Sorting.Order> getOrders() {
+      return orders;
     }
   }
 }
