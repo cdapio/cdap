@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metadata.spanner;
 
+import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.toMetadataId;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -214,7 +215,7 @@ public class SpannerMetadataStorageTest {
         String metadataJson = SpannerMetadataStorage.GSON.toJson(metadata);
 
         Mutation mutation = Mutation.newInsertOrUpdateBuilder(METADATA_TABLE)
-          .set(Tables.Metadata.METADATA_ID_FIELD).to(spannerMetadataStorage.toMetadataId(entity))
+          .set(Tables.Metadata.METADATA_ID_FIELD).to(toMetadataId(entity))
           .set(Tables.Metadata.NAMESPACE_FIELD).to(entity.getValue(MetadataEntity.NAMESPACE))
           .set(Tables.Metadata.TYPE_FIELD).to(entity.getType())
           .set(Tables.Metadata.NAME_FIELD).to(entity.getValue(entity.getType()))
