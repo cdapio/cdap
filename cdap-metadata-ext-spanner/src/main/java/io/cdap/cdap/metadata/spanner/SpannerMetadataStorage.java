@@ -16,12 +16,31 @@
 
 package io.cdap.cdap.metadata.spanner;
 
+import static java.util.Arrays.asList;
+
 import com.google.cloud.spanner.DatabaseAdminClient;
+import com.google.cloud.spanner.DatabaseClient;
+import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.ErrorCode;
+import com.google.cloud.spanner.Mutation;
+import com.google.cloud.spanner.ReadContext;
+import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
 import com.google.cloud.spanner.SpannerOptions;
+import com.google.cloud.spanner.Statement;
+import com.google.cloud.spanner.Struct;
+import com.google.cloud.spanner.TransactionContext;
+import com.google.cloud.spanner.TransactionRunner;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataChange;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
@@ -29,16 +48,24 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageContext;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameTypeAdapter;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.cdap.cdap.spi.metadata.VersionedMetadata;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A metadata storage provider that delegates to Spanner.
@@ -46,37 +73,26 @@ import java.util.concurrent.ExecutionException;
 public class SpannerMetadataStorage implements MetadataStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerMetadataStorage.class);
+  static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter()).create();
+  private static final Set<Mutation.Op> SUPPORTED_MUTATION_OPS =
+    Collections.unmodifiableSet(new HashSet<>(asList(
+      Mutation.Op.INSERT,
+      Mutation.Op.UPDATE,
+      Mutation.Op.INSERT_OR_UPDATE,
+      Mutation.Op.DELETE
+    )));
 
   // Metadata table names
   private static final String METADATA_TABLE = "metadata";
   private static final String METADATA_PROPS_TABLE = "metadata_props";
-
-  public static final class MetadataTable {
-    private static final String METADATA_ID_FIELD = "metadata_id";
-    private static final String METADATA_COLUMN_FIELD = "metadata_column";
-    private static final String NAMESPACE_FIELD = "namespace";
-    private static final String TYPE_FIELD = "entity_type";
-    private static final String NAME_FIELD = "name";
-    private static final String VERSION = "version";
-    private static final String CREATED_FIELD = "create_time";
-    private static final String USER_FIELD = "user";
-    private static final String SYSTEM_FIELD = "system";
-  }
-
-  public static final class MetadataPropsTable {
-    private static final String METADATA_ID_FIELD = "metadata_id";
-    private static final String NAMESPACE_FIELD = "namespace";
-    private static final String TYPE_FIELD = "entity_type";
-    private static final String NESTED_NAME_FIELD = "name";
-    private static final String NESTED_SCOPE_FIELD = "scope";
-    private static final String NESTED_VALUE_FIELD = "value";
-  }
 
   private String instanceId;
   private String projectId;
   private String databaseId;
 
   private Spanner spanner;
+  private DatabaseClient dbClient;
   private DatabaseAdminClient adminClient;
 
   @Override
@@ -87,8 +103,19 @@ public class SpannerMetadataStorage implements MetadataStorage {
     this.instanceId = Objects.requireNonNull(properties.get("instance"));
     this.databaseId = Objects.requireNonNull(properties.get("database"));
 
-    this.spanner = SpannerOptions.newBuilder().setProjectId(projectId).build().getService();
+    /*
+      The Cloud Spanner Emulator is intended for local development and testing purposes only. It
+      does not persist data across sessions and is not suitable for production use.
+     */
+    String emulatorHost = properties.get("emulator.host");
+    SpannerOptions.Builder optionsBuilder = SpannerOptions.newBuilder().setProjectId(projectId);
+    if (!Strings.isNullOrEmpty(emulatorHost)) {
+      optionsBuilder.setEmulatorHost(emulatorHost);
+      LOG.trace("Connecting to Spanner Emulator at {}", emulatorHost);
+    }
+    this.spanner = optionsBuilder.build().getService();
     this.adminClient = spanner.getDatabaseAdminClient();
+    this.dbClient = spanner.getDatabaseClient(DatabaseId.of(projectId, instanceId, databaseId));
 
     LOG.info("SpannerMetadataStorage initialized.");
   }
@@ -155,18 +182,18 @@ public class SpannerMetadataStorage implements MetadataStorage {
         "(TOKENLIST_CONCAT([User_Tokens, System_Tokens])) HIDDEN," +
         ") PRIMARY KEY (%s) ", // metadata_id
       METADATA_TABLE,
-      MetadataTable.METADATA_ID_FIELD,
-      MetadataTable.NAMESPACE_FIELD,
-      MetadataTable.TYPE_FIELD,
-      MetadataTable.NAME_FIELD,
-      MetadataTable.CREATED_FIELD,
-      MetadataTable.USER_FIELD,
-      MetadataTable.SYSTEM_FIELD,
-      MetadataTable.METADATA_COLUMN_FIELD,
-      MetadataTable.VERSION,
-      MetadataTable.USER_FIELD,
-      MetadataTable.SYSTEM_FIELD,
-      MetadataTable.METADATA_ID_FIELD
+      Tables.Metadata.METADATA_ID_FIELD,
+      Tables.Metadata.NAMESPACE_FIELD,
+      Tables.Metadata.TYPE_FIELD,
+      Tables.Metadata.NAME_FIELD,
+      Tables.Metadata.CREATED_FIELD,
+      Tables.Metadata.USER_FIELD,
+      Tables.Metadata.SYSTEM_FIELD,
+      Tables.Metadata.METADATA_COLUMN_FIELD,
+      Tables.Metadata.VERSION,
+      Tables.Metadata.USER_FIELD,
+      Tables.Metadata.SYSTEM_FIELD,
+      Tables.Metadata.METADATA_ID_FIELD
     );
   }
 
@@ -208,16 +235,16 @@ public class SpannerMetadataStorage implements MetadataStorage {
         ") PRIMARY KEY (%s, %s, %s) ," + // metadata_id, name, scope
         "INTERLEAVE IN PARENT %s ON DELETE CASCADE",
       METADATA_PROPS_TABLE,
-      MetadataPropsTable.METADATA_ID_FIELD,
-      MetadataPropsTable.NAMESPACE_FIELD,
-      MetadataPropsTable.TYPE_FIELD,
-      MetadataPropsTable.NESTED_NAME_FIELD,
-      MetadataPropsTable.NESTED_SCOPE_FIELD,
-      MetadataPropsTable.NESTED_VALUE_FIELD,
-      MetadataPropsTable.NESTED_VALUE_FIELD,
-      MetadataPropsTable.METADATA_ID_FIELD,
-      MetadataPropsTable.NESTED_NAME_FIELD,
-      MetadataPropsTable.NESTED_SCOPE_FIELD,
+      Tables.MetadataProps.METADATA_ID_FIELD,
+      Tables.MetadataProps.NAMESPACE_FIELD,
+      Tables.MetadataProps.TYPE_FIELD,
+      Tables.MetadataProps.NESTED_NAME_FIELD,
+      Tables.MetadataProps.NESTED_SCOPE_FIELD,
+      Tables.MetadataProps.NESTED_VALUE_FIELD,
+      Tables.MetadataProps.NESTED_VALUE_FIELD,
+      Tables.MetadataProps.METADATA_ID_FIELD,
+      Tables.MetadataProps.NESTED_NAME_FIELD,
+      Tables.MetadataProps.NESTED_SCOPE_FIELD,
       METADATA_TABLE
     );
   }
@@ -276,15 +303,157 @@ public class SpannerMetadataStorage implements MetadataStorage {
     LOG.info("Metadata Tables dropped successfully.");
   }
 
-  @Override
+  /**
+   * Applies a single metadata mutation atomically.
+   *
+   * @param mutation The {@link MetadataMutation} to apply.
+   * @param options  {@link MutationOptions} for the operation.
+   * @return The {@link MetadataChange} that occurred.
+   * @throws IOException If a non-retryable Spanner error occurs.
+   */
   public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
+    try {
+      TransactionRunner runner = dbClient.readWriteTransaction();
+      return runner.run(transaction -> applyAndBufferMutation(transaction, mutation));
+    } catch (SpannerException e) {
+      throw new IOException("Error applying mutation to Spanner for entity: " + mutation.getEntity(), e);
+    }
+  }
+
+  /**
+   * Processes and buffers a single metadata mutation within a Spanner transaction.
+   *
+   * @param transaction The active Spanner {@link TransactionContext}.
+   * @param mutation    The {@link MetadataMutation} to apply.
+   * @return The resulting {@link MetadataChange}.
+   */
+  private MetadataChange applyAndBufferMutation(TransactionContext transaction, MetadataMutation mutation)
+    throws IOException {
+    MetadataEntity entity = mutation.getEntity();
+    VersionedMetadata before = readVersionedMetadata(entity, transaction);
+    Preconditions.checkArgument(before != null,
+                                "Metadata entity %s not found for mutation", entity);
+    ChangeRequest intermediary = applyMutation(before, mutation);
+    bufferMutations(transaction, intermediary.getMutation());
+    return intermediary.getChange();
+  }
+
+  /**
+   * Validates and buffers a list of mutations to be sent when the transaction commits.
+   */
+  private void bufferMutations(TransactionContext transaction, List<Mutation> mutations) {
+    for (Mutation mutation : mutations) {
+      validateMutationOperation(mutation.getOperation());
+      transaction.buffer(mutation);
+    }
+  }
+
+  /**
+   * Validates if the given {@link Mutation.Op} is a supported operation.
+   *
+   * @param operation The Spanner mutation operation to validate.
+   * @throws IllegalArgumentException if the operation is not one of the supported types
+   *                                  (INSERT, UPDATE, INSERT_OR_UPDATE, DELETE).
+   */
+  private void validateMutationOperation(Mutation.Op operation) {
+    if (!SUPPORTED_MUTATION_OPS.contains(operation)) {
+      throw new IllegalArgumentException("Unsupported Spanner Mutation operation: " + operation);
+    }
+  }
+
+  /**
+   * Creates a Spanner request that corresponds to the given mutation, along with the change
+   * effected by this mutation. The request must be executed by the caller.
+   *
+   * @param before   the metadata for the mutation's entity before the change
+   * @param mutation the mutation to apply
+   * @return a Spanner request to be executed, and the change caused by the mutation.
+   */
+  private ChangeRequest applyMutation(VersionedMetadata before, MetadataMutation mutation) throws IOException {
     throw new IOException("NOT IMPLEMENTED");
   }
 
+  /**
+   * Reads the existing metadata for an entity from the table.
+   *
+   * @return existing metadata along with its version in the table, or an empty metadata with null version.
+   */
+  @VisibleForTesting
+  VersionedMetadata readVersionedMetadata(MetadataEntity entity, ReadContext transaction) throws
+    RuntimeException {
+    try {
+      String query = String.format(
+        "SELECT %s, %s FROM %s WHERE %s = @%s",
+        Tables.Metadata.METADATA_COLUMN_FIELD,
+        Tables.Metadata.VERSION,
+        METADATA_TABLE,
+        Tables.Metadata.METADATA_ID_FIELD,
+        Tables.Metadata.METADATA_ID_FIELD
+      );
+
+      Statement statement = Statement.newBuilder(query)
+        .bind(Tables.Metadata.METADATA_ID_FIELD).to(toMetadataId(entity))
+        .build();
+
+      ResultSet resultSet = transaction.executeQuery(statement);
+      if (resultSet.next()) {
+        Struct row = resultSet.getCurrentRowAsStruct();
+        String metadataString = row.getJson(Tables.Metadata.METADATA_COLUMN_FIELD);
+        long version = row.getLong(Tables.Metadata.VERSION);
+        Metadata metadata = GSON.fromJson(metadataString, Metadata.class);
+        return VersionedMetadata.of(metadata, version);
+      } else {
+        return VersionedMetadata.NONE;
+      }
+    } catch (SpannerException | JsonParseException e) {
+      throw new RuntimeException("Failed to read metadata for entity " + entity + " from Spanner", e);
+    }
+  }
+
+  /**
+   * Applies a list of {@link MetadataMutation} operations in a single, atomic Spanner read-write transaction.
+   *
+   * @param mutations A list of {@link MetadataMutation} objects to apply.
+   * @param options   {@link MutationOptions} for the batch operation.
+   * @return A {@link List} of {@link MetadataChange} objects for all successfully processed mutations.
+   * @throws IOException If a Spanner error occurs or an underlying operation fails.
+   *                                         TODO (CDAP-21172): Mutation Execution can further be optimized.
+   */
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
     throws IOException {
-    throw new IOException("NOT IMPLEMENTED");
+    if (mutations.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<MetadataChange> changes = new ArrayList<>(mutations.size());
+    try {
+      TransactionRunner runner = dbClient.readWriteTransaction();
+      runner.run(transaction -> {
+        for (MetadataMutation mutation : mutations) {
+          MetadataChange change = applyAndBufferMutation(transaction, mutation);
+          changes.add(change);
+        }
+        return null;
+      });
+    } catch (SpannerException e) {
+      throw new IOException("Error applying batch mutations to Spanner", e);
+    }
+    return changes;
+  }
+
+  /**
+   * Translate a metadata entity into a metadata_id in the table.
+   */
+  protected String toMetadataId(MetadataEntity entity) {
+    final boolean isEntityTypeVersioned = MetadataUtil.isVersionedEntityType(entity.getType());
+
+    String keyValuePairs = StreamSupport.stream(entity.spliterator(), false)
+      .filter(kv -> !isEntityTypeVersioned || !MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey()))
+      .map(kv -> kv.getKey() + "=" + kv.getValue())
+      .collect(Collectors.joining(","));
+
+    return keyValuePairs.isEmpty() ? entity.getType() : entity.getType() + ":" + keyValuePairs;
   }
 
   @Override

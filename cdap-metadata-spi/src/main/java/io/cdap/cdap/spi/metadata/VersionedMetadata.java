@@ -14,9 +14,8 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata.elastic;
+package io.cdap.cdap.spi.metadata;
 
-import io.cdap.cdap.spi.metadata.Metadata;
 import javax.annotation.Nullable;
 
 /**
@@ -27,9 +26,9 @@ public class VersionedMetadata {
   private final Metadata metadata;
   private final Long version;
 
-  static final VersionedMetadata NONE = new VersionedMetadata(Metadata.EMPTY, null);
+  public static final VersionedMetadata NONE = new VersionedMetadata(Metadata.EMPTY, null);
 
-  static VersionedMetadata of(Metadata metadata, long version) {
+  public static VersionedMetadata of(Metadata metadata, long version) {
     return new VersionedMetadata(metadata, version);
   }
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.metadata.elastic;
+package io.cdap.cdap.spi.metadata;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -23,7 +23,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import io.cdap.cdap.spi.metadata.ScopedName;
 import java.lang.reflect.Type;
 
 /**
