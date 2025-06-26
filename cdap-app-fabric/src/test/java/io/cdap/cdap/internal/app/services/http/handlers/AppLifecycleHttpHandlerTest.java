@@ -1676,6 +1676,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     deleteArtifact(ns1ArtifactId, 200);
     deleteArtifact(pluginArtifact, 200);
+    deleteApp(appId, 200);
   }
 
   @Test
@@ -1728,6 +1729,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     deleteArtifact(latestAppArtifact, 200);
     deleteArtifact(pluginArtifact, 200);
     deleteArtifact(latestPluginArtifact, 200);
+    deleteApp(appId, 200);
   }
 
   private Artifact deployPluginArtifact(Namespace namespace, Artifact artifact, Class<?> claszz,
