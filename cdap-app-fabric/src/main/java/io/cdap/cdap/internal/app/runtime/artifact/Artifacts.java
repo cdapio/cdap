@@ -43,9 +43,12 @@ public final class Artifacts {
    * @return the resolved config type
    * @throws IllegalArgumentException if the config type is not a valid type
    */
-  public static Type getConfigType(Class<? extends Application> appClass) {
+  public static Type getConfigType(Class<?> appClass) {
+    // Class has to be a child of Application
+    Preconditions.checkArgument(Application.class.isAssignableFrom(appClass), "The given class : " + appClass
+      + " is not supported. Type must be a child class of Application");
     TypeToken<?> configType = TypeToken.of(appClass)
-        .resolveType(Application.class.getTypeParameters()[0]);
+      .resolveType(Application.class.getTypeParameters()[0]);
     if (Reflections.isResolved(configType.getType())) {
       // Default the type to Config.class if the resolved type is not subclass of Config.
       // It normally won't happen, unless someone generate the bytecode directly.
