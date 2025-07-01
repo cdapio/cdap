@@ -21,19 +21,13 @@ import com.google.common.base.Preconditions;
  */
 public class OAuthAccessToken {
   private final String accessToken;
-  private final String redirectURI;
 
-  public OAuthAccessToken(String accessToken, String redirectURI) {
+  public OAuthAccessToken(String accessToken) {
     this.accessToken = accessToken;
-    this.redirectURI = redirectURI;
   }
 
   public String getAccessToken() {
     return accessToken;
-  }
-
-  public String getRedirectURI() {
-    return redirectURI;
   }
 
   public static Builder newBuilder() {
@@ -45,7 +39,6 @@ public class OAuthAccessToken {
    */
   public static class Builder {
     private String accessToken;
-    private String redirectURI;
 
     public Builder() {}
 
@@ -54,15 +47,9 @@ public class OAuthAccessToken {
       return this;
     }
 
-    public Builder withRedirectURI(String redirectURI) {
-      this.redirectURI = redirectURI;
-      return this;
-    }
-
     public OAuthAccessToken build() {
       Preconditions.checkNotNull(accessToken, "OAuth access token missing");
-      Preconditions.checkNotNull(redirectURI, "OAuth redirect URI missing");
-      return new OAuthAccessToken(accessToken, redirectURI);
+      return new OAuthAccessToken(accessToken);
     }
   }
 }

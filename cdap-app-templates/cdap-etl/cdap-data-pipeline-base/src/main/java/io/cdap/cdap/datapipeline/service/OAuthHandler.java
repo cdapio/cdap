@@ -239,7 +239,6 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         try {
           OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
               .withAccessToken(refreshTokenResponse.getAccessToken())
-              .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
               .build();
           oauthStore.writeAccessToken(provider, credentialId, accessToken);
         } catch (NullPointerException e) {
@@ -255,6 +254,14 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     }
   }
 
+  /**
+   * If a refresh token is stored, use it to request a short-lived access token from the 3rd-party OAuth API.
+   * If a long-lived access token is stored, return it.
+   * @param request
+   * @param responder
+   * @param provider ID of OAuth provider
+   * @param credentialId ID of stored credential
+   */
   @GET
   @Path(API_VERSION + "/oauth/provider/{provider}/credential/{credential}")
   public void getOAuthCredential(HttpServiceRequest request, HttpServiceResponder responder,
@@ -262,19 +269,36 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("credential") String credentialId) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
-      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
+      OAuthRefreshToken refreshToken;
+
+      try {
+        refreshToken = getRefreshToken(provider, credentialId);
+      } catch (OAuthServiceException e) {
+        // Throw any other exception other than NOT_FOUND
+        if (e.getStatus() != HttpURLConnection.HTTP_NOT_FOUND) {
+          throw e;
+        }
+
+        // Refresh token wasn't found; try looking for a long-lived Access Token (otherwise `getAccessToken` will throw)
+        OAuthAccessToken oAuthAccessToken = getAccessToken(provider, credentialId);
+
+        // If found, send the long-lived access token
+        responder.sendString(GSON.toJson(
+          new GetAccessTokenResponse(oAuthAccessToken.getAccessToken(), "")));
+        return;
+      }
 
       HttpResponse response;
       try {
         response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
       } catch (IOException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to fetch refresh token", e);
+        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to fetch access token", e);
       }
 
       if (response.getResponseCode() != 200) {
         throw new OAuthServiceException(
           response.getResponseCode(),
-            "Request for refresh token did not return 200. Response code: "
+            "Request for access token did not return 200. Response code: "
                 + response.getResponseCode()
                 + " , response message: "
                 + response.getResponseMessage()
@@ -290,7 +314,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       }
       if (refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty()) {
         throw new OAuthServiceException(
-            HttpURLConnection.HTTP_INTERNAL_ERROR, "Refresh token response body does not have refresh token");
+            HttpURLConnection.HTTP_INTERNAL_ERROR, "Access token response body does not have access token");
       }
 
       responder.sendString(GSON.toJson(
@@ -453,6 +477,13 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     }
   }
 
+  /**
+   * Fetch a refresh token from the secure store
+   * @param provider
+   * @param credentialId
+   * @return a long-lived refresh token stored in the secure store
+   * @throws OAuthServiceException
+   */
   private OAuthRefreshToken getRefreshToken(String provider, String credentialId) throws OAuthServiceException {
     try {
       Optional<OAuthRefreshToken> refreshTokenOptional = oauthStore.getRefreshToken(provider, credentialId);
@@ -463,6 +494,26 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     } catch (OAuthStoreException e) {
       throw new OAuthServiceException(
           HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to read OAuth credential from secure store", e);
+    }
+  }
+
+  /**
+   * Fetch a long-lived access token from the secure store.
+   * @param provider
+   * @param credentialId
+   * @return a long-lived access token stored in the secure store
+   * @throws OAuthServiceException
+   */
+  private OAuthAccessToken getAccessToken(String provider, String credentialId) throws OAuthServiceException {
+    try {
+      Optional<OAuthAccessToken> accessTokenOptional = oauthStore.getAccessToken(provider, credentialId);
+      if (accessTokenOptional.isPresent()) {
+        return accessTokenOptional.get();
+      }
+      throw new OAuthServiceException(HttpURLConnection.HTTP_NOT_FOUND, "Unknown OAuth access token: " + credentialId);
+    } catch (OAuthStoreException e) {
+      throw new OAuthServiceException(
+          HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to read OAuth access token from secure store", e);
     }
   }
 
@@ -477,6 +528,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     OAuthServiceException(int status, String message) {
       super(message);
       this.status = status;
+    }
+
+    int getStatus() {
+      return this.status;
     }
 
     void respond(HttpServiceResponder responder) {
