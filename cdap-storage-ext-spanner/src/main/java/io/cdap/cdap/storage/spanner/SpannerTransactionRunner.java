@@ -37,8 +37,7 @@ public class SpannerTransactionRunner implements TransactionRunner {
   public void run(TxRunnable runnable) throws TransactionException {
     try {
       admin.getDatabaseClient().readWriteTransaction().allowNestedTransaction().run(context -> {
-        runnable.run(tableId -> new SpannerStructuredTable(context,
-            admin.getSpannerStructuredTableSchema(tableId)));
+        runnable.run(new SpannerStructuredTableContext(context, admin));
         return null;
       });
     } catch (SpannerException e) {

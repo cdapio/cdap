@@ -52,8 +52,10 @@ import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedName;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.spi.metadata.ScopedNameTypeAdapter;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.Sorting;
+import io.cdap.cdap.spi.metadata.VersionedMetadata;
 import java.io.IOException;
 import java.net.URL;
 import java.security.KeyManagementException;
@@ -215,6 +217,11 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         Config.DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS);
     this.retryStrategyOnConflict = RetryStrategies.limit(numRetries,
         RetryStrategies.fixDelay(retrySleepMs, TimeUnit.MILLISECONDS));
+  }
+
+  @Override
+  public String getName() {
+    return getClass().getSimpleName();
   }
 
   @Override

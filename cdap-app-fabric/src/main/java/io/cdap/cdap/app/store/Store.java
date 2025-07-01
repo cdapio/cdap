@@ -26,7 +26,6 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
@@ -738,6 +737,14 @@ public interface Store {
    * @throws ApplicationNotFoundException if application with appName is not found.
    */
   void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException;
+
+  /**
+   * Get the count of latest applications in the namespace.
+   *
+   * @param namespaceId NamespaceId of the application.
+   * @return the count of applications in the namespace
+   */
+  long getApplicationCount(NamespaceId namespaceId);
 
   /**
    * Ensures the given program exists in the given application spec.

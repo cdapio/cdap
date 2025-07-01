@@ -55,6 +55,7 @@ public class CloudSecretManager implements SecretManager {
     this.store = context.getSecretStore();
     this.client = new CloudKMSClient(context.getProperties());
     this.client.createKeyRingIfNotExists();
+    this.client.enableKeyRotationIfNeeded();
   }
 
   @Override

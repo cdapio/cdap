@@ -37,6 +37,14 @@ jobs:
          && (github.event.action != 'labeled' || github.event.label.name == 'build')
          )
     steps:
+      - name: Set up Spanner Emulator
+        run: |
+          gcloud config configurations create emulator
+          gcloud config set auth/disable_credentials true
+          gcloud config set api_endpoint_overrides/spanner http://localhost:9010/
+          gcloud config configurations activate emulator
+          gcloud emulators spanner start &
+          echo "SPANNER_EMULATOR_HOST=localhost:9010" >> $GITHUB_ENV
       - uses: actions/checkout@v4
         with:
           submodules: recursive

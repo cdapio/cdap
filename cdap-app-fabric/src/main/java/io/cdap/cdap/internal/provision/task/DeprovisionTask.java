@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.provision.task;
 
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
+import io.cdap.cdap.internal.provision.ProvisionerStore;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -59,10 +60,11 @@ public class DeprovisionTask extends ProvisioningTask {
   private final Location keysDir;
 
   public DeprovisionTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
-      int retryTimeLimitSecs, Provisioner provisioner,
+      int retryTimeLimitSecs, Provisioner provisioner, ProvisionerStore provisionerStore,
       ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
       LocationFactory locationFactory) {
-    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, retryTimeLimitSecs);
+    super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, provisionerStore,
+        retryTimeLimitSecs);
     this.provisionerNotifier = provisionerNotifier;
     this.keysDir = locationFactory.create(initialTaskInfo.getSecureKeysDir());
   }

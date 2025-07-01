@@ -52,6 +52,7 @@ public class SpannerStorageProvider implements StorageProvider {
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
   public static final String COMPRESSION_CONFIG = "compression.config";
+  static final String NAME = "gcp-spanner";
 
   private Spanner spanner;
   private SpannerStructuredTableAdmin admin;
@@ -96,7 +97,7 @@ public class SpannerStorageProvider implements StorageProvider {
 
   @Override
   public String getName() {
-    return "gcp-spanner";
+    return NAME;
   }
 
   @Override

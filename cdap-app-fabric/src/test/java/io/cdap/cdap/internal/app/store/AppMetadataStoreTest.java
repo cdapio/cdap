@@ -24,6 +24,12 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.schedule.SchedulableProgramType;
+import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
+import io.cdap.cdap.api.workflow.WorkflowActionNode;
+import io.cdap.cdap.api.workflow.WorkflowNode;
+import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.ProjectInfo;
@@ -32,6 +38,7 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.plugin.Plugins;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
@@ -1102,6 +1109,49 @@ public abstract class AppMetadataStoreTest {
   }
 
   @Test
+  public void testGetApplicationCount() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+    NamespaceId customNamespace = new NamespaceId("custom");
+    createMultipleApplications(NamespaceId.DEFAULT, "test-default", 20, appSpec);
+    createMultipleApplications(NamespaceId.SYSTEM, "test-system", 5, appSpec);
+    createMultipleApplications(customNamespace, "test-custom", 15, appSpec);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      long count = store.getApplicationCount();
+      // System apps are not included in the count. Default(20) and custom(15) are included.
+      Assert.assertEquals(35, count);
+    });
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      // System namespace has 20 applications.
+      long count = store.getNamespaceApplicationCount(NamespaceId.DEFAULT);
+      Assert.assertEquals(20, count);
+      // System namespace has 5 applications.
+      count = store.getNamespaceApplicationCount(NamespaceId.SYSTEM);
+      Assert.assertEquals(5, count);
+      // Custom namespace has 15 applications.
+      count = store.getNamespaceApplicationCount(customNamespace);
+      Assert.assertEquals(15, count);
+    });
+
+  }
+
+  private void createMultipleApplications(NamespaceId namespaceId, String appPrefix, int count,
+      ApplicationSpecification appSpec) {
+    for (int i = 0; i < count; i++) {
+      String appName = appPrefix + i;
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(namespaceId.getNamespace(), appName, ApplicationId.DEFAULT_VERSION,
+            appSpec,
+            new ChangeDetail(null, null, null, creationTimeMillis), null);
+      });
+    }
+  }
+
+  @Test
   public void testScanApplications() {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
@@ -1618,6 +1668,37 @@ public abstract class AppMetadataStoreTest {
   }
 
   @Test
+  public void testCreateAndGetApplication() {
+    String appName = "application1";
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    ApplicationReference appRef = new ApplicationReference(NamespaceId.DEFAULT, appName);
+    ApplicationId appId = appRef.app(appName + "_version_" + 1);
+    ApplicationSpecification spec = createDummyAppSpecWithWorkflow(appId, artifactId);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
+        new ChangeDetail(null, null, null,
+            creationTimeMillis + 1, true));
+
+    // Deploy the first version
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      StructuredTable pluginDataTable = metaStore.getPluginDataTable();
+      Plugins.addWranglerPluginToTable(pluginDataTable);
+      Plugins.addNowDirectivePluginToTable(pluginDataTable);
+      Plugins.addFormatTextPluginToTable(pluginDataTable);
+      metaStore.createLatestApplicationVersion(appId, meta);
+    });
+
+    // Verify latest version
+    final ApplicationMeta[] gotMeta = {null};
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      gotMeta[0] = metaStore.getApplication(appId);
+    });
+
+    Assert.assertEquals(meta.toString(), gotMeta[0].toString());
+  }
+
+  @Test
   public void testDeleteCompletedRunsStartedBefore() throws Exception {
     // Map an iterator to one of 15 different program+workflow permutations. Used to ensure
     // (1) Multiple types of ProgramId exist (2) Multiple runs exist for each ProgramId.
@@ -1755,6 +1836,29 @@ public abstract class AppMetadataStoreTest {
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
+  }
+
+  private ApplicationSpecification createDummyAppSpecWithWorkflow(ApplicationId appId,
+      ArtifactId artifactId) {
+    Map<String, Plugin> plugins = Plugins.createDummyPlugins();
+    ImmutableList<WorkflowNode> nodes = ImmutableList.of(
+        new WorkflowActionNode("mr1",
+            new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr1")),
+        new WorkflowActionNode("spark1",
+            new ScheduleProgramInfo(SchedulableProgramType.SPARK, "spark1")));
+    WorkflowSpecification wfSpec =
+        new WorkflowSpecification("test", "wf1", "", Collections.emptyMap(),
+            nodes,
+            Collections.emptyMap(), plugins);
+    return new DefaultApplicationSpecification(
+        appId.getApplication(), appId.getVersion(), ProjectInfo.getVersion().toString(), "desc",
+        null, artifactId,
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+        Collections.emptyMap(),
+        ImmutableMap.of(appId.workflow("wf1").getProgram(), wfSpec), Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyMap());
   }
 
   private void runConcurrentOperation(String name, int numThreads, Runnable runnable) throws Exception {

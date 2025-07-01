@@ -2845,6 +2845,11 @@
     <value>/opt/cdap/master/ext/log-publisher</value>
   </property>
 
+  <property>
+    <name>metadata.storage.extensions.dir</name>
+    <value>/opt/cdap/master/ext/metadata-storage</value>
+  </property>
+
   <!-- Metrics Configuration -->
 
   <property>
@@ -5017,6 +5022,26 @@
       cdap-security.xml.
       KMS based provider is supported for Apache Hadoop 2.6.0 and above
       versions.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.system.properties.gcp-cloudkms.key.rotation.enabled</name>
+    <value>true</value>
+    <description>
+      Enable key rotation for KMS keys used to encrypt and decrypt secure keys.
+      When true, it will enable rotation for newly created keys as well as
+      existing keys (after upgrade).
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.system.properties.gcp-cloudkms.key.rotation.period.days</name>
+    <value>90</value>
+    <description>
+      Specifies the rotation period applied to KMS keys when
+      security.store.system.properties.gcp-cloudkms.key.rotation.enabled is true.
+      The rotation period must be at least 1 day.
     </description>
   </property>
 

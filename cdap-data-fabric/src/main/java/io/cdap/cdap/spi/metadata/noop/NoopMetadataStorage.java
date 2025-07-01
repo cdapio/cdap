@@ -35,6 +35,11 @@ import java.util.stream.Collectors;
 public class NoopMetadataStorage implements MetadataStorage {
 
   @Override
+  public String getName() {
+    return getClass().getSimpleName();
+  }
+
+  @Override
   public void createIndex() throws IOException {
     // no-op
   }

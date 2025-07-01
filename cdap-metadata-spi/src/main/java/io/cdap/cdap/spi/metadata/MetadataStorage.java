@@ -28,6 +28,23 @@ import java.util.List;
 public interface MetadataStorage extends Closeable {
 
   /**
+   * Initialization of the metadata storage. This method will be called after the constructor and
+   * before any method is being called.
+   *
+   * @param context a context object providing interaction with the CDAP platform.
+   * @throws Exception if the metadata storage failed to initialize itself
+   */
+  default void initialize(MetadataStorageContext context) throws Exception {
+    // no-op
+  }
+
+  /**
+   * Returns the name of this MetadataStorage. The name needs to match with the configuration
+   * provided through {@code metadata.storage.implementation}.
+   */
+  String getName();
+
+  /**
    * Create all tables or indexes required for operations.
    */
   void createIndex() throws IOException;

@@ -28,7 +28,7 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
-import io.cdap.cdap.internal.provision.ProvisionerTable;
+import io.cdap.cdap.internal.provision.ProvisionerStore;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
 import io.cdap.cdap.internal.provision.ProvisioningTaskKey;
@@ -66,6 +66,7 @@ public abstract class ProvisioningTask implements RepeatedTask {
   private final TransactionRunner transactionRunner;
   private final ProvisioningTaskKey taskKey;
   private final ProvisioningTaskInfo initialTaskInfo;
+  private final ProvisionerStore provisionerStore;
 
   private ProvisioningTaskInfo taskInfo;
   private RetryStrategy retryStrategy;
@@ -76,10 +77,11 @@ public abstract class ProvisioningTask implements RepeatedTask {
 
   protected ProvisioningTask(Provisioner provisioner, ProvisionerContext provisionerContext,
       ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
-      int retryTimeLimitSecs) {
+      ProvisionerStore provisionerStore, int retryTimeLimitSecs) {
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.initialTaskInfo = initialTaskInfo;
+    this.provisionerStore = provisionerStore;
     this.taskKey = new ProvisioningTaskKey(initialTaskInfo.getProgramRunId(),
         initialTaskInfo.getProvisioningOp().getType());
     this.programRunId = initialTaskInfo.getProgramRunId();
@@ -186,7 +188,7 @@ public abstract class ProvisioningTask implements RepeatedTask {
   }
 
   /**
-   * Write the task state to the {@link ProvisionerTable}, retrying if any exception is caught.
+   * Write the task state to the {@link ProvisionerStore}, retrying if any exception is caught.
    * Before persisting the state, the current state will be checked. If the current state is
    * cancelled, it will not be overwritten.
    *
@@ -204,14 +206,13 @@ public abstract class ProvisioningTask implements RepeatedTask {
       // Stop retrying if we are interrupted. Otherwise, retry on every exception, up to the retry limit
       return Retries.callWithInterruptibleRetries(
           () -> TransactionRunners.run(transactionRunner, context -> {
-            ProvisionerTable provisionerTable = new ProvisionerTable(context);
-            ProvisioningTaskInfo currentState = provisionerTable.getTaskInfo(taskKey);
+            ProvisioningTaskInfo currentState = provisionerStore.getTaskInfo(taskKey);
             // if the state is cancelled, don't write anything and transition to the end subtask.
             if (currentState != null && currentState.getProvisioningOp().getStatus()
                 == ProvisioningOp.Status.CANCELLED) {
               return currentState;
             }
-            provisionerTable.putTaskInfo(taskInfo);
+            provisionerStore.putTaskInfo(taskInfo);
             return taskInfo;
           }), retryStrategy, t -> true);
     } catch (RuntimeException e) {

@@ -84,6 +84,11 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   @Override
+  public String getName() {
+    return getClass().getSimpleName();
+  }
+
+  @Override
   public void createIndex() throws IOException {
     try {
       storage.createIndex();

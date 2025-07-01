@@ -21,6 +21,7 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.lib.IndexedTable;
 import io.cdap.cdap.api.metrics.MetricsCollector;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.StructuredTableInstantiationException;
@@ -74,5 +75,10 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
       throw new StructuredTableInstantiationException(
           tableId, String.format("Error instantiating table %s", tableId), e);
     }
+  }
+
+  @Override
+  public String getStorageProvider() {
+    return Constants.Dataset.DATA_STORAGE_NOSQL;
   }
 }
