@@ -6627,4 +6627,12 @@
     </description>
   </property>
 
+  <property>
+    <name>system.services.server.dir</name>
+    <value>/tmp</value>
+    <description>
+      Directory for storing files related to server for system services.
+    </description>
+  </property>
+
 </configuration>

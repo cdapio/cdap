@@ -22,14 +22,17 @@ import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.conf.StringUtils;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.security.server.LdapLoginModule;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLSocket;
@@ -92,6 +95,37 @@ public class AppFabricServerTest {
       // "javax.net.ssl.SSLException: Unrecognized SSL message, plaintext connection?"
       socket.startHandshake();
       appFabricServer.stopAndWait();
+    } finally {
+      AppFabricTestHelper.shutdown();
+    }
+  }
+
+  @Test
+  public void testServerPortFile() throws Exception {
+    Injector injector = AppFabricTestHelper.getInjector();
+    try {
+      AppFabricServer server = injector.getInstance(AppFabricServer.class);
+      DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+      Service.State state = server.startAndWait();
+      Assert.assertSame(state, Service.State.RUNNING);
+
+      final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+          () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
+      Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
+
+      // Check file exists and port number is in range of 0 to 65535.
+      File file = new File("/tmp/appfabric.port");
+      Assert.assertTrue("server port file doesn't exist",
+          file.exists() && !file.isDirectory());
+      byte[] bytes = Files.readAllBytes(file.toPath());
+      String content = new String(bytes);
+      Assert.assertTrue(Integer.valueOf(content) > 0);
+      Assert.assertTrue(Integer.valueOf(content) < 65535);
+
+      state = server.stopAndWait();
+      Assert.assertSame(state, Service.State.TERMINATED);
+
+      Tasks.waitFor(true, () -> endpointStrategy.pick() == null, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       AppFabricTestHelper.shutdown();
     }

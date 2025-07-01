@@ -162,6 +162,8 @@ public final class Constants {
     public static final String REMOTE_AGENT_SERVICE = "remote.agent.service";
     public static final String ARTIFACT_CACHE_SERVICE = "artifact.cache.service";
     public static final String RUNTIME_MONITOR_RETRY_PREFIX = "system.runtime.monitor.";
+
+    public static final String SERVER_PORT_DIR = "system.services.server.dir";
   }
 
   /**

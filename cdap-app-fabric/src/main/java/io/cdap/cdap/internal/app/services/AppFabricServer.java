@@ -53,8 +53,12 @@ import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -243,6 +247,9 @@ public class AppFabricServer extends AbstractIdleService {
           ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
     }
 
+    writeServerPortToFile(Constants.Service.APP_FABRIC_HTTP, announcePort);
+    LOG.debug("AppFabric HTTP server started.");
+
     return () -> {
       LOG.debug("Stopping AppFabric HTTP service.");
       for (Cancellable cancellable : cancellables) {
@@ -259,5 +266,13 @@ public class AppFabricServer extends AbstractIdleService {
 
       LOG.info("AppFabric HTTP service stopped.");
     };
+  }
+
+  private void writeServerPortToFile(String service, int port) throws IOException {
+    String dir = cConf.get(Constants.Service.SERVER_PORT_DIR);
+    String filename = service + ".port";
+    File file = new File(dir, filename);
+    LOG.debug("Writing server port {} to file: {}", port, file.getAbsolutePath());
+    Files.write(file.toPath(), String.valueOf(port).getBytes());
   }
 }
