@@ -115,7 +115,6 @@ public class OAuthStoreTest {
 
     OAuthAccessToken token = OAuthAccessToken.newBuilder()
         .withAccessToken("muhtoken")
-        .withRedirectURI("uri")
         .build();
     oauthStore.writeAccessToken("Provider", "ID0", token);
 
