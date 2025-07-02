@@ -217,7 +217,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       if (!hasAccessToken && !hasRefreshToken) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_BAD_REQUEST,
-            "Refresh token response body did not contain a refresh token or access token");
+            String.format(
+                "Refresh token response is missing the required access token or refresh token. " +
+                    "The actual response received: %s",
+                refreshTokenResponse));
       }
 
       if (hasRefreshToken) {
@@ -270,36 +273,30 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("credential") String credentialId) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
-      OAuthRefreshToken refreshToken;
+      Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
-      try {
-        refreshToken = getRefreshToken(provider, credentialId);
-      } catch (OAuthServiceException e) {
-        // Throw any other exception other than NOT_FOUND
-        if (e.getStatus() != HttpURLConnection.HTTP_NOT_FOUND) {
-          throw e;
-        }
-
-        // Refresh token wasn't found; try looking for a long-lived Access Token (otherwise `getAccessToken` will throw)
-        OAuthAccessToken oAuthAccessToken = getAccessToken(provider, credentialId);
-
-        // If found, send the long-lived access token
+      // If found, send the long-lived access token
+      if (oAuthAccessToken.isPresent()) {
         responder.sendString(GSON.toJson(
-          new GetAccessTokenResponse(oAuthAccessToken.getAccessToken(), "")));
+          new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), "")));
         return;
       }
+
+      // If no long-lived access token was found, request a short-lived access token from the 3rd-party API using the
+      // stored refresh token
+      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
 
       HttpResponse response;
       try {
         response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
       } catch (IOException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to fetch access token", e);
+        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to fetch refresh token", e);
       }
 
       if (response.getResponseCode() != 200) {
         throw new OAuthServiceException(
-          response.getResponseCode(),
-            "Request for access token did not return 200. Response code: "
+            response.getResponseCode(),
+            "Request for refresh token did not return 200. Response code: "
                 + response.getResponseCode()
                 + " , response message: "
                 + response.getResponseMessage()
@@ -322,7 +319,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       if (!hasAccessToken) {
         throw new OAuthServiceException(
             HttpURLConnection.HTTP_BAD_REQUEST,
-            String.format("Access token response body does not have access token. The actual response received : %s",
+            String.format(
+                "Access token response body does not have access token. The actual response received : %s",
                 response.getResponseBodyAsString()));
       }
 
@@ -528,13 +526,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
    * @return a long-lived access token stored in the secure store
    * @throws OAuthServiceException
    */
-  private OAuthAccessToken getAccessToken(String provider, String credentialId) throws OAuthServiceException {
+  private Optional<OAuthAccessToken> getAccessToken(String provider, String credentialId)
+      throws OAuthServiceException {
     try {
-      Optional<OAuthAccessToken> accessTokenOptional = oauthStore.getAccessToken(provider, credentialId);
-      if (accessTokenOptional.isPresent()) {
-        return accessTokenOptional.get();
-      }
-      throw new OAuthServiceException(HttpURLConnection.HTTP_NOT_FOUND, "Unknown OAuth access token: " + credentialId);
+      return oauthStore.getAccessToken(provider, credentialId);
     } catch (OAuthStoreException e) {
       throw new OAuthServiceException(
           HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to read OAuth access token from secure store", e);
