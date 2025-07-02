@@ -348,7 +348,7 @@ Corresponding ``pom.xml``. Configure the property ``hbase-client`` (currently ``
     <repositories>
       <repository>
         <id>sonatype</id>
-        <url>https://oss.sonatype.org/content/groups/public</url>
+        <url>https://ossrh-staging-api.central.sonatype.com/content/groups/public</url>
       </repository>
       <repository>
         <id>apache.snapshots</id>
