@@ -144,7 +144,7 @@
     <hamcrest.version>2.2</hamcrest.version>
     <log4j2.slf4j.version>2.20.0</log4j2.slf4j.version>
     <pragmatists.version>1.0.5</pragmatists.version>
-    <kafka.version>0.10.2.2</kafka.version>
+    <kafka.version>3.7.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
     <logback.version>1.2.11</logback.version>
     <mockftp.version>2.6</mockftp.version>
