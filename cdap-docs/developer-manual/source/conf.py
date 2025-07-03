@@ -25,7 +25,7 @@ snapshot_version = release.endswith('SNAPSHOT')
 archetype_version = "-DarchetypeVersion=%s" % release
 
 if snapshot_version:
-    archetype_repository = '-DarchetypeRepository=https://central.sonatype.com/repositories/snapshots/'
+    archetype_repository = '-DarchetypeRepository=https://central.sonatype.com/repository/maven-snapshots/'
     archetype_repository_version = "%s %s" % (archetype_repository, archetype_version)
 else:
     # For releases, repo is not required, but included here to simplify the code as replacements can't be empty
