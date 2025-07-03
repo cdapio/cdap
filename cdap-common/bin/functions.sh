@@ -345,12 +345,13 @@ cdap_set_java () {
       die "JAVA_HOME is not set and 'java' was not found in your PATH. Please set JAVA_HOME to the location of your Java install"
     fi
   fi
-  __java_version=$("${__java}" -version 2>&1 | grep version | awk '{print $3}' | awk -F '.' '{print $2}')
+  __java_version_raw=$("${__java}" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+  __java_version=$(echo "$__java_version_raw" | awk -F. '{if ($1 == "1") print $2; else print $1}')
+  echo "$(date) Major Java version: $__java_version"
   if [[ -z ${__java_version} ]]; then
     die "Could not detect Java version. Aborting..."
-  elif [[ ${__java_version} -lt 8 ]]; then
-    die "Java version not supported. Please install Java 8 - other versions of Java are not supported."
   fi
+  export JAVA_VERSION=${__java_version}
   export JAVA=${__java}
   return 0
 }
@@ -645,7 +646,7 @@ cdap_start_java() {
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/${__comp_home} "${CDAP_CONF}"
   # Setup Java
-  cdap_set_java || return 1
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   # Set JAVA_HEAPMAX from variable defined in JAVA_HEAP_VAR, unless defined already
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
@@ -657,7 +658,12 @@ cdap_start_java() {
   if [[ ${HEAPDUMP_ON_OOM} == true ]]; then
     __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__gc_log_and_heapdump_dir}"
   fi
-  __defines+=" -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+
+  if [ "$JAVA_VERSION" -le 8 ]; then
+      __defines+=" -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+  else
+      __defines+="-Xlog:gc*:file=${__gc_log_and_heapdump_dir}/gc.log:time,uptime,level,tags:filecount=10,filesize=1M"
+  fi
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
   if [[ ${CDAP_SERVICE} == master ]]; then
@@ -731,9 +737,11 @@ cdap_run_class() {
   # Setup Java
   cdap_set_java || return 1
   cdap_set_spark || logecho "$(date) [WARN] Could not determine SPARK_HOME! Spark support unavailable!"
-  cdap_create_local_dir || die "Could not create local directory"
+  cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
+  # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
+  OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
-    echo "$(date) Running class ${__class} with arguments: ${__args}"
+    echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
     echo "$(date) Running class ${__class}"
   fi
@@ -760,9 +768,11 @@ cdap_exec_class() {
   # Setup Java
   cdap_set_java || return 1
   cdap_set_spark || logecho "$(date) [WARN] Could not determine SPARK_HOME! Spark support unavailable!"
-  cdap_create_local_dir || die "Could not create local directory"
+  cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
+  # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
+  OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
-    echo "$(date) Running class ${__class} with arguments: ${__args}"
+    echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
     echo "$(date) Running class ${__class}"
   fi
@@ -927,7 +937,13 @@ cdap_sdk_start() {
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx2048m"
   fi
 
-  SDK_GC_OPTS="-verbose:gc -Xloggc:${LOG_DIR}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
+
+  if [ "$JAVA_VERSION" -le 8 ]; then
+      SDK_GC_OPTS="-verbose:gc -Xloggc:${LOG_DIR}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+  else
+      SDK_GC_OPTS="-Xlog:gc*:file=${LOG_DIR}/gc.log:time,uptime,level,tags:filecount=10,filesize=1M"
+  fi
   if [[ ${HEAPDUMP_ON_OOM} == true ]]; then
     CDAP_SDK_OPTS+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOG_DIR}"
   fi
@@ -951,8 +967,6 @@ cdap_sdk_start() {
     fi
     ROUTER_OPTS="-Drouter.address=$(hostname -I | awk '{print $1}')" # -I is safe since we know we're Linux
   fi
-
-  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
 
   # In order to ensure that we can do hacks, need to make sure classpath is sorted
   # so that cdap jars are placed earlier in the classpath than twill or hadoop jars
