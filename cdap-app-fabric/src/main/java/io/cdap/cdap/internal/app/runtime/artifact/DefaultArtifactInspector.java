@@ -461,8 +461,8 @@ final class DefaultArtifactInspector implements ArtifactInspector {
   }
 
   /**
-   * Returns the metadata mutation for this plugin, return {@code null} if no metadata annotation is
-   * there
+   * Returns the metadata mutation for this plugin.
+   * return {@code null} if no metadata annotation is there.
    */
   @Nullable
   private MetadataMutation getMetadataMutation(PluginId pluginId, Class<?> cls)
@@ -624,7 +624,7 @@ final class DefaultArtifactInspector implements ArtifactInspector {
       // Use ASM to inspect the class bytecode to see if it is annotated with @Plugin
       final boolean[] isPlugin = new boolean[1];
       ClassReader cr = new ClassReader(is);
-      cr.accept(new ClassVisitor(Opcodes.ASM5) {
+      cr.accept(new ClassVisitor(Opcodes.ASM7) {
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           if (Plugin.class.getName().equals(Type.getType(desc).getClassName()) && visible) {
