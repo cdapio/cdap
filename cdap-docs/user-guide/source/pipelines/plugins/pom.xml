@@ -837,16 +837,16 @@
       <id>release</id>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.14</version>
-            <extensions>true</extensions>
-            <configuration>
-              <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>
-              <serverId>sonatype.release</serverId>
-            </configuration>
-          </plugin>
+<!--          <plugin>-->
+<!--            <groupId>org.sonatype.plugins</groupId>-->
+<!--            <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--            <version>1.6.14</version>-->
+<!--            <extensions>true</extensions>-->
+<!--            <configuration>-->
+<!--              <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>-->
+<!--              <serverId>sonatype.release</serverId>-->
+<!--            </configuration>-->
+<!--          </plugin>-->
           <!-- Source JAR -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>

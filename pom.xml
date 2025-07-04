@@ -1680,15 +1680,26 @@
           </executions>
         </plugin>
 
-        <!-- Nexus deploy plugin -->
+<!--        &lt;!&ndash; Nexus deploy plugin &ndash;&gt;-->
+<!--        <plugin>-->
+<!--          <groupId>org.sonatype.plugins</groupId>-->
+<!--          <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--          <version>1.6.14</version>-->
+<!--          <extensions>true</extensions>-->
+<!--          <configuration>-->
+<!--            <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>-->
+<!--            <serverId>sonatype.release</serverId>-->
+<!--          </configuration>-->
+<!--        </plugin>-->
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.14</version>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.8.0</version>
           <extensions>true</extensions>
           <configuration>
-            <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>
-            <serverId>sonatype.release</serverId>
+            <publishingServerId>sonatype.release</publishingServerId>
+            <autoPublish>false</autoPublish>
+            <ignorePublishedComponents>true</ignorePublishedComponents>
           </configuration>
         </plugin>
       </plugins>
@@ -1715,17 +1726,17 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <version>3.1.4</version>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.14</version>
-        <extensions>true</extensions>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>org.apache.maven.plugins</groupId>-->
+<!--        <artifactId>maven-deploy-plugin</artifactId>-->
+<!--        <version>3.1.4</version>-->
+<!--      </plugin>-->
+<!--      <plugin>-->
+<!--        <groupId>org.sonatype.plugins</groupId>-->
+<!--        <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--        <version>1.6.14</version>-->
+<!--        <extensions>true</extensions>-->
+<!--      </plugin>-->
     </plugins>
   </build>
 
