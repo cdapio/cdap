@@ -96,16 +96,16 @@
   </repositories>
 
 
-  <distributionManagement>
-    <repository>
-      <id>sonatype.release</id>
-      <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype.snapshots</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
+<!--  <distributionManagement>-->
+<!--    <repository>-->
+<!--      <id>sonatype.release</id>-->
+<!--      <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2</url>-->
+<!--    </repository>-->
+<!--    <snapshotRepository>-->
+<!--      <id>sonatype.snapshots</id>-->
+<!--      <url>https://central.sonatype.com/repository/maven-snapshots</url>-->
+<!--    </snapshotRepository>-->
+<!--  </distributionManagement>-->
 
   <properties>
     <jee.version>7</jee.version>
@@ -1679,18 +1679,6 @@
             </execution>
           </executions>
         </plugin>
-
-<!--        &lt;!&ndash; Nexus deploy plugin &ndash;&gt;-->
-<!--        <plugin>-->
-<!--          <groupId>org.sonatype.plugins</groupId>-->
-<!--          <artifactId>nexus-staging-maven-plugin</artifactId>-->
-<!--          <version>1.6.14</version>-->
-<!--          <extensions>true</extensions>-->
-<!--          <configuration>-->
-<!--            <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>-->
-<!--            <serverId>sonatype.release</serverId>-->
-<!--          </configuration>-->
-<!--        </plugin>-->
         <plugin>
           <groupId>org.sonatype.central</groupId>
           <artifactId>central-publishing-maven-plugin</artifactId>
@@ -1726,17 +1714,16 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-deploy-plugin</artifactId>-->
-<!--        <version>3.1.4</version>-->
-<!--      </plugin>-->
-<!--      <plugin>-->
-<!--        <groupId>org.sonatype.plugins</groupId>-->
-<!--        <artifactId>nexus-staging-maven-plugin</artifactId>-->
-<!--        <version>1.6.14</version>-->
-<!--        <extensions>true</extensions>-->
-<!--      </plugin>-->
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>sonatype.release</publishingServerId>
+          <autoPublish>false</autoPublish>
+          <ignorePublishedComponents>true</ignorePublishedComponents>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
