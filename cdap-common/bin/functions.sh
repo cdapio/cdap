@@ -347,7 +347,6 @@ cdap_set_java () {
   fi
   __java_version_raw=$("${__java}" -version 2>&1 | awk -F '"' '/version/ {print $2}')
   __java_version=$(echo "$__java_version_raw" | awk -F. '{if ($1 == "1") print $2; else print $1}')
-  echo "$(date) Major Java version: $__java_version"
   if [[ -z ${__java_version} ]]; then
     die "Could not detect Java version. Aborting..."
   fi
@@ -740,6 +739,7 @@ cdap_run_class() {
   cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
   # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
   OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
+  echo "$(date) Major Java version: $JAVA_VERSION"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
@@ -771,6 +771,7 @@ cdap_exec_class() {
   cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
   # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
   OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
+  echo "$(date) Major Java version: $JAVA_VERSION"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
