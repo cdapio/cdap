@@ -821,7 +821,7 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
-                        <!-- Wrangler excludes --> 
+                        <!-- Wrangler excludes -->
                         <exclude name="**/target/wrangler-core*"/>
                         <exclude name="**/target/wrangler-test*"/>
                         <!--We don't want to package the following plugins with CDAP-->
@@ -1069,34 +1069,6 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>1.3.1</version>
           </plugin>
-
-          <!-- Extra deployment for rpm package. -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
-            <executions>
-              <execution>
-                <id>deploy-rpm</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>${project.artifactId}</artifactId>
-                  <packaging>noarch.rpm</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}-${package.version}-1.noarch.rpm</file>
-                  <classifier>1</classifier>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
         </plugins>
       </build>
     </profile>
@@ -1110,33 +1082,6 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>1.3.1</version>
           </plugin>
-
-          <!-- Extra deployment for deb package -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
-            <executions>
-              <execution>
-                <id>deploy-deb</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>${project.artifactId}</artifactId>
-                  <packaging>deb</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}_${package.version}-1_all.deb</file>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
         </plugins>
       </build>
     </profile>
@@ -1149,33 +1094,6 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
             <version>2.4</version>
-          </plugin>
-
-          <!-- Extra deployment for tgz package -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
-            <executions>
-              <execution>
-                <id>deploy-tgz</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>${project.artifactId}</artifactId>
-                  <packaging>tar.gz</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/${project.artifactId}-${package.version}.tar.gz</file>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>
