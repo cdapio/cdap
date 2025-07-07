@@ -857,32 +857,6 @@
               </execution>
             </executions>
           </plugin>
-
-          <!-- Extra deployment for cdap sdk -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>3.1.4</version>
-            <executions>
-              <execution>
-                <id>deploy-sdk</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>cdap-sandbox</artifactId>
-                  <packaging>zip</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-sandbox-${project.version}.zip</file>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
         </plugins>
       </build>
     </profile>
