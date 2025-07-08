@@ -95,18 +95,6 @@
     </repository>
   </repositories>
 
-
-  <distributionManagement>
-    <repository>
-      <id>sonatype.release</id>
-      <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype.snapshots</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <properties>
     <jee.version>7</jee.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1818,16 +1806,15 @@
             </execution>
           </executions>
         </plugin>
-
-        <!-- Nexus deploy plugin -->
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.2</version>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.8.0</version>
           <extensions>true</extensions>
           <configuration>
-            <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>
-            <serverId>sonatype.release</serverId>
+            <publishingServerId>sonatype.release</publishingServerId>
+            <autoPublish>false</autoPublish>
+            <ignorePublishedComponents>true</ignorePublishedComponents>
           </configuration>
         </plugin>
       </plugins>
@@ -1855,13 +1842,14 @@
         <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <version>2.8</version>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>sonatype.release</publishingServerId>
+          <autoPublish>false</autoPublish>
+          <ignorePublishedComponents>true</ignorePublishedComponents>
+        </configuration>
       </plugin>
     </plugins>
   </build>
