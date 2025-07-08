@@ -127,35 +127,6 @@
               </execution>
             </executions>
           </plugin>
-
-          <!-- Extra deployment for rpm package. -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>3.1.4</version>
-            <executions>
-              <execution>
-                <id>deploy-rpm</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>cdap</artifactId>
-                  <packaging>noarch.rpm</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-${package.version}-1.noarch.rpm</file>
-                  <classifier>1</classifier>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
         </plugins>
       </build>
     </profile>
@@ -203,33 +174,6 @@
                     ${package.config.dirs}
                     ${package.dirs}
                   </commandlineArgs>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
-          <!-- Extra deployment for deb package -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>3.1.4</version>
-            <executions>
-              <execution>
-                <id>deploy-deb</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>cdap</artifactId>
-                  <packaging>deb</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap_${package.version}-1_all.deb</file>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
                 </configuration>
               </execution>
             </executions>

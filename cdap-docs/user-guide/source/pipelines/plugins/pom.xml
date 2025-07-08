@@ -838,13 +838,14 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.14</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.8.0</version>
             <extensions>true</extensions>
             <configuration>
-              <nexusUrl>https://ossrh-staging-api.central.sonatype.com</nexusUrl>
-              <serverId>sonatype.release</serverId>
+              <publishingServerId>sonatype.release</publishingServerId>
+              <autoPublish>false</autoPublish>
+              <ignorePublishedComponents>true</ignorePublishedComponents>
             </configuration>
           </plugin>
           <!-- Source JAR -->
