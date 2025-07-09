@@ -242,7 +242,6 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         try {
           OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
               .withAccessToken(refreshTokenResponse.getAccessToken())
-              .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
               .build();
           oauthStore.writeAccessToken(provider, credentialId, accessToken);
         } catch (NullPointerException e) {
