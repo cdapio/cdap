@@ -24,6 +24,7 @@ import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.ErrorCode;
 import com.google.cloud.spanner.Mutation;
 import com.google.cloud.spanner.ReadContext;
+import com.google.cloud.spanner.ReadOnlyTransaction;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
@@ -35,20 +36,25 @@ import com.google.cloud.spanner.TransactionRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.metadata.MetadataUtil;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataChange;
+import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageContext;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedName;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.ScopedNameTypeAdapter;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
@@ -84,8 +90,8 @@ public class SpannerMetadataStorage implements MetadataStorage {
     )));
 
   // Metadata table names
-  private static final String METADATA_TABLE = "metadata";
-  private static final String METADATA_PROPS_TABLE = "metadata_props";
+  public static final String METADATA_TABLE = "metadata";
+  public static final String METADATA_PROPS_TABLE = "metadata_props";
 
   private String instanceId;
   private String projectId;
@@ -164,23 +170,23 @@ public class SpannerMetadataStorage implements MetadataStorage {
    */
   private String getCreateMetadataTableDDLStatement() {
     return String.format(
-      "CREATE TABLE IF NOT EXISTS %s (" + // metadata
-        "%s STRING(MAX) NOT NULL," +  // metadata_id
-        "%s STRING(MAX) NOT NULL," + // namespace
-        "%s STRING(MAX) NOT NULL," + // entity_type
-        "%s STRING(MAX) NOT NULL," + // name
-        "%s INT64," + // create_time
-        "%s STRING(MAX)," + // user
-        "%s STRING(MAX)," + // system
-        "%s JSON," + // metadata_column
-        "%s INT64 NOT NULL," + // version
-        "user_tokens TOKENLIST AS " + // user_tokens list
-        "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN," +
-        "system_tokens TOKENLIST AS " + // system_tokens list
-        "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN," +
-        "text_tokens TOKENLIST AS " + // text_tokens list
-        "(TOKENLIST_CONCAT([User_Tokens, System_Tokens])) HIDDEN," +
-        ") PRIMARY KEY (%s) ", // metadata_id
+      "CREATE TABLE IF NOT EXISTS %s (" // metadata
+        + "%s STRING(MAX) NOT NULL,"   // metadata_id
+        + "%s STRING(MAX) NOT NULL," // namespace
+        + "%s STRING(MAX) NOT NULL,"  // entity_type
+        + "%s STRING(MAX) NOT NULL,"  // name
+        + "%s INT64,"  // create_time
+        + "%s STRING(MAX),"  // user
+        + "%s STRING(MAX),"  // system
+        + "%s JSON,"  // metadata_column
+        + "%s INT64 NOT NULL,"  // version
+        + "user_tokens TOKENLIST AS "  // user_tokens list
+        + "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN,"
+        + "system_tokens TOKENLIST AS "  // system_tokens list
+        + "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN,"
+        + "text_tokens TOKENLIST AS "  // text_tokens list
+        + "(TOKENLIST_CONCAT([User_Tokens, System_Tokens])) HIDDEN,"
+        + ") PRIMARY KEY (%s) ", // metadata_id
       METADATA_TABLE,
       Tables.Metadata.METADATA_ID_FIELD,
       Tables.Metadata.NAMESPACE_FIELD,
@@ -223,17 +229,17 @@ public class SpannerMetadataStorage implements MetadataStorage {
    */
   private String getCreateMetadataPropsTableDDLStatement() {
     return String.format(
-      "CREATE TABLE IF NOT EXISTS %s (" +
-        "%s STRING(MAX) NOT NULL," +  // metadata_id
-        "%s STRING(MAX) NOT NULL," + // namespace
-        "%s STRING(MAX) NOT NULL," + // entity_type
-        "%s STRING(MAX) NOT NULL," + // name
-        "%s STRING(MAX)," + // scope
-        "%s STRING(MAX)," + // value
-        "value_tokens TOKENLIST AS " + // value_tokens list
-        "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN," +
-        ") PRIMARY KEY (%s, %s, %s) ," + // metadata_id, name, scope
-        "INTERLEAVE IN PARENT %s ON DELETE CASCADE",
+      "CREATE TABLE IF NOT EXISTS %s ("
+        + "%s STRING(MAX) NOT NULL,"  // metadata_id
+        + "%s STRING(MAX) NOT NULL," // namespace
+        + "%s STRING(MAX) NOT NULL," // entity_type
+        + "%s STRING(MAX) NOT NULL," // name
+        + "%s STRING(MAX)," // scope
+        + "%s STRING(MAX)," // value
+        + "value_tokens TOKENLIST AS " // value_tokens list
+        + "(TOKENIZE_SUBSTRING(%s, support_relative_search=>TRUE)) HIDDEN,"
+        + ") PRIMARY KEY (%s, %s, %s) ," // metadata_id, name, scope
+        + "INTERLEAVE IN PARENT %s ON DELETE CASCADE",
       METADATA_PROPS_TABLE,
       Tables.MetadataProps.METADATA_ID_FIELD,
       Tables.MetadataProps.NAMESPACE_FIELD,
@@ -303,6 +309,17 @@ public class SpannerMetadataStorage implements MetadataStorage {
     LOG.info("Metadata Tables dropped successfully.");
   }
 
+  @Override
+  public Metadata read(Read read) throws IOException {
+    try (ReadOnlyTransaction transaction = dbClient.readOnlyTransaction()) {
+      Metadata metadata = readVersionedMetadata(read.getEntity(), transaction).getMetadata();
+      return filterMetadata(metadata, true, read.getKinds(),
+                            read.getScopes(), read.getSelection());
+    } catch (SpannerException e) {
+      throw new IOException("Error reading from Spanner", e);
+    }
+  }
+
   /**
    * Applies a single metadata mutation atomically.
    *
@@ -311,6 +328,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
    * @return The {@link MetadataChange} that occurred.
    * @throws IOException If a non-retryable Spanner error occurs.
    */
+  @Override
   public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
     try {
       TransactionRunner runner = dbClient.readWriteTransaction();
@@ -333,7 +351,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
     VersionedMetadata before = readVersionedMetadata(entity, transaction);
     Preconditions.checkArgument(before != null,
                                 "Metadata entity %s not found for mutation", entity);
-    ChangeRequest intermediary = applyMutation(before, mutation);
+    ChangeRequest intermediary = MetadataMutator.applyMutation(before, mutation);
     bufferMutations(transaction, intermediary.getMutation());
     return intermediary.getChange();
   }
@@ -359,18 +377,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
     if (!SUPPORTED_MUTATION_OPS.contains(operation)) {
       throw new IllegalArgumentException("Unsupported Spanner Mutation operation: " + operation);
     }
-  }
-
-  /**
-   * Creates a Spanner request that corresponds to the given mutation, along with the change
-   * effected by this mutation. The request must be executed by the caller.
-   *
-   * @param before   the metadata for the mutation's entity before the change
-   * @param mutation the mutation to apply
-   * @return a Spanner request to be executed, and the change caused by the mutation.
-   */
-  private ChangeRequest applyMutation(VersionedMetadata before, MetadataMutation mutation) throws IOException {
-    throw new IOException("NOT IMPLEMENTED");
   }
 
   /**
@@ -443,9 +449,33 @@ public class SpannerMetadataStorage implements MetadataStorage {
   }
 
   /**
+   * Filter the metadata based on the given scopes, kinds, and selection. Based on the value of
+   * {@param keep}, this can be used to keep or to discard the matching tags and properties.
+   *
+   * @param keep if true, only matching metadata elements are kept; otherwise only non-matching
+   *             elements are kept.
+   */
+  public static Metadata filterMetadata(Metadata metadata, boolean keep, Set<MetadataKind> kinds,
+                                  Set<MetadataScope> scopes, Set<ScopedNameOfKind> selection) {
+    if (selection != null) {
+      return new Metadata(
+        Sets.filter(metadata.getTags(), tag -> keep == selection.contains(
+          new ScopedNameOfKind(MetadataKind.TAG, tag.getScope(), tag.getName()))),
+        Maps.filterKeys(metadata.getProperties(), key ->
+          keep == selection.contains(new ScopedNameOfKind(MetadataKind.PROPERTY, key.getScope(), key.getName())))
+      );
+    }
+    return new Metadata(
+      Sets.filter(metadata.getTags(), tag ->
+        keep == (kinds.contains(MetadataKind.TAG) && scopes.contains(tag.getScope()))),
+      Maps.filterKeys(metadata.getProperties(), key ->
+        keep == (kinds.contains(MetadataKind.PROPERTY) && scopes.contains(key.getScope()))));
+  }
+
+  /**
    * Translate a metadata entity into a metadata_id in the table.
    */
-  protected String toMetadataId(MetadataEntity entity) {
+  public static String toMetadataId(MetadataEntity entity) {
     final boolean isEntityTypeVersioned = MetadataUtil.isVersionedEntityType(entity.getType());
 
     String keyValuePairs = StreamSupport.stream(entity.spliterator(), false)
@@ -454,11 +484,6 @@ public class SpannerMetadataStorage implements MetadataStorage {
       .collect(Collectors.joining(","));
 
     return keyValuePairs.isEmpty() ? entity.getType() : entity.getType() + ":" + keyValuePairs;
-  }
-
-  @Override
-  public Metadata read(Read read) throws IOException {
-    throw new IOException("NOT IMPLEMENTED");
   }
 
   @Override
