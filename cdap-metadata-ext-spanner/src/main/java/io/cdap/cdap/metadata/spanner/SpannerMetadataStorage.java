@@ -36,6 +36,7 @@ import com.google.cloud.spanner.TransactionRunner;
 import com.google.cloud.spanner.Value;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -76,6 +77,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -120,10 +122,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
     "creation-time", Tables.Metadata.CREATED_FIELD
   );
 
-  @VisibleForTesting
-  static final boolean KEEP = true;
-  @VisibleForTesting
-  static final boolean DISCARD = false;
+  private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
 
   @Override
   public void initialize(MetadataStorageContext context) throws Exception {
@@ -339,7 +338,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
   public Metadata read(Read read) throws IOException {
     try (ReadOnlyTransaction transaction = dbClient.readOnlyTransaction()) {
       Metadata metadata = readVersionedMetadata(read.getEntity(), transaction).getMetadata();
-      return filterMetadata(metadata, KEEP, read.getKinds(),
+      return filterMetadata(metadata, true, read.getKinds(),
                             read.getScopes(), read.getSelection());
     } catch (SpannerException e) {
       throw new IOException("Error reading from Spanner", e);
@@ -516,11 +515,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
 
   @Override
   public SearchResponse search(SearchRequest request)  {
-    Cursor cursor = Optional.ofNullable(request.getCursor())
-      .filter(s -> !s.isEmpty())
-      .map(Cursor::fromString)
-      .orElse(null);
-
+    Cursor cursor = Strings.isNullOrEmpty(request.getCursor()) ? null : Cursor.fromString(request.getCursor());
     return doSearch(request, cursor);
   }
 
@@ -543,13 +538,12 @@ public class SpannerMetadataStorage implements MetadataStorage {
       params.forEach((key, value) -> statementBuilder.bind(key).to(value));
       Statement statement = statementBuilder.build();
 
-      LOG.info("Executing Spanner SQL Template: {}", statement.getSql());
-      LOG.info("With Parameters: {}", statement.getParameters());
+      LOG.info("Executing Spanner SQL Template: {} With Parameters: {}", statement.getSql(),
+               statement.getParameters());
 
       ResultSet resultSet = transaction.executeQuery(statement);
       List<MetadataRecord> results = new ArrayList<>();
       String nextActualCursor = null;
-
       while (resultSet.next()) {
         results.add(mapResult(resultSet));
         nextActualCursor = createNextCursorKey(resultSet, sortColumns);
@@ -566,18 +560,37 @@ public class SpannerMetadataStorage implements MetadataStorage {
    */
   private QueryBuildResult buildQuery(SearchRequest request, @Nullable Cursor requestCursor) {
     StringBuilder sql = new StringBuilder("SELECT * FROM metadata");
+    MetadataScope scope = request.getScope();
     Map<String, Value> params = new HashMap<>();
     SortDetailsResult sortDetails = getSortDetails(request);
     List<String> sortColumns = sortDetails.getColumns();
     List<Sorting.Order> sortOrders = sortDetails.getOrders();
+    List<String> allSearchConditions = new ArrayList<>();
+    Iterable<String> terms = Splitter.on(SPACE_SEPARATOR_PATTERN)
+      .omitEmptyStrings().trimResults().split(request.getQuery());
+
+    if (request.getNamespaces() != null && !request.getNamespaces().isEmpty()) {
+      allSearchConditions.add("namespace IN UNNEST(@namespaces)");
+      params.put("namespaces", Value.stringArray(request.getNamespaces()));
+    }
+
+    if (request.getTypes() != null && !request.getTypes().isEmpty()) {
+      allSearchConditions.add("entity_type IN UNNEST(@types)");
+      params.put("types", Value.stringArray(request.getTypes()));
+    }
 
     // Add standard filter conditions (namespaces, types, etc.) to the WHERE clause.
-    List<String> conditions = appendFilterConditions(request, params);
+    for (String searchTerm : terms) {
+      List<String> termConditions = appendFilterConditions(searchTerm, params, scope);
+      if (!termConditions.isEmpty()) {
+        allSearchConditions.add("(" + String.join(" OR ", termConditions) + ")");
+      }
+    }
 
     // Add the special WHERE condition for keyset pagination if a cursor exists.
-    appendCursorCondition(requestCursor, sortColumns, sortOrders, conditions, params);
-    if (!conditions.isEmpty()) {
-      sql.append(" WHERE ").append(String.join(" AND ", conditions));
+    appendCursorCondition(requestCursor, sortColumns, sortOrders, allSearchConditions, params);
+    if (!allSearchConditions.isEmpty()) {
+      sql.append(" WHERE ").append(String.join(" AND ", allSearchConditions));
     }
 
     // Add the ORDER BY clause.
@@ -625,28 +638,16 @@ public class SpannerMetadataStorage implements MetadataStorage {
   /**
    * Appends standard WHERE conditions and their parameters for filtering the search.
    */
-  private List<String> appendFilterConditions(SearchRequest request, Map<String, Value> params) {
+  private List<String> appendFilterConditions(String term, Map<String, Value> params , MetadataScope scope) {
     List<String> conditions = new ArrayList<>();
-
-    if (request.getNamespaces() != null && !request.getNamespaces().isEmpty()) {
-      conditions.add("namespace IN UNNEST(@namespaces)");
-      params.put("namespaces", Value.stringArray(request.getNamespaces()));
-    }
-
-    if (request.getTypes() != null && !request.getTypes().isEmpty()) {
-      conditions.add("entity_type IN UNNEST(@types)");
-      params.put("types", Value.stringArray(request.getTypes()));
-    }
-
-    String query = request.getQuery().toLowerCase();
-    if (query.isEmpty() || query.equals("*")) {
+    if (term.isEmpty() || term.equals("*")) {
       return conditions;
     }
 
-    if (query.contains(":")) {
-      conditions.add(buildKeyValueSearchCondition(query, params));
+    if (term.contains(":")) {
+      conditions.add(buildKeyValueSearchCondition(term, params));
     } else {
-      conditions.add(buildScopedSearchCondition(query, request.getScope(), params));
+      conditions.add(buildScopedSearchCondition(term, scope, params));
     }
 
     return conditions;
@@ -895,7 +896,7 @@ public class SpannerMetadataStorage implements MetadataStorage {
   private MetadataRecord mapResult(ResultSet resultSet) {
     String metadataId = resultSet.getString(Tables.Metadata.METADATA_ID_FIELD);
     Struct row = resultSet.getCurrentRowAsStruct();
-    String metadataJson = row.getJson(7);
+    String metadataJson = row.getJson(Tables.Metadata.METADATA_COLUMN_FIELD);
     Metadata metadata = GSON.fromJson(metadataJson, Metadata.class);
     MetadataEntity entity = toMetadataEntity(metadataId);
     return new MetadataRecord(entity, metadata);

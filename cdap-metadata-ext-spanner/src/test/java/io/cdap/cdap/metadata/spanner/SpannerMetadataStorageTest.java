@@ -97,10 +97,6 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
   private static InstanceAdminClient adminClient;
   private static Spanner spanner;
 
-  // Metadata table names
-  private static final String METADATA_TABLE = "metadata";
-  private static final String METADATA_PROPS_TABLE = "metadata_props";
-
   // Indicates whether the Spanner emulator is active, guiding cleanup decisions.
   private static boolean isEmulatorRunning;
 
@@ -213,7 +209,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys), props(user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.NONE,
                           MetadataScope.NONE,
                           ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
@@ -223,7 +219,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys), props(user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.ALL,
                           MetadataScope.ALL,
                           ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
@@ -233,7 +229,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(user), props(sys, sval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.NONE,
                           MetadataScope.NONE,
                           ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
@@ -243,7 +239,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(user), props(sys, sval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.ALL,
                           MetadataScope.ALL,
                           ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
@@ -253,21 +249,21 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(before,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.NONE,
                           MetadataScope.NONE,
                           null));
     Assert.assertEquals(before,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.NONE,
                           MetadataScope.ALL,
                           null));
     Assert.assertEquals(before,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.ALL,
                           MetadataScope.NONE,
                           null));
@@ -276,7 +272,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(before,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.ALL,
                           MetadataScope.ALL,
                           null));
@@ -285,7 +281,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(Metadata.EMPTY,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.ALL,
                           MetadataScope.ALL,
                           null));
@@ -294,7 +290,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(Metadata.EMPTY,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.NONE,
                           MetadataScope.NONE,
                           null));
@@ -302,7 +298,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(Metadata.EMPTY,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.ALL,
                           MetadataScope.NONE,
                           null));
@@ -310,7 +306,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(Metadata.EMPTY,
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.NONE,
                           MetadataScope.ALL,
                           null));
@@ -319,7 +315,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(user), props(user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.ALL,
                           Collections.singleton(MetadataScope.SYSTEM),
                           null));
@@ -327,7 +323,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys), props(sys, sval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           MetadataKind.ALL,
                           Collections.singleton(MetadataScope.USER),
                           null));
@@ -335,7 +331,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys), props(sys, sval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.ALL,
                           Collections.singleton(MetadataScope.SYSTEM),
                           null));
@@ -343,7 +339,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(user), props(user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           MetadataKind.ALL,
                           Collections.singleton(MetadataScope.USER),
                           null));
@@ -352,7 +348,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(), props(sys, sval, user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           Collections.singleton(MetadataKind.TAG),
                           MetadataScope.ALL,
                           null));
@@ -361,7 +357,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys, user), props()),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           Collections.singleton(MetadataKind.PROPERTY),
                           MetadataScope.ALL,
                           null));
@@ -370,7 +366,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys, user), props()),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           Collections.singleton(MetadataKind.TAG),
                           MetadataScope.ALL,
                           null));
@@ -379,7 +375,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(), props(sys, sval, user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           Collections.singleton(MetadataKind.PROPERTY),
                           MetadataScope.ALL,
                           null));
@@ -388,7 +384,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(user), props(sys, sval, user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           Collections.singleton(MetadataKind.TAG),
                           Collections.singleton(MetadataScope.SYSTEM),
                           null));
@@ -397,7 +393,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys, user), props(sys, sval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.DISCARD,
+                          false,
                           Collections.singleton(MetadataKind.PROPERTY),
                           Collections.singleton(MetadataScope.USER),
                           null));
@@ -406,7 +402,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(sys), props()),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           Collections.singleton(MetadataKind.TAG),
                           Collections.singleton(MetadataScope.SYSTEM),
                           null));
@@ -415,7 +411,7 @@ public class SpannerMetadataStorageTest extends MetadataStorageTest {
     Assert.assertEquals(new Metadata(tags(), props(user, uval)),
                         SpannerMetadataStorage.filterMetadata(
                           before,
-                          SpannerMetadataStorage.KEEP,
+                          true,
                           Collections.singleton(MetadataKind.PROPERTY),
                           Collections.singleton(MetadataScope.USER),
                           null));

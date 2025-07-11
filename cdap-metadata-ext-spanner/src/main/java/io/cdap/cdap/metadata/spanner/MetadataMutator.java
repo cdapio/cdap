@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.metadata.spanner;
 
-import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.DISCARD;
 import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.GSON;
 import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.METADATA_PROPS_TABLE;
 import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.METADATA_TABLE;
@@ -222,7 +221,7 @@ public class MetadataMutator {
    * @return the list of mutations to execute and the change caused by the mutation
    */
   private static ChangeRequest remove(VersionedMetadata before, MetadataMutation.Remove remove) throws IOException {
-    Metadata after = filterMetadata(before.getMetadata(), DISCARD,
+    Metadata after = filterMetadata(before.getMetadata(), false,
                                     remove.getKinds(), remove.getScopes(), remove.getRemovals());
     return new ChangeRequest(bufferWrites(remove.getEntity(), before.getVersion(), after),
                              new MetadataChange(remove.getEntity(), before.getMetadata(), after));
