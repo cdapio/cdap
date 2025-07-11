@@ -6536,4 +6536,12 @@
     </description>
   </property>
 
+  <property>
+    <name>ui.default.poll.interval.millis</name>
+    <value>10000</value>
+    <description>
+      The default polling interval in milliseconds for poll calls from cdap-ui.
+    </description>
+  </property>
+
 </configuration>
