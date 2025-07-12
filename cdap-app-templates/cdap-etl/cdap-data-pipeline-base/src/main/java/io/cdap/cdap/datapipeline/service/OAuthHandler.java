@@ -352,6 +352,13 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                          @PathParam("credential") String credentialId) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
+      Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
+
+      if (oAuthAccessToken.isPresent()) {
+        responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
+        return;
+      }
+
       OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
 
       HttpResponse response;
