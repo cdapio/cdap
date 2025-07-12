@@ -220,7 +220,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             String.format(
                 "Refresh token response is missing the required access token or refresh token. " +
                     "The actual response received: %s",
-                refreshTokenResponse));
+                response.getResponseBodyAsString()));
       }
 
       if (hasRefreshToken) {
