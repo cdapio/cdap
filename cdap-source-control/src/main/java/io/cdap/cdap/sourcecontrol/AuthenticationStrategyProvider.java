@@ -42,12 +42,16 @@ public class AuthenticationStrategyProvider {
    */
   AuthenticationStrategy get(RepositoryConfig repoConfig) throws
       AuthenticationStrategyNotFoundException {
-    if (repoConfig.getAuth().getType() == AuthType.PAT) {
-      return new PatAuthenticationStrategy(secureStore, repoConfig, namespaceId);
+    AuthType authType = repoConfig.getAuth().getType();
+    switch (authType) {
+      case PAT:
+        return new PatAuthenticationStrategy(secureStore, repoConfig, namespaceId);
+      case HTTP_ACCESS_TOKEN:
+        return new HttpAccessTokenAuthenticationStrategy(secureStore, repoConfig, namespaceId);
+      default:
+        throw new AuthenticationStrategyNotFoundException(
+            String.format("No strategy found for provider %s and type %s.",
+                repoConfig.getProvider(), authType));
     }
-    throw new AuthenticationStrategyNotFoundException(
-        String.format("No strategy found for provider %s and type %s.",
-            repoConfig.getProvider(),
-            repoConfig.getAuth().getType()));
   }
 }

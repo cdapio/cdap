@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Cask Data, Inc.
+ * Copyright © 2025 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,15 @@
  * the License.
  */
 
-package io.cdap.cdap.proto.sourcecontrol;
+package io.cdap.cdap.sourcecontrol;
+
+import org.eclipse.jgit.api.TransportCommand;
 
 /**
- * Auth Type Enums.
+ * An interface for CredentialsProviders that need to apply custom configurations to a
+ * {@link TransportCommand}, such as adding special headers.
  */
-public enum AuthType {
-  PAT,
-  HTTP_ACCESS_TOKEN
+public interface TransportCommandConfigurator {
+
+  void configure(TransportCommand<?, ?> command);
 }
