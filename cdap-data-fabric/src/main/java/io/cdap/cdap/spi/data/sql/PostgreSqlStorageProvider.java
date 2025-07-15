@@ -186,7 +186,9 @@ public class PostgreSqlStorageProvider implements StorageProvider {
     }
 
     // Create a separate classloader for the JDBC driver, which doesn't have any CDAP dependencies in it.
-    ClassLoader driverClassLoader = new DirectoryClassLoader(driverExtensionDir, null);
+    // Passing java.sql.Driver's parent classloader for java 11 + as it doesn't load them if we pass null.
+    ClassLoader driverClassLoader = new DirectoryClassLoader(driverExtensionDir,
+                                                             java.sql.Driver.class.getClassLoader());
     try {
       Driver driver = (Driver) Class.forName(driverName, true, driverClassLoader).newInstance();
 
