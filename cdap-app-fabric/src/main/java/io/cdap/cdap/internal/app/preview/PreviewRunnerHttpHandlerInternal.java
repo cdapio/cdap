@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.internal.app.preview;
 
+import com.google.gson.Gson;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -33,6 +35,8 @@ import org.slf4j.LoggerFactory;
 public class PreviewRunnerHttpHandlerInternal extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerHttpHandlerInternal.class);
+
+  private static final Gson GSON = new Gson();
 
   /**
    * Holds the total number of requests that have been executed by this handler that should count
@@ -51,7 +55,8 @@ public class PreviewRunnerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    LOG.info("sidhdirenge - Run called.");
+    LOG.info("sidhdirenge - Run called");
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
 }
