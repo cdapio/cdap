@@ -65,6 +65,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private static final String API_VERSION = "v1";
   private static final Gson GSON = new GsonBuilder()
     .setPrettyPrinting()
+    .registerTypeAdapterFactory(new ErrorHandlingGsonTypeAdapterFactory())
     .create();
 
   private OAuthStore oauthStore;
