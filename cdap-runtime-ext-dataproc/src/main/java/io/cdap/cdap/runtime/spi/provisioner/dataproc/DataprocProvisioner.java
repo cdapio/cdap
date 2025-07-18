@@ -459,8 +459,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   String getImageVersion(ProvisionerContext context, DataprocConf conf) {
     String imageVersion = conf.getImageVersion();
     if (imageVersion == null) {
-      // Dataproc 2.1 is the default version from 6.10.0 and later
-      imageVersion = "2.2";
+      // Dataproc 2.3 is the default version from 6.11.1 and later
+      imageVersion = "2.3";
     }
     return imageVersion;
   }

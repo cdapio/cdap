@@ -272,20 +272,20 @@ public class DataprocProvisionerTest {
     ));
 
     context.setSparkCompat(SparkCompat.SPARK3_2_12);
-    Assert.assertEquals("2.2", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.3", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.5.0"));
-    Assert.assertEquals("2.2", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.3", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     context.setAppCDAPVersionInfo(new MockVersionInfo("6.4.0"));
-    Assert.assertEquals("2.2", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.3", provisioner.getImageVersion(context, defaultConf));
     Assert.assertEquals("explicit", provisioner.getImageVersion(context, explicitVersionConf));
 
     //Doublecheck we still get 2.1 for Spark 3 even with CDAP 6.4
     context.setSparkCompat(SparkCompat.SPARK3_2_12);
-    Assert.assertEquals("2.2", provisioner.getImageVersion(context, defaultConf));
+    Assert.assertEquals("2.3", provisioner.getImageVersion(context, defaultConf));
 
   }
 
@@ -313,7 +313,7 @@ public class DataprocProvisionerTest {
     Mockito.when(dataprocClient.getCluster("cdap-app-runId"))
         .thenReturn(Optional.empty());
     Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
-            Mockito.eq("2.2"), addedLabelsCaptor.capture(), Mockito.eq(false),
+            Mockito.eq("2.3"), addedLabelsCaptor.capture(), Mockito.eq(false),
             Mockito.any()))
       .thenReturn(ClusterOperationMetadata.getDefaultInstance());
     Cluster expectedCluster = new Cluster(
