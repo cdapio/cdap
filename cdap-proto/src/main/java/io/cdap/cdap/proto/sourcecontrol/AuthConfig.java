@@ -58,12 +58,17 @@ public class AuthConfig {
       failures.add(new RepositoryValidationFailure("'type' must be specified in 'auth'."));
     }
 
-    if (type == AuthType.PAT) {
+    if (type == AuthType.PAT || type == AuthType.HTTP_ACCESS_TOKEN) {
       if (patConfig == null) {
         failures.add(new RepositoryValidationFailure("'patConfig' must be specified in 'auth'."));
       } else {
         failures.addAll(patConfig.validate(provider));
       }
+    }
+
+    if (type == AuthType.HTTP_ACCESS_TOKEN && provider != Provider.BITBUCKET_SERVER) {
+      failures.add(new RepositoryValidationFailure(
+          "HTTP access token must only be used with bitbucket server."));
     }
 
     return failures;
