@@ -424,6 +424,11 @@ public class RepositoryManager implements AutoCloseable {
     C command = creator.get();
     command.setCredentialsProvider(credentialsProvider);
     command.setTimeout(sourceControlConfig.getGitCommandTimeoutSeconds());
+
+    if (credentialsProvider instanceof TransportCommandConfigurator) {
+      ((TransportCommandConfigurator) credentialsProvider).configure(command);
+    }
+
     return command;
   }
 
