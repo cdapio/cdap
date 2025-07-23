@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import io.cdap.cdap.common.io.Locations;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,15 +33,22 @@ import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 /**
  * Unit Tests for {@link BundleJarUtil}.
  */
 public class BundleJarUtilTest {
+
+  @Rule
+  public ExpectedException expectedEx = ExpectedException.none();
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -157,6 +165,35 @@ public class BundleJarUtilTest {
     try (JarFile jarFile = new JarFile(destArchive)) {
       Assert.assertEquals(0, jarFile.stream().count());
     }
+  }
+
+
+  @Test
+  public void testZipSlipValidation() throws IOException {
+
+    expectedEx.expect(IllegalArgumentException.class);
+    expectedEx.expectMessage("Illegal path detected for Jar Entry : ../../../malicious.jar. This will try to "
+                               + "write outside the target directory, which is not allowed.");
+
+    // Create a file inside a sub-dir.
+    File inputJarDirectory = TEMP_FOLDER.newFolder();
+
+    String maliciousEntryName = "../../../malicious.jar";
+
+    // 1. Create malicious JAR content in memory
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (ZipOutputStream zos = new ZipOutputStream(bos)) {
+      ZipEntry maliciousEntry = new ZipEntry(maliciousEntryName);
+      zos.putNextEntry(maliciousEntry);
+      zos.write("some random message!".getBytes());
+      zos.closeEntry();
+    }
+    byte[] maliciousJarContent = bos.toByteArray();
+    File maliciousJarFile = new File(inputJarDirectory, "malicious.jar");
+    java.nio.file.Files.createDirectories(inputJarDirectory.toPath());
+    java.nio.file.Files.write(maliciousJarFile.toPath(), maliciousJarContent);
+
+    BundleJarUtil.unJar(maliciousJarFile, TEMP_FOLDER.newFolder());
   }
 
   /**
