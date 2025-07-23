@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
@@ -41,6 +42,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -168,13 +170,13 @@ public class BundleJarUtil {
   public static void addToArchive(final File input, final boolean includeDirName,
       final ZipOutputStream output,
       final Predicate<String> fileNameFilter) throws IOException {
-    final URI baseURI = input.toURI();
+    final URI baseUri = input.toURI();
     Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS),
         Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
               throws IOException {
-            URI uri = baseURI.relativize(dir.toUri());
+            URI uri = baseUri.relativize(dir.toUri());
             String entryName =
                 includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath();
 
@@ -191,7 +193,7 @@ public class BundleJarUtil {
             if (fileNameFilter.test(file.getFileName().toString())) {
               return FileVisitResult.CONTINUE;
             }
-            URI uri = baseURI.relativize(file.toUri());
+            URI uri = baseUri.relativize(file.toUri());
             if (uri.getPath().isEmpty()) {
               // Only happen if the given "input" is a file.
               output.putNextEntry(new ZipEntry(file.toFile().getName()));
@@ -210,7 +212,7 @@ public class BundleJarUtil {
    * Takes a jar or a local directory and prepares a folder to be loaded by classloader. If a jar is
    * provided it unpacks a manifest and any nested jars and links original jar into the destination
    * folder, so that it would be picked up by classloader to load any classes or resources.
-   *
+   * <p>
    * If a directory is provided, it assumes that this directory already contains the unpacked jar
    * contents (ie. this directory was used as the destinationFolder in a previous call to this
    * method). In this case, no unpacking is needed. The {@link ClassLoaderFolder} returned will be
@@ -314,6 +316,58 @@ public class BundleJarUtil {
     return destinationFolder;
   }
 
+  private static void unJar(ZipInputStream input, File targetDirectory,
+                            Predicate<String> nameFilter,
+                            CopyOption... copyOptions)
+    throws IOException {
+
+    Path targetPath = targetDirectory.toPath().normalize();
+    boolean isSuccess = false;
+    boolean isTargetDirectoryNewlyCreated = false;
+
+    try {
+      // Check if the directory exists before trying to create it
+      if (!Files.exists(targetPath)) {
+        Files.createDirectories(targetPath);
+        isTargetDirectoryNewlyCreated = true;
+      }
+
+      ZipEntry entry;
+      while ((entry = input.getNextEntry()) != null) {
+        String entryName = entry.getName();
+
+        if (!nameFilter.test(entryName)) {
+          continue;
+        }
+
+        Path output = targetPath.resolve(entryName).normalize();
+
+        if (!output.startsWith(targetPath)) {
+          throw new IllegalArgumentException("Illegal path detected for Jar Entry : " + entryName + ". This will try to"
+                                               + " write outside the target directory, which is not allowed.");
+        }
+
+        if (entry.isDirectory()) {
+          Files.createDirectories(output);
+        } else {
+          Files.createDirectories(output.getParent());
+          Files.copy(input, output, copyOptions);
+        }
+        input.closeEntry();
+      }
+      isSuccess = true;
+    } finally {
+      // Cleanup logic: Only delete if not successful AND we created the directory
+      if (!isSuccess && isTargetDirectoryNewlyCreated && Files.exists(targetPath)) {
+        try (Stream<Path> paths = Files.walk(targetPath)) {
+          paths.sorted(Comparator.reverseOrder())
+            .map(Path::toFile)
+            .forEach(File::delete);
+        }
+      }
+    }
+  }
+
   /**
    * Search for {@link Manifest} from the given {@link JarInputStream}.
    *
@@ -339,28 +393,6 @@ public class BundleJarUtil {
     }
 
     return null;
-  }
-
-  private static void unJar(ZipInputStream input, File targetDirectory,
-      Predicate<String> nameFilter,
-      CopyOption... copyOptions)
-      throws IOException {
-    Path targetPath = targetDirectory.toPath();
-    Files.createDirectories(targetPath);
-
-    ZipEntry entry;
-    while ((entry = input.getNextEntry()) != null) {
-      if (nameFilter.test(entry.getName())) {
-        Path output = targetPath.resolve(entry.getName());
-
-        if (entry.isDirectory()) {
-          Files.createDirectories(output);
-        } else {
-          Files.createDirectories(output.getParent());
-          Files.copy(input, output, copyOptions);
-        }
-      }
-    }
   }
 
   private BundleJarUtil() {
