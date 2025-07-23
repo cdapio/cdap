@@ -87,4 +87,18 @@ public class ArtifactVersionTest {
     Assert.assertTrue(smaller.compareTo(larger) < 0);
     Assert.assertTrue(larger.compareTo(smaller) > 0);
   }
+
+  @Test
+  public void testArtifactVersionValidationSuccess() {
+    // None of them should throw any exception.
+    new ArtifactVersion("1.5.0");
+    new ArtifactVersion("1.5.0-SNAPSHOT");
+    new ArtifactVersion("1.5.0-RC1");
+    new ArtifactVersion("1.5.0-v2-beta3");
+  }
+
+  @Test (expected = IllegalArgumentException.class)
+  public void testArtifactVersionValidationException() {
+    new ArtifactVersion("1.5.0./../../../tmp");
+  }
 }
