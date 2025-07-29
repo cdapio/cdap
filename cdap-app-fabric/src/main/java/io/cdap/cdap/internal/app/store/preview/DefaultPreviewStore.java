@@ -54,12 +54,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of the {@link PreviewStore} that stores data in a level db table.
  */
 public class DefaultPreviewStore implements PreviewStore {
-
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewStore.class);
   private static final DatasetId PREVIEW_TABLE_ID = NamespaceId.SYSTEM.dataset("preview.table");
   private static final DatasetId PREVIEW_QUEUE_TABLE_ID = NamespaceId.SYSTEM.dataset(
       "preview.queue.table");
@@ -335,23 +337,24 @@ public class DefaultPreviewStore implements PreviewStore {
   public void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo)
       throws ConflictException {
     if (pollerInfo != null) {
+      LOG.info("sidhdirenge - setting poller info in DB");
       setPollerinfo(applicationId, pollerInfo);
     }
-    removeFromWaitingState(applicationId);
-    PreviewStatus previewStatus = getPreviewStatus(applicationId);
-    if (previewStatus == null) {
-      throw new ConflictException(
-          String.format("Preview application with id %s does not exist.", applicationId));
-    }
-    if (previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
-      throw new ConflictException(
-          String.format("Preview application with id %s does not exist in the "
-                  + "waiting state. Its current state is %s", applicationId,
-              previewStatus.getStatus().name()));
-    }
-    long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
-    setPreviewStatus(applicationId,
-        new PreviewStatus(PreviewStatus.Status.INIT, submitTimeInMillis, null, null, null));
+//    removeFromWaitingState(applicationId);
+//    PreviewStatus previewStatus = getPreviewStatus(applicationId);
+//    if (previewStatus == null) {
+//      throw new ConflictException(
+//          String.format("Preview application with id %s does not exist.", applicationId));
+//    }
+//    if (previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
+//      throw new ConflictException(
+//          String.format("Preview application with id %s does not exist in the "
+//                  + "waiting state. Its current state is %s", applicationId,
+//              previewStatus.getStatus().name()));
+//    }
+//    long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
+//    setPreviewStatus(applicationId,
+//        new PreviewStatus(PreviewStatus.Status.INIT, submitTimeInMillis, null, null, null));
   }
 
   private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {

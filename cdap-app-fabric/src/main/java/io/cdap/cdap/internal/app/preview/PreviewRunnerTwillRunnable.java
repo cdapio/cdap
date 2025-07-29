@@ -102,7 +102,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerTwillRunnable.class);
 
   private PreviewRunnerManager previewRunnerManager;
-  private PreviewRunnerHttpService previewRunner;
+//  private PreviewRunnerHttpService previewRunner;
   private LogAppenderInitializer logAppenderInitializer;
   private StorageProvider storageProvider;
 
@@ -137,22 +137,22 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    previewRunner.addListener(new ServiceListenerAdapter() {
-      @Override
-      public void terminated(Service.State from) {
-        future.complete(from);
-      }
-
-      @Override
-      public void failed(Service.State from, Throwable failure) {
-        future.completeExceptionally(failure);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
+//    previewRunner.addListener(new ServiceListenerAdapter() {
+//      @Override
+//      public void terminated(Service.State from) {
+//        future.complete(from);
+//      }
+//
+//      @Override
+//      public void failed(Service.State from, Throwable failure) {
+//        future.completeExceptionally(failure);
+//      }
+//    }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting preview runner manager");
     previewRunnerManager.start();
-    LOG.debug("sidhdirenge - Starting preview runner");
-    previewRunner.start();
+//    LOG.debug("sidhdirenge - Starting preview runner");
+//    previewRunner.start();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -166,7 +166,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   public void stop() {
     LOG.info("Stopping preview runner manager");
     previewRunnerManager.stop();
-    previewRunner.stop();
+//    previewRunner.stop();
   }
 
   @Override
@@ -220,7 +220,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }
 
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
-    previewRunner = injector.getInstance(PreviewRunnerHttpService.class);
+//    previewRunner = injector.getInstance(PreviewRunnerHttpService.class);
   }
 
   @VisibleForTesting

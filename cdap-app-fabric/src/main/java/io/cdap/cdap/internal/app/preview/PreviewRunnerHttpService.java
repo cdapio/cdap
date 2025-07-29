@@ -31,6 +31,7 @@ import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -48,7 +49,7 @@ public class PreviewRunnerHttpService extends AbstractIdleService {
 
   @Inject
   PreviewRunnerHttpService(CConfiguration cConf, SConfiguration sConf,
-      DiscoveryService discoveryService) {
+      DiscoveryService discoveryService, PreviewRunnerHttpHandlerInternal handler) {
     this.discoveryService = discoveryService;
 
 //    // set workdir location in cConf
@@ -58,9 +59,8 @@ public class PreviewRunnerHttpService extends AbstractIdleService {
 //      cConf.set(TaskWorker.WORK_DIR, workDir);
 //    }
 
-    NettyHttpService.Builder builder = NettyHttpService.builder(
-            Service.PREVIEW_RUNNER_HTTP).setHost(cConf.get(Preview.RUNNER_ADDRESS))
-        .setPort(cConf.getInt(Preview.RUNNER_PORT))
+    NettyHttpService.Builder builder = NettyHttpService.builder(Service.PREVIEW_RUNNER_HTTP)
+        .setHost(cConf.get(Preview.RUNNER_ADDRESS)).setPort(cConf.getInt(Preview.RUNNER_PORT))
         .setExecThreadPoolSize(cConf.getInt(Constants.Preview.EXEC_THREADS))
         .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.Preview.WORKER_THREADS))
@@ -69,7 +69,7 @@ public class PreviewRunnerHttpService extends AbstractIdleService {
           public void modify(ChannelPipeline pipeline) {
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
-        }).setHttpHandlers(new PreviewRunnerHttpHandlerInternal(cConf));
+        }).setHttpHandlers(Collections.singleton(handler));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

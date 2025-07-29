@@ -92,7 +92,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     int runs = 0;
     while (!terminated && (maxRuns <= 0 || runs < maxRuns)) {
       try {
-        PreviewRequest request = getPreviewRequest();
+        PreviewRequest request = null;
         if (request == null) {
           // If there is no preview request, sleep for a while and poll again.
           terminated = Uninterruptibles.awaitUninterruptibly(stopLatch, pollDelayMillis,

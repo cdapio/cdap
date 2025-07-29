@@ -19,9 +19,7 @@ package io.cdap.cdap.gateway.handlers.preview;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
@@ -52,15 +50,8 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/requests/pull")
   public void poll(FullHttpRequest request, HttpResponder responder) {
-    byte[] pollerInfo = Bytes.toBytes(request.content().nioBuffer());
-    PreviewRequest previewRequest = previewManager.poll(pollerInfo).orElse(null);
-
-    if (previewRequest != null) {
-      LOG.debug("Send preview request {} to poller {}", previewRequest.getProgram(),
-          Bytes.toString(pollerInfo));
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewRequest));
-    } else {
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
+    // TODO(sidhdirenge): Deprecate.
+    LOG.info("sidhdirenge - this should not be called");
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 }

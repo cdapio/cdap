@@ -84,6 +84,7 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
             .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
             .to(RemoteDatasetFramework.class);
 
+        // TODO(sidhdirenge) - this can be removed.
         bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class)
             .in(Scopes.SINGLETON);
 

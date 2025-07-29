@@ -105,6 +105,25 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   }
 
   @Override
+  public Optional<PreviewRequest> poll() {
+    LOG.info("sidhdirenge - new poll");
+    while (true) {
+      PreviewRequest previewRequest = requestQueue.poll();
+      if (previewRequest == null) {
+        return Optional.empty();
+      }
+
+      if (!isValid(previewRequest, waitTimeOut)) {
+        LOG.warn("Preview request wth application id {} is timed out. Ignoring it.",
+            previewRequest.getProgram().getParent());
+        continue;
+      }
+
+      return Optional.of(previewRequest);
+    }
+  }
+
+  @Override
   public void add(PreviewRequest previewRequest) {
     previewStore.add(previewRequest.getProgram().getParent(),
         previewRequest.getAppRequest(),

@@ -134,17 +134,20 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       String className = taskDetails.getClassName();
       if (mustRestart.get() && pendingRequests == 0) {
         stopper.accept(className);
+        LOG.info("here 1");
         return;
       }
 
       if (!enableUserCodeIsolationEnabled
           || !taskDetails.isTerminateOnComplete()
           || className == null || killAfterRequestCount <= 0) {
+        LOG.info("here 2");
         // No need to restart.
         return;
       }
 
       if (requestProcessedCount.get() >= killAfterRequestCount) {
+        LOG.info("here 3");
         stopper.accept(className);
       }
     };
@@ -172,6 +175,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
     int waitTime = (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
     int finalTaskDeadlineSeconds = calculateFinalTaskDeadlineSeconds(duration);
+    LOG.info("finalTaskDeadline {}", finalTaskDeadlineSeconds);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
     Threads.createDaemonThreadFactory("task-worker-restart"));
@@ -183,6 +187,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           "Task worker service is about to restart in {} seconds, no new tasks will be accepted.",
           finalTaskDeadlineSeconds);
       if (runningRequestCount.get() == 0) {
+        LOG.info("here 4");
         stopper.accept("");
         executorService.shutdown();
         return;
@@ -194,6 +199,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
             "Interrupted while waiting for task completion. Stopping immediately",
             e);
       }
+      LOG.info("here 5");
       stopper.accept("");
       executorService.shutdown();
     }, waitTime, finalTaskDeadlineSeconds, TimeUnit.SECONDS);
@@ -247,6 +253,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
                 taskCompletionConsumer, taskDetails),
             new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_OCTET_STREAM));
+        LOG.info("sent status ok");
       } catch (ClassNotFoundException | ClassCastException ex) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
             exceptionToJson(ex),
@@ -332,6 +339,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
       taskDeadlineSeconds = duration;
     }
+    LOG.info("Task deadline {}", taskDeadlineSeconds);
     return taskDeadlineSeconds;
   }
 
@@ -369,6 +377,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     @Override
     public void finished() {
       context.executeCleanupTask();
+      LOG.info("finished()");
       taskCompletionConsumer.accept(true, taskDetails);
     }
 

@@ -36,7 +36,9 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -64,6 +66,9 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -91,6 +96,7 @@ import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
+import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
@@ -117,8 +123,12 @@ import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -158,6 +168,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
   private LogAppender logAppender;
+  private RetryStrategy retryStrategy;
 
   @Inject
   DefaultPreviewManager(DiscoveryServiceClient discoveryServiceClient,
@@ -195,6 +206,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.messagingService = messagingService;
     this.previewDataCleanupService = previewDataCleanupService;
     this.metricsCollectionService = metricsCollectionService;
+    this.retryStrategy = RetryStrategies.fromConfiguration(previewCConf,
+        PREVIEW_RUNNER_HTTP + ".");
   }
 
   @Override
@@ -240,18 +253,54 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       throw new IllegalStateException(
           "Preview service is not running. Cannot start preview for " + programId);
     }
+    LOG.info("sidhdirenge - start preview");
+
+//    HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
 
     previewRequestQueue.add(previewRequest);
-    LOG.info("sidhdirenge - start preview");
-    // Start run here.
-    HttpRequest.Builder requestBuilder = previewRunnerClient
-        .requestBuilder(HttpMethod.POST, "/preview-runner/run")
-        .withBody(GSON.toJson(previewRequest));
-    HttpRequest httpRequest = requestBuilder.build();
-    HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
+    return Retries.callWithRetries((retryContext) -> {
+      try {
+        // TODO(sidhdirenge): Add poll().
+        LOG.info("sidhdirenge - called poll");
+//        Optional<PreviewRequest> previewRequest2 = previewRequestQueue.poll(pollerInfoProvider.get());
+//        LOG.info("sidhdirenge - finished poll {}", previewRequest2);
+        // Start run here.
+        HttpRequest.Builder requestBuilder = previewRunnerClient
+            .requestBuilder(HttpMethod.POST, "/preview-runner/run")
+            .withBody(GSON.toJson(previewRequest));
+        HttpRequest httpRequest = requestBuilder.build();
+        HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
+        LOG.info("sidhdirenge - preview response {}", httpResponse.toString());
 
-    LOG.info("sidhdirenge - preview response {}", httpResponse.toString());
-    return previewApp;
+        if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+          throw new RetryableException(
+              String.format("sidhdirenge - Received response code %s for %s",
+                  httpResponse.getResponseCode(),
+                  previewRequest));
+        }
+        if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+          BasicThrowable basicThrowable = GSON
+              .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
+          throw RemoteExecutionException.fromBasicThrowable(basicThrowable);
+        }
+        PreviewRequestDetails details = GSON.fromJson(httpResponse.getResponseBodyAsString(),
+            PreviewRequestDetails.class);
+        byte[] pollerInfo = details.getPollerInfo();
+        previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(),
+            pollerInfo);
+        LOG.info("sidhdirenge - saved poller info");
+        return previewApp;
+      } catch (NoRouteToHostException e) {
+        throw new RetryableException(
+            String.format("sidhdirenge - Received exception %s for %s", e.getMessage(),
+                previewRequest));
+      } catch (RemoteExecutionException | IOException e) {
+        throw new RuntimeException(e);
+      }
+    }, retryStrategy, throwable ->
+        (throwable instanceof RetryableException));
+
+//    return previewApp;
   }
 
   @Override
@@ -321,6 +370,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
+  @Deprecated
   public Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo) {
     return previewInjector.getInstance(PreviewRequestQueue.class).poll(pollerInfo);
   }

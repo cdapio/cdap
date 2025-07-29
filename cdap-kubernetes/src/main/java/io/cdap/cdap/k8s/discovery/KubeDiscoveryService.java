@@ -131,6 +131,7 @@ public class KubeDiscoveryService implements DiscoveryService,
     // The service is created with label selector based on the current pod labels
     String serviceName =
         namePrefix + discoverable.getName().toLowerCase().replace('.', '-');
+    LOG.info("Starting to register() service : {}", serviceName);
 
     try {
       CoreV1Api api = getCoreApi();
@@ -374,8 +375,10 @@ public class KubeDiscoveryService implements DiscoveryService,
   // Returns the k8s service type for the discoverable.
   private String getServiceType(Discoverable discoverable) {
     if (loadBalancerServiceList.contains(discoverable.getName())) {
+      LOG.info("{} is of type load balancer", discoverable.getName());
       return SERVICE_TYPE_LOAD_BALANCER;
     }
+    LOG.info("{} is of type cluster IP", discoverable.getName());
     return SERVICE_TYPE_CLUSTER_IP;
   }
 
