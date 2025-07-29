@@ -157,6 +157,35 @@ public class OAuthStore {
   }
 
   /**
+   * Remove an OAuth provider.
+   *
+   * @param name name of {@link OAuthProvider} to read
+   * @throws OAuthStoreException if the read fails
+   */
+  public void deleteProvider(String name) throws OAuthStoreException {
+    // Delete associated Client Credentials with given provider.
+    try {
+      secureStoreManager.delete(NamespaceId.SYSTEM.getNamespace(), getClientCredsKey(name));
+    } catch (Exception e) {
+      // If key is not found, then we can safely delete provider. For any other exception, throw it.
+      if (!e.getClass().getName().contains("NotFoundException")) {
+        throw new OAuthStoreException("Failed to delete client credential from OAuth provider secure storage", e);
+      }
+    }
+
+    try {
+       TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = context.getTable(TABLE_ID);
+        table.delete(getKey(name));
+      }, TableNotFoundException.class, InvalidFieldException.class);
+    } catch (TableNotFoundException e) {
+      throw new OAuthStoreException("OAuth provider table not found", e);
+    } catch (InvalidFieldException e) {
+      throw new OAuthStoreException("Failed to delete OAuth provider, object fields do not match table", e);
+    }
+  }
+
+  /**
    * Write an OAuth refresh token for the given provider and credential.
    *
    * @param oauthProvider name of OAuth provider the refresh token is sourced from
