@@ -38,6 +38,7 @@ import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -81,7 +82,14 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
   public final <T> T usePlugin(String pluginType, String pluginName, String pluginId,
       PluginProperties properties, PluginSelector selector) {
     try {
+      LOG.info("Inside usePlugin");
+      LOG.info("pluginType:{}", pluginType);
+      LOG.info("pluginName:{}", pluginName);
+      LOG.info("pluginId:{}", pluginId);
+      LOG.info("properties:{}", properties);
+      LOG.info("selector:{}", selector);
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
+      LOG.info("plugin:{}", plugin);
       return pluginInstantiator.newInstance(plugin);
     } catch (PluginNotExistsException e) {
       return null;
@@ -127,6 +135,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     validateExistingPlugin(pluginId);
 
     final Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
+    LOG.info("callerclasses:{}", Arrays.toString(callerClasses));
     if (callerClasses.length < 3) {
       // This shouldn't happen as there should be someone calling this method.
       throw new IllegalStateException("Invalid call stack.");
@@ -139,26 +148,32 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
     // 0 is the CallerClassSecurityManager, 1 is this class, hence 2 is the actual caller
     for (int i = 2; i < callerClasses.length; i++) {
       ClassLoader classloader = callerClasses[i].getClassLoader();
+      LOG.info("classloader:{}", classloader);
       if (classloader instanceof PluginClassLoader) {
         // if this is the first time we've seen this plugin artifact, it must be a new plugin parent.
         io.cdap.cdap.api.artifact.ArtifactId pluginCallerArtifactId = ((PluginClassLoader) classloader).getArtifactId();
+        LOG.info("pluginCallerArtifactId:{}", pluginCallerArtifactId);
         parents.add((pluginCallerArtifactId.getScope() == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM
             : pluginNamespaceId)
             .artifact(pluginCallerArtifactId.getName(),
                 pluginCallerArtifactId.getVersion().getVersion()));
+        LOG.info("parents:{}", parents);
       }
     }
 
     PluginNotExistsException exception = null;
+    LOG.info("artifactId: {}", artifactId);
     for (ArtifactId parentId : Iterables.concat(parents, Collections.singleton(artifactId))) {
       try {
         Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = pluginFinder.findPlugin(
             pluginNamespaceId, parentId,
             pluginType, pluginName,
             selector);
+        LOG.info("pluginEntry: {}", pluginEntry);
         Plugin plugin = FindPluginHelper.getPlugin(
             Iterables.transform(parents, ArtifactId::toApiArtifactId),
             pluginEntry, properties, pluginInstantiator);
+        LOG.info("plugin: {}", plugin);
         plugins.put(pluginId, new PluginWithLocation(plugin, pluginEntry.getKey().getLocation()));
         return plugin;
       } catch (PluginNotExistsException e) {
@@ -176,6 +191,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
 
   protected void validateExistingPlugin(String pluginId) {
     PluginWithLocation existing = plugins.get(pluginId);
+    LOG.info("validateExistingPlugin existing:{}", existing);
     if (existing != null) {
       throw new IllegalArgumentException(
           String.format("Plugin of type %s, name %s was already added as id %s.",

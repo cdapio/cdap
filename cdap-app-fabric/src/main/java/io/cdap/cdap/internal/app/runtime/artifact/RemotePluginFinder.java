@@ -38,6 +38,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.PluginInfo;
 import io.cdap.cdap.proto.id.ArtifactId;
@@ -56,6 +57,8 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
@@ -63,6 +66,7 @@ import org.apache.twill.filesystem.LocationFactory;
 public class RemotePluginFinder implements PluginFinder {
 
   private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePluginFinder.class);
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() {
   }.getType();
 
@@ -99,11 +103,18 @@ public class RemotePluginFinder implements PluginFinder {
       String pluginType, String pluginName,
       PluginSelector selector)
       throws PluginNotExistsException {
+    LOG.info("Inside findPlugin of RemotePluginFinder..");
+    LOG.info("pluginNamespaceId:{}", pluginNamespaceId);
+    LOG.info("parentArtifactId:{}", parentArtifactId);
+    LOG.info("pluginType:{}", pluginType);
+    LOG.info("pluginName:{}", pluginName);
+    LOG.info("selector:{}", selector);
 
     try {
       return Retries.callWithRetries(() -> {
         List<PluginInfo> infos = getPlugins(pluginNamespaceId, parentArtifactId, pluginType,
             pluginName);
+        LOG.info("infos:{}", infos);
         if (infos.isEmpty()) {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
         }
@@ -122,9 +133,11 @@ public class RemotePluginFinder implements PluginFinder {
                   .build();
           plugins.put(pluginArtifactId, pluginClass);
         }
+        LOG.info("plugins:{}", plugins);
 
         Map.Entry<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> selected = selector.select(
             plugins);
+        LOG.info("selected:{}", selected);
         if (selected == null) {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
         }
@@ -163,7 +176,12 @@ public class RemotePluginFinder implements PluginFinder {
       throws IOException, PluginNotExistsException, UnauthorizedException {
     // replace the space in the name
     // TODO: CDAP-18375 improve url encoding the our remote call
+    LOG.info("Inside getPlugins of RemotePluginFinder....");
     pluginName = pluginName.replace(" ", "%20");
+    LOG.info("pluginName: {}", pluginName);
+    LOG.info("namespaceId: {}", namespaceId);
+    LOG.info("parentArtifactId: {}", parentArtifactId);
+    LOG.info("pluginType: {}", pluginType);
     HttpRequest.Builder requestBuilder =
         remoteClient.requestBuilder(
             HttpMethod.GET,
@@ -176,10 +194,12 @@ public class RemotePluginFinder implements PluginFinder {
                 NamespaceId.SYSTEM.equals(namespaceId.getNamespaceId())
                     ? ArtifactScope.SYSTEM : ArtifactScope.USER
             ));
-
+    LOG.info("requestBuilder: {}", requestBuilder);
     HttpResponse response = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
 
     int responseCode = response.getResponseCode();
+    LOG.info("responseCode: {}", responseCode);
+    LOG.info("response: {}", response);
     if (responseCode != HttpURLConnection.HTTP_OK) {
       if (HttpCodes.isRetryable(responseCode)) {
         throw new ServiceUnavailableException(
