@@ -140,6 +140,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
               ImmutablePair<Boolean, String> newCredentialPair = decryptAndIdentifyCredential(
                   credentialValue, taskWorkerDecryptionHeader);
               if (newCredentialPair.getFirst()) {
+                LOG.error("Throwing unauthenticated for request {}", request);
                 throw new UnauthenticatedException("Request denied for Task workers");
               }
               currentUserCredential = new Credential(newCredentialPair.getSecond(), credentialType);

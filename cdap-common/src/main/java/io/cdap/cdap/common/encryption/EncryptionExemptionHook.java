@@ -51,10 +51,14 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+    LOG.error("Reached pre call in Encryption Exemption for request {}", request);
+    LOG.error("Request URI is {}", request.uri());
     try {
       for (Pattern uriPattern : EXEMPTED_URIS) {
         Matcher matcher = uriPattern.matcher(request.uri());
         if (matcher.matches()) {
+          LOG.error("Pattern {} matches for URI {}", uriPattern, request.uri());
+          LOG.error("Setting task worker header true");
           // For any pattern match, set the header to false to prevent Unauthenticated exception after decryption
           request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "false");
           return true;
@@ -64,6 +68,7 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       LOG.error("Encountered exception while pattern matching for URI {}", request.uri(), e);
     }
 
+    LOG.error("No pattern match, setting task worker header to false");
     request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "true");
     return true;
   }

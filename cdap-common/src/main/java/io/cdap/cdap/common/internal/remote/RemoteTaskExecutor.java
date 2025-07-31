@@ -83,6 +83,7 @@ public class RemoteTaskExecutor {
   private final AeadCipher userEncryptionAeadCipher;
   private final String workerUrl;
   private final boolean isWorkerEncryptionRequired;
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -147,6 +148,7 @@ public class RemoteTaskExecutor {
                 Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
             Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
             SecurityRequestContext.setUserCredential(encryptedCredential);
+            LOG.error("Set encrypted user creds for request {}", requestBuilder.build());
           }
 
           HttpRequest httpRequest = requestBuilder.build();
