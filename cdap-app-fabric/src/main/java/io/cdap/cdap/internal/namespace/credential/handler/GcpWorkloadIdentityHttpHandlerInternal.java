@@ -70,6 +70,8 @@ public class GcpWorkloadIdentityHttpHandlerInternal extends AbstractHttpHandler 
   public void provisionCredential(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @QueryParam("scopes") String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException {
+    // If query params are updated, update the pattern matching URI at
+    // io.cdap.cdap.common.encryption.EncryptionExemptionHook
     try {
       responder.sendJson(HttpResponseStatus.OK,
           GSON.toJson(credentialProvider.provision(namespace, scopes)));

@@ -45,6 +45,31 @@ public class EncryptionExemptionHookTest {
   }
 
   @Test
+  public void testPatternMatchingCredentialsUriWithQueryParamsSuccessful() {
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+        "/v3Internal/namespaces/default/credentials/workloadIdentity/"
+            + "provision?scopes=https://www.test.com/auth/test-platform");
+    HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
+    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+
+    hook.preCall(request, null, handlerInfo);
+
+    Assert.assertFalse(Boolean.parseBoolean(request.headers().get(TASK_WORKER_DECRYPTION_HDR)));
+  }
+
+  @Test
+  public void testPatternMatchingCredentialsUriWithoutQueryParamsSuccessful() {
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+        "/v3Internal/namespaces/default/credentials/workloadIdentity/provision");
+    HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
+    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+
+    hook.preCall(request, null, handlerInfo);
+
+    Assert.assertFalse(Boolean.parseBoolean(request.headers().get(TASK_WORKER_DECRYPTION_HDR)));
+  }
+
+  @Test
   public void testPatternMatchingUnsuccessful() {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "testingUri");
     HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
