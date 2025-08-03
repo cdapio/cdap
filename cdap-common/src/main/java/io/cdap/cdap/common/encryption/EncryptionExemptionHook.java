@@ -40,7 +40,7 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
   private static final List<Pattern> EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
       Pattern.compile("/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
-      Pattern.compile("/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision(.*)$"),
       Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"),
       Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$")
   );
