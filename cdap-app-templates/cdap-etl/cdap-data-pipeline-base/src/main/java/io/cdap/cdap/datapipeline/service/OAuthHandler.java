@@ -47,6 +47,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -151,6 +152,24 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid URL: " + e.getMessage(), e);
       } catch (OAuthStoreException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to write to OAuth store", e);
+      }
+    } catch (OAuthServiceException e) {
+      e.respond(responder);
+    }
+  }
+
+  @DELETE
+  @Path(API_VERSION + "/oauth/provider/{provider}")
+  public void deleteOAuthProvider(HttpServiceRequest request, HttpServiceResponder responder,
+                               @PathParam("provider") String oauthProvider) {
+    try {
+      try {
+        oauthStore.deleteProvider(oauthProvider);
+        responder.sendStatus(HttpURLConnection.HTTP_OK);
+      } catch (NullPointerException e) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid provider: " + e.getMessage(), e);
+      } catch (OAuthStoreException e) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to delete OAuth provider.", e);
       }
     } catch (OAuthServiceException e) {
       e.respond(responder);
