@@ -47,6 +47,7 @@ public class OAuthStore {
   private static final String CREDENTIAL_ENCODING_STRATEGY_COL = "credentialencodingstrategy";
   private static final String USER_AGENT_COL = "useragent";
   private static final String CLIENT_CREDS_KEY_PREFIX = "oauthclientcreds";
+  private static final String ACCESS_TOKEN_KEY_PREFIX = "oauthaccesstoken";
   private static final String REFRESH_TOKEN_KEY_PREFIX = "oauthrefreshtoken";
   private static final Gson GSON = new Gson();
   private final TransactionRunner transactionRunner;
@@ -156,6 +157,35 @@ public class OAuthStore {
   }
 
   /**
+   * Remove an OAuth provider.
+   *
+   * @param name name of {@link OAuthProvider} to read
+   * @throws OAuthStoreException if the read fails
+   */
+  public void deleteProvider(String name) throws OAuthStoreException {
+    // Delete associated Client Credentials with given provider.
+    try {
+      secureStoreManager.delete(NamespaceId.SYSTEM.getNamespace(), getClientCredsKey(name));
+    } catch (Exception e) {
+      // If key is not found, then we can safely delete provider. For any other exception, throw it.
+      if (!e.getClass().getName().contains("NotFoundException")) {
+        throw new OAuthStoreException("Failed to delete client credential from OAuth provider secure storage", e);
+      }
+    }
+
+    try {
+       TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = context.getTable(TABLE_ID);
+        table.delete(getKey(name));
+      }, TableNotFoundException.class, InvalidFieldException.class);
+    } catch (TableNotFoundException e) {
+      throw new OAuthStoreException("OAuth provider table not found", e);
+    } catch (InvalidFieldException e) {
+      throw new OAuthStoreException("Failed to delete OAuth provider, object fields do not match table", e);
+    }
+  }
+
+  /**
    * Write an OAuth refresh token for the given provider and credential.
    *
    * @param oauthProvider name of OAuth provider the refresh token is sourced from
@@ -203,12 +233,67 @@ public class OAuthStore {
     }
   }
 
+  /**
+   * Write an OAuth access token for the given provider and credential. This is used for providers which do not provide
+   * a refresh token and instead opt for a permanent access token.
+   *
+   * @param oauthProvider name of OAuth provider the access token is sourced from
+   * @param credentialId ID used to identify this credential
+   * @param token the {@link OAuthAccessToken} to write
+   * @throws OAuthStoreException if the write fails
+   */
+  public void writeAccessToken(
+    String oauthProvider,
+    String credentialId,
+    OAuthAccessToken token) throws OAuthStoreException {
+    String namespace = NamespaceId.SYSTEM.getNamespace();
+    try {
+    secureStoreManager.put(
+          namespace,
+          getAccessTokenKey(oauthProvider, credentialId),
+          GSON.toJson(token),
+          "OAuth access token",
+          Collections.emptyMap());
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to write OAuth access token", e);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
+    }
+  }
+
+  /**
+   * Retrieve the {@link OAuthAccessToken} associated with the given OAuth provider and credential
+   *
+   * @param oauthProvider name of the OAuth provider the access token is sourced from
+   * @param credentialId ID used to identify this credential
+   * @throws OAuthStoreException if the read fails
+   */
+  public Optional<OAuthAccessToken> getAccessToken(String oauthProvider, String credentialId)
+      throws OAuthStoreException {
+    try {
+      String tokenJson = new String(
+          secureStore.getData(NamespaceId.SYSTEM.getNamespace(), getAccessTokenKey(oauthProvider, credentialId)),
+          StandardCharsets.UTF_8);
+      return Optional.of(GSON.fromJson(tokenJson, OAuthAccessToken.class));
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to read from OAuth access token secure storage", e);
+    } catch (JsonSyntaxException e) {
+      throw new OAuthStoreException("Invalid JSON for OAuth access token", e);
+    } catch (Exception e) {
+      return Optional.empty();
+    }
+  }
+
   private static String getClientCredsKey(String oauthProvider) {
     return String.format("%s-%s", CLIENT_CREDS_KEY_PREFIX, oauthProvider.toLowerCase());
   }
 
   private static String getRefreshTokenKey(String oauthProvider, String credentialId) {
     return String.format("%s-%s-%s", REFRESH_TOKEN_KEY_PREFIX, oauthProvider.toLowerCase(), credentialId.toLowerCase());
+  }
+
+  private static String getAccessTokenKey(String oauthProvider, String credentialId) {
+    return String.format("%s-%s-%s", ACCESS_TOKEN_KEY_PREFIX, oauthProvider.toLowerCase(), credentialId.toLowerCase());
   }
 
   private static List<Field<?>> getKey(String name) {

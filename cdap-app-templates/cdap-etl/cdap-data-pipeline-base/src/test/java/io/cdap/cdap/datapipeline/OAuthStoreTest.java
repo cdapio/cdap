@@ -20,8 +20,11 @@ import org.junit.Test;
 
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
+import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
+import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -30,13 +33,18 @@ import io.cdap.cdap.spi.data.transaction.TxRunnable;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class OAuthStoreTest {
-
   private OAuthStore oauthStore;
   private TransactionRunner mockTransactionRunner;
   private SecureStore mockSecureStore;
@@ -87,5 +95,86 @@ public class OAuthStoreTest {
     assertTrue(provider.isPresent());
     assertEquals(provider.get().getCredentialEncodingStrategy(),
         OAuthProvider.CredentialEncodingStrategy.FORM_BODY);
+  }
+
+  @Test
+  public void testWriteRefreshToken() throws Exception {
+    doNothing().when(mockSecureStoreManager).put(anyString(), anyString(), any(), anyString(), any());
+
+    OAuthRefreshToken token = OAuthRefreshToken.newBuilder()
+        .withRefreshToken("muhtoken")
+        .withRedirectURI("uri")
+        .build();
+    oauthStore.writeRefreshToken("Provider", "ID0", token);
+
+    verify(mockSecureStoreManager, times(1))
+        .put(eq("system"), eq("oauthrefreshtoken-provider-id0"), any(), eq("OAuth refresh token"), any());
+  }
+
+  @Test
+  public void testWriteAccessToken() throws Exception {
+    doNothing().when(mockSecureStoreManager).put(anyString(), anyString(), any(), anyString(), any());
+
+    OAuthAccessToken token = OAuthAccessToken.newBuilder()
+        .withAccessToken("muhtoken")
+        .build();
+    oauthStore.writeAccessToken("Provider", "ID0", token);
+
+    verify(mockSecureStoreManager, times(1))
+        .put(eq("system"), eq("oauthaccesstoken-provider-id0"), any(), eq("OAuth access token"), any());
+  }
+
+  @Test
+  public void testDeleteProvider() throws Exception {
+    doNothing().when(mockSecureStoreManager).delete(any(), any());
+
+    doAnswer(invocation -> {
+      TxRunnable runnable = invocation.getArgument(0);
+      StructuredTableContext mockContext = mock(StructuredTableContext.class);
+      when(mockContext.getTable(any())).thenReturn(mockTable);
+      runnable.run(mockContext);
+      return null;
+    }).when(mockTransactionRunner).run(any(TxRunnable.class));
+
+    doNothing().when(mockTable).delete(any());
+
+    oauthStore.deleteProvider(PROVIDER_NAME);
+    verify(mockSecureStoreManager, times(1)).delete(any(), any());
+  }
+
+  @Test
+  public void testDeleteProviderWhenSecureKeyNotFound() throws Exception {
+    class NotFoundException extends Exception {
+      public NotFoundException(String message) {
+        super(message);
+      }
+    }
+
+    doAnswer(invocation -> {
+      TxRunnable runnable = invocation.getArgument(0);
+      StructuredTableContext mockContext = mock(StructuredTableContext.class);
+      when(mockContext.getTable(any())).thenReturn(mockTable);
+      runnable.run(mockContext);
+      return null;
+    }).when(mockTransactionRunner).run(any(TxRunnable.class));
+    doNothing().when(mockTable).delete(any());
+
+    // CASE 1 :  When Secure keys not found, the provider should be deleted.
+    doThrow(new NotFoundException("Keys not found.")).when(mockSecureStoreManager).delete(any(), any());
+    oauthStore.deleteProvider(PROVIDER_NAME);
+    verify(mockSecureStoreManager, times(1)).delete(any(), any());
+    verify(mockTable, times(1)).delete(any());
+
+    // CASE 2 :  When secure keys were not deleted because of any reason, the provider should NOT be deleted.
+    org.mockito.Mockito.clearInvocations(mockSecureStoreManager);
+    org.mockito.Mockito.clearInvocations(mockTable);
+    doThrow(new Exception("Unable to delete secure key")).when(mockSecureStoreManager).delete(any(), any());
+    try {
+      oauthStore.deleteProvider(PROVIDER_NAME);
+    } catch (Exception e) {
+      assertEquals(e.getClass(), OAuthStoreException.class);
+    }
+    verify(mockSecureStoreManager, times(1)).delete(any(), any());
+    verify(mockTable, times(0)).delete(any());
   }
 }
