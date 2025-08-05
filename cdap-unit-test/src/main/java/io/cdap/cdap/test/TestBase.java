@@ -441,7 +441,6 @@ public class TestBase {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
     appStateStoreProvider = injector.getInstance(AppStateStoreProvider.class);
-    LOG.error("Got all instances");
   }
 
   /**
