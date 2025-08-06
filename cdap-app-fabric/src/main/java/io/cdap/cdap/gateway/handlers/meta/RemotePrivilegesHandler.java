@@ -83,18 +83,24 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
         AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
     Set<Permission> permissions = authorizationPrivilege.getPermissions();
-    if (authorizationPrivilege.getChildEntityType() != null) {
-      //It's expected that we'll always have one, but let's handle generic case
-      for (Permission permission : permissions) {
-        accessEnforcer.enforceOnParent(authorizationPrivilege.getChildEntityType(),
-            authorizationPrivilege.getEntity(),
-            authorizationPrivilege.getPrincipal(), permission);
+    try {
+      if (authorizationPrivilege.getChildEntityType() != null) {
+        //It's expected that we'll always have one, but let's handle generic case
+        for (Permission permission : permissions) {
+          accessEnforcer.enforceOnParent(authorizationPrivilege.getChildEntityType(),
+                                         authorizationPrivilege.getEntity(),
+                                         authorizationPrivilege.getPrincipal(), permission);
+        }
+      } else {
+        accessEnforcer.enforce(authorizationPrivilege.getEntity(),
+                               authorizationPrivilege.getPrincipal(),
+                               permissions);
       }
-    } else {
-      accessEnforcer.enforce(authorizationPrivilege.getEntity(),
-          authorizationPrivilege.getPrincipal(),
-          permissions);
+    } catch (Exception e) {
+      LOG.debug("WORKSPACE_LOG : {}", e.getMessage());
+      LOG.debug("WORKSPACE_LOG : {}", e);
     }
+
     Queue<AuditLogContext>  auditLogContextQueue = SecurityRequestContext.getAuditLogQueue();
     //Clearing this so it doesn't get double write to messaging queue
     //This should be written by the Client who is calling this service.
