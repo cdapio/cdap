@@ -99,6 +99,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     } catch (Exception e) {
       LOG.debug("WORKSPACE_LOG : {}", e.getMessage());
       LOG.debug("WORKSPACE_LOG : {}", e);
+      throw e;
     }
 
     Queue<AuditLogContext>  auditLogContextQueue = SecurityRequestContext.getAuditLogQueue();
