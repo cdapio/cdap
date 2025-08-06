@@ -95,6 +95,7 @@ public class ArtifactVersionTest {
     new ArtifactVersion("1.5.0-SNAPSHOT");
     new ArtifactVersion("1.5.0-RC1");
     new ArtifactVersion("1.5.0-v2-beta3");
+    new ArtifactVersion("8-1.0.16-jar-with-driver-and-dependencies");
   }
 
   @Test (expected = IllegalArgumentException.class)

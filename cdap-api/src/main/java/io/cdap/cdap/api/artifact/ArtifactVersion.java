@@ -37,7 +37,7 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
   private static final Pattern PATTERN = Pattern.compile(VERSION_REGEX);
   private static final Pattern SUFFIX_PATTERN = Pattern.compile("\\-" + VERSION_REGEX);
   //  Suffix can contain only alphanumeric characters and hyphen(-)
-  private static final String  SUFFIX_VALIDATION_REGEX = "^[a-zA-Z0-9-]+$";
+  private static final String  SUFFIX_VALIDATION_REGEX = "^[a-zA-Z0-9-.]+$";
   private static final Pattern SUFFIX_VALIDATION_PATTERN = Pattern.compile(SUFFIX_VALIDATION_REGEX);
 
   private final String version;
@@ -85,10 +85,10 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
     }
 
     if (suffix != null) {
-      Matcher suffix_validation_matcher = SUFFIX_VALIDATION_PATTERN.matcher(suffix);
-      if (!suffix_validation_matcher.matches()) {
-        throw new IllegalArgumentException("The suffix of the version is not valid. It should contain only " +
-                                             "alphanumeric characters and hyphen(-)");
+      Matcher suffixValidationMatcher = SUFFIX_VALIDATION_PATTERN.matcher(suffix);
+      if (!suffixValidationMatcher.matches()) {
+        throw new IllegalArgumentException("The suffix of the version is not valid. It should contain only "
+                                             + "alphanumeric characters, hyphen(-) and dot(.)");
       }
     }
 
