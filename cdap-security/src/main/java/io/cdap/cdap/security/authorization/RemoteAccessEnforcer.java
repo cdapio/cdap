@@ -86,6 +86,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
       .enableComplexMapKeySerialization()
       .create();
 
+  private static final Type AUDIT_LOG_QUEUE_TYPE = new TypeToken<LinkedBlockingDeque<AuditLogContext>>(){}.getType();
+
   private static final Type MAP_ENTITY_TYPE = new TypeToken<Map<EntityId, AuthorizationResponse>>() {
   }.getType();
 
@@ -305,19 +307,33 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     LOG.trace("Remotely enforcing on authorization privilege {}", authorizationPrivilege);
     try {
       HttpResponse response = remoteClient.execute(request);
+      Queue<AuditLogContext> deserializedQueue = GSON.fromJson(response.getResponseBodyAsString(),
+          AUDIT_LOG_QUEUE_TYPE);
+      switch (response.getResponseCode()) {
+        case HttpURLConnection.HTTP_OK:
+          return new EnforcementResponse(true, deserializedQueue, null);
 
-      Type queueType = new TypeToken<LinkedBlockingDeque<AuditLogContext>>(){}.getType();
-      Queue<AuditLogContext> deserializedQueue = GSON.fromJson(response.getResponseBodyAsString(), queueType);
-
-      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        return new EnforcementResponse(true, deserializedQueue, null);
+        default:
+          return new EnforcementResponse(false,
+              deserializedQueue,
+              new IOException(String.format("Failed to enforce with code %d: %s",
+                  response.getResponseCode(),
+                  response.getResponseBodyAsString())));
       }
-      return new EnforcementResponse(false,
-                                     deserializedQueue,
-                                     new IOException(String.format("Failed to enforce with code %d: %s",
-                                        response.getResponseCode(),
-                                        response.getResponseBodyAsString())));
     } catch (UnauthorizedException e) {
+      try {
+        Queue<AuditLogContext> deserializedQueue = GSON.fromJson(e.getMessage(), AUDIT_LOG_QUEUE_TYPE);
+        return new EnforcementResponse(false,
+            deserializedQueue,
+            new UnauthorizedException(
+                authorizationPrivilege.getPrincipal(),
+                authorizationPrivilege.getPermissions(),
+                authorizationPrivilege.getEntity(),
+                true, false));
+
+      } catch (Exception ex) {
+        // no-op
+      }
       return new EnforcementResponse(false, null, e);
     }
   }
