@@ -77,11 +77,15 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
   }
 
   public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
-      EntityId entityId,
-      boolean mustHaveAllPermissions) {
+      EntityId entityId, boolean mustHaveAllPermissions) {
+    this(principal, actions, entityId, mustHaveAllPermissions, true);
+  }
+
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
+                               EntityId entityId, boolean mustHaveAllPermissions, boolean includePrincipal) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
-            .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
-        null, mustHaveAllPermissions, true, null);
+           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
+         null, mustHaveAllPermissions, includePrincipal, null);
   }
 
   public UnauthorizedException(@Nullable String principal, Set<String> missingPermissions,
