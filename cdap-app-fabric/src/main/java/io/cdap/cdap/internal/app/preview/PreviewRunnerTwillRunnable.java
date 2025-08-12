@@ -37,7 +37,6 @@ import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
-import io.cdap.cdap.app.preview.PreviewRunnerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -226,32 +225,25 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf,
       PreviewRequestPollerInfo pollerInfo) {
+    List<Module> modules = new ArrayList<>();
 
     SConfiguration sConf = SConfiguration.create();
-    ConfigModule configModule = new ConfigModule(cConf, hConf, sConf);
-    AbstractModule authorizationEnforcementModule = new AuthorizationEnforcementModule().getNoOpModules();
 
-    // Define all the modules that our inner injector will need.
-    // This includes the ones we already had, plus the ones that provide
-    // the missing dependencies identified in the error message.
-    List<Module> previewRunnerDeps = new ArrayList<>();
-    previewRunnerDeps.add(configModule);
-    previewRunnerDeps.add(authorizationEnforcementModule);
-    previewRunnerDeps.add(RemoteAuthenticatorModules.getDefaultModule()); // Provides Authenticators
-    previewRunnerDeps.add(new PreviewConfigModule(cConf, hConf, sConf));
-    previewRunnerDeps.add(new IOModule()); // Needed by other modules
-    previewRunnerDeps.add(new DFSLocationModule()); // Needed by other modules
+    modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(RemoteAuthenticatorModules.getDefaultModule());
+    modules.add(new PreviewConfigModule(cConf, hConf, sConf));
+    modules.add(new IOModule());
 
-    // Add modules for service discovery, which RemoteClientFactory also needs
-    // (This also addresses the other errors from your screenshot)
+    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
     if (masterEnv == null) {
-      previewRunnerDeps.add(new ZkClientModule());
-      previewRunnerDeps.add(new ZkDiscoveryModule());
-      previewRunnerDeps.add(new KafkaClientModule());
-      previewRunnerDeps.add(new KafkaLogAppenderModule());
+      modules.add(new ZkClientModule());
+      modules.add(new ZkDiscoveryModule());
+      modules.add(new KafkaClientModule());
+      modules.add(new KafkaLogAppenderModule());
     } else {
-      previewRunnerDeps.add(new AbstractModule() {
+      modules.add(new AbstractModule() {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
@@ -261,49 +253,42 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
                   new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
-      previewRunnerDeps.add(new RemoteLogAppenderModule());
+      modules.add(new RemoteLogAppenderModule());
     }
 
-    AbstractModule clientModule = new PreviewRunnerMessagingClientModule(cConf);
-    previewRunnerDeps.add(clientModule);
-
-    // Now, add ALL of these dependency modules to the main injector's list.
-    List<Module> modules = new ArrayList<>(previewRunnerDeps);
-
-    // Also add the other modules needed by the main application.
     modules.add(new PreviewRunnerManagerModule().getDistributedModules());
+    modules.add(new PreviewRunnerMessagingClientModule(cConf));
     modules.add(new SecureStoreClientModule());
+    // Needed for InMemoryProgramRunnerModule. We use local metadata reader/publisher to avoid conflicting with
+    // metadata stored in AppFabric.
+    modules.add(new DFSLocationModule());
+    // Configurator tasks should be executed in-memory since it is in the preview runner pod.
     modules.add(new FactoryModuleBuilder().implement(Configurator.class, InMemoryConfigurator.class)
         .build(ConfiguratorFactory.class));
+
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
+    modules.add(new AuthorizationEnforcementModule().getNoOpModules());
     modules.add(new AuditLogWriterModule(cConf).getInMemoryModules());
     modules.add(new UserCredentialAeadEncryptionModule());
-
-
-    // Create the temporary injector with the COMPLETE set of dependencies
-    // and use it to get the PreviewRunnerModule instance.
-    Injector previewRunnerModuleInjector = Guice.createInjector(previewRunnerDeps);
-    PreviewRunnerModule previewRunnerModule = previewRunnerModuleInjector.getInstance(PreviewRunnerModule.class);
-
-    // Finally, install the created instance into the main injector config.
-    modules.add(new AbstractModule() {
-      @Override
-      protected void configure() {
-        install(previewRunnerModule);
-      }
-    });
 
     byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
         bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+
         bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> pollerInfoBytes);
+
+        // Artifact Repository should use RemoteArtifactRepository.
+        // TODO(CDAP-19041): Consider adding a remote artifact respository handler to the preview manager so that
+        //  preview runners do not have to talk directly to app-fabric for artifacts to prevent hot-spotting.
         bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class)
             .in(Scopes.SINGLETON);
         bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
+        // Use artifact localizer client for preview.
         bind(PluginFinder.class).to(PreviewPluginFinder.class);
         bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
+        // Preview runner pods should not have any elevated privileges, so use the current UGI.
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
       }
     });
