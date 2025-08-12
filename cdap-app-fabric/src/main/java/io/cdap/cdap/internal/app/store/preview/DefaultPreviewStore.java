@@ -337,21 +337,6 @@ public class DefaultPreviewStore implements PreviewStore {
     if (pollerInfo != null) {
       setPollerinfo(applicationId, pollerInfo);
     }
-    removeFromWaitingState(applicationId);
-    PreviewStatus previewStatus = getPreviewStatus(applicationId);
-    if (previewStatus == null) {
-      throw new ConflictException(
-          String.format("Preview application with id %s does not exist.", applicationId));
-    }
-    if (previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
-      throw new ConflictException(
-          String.format("Preview application with id %s does not exist in the "
-                  + "waiting state. Its current state is %s", applicationId,
-              previewStatus.getStatus().name()));
-    }
-    long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
-    setPreviewStatus(applicationId,
-        new PreviewStatus(PreviewStatus.Status.INIT, submitTimeInMillis, null, null, null));
   }
 
   private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {

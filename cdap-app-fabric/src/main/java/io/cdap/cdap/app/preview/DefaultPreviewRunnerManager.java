@@ -30,15 +30,17 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -48,7 +50,8 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerHttpHandlerInternal;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.tms.PreviewTMSLogAppender;
@@ -56,18 +59,22 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
+import io.cdap.http.ChannelPipelineModifier;
+import io.cdap.http.NettyHttpService;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.common.Threads;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,9 +95,11 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
   private final PreviewRunnerModule previewRunnerModule;
-  private final Set<PreviewRunnerService> previewRunnerServices;
   private final LevelDBTableService previewLevelDBTableService;
-  private final PreviewRunnerServiceFactory previewRunnerServiceFactory;
+  private final PreviewRequestPollerInfoProvider pollerInfoProvider;
+  private final DiscoveryService discoveryService;
+  private NettyHttpService previewRunnerHttpService;
+  private Cancellable cancelDiscovery;
   private PreviewRunner runner;
 
   @Inject
@@ -103,7 +112,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
       TransactionSystemClient transactionSystemClient,
       PreviewRunnerModule previewRunnerModule,
       @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBService,
-      PreviewRunnerServiceFactory previewRunnerServiceFactory) {
+      PreviewRequestPollerInfoProvider pollerInfoProvider, DiscoveryService discoveryService) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -112,10 +121,10 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     this.discoveryServiceClient = discoveryServiceClient;
     this.transactionSystemClient = transactionSystemClient;
     this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.POLLER_COUNT);
-    this.previewRunnerServices = ConcurrentHashMap.newKeySet();
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBService;
-    this.previewRunnerServiceFactory = previewRunnerServiceFactory;
+    this.pollerInfoProvider = pollerInfoProvider;
+    this.discoveryService = discoveryService;
   }
 
   @Override
@@ -127,19 +136,42 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
       ((Service) runner).startAndWait();
     }
 
-    // Create and start the preview poller services.
-    for (int i = 0; i < maxConcurrentPreviews; i++) {
-      createPreviewRunnerService().startAndWait();
+    NettyHttpService.Builder builder = NettyHttpService.builder(
+            //TODO(sidhdirenge) : Use cConf for this host address and port.
+            Constants.Service.PREVIEW_RUNNER).setHost("0.0.0.0").setPort(44317)
+        .setExecThreadPoolSize(previewCConf.getInt(Constants.Preview.EXEC_THREADS))
+        .setBossThreadPoolSize(previewCConf.getInt(Constants.Preview.BOSS_THREADS))
+        .setWorkerThreadPoolSize(previewCConf.getInt(Constants.Preview.WORKER_THREADS))
+        .setChannelPipelineModifier(new ChannelPipelineModifier() {
+          @Override
+          public void modify(ChannelPipeline pipeline) {
+            pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+          }
+        }).setHttpHandlers(
+            new PreviewRunnerHttpHandlerInternal(1, pollerInfoProvider, runner, this::stopPreview)
+        );
+
+    if (previewCConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(previewCConf, previewSConf).enable(builder);
     }
+    this.previewRunnerHttpService = builder.build();
+
+    LOG.debug("Starting PreviewRunnerHttpService");
+    previewRunnerHttpService.start();
+    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
+        URIScheme.createDiscoverable(Constants.Service.PREVIEW_RUNNER, previewRunnerHttpService)));
+    LOG.debug("Starting PreviewRunnerHttpService has completed");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    // Should stop the polling service, hence individual preview runs, before stopping the top level preview runner.
-    previewRunnerServices.forEach(this::stopQuietly);
     if (runner instanceof Service) {
       stopQuietly((Service) runner);
     }
+    if (previewRunnerHttpService != null) {
+      previewRunnerHttpService.stop(1, 2, TimeUnit.SECONDS);
+    }
+    cancelDiscovery.cancel();
   }
 
   private void stopQuietly(Service service) {
@@ -152,19 +184,27 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
 
   @Override
   public void stop(ApplicationId preview) throws Exception {
-    PreviewRunnerService runnerService = previewRunnerServices.stream()
-        .filter(r -> r.getPreviewApplication().filter(preview::equals).isPresent())
-        .findFirst()
-        .orElse(null);
+//    PreviewRunnerService runnerService = previewRunnerServices.stream()
+//        .filter(r -> r.getPreviewApplication().filter(preview::equals).isPresent())
+//        .findFirst()
+//        .orElse(null);
+//
+//    if (runnerService == null) {
+//      throw new NotFoundException(
+//          "Preview run cannot be stopped. Please try stopping again or start new preview run.");
+//    }
+//
+//    PreviewRunnerService newRunnerService = createPreviewRunnerService();
+//    runnerService.stopAndWait();
+//    newRunnerService.startAndWait();
+    // TODO(sidhdirenge): Stop preview before killing the pod.
+    LOG.info("Stop called for preview {}", preview.getApplication());
+    stop();
+  }
 
-    if (runnerService == null) {
-      throw new NotFoundException(
-          "Preview run cannot be stopped. Please try stopping again or start new preview run.");
-    }
-
-    PreviewRunnerService newRunnerService = createPreviewRunnerService();
-    runnerService.stopAndWait();
-    newRunnerService.startAndWait();
+  private void stopPreview(ProgramId program) {
+    LOG.info("Stop called for preview {}", program.getApplication());
+    stop();
   }
 
   /**
@@ -222,32 +262,5 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
           }
         }
     );
-  }
-
-  /**
-   * Creates a {@link PreviewRunnerService}. It will automatically added to and removed from the
-   * {@link #previewRunnerServices} set.
-   */
-  private PreviewRunnerService createPreviewRunnerService() {
-    PreviewRunnerService previewRunnerService = previewRunnerServiceFactory.create(runner);
-
-    previewRunnerService.addListener(new ServiceListenerAdapter() {
-
-      @Override
-      public void terminated(State from) {
-        previewRunnerServices.remove(previewRunnerService);
-        if (previewRunnerServices.isEmpty()) {
-          try {
-            stop();
-          } catch (Exception e) {
-            // should not happen
-            LOG.error("Failed to shutdown the preview runner manager service.", e);
-          }
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    previewRunnerServices.add(previewRunnerService);
-    return previewRunnerService;
   }
 }

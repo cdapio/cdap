@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Internal {@link HttpHandler} for Preview system.
  */
+@Deprecated
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/previews")
 public class PreviewHttpHandlerInternal extends AbstractHttpHandler {

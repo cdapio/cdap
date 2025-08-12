@@ -102,5 +102,6 @@ public interface PreviewManager {
    * @param pollerInfo information about the poller
    * @return {@code PreviewRequest} if such request is available in the queue
    */
+  @Deprecated
   Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
 }
