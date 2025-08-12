@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.Constants.Preview;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -107,13 +108,12 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
       PreviewRunStopper previewRunStopper, MessagingService messagingService,
       MetricsCollectionService metricsCollectionService,
       PreviewDataCleanupService previewDataCleanupService,
-      TwillRunner twillRunner) {
+      TwillRunner twillRunner, RemoteClientFactory remoteClientFactory) {
     super(discoveryServiceClient, datasetFramework, transactionSystemClient,
         accessControllerInstantiator, accessEnforcer, authenticationContext,
-        previewLevelDbTableService,
-        previewCconf, previewHconf, previewSconf, previewRequestQueue, previewStore,
-        previewRunStopper,
-        messagingService, previewDataCleanupService, metricsCollectionService);
+        previewLevelDbTableService, previewCconf, previewHconf, previewSconf, previewRequestQueue,
+        previewStore, previewRunStopper, messagingService, previewDataCleanupService,
+        metricsCollectionService, remoteClientFactory);
 
     this.cConf = cConf;
     this.hConf = hConf;

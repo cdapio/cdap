@@ -19,7 +19,6 @@ package io.cdap.cdap.app.preview;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -30,7 +29,6 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
-import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
 
 /**
@@ -64,10 +62,6 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         expose(PreviewRunStopper.class);
         bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
         expose(PreviewRunnerManager.class);
-
-        install(new FactoryModuleBuilder()
-            .implement(PreviewRunnerService.class, PreviewRunnerService.class)
-            .build(PreviewRunnerServiceFactory.class));
       }
     };
   }
@@ -90,10 +84,6 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
         expose(PreviewRunnerManager.class);
-
-        install(new FactoryModuleBuilder()
-            .implement(PreviewRunnerService.class, PreviewRunnerService.class)
-            .build(PreviewRunnerServiceFactory.class));
       }
     };
   }

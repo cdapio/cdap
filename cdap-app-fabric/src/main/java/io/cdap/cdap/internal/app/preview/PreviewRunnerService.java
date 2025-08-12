@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A scheduled service that periodically poll for new preview request and execute it.
  */
+@Deprecated
 public class PreviewRunnerService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerService.class);
