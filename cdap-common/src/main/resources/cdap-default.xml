@@ -1283,9 +1283,7 @@
 
   <property>
     <name>data.storage.properties.gcp-spanner.compression.config</name>
-    <value>
-      application_specs:application_data:SNAPPY,provisioner_data:provisioner_task_info:SNAPPY,destination_fields_table:destination_data:SNAPPY,summary_fields_table:destination_data:SNAPPY,run_records:run_record_data:SNAPPY,workflows:workflow_data:SNAPPY
-    </value>
+    <value>application_specs:application_data:SNAPPY,provisioner_data:provisioner_task_info:SNAPPY,destination_fields_table:destination_data:SNAPPY,summary_fields_table:destination_data:SNAPPY,run_records:run_record_data:SNAPPY,workflows:workflow_data:SNAPPY</value>
     <description>
       Represents table_name:column_name:compressor_type which possibly can cross spanner cell limit
       and will need compression to reduce size.

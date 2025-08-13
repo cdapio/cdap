@@ -36,6 +36,7 @@ import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.preview.DistributedPreviewManager;
 import io.cdap.cdap.internal.app.preview.DistributedPreviewRunStopper;
 import io.cdap.cdap.internal.app.preview.PreviewDataCleanupService;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerService;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.messaging.server.FetchHandler;
@@ -71,6 +72,7 @@ public class PreviewManagerModule extends PrivateModule {
     expose(PreviewRequestQueue.class);
 
     bind(PreviewDataCleanupService.class).in(Scopes.SINGLETON);
+    bind(PreviewRequestPollerService.class).in(Scopes.SINGLETON);
 
     if (distributedRunner) {
       bind(PreviewManager.class).to(DistributedPreviewManager.class).in(Scopes.SINGLETON);
