@@ -122,6 +122,11 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
   }
 
   @Override
+  protected void runOneIteration() throws Exception {
+
+  }
+
+  @Override
   protected void startUp() throws Exception {
     super.startUp();
     scheduler = Executors.newSingleThreadScheduledExecutor(
@@ -146,6 +151,11 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
       });
       future.get();
     }
+  }
+
+  @Override
+  protected Scheduler scheduler() {
+    return null;
   }
 
   @Override
