@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -124,16 +124,13 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +138,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Class responsible for creating the injector for preview and starting it.
  */
-public class DefaultPreviewManager extends AbstractScheduledService implements PreviewManager {
+public class DefaultPreviewManager extends AbstractIdleService implements PreviewManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
   private static final Gson GSON = new Gson();
@@ -168,7 +165,6 @@ public class DefaultPreviewManager extends AbstractScheduledService implements P
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
   private LogAppender logAppender;
-  private ScheduledExecutorService executor;
 
   @Inject
   DefaultPreviewManager(DiscoveryServiceClient discoveryServiceClient,
@@ -211,48 +207,6 @@ public class DefaultPreviewManager extends AbstractScheduledService implements P
   }
 
   @Override
-  protected final ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(
-        Threads.createDaemonThreadFactory("preview-manager"));
-    return executor;
-  }
-
-  @Override
-  protected void runOneIteration() throws Exception {
-    LOG.info("sidhdirenge - looking for preview request");
-    PreviewRequest previewRequest = previewRequestQueue.poll().orElse(null);
-    if (previewRequest == null) {
-      return;
-    }
-    LOG.info("sidhdirenge - found a preview request");
-    Retries.callWithRetries(() -> {
-      HttpRequest.Builder requestBuilder = previewRunnerClient.requestBuilder(HttpMethod.POST,
-          "/" + Constants.Service.PREVIEW_RUNNER + "/run").withBody(GSON.toJson(previewRequest));
-      HttpRequest httpRequest = requestBuilder.build();
-      HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
-
-      if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-        // Look for available runner pod.
-        throw new RetryableException(
-            String.format("Received response code %s for %s", httpResponse.getResponseCode(),
-                previewRequest));
-      }
-
-      if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        // This is a definitive failure, not a transient network issue.
-        // Throw a RuntimeException to break the retry loop immediately.
-        BasicThrowable basicThrowable = GSON.fromJson(httpResponse.getResponseBodyAsString(),
-            BasicThrowable.class);
-        throw new RuntimeException(RemoteExecutionException.fromBasicThrowable(basicThrowable));
-      }
-
-      byte[] pollerInfo = httpResponse.getResponseBody();
-      previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
-      return null;
-    }, retryStrategy, throwable -> (throwable instanceof RetryableException));
-  }
-
-  @Override
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
     StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class));
@@ -261,7 +215,8 @@ public class DefaultPreviewManager extends AbstractScheduledService implements P
     logAppender.start();
     LoggingContextAccessor.setLoggingContext(
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-            Constants.Logging.COMPONENT_NAME, Constants.Service.PREVIEW_HTTP));
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.PREVIEW_HTTP));
     logSubscriberService = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
     logSubscriberService.startAndWait();
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
@@ -277,16 +232,6 @@ public class DefaultPreviewManager extends AbstractScheduledService implements P
     logAppender.stop();
     stopQuietly(metricsCollectionService);
     previewLevelDBTableService.close();
-    if (executor != null) {
-      executor.shutdownNow();
-    }
-  }
-
-  @Override
-  protected Scheduler scheduler() {
-    long pollDelayMillis = previewCConf.getLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS);
-    LOG.info("sidhdirenge - Scheduler set for poll {}", pollDelayMillis);
-    return Scheduler.newFixedRateSchedule(0, pollDelayMillis, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -306,7 +251,38 @@ public class DefaultPreviewManager extends AbstractScheduledService implements P
     }
 
     previewRequestQueue.add(previewRequest);
-    return previewApp;
+    return Retries.callWithRetries((retryContext) -> {
+      try {
+        //TODO(sidhdirenge): Add poll.
+        HttpRequest.Builder requestBuilder = previewRunnerClient
+            .requestBuilder(HttpMethod.POST, "/" + Constants.Service.PREVIEW_RUNNER + "/run")
+            .withBody(GSON.toJson(previewRequest));
+        //TODO(sidhdirenge): Check if gzip compression needs to be enabled.
+        //TODO(sidhdirenge): Check for credential encryption.
+        HttpRequest httpRequest = requestBuilder.build();
+        HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
+        if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+          throw new RetryableException(
+              String.format("Received response code %s for %s",
+                  httpResponse.getResponseCode(),
+                  previewRequest));
+        }
+        if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+          BasicThrowable basicThrowable = GSON
+              .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
+          throw RemoteExecutionException.fromBasicThrowable(basicThrowable);
+        }
+        byte[] pollerInfo = httpResponse.getResponseBody();
+        previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(),
+            pollerInfo);
+        return previewApp;
+      } catch (NoRouteToHostException e) {
+        throw new RetryableException(
+            String.format("Received exception %s for %s", e.getMessage(),
+                programId));
+      }
+    }, retryStrategy, throwable ->
+        (throwable instanceof RetryableException));
   }
 
   @Override

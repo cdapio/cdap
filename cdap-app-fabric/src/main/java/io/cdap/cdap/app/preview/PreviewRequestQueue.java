@@ -37,8 +37,6 @@ public interface PreviewRequestQueue {
    */
   Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
 
-  Optional<PreviewRequest> poll();
-
   /**
    * Add a preview request in the queue.
    *
