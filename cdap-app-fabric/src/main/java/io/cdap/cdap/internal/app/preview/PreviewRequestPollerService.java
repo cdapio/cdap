@@ -23,7 +23,9 @@ import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
+import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -93,31 +95,52 @@ public class PreviewRequestPollerService extends AbstractScheduledService {
       return;
     }
     LOG.info("sidhdirenge - found a preview request");
-    Retries.callWithRetries(() -> {
-      HttpRequest.Builder requestBuilder = previewRunnerClient.requestBuilder(HttpMethod.POST,
-          "/" + Constants.Service.PREVIEW_RUNNER + "/run").withBody(GSON.toJson(previewRequest));
-      HttpRequest httpRequest = requestBuilder.build();
-      HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
+    // This try block prevents the service from crashing when a single request fails permanently after retries.
+    try {
+      Retries.callWithRetries(() -> {
+        HttpRequest.Builder requestBuilder = previewRunnerClient.requestBuilder(HttpMethod.POST,
+            "/" + Constants.Service.PREVIEW_RUNNER + "/run").withBody(GSON.toJson(previewRequest));
+        HttpRequest httpRequest = requestBuilder.build();
+        HttpResponse httpResponse = previewRunnerClient.execute(httpRequest);
 
-      if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-        // Look for available runner pod.
-        throw new RetryableException(
-            String.format("Received response code %s for %s", httpResponse.getResponseCode(),
-                previewRequest));
+        if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+          // Look for available runner pod.
+          throw new RetryableException(
+              String.format("Received response code %s for %s", httpResponse.getResponseCode(),
+                  previewRequest));
+        }
+
+        if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+          // This is a definitive failure, not a transient network issue.
+          // Throw a RuntimeException to break the retry loop immediately.
+          BasicThrowable basicThrowable = GSON.fromJson(httpResponse.getResponseBodyAsString(),
+              BasicThrowable.class);
+          throw new RuntimeException(RemoteExecutionException.fromBasicThrowable(basicThrowable));
+        }
+
+        byte[] pollerInfo = httpResponse.getResponseBody();
+        previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(),
+            pollerInfo);
+        return null;
+      }, retryStrategy, throwable -> (throwable instanceof RetryableException));
+    } catch (Exception e) {
+      // A single request failed permanently after exhausting all retries.
+      // Log the error and move on to the next iteration.
+      if (e instanceof RetryableException) {
+        //TODO(sidhdirenge) : Check if we need to add the request back to queue.
+        long submitTimeMillis = RunIds.getTime(previewRequest.getProgram().getApplication(),
+            TimeUnit.MILLISECONDS);
+        PreviewStatus status = new PreviewStatus(
+            PreviewStatus.Status.KILLED_BY_INSUFFICIENT_RESOURCES, submitTimeMillis,
+            new BasicThrowable(new Exception(
+                "Preview run failed possibly as no preview runners were available."
+                    + "Please try running preview again.")),
+            null, null);
+        previewStore.setPreviewStatus(previewRequest.getProgram().getParent(), status);
+      } else {
+        LOG.error("Failed to process preview request {} after all retries.", previewRequest, e);
       }
-
-      if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        // This is a definitive failure, not a transient network issue.
-        // Throw a RuntimeException to break the retry loop immediately.
-        BasicThrowable basicThrowable = GSON.fromJson(httpResponse.getResponseBodyAsString(),
-            BasicThrowable.class);
-        throw new RuntimeException(RemoteExecutionException.fromBasicThrowable(basicThrowable));
-      }
-
-      byte[] pollerInfo = httpResponse.getResponseBody();
-      previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
-      return null;
-    }, retryStrategy, throwable -> (throwable instanceof RetryableException));
+    }
   }
 
   @Override

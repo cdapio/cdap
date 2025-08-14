@@ -37,7 +37,8 @@ public class PreviewStatus {
     RUN_FAILED(true),
     KILLED(true),
     KILLED_BY_TIMER(true),
-    KILLED_BY_EXCEEDING_MEMORY_LIMIT(true);
+    KILLED_BY_EXCEEDING_MEMORY_LIMIT(true),
+    KILLED_BY_INSUFFICIENT_RESOURCES(true);
 
     private final boolean endState;
 

@@ -222,8 +222,10 @@ public class DefaultPreviewStoreTest {
     store.add(secondApplicationId, testRequest, null);
     store.add(thirdApplicationId, testRequest, null);
 
-    // set poller info so that it gets removed from WAITING state
     store.setPreviewRequestPollerInfo(firstApplicationId, null);
+    store.setPreviewStatus(firstApplicationId,
+        new PreviewStatus(PreviewStatus.Status.INIT, System.currentTimeMillis(), null, 0L,
+            System.currentTimeMillis()));
 
     // put data for the first application
     store.put(firstApplicationId, "mytracer", "key1", "value1");
