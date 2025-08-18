@@ -82,7 +82,7 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
         AuthorizationPrivilege.class);
-    LOG.debug("Enforcing for {}", authorizationPrivilege);
+    LOG.trace("Enforcing for {}", authorizationPrivilege);
     Set<Permission> permissions = authorizationPrivilege.getPermissions();
     HttpResponseStatus responseStatus = HttpResponseStatus.OK;
     try {
