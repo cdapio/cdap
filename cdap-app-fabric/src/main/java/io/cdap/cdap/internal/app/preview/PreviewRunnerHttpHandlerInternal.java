@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.inject.Singleton;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -39,6 +40,14 @@ import javax.ws.rs.core.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * An internal HTTP handler for the preview runner service.
+ * <p>
+ * This handler receives requests to start a preview run, initiates the pipeline execution, and
+ * manages the lifecycle of the runner pod based on the completion of the preview. It is responsible
+ * for handling concurrent requests and signaling the runner to shut down when its work is
+ * complete.
+ */
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/" + Constants.Service.PREVIEW_RUNNER)
 public class PreviewRunnerHttpHandlerInternal extends AbstractHttpHandler {
@@ -47,27 +56,35 @@ public class PreviewRunnerHttpHandlerInternal extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
   private final AtomicInteger runningRequestCount = new AtomicInteger(0);
   private final int concurrentRequestLimit;
+  private final int containerCount;
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
   private final PreviewRunner previewRunner;
   private final Consumer<ProgramId> previewCompletionConsumer;
 
-  public PreviewRunnerHttpHandlerInternal(int concurrentRequestLimit,
+  /**
+   * Constructs the handler with necessary dependencies.
+   */
+  public PreviewRunnerHttpHandlerInternal(CConfiguration cConf,
       PreviewRequestPollerInfoProvider pollerInfoProvider, PreviewRunner previewRunner,
       Consumer<ProgramId> stopper) {
-    //TODO(sidhdirenge): Fetch from cConf.
-    this.concurrentRequestLimit = concurrentRequestLimit;
+    this.concurrentRequestLimit = cConf.getInt(Constants.Preview.CONCURRENT_REQUEST_LIMIT);
+    this.containerCount = cConf.getInt(Constants.Preview.CONTAINER_COUNT);
     this.pollerInfoProvider = pollerInfoProvider;
     this.previewRunner = previewRunner;
     // Restart the service to clean up and re-claim resources after user code
     // execution.
     this.previewCompletionConsumer = (previewApp) -> {
       final int pendingRequests = runningRequestCount.decrementAndGet();
-      if (pendingRequests == 0) {
+      // No need to kill the runner if preview execution will be running in the same process as the preview manager.
+      if (containerCount > 0 && pendingRequests == 0) {
         stopper.accept(previewApp);
       }
     };
   }
 
+  /**
+   * Handles a POST request to start a preview run.
+   */
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {

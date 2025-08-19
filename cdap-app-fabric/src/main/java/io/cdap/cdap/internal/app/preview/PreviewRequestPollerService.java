@@ -47,6 +47,14 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A scheduled service that polls a {@link PreviewRequestQueue} for new preview requests and pushes
+ * them to an available preview runner.
+ * <p>
+ * This service takes care of pushing the preview requests to preview runner pods and handling the
+ * lifecycle and retry logic for each request. It uses a single-threaded executor to ensure that
+ * only one request is processed at a time.
+ */
 public class PreviewRequestPollerService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
@@ -70,11 +78,11 @@ public class PreviewRequestPollerService extends AbstractScheduledService {
         Constants.Gateway.INTERNAL_API_VERSION_3);
     this.retryStrategy = RetryStrategies.fromConfiguration(previewCConf,
         Constants.Service.PREVIEW_RUNNER + ".");
-    LOG.info("sidhdirenge - PreviewRequestPollerService initialized.");
   }
 
   @Override
   protected final ScheduledExecutorService executor() {
+    //TODO(sidhdirenge) : Check if we can use multiple threads here.
     executor = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("preview-poller"));
     return executor;
@@ -83,18 +91,15 @@ public class PreviewRequestPollerService extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     long pollDelayMillis = previewCConf.getLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS);
-    LOG.info("sidhdirenge - Scheduler set for poll {}", pollDelayMillis);
     return Scheduler.newFixedRateSchedule(0, pollDelayMillis, TimeUnit.MILLISECONDS);
   }
 
   @Override
   protected void runOneIteration() throws Exception {
-    LOG.info("sidhdirenge - looking for preview request");
     PreviewRequest previewRequest = previewRequestQueue.poll().orElse(null);
     if (previewRequest == null) {
       return;
     }
-    LOG.info("sidhdirenge - found a preview request");
     // This try block prevents the service from crashing when a single request fails permanently after retries.
     try {
       Retries.callWithRetries(() -> {
@@ -134,8 +139,7 @@ public class PreviewRequestPollerService extends AbstractScheduledService {
             PreviewStatus.Status.KILLED_BY_INSUFFICIENT_RESOURCES, submitTimeMillis,
             new BasicThrowable(new Exception(
                 "Preview run failed possibly as no preview runners were available."
-                    + "Please try running preview again.")),
-            null, null);
+                    + "Please try running preview again.")), null, null);
         previewStore.setPreviewStatus(previewRequest.getProgram().getParent(), status);
       } else {
         LOG.error("Failed to process preview request {} after all retries.", previewRequest, e);

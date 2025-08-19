@@ -469,6 +469,7 @@ public final class Constants {
     public static final String CONTAINER_DISK_SIZE_GB = "preview.runner.container.disk.size.gb";
     public static final String CONTAINER_MEMORY_MB = "preview.runner.container.memory.mb";
     public static final String CONTAINER_CORES = "preview.runner.container.num.cores";
+    public static final String CONCURRENT_REQUEST_LIMIT = "preview.runner.concurrent.request.limit";
 
     public static final String CONTAINER_CPU_MULTIPLIER = "preview.runner.container.cpu.multiplier";
     public static final String CONTAINER_MEMORY_MULTIPLIER = "preview.runner.container.memory.multiplier";

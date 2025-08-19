@@ -89,7 +89,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
-  private final int maxConcurrentPreviews;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
@@ -120,7 +119,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     this.secureStore = secureStore;
     this.discoveryServiceClient = discoveryServiceClient;
     this.transactionSystemClient = transactionSystemClient;
-    this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.POLLER_COUNT);
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBService;
     this.pollerInfoProvider = pollerInfoProvider;
@@ -148,7 +146,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
         }).setHttpHandlers(
-            new PreviewRunnerHttpHandlerInternal(1, pollerInfoProvider, runner, this::stopPreview)
+            new PreviewRunnerHttpHandlerInternal(previewCConf, pollerInfoProvider, runner,
+                this::stopPreview)
         );
 
     if (previewCConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
@@ -184,19 +183,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
 
   @Override
   public void stop(ApplicationId preview) throws Exception {
-//    PreviewRunnerService runnerService = previewRunnerServices.stream()
-//        .filter(r -> r.getPreviewApplication().filter(preview::equals).isPresent())
-//        .findFirst()
-//        .orElse(null);
-//
-//    if (runnerService == null) {
-//      throw new NotFoundException(
-//          "Preview run cannot be stopped. Please try stopping again or start new preview run.");
-//    }
-//
-//    PreviewRunnerService newRunnerService = createPreviewRunnerService();
-//    runnerService.stopAndWait();
-//    newRunnerService.startAndWait();
     // TODO(sidhdirenge): Stop preview before killing the pod.
     LOG.info("Stop called for preview {}", preview.getApplication());
     stop();
