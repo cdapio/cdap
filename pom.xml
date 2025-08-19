@@ -22,7 +22,7 @@
 
   <groupId>io.cdap.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>6.11.1-SNAPSHOT</version>
+  <version>6.12.0</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -1915,7 +1915,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-dependency-plugin</artifactId>
-              <version>2.8</version>
+              <version>3.8.1</version>
               <executions>
                 <!-- Copy runtime dependencies -->
                 <execution>
@@ -2033,7 +2033,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
+              <version>3.1.0</version>
               <executions>
                 <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
                 <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
@@ -2200,7 +2200,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
+              <version>3.1.0</version>
               <executions>
                 <execution>
                   <id>rename-rpm-service</id>
@@ -2303,7 +2303,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
+              <version>3.1.0</version>
               <executions>
                 <execution>
                   <id>rename-deb-service</id>
@@ -2575,6 +2575,7 @@
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-metadata-spi</module>
+        <module>cdap-metadata-ext-spanner</module>
         <module>cdap-storage-ext-spanner</module>
         <module>cdap-storage-spi</module>
         <module>cdap-system-app-api</module>

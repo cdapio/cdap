@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2022 Cask Data, Inc.
+  Copyright © 2025 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -18,16 +18,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>cdap</artifactId>
     <groupId>io.cdap.cdap</groupId>
+    <artifactId>cdap</artifactId>
     <version>6.12.0</version>
   </parent>
-  <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>cdap-storage-ext-spanner</artifactId>
-  <name>CDAP Google Cloud Spanner Storage Extension</name>
-  <packaging>jar</packaging>
+  <artifactId>cdap-metadata-ext-spanner</artifactId>
 
   <properties>
     <guava.version>33.4.0-jre</guava.version>
@@ -49,44 +47,30 @@
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-storage-spi</artifactId>
+      <artifactId>cdap-metadata-spi</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-spanner</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-storage-spi</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xerial.snappy</groupId>
-      <artifactId>snappy-java</artifactId>
-      <version>1.1.10.7</version>
     </dependency>
   </dependencies>
 
   <profiles>
     <profile>
-      <id>dist</id>
       <build>
         <plugins>
           <plugin>
@@ -95,44 +79,44 @@
             <version>3.8.1</version>
             <executions>
               <execution>
-                <id>copy-dependencies</id>
-                <phase>prepare-package</phase>
+                <configuration combine.self="override">
+                  <includeScope>runtime</includeScope>
+                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <prependGroupId>true</prependGroupId>
+                  <silent>true</silent>
+                </configuration>
                 <goals>
                   <goal>copy-dependencies</goal>
                 </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
-                  <overWriteReleases>false</overWriteReleases>
-                  <overWriteSnapshots>false</overWriteSnapshots>
-                  <overWriteIfNewer>true</overWriteIfNewer>
-                  <prependGroupId>true</prependGroupId>
-                  <silent>true</silent>
-                  <includeScope>runtime</includeScope>
-                </configuration>
+                <id>copy-dependencies</id>
+                <phase>prepare-package</phase>
               </execution>
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
             <executions>
               <execution>
-                <id>jar</id>
-                <phase>prepare-package</phase>
                 <configuration combine.self="override">
-                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}</finalName>
+                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                 </configuration>
                 <goals>
                   <goal>jar</goal>
                 </goals>
+                <id>jar</id>
+                <phase>prepare-package</phase>
               </execution>
             </executions>
+            <groupId>org.apache.maven.plugins</groupId>
+            <version>2.4</version>
           </plugin>
         </plugins>
       </build>
+      <id>dist</id>
     </profile>
   </profiles>
-
 </project>

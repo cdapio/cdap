@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.11.1-SNAPSHOT</version>
+    <version>6.12.0</version>
   </parent>
 
   <artifactId>cdap-master</artifactId>
@@ -378,7 +378,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.8</version>
+            <version>3.8.1</version>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -804,7 +804,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>3.1.0</version>
             <executions>
               <!-- Copy any additional system artifacts.
                    For example, if you want to include plugins from hydrator-plugins. -->
@@ -1005,7 +1005,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.8</version>
+            <version>3.8.1</version>
             <executions>
               <!--
                 Need to override the copy-dependencies to exclude Kafka and Scala in K8s build, but to include Hadoop
@@ -1040,7 +1040,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>3.1.0</version>
           </plugin>
         </plugins>
       </build>
@@ -1058,7 +1058,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>3.1.0</version>
           </plugin>
         </plugins>
       </build>
