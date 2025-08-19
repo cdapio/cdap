@@ -28,6 +28,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
 
@@ -56,6 +57,7 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
 
         bind(PreviewRequestFetcher.class).to(DirectPreviewRequestFetcher.class)
             .in(Scopes.SINGLETON);
+        bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> new byte[0]);
 
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunStopper.class).to(DefaultPreviewRunnerManager.class);

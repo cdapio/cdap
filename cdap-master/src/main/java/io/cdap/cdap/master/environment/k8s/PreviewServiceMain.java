@@ -41,7 +41,6 @@ import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingServiceModule;
@@ -128,12 +127,6 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     } else {
       modules.add(new PreviewManagerModule(cConf, false));
       modules.add(new PreviewRunnerManagerModule().getStandaloneModules());
-      modules.add(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> new byte[0]);
-        }
-      });
     }
 
     return modules;
