@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -95,6 +96,10 @@ public class PreviewRunnerHttpHandlerInternal extends AbstractHttpHandler {
     }
     PreviewRequest previewRequest = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8), PreviewRequest.class);
+    if (previewRequest != null && previewRequest.getPrincipal() != null) {
+      SecurityRequestContext.setUserId(previewRequest.getPrincipal().getName());
+      SecurityRequestContext.setUserCredential(previewRequest.getPrincipal().getFullCredential());
+    }
     try {
       LOG.info("Initiating preview for program {}", previewRequest.getProgram());
 
