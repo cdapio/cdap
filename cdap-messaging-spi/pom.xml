@@ -26,6 +26,8 @@
   </parent>
 
   <artifactId>cdap-messaging-spi</artifactId>
+  <name>CDAP Messaging SPI</name>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
