@@ -58,7 +58,6 @@ import io.cdap.cdap.logging.appender.tms.PreviewTMSLogAppender;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
@@ -182,10 +181,9 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
   }
 
   @Override
-  public void stop(ApplicationId preview) throws Exception {
-    // TODO(sidhdirenge): Stop preview before killing the pod.
-    LOG.info("Stop called for preview {}", preview.getApplication());
-    stop();
+  public void stop(ProgramId preview) throws Exception {
+    LOG.info("Stop called for preview {}", preview.getParent());
+    runner.stopPreview(preview);
   }
 
   private void stopPreview(ProgramId program) {

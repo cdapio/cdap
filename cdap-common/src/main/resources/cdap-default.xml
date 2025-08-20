@@ -3847,7 +3847,7 @@
 
   <property>
     <name>preview.runner.concurrent.request.limit</name>
-    <value>1</value>
+    <value>10</value>
     <description>
       Number of max concurrent preview runs on a preview runner pod.
     </description>

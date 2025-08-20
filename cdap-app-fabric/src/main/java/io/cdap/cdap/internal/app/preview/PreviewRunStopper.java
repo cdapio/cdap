@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.preview;
 
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 
 /**
  * Interface to kill the preview runner service.
@@ -29,5 +29,5 @@ public interface PreviewRunStopper {
    * @param preview id of the preview application to be stopped
    * @throws Exception if any error while stopping
    */
-  void stop(ApplicationId preview) throws Exception;
+  void stop(ProgramId preview) throws Exception;
 }

@@ -269,7 +269,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
           status.getSubmitTime(), null, null, null));
       return;
     }
-    previewRunStopper.stop(applicationId);
+    ProgramRunId programRunId = previewStore.getProgramRunId(applicationId);
+    previewRunStopper.stop(programRunId.getParent());
   }
 
   @Override

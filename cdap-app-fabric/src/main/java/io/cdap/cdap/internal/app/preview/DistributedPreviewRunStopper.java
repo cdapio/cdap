@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillController;
-import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.concurrent.Future;
@@ -49,8 +49,8 @@ public class DistributedPreviewRunStopper implements PreviewRunStopper {
   }
 
   @Override
-  public void stop(ApplicationId previewApp) throws Exception {
-    byte[] info = previewStore.getPreviewRequestPollerInfo(previewApp);
+  public void stop(ProgramId previewApp) throws Exception {
+    byte[] info = previewStore.getPreviewRequestPollerInfo(previewApp.getParent());
     if (info == null) {
       // should not happen
       throw new IllegalStateException(
