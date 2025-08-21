@@ -182,12 +182,12 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
 
   @Override
   public void stop(ProgramId preview) throws Exception {
-    LOG.info("Stop called for preview {}", preview.getParent());
+    LOG.info("sidhdirenge - Stop called for preview {}", preview.getParent());
     runner.stopPreview(preview);
   }
 
   private void stopPreview(ProgramId program) {
-    LOG.info("Stop called for preview {}", program.getApplication());
+    LOG.info("sidhdirenge - stopPreview called for preview {}", program.getApplication());
     stop();
   }
 

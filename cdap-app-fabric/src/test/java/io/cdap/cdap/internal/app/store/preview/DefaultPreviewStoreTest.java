@@ -139,7 +139,7 @@ public class DefaultPreviewStoreTest {
                                           RunIds.generate().getId());
     PreviewStatus status = new PreviewStatus(PreviewStatus.Status.COMPLETED, System.currentTimeMillis(), null, 0L,
                                              System.currentTimeMillis());
-    store.setProgramId(runId);
+    store.setProgramRunId(runId);
     store.setPreviewStatus(applicationId, status);
 
     Assert.assertEquals(runId, store.getProgramRunId(applicationId));

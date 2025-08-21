@@ -101,13 +101,23 @@ public class DefaultPreviewRequestQueueTest {
     }
 
     @Override
-    public void setProgramId(ProgramRunId programRunId) {
+    public void setProgramRunId(ProgramRunId programRunId) {
 
     }
 
     @Nullable
     @Override
     public ProgramRunId getProgramRunId(ApplicationId applicationId) {
+      return null;
+    }
+
+    @Override
+    public void setProgramId(ProgramId programId) {
+
+    }
+
+    @Override
+    public ProgramId getProgramId(ApplicationId applicationId) {
       return null;
     }
 

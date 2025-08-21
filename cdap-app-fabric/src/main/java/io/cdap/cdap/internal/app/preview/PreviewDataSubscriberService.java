@@ -283,7 +283,7 @@ public class PreviewDataSubscriberService extends
             message, t);
         return;
       }
-      previewStore.setProgramId(payload);
+      previewStore.setProgramRunId(payload);
     }
   }
 }

@@ -22,6 +22,7 @@ import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Principal;
 import java.util.List;
@@ -64,7 +65,11 @@ public interface PreviewStore {
    *
    * @param programRunId the program run id to save
    */
-  void setProgramId(ProgramRunId programRunId);
+  void setProgramRunId(ProgramRunId programRunId);
+
+  void setProgramId(ProgramId programId);
+
+  ProgramId getProgramId(ApplicationId applicationId);
 
   /**
    * Get the program run id associated with the preview run

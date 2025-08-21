@@ -230,6 +230,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     }
 
     previewRequestQueue.add(previewRequest);
+    LOG.info("sidhdirenge - Setting program id {} and appId {}", programId, programId.getParent());
+    previewStore.setProgramId(programId);
     return previewApp;
   }
 
@@ -269,8 +271,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
           status.getSubmitTime(), null, null, null));
       return;
     }
-    ProgramRunId programRunId = previewStore.getProgramRunId(applicationId);
-    previewRunStopper.stop(programRunId.getParent());
+    ProgramId programId = previewStore.getProgramId(applicationId);
+    LOG.info("sidhdirenge - Got program Id {} for application {}", programId, applicationId);
+    previewRunStopper.stop(programId);
   }
 
   @Override

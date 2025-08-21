@@ -44,6 +44,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Principal;
 import java.io.IOException;
@@ -71,6 +72,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] RUN = Bytes.toBytes("r");
   private static final byte[] STATUS = Bytes.toBytes("s");
   private static final byte[] POLLERINFO = Bytes.toBytes("i");
+  private static final byte[] PROGRAM_ID = Bytes.toBytes("pid");
   /*
    * Row storing the preview requests waiting for execution
    * |------------------------------------|--------------------|-----------------|
@@ -175,7 +177,7 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void setProgramId(ProgramRunId programRunId) {
+  public void setProgramRunId(ProgramRunId programRunId) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
         .create();
@@ -188,6 +190,41 @@ public class DefaultPreviewStore implements PreviewStore {
       throw new RuntimeException(String.format("Failed to put %s into preview store", programRunId),
           e);
     }
+  }
+
+  @Override
+  public void setProgramId(ProgramId programId) {
+
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+        .create();
+    MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX,
+        programId.getParent()).build();
+    try {
+      previewTable.putDefaultVersion(mdsKey.getKey(), PROGRAM_ID,
+          Bytes.toBytes(gson.toJson(programId)));
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to put %s into preview store", programId),
+          e);
+    }
+  }
+
+  @Override
+  public ProgramId getProgramId(ApplicationId applicationId) {
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+        .create();
+    MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
+
+    byte[] programId = null;
+    try {
+      programId = previewTable.getDefaultVersion(mdsKey.getKey(), PROGRAM_ID);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          String.format("Failed to get program id for preview %s", applicationId), e);
+    }
+    if (programId != null) {
+      return gson.fromJson(Bytes.toString(programId), ProgramId.class);
+    }
+    return null;
   }
 
   @Override
