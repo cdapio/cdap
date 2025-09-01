@@ -67,6 +67,7 @@ import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.cdap.cdap.messaging.guice.client.PreviewRunnerMessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -96,6 +97,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The {@link TwillRunnable} for running {@link PreviewRunner}.
  */
+@Completable
 public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerTwillRunnable.class);
