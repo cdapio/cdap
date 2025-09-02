@@ -33,6 +33,13 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
@@ -74,7 +81,7 @@ final class ArtifactClassLoaderFactory {
    *
    * @param unpackDir the directory where the artifact jar has been expanded
    * @return a closeable classloader based off the specified artifact; on closing the returned
-   *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
+   * {@link ClassLoader}, all temporary resources created for the classloader will be removed
    */
   CloseableClassLoader createClassLoader(File unpackDir) {
     ClassLoader sparkClassLoader = null;
@@ -113,12 +120,12 @@ final class ArtifactClassLoaderFactory {
   }
 
   /**
-   * Unpack the given {@code artifactLocation} to a temporary directory and call {@link
-   * #createClassLoader(File)} to create the {@link ClassLoader}.
+   * Unpack the given {@code artifactLocation} to a temporary directory and call
+   * {@link #createClassLoader(File)} to create the {@link ClassLoader}.
    *
    * @param artifactLocation the location of the artifact to create the classloader from
    * @return a closeable classloader based off the specified artifact; on closing the returned
-   *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
+   * {@link ClassLoader}, all temporary resources created for the classloader will be removed
    * @see #createClassLoader(File)
    */
   CloseableClassLoader createClassLoader(Location artifactLocation,
@@ -134,6 +141,19 @@ final class ArtifactClassLoaderFactory {
         Closeables.closeQuietly(classLoaderFolder);
       });
     } catch (Exception e) {
+      // --- START OF ADDED DEBUGGING CODE ---
+      try {
+        // Log the file path that caused the error
+        LOG.error("DEBUG: FileNotFoundException occurred for path: {}. Dumping directory tree.",
+            artifactLocation.toURI().getPath());
+
+        // Use the DirectoryTreeWalker to print the tree from the root
+        printTree("/");
+
+      } catch (Exception ex) {
+        LOG.error("Failed to print directory tree for debugging.", ex);
+      }
+      // --- END OF ADDED DEBUGGING CODE ---
       throw Throwables.propagate(e);
     }
   }
@@ -144,7 +164,7 @@ final class ArtifactClassLoaderFactory {
    *
    * @param artifactLocations the locations of the artifact to create the classloader from
    * @return a closeable classloader based off the specified artifacts; on closing the returned
-   *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
+   * {@link ClassLoader}, all temporary resources created for the classloader will be removed
    * @see #createClassLoader(File)
    */
   CloseableClassLoader createClassLoader(Iterator<Location> artifactLocations,
@@ -171,7 +191,49 @@ final class ArtifactClassLoaderFactory {
         Closeables.closeQuietly(classLoaderFolder);
       });
     } catch (Exception e) {
+      // --- START OF ADDED DEBUGGING CODE ---
+      try {
+        // Log the file path that caused the error
+        LOG.error("DEBUG: FileNotFoundException occurred for path: {}. Dumping directory tree.",
+            artifactLocation.toURI().getPath());
+
+        // Use the DirectoryTreeWalker to print the tree from the root
+        printTree("/");
+
+      } catch (Exception ex) {
+        LOG.error("Failed to print directory tree for debugging.", ex);
+      }
+      // --- END OF ADDED DEBUGGING CODE ---
       throw Throwables.propagate(e);
+    }
+  }
+
+  public void printTree(String startPath) {
+    Path startDir = Paths.get(startPath);
+    try {
+      Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+            throws IOException {
+          LOG.error("DIR: {}", dir);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          LOG.error("FILE: {}", file);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+          // Log the error but continue the traversal
+          LOG.error("Failed to access {}: {}", file, exc.getMessage());
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (IOException e) {
+      LOG.error("Failed to walk file tree from {}: {}", startPath, e.getMessage());
     }
   }
 }

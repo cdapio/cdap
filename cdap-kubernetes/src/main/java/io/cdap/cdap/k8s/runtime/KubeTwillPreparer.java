@@ -648,6 +648,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       for (Annotation annotation : contextClassLoader
           .loadClass(mainRuntimeSpec.getRunnableSpecification().getClassName()).getAnnotations()) {
         if (annotation.annotationType().equals(Completable.class)) {
+          LOG.info("sidhdirenge - identified preview as a job");
           resourceType = V1Job.class;
         }
       }
@@ -827,7 +828,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * @throws KubeAPIException if job creation failed
    */
   @Nullable
-  private KubernetesObject createJob(V1ObjectMeta metadata,
+  public KubernetesObject createJob(V1ObjectMeta metadata,
       Map<String, RuntimeSpecification> runtimeSpecs,
       Location runtimeConfigLocation) throws KubeAPIException {
     int parallelism = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification()
@@ -1179,6 +1180,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           .configMap(new V1ConfigMapVolumeSourceBuilder().withName(configMapName).build());
       volumes.add(configMapVolume);
     }
+    volumes.add(new V1Volume().name("preview-runner-data"));
+    LOG.info("sidhdirenge - Added preview runner volume");
 
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
@@ -1226,6 +1229,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     // Add the working directory the file localization by the init container
     volumeMounts.add(new V1VolumeMount().name("workdir").mountPath(workDir));
     volumeMounts.addAll(Arrays.asList(extraMounts));
+    volumeMounts.add(new V1VolumeMount().name("preview-runner-data").mountPath("/data"));
+    LOG.info("sidhdirenge - added volume mount");
 
     // Add workload identity volume, volume mount, and environment variable if applicable.
     // If running in the installation namespace, always mount workload identity ConfigMap.

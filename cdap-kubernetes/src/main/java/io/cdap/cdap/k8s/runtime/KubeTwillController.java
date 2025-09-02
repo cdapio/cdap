@@ -596,6 +596,7 @@ class KubeTwillController implements ExtendedTwillController {
   private CompletionStage<String> deleteJobAndGetCompletionStatus(int gracePeriodSeconds) {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
+    LOG.info("sidhdirenge - job status is {}", jobStatus);
     if (jobStatus == null) {
       if (jobTimedOut) {
         LOG.warn("Job {} timed out", name);
@@ -620,7 +621,7 @@ class KubeTwillController implements ExtendedTwillController {
       if (t != null) {
         LOG.warn("Failed to delete job {}. Attempt will be retried", jName);
       } else {
-        LOG.trace("Successfully deleted job {}", jName);
+        LOG.info("Successfully deleted job {}", jName);
       }
     });
 

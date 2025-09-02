@@ -253,7 +253,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
       listObject = listResult.getObject();
       String resourceVersion = listObject.getMetadata().getResourceVersion();
 
-      LOG.trace("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural,
+      LOG.info("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural,
           resourceVersion);
 
       // Create the new watch

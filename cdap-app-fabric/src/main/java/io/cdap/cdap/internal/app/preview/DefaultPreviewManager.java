@@ -127,8 +127,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
 
   private final AccessControllerInstantiator accessControllerInstantiator;
-  private final AccessEnforcer accessEnforcer;
-  private final AuthenticationContext authenticationContext;
+  final AccessEnforcer accessEnforcer;
+  final AuthenticationContext authenticationContext;
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
@@ -136,7 +136,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final DatasetFramework datasetFramework;
   private final TransactionSystemClient transactionSystemClient;
   private final LevelDBTableService previewLevelDBTableService;
-  private final PreviewRequestQueue previewRequestQueue;
+  final PreviewRequestQueue previewRequestQueue;
   private final PreviewStore previewStore;
   private final PreviewRunStopper previewRunStopper;
   private final MessagingService messagingService;
@@ -405,7 +405,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     );
   }
 
-  private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest<?> request)
+  ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest<?> request)
       throws BadRequestException {
     PreviewConfig previewConfig = request.getPreview();
     if (previewConfig == null) {

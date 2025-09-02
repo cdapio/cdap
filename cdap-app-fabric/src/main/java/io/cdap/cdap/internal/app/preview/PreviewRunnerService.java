@@ -91,6 +91,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     boolean terminated = false;
     int runs = 0;
     while (!terminated && (maxRuns <= 0 || runs < maxRuns)) {
+      LOG.info("sidhdirenge - checking for request");
       try {
         PreviewRequest request = getPreviewRequest();
         if (request == null) {

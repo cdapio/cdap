@@ -309,8 +309,13 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
         twillPreparer.setJVMOptions(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
             cConf.get(Constants.ArtifactLocalizer.CONTAINER_JVM_OPTS));
 
-        twillPreparer.start(5, TimeUnit.MINUTES);
-        LOG.info("sidhdirenge - job created");
+        TwillController activeController = twillPreparer.start(5, TimeUnit.MINUTES);
+        activeController.onRunning(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);
+        activeController.onTerminated(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);
+        LOG.info("sidhdirenge - job created. Now sleeping for 1 minute");
+        Thread.sleep(60000);
+        LOG.info("sidhdirenge - terminating the container now");
+        activeController.terminate();
       } catch (Exception e) {
         deleteDir(runDir);
         throw e;
