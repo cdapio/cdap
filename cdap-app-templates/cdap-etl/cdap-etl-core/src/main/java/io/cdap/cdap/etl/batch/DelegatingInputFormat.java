@@ -85,9 +85,9 @@ public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
       }
       return inputFormat;
     } catch (Exception e) {
-      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+      throw new RuntimeException(
         String.format("Unable to instantiate delegate input format class '%s'.",
-          delegateClassName), e.getMessage(), ErrorType.SYSTEM, false, e);
+          delegateClassName), e);
     }
   }
 }

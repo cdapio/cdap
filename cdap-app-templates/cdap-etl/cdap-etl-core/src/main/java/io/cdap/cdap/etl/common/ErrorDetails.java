@@ -16,12 +16,15 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.base.Throwables;
+import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.etl.api.exception.ErrorContext;
 import io.cdap.cdap.etl.api.exception.ErrorDetailsProvider;
 import io.cdap.cdap.etl.api.exception.ErrorPhase;
 import io.cdap.cdap.etl.api.exception.NoopErrorDetailsProvider;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,10 +73,34 @@ public class ErrorDetails {
     ErrorDetailsProvider errorDetailsProvider, ErrorPhase phase) {
     ProgramFailureException exception = null;
 
-    if (!(e instanceof ProgramFailureException)) {
+    if (!(isFailureDetailsProviderInCausalChain(e))) {
       exception = errorDetailsProvider == null ? null :
-        errorDetailsProvider.getExceptionDetails(e, new ErrorContext(phase));
+          errorDetailsProvider.getExceptionDetails(e, new ErrorContext(phase));
+    }
+    WrappedStageException wrappedStageException = getWrappedStageExceptionFromCausalChain(e);
+    if (wrappedStageException != null) {
+      return wrappedStageException;
     }
     return new WrappedStageException(exception == null ? e : exception, stageName);
+  }
+
+  public static boolean isFailureDetailsProviderInCausalChain(Throwable e) {
+    List<Throwable> causalChain = Throwables.getCausalChain(e);
+    for (Throwable cause : causalChain) {
+      if (cause instanceof FailureDetailsProvider) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static WrappedStageException getWrappedStageExceptionFromCausalChain(Throwable e) {
+    List<Throwable> causalChain = Throwables.getCausalChain(e);
+    for (Throwable cause : causalChain) {
+      if (cause instanceof WrappedStageException) {
+        return (WrappedStageException) cause;
+      }
+    }
+    return null;
   }
 }
