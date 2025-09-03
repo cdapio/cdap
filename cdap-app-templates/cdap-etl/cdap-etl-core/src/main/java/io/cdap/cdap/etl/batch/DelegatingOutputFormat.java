@@ -85,9 +85,9 @@ public class DelegatingOutputFormat<K, V> extends OutputFormat<K, V> {
       }
       return outputFormat;
     } catch (Exception e) {
-      throw ErrorUtils.getProgramFailureException(new ErrorCategory(ErrorCategoryEnum.PLUGIN),
+      throw new RuntimeException(
         String.format("Unable to instantiate delegate output format class '%s'.",
-          delegateClassName), e.getMessage(), ErrorType.SYSTEM, false, e);
+          delegateClassName), e);
     }
   }
 }
