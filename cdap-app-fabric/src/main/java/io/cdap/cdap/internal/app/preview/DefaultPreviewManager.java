@@ -46,7 +46,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -92,6 +94,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
@@ -142,6 +146,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final MessagingService messagingService;
   private final PreviewDataCleanupService previewDataCleanupService;
   private final MetricsCollectionService metricsCollectionService;
+  private final AeadCipher userEncryptionAeadCipher;
   private Injector previewInjector;
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
@@ -151,8 +156,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   DefaultPreviewManager(DiscoveryServiceClient discoveryServiceClient,
       @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
       TransactionSystemClient transactionSystemClient,
-      AccessControllerInstantiator accessControllerInstantiator,
-      AccessEnforcer accessEnforcer,
+      AccessControllerInstantiator accessControllerInstantiator, AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
       @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
       @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
@@ -161,7 +165,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
       PreviewRunStopper previewRunStopper, MessagingService messagingService,
       PreviewDataCleanupService previewDataCleanupService,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     this.authenticationContext = authenticationContext;
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
@@ -178,6 +183,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.messagingService = messagingService;
     this.previewDataCleanupService = previewDataCleanupService;
     this.metricsCollectionService = metricsCollectionService;
+    LOG.info("sidhdirenge - using cipher {}", userEncryptionAeadCipher);
+    this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
 
   @Override
@@ -189,8 +196,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     logAppender.start();
     LoggingContextAccessor.setLoggingContext(
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-            Constants.Logging.COMPONENT_NAME,
-            Constants.Service.PREVIEW_HTTP));
+            Constants.Logging.COMPONENT_NAME, Constants.Service.PREVIEW_HTTP));
     logSubscriberService = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
     logSubscriberService.startAndWait();
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
@@ -216,8 +222,19 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     accessEnforcer.enforce(previewApp, authenticationContext.getPrincipal(),
         ApplicationPermission.PREVIEW);
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
-    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest,
-        authenticationContext.getPrincipal());
+    Principal currentPrincipal = authenticationContext.getPrincipal();
+    Principal principal = currentPrincipal;
+    if (currentPrincipal != null) {
+      Credential currentCredential = currentPrincipal.getFullCredential();
+      LOG.info("sidhdirenge - current creds :{}", currentCredential.getValue());
+      String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
+          Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+      Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
+      LOG.info("sidhdirenge - encrypted creds {}", encryptedCredential.getValue());
+      principal = new Principal(principal.getName(), principal.getType(),
+          principal.getKerberosPrincipal(), encryptedCredential);
+    }
+    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest, principal);
 
     if (state() != State.RUNNING) {
       throw new IllegalStateException(
@@ -260,8 +277,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
               status.getStatus().name()));
     }
     if (status.getStatus() == PreviewStatus.Status.WAITING) {
-      previewStore.setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.KILLED,
-          status.getSubmitTime(), null, null, null));
+      previewStore.setPreviewStatus(applicationId,
+          new PreviewStatus(PreviewStatus.Status.KILLED, status.getSubmitTime(), null, null, null));
       return;
     }
     previewRunStopper.stop(applicationId);
@@ -269,8 +286,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   @Override
   public Map<String, List<JsonElement>> getData(@Name("applicationId") ApplicationId applicationId,
-      String tracerName)
-      throws AccessException {
+      String tracerName) throws AccessException {
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
         ApplicationPermission.PREVIEW);
     return previewStore.get(applicationId, tracerName);
@@ -308,16 +324,14 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         // Used for internal authorization to generate and validate tokens in system services originated requests.
         CoreSecurityRuntimeModule.getDistributedModule(previewCConf),
         // Needed for FileBasedKeyManager when file based core security module is used by CoreSecurityRuntimeModule
-        new IOModule(),
-        new ConfigModule(previewCConf, previewHConf, previewSConf),
+        new IOModule(), new ConfigModule(previewCConf, previewHConf, previewSConf),
         RemoteAuthenticatorModules.getDefaultModule(),
         new PreviewDataModules().getDataFabricModule(transactionSystemClient,
             previewLevelDBTableService),
         new PreviewDataModules().getDataSetsModule(datasetFramework),
         new AuditLogWriterModule(previewCConf).getInMemoryModules(),
         new UserCredentialAeadEncryptionModule(),
-        new AuthenticationContextModules().getMasterModule(),
-        new LocalLocationModule(),
+        new AuthenticationContextModules().getMasterModule(), new LocalLocationModule(),
         new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new DataSetServiceModules().getStandaloneModules(),
@@ -329,9 +343,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                 // we don't start a metadata service in preview, so don't attempt to create any metadata
                 bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
               }
-            }),
-        new LocalLogAppenderModule(),
-        new PrivateModule() {
+            }), new LocalLogAppenderModule(), new PrivateModule() {
           @Override
           protected void configure() {
             bind(AccessControllerInstantiator.class).toInstance(accessControllerInstantiator);
@@ -373,20 +385,18 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
             expose(MetadataAdmin.class);
 
-            bind(MessagingService.class)
-                .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
+            bind(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
                 .toInstance(messagingService);
             expose(MessagingService.class).annotatedWith(
                 Names.named(PreviewConfigModule.GLOBAL_TMS));
 
-            bind(MetricsCollectionService.class)
-                .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_METRICS))
+            bind(MetricsCollectionService.class).annotatedWith(
+                    Names.named(PreviewConfigModule.GLOBAL_METRICS))
                 .toInstance(metricsCollectionService);
             expose(MetricsCollectionService.class).annotatedWith(
                 Names.named(PreviewConfigModule.GLOBAL_METRICS));
           }
-        },
-        new AbstractModule() {
+        }, new AbstractModule() {
           @Override
           protected void configure() {
             bind(LevelDBTableService.class).toInstance(previewLevelDBTableService);
@@ -401,8 +411,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             String address = cConf.get(Constants.Preview.ADDRESS);
             return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
           }
-        }
-    );
+        });
   }
 
   private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest<?> request)

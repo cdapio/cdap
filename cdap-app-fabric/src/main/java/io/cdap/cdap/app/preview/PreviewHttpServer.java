@@ -59,8 +59,9 @@ public class PreviewHttpServer extends AbstractIdleService {
       DiscoveryService discoveryService, Set<HttpHandler> httpHandlers,
       PreviewManager previewManager, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
+    LOG.info("sidhdirenge - enabling decryption");
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
-            Constants.Service.PREVIEW_HTTP, false)
+            Constants.Service.PREVIEW_HTTP, true)
         .setHost(cConf.get(Constants.Preview.ADDRESS))
         .setPort(cConf.getInt(Constants.Preview.PORT))
         .setHttpHandlers(httpHandlers)

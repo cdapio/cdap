@@ -22,11 +22,14 @@ import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import java.util.Map;
 import javax.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provider for {@link AeadCipher}.
  */
 public abstract class AbstractAeadCipherProvider implements Provider<AeadCipher> {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractAeadCipherProvider.class);
 
   private final String NOOP_AEAD_CIPHER_NAME = "NONE";
 
@@ -66,6 +69,7 @@ public abstract class AbstractAeadCipherProvider implements Provider<AeadCipher>
   @Override
   public AeadCipher get() {
     String cipherName = getCipherName();
+    LOG.info("sidhdirenge - cipher name {}", cipherName);
     if (NOOP_AEAD_CIPHER_NAME.equals(cipherName)) {
       return new NoOpAeadCipher();
     }

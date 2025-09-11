@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class EncryptionExemptionHookTest {
+
   private static final String TESTSERVICENAME = "test.Service";
   private static final String TESTHANDLERNAME = "test.handler";
   private static final String TESTMETHODNAME = "testMethod";
@@ -35,9 +36,10 @@ public class EncryptionExemptionHookTest {
   @Test
   public void testPatternMatchingSuccessful() {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3/namespaces/default/securekeys/personal-token");
+        "/v3/namespaces/default/data/datasets/NYT_BestSellers_Raw");
     HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(),
+        TESTSERVICENAME);
 
     hook.preCall(request, null, handlerInfo);
 
@@ -47,10 +49,11 @@ public class EncryptionExemptionHookTest {
   @Test
   public void testPatternMatchingCredentialsUriWithQueryParamsSuccessful() {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3Internal/namespaces/default/credentials/workloadIdentity/"
-            + "provision?scopes=https://www.test.com/auth/test-platform");
+        "/v3Internal/namespaces/default/apps/e99c8132-8edd-11f0-9607-36a08ae62395"
+            + "/workflows/DataPipelineWorkflow/preferences?resolved=true");
     HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(),
+        TESTSERVICENAME);
 
     hook.preCall(request, null, handlerInfo);
 
@@ -60,9 +63,11 @@ public class EncryptionExemptionHookTest {
   @Test
   public void testPatternMatchingCredentialsUriWithoutQueryParamsSuccessful() {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3Internal/namespaces/default/credentials/workloadIdentity/provision");
+        "/v3Internal/namespaces/system/artifacts/cdap-data-pipeline/"
+            + "versions?lower=6.12.0-SNAPSHOT&upper=6.12.0-SNAPSHOT&limit=1&order=DESC");
     HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(),
+        TESTSERVICENAME);
 
     hook.preCall(request, null, handlerInfo);
 
@@ -71,9 +76,11 @@ public class EncryptionExemptionHookTest {
 
   @Test
   public void testPatternMatchingUnsuccessful() {
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "testingUri");
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+        "testingUri");
     HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(),
+        TESTSERVICENAME);
 
     hook.preCall(request, null, handlerInfo);
 

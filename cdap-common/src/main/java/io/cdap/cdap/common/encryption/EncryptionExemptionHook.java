@@ -42,7 +42,11 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       Pattern.compile("/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
       Pattern.compile("/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision(\\?scopes=(.*))?$"),
       Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"),
-      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$")
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/apps/([^/]+)/workflows/([^/]+)/preferences(\\?.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
+      Pattern.compile("/v1/namespaces/system/topics/preview/publish"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions(\\?.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$")
   );
 
   public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
@@ -51,10 +55,14 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
+    LOG.info("Reached pre call in Encryption Exemption for request {}", request);
+    LOG.info("Request URI is {}", request.uri());
     try {
       for (Pattern uriPattern : EXEMPTED_URIS) {
         Matcher matcher = uriPattern.matcher(request.uri());
         if (matcher.matches()) {
+          LOG.info("Pattern {} matches for URI {}", uriPattern, request.uri());
+          LOG.info("Setting task worker header false");
           // For any pattern match, set the header to false to prevent Unauthenticated exception after decryption
           request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "false");
           return true;
@@ -63,7 +71,7 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
     } catch (Throwable e) {
       LOG.error("Encountered exception while pattern matching for URI {}", request.uri(), e);
     }
-
+    LOG.info("sidhdirenge - header set to true");
     request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "true");
     return true;
   }

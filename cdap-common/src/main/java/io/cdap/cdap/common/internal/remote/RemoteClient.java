@@ -52,12 +52,14 @@ import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
-
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
 
   private final InternalAuthenticator internalAuthenticator;
@@ -114,6 +116,7 @@ public class RemoteClient {
    *     request
    */
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    LOG.info("sidhdirenge - api call for : {}", request.getURL().toString());
     return execute(request, Idempotency.AUTO);
   }
 

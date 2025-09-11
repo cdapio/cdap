@@ -23,11 +23,14 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import java.util.Map;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link AeadCipher} provider for user credential encryption.
  */
 public class UserCredentialAeadCipherProvider extends AbstractAeadCipherProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(UserCredentialAeadCipherProvider.class);
 
   // These properties are here for backwards compatibility, because Tink used to be in cdap-security
   // rather than an extension.
@@ -46,13 +49,18 @@ public class UserCredentialAeadCipherProvider extends AbstractAeadCipherProvider
   protected String getCipherName() {
     // Backwards compatibility with older properties
     if (sConf.getBoolean(Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
+      LOG.info("sidhdirenge - using tink");
       return TINK_CLEARTEXT_CIPHER_NAME;
     }
+    LOG.info("sidhdirenge - cConf.get(Encryption.USER_CREDENTIAL_ENCRYPTION_CIPHER_NAME) : {}",
+        cConf.get(Encryption.USER_CREDENTIAL_ENCRYPTION_CIPHER_NAME));
     return cConf.get(Encryption.USER_CREDENTIAL_ENCRYPTION_CIPHER_NAME);
   }
 
   @Override
   protected Map<String, String> getProperties() {
+    LOG.info("sidhdirenge - getProperties {}",
+        cConf.getPropsWithPrefix(Encryption.USER_CREDENTIAL_ENCRYPTION_PROPERTIES_PREFIX));
     return cConf.getPropsWithPrefix(Encryption.USER_CREDENTIAL_ENCRYPTION_PROPERTIES_PREFIX);
   }
 

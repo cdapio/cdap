@@ -140,6 +140,7 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
               ImmutablePair<Boolean, String> newCredentialPair = decryptAndIdentifyCredential(
                   credentialValue, taskWorkerDecryptionHeader);
               if (newCredentialPair.getFirst()) {
+                LOG.error("Throwing unauthenticated for request {}", request);
                 throw new UnauthenticatedException(
                     String.format("Request denied for Task workers for URI: %s", request.uri()));
               }
@@ -308,11 +309,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * @return the decrypted string if possible, or original string.
    */
   private String decryptIfPossible(String credentialValue) {
+    LOG.info("sidhdirenge - decryptIfPossible() module {}", userEncryptionAeadCipher);
     if (userEncryptionAeadCipher instanceof LazyDelegateAeadCipher) {
+      LOG.info("sidhdirenge - module found {}", userEncryptionAeadCipher);
       try {
         String decryptedCredentialValue = userEncryptionAeadCipher.decryptStringFromBase64(
             credentialValue,
             Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+        LOG.info("sidhdirenge - decryption done");
         return decryptedCredentialValue;
       } catch (CipherException | IllegalArgumentException e) {
         return credentialValue;
@@ -330,7 +334,10 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    */
   private ImmutablePair<Boolean, String> decryptAndIdentifyCredential(String credentialValue,
       boolean taskWorkerDecryptionHeader) {
+    LOG.info("sidhdirenge - decryptAndIdentifyCredential {}", userEncryptionAeadCipher);
+    LOG.info("sidhdirenge - current creds {}", credentialValue);
     String decryptedCredentialValue = decryptIfPossible(credentialValue);
+    LOG.info("sidhdirenge - decrypted {}", decryptedCredentialValue);
     if (!decryptedCredentialValue.equals(credentialValue) && taskWorkerDecryptionHeader) {
       return new ImmutablePair<>(true, decryptedCredentialValue);
     }
