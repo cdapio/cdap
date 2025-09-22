@@ -56,7 +56,12 @@ public class DistributedPreviewRunStopper implements PreviewRunStopper {
       throw new IllegalStateException(
           "Preview cannot be stopped. Please try stopping again or run the new preview.");
     }
+    stop(info);
+    LOG.info("Force stopped preview run {}", previewApp);
+  }
 
+  @Override
+  public void stop(byte[] info) throws Exception {
     PreviewRequestPollerInfo pollerInfo = GSON.fromJson(new String(info, StandardCharsets.UTF_8),
         PreviewRequestPollerInfo.class);
     Iterator<TwillController> controllers = twillRunner.lookup(PreviewRunnerTwillApplication.NAME)
@@ -65,20 +70,18 @@ public class DistributedPreviewRunStopper implements PreviewRunStopper {
       throw new IllegalStateException("Preview runners cannot be stopped. Please try again.");
     }
 
-    LOG.debug("Stopping preview run {} with poller info {}", previewApp, pollerInfo);
+    LOG.debug("Stopping preview run with poller info {}", pollerInfo);
 
     TwillController controller = controllers.next();
     Future<String> future;
     if (controller instanceof ExtendedTwillController) {
       future = ((ExtendedTwillController) controller).restartInstance(
-          PreviewRunnerTwillRunnable.class.getSimpleName(),
-          pollerInfo.getInstanceId(),
+          PreviewRunnerTwillRunnable.class.getSimpleName(), pollerInfo.getInstanceId(),
           pollerInfo.getInstanceUid());
     } else {
       future = controller.restartInstances(PreviewRunnerTwillRunnable.class.getSimpleName(),
           pollerInfo.getInstanceId());
     }
     future.get();
-    LOG.info("Force stopped preview run {}", previewApp);
   }
 }

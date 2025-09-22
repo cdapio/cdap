@@ -30,4 +30,21 @@ public interface PreviewRunStopper {
    * @throws Exception if any error while stopping
    */
   void stop(ApplicationId preview) throws Exception;
+
+  /**
+   * Stops the preview runner associated with the given poller information.
+   * <p>
+   * In a distributed environment (e.g., Kubernetes), this method is responsible for finding the
+   * runner's container and terminating it. This is a critical action for enforcing the
+   * "one-request-per-runner" security policy when a suspicious runner is detected.
+   * </p><p>
+   * In a non-distributed (standalone) environment, this is a no-op as there is no separate container
+   * to terminate.
+   * </p>
+   *
+   * @param pollerInfo The poller information identifying the preview runner to be stopped.
+   * @throws Exception if there is an error while attempting to stop the runner in a distributed
+   *                   environment.
+   */
+  void stop(byte[] pollerInfo) throws Exception;
 }

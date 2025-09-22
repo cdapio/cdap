@@ -69,7 +69,7 @@ public class DefaultPreviewStoreTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
-      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create())
+        new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create())
     );
     store = injector.getInstance(DefaultPreviewStore.class);
   }
@@ -87,10 +87,12 @@ public class DefaultPreviewStoreTest {
   @Test
   public void testPreviewStore() {
     String firstApplication = RunIds.generate().getId();
-    ApplicationId firstApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), firstApplication);
+    ApplicationId firstApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(),
+        firstApplication);
 
     String secondApplication = RunIds.generate().getId();
-    ApplicationId secondApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), secondApplication);
+    ApplicationId secondApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(),
+        secondApplication);
 
     // put data for the first application
     store.put(firstApplicationId, "mytracer", "key1", "value1");
@@ -113,10 +115,12 @@ public class DefaultPreviewStoreTest {
     Assert.assertEquals(2, firstApplicationData.get("key1").get(1).getAsInt());
     Assert.assertEquals(3, firstApplicationData.get("key2").get(0).getAsInt());
     Assert.assertEquals(propertyMap, GSON.fromJson(firstApplicationData.get("key2").get(1),
-                                                   new TypeToken<HashMap<Object, Object>>() { }.getType()));
+        new TypeToken<HashMap<Object, Object>>() {
+        }.getType()));
 
     // get the data for second application and logger name "mytracer"
-    Map<String, List<JsonElement>> secondApplicationData = store.get(secondApplicationId, "mytracer");
+    Map<String, List<JsonElement>> secondApplicationData = store.get(secondApplicationId,
+        "mytracer");
     Assert.assertEquals(1, secondApplicationData.size());
     Assert.assertEquals("value1", secondApplicationData.get("key1").get(0).getAsString());
 
@@ -136,9 +140,10 @@ public class DefaultPreviewStoreTest {
     // test put and get
     ApplicationId applicationId = new ApplicationId("ns1", "app1");
     ProgramRunId runId = new ProgramRunId("ns1", "app1", ProgramType.WORKFLOW, "test",
-                                          RunIds.generate().getId());
-    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.COMPLETED, System.currentTimeMillis(), null, 0L,
-                                             System.currentTimeMillis());
+        RunIds.generate().getId());
+    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.COMPLETED,
+        System.currentTimeMillis(), null, 0L,
+        System.currentTimeMillis());
     store.setProgramId(runId);
     store.setPreviewStatus(applicationId, status);
 
@@ -151,7 +156,8 @@ public class DefaultPreviewStoreTest {
     byte[] pollerInfo = Bytes.toBytes("runner-1");
 
     PreviewConfig previewConfig = new PreviewConfig("WordCount", ProgramType.WORKFLOW, null, null);
-    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null, previewConfig);
+    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null,
+        previewConfig);
     Assert.assertEquals(0, store.getAllInWaitingState().size());
 
     RunId id1 = RunIds.generate();
@@ -191,9 +197,9 @@ public class DefaultPreviewStoreTest {
     // Add a preview request that has a principle associated with it
     ApplicationId applicationId4 = new ApplicationId("ns1", RunIds.generate().getId());
     Principal principal = new Principal("userForApplicationId4",
-                                        Principal.PrincipalType.USER,
-                                        new Credential("userForApplicationId4Credential",
-                                                       Credential.CredentialType.EXTERNAL));
+        Principal.PrincipalType.USER,
+        new Credential("userForApplicationId4Credential",
+            Credential.CredentialType.EXTERNAL));
     store.add(applicationId4, testRequest, principal);
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(1, allWaiting.size());
@@ -207,16 +213,20 @@ public class DefaultPreviewStoreTest {
   @Test
   public void testPreviewTTL() throws Exception {
     PreviewConfig previewConfig = new PreviewConfig("WordCount", ProgramType.WORKFLOW, null, null);
-    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null, previewConfig);
+    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null,
+        previewConfig);
 
     String firstApplication = RunIds.generate(System.currentTimeMillis() - 5000).getId();
-    ApplicationId firstApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), firstApplication);
+    ApplicationId firstApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(),
+        firstApplication);
 
     String secondApplication = RunIds.generate(System.currentTimeMillis() - 4000).getId();
-    ApplicationId secondApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), secondApplication);
+    ApplicationId secondApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(),
+        secondApplication);
 
     String thirdApplication = RunIds.generate(System.currentTimeMillis()).getId();
-    ApplicationId thirdApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), thirdApplication);
+    ApplicationId thirdApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(),
+        thirdApplication);
 
     store.add(firstApplicationId, testRequest, null);
     store.add(secondApplicationId, testRequest, null);
@@ -246,6 +256,39 @@ public class DefaultPreviewStoreTest {
 
     // only thirdApplication should be in waiting now
     Assert.assertEquals(1, store.getAllInWaitingState().size());
-    Assert.assertEquals(thirdApplicationId, store.getAllInWaitingState().iterator().next().getProgram().getParent());
+    Assert.assertEquals(thirdApplicationId,
+        store.getAllInWaitingState().iterator().next().getProgram().getParent());
+  }
+
+  @Test
+  public void testGetApplicationIdForPollerInfo() throws Exception {
+    byte[] pollerInfo1 = Bytes.toBytes("runner-1");
+    byte[] pollerInfo2 = Bytes.toBytes("runner-2");
+
+    PreviewConfig previewConfig = new PreviewConfig("WordCount", ProgramType.WORKFLOW, null, null);
+    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null,
+        previewConfig);
+
+    // 1. Test success case: associate pollerInfo1 with applicationId1
+    ApplicationId applicationId1 = new ApplicationId("ns1", RunIds.generate().getId());
+    store.add(applicationId1, testRequest, null);
+    store.setPreviewRequestPollerInfo(applicationId1, pollerInfo1);
+
+    // Verify that the mapping is correct
+    Assert.assertEquals(applicationId1, store.getApplicationId(pollerInfo1));
+
+    // 2. Test failure case: pollerInfo2 is not associated with any application
+    Assert.assertNull(store.getApplicationId(pollerInfo2));
+
+    // 3. Test re-association: associate pollerInfo1 with a new application
+    // This simulates a scenario where a runner with the same info is reused, overwriting the index.
+    ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
+    store.add(applicationId2, testRequest, null);
+    store.setPreviewRequestPollerInfo(applicationId2, pollerInfo1);
+    Assert.assertEquals(applicationId2, store.getApplicationId(pollerInfo1));
+
+    // 4. Test removal: remove the application and verify the mapping is gone
+    store.remove(applicationId2);
+    Assert.assertNull(store.getApplicationId(pollerInfo1));
   }
 }

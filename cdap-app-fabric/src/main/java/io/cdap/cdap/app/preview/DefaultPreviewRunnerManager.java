@@ -167,6 +167,12 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     newRunnerService.startAndWait();
   }
 
+  @Override
+  public void stop(byte[] pollerInfo) throws Exception {
+    // This is a no-op in a non-distributed environment because there is no separate
+    // runner container to terminate. The preview runner is a thread in the same process.
+  }
+
   /**
    * Create injector for the given application id.
    */
