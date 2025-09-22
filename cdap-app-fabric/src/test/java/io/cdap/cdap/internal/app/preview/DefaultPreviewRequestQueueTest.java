@@ -142,6 +142,12 @@ public class DefaultPreviewRequestQueueTest {
       return new byte[0];
     }
 
+    @Nullable
+    @Override
+    public ApplicationId getApplicationId(byte[] pollerInfo) {
+      return null;
+    }
+
     @Override
     public void deleteExpiredData(long ttlInSeconds) {
 
