@@ -99,6 +99,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
       responder.sendString(HttpResponseStatus.OK,
           GSON.toJson(previewManager.start(namespace, appRequest)));
     } catch (JsonSyntaxException e) {
+      LOG.error("sidhdirenge - start failed");
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage());

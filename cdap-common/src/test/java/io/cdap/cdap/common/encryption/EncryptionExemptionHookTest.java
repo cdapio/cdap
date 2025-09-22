@@ -49,8 +49,8 @@ public class EncryptionExemptionHookTest {
   @Test
   public void testPatternMatchingCredentialsUriWithQueryParamsSuccessful() {
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3Internal/namespaces/default/apps/e99c8132-8edd-11f0-9607-36a08ae62395"
-            + "/workflows/DataPipelineWorkflow/preferences?resolved=true");
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts"
+            + "/default/connections/BigQuery+Default");
     HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
     EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(),
         TESTSERVICENAME);

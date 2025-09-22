@@ -46,7 +46,9 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
       Pattern.compile("/v1/namespaces/system/topics/preview/publish"),
       Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions(\\?.*)?$"),
-      Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$")
+      Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/"
+          + "methods/([^/]+)/contexts/([^/]+)/connections/([^/]+)$")
   );
 
   public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
