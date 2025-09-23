@@ -83,7 +83,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
     this.setHandlerHooks(Collections.unmodifiableList(
       Arrays.asList(new MetricsReporterHook(cConf, metricsCollectionService, serviceName),
                     new AuditLogSetterHook(cConf, serviceName),
-                    new EncryptionExemptionHook(cConf, serviceName))));
+                    new EncryptionExemptionHook())));
   }
 
   /**
