@@ -309,14 +309,14 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
    * @return the decrypted string if possible, or original string.
    */
   private String decryptIfPossible(String credentialValue) {
-    LOG.info("sidhdirenge - decryptIfPossible() module {}", userEncryptionAeadCipher);
+//    LOG.info("sidhdirenge - decryptIfPossible() module {}", userEncryptionAeadCipher);
     if (userEncryptionAeadCipher instanceof LazyDelegateAeadCipher) {
-      LOG.info("sidhdirenge - module found {}", userEncryptionAeadCipher);
+//      LOG.info("sidhdirenge - module found {}", userEncryptionAeadCipher);
       try {
         String decryptedCredentialValue = userEncryptionAeadCipher.decryptStringFromBase64(
             credentialValue,
             Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-        LOG.info("sidhdirenge - decryption done");
+//        LOG.info("sidhdirenge - decryption done");
         return decryptedCredentialValue;
       } catch (CipherException | IllegalArgumentException e) {
         return credentialValue;

@@ -92,6 +92,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   @Path("/previews")
   public void start(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
+    LOG.info("sidhdirenge - received request");
     NamespaceId namespace = new NamespaceId(namespaceId);
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
         StandardCharsets.UTF_8)) {

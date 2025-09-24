@@ -116,7 +116,6 @@ public class RemoteClient {
    *     request
    */
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
-    LOG.info("sidhdirenge - api call for : {}", request.getURL().toString());
     return execute(request, Idempotency.AUTO);
   }
 

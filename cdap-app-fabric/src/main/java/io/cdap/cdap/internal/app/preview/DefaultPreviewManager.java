@@ -224,13 +224,11 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
     Principal currentPrincipal = authenticationContext.getPrincipal();
     Principal principal = currentPrincipal;
-    if (currentPrincipal != null) {
+    if (currentPrincipal != null && currentPrincipal.getFullCredential() != null) {
       Credential currentCredential = currentPrincipal.getFullCredential();
-      LOG.info("sidhdirenge - current creds :{}", currentCredential.getValue());
       String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
           Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
       Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
-      LOG.info("sidhdirenge - encrypted creds {}", encryptedCredential.getValue());
       principal = new Principal(principal.getName(), principal.getType(),
           principal.getKerberosPrincipal(), encryptedCredential);
     }
