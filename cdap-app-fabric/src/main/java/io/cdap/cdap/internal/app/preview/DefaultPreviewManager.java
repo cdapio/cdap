@@ -46,7 +46,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
@@ -92,6 +94,8 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
@@ -142,6 +146,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final MessagingService messagingService;
   private final PreviewDataCleanupService previewDataCleanupService;
   private final MetricsCollectionService metricsCollectionService;
+  private final AeadCipher userEncryptionAeadCipher;
   private Injector previewInjector;
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
@@ -161,7 +166,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
       PreviewRunStopper previewRunStopper, MessagingService messagingService,
       PreviewDataCleanupService previewDataCleanupService,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     this.authenticationContext = authenticationContext;
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
@@ -178,6 +184,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.messagingService = messagingService;
     this.previewDataCleanupService = previewDataCleanupService;
     this.metricsCollectionService = metricsCollectionService;
+    this.userEncryptionAeadCipher = userEncryptionAeadCipher;
   }
 
   @Override
@@ -216,8 +223,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     accessEnforcer.enforce(previewApp, authenticationContext.getPrincipal(),
         ApplicationPermission.PREVIEW);
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
-    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest,
-        authenticationContext.getPrincipal());
+    Principal principal = encryptCredential();
+    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest, principal);
 
     if (state() != State.RUNNING) {
       throw new IllegalStateException(
@@ -420,6 +427,21 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     }
 
     return preview.program(programType, programName);
+  }
+
+  private Principal encryptCredential() {
+    Principal originalPrincipal = authenticationContext.getPrincipal();
+    if (originalPrincipal == null || originalPrincipal.getFullCredential() == null) {
+      return originalPrincipal;
+    }
+
+    Credential credential = originalPrincipal.getFullCredential();
+    String encryptedValue = userEncryptionAeadCipher.encryptToBase64(credential.getValue(),
+        Encryption.PREVIEW_RUNNER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+    Credential encryptedCredential = new Credential(encryptedValue, credential.getType());
+
+    return new Principal(originalPrincipal.getName(), originalPrincipal.getType(),
+        originalPrincipal.getKerberosPrincipal(), encryptedCredential);
   }
 
   private void stopQuietly(Service service) {

@@ -32,6 +32,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.InternalRouter;
 import io.cdap.cdap.common.conf.Constants.Preview;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -114,13 +116,14 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
       PreviewRunStopper previewRunStopper, MessagingService messagingService,
       MetricsCollectionService metricsCollectionService,
       PreviewDataCleanupService previewDataCleanupService,
-      TwillRunner twillRunner) {
+      TwillRunner twillRunner,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
     super(discoveryServiceClient, datasetFramework, transactionSystemClient,
         accessControllerInstantiator, accessEnforcer, authenticationContext,
         previewLevelDbTableService,
         previewCconf, previewHconf, previewSconf, previewRequestQueue, previewStore,
         previewRunStopper,
-        messagingService, previewDataCleanupService, metricsCollectionService);
+        messagingService, previewDataCleanupService, metricsCollectionService, userEncryptionAeadCipher);
 
     this.cConf = cConf;
     this.hConf = hConf;
