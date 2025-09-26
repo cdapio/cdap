@@ -28,9 +28,9 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.StoreRequest;
-import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -46,6 +46,7 @@ public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
   private final TopicId topic;
   private final MessagingService messagingService;
   private final RetryStrategy retryStrategy;
+  private byte[] publisherInfo;
 
   @Inject
   MessagingPreviewDataPublisher(CConfiguration cConf,
@@ -57,6 +58,11 @@ public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
 
   @Override
   public void publish(EntityId entityId, PreviewMessage previewMessage) {
+    if (publisherInfo != null) {
+      // The publisherInfo is null in case of non-distributed environments, because there is no separate
+      // runner container. The preview runner is a thread in the same process.
+      previewMessage.setPublisherInfo(publisherInfo);
+    }
     StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(previewMessage))
         .build();
     try {
@@ -67,5 +73,9 @@ public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
           "Failed to publish preview message " + previewMessage + " for application " + entityId,
           e);
     }
+  }
+
+  public void setPublisherInfo(byte[] publisherInfo) {
+    this.publisherInfo = publisherInfo;
   }
 }

@@ -55,19 +55,24 @@ public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
 
   @Override
   public Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException {
+    byte[] runnerInfo = pollerInfoProvider.get();
     HttpRequest request = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull")
-        .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
+        .withBody(ByteBuffer.wrap(runnerInfo))
         .build();
 
     HttpResponse httpResponse = remoteClientInternal.execute(request);
     if (httpResponse.getResponseCode() == 200) {
       PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(),
           PreviewRequest.class);
-      if (previewRequest != null && previewRequest.getPrincipal() != null) {
-        SecurityRequestContext.setUserId(previewRequest.getPrincipal().getName());
-        SecurityRequestContext.setUserCredential(previewRequest.getPrincipal().getFullCredential());
-      }
-      return Optional.ofNullable(previewRequest);
+      return Optional.ofNullable(previewRequest)
+          .map(req -> {
+            if (req.getPrincipal() != null) {
+              SecurityRequestContext.setUserId(req.getPrincipal().getName());
+              SecurityRequestContext.setUserCredential(req.getPrincipal().getFullCredential());
+            }
+            req.setRunnerInfo(runnerInfo);
+            return req;
+          });
     }
     throw new IOException(
         String.format("Received status code:%s and body: %s", httpResponse.getResponseCode(),
