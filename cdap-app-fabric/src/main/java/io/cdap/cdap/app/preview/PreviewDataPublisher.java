@@ -30,4 +30,16 @@ public interface PreviewDataPublisher {
    * @param previewMessage preview message
    */
   void publish(EntityId entityId, PreviewMessage previewMessage);
+
+  /**
+   * Sets the identifying information for the publisher of the preview data.
+   * This is typically called once to associate the publisher with a specific preview runner.
+   * The provided information should be a serialized {@code PreviewRequestPollerInfo} object,
+   * which contains the unique identity of the runner pod. This information is used by the
+   * receiving service to authenticate the origin of the messages.
+   *
+   * @param publisherInfo a byte array containing the serialized identifying information
+   *                      for the publisher (the preview runner).
+   */
+  void setPublisherInfo(byte[] publisherInfo);
 }
