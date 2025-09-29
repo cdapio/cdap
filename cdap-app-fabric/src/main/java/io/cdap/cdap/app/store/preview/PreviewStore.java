@@ -126,6 +126,20 @@ public interface PreviewStore {
   byte[] getPreviewRequestPollerInfo(ApplicationId applicationId);
 
   /**
+   * Retrieves the {@link ApplicationId} associated with a given preview runner's poller information.
+   * <p>
+   * This method uses a secondary index for a fast, direct lookup to find the mapping from a
+   * {@code pollerInfo} to an {@code ApplicationId}.
+   *
+   * @param pollerInfo the {@link PreviewRequestPollerInfo} of the preview runner.
+   * @return the {@link ApplicationId} associated with the given {@code pollerInfo},
+   *         or {@code null} if no association is found. A {@code null} return value
+   *         typically indicates that the runner is new and not yet assigned to a preview run.
+   */
+  @Nullable
+  ApplicationId getApplicationId(byte[] pollerInfo);
+
+  /**
    * Deletes the preview data older than ttl.
    *
    * @param ttlInSeconds ttl in seconds
