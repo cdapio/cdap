@@ -84,6 +84,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: >-
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
@@ -93,7 +94,7 @@ jobs:
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
           -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-          -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+          -Dsonar.pullrequest.branch="$PR_HEAD_REF"
           -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
 
       - name: Sonar report
