@@ -30,5 +30,5 @@ jobs:
         env:
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          echo "{ \"repository\": \"${{ github.repository }}\", \"build_name\": \"${{ github.event.workflow.name }}\", \"branch\": \"$HEAD_BRANCH\", \"conclusion\": \"${{ github.event.workflow_run.conclusion }}\", \"started_at\": \"${{ github.event.workflow_run.created_at }}\", \"ended_at\": \"${{ github.event.workflow_run.updated_at }}\", \"url\": \"${{ github.event.workflow_run.html_url }}\", \"run_id\": \"${{ github.event.workflow_run.id }}\", \"run_attempt\": \"${{ github.event.workflow_run.run_attempt }}\" }\" | bq insert ${{ vars.BUILD_HISTORY_TABLE }}
+          echo "{ \"repository\": \"${{ github.repository }}\", \"build_name\": \"${{ github.event.workflow.name }}\", \"branch\": \"$HEAD_BRANCH\", \"conclusion\": \"${{ github.event.workflow_run.conclusion }}\", \"started_at\": \"${{ github.event.workflow_run.created_at }}\", \"ended_at\": \"${{ github.event.workflow_run.updated_at }}\", \"url\": \"${{ github.event.workflow_run.html_url }}\", \"run_id\": \"${{ github.event.workflow_run.id }}\", \"run_attempt\": \"${{ github.event.workflow_run.run_attempt }}\" }" | bq insert ${{ vars.BUILD_HISTORY_TABLE }}
 
