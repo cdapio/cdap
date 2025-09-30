@@ -170,7 +170,7 @@ public class AppFabricServer extends AbstractIdleService {
 
     // Create encryption exemption handler hooks
     List<EncryptionExemptionHook> encryptionHandlerHooks = handlerHookNames.stream()
-        .map(name -> new EncryptionExemptionHook(cConf, name))
+        .map(name -> new EncryptionExemptionHook())
         .collect(Collectors.toList());
 
     handlerHooks.addAll(auditHandlerHooks);

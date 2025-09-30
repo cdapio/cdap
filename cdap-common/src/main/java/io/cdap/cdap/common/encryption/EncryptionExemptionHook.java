@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.encryption;
 
 import com.google.common.collect.ImmutableList;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.AbstractHandlerHook;
@@ -34,20 +33,21 @@ import org.slf4j.LoggerFactory;
  * Sets encryption exception metadata to {@link SecurityRequestContext}.
  */
 public class EncryptionExemptionHook extends AbstractHandlerHook {
-  private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
-  private final String serviceName;
 
+  private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
   private static final List<Pattern> EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
       Pattern.compile("/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
-      Pattern.compile("/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision(\\?scopes=(.*))?$"),
+      Pattern.compile(
+          "/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision(\\?scopes=(.*))?$"),
       Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"),
-      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$")
-  );
+      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/methods"
+          + "/v1/contexts/([^/]+)/connections(?:/.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/methods"
+          + "/v1/oauth/provider/([^/]+)(?:/authurl|/credential/([^/]+)(?:/valid)?)?$")
 
-  public EncryptionExemptionHook(CConfiguration cConf, String serviceName) {
-    this.serviceName = serviceName;
-  }
+  );
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
@@ -55,7 +55,8 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
       for (Pattern uriPattern : EXEMPTED_URIS) {
         Matcher matcher = uriPattern.matcher(request.uri());
         if (matcher.matches()) {
-          // For any pattern match, set the header to false to prevent Unauthenticated exception after decryption
+          // For any pattern match, set the header to false, in order to prevent Unauthenticated exception
+          // after decryption.
           request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "false");
           return true;
         }

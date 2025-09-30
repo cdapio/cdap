@@ -18,65 +18,82 @@ package io.cdap.cdap.common.encryption;
 
 import static io.cdap.cdap.common.http.HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR;
 
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
+import java.util.Arrays;
+import java.util.Collection;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+/**
+ * Tests for {@link EncryptionExemptionHook}.
+ */
+@RunWith(Parameterized.class)
 public class EncryptionExemptionHookTest {
-  private static final String TESTSERVICENAME = "test.Service";
-  private static final String TESTHANDLERNAME = "test.handler";
-  private static final String TESTMETHODNAME = "testMethod";
 
-  @Test
-  public void testPatternMatchingSuccessful() {
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3/namespaces/default/securekeys/personal-token");
-    HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+  private HandlerInfo handlerInfo;
+  private EncryptionExemptionHook hook;
 
-    hook.preCall(request, null, handlerInfo);
+  // Parameters for the test
+  private final String uri;
+  private final boolean expectedDecryptionHeader;
+  private final String testName;
 
-    Assert.assertFalse(Boolean.parseBoolean(request.headers().get(TASK_WORKER_DECRYPTION_HDR)));
+  public EncryptionExemptionHookTest(String uri, boolean expectedDecryptionHeader,
+      String testName) {
+    this.uri = uri;
+    this.expectedDecryptionHeader = expectedDecryptionHeader;
+    this.testName = testName;
+  }
+
+  // Define the data set for the tests
+  @Parameters(name = "{2}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][]{
+        // Successful (Exempt) Tests - Header should be FALSE.
+        {"/v3/namespaces/default/securekeys/personal-token", false, "SecureKeysExempt"},
+        {"/v3Internal/namespaces/default/credentials/workloadIdentity/provision"
+            + "?scopes=https://www.test.com/auth/test-platform",
+            false, "CredentialsWithQueryParamsExempt"},
+        {"/v3Internal/namespaces/default/credentials/workloadIdentity/provision", false,
+            "CredentialsWithoutQueryParamsExempt"},
+        {"/v3/namespaces/system/apps/pipeline/services/studio/methods"
+            + "/v1/contexts/default/connections/testing",
+            false, "ConnectionValidationExempt"},
+        {"/v3/namespaces/system/apps/pipeline/services/studio/methods"
+            + "/v1/oauth/provider/provider/credential/REUSE_PROV_FALSE",
+            false, "OAuthMacroEvaluatorExempt"},
+        // Unsuccessful (Non-Exempt) Test - Header should be TRUE.
+        {"testing", true, "NonExempt"}});
+  }
+
+  @Before
+  public void setup() {
+    handlerInfo = new HandlerInfo("test.handler", "testMethod");
+    hook = new EncryptionExemptionHook();
   }
 
   @Test
-  public void testPatternMatchingCredentialsUriWithQueryParamsSuccessful() {
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3Internal/namespaces/default/credentials/workloadIdentity/"
-            + "provision?scopes=https://www.test.com/auth/test-platform");
-    HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
+  public void testPreCall() {
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, this.uri);
 
     hook.preCall(request, null, handlerInfo);
 
-    Assert.assertFalse(Boolean.parseBoolean(request.headers().get(TASK_WORKER_DECRYPTION_HDR)));
+    String message = String.format("Test case '%s' failed for URI: %s. Expected header value: %s.",
+        this.testName, this.uri, this.expectedDecryptionHeader);
+
+    Assert.assertEquals(message, this.expectedDecryptionHeader, isDecryptionHeaderSet(request));
   }
 
-  @Test
-  public void testPatternMatchingCredentialsUriWithoutQueryParamsSuccessful() {
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-        "/v3Internal/namespaces/default/credentials/workloadIdentity/provision");
-    HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
-
-    hook.preCall(request, null, handlerInfo);
-
-    Assert.assertFalse(Boolean.parseBoolean(request.headers().get(TASK_WORKER_DECRYPTION_HDR)));
-  }
-
-  @Test
-  public void testPatternMatchingUnsuccessful() {
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "testingUri");
-    HandlerInfo handlerInfo = new HandlerInfo(TESTHANDLERNAME, TESTMETHODNAME);
-    EncryptionExemptionHook hook = new EncryptionExemptionHook(CConfiguration.create(), TESTSERVICENAME);
-
-    hook.preCall(request, null, handlerInfo);
-
-    Assert.assertTrue(Boolean.parseBoolean(request.headers().get(TASK_WORKER_DECRYPTION_HDR)));
+  private boolean isDecryptionHeaderSet(HttpRequest request) {
+    String headerValue = request.headers().get(TASK_WORKER_DECRYPTION_HDR);
+    return Boolean.parseBoolean(headerValue);
   }
 }
