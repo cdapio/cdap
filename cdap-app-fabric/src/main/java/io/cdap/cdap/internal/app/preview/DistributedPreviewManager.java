@@ -336,22 +336,45 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
    */
   @Override
   public Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo) {
-    ApplicationId appId = previewStore.getApplicationId(pollerInfo);
-    if (appId != null) {
-      try {
-        PreviewStatus status = getStatus(appId);
-        previewStore.setPreviewStatus(appId, new PreviewStatus(PreviewStatus.Status.KILLED,
-            status.getSubmitTime(), new BasicThrowable(new IllegalStateException(
-            "Preview run stopped due to an invalid state. A runner can only be assigned one preview run at a time. "
-                + "Please try running preview again.")), null, null));
-        previewRunStopper.stop(pollerInfo);
-      } catch (Exception e) {
-        LOG.warn("Attempted to stop a runner due to a state violation but failed. " +
-            "The runner will be denied a new request, but may not have been terminated.", e);
-      }
+    // In a distributed environment, pollerInfo is always expected.
+    // Return empty to deny the request without throwing an exception.
+    if (pollerInfo == null) {
+      LOG.warn("poll() was called with a null pollerInfo in a distributed environment. "
+          + "This is unexpected. Denying the request.");
       return Optional.empty();
     }
-    return super.poll(pollerInfo);
+
+    // Check if the runner is already registered to an application.
+    // If no app is associated with this runner, it's a valid new runner.
+    // Proceed to the default polling behavior.
+    ApplicationId existingAppId = previewStore.getApplicationId(pollerInfo);
+    if (existingAppId == null) {
+      return super.poll(pollerInfo);
+    }
+
+    // The runner is already registered, which is a state violation.
+    // Handle the violation and deny the request.
+    handlePollingViolation(existingAppId, pollerInfo);
+    return Optional.empty();
+  }
+
+  private void handlePollingViolation(ApplicationId appId, byte[] pollerInfo) {
+    try {
+      PreviewStatus status = previewStore.getPreviewStatus(appId);
+      if (status != null && !status.getStatus().isEndState()) {
+        LOG.warn("Runner for application '{}' polled for a new request, indicating a state violation. "
+            + "Setting status to KILLED.", appId);
+        previewStore.setPreviewStatus(appId,
+            new PreviewStatus(PreviewStatus.Status.KILLED, status.getSubmitTime(),
+                new BasicThrowable(new IllegalStateException(
+                    "Preview run stopped due to an invalid state. "
+                        + "A runner can only be assigned one preview run at a time.")), null, null));
+      }
+      previewRunStopper.stop(pollerInfo);
+    } catch (Exception e) {
+      LOG.warn("Attempted to stop a runner due to a state violation but failed. "
+          + "The runner was still denied a new request.", e);
+    }
   }
 
   /**
