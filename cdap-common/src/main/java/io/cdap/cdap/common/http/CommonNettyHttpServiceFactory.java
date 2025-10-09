@@ -56,8 +56,8 @@ public class CommonNettyHttpServiceFactory {
     return builder(serviceName, true);
   }
 
-  public CommonNettyHttpServiceBuilder builder(String serviceName, boolean taskWorkerDecryptionEnabled) {
+  public CommonNettyHttpServiceBuilder builder(String serviceName, boolean workerDecryptionEnabled) {
     return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService,
-        taskWorkerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher);
+        workerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher);
   }
 }

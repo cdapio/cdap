@@ -52,12 +52,12 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
    * @param cConf CConfiguration
    * @param serviceName Name of the service
    * @param metricsCollectionService MetricsCollectionService
-   * @param taskWorkerDecryptionEnabled flag to check if requests to this service are from task worker
+   * @param workerDecryptionEnabled flag to check if requests to this service are from task worker
    * @param auditLogWriter Writer to publish audit log requests
    * @param userEncryptionAeadCipher cipher used for decrypting user credentials
    */
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-      MetricsCollectionService metricsCollectionService, boolean taskWorkerDecryptionEnabled,
+      MetricsCollectionService metricsCollectionService, boolean workerDecryptionEnabled,
       AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
@@ -74,7 +74,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, taskWorkerDecryptionEnabled,
+                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, workerDecryptionEnabled,
                                  auditLogWriter, userEncryptionAeadCipher));
         }
       };

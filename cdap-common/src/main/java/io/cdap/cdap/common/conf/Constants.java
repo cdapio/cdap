@@ -1965,6 +1965,12 @@ public final class Constants {
        */
       public static final String TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA
           = "TaskWorkerEncryptionAD";
+
+      /**
+       * Associated data for preview runner credential encryption.
+       */
+      public static final String PREVIEW_RUNNER_ENCRYPTION_ASSOCIATED_DATA
+          = "PreviewRunnerEncryptionAD";
     }
 
     /**

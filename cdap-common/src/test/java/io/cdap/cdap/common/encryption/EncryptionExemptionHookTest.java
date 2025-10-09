@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.common.encryption;
 
-import static io.cdap.cdap.common.http.HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR;
+import static io.cdap.cdap.common.http.HttpHeaderNames.WORKER_DECRYPTION_HDR;
 
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -43,35 +43,54 @@ public class EncryptionExemptionHookTest {
 
   // Parameters for the test
   private final String uri;
-  private final boolean expectedDecryptionHeader;
+  private final String expectedExemptionType;
   private final String testName;
 
-  public EncryptionExemptionHookTest(String uri, boolean expectedDecryptionHeader,
-      String testName) {
+  public EncryptionExemptionHookTest(String uri, String expectedExemptionType, String testName) {
     this.uri = uri;
-    this.expectedDecryptionHeader = expectedDecryptionHeader;
+    this.expectedExemptionType = expectedExemptionType;
     this.testName = testName;
   }
 
-  // Define the data set for the tests
+  // Define the data set for the tests.
   @Parameters(name = "{2}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{
-        // Successful (Exempt) Tests - Header should be FALSE.
-        {"/v3/namespaces/default/securekeys/personal-token", false, "SecureKeysExempt"},
         {"/v3Internal/namespaces/default/credentials/workloadIdentity/provision"
             + "?scopes=https://www.test.com/auth/test-platform",
-            false, "CredentialsWithQueryParamsExempt"},
-        {"/v3Internal/namespaces/default/credentials/workloadIdentity/provision", false,
-            "CredentialsWithoutQueryParamsExempt"},
+            WorkerDecryptionScope.ANY_WORKER.name(), "CredentialsWithQueryParamsExempt"},
+        {"/v3Internal/namespaces/default/credentials/workloadIdentity/provision",
+            WorkerDecryptionScope.ANY_WORKER.name(), "CredentialsWithoutQueryParamsExempt"},
         {"/v3/namespaces/system/apps/pipeline/services/studio/methods"
-            + "/v1/contexts/default/connections/testing",
-            false, "ConnectionValidationExempt"},
+            + "/v1/contexts/default/connections/testing", WorkerDecryptionScope.ANY_WORKER.name(),
+            "ConnectionValidationExempt"},
         {"/v3/namespaces/system/apps/pipeline/services/studio/methods"
             + "/v1/oauth/provider/provider/credential/REUSE_PROV_FALSE",
-            false, "OAuthMacroEvaluatorExempt"},
-        // Unsuccessful (Non-Exempt) Test - Header should be TRUE.
-        {"testing", true, "NonExempt"}});
+            WorkerDecryptionScope.ANY_WORKER.name(), "OAuthMacroEvaluatorExempt"},
+
+        {"/v3Internal/namespaces/system/artifacts/cdap-data-pipeline/versions?"
+            + "lower=6.12.0-SNAPSHOT&upper=6.12.0-SNAPSHOT&limit=1&order=DE",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(), "ArtifactsWithVersionParams"},
+        {"/v3Internal/namespaces/system/artifacts/MyApp/versions",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(), "ArtifactsVersionlessExempt"},
+        {"/v3Internal/namespaces/default/apps/e99c8132-8edd-11f0-9607-36a08ae62395/"
+            + "workflows/DataPipelineWorkflow/preferences?resolved=true",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(), "WorkflowPreferencesExempt"},
+        {"/v3/namespaces/user/data/datasets/MyDatasetName",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(), "DataDatasetsExempt"},
+        {"/v1/namespaces/system/topics/preview/publish",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(),
+            "SystemTopicPublishExempt"},
+
+        {"/v3Internal/namespaces/default/preferences?key=value",
+            WorkerDecryptionScope.TASK_WORKER.name(), "GenericPreferencesExempt"},
+        {"/v3/namespaces/default/securekeys/personal-token",
+            WorkerDecryptionScope.TASK_WORKER.name(),
+            "SecureKeysExempt"},
+
+        {"testing", WorkerDecryptionScope.NONE.name(), "NonExemptGeneric"},
+        {"/v3/system/services/status", WorkerDecryptionScope.NONE.name(), "NonExemptV3Status"}
+    });
   }
 
   @Before
@@ -86,14 +105,12 @@ public class EncryptionExemptionHookTest {
 
     hook.preCall(request, null, handlerInfo);
 
-    String message = String.format("Test case '%s' failed for URI: %s. Expected header value: %s.",
-        this.testName, this.uri, this.expectedDecryptionHeader);
+    String actualHeader = request.headers().get(WORKER_DECRYPTION_HDR);
 
-    Assert.assertEquals(message, this.expectedDecryptionHeader, isDecryptionHeaderSet(request));
-  }
+    String message = String.format(
+        "Test case '%s' failed for URI: %s. Expected Exemption Type: %s, Actual: %s.",
+        this.testName, this.uri, this.expectedExemptionType, actualHeader);
 
-  private boolean isDecryptionHeaderSet(HttpRequest request) {
-    String headerValue = request.headers().get(TASK_WORKER_DECRYPTION_HDR);
-    return Boolean.parseBoolean(headerValue);
+    Assert.assertEquals(message, this.expectedExemptionType, actualHeader);
   }
 }

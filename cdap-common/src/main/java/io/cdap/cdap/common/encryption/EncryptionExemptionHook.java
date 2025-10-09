@@ -24,7 +24,6 @@ import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,37 +34,52 @@ import org.slf4j.LoggerFactory;
 public class EncryptionExemptionHook extends AbstractHandlerHook {
 
   private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
-  private static final List<Pattern> EXEMPTED_URIS = ImmutableList.of(
-      Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
+
+  private static final List<Pattern> SHARED_WORKER_EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
       Pattern.compile(
           "/v3Internal/namespaces/([^/]+)/credentials/workloadIdentity/provision(\\?scopes=(.*))?$"),
-      Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"),
-      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
       Pattern.compile("/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/methods"
           + "/v1/contexts/([^/]+)/connections(?:/.*)?$"),
-      Pattern.compile("/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/methods"
-          + "/v1/oauth/provider/([^/]+)(?:/authurl|/credential/([^/]+)(?:/valid)?)?$")
-
-  );
+      Pattern.compile(
+          "/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/methods"
+              + "/v1/oauth/provider/([^/]+)(?:/authurl|/credential/([^/]+)(?:/valid)?)?$"));
+  private static final List<Pattern> TASK_WORKER_EXEMPTED_URIS = ImmutableList.of(
+      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"));
+  private static final List<Pattern> PREVIEW_RUNNER_EXEMPTED_URIS = ImmutableList.of(
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions(\\?.*)?$"),
+      Pattern.compile(
+          "/v3Internal/namespaces/([^/]+)/apps/([^/]+)/workflows/([^/]+)/preferences(\\?.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$"),
+      Pattern.compile("/v1/namespaces/system/topics/preview/publish"));
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
-    try {
-      for (Pattern uriPattern : EXEMPTED_URIS) {
-        Matcher matcher = uriPattern.matcher(request.uri());
-        if (matcher.matches()) {
-          // For any pattern match, set the header to false, in order to prevent Unauthenticated exception
-          // after decryption.
-          request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "false");
-          return true;
-        }
-      }
-    } catch (Throwable e) {
-      LOG.error("Encountered exception while pattern matching for URI {}", request.uri(), e);
+    WorkerDecryptionScope exemptionType = WorkerDecryptionScope.NONE;
+    String uri = request.uri();
+
+    if (isUriExempt(uri, SHARED_WORKER_EXEMPTED_URIS)) {
+      exemptionType = WorkerDecryptionScope.ANY_WORKER;
+    } else if (isUriExempt(uri, PREVIEW_RUNNER_EXEMPTED_URIS)) {
+      exemptionType = WorkerDecryptionScope.PREVIEW_RUNNER;
+    } else if (isUriExempt(uri, TASK_WORKER_EXEMPTED_URIS)) {
+      exemptionType = WorkerDecryptionScope.TASK_WORKER;
     }
 
-    request.headers().set(HttpHeaderNames.TASK_WORKER_DECRYPTION_HDR, "true");
+    // Set the header with the determined exemption type.
+    request.headers().set(HttpHeaderNames.WORKER_DECRYPTION_HDR, exemptionType.name());
+    LOG.trace("URI {} exemption type set to {}", uri, exemptionType);
     return true;
+  }
+
+  private boolean isUriExempt(String uri, List<Pattern> exemptionList) {
+    for (Pattern pattern : exemptionList) {
+      if (pattern.matcher(uri).matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -60,7 +60,7 @@ public class PreviewHttpServer extends AbstractIdleService {
       PreviewManager previewManager, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
-            Constants.Service.PREVIEW_HTTP, false)
+            Constants.Service.PREVIEW_HTTP)
         .setHost(cConf.get(Constants.Preview.ADDRESS))
         .setPort(cConf.getInt(Constants.Preview.PORT))
         .setHttpHandlers(httpHandlers)
