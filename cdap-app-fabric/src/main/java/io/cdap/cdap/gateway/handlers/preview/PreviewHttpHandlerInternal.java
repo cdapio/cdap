@@ -23,6 +23,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.k8s.PreviewRequestPollerInfo;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -57,7 +58,7 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
 
     if (previewRequest != null) {
       LOG.debug("Send preview request {} to poller {}", previewRequest.getProgram(),
-          Bytes.toString(pollerInfo));
+          GSON.fromJson(Bytes.toString(pollerInfo), PreviewRequestPollerInfo.class));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewRequest));
     } else {
       responder.sendStatus(HttpResponseStatus.OK);

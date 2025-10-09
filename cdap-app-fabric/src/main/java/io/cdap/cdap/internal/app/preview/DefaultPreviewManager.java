@@ -357,6 +357,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             bind(PreviewRequestQueue.class).toInstance(previewRequestQueue);
             expose(PreviewRequestQueue.class);
 
+            bind(PreviewRunStopper.class).toInstance(previewRunStopper);
+            expose(PreviewRunStopper.class);
+
             bind(Store.class).to(DefaultStore.class);
             bind(OwnerStore.class).to(DefaultOwnerStore.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);

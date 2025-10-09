@@ -16,19 +16,32 @@
 
 package io.cdap.cdap.internal.app.runtime.k8s;
 
+import com.google.common.base.Objects;
+import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
- * Poller information holder.
+ * A holder for information that uniquely identifies and authenticates a preview runner. This object
+ * is serialized and stored in the PreviewStore.
  */
 public class PreviewRequestPollerInfo {
 
   private final int instanceId;
   private final String instanceUid;
+  private final byte[] secureToken;
 
-  public PreviewRequestPollerInfo(int instanceId, @Nullable String instanceUid) {
+  /**
+   * Constructs a new PreviewRequestPollerInfo.
+   *
+   * @param instanceId  the instance id of the runner
+   * @param instanceUid the unique UID of the runner pod
+   * @param secureToken a secret token used to authenticate requests from the runner
+   */
+  public PreviewRequestPollerInfo(int instanceId, @Nullable String instanceUid,
+      @Nullable byte[] secureToken) {
     this.instanceId = instanceId;
     this.instanceUid = instanceUid;
+    this.secureToken = secureToken;
   }
 
   public int getInstanceId() {
@@ -42,9 +55,25 @@ public class PreviewRequestPollerInfo {
 
   @Override
   public String toString() {
-    return "PreviewRequestPollerInfo{"
-        + "instanceId=" + instanceId
-        + ", instanceUid='" + instanceUid + '\''
-        + '}';
+    return "PreviewRequestPollerInfo{" + "instanceId=" + instanceId + ", instanceUid='"
+        + instanceUid + '\'' + '}';
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(instanceId, instanceUid, Arrays.hashCode(secureToken));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    PreviewRequestPollerInfo that = (PreviewRequestPollerInfo) o;
+    return instanceId == that.instanceId && Objects.equal(instanceUid, that.instanceUid)
+        && Arrays.equals(secureToken, that.secureToken);
   }
 }

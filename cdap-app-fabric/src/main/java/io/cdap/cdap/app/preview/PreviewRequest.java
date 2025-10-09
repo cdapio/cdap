@@ -32,6 +32,7 @@ public class PreviewRequest {
   private final ProgramId program;
   private final AppRequest<?> appRequest;
   private final Principal principal;
+  private byte[] runnerInfo;
 
   public PreviewRequest(ProgramId program, AppRequest<?> appRequest,
       @Nullable Principal principal) {
@@ -56,6 +57,14 @@ public class PreviewRequest {
   @Nullable
   public Principal getPrincipal() {
     return principal;
+  }
+
+  public byte[] getRunnerInfo() {
+    return runnerInfo;
+  }
+
+  public void setRunnerInfo(byte[] runnerInfo) {
+    this.runnerInfo = runnerInfo;
   }
 
   private static ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) {
