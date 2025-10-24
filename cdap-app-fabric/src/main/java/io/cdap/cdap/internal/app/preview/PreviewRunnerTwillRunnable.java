@@ -76,6 +76,7 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.spi.data.StorageProvider;
 import java.io.File;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -168,12 +169,13 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     hConf.clear();
     hConf.addResource(new File(getArgument("hConf")).toURI().toURL());
 
+    byte[] secureToken = generateSecureToken();
     PreviewRequestPollerInfo pollerInfo;
     if (context instanceof ExtendedTwillContext) {
       pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(),
-          ((ExtendedTwillContext) context).getUID());
+          ((ExtendedTwillContext) context).getUID(), secureToken);
     } else {
-      pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), null);
+      pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), null, secureToken);
     }
 
     CConfiguration cConf = CConfiguration.create(new File(getArgument("cConf")).toURI().toURL());
@@ -273,5 +275,15 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     });
 
     return Guice.createInjector(modules);
+  }
+
+  /**
+   * Generates a cryptographically strong random byte array to be used as a secret token.
+   */
+  private byte[] generateSecureToken() {
+    SecureRandom random = new SecureRandom();
+    byte[] token = new byte[32]; // 256 bits
+    random.nextBytes(token);
+    return token;
   }
 }

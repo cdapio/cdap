@@ -36,7 +36,7 @@ public class PreviewRunnerTwillRunnableTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
     Injector injector = PreviewRunnerTwillRunnable.createInjector(cConf, new Configuration(),
-                                                                  new PreviewRequestPollerInfo(0, "testuid"));
+                                                                  new PreviewRequestPollerInfo(0, "testuid", null));
     DefaultPreviewRunnerManager defaultPreviewRunnerManager = (DefaultPreviewRunnerManager) injector
       .getInstance(PreviewRunnerManager.class);
     Injector previewInjector = defaultPreviewRunnerManager.createPreviewInjector();
@@ -48,7 +48,7 @@ public class PreviewRunnerTwillRunnableTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
     Injector injector = PreviewRunnerTwillRunnable.createInjector(cConf, new Configuration(),
-                                                                  new PreviewRequestPollerInfo(0, "testuid"));
+                                                                  new PreviewRequestPollerInfo(0, "testuid", null));
     DefaultPreviewRunnerManager defaultPreviewRunnerManager = (DefaultPreviewRunnerManager) injector
       .getInstance(PreviewRunnerManager.class);
     Injector previewInjector = defaultPreviewRunnerManager.createPreviewInjector();

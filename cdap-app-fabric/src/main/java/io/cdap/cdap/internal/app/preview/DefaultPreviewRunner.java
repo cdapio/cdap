@@ -158,7 +158,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception {
+  public Future<PreviewRequest> startPreview(PreviewRequest previewRequest)
+      throws Exception {
+    previewDataPublisher.setPublisherInfo(previewRequest.getRunnerInfo());
     ProgramId programId = previewRequest.getProgram();
     long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
     previewStarted(programId);

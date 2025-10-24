@@ -23,14 +23,14 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 /**
- * A container for messages in the preview topic configured by {@link
- * Constants.Preview#MESSAGING_TOPIC}. It carries the message type and the payload as {@link
- * JsonElement}.
+ * A container for messages in the preview topic configured by
+ * {@link Constants.Preview#MESSAGING_TOPIC}. It carries the message type and the payload as
+ * {@link JsonElement}.
  */
 public final class PreviewMessage {
 
   /**
-   * The message type
+   * The message type.
    */
   public enum Type {
     DATA,
@@ -41,13 +41,14 @@ public final class PreviewMessage {
   private final Type type;
   private final EntityId entityId;
   private final JsonElement payload;
+  private byte[] publisherInfo;
 
   /**
    * Create an instance of message.
    *
-   * @param type type of the message
+   * @param type     type of the message
    * @param entityId program run id associated with the message
-   * @param payload the payload
+   * @param payload  the payload
    */
   public PreviewMessage(Type type, EntityId entityId, JsonElement payload) {
     this.type = type;
@@ -72,13 +73,34 @@ public final class PreviewMessage {
   /**
    * Returns the payload by decoding the json to the given type.
    *
-   * @param gson the {@link Gson} for decoding the json element
+   * @param gson    the {@link Gson} for decoding the json element
    * @param objType the resulting object type
-   * @param <T> the resulting object type
+   * @param <T>     the resulting object type
    * @return the decode object
    */
   public <T> T getPayload(Gson gson, java.lang.reflect.Type objType) {
     return gson.fromJson(payload, objType);
+  }
+
+  /**
+   * Returns the serialized information that identifies and authenticates the publisher. This is
+   * expected to be a serialized {@link PreviewRequestPollerInfo} object.
+   *
+   * @return the publisher information byte array, or {@code null} if not set.
+   */
+  public byte[] getPublisherInfo() {
+    return publisherInfo;
+  }
+
+  /**
+   * Sets the identifying information for the publisher of this message. This information is used by
+   * the receiving service to authenticate the message's origin.
+   *
+   * @param publisherInfo a byte array containing the serialized {@link PreviewRequestPollerInfo},
+   *                      which includes the runner's identity and secret token for authentication.
+   */
+  public void setPublisherInfo(byte[] publisherInfo) {
+    this.publisherInfo = publisherInfo;
   }
 
   @Override
