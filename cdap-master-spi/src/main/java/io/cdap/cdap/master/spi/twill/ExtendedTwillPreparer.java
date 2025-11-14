@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.spi.twill;
 
 
+import java.util.Map;
 import org.apache.twill.api.TwillPreparer;
 
 /**
@@ -44,4 +45,10 @@ public interface ExtendedTwillPreparer extends TwillPreparer {
    */
   ExtendedTwillPreparer setShouldLocalizeConfigurationAsConfigmap(
       boolean shouldLocalizeConfigurationAsConfigmap);
+
+  /**
+   * Creates the probes based on the Probe Config passed and assigns to the given runnable.
+   * Example : It can be used for a Liveness Probe in k8s
+   */
+  ExtendedTwillPreparer addProbes(String runnableName, Map<String, String> probeConf);
 }

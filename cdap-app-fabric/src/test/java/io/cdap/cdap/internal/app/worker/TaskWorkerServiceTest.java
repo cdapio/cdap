@@ -75,6 +75,8 @@ public class TaskWorkerServiceTest {
   private TaskWorkerService taskWorkerService;
   private CompletableFuture<Service.State> serviceCompletionFuture;
 
+  private SecurityManager securityManager;
+
   private CConfiguration createCConf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.TaskWorker.ADDRESS, "localhost");
@@ -91,7 +93,7 @@ public class TaskWorkerServiceTest {
   }
 
   @Before
-  public void beforeTest() {
+  public void beforeTest() throws Exception {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = createSConf();
 
@@ -105,6 +107,8 @@ public class TaskWorkerServiceTest {
     // start the service
     taskWorkerService.startAndWait();
     this.taskWorkerService = taskWorkerService;
+    securityManager = System.getSecurityManager();
+    System.setSecurityManager(new NoExitSecurityManager());
   }
 
   @After
@@ -113,6 +117,7 @@ public class TaskWorkerServiceTest {
       taskWorkerService.stopAndWait();
       taskWorkerService = null;
     }
+    System.setSecurityManager(securityManager);
   }
 
   @Test
@@ -497,6 +502,19 @@ public class TaskWorkerServiceTest {
         Thread.sleep(Integer.parseInt(context.getParam()));
       }
       context.writeResult(context.getParam().getBytes(StandardCharsets.UTF_8));
+    }
+  }
+
+  public class NoExitSecurityManager extends SecurityManager {
+
+    @Override
+    public void checkExit(int status) {
+      throw new SecurityException("System.exit attempted, status=" + status);
+    }
+
+    @Override
+    public void checkPermission(java.security.Permission perm) {
+      // allow everything else
     }
   }
 }
