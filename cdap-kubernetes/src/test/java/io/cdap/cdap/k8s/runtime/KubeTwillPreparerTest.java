@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import static io.cdap.cdap.k8s.runtime.KubeTwillPreparer.filterAndRemoveKeyPrefix;
+
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -394,6 +396,26 @@ public class KubeTwillPreparerTest {
     Assert.assertEquals("name-1", KubeTwillPreparer.cleanse("name_1",
         6));
   }
+
+  @Test
+  public void testBasicFilteringAndPrefixRemoval() {
+    Map<String, String> original = new HashMap<>();
+    original.put("k8s.liveness.init.delay.seconds", "10");
+    original.put("gcp.liveness.init.delay.seconds", "100");
+    original.put("app.version", "1.0");
+    original.put("k8s.liveness.period.seconds", "2");
+
+    String prefix = "k8s.";
+    Map<String, String> expected = new HashMap<>();
+    expected.put("liveness.init.delay.seconds", "10");
+    expected.put("liveness.period.seconds", "2");
+
+    Map<String, String> actual = filterAndRemoveKeyPrefix(original, prefix);
+
+    Assert.assertEquals("The resulting map size should match the expected size.", expected.size(), actual.size());
+    Assert.assertEquals("The filtered map should contain the correct entries with prefixes removed.", expected, actual);
+  }
+
 
   private static Map<String, String> getTwillConfigs() {
     HashMap<String, String> cConf = new HashMap<>();
