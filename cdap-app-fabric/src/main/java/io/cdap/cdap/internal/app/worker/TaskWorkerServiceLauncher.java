@@ -269,6 +269,14 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
             }
           }
 
+          if (cConf.getBoolean(TaskWorker.TASK_WORKER_PROBE_ENABLED)) {
+            if (twillPreparer instanceof ExtendedTwillPreparer) {
+              twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
+                  .addProbes(TaskWorkerTwillRunnable.class.getSimpleName(),
+                      cConf.getPropsWithPrefix(TaskWorker.TASK_WORKER_PROBE_PREFIX));
+            }
+          }
+
           // Set JVM options for task worker and artifact localizer
           twillPreparer.setJVMOptions(TaskWorkerTwillRunnable.class.getSimpleName(),
               cConf.get(Constants.TaskWorker.CONTAINER_JVM_OPTS));

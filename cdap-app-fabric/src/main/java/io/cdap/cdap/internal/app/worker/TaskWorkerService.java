@@ -30,11 +30,15 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.http.ChannelPipelineModifier;
+import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -70,6 +74,12 @@ public class TaskWorkerService extends AbstractIdleService {
       cConf.set(TaskWorker.WORK_DIR, workDir);
     }
 
+    List<HttpHandler> handlers = Arrays.asList(
+        new PingHandler(),
+        new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
+            discoveryServiceClient, this::stopService,
+            metricsCollectionService));
+
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.TASK_WORKER)
         .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
@@ -83,9 +93,7 @@ public class TaskWorkerService extends AbstractIdleService {
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
         })
-        .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
-            discoveryServiceClient, this::stopService,
-            metricsCollectionService));
+        .setHttpHandlers(handlers);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);

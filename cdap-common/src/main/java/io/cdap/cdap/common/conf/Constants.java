@@ -554,8 +554,14 @@ public final class Constants {
     public static final String METADATA_SERVICE_END_POINT = "task.worker.metadata.service.endpoint";
     public static final String METRIC_PREFIX = "task.worker.";
     public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
-  }
 
+    /**
+     * Task worker container probe configurations.
+     * For usage for k8s probes refer : `io.cdap.cdap.k8s.util.ProbeFactory`
+     */
+    public static final String TASK_WORKER_PROBE_ENABLED = "task.worker.probe.enabled";
+    public static final String TASK_WORKER_PROBE_PREFIX = "task.worker.probe.";
+  }
 
   /**
    * System pods.

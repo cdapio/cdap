@@ -22,6 +22,8 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.k8s.util.ProbeFactory;
+import io.cdap.cdap.k8s.util.ProbeFactory.ProbeName;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
@@ -65,6 +67,7 @@ import io.kubernetes.client.openapi.models.V1PersistentVolumeClaim;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimBuilder;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
+import io.kubernetes.client.openapi.models.V1Probe;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1ResourceRequirementsBuilder;
 import io.kubernetes.client.openapi.models.V1SecurityContext;
@@ -195,6 +198,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final Map<String, Set<String>> readonlyDisks;
   private final Map<String, Map<String, String>> runnableConfigs;
   private final Map<String, StringBuilder> runnableJvmOptions;
+  private final Map<String, Map<ProbeName, V1Probe>> containerProbes;
   private final String cdapInstallNamespace;
   private final boolean workloadIdentityEnabled;
   private final long workloadIdentityKsaTtl;
@@ -272,6 +276,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.cdapRuntimeNamespace = null;
     this.globalJvmOptions = new StringBuilder();
     this.workDirVolumeSource = new V1EmptyDirVolumeSource();
+    this.containerProbes = new HashMap<>();
   }
 
   @Override
@@ -284,6 +289,19 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   public ExtendedTwillPreparer setShouldLocalizeConfigurationAsConfigmap(
       boolean shouldLocalizeConfigurationAsConfigmap) {
     this.shouldLocalizeConfigurationAsConfigmap = shouldLocalizeConfigurationAsConfigmap;
+    return this;
+  }
+
+  @Override
+  public ExtendedTwillPreparer addProbes(String runnableName, Map<String, String> probeConf) {
+    containerProbes.putIfAbsent(runnableName, new HashMap<>());
+    Map<String, String> k8sProbeConf = filterAndRemoveKeyPrefix(probeConf, ProbeFactory.PROBE_ENV);
+    Arrays.stream(k8sProbeConf.get(ProbeFactory.PROBE_NAME_CSV).split(","))
+        .map(String::trim)
+        .forEach(probeName -> containerProbes.get(runnableName).put(
+            ProbeName.valueOf(probeName.toUpperCase()),
+            ProbeFactory.createV1Probe(
+                filterAndRemoveKeyPrefix(k8sProbeConf, String.format("%s.", probeName)))));
     return this;
   }
 
@@ -1398,6 +1416,25 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
     }
 
+    if (containerProbes.containsKey(name)){
+      containerProbes.get(name).forEach((probeName, probeObj) -> {
+        switch (probeName) {
+          case LIVENESS:
+            builder.withLivenessProbe(probeObj);
+            break;
+          case READINESS:
+            builder.withReadinessProbe(probeObj);
+            break;
+          case STARTUP:
+            builder.withStartupProbe(probeObj);
+            break;
+          default:
+            throw new IllegalArgumentException(
+                String.format("Unsupported k8s Probe type : %s", probeName));
+        }
+      });
+    }
+
     return builder
         .withName(cleanse(name, 254))
         .withImage(containerImage)
@@ -1583,5 +1620,24 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     List<SecretDisk> getSecretDisks() {
       return secretDisks;
     }
+  }
+
+  /**
+   * Get {@link Map} of properties prefixed with the string provided as an input.
+   * Property names in the mapping are trimmed to remove the prefix.
+   *
+   * @param originalMap
+   * @param prefix
+   * @return
+   */
+  public static Map<String, String> filterAndRemoveKeyPrefix(Map<String, String> originalMap,
+      String prefix) {
+
+    return originalMap.entrySet().stream()
+        .filter(entry -> entry.getKey().startsWith(prefix))
+        .collect(Collectors.toMap(
+            entry -> entry.getKey().substring(prefix.length()),
+            Map.Entry::getValue
+        ));
   }
 }

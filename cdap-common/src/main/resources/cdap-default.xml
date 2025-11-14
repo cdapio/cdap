@@ -5605,6 +5605,95 @@
     </description>
   </property>
 
+  <property>
+    <name>task.worker.probe.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to configure a probe for the task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.names</name>
+    <value>liveness</value>
+    <description>
+      A Comma separated value of kubernetes probe names. Ex : "liveness","readiness"
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.type</name>
+    <value>httpget</value>
+    <description>
+      Which type of liveness probe to be used.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.http.port</name>
+    <value>${task.worker.bind.port}</value>
+    <description>
+      The port number on the container where the API server is listening.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.http.path</name>
+    <value>/ping</value>
+    <description>
+      The specific URL path to access on the container.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.init.delay.seconds</name>
+    <value>20</value>
+    <description>
+      Seconds to wait after container start before the first probe for a task worker.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.timeout.seconds</name>
+    <value>5</value>
+    <description>
+      Seconds after which the probe is considered failed due to no response.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.failure.threshold</name>
+    <value>12</value>
+    <description>
+      Number of consecutive failures before k8s restarts the task worker container.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.period.seconds</name>
+    <value>10</value>
+    <description>
+      The time interval (in seconds) between consecutive probe executions.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.success.threshold</name>
+    <value>1</value>
+    <description>
+      Minimum consecutive successes for the probe to be considered successful after having failed.
+      Keeping same as K8s default.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.probe.k8s.liveness.http.scheme</name>
+    <value>HTTPS</value>
+    <description>
+      The protocol used to connect to the host.
+    </description>
+  </property>
+
   <!-- System pods Configuration  -->
   <property>
     <name>system.worker.program.twill.controller.start.seconds</name>
