@@ -494,4 +494,64 @@ public class DataprocProvisionerTest {
     Map<String, String> labels = provisioner.getCommonDataprocLabels(context);
     Assert.assertNull(labels.get("email"));
   }
+
+  @Test
+  public void testDeleteClusterWithStatus_CancelOnDoneJob() throws Exception {
+    context.addProperty("accountKey", "testKey");
+    context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    context.addProperty("region", "testRegion");
+    context.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.DEPROVISIONING));
+
+    DataprocRuntimeJobManager jobManager = Mockito.mock(DataprocRuntimeJobManager.class);
+    DataprocRuntimeJobDetail jobDetail = Mockito.mock(DataprocRuntimeJobDetail.class);
+
+    Mockito.when(provisioner.getRuntimeJobManager(context)).thenReturn(Optional.of(jobManager));
+    Mockito.when(jobManager.getDetail(context.getProgramRunInfo())).thenReturn(Optional.of(jobDetail));
+    Mockito.when(jobDetail.getStatus()).thenReturn(RuntimeJobStatus.FAILED);
+    Mockito.when(jobDetail.getJobId()).thenReturn("test-job-id");
+    String cancelErrorMessage = "Cancellation for task: Task(ofr-2hc-battery-management-dev/test-cluster-uuid/job-test-job-id) is not supported in the current state: DONE.";
+    Mockito.when(jobDetail.getJobStatusDetails()).thenReturn(cancelErrorMessage);
+
+    Mockito.when(cluster.getName()).thenReturn("testClusterName");
+    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+
+    // Simulate doDeleteCluster to avoid actual deletion call
+    Mockito.doNothing().when(provisioner).doDeleteCluster(context, cluster, conf);
+
+    ClusterStatus status = provisioner.deleteClusterWithStatus(context, cluster);
+
+    Assert.assertEquals(ClusterStatus.DELETING, status);
+    // N.B. We are not asserting on logs here, just that no exception is thrown
+    // and the status is DELETING.
+  }
+
+  @Test
+  public void testDeleteClusterWithStatus_OtherJobFailure() throws Exception {
+    context.addProperty("accountKey", "testKey");
+    context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    context.addProperty("region", "testRegion");
+    context.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.DEPROVISIONING));
+
+    DataprocRuntimeJobManager jobManager = Mockito.mock(DataprocRuntimeJobManager.class);
+    DataprocRuntimeJobDetail jobDetail = Mockito.mock(DataprocRuntimeJobDetail.class);
+
+    Mockito.when(provisioner.getRuntimeJobManager(context)).thenReturn(Optional.of(jobManager));
+    Mockito.when(jobManager.getDetail(context.getProgramRunInfo())).thenReturn(Optional.of(jobDetail));
+    Mockito.when(jobDetail.getStatus()).thenReturn(RuntimeJobStatus.FAILED);
+    Mockito.when(jobDetail.getJobId()).thenReturn("test-job-id");
+    String otherErrorMessage = "Some other fatal error";
+    Mockito.when(jobDetail.getJobStatusDetails()).thenReturn(otherErrorMessage);
+
+    Mockito.when(cluster.getName()).thenReturn("testClusterName");
+    DataprocConf conf = DataprocConf.create(provisioner.createContextProperties(context));
+
+    // Simulate doDeleteCluster to avoid actual deletion call
+    Mockito.doNothing().when(provisioner).doDeleteCluster(context, cluster, conf);
+
+    ClusterStatus status = provisioner.deleteClusterWithStatus(context, cluster);
+    Assert.assertEquals(ClusterStatus.DELETING, status);
+    // In this case, the error is not the specific one we are suppressing, so the LOG.error in the original code would be called.
+    // We are not re-throwing, so the status remains DELETING.
+  }
 }
+

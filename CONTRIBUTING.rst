@@ -12,7 +12,7 @@ Please see SECURITY.md for reporting security vulnerabilities.
 Creating Issues
 ===============
 
-In order to file bugs or new feature requests, please use http://issues.cask.co.
+In order to file bugs or new feature requests, please use https://cdap.atlassian.net/jira/
 
 Feature Requests
 ================

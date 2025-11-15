@@ -127,10 +127,19 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
           // Status details is specific to dataproc jobs, so it was not added to RuntimeJobDetail spi.
           String statusDetails = ((DataprocRuntimeJobDetail) jobDetail).getJobStatusDetails();
           if (statusDetails != null) {
-            ProgramRunFailureException e = new ProgramRunFailureException(
-                String.format("Dataproc job '%s' status details: %s",
-                    ((DataprocRuntimeJobDetail) jobDetail).getJobId(), statusDetails));
-            LOG.error("Dataproc Job {}", jobDetail.getStatus(), e);
+            // Check if the failure is due to attempting to cancel a job already DONE
+            if (jobDetail.getStatus() == RuntimeJobStatus.FAILED && statusDetails.contains("is not supported in the current state: DONE")) {
+              LOG.warn("Attempted to cancel Dataproc job {} which was already DONE. This is not a pipeline failure. Continuing with deprovisioning.", ((DataprocRuntimeJobDetail) jobDetail).getJobId());
+            } else {
+              ProgramRunFailureException e = new ProgramRunFailureException(
+                  String.format("Dataproc job '%s' status details: %s",
+                      ((DataprocRuntimeJobDetail) jobDetail).getJobId(), statusDetails));
+              LOG.error("Dataproc Job {} failed with error: {}", jobDetail.getStatus(), statusDetails, e);
+              // Rethrow only if it's not the specific Cancel-on-DONE issue
+              // We need to be careful here, as this method is expected to return ClusterStatus.DELETING
+              // and an exception here might halt the deprovisioning process in the caller.
+              // For now, let's just log and not throw for the specific case.
+            }
           }
         }
       } finally {
