@@ -183,9 +183,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           "Task worker service is about to restart in {} seconds, no new tasks will be accepted.",
           finalTaskDeadlineSeconds);
       if (runningRequestCount.get() == 0) {
-        stopper.accept("");
-        executorService.shutdown();
-        return;
+        stopAndShutdown(executorService, stopper);
       }
       try {
         Thread.sleep(TimeUnit.SECONDS.toMillis(finalTaskDeadlineSeconds));
@@ -194,9 +192,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
             "Interrupted while waiting for task completion. Stopping immediately",
             e);
       }
-      stopper.accept("");
-      executorService.shutdown();
+      stopAndShutdown(executorService, stopper);
     }, waitTime, finalTaskDeadlineSeconds, TimeUnit.SECONDS);
+  }
+
+  private void stopAndShutdown(ScheduledExecutorService executorService, Consumer<String> stopper) {
+    stopper.accept("");
+    executorService.shutdown();
+    System.exit(0);
   }
 
   /**
