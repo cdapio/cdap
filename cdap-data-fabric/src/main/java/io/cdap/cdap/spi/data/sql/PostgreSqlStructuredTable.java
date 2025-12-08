@@ -29,6 +29,7 @@ import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.FieldValidator;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.field.Range.Bound;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -985,7 +987,115 @@ public class PostgreSqlStructuredTable implements StructuredTable {
    * @param sortOrder sort order by primary keys
    * @return the scan query
    */
-  private String getScanIndexesQuery(Range range, int limit, Collection<Field<?>> filterIndexes,
+  private String getScanIndexesQuery(Range originalRange, int limit, Collection<Field<?>> filterIndexes,
+      Collection<String> fieldsToSort, SortOrder sortOrder) {
+
+    LOG.warn("SANKET_TEST : OLD SQL QUERY : {} ",
+        getScanIndexesQueryOLD(originalRange, limit, filterIndexes, fieldsToSort, sortOrder));
+
+
+    StringBuilder queryString = new StringBuilder("SELECT * FROM ")
+        .append(tableSchema.getTableId().getName())
+        .append(" WHERE ");
+
+    // 1. Simplify Equality Fields
+    int simplifiedCount = 0;
+    if (!originalRange.getBegin().isEmpty() && !originalRange.getEnd().isEmpty()) {
+      simplifiedCount = simplifyEqualFields(queryString, originalRange);
+    }
+
+    // 2. RECREATE RANGE using subList (Preserves Order)
+    List<Field<?>> beginList = new ArrayList<>(originalRange.getBegin());
+    List<Field<?>> endList = new ArrayList<>(originalRange.getEnd());
+
+    // Slice the lists. If count is 0, we get the full list.
+    Collection<Field<?>> newBegin = beginList.subList(simplifiedCount, beginList.size());
+    Collection<Field<?>> newEnd = endList.subList(simplifiedCount, endList.size());
+    Range remainingRange = Range.create(newBegin, originalRange.getBeginBound(),
+        newEnd, originalRange.getEndBound());
+
+    boolean hasRemainingRange = !remainingRange.getBegin().isEmpty() ||
+        !remainingRange.getEnd().isEmpty();
+
+    if (simplifiedCount > 0 && hasRemainingRange) {
+      queryString.append(" AND ");
+    }
+
+    if (!remainingRange.getBegin().isEmpty() || !remainingRange.getEnd().isEmpty()) {
+      appendRange(queryString, remainingRange);
+    }
+
+    if (!filterIndexes.isEmpty()) {
+      // only add AND if there was range clause applied
+      if (!remainingRange.getBegin().isEmpty() || !remainingRange.getEnd().isEmpty()) {
+        queryString.append(" AND ");
+      }
+      queryString.append(getIndexesFilterClause(filterIndexes));
+    }
+
+    queryString.append(getOrderByClause(fieldsToSort, sortOrder));
+    queryString.append(" LIMIT ").append(limit).append(";");
+
+    LOG.warn("SANKET_TEST : NEW SQL QUERY : {} ", queryString);
+
+    return queryString.toString();
+  }
+
+  /**
+   * Extracts common prefix fields from the range as simple equalities (col = val).
+   * * @return the number of fields that were simplified (the offset index).
+   */
+  private int simplifyEqualFields(StringBuilder queryString, Range range) {
+    List<Field<?>> beginFields = new ArrayList<>(range.getBegin());
+    List<Field<?>> endFields = new ArrayList<>(range.getEnd());
+
+    int minSize = Math.min(beginFields.size(), endFields.size());
+    int count = 0;
+
+    for (int i = 0; i < minSize; i++) {
+      Field<?> begin = beginFields.get(i);
+      Field<?> end = endFields.get(i);
+
+      // 1. Validation: Must be same Name and Value
+      if (!begin.getName().equals(end.getName()) ||
+          !Objects.equals(begin.getValue(), end.getValue())) {
+        break;
+      }
+
+      // 2. Bound Safety: Cannot simplify if it's the last field AND bounds are Exclusive
+      // (e.g., A > 1 AND A < 1 cannot become A = 1)
+      boolean isLastField = (i == beginFields.size() - 1) || (i == endFields.size() - 1);
+      if (isLastField) {
+        if (range.getBeginBound() == Range.Bound.EXCLUSIVE ||
+            range.getEndBound() == Range.Bound.EXCLUSIVE) {
+          break;
+        }
+      }
+
+      // 3. Append to Query
+      // Only add " AND " if this is not the first equality we are adding
+      if (count > 0) {
+        queryString.append(" AND ");
+      }
+
+      queryString.append(begin.getName())
+          .append(" = ")
+          .append(formatValue(begin.getValue()));
+
+      count++;
+    }
+
+    return count;
+  }
+
+  private String formatValue(Object value) {
+    if (value instanceof String) {
+      return "'" + value + "'";
+    }
+    return String.valueOf(value);
+  }
+
+  private String getScanIndexesQueryOLD(Range range, int limit, Collection<Field<?>> filterIndexes,
       Collection<String> fieldsToSort, SortOrder sortOrder) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ")
         .append(tableSchema.getTableId().getName())
@@ -1007,6 +1117,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
   }
+
 
   private void appendRange(StringBuilder query, Range range) {
     appendScanBound(query, range.getBegin(),
