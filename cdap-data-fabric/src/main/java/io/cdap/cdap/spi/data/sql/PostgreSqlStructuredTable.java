@@ -38,6 +38,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -211,6 +212,18 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan range {} with limit {} order {}", tableSchema.getTableId(), keyRange,
         limit, sortOrder);
     fieldValidator.validateScanRange(keyRange);
+
+
+    Range remainingRange = getRemainingRange(keyRange);
+    int simplifiedCount = keyRange.getBegin().size() - remainingRange.getBegin().size();
+
+    if (simplifiedCount > 0) {
+      List<Field<?>> extractedEqualities = new ArrayList<>(keyRange.getBegin())
+          .subList(0, simplifiedCount);
+      return scan(remainingRange, limit, extractedEqualities, Collections.emptyList(),
+          sortOrder);
+    }
+
     String scanQuery = getScanQuery(keyRange, limit, tableSchema.getPrimaryKeys(), sortOrder);
 
     // We don't close the statement here because once it is closed, the result set is also closed.
@@ -218,7 +231,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
       statement.setFetchSize(fetchSize);
       setStatementFieldByRange(keyRange, statement);
-      LOG.trace("SQL statement: {}", statement);
+      LOG.warn(" SANKET_TEST : SQL statement: {}", statement);
 
       ResultSet resultSet = statement.executeQuery();
       return new ResultSetIterator(statement, resultSet, tableSchema);
@@ -372,34 +385,47 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   private CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
       Collection<Field<?>> filterIndexes, Collection<String> fieldsToSort, SortOrder sortOrder)
       throws InvalidFieldException, IOException {
-    fieldValidator.validateScanRange(keyRange);
-    filterIndexes.forEach(fieldValidator::validateField);
+
+
+    Range remainingRange = getRemainingRange(keyRange);
+    int simplifiedCount = keyRange.getBegin().size() - remainingRange.getBegin().size();
+    List<Field<?>> combinedFilters = new ArrayList<>(filterIndexes);
+
+    if (simplifiedCount > 0) {
+      List<Field<?>> extractedEqualities = new ArrayList<>(keyRange.getBegin())
+          .subList(0, simplifiedCount);
+      combinedFilters.addAll(extractedEqualities);
+    }
+
+    fieldValidator.validateScanRange(remainingRange);
+    combinedFilters.forEach(fieldValidator::validateField);
     if (!tableSchema.isIndexColumns(
-        filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
-      throw new InvalidFieldException(tableSchema.getTableId(), filterIndexes,
+        combinedFilters.stream().map(Field::getName).collect(Collectors.toList()))) {
+      throw new InvalidFieldException(tableSchema.getTableId(), combinedFilters,
           "are not all indexed columns");
     }
 
     LOG.trace("Table {}: Scan range {} with filterIndexes {} limit {} sortOrder {}",
-        tableSchema.getTableId(), keyRange, filterIndexes, limit, sortOrder);
+        tableSchema.getTableId(), remainingRange, combinedFilters, limit, sortOrder);
 
-    String scanQuery = getScanIndexesQuery(keyRange, limit, filterIndexes, fieldsToSort, sortOrder);
+    String scanQuery = getScanIndexesQuery(remainingRange, limit, combinedFilters, fieldsToSort,
+        sortOrder);
     // Since in getScanIndexesQuery we directly set the NULL checks, we need to skip the null fields
-    filterIndexes = filterIndexes.stream().filter(f -> f.getValue() != null)
+    combinedFilters = combinedFilters.stream().filter(f -> f.getValue() != null)
         .collect(Collectors.toList());
 
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
       statement.setFetchSize(fetchSize);
-      int nextIndex = setStatementFieldByRange(keyRange, statement, 1);
-      setFields(statement, filterIndexes, nextIndex);
-      LOG.trace("SQL statement: {}", statement);
+      int nextIndex = setStatementFieldByRange(remainingRange, statement, 1);
+      setFields(statement, combinedFilters, nextIndex);
+      LOG.warn(" SANKET_TEST : SQL statement: {}", statement);
 
       ResultSet resultSet = statement.executeQuery();
       return new ResultSetIterator(statement, resultSet, tableSchema);
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to scan from table %s with range %s and index %s",
-          tableSchema.getTableId().getName(), keyRange, filterIndexes), e);
+          tableSchema.getTableId().getName(), remainingRange, combinedFilters), e);
     }
   }
 
@@ -410,6 +436,17 @@ public class PostgreSqlStructuredTable implements StructuredTable {
 
     LOG.trace("Table {}: Scan range {} with limit {} order {} on index field {}",
         tableSchema.getTableId(), keyRange, limit, sortOrder, orderByField);
+
+    Range remainingRange = getRemainingRange(keyRange);
+    int simplifiedCount = keyRange.getBegin().size() - remainingRange.getBegin().size();
+
+    if (simplifiedCount > 0) {
+      List<Field<?>> extractedEqualities = new ArrayList<>(keyRange.getBegin())
+          .subList(0, simplifiedCount);
+      return scan(remainingRange, limit, extractedEqualities, Arrays.asList(orderByField),
+          sortOrder);
+    }
+
     fieldValidator.validateScanRange(keyRange);
     if (!tableSchema.isIndexColumn(orderByField) && !tableSchema.isPrimaryKeyColumn(orderByField)) {
       throw new InvalidFieldException(tableSchema.getTableId(), orderByField,
@@ -423,7 +460,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
       statement.setFetchSize(fetchSize);
       setStatementFieldByRange(keyRange, statement);
-      LOG.trace("SQL statement: {}", statement);
+      LOG.warn(" SANKET_TEST : 2 : SQL statement: {}", statement);
 
       ResultSet resultSet = statement.executeQuery();
       return new ResultSetIterator(statement, resultSet, tableSchema);
@@ -431,6 +468,48 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       throw new IOException(String.format("Failed to scan from table %s with range %s",
           tableSchema.getTableId().getName(), keyRange), e);
     }
+  }
+
+  /**
+   * Calculates the remaining range after stripping away common prefix equalities.
+   * Example: Input (A,B,C) >= (1,2,5) AND (A,B,C) <= (1,2,10)
+   * Returns: (C) >= (5) AND (C) <= (10)
+   */
+  private Range getRemainingRange(Range range) {
+    List<Field<?>> beginFields = new ArrayList<>(range.getBegin());
+    List<Field<?>> endFields = new ArrayList<>(range.getEnd());
+
+    int minSize = Math.min(beginFields.size(), endFields.size());
+    int simplifiedCount = 0;
+
+    for (int i = 0; i < minSize; i++) {
+      Field<?> begin = beginFields.get(i);
+      Field<?> end = endFields.get(i);
+
+      // 1. Exact Match Check
+      if (!begin.getName().equals(end.getName()) ||
+          !Objects.equals(begin.getValue(), end.getValue())) {
+        break;
+      }
+
+      // 2. Bound Safety Check
+      // Cannot simplify if it's the last field AND bounds are EXCLUSIVE
+      boolean isLastField = (i == beginFields.size() - 1) || (i == endFields.size() - 1);
+      if (isLastField) {
+        if (range.getBeginBound() == Range.Bound.EXCLUSIVE ||
+            range.getEndBound() == Range.Bound.EXCLUSIVE) {
+          break;
+        }
+      }
+
+      simplifiedCount++;
+    }
+
+    // Create the remainder using subList (safe even if simplifiedCount == size)
+    Collection<Field<?>> newBegin = beginFields.subList(simplifiedCount, beginFields.size());
+    Collection<Field<?>> newEnd = endFields.subList(simplifiedCount, endFields.size());
+
+    return Range.create(newBegin, range.getBeginBound(), newEnd, range.getEndBound());
   }
 
   @Override
@@ -1001,7 +1080,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
         queryString.append(" AND ");
       }
-      queryString.append(getIndexesFilterClause(filterIndexes));
+      queryString.append( getIndexesFilterClause(filterIndexes));
     }
 
     queryString.append(getOrderByClause(fieldsToSort, sortOrder));
@@ -1009,10 +1088,10 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     return queryString.toString();
   }
 
-  private void appendRange(StringBuilder query, Range range) {
+  private void appendRangeNew(StringBuilder query, Range range) {
 
     StringBuilder sbOLD = new StringBuilder(query.toString());
-    appendRangeOLD(sbOLD, range);
+    // appendRangeOLD(sbOLD, range);
     LOG.warn(" SANKET_TEST :  OLD QUERY : {} ",  sbOLD);
 
     // --- PART 1: OPTIMIZATION ---
@@ -1050,7 +1129,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   //TESTING :
-  private void appendRangeOLD(StringBuilder query, Range range) {
+  private void appendRange(StringBuilder query, Range range) {
     appendScanBound(query, range.getBegin(),
         range.getBeginBound().equals(Range.Bound.INCLUSIVE) ? ">=" : ">");
     if (!range.getBegin().isEmpty() && !range.getEnd().isEmpty()) {
@@ -1101,7 +1180,7 @@ public class PostgreSqlStructuredTable implements StructuredTable {
       if (count > 0) {
         sb.append(" AND ");
       }
-      sb.append(begin.getName()).append(formatValue(begin.getValue()));
+      sb.append(begin.getName()) .append(" = ").append(formatValue(begin.getValue()));
 
       count++;
     }
@@ -1208,6 +1287,9 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   private String getOrderByClause(Collection<String> keys, SortOrder sortOrder) {
+    if (keys == null || keys.isEmpty()) {
+      return "";
+    }
     StringJoiner joiner = new StringJoiner(", ", " ORDER BY ", "");
     for (String key : keys) {
       joiner.add(sortOrder == SortOrder.ASC ? key : key + " DESC");
