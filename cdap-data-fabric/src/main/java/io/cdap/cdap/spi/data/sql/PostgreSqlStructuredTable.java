@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -1009,6 +1010,47 @@ public class PostgreSqlStructuredTable implements StructuredTable {
   }
 
   private void appendRange(StringBuilder query, Range range) {
+
+    StringBuilder sbOLD = new StringBuilder(query.toString());
+    appendRangeOLD(sbOLD, range);
+    LOG.warn(" SANKET_TEST :  OLD QUERY : {} ",  sbOLD);
+
+    // --- PART 1: OPTIMIZATION ---
+    // Extract common prefixes (e.g., "A = ?")
+    int simplifiedCount = simplifyAndAppendEqualities(query, range);
+
+    // --- PART 2: PREPARE REMAINDER ---
+    List<Field<?>> beginList = new ArrayList<>(range.getBegin());
+    List<Field<?>> endList = new ArrayList<>(range.getEnd());
+
+    // Slice the lists (subList is safe even if simplifiedCount == size)
+    List<Field<?>> remainingBegin = beginList.subList(simplifiedCount, beginList.size());
+    List<Field<?>> remainingEnd = endList.subList(simplifiedCount, endList.size());
+
+    boolean hasBegin = !remainingBegin.isEmpty();
+    boolean hasEnd = !remainingEnd.isEmpty();
+
+    // 3. Connector: Equalities <-> Range
+    // Only add AND if we simplified something AND there is more to come
+    if (simplifiedCount > 0 && (hasBegin || hasEnd)) {
+      query.append(" AND ");
+    }
+
+    appendScanBound(query, remainingBegin,
+        range.getBeginBound() == Range.Bound.INCLUSIVE ? ">=" : ">");
+
+    if (hasBegin && hasEnd) {
+      query.append(" AND ");
+    }
+
+    appendScanBound(query, remainingEnd,
+        range.getEndBound() == Range.Bound.INCLUSIVE ? "<=" : "<");
+
+    LOG.warn(" SANKET_TEST :  NEW QUERY : {} ",  query);
+  }
+
+  //TESTING :
+  private void appendRangeOLD(StringBuilder query, Range range) {
     appendScanBound(query, range.getBegin(),
         range.getBeginBound().equals(Range.Bound.INCLUSIVE) ? ">=" : ">");
     if (!range.getBegin().isEmpty() && !range.getEnd().isEmpty()) {
@@ -1016,6 +1058,62 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     }
     appendScanBound(query, range.getEnd(),
         range.getEndBound().equals(Range.Bound.INCLUSIVE) ? "<=" : "<");
+  }
+
+  /**
+   * Detects common prefixes, appends them as equalities (col = ?),
+   * and returns the number of fields consumed.
+   */
+  private int simplifyAndAppendEqualities(StringBuilder sb, Range range) {
+    List<Field<?>> beginFields = new ArrayList<>(range.getBegin());
+    List<Field<?>> endFields = new ArrayList<>(range.getEnd());
+
+    if (beginFields.isEmpty() || endFields.isEmpty()) {
+      return 0;
+    }
+
+    int minSize = Math.min(beginFields.size(), endFields.size());
+    int count = 0;
+
+    for (int i = 0; i < minSize; i++) {
+      Field<?> begin = beginFields.get(i);
+      Field<?> end = endFields.get(i);
+
+      // 1. Exact Match Check (Name and Value)
+      if (!begin.getName().equals(end.getName()) ||
+          !Objects.equals(begin.getValue(), end.getValue())) {
+        break;
+      }
+
+      // 2. Bound Safety Check
+      // We cannot simplify "A" to "A=?" if it is the LAST field
+      // AND the bounds are EXCLUSIVE (e.g. A > 1 AND A < 1).
+      boolean isLastField = (i == beginFields.size() - 1) || (i == endFields.size() - 1);
+      if (isLastField) {
+        if (range.getBeginBound() == Range.Bound.EXCLUSIVE ||
+            range.getEndBound() == Range.Bound.EXCLUSIVE) {
+          break;
+        }
+      }
+
+      // 3. Append Equality
+      // Note: If you are not using prepared statements, replace "?" with your value formatter
+      if (count > 0) {
+        sb.append(" AND ");
+      }
+      sb.append(begin.getName()).append(formatValue(begin.getValue()));
+
+      count++;
+    }
+
+    return count;
+  }
+
+  private String formatValue(Object value) {
+    if (value instanceof String) {
+      return "'" + value + "'";
+    }
+    return String.valueOf(value);
   }
 
   private void appendScanBound(StringBuilder sb,
