@@ -18,12 +18,15 @@ package io.cdap.cdap.storage.spanner;
 
 import com.google.api.client.util.Throwables;
 import com.google.cloud.ByteArray;
+import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Key;
 import com.google.cloud.spanner.KeyRange;
 import com.google.cloud.spanner.KeySet;
+import com.google.cloud.spanner.ReadContext;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Struct;
+import com.google.cloud.spanner.TimestampBound;
 import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.Value;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
@@ -52,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -76,15 +80,17 @@ public class SpannerStructuredTable implements StructuredTable {
   private final TransactionContext transactionContext;
   private final SpannerStructuredTableSchema schema;
   private final SpannerFieldValidator fieldValidator;
+  private final DatabaseClient dbClient;
 
   /**
    * Constructor for {@link SpannerStructuredTable}.
    */
   public SpannerStructuredTable(TransactionContext transactionContext,
-      SpannerStructuredTableSchema schema) {
+      SpannerStructuredTableSchema schema, DatabaseClient dbClient) {
     this.transactionContext = transactionContext;
     this.schema = schema;
     this.fieldValidator = new SpannerFieldValidator(schema);
+    this.dbClient = dbClient;
   }
 
   @Override
@@ -458,6 +464,21 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public long count(Collection<Range> keyRanges) {
+    if (Objects.equals(schema.getTableId().getName(), "run_records")) {
+      LOG.debug("sidhdirenge - performing stale read {}", schema.getTableId().getName());
+      TimestampBound staleness = TimestampBound.ofMaxStaleness(1000, TimeUnit.MILLISECONDS);
+
+      try (ReadContext readContext = dbClient.singleUse(staleness)) {
+        Statement sqlStatement = getCountStatement(keyRanges, Collections.emptyList());
+        try (ResultSet resultSet = readContext.executeQuery(sqlStatement)) {
+          if (!resultSet.next()) {
+            return 0L;
+          }
+          return resultSet.getCurrentRowAsStruct().getLong(0);
+        }
+      }
+    }
+    LOG.debug("sidhdirenge - performing normal read {}", schema.getTableId().getName());
     try (ResultSet resultSet = transactionContext.executeQuery(
         getCountStatement(keyRanges, Collections.emptyList()))) {
       if (!resultSet.next()) {
@@ -471,6 +492,21 @@ public class SpannerStructuredTable implements StructuredTable {
   public long count(Collection<Range> keyRanges, Collection<Field<?>> filterIndexes)
       throws InvalidFieldException, IOException {
     fieldValidator.validateFilterIndexes(filterIndexes);
+    if (Objects.equals(schema.getTableId().getName(), "run_records")) {
+      LOG.debug("sidhdirenge - performing stale read {}", schema.getTableId().getName());
+      TimestampBound staleness = TimestampBound.ofMaxStaleness(1000, TimeUnit.MILLISECONDS);
+
+      try (ReadContext readContext = dbClient.singleUse(staleness)) {
+        Statement sqlStatement = getCountStatement(keyRanges, filterIndexes);
+        try (ResultSet resultSet = readContext.executeQuery(sqlStatement)) {
+          if (!resultSet.next()) {
+            return 0L;
+          }
+          return resultSet.getCurrentRowAsStruct().getLong(0);
+        }
+      }
+    }
+    LOG.debug("sidhdirenge - performing normal read {}", schema.getTableId().getName());
     try (ResultSet resultSet = transactionContext.executeQuery(
         getCountStatement(keyRanges, filterIndexes))) {
       if (!resultSet.next()) {
