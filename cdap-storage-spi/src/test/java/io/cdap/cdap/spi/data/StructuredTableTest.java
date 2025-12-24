@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.StaleReadOption;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -1644,6 +1645,60 @@ public abstract class StructuredTableTest {
                              Range.from(Collections.singletonList(Fields.intField(KEY, 0)),
                                         Range.Bound.EXCLUSIVE));
       Assert.assertEquals(max, table.count(ranges));
+    });
+  }
+
+  @Test
+  public void testCountWithFilterIndexes() throws Exception {
+    // Write records
+    int max = 5;
+    List<Collection<Field<?>>> fields = writeSimpleStructuredRows(max, "");
+    Assert.assertEquals(max, fields.size());
+    // Verify count
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Assert.assertEquals(max, table.count(Collections.singleton(Range.all())));
+
+      Collection<Range> ranges = Arrays.asList(
+          Range.to(Collections.singletonList(Fields.intField(KEY, 2)),
+              Range.Bound.INCLUSIVE),
+          // Intentionally create overlapping range
+          Range.from(Collections.singletonList(Fields.intField(KEY, 0)),
+              Range.Bound.EXCLUSIVE));
+      List<Field<?>> filterIndexes = Collections.singletonList(
+          Fields.stringField(STRING_COL, "val3"));
+      Assert.assertEquals(1,
+          table.count(ranges, filterIndexes));
+
+      // Partial primary keys range
+      ranges = Arrays.asList(Range.to(Collections.singletonList(Fields.intField(KEY, 4)),
+              Range.Bound.INCLUSIVE),
+          // Intentionally create overlapping range
+          Range.from(Collections.singletonList(Fields.intField(KEY, 0)),
+              Range.Bound.EXCLUSIVE));
+      Assert.assertEquals(1,
+          table.count(ranges, filterIndexes));
+    });
+  }
+
+  @Test
+  public void testCountWithFilterIndexesAndQueryOptions() throws Exception {
+    int max = 5;
+    List<Collection<Field<?>>> fields = writeSimpleStructuredRows(max, "");
+    Assert.assertEquals(max, fields.size());
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Assert.assertEquals(max, table.count(Collections.singleton(Range.all())));
+      Collection<Range> ranges = Arrays.asList(
+          Range.to(Collections.singletonList(Fields.intField(KEY, 2)),
+              Range.Bound.INCLUSIVE),
+          Range.from(Collections.singletonList(Fields.intField(KEY, 0)),
+              Range.Bound.EXCLUSIVE));
+      List<Field<?>> filterIndexes = Collections.singletonList(
+          Fields.stringField(STRING_COL, "val3"));
+      Assert.assertEquals(1,
+          table.count(ranges, filterIndexes,
+              new StaleReadOption(1)));
     });
   }
 
