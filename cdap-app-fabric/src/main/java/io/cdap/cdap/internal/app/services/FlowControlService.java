@@ -23,6 +23,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -30,7 +31,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -46,6 +46,7 @@ public class FlowControlService extends AbstractIdleService {
 
   private final MetricsCollectionService metricsCollectionService;
   private final TransactionRunner transactionRunner;
+  private final int readStalenessSeconds;
 
   private static final Map<String, String> tags = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace()
@@ -59,9 +60,10 @@ public class FlowControlService extends AbstractIdleService {
   @Inject
   public FlowControlService(
       MetricsCollectionService metricsCollectionService,
-      TransactionRunner transactionRunner) {
+      TransactionRunner transactionRunner, CConfiguration cConf) {
     this.metricsCollectionService = metricsCollectionService;
     this.transactionRunner = transactionRunner;
+    this.readStalenessSeconds = cConf.getInt(Constants.Metrics.FlowControl.READ_STALENESS_SECONDS, 0);
   }
 
   @Override
@@ -92,8 +94,8 @@ public class FlowControlService extends AbstractIdleService {
           programOptions.getArguments().asMap(),
           programOptions.getUserArguments().asMap(),
           programDescriptor.getArtifactId().toApiArtifactId());
-      int launchingCount = store.getFlowControlLaunchingCount();
-      int runningCount = store.getFlowControlRunningCount();
+      int launchingCount = store.getFlowControlLaunchingCount(readStalenessSeconds);
+      int runningCount = store.getFlowControlRunningCount(readStalenessSeconds);
       return new Counter(launchingCount, runningCount);
     });
     LOG.info("Added request with runId {}.", programRunId);
@@ -114,7 +116,8 @@ public class FlowControlService extends AbstractIdleService {
   public Counter getCounter() {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      return new Counter(store.getFlowControlLaunchingCount(), store.getFlowControlRunningCount());
+      return new Counter(store.getFlowControlLaunchingCount(readStalenessSeconds),
+          store.getFlowControlRunningCount(readStalenessSeconds));
     });
   }
 

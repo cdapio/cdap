@@ -71,6 +71,7 @@ import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.StaleReadOption;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.io.StringReader;
@@ -1781,13 +1782,15 @@ public class AppMetadataStore {
    *
    * @return Count of records in launching state.
    */
-  public int getFlowControlLaunchingCount() throws IOException {
+  public int getFlowControlLaunchingCount(int readStalenessSeconds) throws IOException {
     ImmutableList<Field<?>> keyPrefix = ImmutableList.of(
         Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_ACTIVE));
     Collection<Field<?>> filterIndexes =
         ImmutableList.of(
-            Fields.stringField(StoreDefinition.AppMetadataStore.FLOW_CONTROL_STATUS, TYPE_FLOW_CONTROL_LAUNCHING));
-    return (int) getRunRecordsTable().count(Arrays.asList(Range.singleton(keyPrefix)), filterIndexes);
+            Fields.stringField(StoreDefinition.AppMetadataStore.FLOW_CONTROL_STATUS,
+                TYPE_FLOW_CONTROL_LAUNCHING));
+    return (int) getRunRecordsTable().count(Collections.singletonList(Range.singleton(keyPrefix)),
+        filterIndexes, new StaleReadOption(readStalenessSeconds));
   }
 
   /**
@@ -1795,13 +1798,15 @@ public class AppMetadataStore {
    *
    * @return Count of records in running state.
    */
-  public int getFlowControlRunningCount() throws IOException {
+  public int getFlowControlRunningCount(int readStalenessSeconds) throws IOException {
     ImmutableList<Field<?>> keyPrefix = ImmutableList.of(
         Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_ACTIVE));
     Collection<Field<?>> filterIndexes =
         ImmutableList.of(
-            Fields.stringField(StoreDefinition.AppMetadataStore.FLOW_CONTROL_STATUS, TYPE_FLOW_CONTROL_RUNNING));
-    return (int) getRunRecordsTable().count(Arrays.asList(Range.singleton(keyPrefix)), filterIndexes);
+            Fields.stringField(StoreDefinition.AppMetadataStore.FLOW_CONTROL_STATUS,
+                TYPE_FLOW_CONTROL_RUNNING));
+    return (int) getRunRecordsTable().count(Collections.singletonList(Range.singleton(keyPrefix)),
+        filterIndexes, new StaleReadOption(readStalenessSeconds));
   }
 
   /**

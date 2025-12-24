@@ -1182,6 +1182,7 @@ public final class Constants {
 
       public static final String LAUNCHING_COUNT = "flowcontrol.launching.count";
       public static final String RUNNING_COUNT = "flowcontrol.running.count";
+      public static final String READ_STALENESS_SECONDS = "flowcontrol.read.staleness.seconds";
     }
 
     /**
