@@ -29,6 +29,7 @@ import com.google.cloud.spanner.Struct;
 import com.google.cloud.spanner.TimestampBound;
 import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.Value;
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.FieldSizeLimitExceededException;
@@ -545,37 +546,80 @@ public class SpannerStructuredTable implements StructuredTable {
     List<String> conditions = new ArrayList<>();
     int paramIndex = parameters.size();
 
-    int beginIndex = 1;
-    int beginFieldsCount = range.getBegin().size();
-    for (Field<?> field : range.getBegin()) {
-      // Edge case for = when we filter by the last field
-      // This is for case like ([KEY: "ns1", KEY2: 123], EXCLUSIVE, [KEY: "ns1", KEY2: 250], INCLUSIVE)
-      // We need to check the ending bound for KEY2, not KEY
-      String symbol =
-          beginIndex == beginFieldsCount && range.getBeginBound().equals(Range.Bound.EXCLUSIVE)
-              ? " > " : " >= ";
-      conditions.add(escapeName(field.getName()) + symbol + "@p_" + paramIndex);
-      parameters.put("p_" + paramIndex, getValue(field));
-      paramIndex++;
-      beginIndex++;
+    if (!range.getBegin().isEmpty()) {
+      conditions.add(getCompositeKeyCondition(new ArrayList<>(range.getBegin()), range.getBeginBound(),
+                                                      true, parameters, paramIndex));
+      paramIndex += range.getBegin().size();
     }
 
-    int endIndex = 1;
-    int endFieldsCount = range.getEnd().size();
-    for (Field<?> field : range.getEnd()) {
-      // Edge case for = when we filter by the last field
-      // This is for case like ([KEY: "ns1", KEY2: 123], INCLUSIVE, [KEY: "ns1", KEY2: 250], EXCLUSIVE)
-      // We need to check the ending bound for KEY2, not KEY
-      String symbol =
-          endIndex == endFieldsCount && range.getEndBound().equals(Range.Bound.EXCLUSIVE) ? " < "
-              : " <= ";
-      conditions.add(escapeName(field.getName()) + symbol + "@p_" + paramIndex);
-      parameters.put("p_" + paramIndex, getValue(field));
-      paramIndex++;
-      endIndex++;
+    if (!range.getEnd().isEmpty()) {
+      conditions.add(getCompositeKeyCondition(new ArrayList<>(range.getEnd()), range.getEndBound(),
+                                                      false, parameters, paramIndex));
     }
 
     return String.join(" AND ", conditions);
+  }
+
+  /**
+   * Builds a SQL fragment for one bound (lower or upper) of a range on a compound key,
+   * handling lexicographical ordering.
+   *
+   * <p>Example: For a lower bound `(Key1, Key2) >= ('A', 10)`, this generates:
+   * `((`Key1` > @p_0) OR (`Key1` = @p_0 AND `Key2` >= @p_1))`.</p>
+   * The parameters map will contain mappings for `p_0` to 'A' and `p_1` to 10.
+   *
+   * @param fields The fields forming the compound key (e.g., namespace, application, version).
+   * @param bound The bound type (INCLUSIVE or EXCLUSIVE).
+   * @param isLowerBound True if building the condition for the beginning of the range (lower bound),
+   *                     false if for the end of the range (upper bound).
+   * @param parameters The map to add Spanner parameters to. Parameter names will be generated
+   *                   starting from the current size of this map.
+   * @return A SQL fragment for the composite range bound.
+   */
+  @VisibleForTesting
+  String getCompositeKeyCondition(List<Field<?>> fields, Range.Bound bound, boolean isLowerBound,
+                                      Map<String, Value> parameters, int startParamIndex) {
+    if (fields.isEmpty()) {
+      return "";
+    }
+
+    List<String> orClauses = new ArrayList<>();
+    StringBuilder equalityPrefix = new StringBuilder();
+
+    for (int i = 0; i < fields.size(); i++) {
+      Field<?> field = fields.get(i);
+      String paramName = "p_" + (startParamIndex + i);
+      parameters.put(paramName, getValue(field));
+
+      // 1. Determine operator: strictly >/< for non-terminal fields,
+      // or based on inclusivity for the final field.
+      boolean isLast = (i == fields.size() - 1);
+      boolean isInclusive = bound == Range.Bound.INCLUSIVE;
+      String op;
+      if (isLowerBound) {
+        op = (isLast && isInclusive) ? " >= " : " > ";
+      } else {
+        op = (isLast && isInclusive) ? " <= " : " < ";
+      }
+
+      // 2. Construct the OR clause for this depth
+      String escapedName = escapeName(field.getName());
+      String condition = escapedName + op + "@" + paramName;
+      if (equalityPrefix.length() > 0) {
+        orClauses.add("(" + equalityPrefix + " AND " + condition + ")");
+      } else {
+        orClauses.add("(" + condition + ")");
+      }
+
+      if (!isLast) {
+        if (equalityPrefix.length() > 0) {
+          equalityPrefix.append(" AND ");
+        }
+        equalityPrefix.append(escapedName).append(" = @").append(paramName);
+      }
+    }
+
+    return "(" + String.join(" OR ", orClauses) + ")";
   }
 
   private String getFieldsWhereClause(Collection<Field<?>> fields, Map<String, Value> parameters) {
