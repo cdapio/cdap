@@ -21,6 +21,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.QueryOption;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -332,5 +333,24 @@ public interface StructuredTable extends Closeable {
   default long count(Collection<Range> keyRanges,
       Collection<Field<?>> filterIndexes) throws InvalidFieldException, IOException {
     throw new UnsupportedOperationException("No supported implementation.");
+  }
+
+  /**
+   * Get the number of records from the table matching the key range of specified index fields, with
+   * additional query options.
+   *
+   * @param keyRanges     key ranges of the rows to count
+   * @param filterIndexes the indexes to filter upon, OR logic will be applied
+   * @param options       optional {@link QueryOption}s to modify the query behavior (e.g., stale
+   *                      reads)
+   * @return the number of records matching the criteria
+   * @throws InvalidFieldException if a field is not part of the table schema, is not an indexed
+   *                               column, or the type does not match the schema
+   * @throws IOException           if there is an error reading from the table
+   */
+  default long count(Collection<Range> keyRanges,
+      Collection<Field<?>> filterIndexes, QueryOption... options)
+      throws InvalidFieldException, IOException {
+    return count(keyRanges, filterIndexes);
   }
 }
