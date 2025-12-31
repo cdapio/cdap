@@ -43,7 +43,8 @@ public class SpannerStructuredTableContext implements StructuredTableContext {
   @Override
   public StructuredTable getTable(StructuredTableId tableId)
       throws StructuredTableInstantiationException, TableNotFoundException {
-    return new SpannerStructuredTable(context, admin.getSpannerStructuredTableSchema(tableId));
+    return new SpannerStructuredTable(context, admin.getSpannerStructuredTableSchema(tableId),
+        admin.getDatabaseClient());
   }
 
   @Override

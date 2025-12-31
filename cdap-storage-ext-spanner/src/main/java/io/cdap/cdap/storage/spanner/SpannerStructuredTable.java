@@ -18,12 +18,15 @@ package io.cdap.cdap.storage.spanner;
 
 import com.google.api.client.util.Throwables;
 import com.google.cloud.ByteArray;
+import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Key;
 import com.google.cloud.spanner.KeyRange;
 import com.google.cloud.spanner.KeySet;
+import com.google.cloud.spanner.ReadContext;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Statement;
 import com.google.cloud.spanner.Struct;
+import com.google.cloud.spanner.TimestampBound;
 import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.Value;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
@@ -38,6 +41,8 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.QueryOption;
+import io.cdap.cdap.spi.data.table.options.StaleReadOption;
 import io.cdap.cdap.storage.spanner.compression.CompressionConfig;
 import io.cdap.cdap.storage.spanner.compression.CompressorFactory;
 import io.cdap.cdap.storage.spanner.compression.CompressorType;
@@ -52,6 +57,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -76,15 +82,17 @@ public class SpannerStructuredTable implements StructuredTable {
   private final TransactionContext transactionContext;
   private final SpannerStructuredTableSchema schema;
   private final SpannerFieldValidator fieldValidator;
+  private final DatabaseClient dbClient;
 
   /**
    * Constructor for {@link SpannerStructuredTable}.
    */
   public SpannerStructuredTable(TransactionContext transactionContext,
-      SpannerStructuredTableSchema schema) {
+      SpannerStructuredTableSchema schema, DatabaseClient dbClient) {
     this.transactionContext = transactionContext;
     this.schema = schema;
     this.fieldValidator = new SpannerFieldValidator(schema);
+    this.dbClient = dbClient;
   }
 
   @Override
@@ -477,6 +485,31 @@ public class SpannerStructuredTable implements StructuredTable {
         return 0L;
       }
       return resultSet.getCurrentRowAsStruct().getLong(0);
+    }
+  }
+
+  @Override
+  public long count(Collection<Range> keyRanges, Collection<Field<?>> filterIndexes,
+      QueryOption... options) throws InvalidFieldException, IOException {
+    Optional<StaleReadOption> staleOption = QueryOption.getOption(StaleReadOption.class, options);
+    // Fallback to strong read if option is missing OR staleness is not > 0.
+    // A staleness of 0 is effectively a strong read, which requires locks.
+    if (!staleOption.isPresent() || staleOption.get().getMaxStalenessInSeconds() <= 0) {
+      return count(keyRanges, filterIndexes);
+    }
+
+    fieldValidator.validateFilterIndexes(filterIndexes);
+    TimestampBound staleness = TimestampBound.ofMaxStaleness(
+        staleOption.get().getMaxStalenessInSeconds(), TimeUnit.SECONDS);
+    // Use a single-use snapshot to bypass transaction locks.
+    try (ReadContext readContext = dbClient.singleUse(staleness)) {
+      Statement sqlStatement = getCountStatement(keyRanges, filterIndexes);
+      try (ResultSet resultSet = readContext.executeQuery(sqlStatement)) {
+        if (!resultSet.next()) {
+          return 0L;
+        }
+        return resultSet.getCurrentRowAsStruct().getLong(0);
+      }
     }
   }
 
