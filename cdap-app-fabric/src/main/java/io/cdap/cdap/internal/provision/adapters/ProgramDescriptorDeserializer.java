@@ -67,6 +67,8 @@ public class ProgramDescriptorDeserializer implements JsonDeserializer<ProgramDe
             + programId.getApplication());
       }
     }
+    JsonElement appNameJson = specJson.get("name");
+    appSpecDeserializationContext.setAppName(appNameJson != null ? appNameJson.getAsString() : null);
     ApplicationSpecification spec = context.deserialize(specJson, ApplicationSpecification.class);
     return new ProgramDescriptor(programId, spec);
   }
