@@ -38,6 +38,8 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.store.StoreDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages Gson instances specifically configured for {@link ProvisioningTaskInfo} serialization and
@@ -48,6 +50,7 @@ import io.cdap.cdap.store.StoreDefinition;
  */
 public final class ProvisioningTaskInfoAdapter {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ProvisioningTaskInfo.class);
   private static final Gson GSON_INSTANCE_REDUCTION_ENABLED = buildGsonInternal(true);
   private static final Gson GSON_INSTANCE_REDUCTION_DISABLED = buildGsonInternal(false);
 
@@ -80,16 +83,23 @@ public final class ProvisioningTaskInfoAdapter {
    * {@link AppSpecDeserializationContext} lifecycle via
    * {@link AppSpecDeserializationContextHolder}.
    */
-  public static ProvisioningTaskInfo fromJson(String jsonString, StructuredTableContext context) {
-    boolean appSpecReductionEnabled = isAppSpecReductionEnabled(context);
-    if (appSpecReductionEnabled) {
-      AppSpecDeserializationContext operationContext = new AppSpecDeserializationContext(null,
-          getPluginDataTable(context), getUniversalPluginDataTable(context));
-      AppSpecDeserializationContextHolder.setContext(operationContext);
+  public static ProvisioningTaskInfo fromJson(String jsonString, String namespace,
+      StructuredTableContext context) {
+    boolean reductionEnabled = isAppSpecReductionEnabled(context);
+    AppSpecDeserializationContext opContext =
+        reductionEnabled ? new AppSpecDeserializationContext(namespace, getPluginDataTable(context),
+            getUniversalPluginDataTable(context)) : null;
+    if (opContext != null) {
+      AppSpecDeserializationContextHolder.setContext(opContext);
     }
     try {
-      Gson gson = getGson(appSpecReductionEnabled);
-      return gson.fromJson(jsonString, ProvisioningTaskInfo.class);
+      Gson gson = getGson(reductionEnabled);
+      ProvisioningTaskInfo taskInfo = gson.fromJson(jsonString, ProvisioningTaskInfo.class);
+      if (opContext != null && !opContext.getMissingPlugins().isEmpty()) {
+        LOG.trace("Missing plugins for application {}: {}", opContext.getAppName(),
+            opContext.getMissingPlugins());
+      }
+      return taskInfo;
     } finally {
       AppSpecDeserializationContextHolder.clearContext();
     }
