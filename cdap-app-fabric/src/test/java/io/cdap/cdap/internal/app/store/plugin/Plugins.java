@@ -95,6 +95,44 @@ public final class Plugins {
     return plugins;
   }
 
+  public static Map<String, Plugin> createDummyPluginsForReducedAppSpec() {
+    Map<String, Plugin> plugins = new HashMap<>();
+
+    Gson gson = new Gson();
+    Map<String, String> childProperties = ImmutableMap.of("child1", "childVal1", "child2",
+        "${secure(acc)}", "child3", "val3");
+    Map<String, String> properties = ImmutableMap.of("key2", gson.toJson(childProperties), "key1",
+        "val1");
+
+    PluginClass wranglerPluginClass = new PluginClass("transform", "Wrangler", null, null,
+        Collections.emptyMap(), new Requirements(Collections.emptySet()), "");
+    Plugin wranglerPlugin = new Plugin(Collections.emptyList(),
+        NamespaceId.DEFAULT.artifact("wrangler-transform", "1.0").toApiArtifactId(),
+        wranglerPluginClass, PluginProperties.builder().addAll(properties).build());
+    plugins.put("p1", wranglerPlugin);
+
+    PluginClass directivePluginClass = new PluginClass("directive", "now", null, null,
+        Collections.emptyMap(), new Requirements(Collections.emptySet()), "");
+    ArtifactId parent = NamespaceId.DEFAULT.artifact("Wrangler", "1.0").toApiArtifactId();
+    Plugin directivePlugin = new Plugin(Collections.singleton(parent),
+        NamespaceId.DEFAULT.artifact("wrangler", "1.0").toApiArtifactId(), directivePluginClass,
+        PluginProperties.builder().addAll(properties).build());
+    plugins.put("p2", directivePlugin);
+
+    PluginClass gCloudFormatTextPluginClass = PluginClass.builder()
+        .setClassName("io.cdap.plugin.format.text.input.TextInputFormatProvider").setName("text")
+        .setRequirements(Requirements.EMPTY).setType("validatingInputFormat")
+        .setDescription("Plugin for reading files in text format.").setConfigFieldName("conf")
+        .build();
+    parent = NamespaceId.DEFAULT.artifact("google-cloud", "1.0").toApiArtifactId();
+    Plugin gCloudFormatTextPlugin = new Plugin(Collections.singleton(parent),
+        NamespaceId.DEFAULT.artifact("format-text", "1.0").toApiArtifactId(),
+        gCloudFormatTextPluginClass, PluginProperties.builder().addAll(properties).build());
+    plugins.put("p3", gCloudFormatTextPlugin);
+
+    return plugins;
+  }
+
   private static void addPluginEntryToTable(StructuredTable pluginDataTable,
       String parentContextName, String pluginType, String pluginName, String artifactName,
       String pluginDataJson) throws IOException {

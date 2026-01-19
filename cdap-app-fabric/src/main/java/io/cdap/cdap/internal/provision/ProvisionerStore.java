@@ -72,7 +72,7 @@ public final class ProvisionerStore {
           StructuredRow row = iterator.next();
           result.add(ProvisioningTaskInfoAdapter.fromJson(
               row.getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD),
-              context));
+              row.getString(StoreDefinition.ProvisionerStore.NAMESPACE_FIELD), context));
         }
       }
       return result;
@@ -176,6 +176,9 @@ public final class ProvisionerStore {
         createPrimaryKey(key.getProgramRunId(), key.getType()));
     String taskInfoJson = row.map(structuredRow -> structuredRow.getString(
         StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD)).orElse(null);
-    return ProvisioningTaskInfoAdapter.fromJson(taskInfoJson, context);
+    String namespace = row.map(
+            structuredRow -> structuredRow.getString(StoreDefinition.ProvisionerStore.NAMESPACE_FIELD))
+        .orElse(null);
+    return ProvisioningTaskInfoAdapter.fromJson(taskInfoJson, namespace, context);
   }
 }

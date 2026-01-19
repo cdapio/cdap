@@ -87,6 +87,10 @@ public class ApplicationMetaCodec implements JsonSerializer<ApplicationMeta>,
             "ArtifactId in ApplicationSpecification was null for app: " + id);
       }
     }
+
+    JsonElement appNameJson = specJson.get("name");
+    appSpecDeserializationContext.setAppName(appNameJson == null ? null : appNameJson.getAsString());
+
     ApplicationSpecification spec = context.deserialize(specJson, ApplicationSpecification.class);
     return new ApplicationMeta(id, spec, null, null);
   }

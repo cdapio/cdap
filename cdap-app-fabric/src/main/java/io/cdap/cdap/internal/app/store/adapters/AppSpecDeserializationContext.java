@@ -34,7 +34,10 @@ import io.cdap.cdap.store.StoreDefinition.ArtifactStore;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
@@ -49,8 +52,10 @@ public class AppSpecDeserializationContext {
   private static final Gson GSON = new Gson();
   private ArtifactId rootArtifact;
   private String namespace;
+  private String appName;
   private final StructuredTable pluginDataTable;
   private final StructuredTable universalPluginDataTable;
+  private Set<String> missingPlugins;
   private final LoadingCache<PluginKey, PluginClass> pluginCache;
 
   /**
@@ -65,6 +70,7 @@ public class AppSpecDeserializationContext {
     this.namespace = namespace;
     this.pluginDataTable = pluginDataTable;
     this.universalPluginDataTable = universalPluginDataTable;
+    this.missingPlugins = new HashSet<>();
     this.pluginCache = CacheBuilder.newBuilder().maximumSize(10)
         .build(new CacheLoader<PluginKey, PluginClass>() {
           @Override
@@ -82,7 +88,7 @@ public class AppSpecDeserializationContext {
       row = fetchFromUniversalPluginDataTable(pluginKey);
       if (!row.isPresent()) {
         throw new PluginNotExistsException(
-            new io.cdap.cdap.proto.id.ArtifactId(pluginKey.getParentNamespace(),
+            new io.cdap.cdap.proto.id.ArtifactId(pluginKey.getArtifactNamespace(),
                 pluginKey.getArtifactName(), pluginKey.getArtifactVersion()),
             pluginKey.getPluginType(), pluginKey.getPluginName());
       }
@@ -172,6 +178,36 @@ public class AppSpecDeserializationContext {
    */
   public void setRootArtifact(ArtifactId rootArtifact) {
     this.rootArtifact = rootArtifact;
+  }
+
+  /**
+   * Appends a plugin that could not be resolved during deserialization.
+   */
+  public void appendMissingPlugin(String pluginInfo) {
+    if (pluginInfo != null) {
+      this.missingPlugins.add(pluginInfo);
+    }
+  }
+
+  /**
+   * Returns a read-only view of the plugins that were missing during the deserialization process.
+   */
+  public Set<String> getMissingPlugins() {
+    return Collections.unmodifiableSet(this.missingPlugins);
+  }
+
+  /**
+   * Sets the application name.
+   */
+  public void setAppName(String appName) {
+    this.appName = appName;
+  }
+
+  /**
+   * Gets the application name, set externally.
+   */
+  public String getAppName() {
+    return appName;
   }
 
   /**

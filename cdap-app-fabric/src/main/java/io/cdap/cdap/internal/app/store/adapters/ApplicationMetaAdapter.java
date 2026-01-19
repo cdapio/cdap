@@ -25,7 +25,10 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.ApplicationSpecificationCodec;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.spi.data.StructuredTable;
+import java.util.Set;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages Gson instances specifically configured for ApplicationMeta serialization and
@@ -38,6 +41,7 @@ public final class ApplicationMetaAdapter {
 
   private static final Gson GSON_INSTANCE_REDUCTION_ENABLED = buildGsonInternal(true);
   private static final Gson GSON_INSTANCE_REDUCTION_DISABLED = buildGsonInternal(false);
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationMetaAdapter.class);
 
   private ApplicationMetaAdapter() {
   }
@@ -55,7 +59,13 @@ public final class ApplicationMetaAdapter {
     AppSpecDeserializationContextHolder.setContext(operationContext);
     try {
       Gson gson = getGson(appSpecReductionEnabled);
-      return gson.fromJson(jsonString, classOfT);
+      T result = gson.fromJson(jsonString, classOfT);
+      Set<String> missingPlugins = operationContext.getMissingPlugins();
+      if (!missingPlugins.isEmpty()) {
+        LOG.trace("For application {} : {}", operationContext.getAppName(),
+            operationContext.getMissingPlugins());
+      }
+      return result;
     } finally {
       AppSpecDeserializationContextHolder.clearContext();
     }
