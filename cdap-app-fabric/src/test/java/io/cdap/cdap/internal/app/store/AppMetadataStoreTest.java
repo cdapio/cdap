@@ -67,6 +67,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -1673,7 +1674,7 @@ public abstract class AppMetadataStoreTest {
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     ApplicationReference appRef = new ApplicationReference(NamespaceId.DEFAULT, appName);
     ApplicationId appId = appRef.app(appName + "_version_" + 1);
-    ApplicationSpecification spec = createDummyAppSpecWithWorkflow(appId, artifactId);
+    ApplicationSpecification spec = createDummyAppSpecWithWorkflow(appId, artifactId, false);
     ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
         new ChangeDetail(null, null, null,
             creationTimeMillis + 1, true));
@@ -1696,6 +1697,33 @@ public abstract class AppMetadataStoreTest {
     });
 
     Assert.assertEquals(meta.toString(), gotMeta[0].toString());
+  }
+
+  @Test
+  public void testCreateAndGetApplicationWithMissingPlugins() {
+    String appName = "application1";
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    ApplicationReference appRef = new ApplicationReference(NamespaceId.DEFAULT, appName);
+    ApplicationId appId = appRef.app(appName + "_version_" + 1);
+    ApplicationSpecification spec = createDummyAppSpecWithWorkflow(appId, artifactId, true);
+    ApplicationMeta meta = new ApplicationMeta(spec.getName(), spec,
+        new ChangeDetail(null, null, null,
+            creationTimeMillis + 1, true));
+
+    // Deploy the first version
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      StructuredTable pluginDataTable = metaStore.getPluginDataTable();
+      Plugins.addFormatTextPluginToTable(pluginDataTable);
+      metaStore.createLatestApplicationVersion(appId, meta);
+    });
+
+    // Verify latest version
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metaStore = AppMetadataStore.create(context);
+      ApplicationMeta gotMeta  = metaStore.getApplication(appId);
+      Assert.assertEquals(meta.toString(), Objects.requireNonNull(gotMeta).toString());
+    });
   }
 
   @Test
@@ -1839,8 +1867,10 @@ public abstract class AppMetadataStoreTest {
   }
 
   private ApplicationSpecification createDummyAppSpecWithWorkflow(ApplicationId appId,
-      ArtifactId artifactId) {
-    Map<String, Plugin> plugins = Plugins.createDummyPlugins();
+      ArtifactId artifactId, boolean isAppSpecReductionEnabled) {
+    Map<String, Plugin> plugins =
+        isAppSpecReductionEnabled ? Plugins.createDummyPluginsForReducedAppSpec()
+            : Plugins.createDummyPlugins();
     ImmutableList<WorkflowNode> nodes = ImmutableList.of(
         new WorkflowActionNode("mr1",
             new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "mr1")),
@@ -1858,7 +1888,7 @@ public abstract class AppMetadataStoreTest {
         ImmutableMap.of(appId.workflow("wf1").getProgram(), wfSpec), Collections.emptyMap(),
         Collections.emptyMap(),
         Collections.emptyMap(),
-        Collections.emptyMap());
+        plugins);
   }
 
   private void runConcurrentOperation(String name, int numThreads, Runnable runnable) throws Exception {

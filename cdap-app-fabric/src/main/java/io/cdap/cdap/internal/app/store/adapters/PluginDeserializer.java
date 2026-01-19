@@ -34,12 +34,16 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Gson deserializer for {@link Plugin}s. Uses {@link AppSpecDeserializationContext} to enrich
  * {@link PluginClass} data if initially minimal.
  */
 public class PluginDeserializer implements JsonDeserializer<Plugin> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PluginDeserializer.class);
 
   /**
    * Deserializes JSON to {@link Plugin}. If {@link PluginClass#getClassName()} is empty, attempts
@@ -105,8 +109,10 @@ public class PluginDeserializer implements JsonDeserializer<Plugin> {
         exception = e;
       }
     }
-    throw new RuntimeException(
-        "No data found in plugin data table OR universal plugin data table for key: " + exception);
+    if (exception != null) {
+      appSpecDeserializationContext.appendMissingPlugin(exception.getMessage());
+    }
+    return pluginClass;
   }
 
   /**
