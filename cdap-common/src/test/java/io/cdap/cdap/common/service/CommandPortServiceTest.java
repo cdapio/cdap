@@ -62,17 +62,15 @@ public class CommandPortServiceTest {
                                                   .build();
 
     final CountDownLatch stopLatch = new CountDownLatch(1);
-    Futures.addCallback(server.start(), new FutureCallback<Service.State>() {
-      @Override
-      public void onSuccess(Service.State result) {
-        stopLatch.countDown();
-      }
+    try{
+      server.startAsync().awaitRunning();
+      stopLatch.countDown();
+    } catch (IllegalStateException e) {
+      // Service failed to start
+      stopLatch.countDown();
+      throw e;
+    }
 
-      @Override
-      public void onFailure(Throwable t) {
-        stopLatch.countDown();
-      }
-    });
     // wait a bit for service to start
     TimeUnit.SECONDS.sleep(1);
 
@@ -95,7 +93,7 @@ public class CommandPortServiceTest {
       }
 
     } finally {
-      server.stopAndWait();
+      server.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(10, handler.getCounter());
