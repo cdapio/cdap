@@ -103,7 +103,7 @@ public class AuditLogTest {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router.startAndWait();
+    router.startAsync().awaitRunning();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new TestHandler()).build();
     httpService.start();
@@ -119,7 +119,7 @@ public class AuditLogTest {
   public static void finish() throws Exception {
     cancelDiscovery.cancel();
     httpService.stop();
-    router.stopAndWait();
+    router.stopAsync().awaitTerminated();
   }
 
   @Test

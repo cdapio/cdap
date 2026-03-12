@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -165,24 +166,24 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
         store.recordProgramStart(programRunId, null, runRecord.getSystemArgs(),
             runRecord.getSourceId());
         store.recordProgramRunning(programRunId,
-            Objects.firstNonNull(runRecord.getRunTs(), System.currentTimeMillis()),
+            MoreObjects.firstNonNull(runRecord.getRunTs(), System.currentTimeMillis()),
             null, runRecord.getSourceId());
         switch (runRecord.getStatus()) {
           case SUSPENDED:
             store.recordProgramSuspend(programRunId, runRecord.getSourceId(),
-                Objects.firstNonNull(runRecord.getSuspendTs(), System.currentTimeMillis()));
+                MoreObjects.firstNonNull(runRecord.getSuspendTs(), System.currentTimeMillis()));
             break;
           case STOPPING:
             store.recordProgramStopping(programRunId, runRecord.getSourceId(),
-                Objects.firstNonNull(runRecord.getStoppingTs(), System.currentTimeMillis()),
+                MoreObjects.firstNonNull(runRecord.getStoppingTs(), System.currentTimeMillis()),
                 // if terminate timestamp is null we will shut down gracefully
-                Objects.firstNonNull(runRecord.getTerminateTs(), Long.MAX_VALUE));
+                MoreObjects.firstNonNull(runRecord.getTerminateTs(), Long.MAX_VALUE));
             break;
           case COMPLETED:
           case KILLED:
           case FAILED:
             store.recordProgramStop(programRunId,
-                Objects.firstNonNull(runRecord.getStopTs(), System.currentTimeMillis()),
+                MoreObjects.firstNonNull(runRecord.getStopTs(), System.currentTimeMillis()),
                 runRecord.getStatus(), null, runRecord.getSourceId());
             // We don't need to retain records for terminated programs, hence just delete it
             store.deleteRunIfTerminated(programRunId, runRecord.getSourceId());

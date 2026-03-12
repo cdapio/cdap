@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.file;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -117,7 +118,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
         FileSetProperties.getFilePermissions(spec.getProperties()));
   }
 
-  // similar to Objects.firstNonNull, but we allow both parameters to be null
+  // similar to MoreObjects.firstNonNull, but we allow both parameters to be null
   private <T> T secondIfFirstIsNull(T first, T second) {
     return first != null ? first : second;
   }

@@ -67,7 +67,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
+import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,12 +124,12 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     // Starts common services
     runner = previewInjector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
-      ((Service) runner).startAndWait();
+      ((Service) runner).startAsync().awaitRunning();
     }
 
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
-      createPreviewRunnerService().startAndWait();
+      createPreviewRunnerService().startAsync().awaitRunning();
     }
   }
 
@@ -144,7 +144,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
 
   private void stopQuietly(Service service) {
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     } catch (Exception e) {
       LOG.warn("Error stopping the preview runner.", e);
     }
@@ -163,8 +163,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     }
 
     PreviewRunnerService newRunnerService = createPreviewRunnerService();
-    runnerService.stopAndWait();
-    newRunnerService.startAndWait();
+    runnerService.stopAsync().awaitTerminated();
+    newRunnerService.startAsync().awaitRunning();
   }
 
   @Override
@@ -237,14 +237,14 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
   private PreviewRunnerService createPreviewRunnerService() {
     PreviewRunnerService previewRunnerService = previewRunnerServiceFactory.create(runner);
 
-    previewRunnerService.addListener(new ServiceListenerAdapter() {
+    previewRunnerService.addListener(new Service.Listener() {
 
       @Override
       public void terminated(State from) {
         previewRunnerServices.remove(previewRunnerService);
         if (previewRunnerServices.isEmpty()) {
           try {
-            stop();
+            stopAsync();
           } catch (Exception e) {
             // should not happen
             LOG.error("Failed to shutdown the preview runner manager service.", e);

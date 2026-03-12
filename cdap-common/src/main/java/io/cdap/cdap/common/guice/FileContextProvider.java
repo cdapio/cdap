@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.common.guice;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -69,7 +68,7 @@ public class FileContextProvider implements Provider<FileContext> {
         return UserGroupInformation.createRemoteUser(hdfsUser);
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Admin;
@@ -275,7 +274,13 @@ public class HttpHandlerGeneratorTest {
     @Override
     public void onError(HttpServiceResponder responder, Throwable failureCause) {
       validateTransaction();
-      Closeables.closeQuietly(channel);
+      try {
+
+        channel.close();
+
+      } catch (Exception ignored) {
+
+      }
       LOG.error("Failed when handling upload", failureCause);
     }
 

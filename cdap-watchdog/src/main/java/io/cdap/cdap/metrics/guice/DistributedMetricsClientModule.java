@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.metrics.guice;
 
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
@@ -58,7 +57,7 @@ final class DistributedMetricsClientModule extends PrivateModule {
       return datumWriterFactory.create(METRIC_RECORD_TYPE,
           schemaGenerator.generate(METRIC_RECORD_TYPE.getType()));
     } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

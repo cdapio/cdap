@@ -106,7 +106,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting SystemWorkerService");
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
     provisioningService.initializeProvisionersAndExecutors();
     twillRunnerService.start();
     remoteTwillRunnerService.start();
@@ -121,7 +121,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down SystemWorkerService");
-    tokenManager.stop();
+    tokenManager.stopAsync();
     twillRunnerService.stop();
     remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);

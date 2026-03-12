@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.scheduler;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramStatus;
@@ -153,13 +154,13 @@ public class ProgramScheduleService {
         ApplicationPermission.EXECUTE);
     ProgramSchedule existing = scheduler.getSchedule(scheduleId);
 
-    String description = Objects.firstNonNull(scheduleDetail.getDescription(),
+    String description = MoreObjects.firstNonNull(scheduleDetail.getDescription(),
         existing.getDescription());
     ProgramId programId = scheduleDetail.getProgram() == null ? existing.getProgramId()
         : existing.getProgramId().getParent().program(
             scheduleDetail.getProgram().getProgramType() == null ? existing.getProgramId().getType()
                 : ProgramType.valueOfSchedulableType(scheduleDetail.getProgram().getProgramType()),
-            Objects.firstNonNull(scheduleDetail.getProgram().getProgramName(),
+            MoreObjects.firstNonNull(scheduleDetail.getProgram().getProgramName(),
                 existing.getProgramId().getProgram()));
     if (!programId.equals(existing.getProgramId())) {
       throw new BadRequestException(
@@ -167,12 +168,12 @@ public class ProgramScheduleService {
                   + "To change the program in a schedule, please delete the schedule and create a new one.",
               existing.getName(), existing.getProgramId().toString()));
     }
-    Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(),
+    Map<String, String> properties = MoreObjects.firstNonNull(scheduleDetail.getProperties(),
         existing.getProperties());
-    Trigger trigger = Objects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
+    Trigger trigger = MoreObjects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
     List<? extends Constraint> constraints =
-        Objects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
-    Long timeoutMillis = Objects.firstNonNull(scheduleDetail.getTimeoutMillis(),
+        MoreObjects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
+    Long timeoutMillis = MoreObjects.firstNonNull(scheduleDetail.getTimeoutMillis(),
         existing.getTimeoutMillis());
     ProgramSchedule updatedSchedule = new ProgramSchedule(existing.getName(), description,
         programId, properties,

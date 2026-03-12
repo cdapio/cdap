@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -198,11 +197,11 @@ public class RuntimeClientServiceTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    runtimeServer.startAsync().awaitRunning();
 
     // Injector for the client side
     clientCConf = CConfiguration.create();
@@ -244,7 +243,7 @@ public class RuntimeClientServiceTest {
 
     clientMessagingService = clientInjector.getInstance(MessagingService.class);
     if (clientMessagingService instanceof Service) {
-      ((Service) clientMessagingService).startAndWait();
+      ((Service) clientMessagingService).startAsync().awaitRunning();
     }
     clientProgramStatePublisher = clientInjector.getInstance(
         ProgramStatePublisher.class);
@@ -253,16 +252,16 @@ public class RuntimeClientServiceTest {
   @After
   public void afterTest() {
     if (runtimeClientService != null) {
-      runtimeClientService.stopAndWait();
+      runtimeClientService.stopAsync().awaitTerminated();
     }
     runtimeClientService = null;
     if (clientMessagingService instanceof Service) {
-      ((Service) clientMessagingService).stopAndWait();
+      ((Service) clientMessagingService).stopAsync().awaitTerminated();
     }
 
-    runtimeServer.stopAndWait();
+    runtimeServer.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 
@@ -270,7 +269,7 @@ public class RuntimeClientServiceTest {
   public void testBasicRelay() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     // Send some messages to multiple topics in the client side TMS, they should get replicated to the server side TMS.
     MessagingContext messagingContext = new MultiThreadMessagingContext(
         clientMessagingService);
@@ -327,7 +326,7 @@ public class RuntimeClientServiceTest {
 
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     Map<String, String> tags = new HashMap<>();
     tags.put("key1", "value1");
     tags.put("key2", "value2");
@@ -435,7 +434,7 @@ public class RuntimeClientServiceTest {
   public void testProgramTerminate() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     MessagingContext messagingContext = new MultiThreadMessagingContext(
         clientMessagingService);
     MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
@@ -483,7 +482,7 @@ public class RuntimeClientServiceTest {
   public void testRuntimeClientStop() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
 
@@ -507,7 +506,7 @@ public class RuntimeClientServiceTest {
   public void testExternalStop() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
     MessagingContext messagingContext = new MultiThreadMessagingContext(
@@ -553,7 +552,7 @@ public class RuntimeClientServiceTest {
             .collect(Collectors.toList());
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

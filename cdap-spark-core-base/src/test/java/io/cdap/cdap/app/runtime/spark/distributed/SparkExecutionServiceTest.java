@@ -86,7 +86,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -99,7 +99,7 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 
@@ -111,7 +111,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       final SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -139,7 +139,7 @@ public class SparkExecutionServiceTest {
       // The stop future of the service should be completed after the client.completed call.
       stopFuture.get(5, TimeUnit.SECONDS);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 
@@ -153,7 +153,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, token);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -172,7 +172,7 @@ public class SparkExecutionServiceTest {
       clientToken.put("completed", "true");
       client.completed(clientToken);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
 
     // The token on the service side should get updated after the completed call.
@@ -199,7 +199,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -227,7 +227,7 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 }

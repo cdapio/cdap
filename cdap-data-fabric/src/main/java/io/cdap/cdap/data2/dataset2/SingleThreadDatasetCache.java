@@ -24,7 +24,6 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
@@ -367,7 +366,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   public void close() {
     for (TransactionAware txAware : extraTxAwares) {
       if (txAware instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) txAware);
+        try {
+
+          ((Closeable) txAware).close();
+
+        } catch (Exception ignored) {
+
+        }
       }
     }
     invalidate();

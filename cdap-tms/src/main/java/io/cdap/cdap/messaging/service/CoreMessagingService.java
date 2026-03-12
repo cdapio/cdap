@@ -17,6 +17,7 @@
 package io.cdap.cdap.messaging.service;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -25,7 +26,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -195,9 +195,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       }
       return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -207,9 +207,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       payloadTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -227,7 +227,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     // Throw if there is any failure in rollback.
     if (failure != null) {
       Throwables.propagateIfPossible(failure, TopicNotFoundException.class, IOException.class);
-      throw Throwables.propagate(failure);
+      throw new RuntimeException(failure);
     }
   }
 
@@ -267,7 +267,13 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   protected void shutDown() throws Exception {
     messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
-    Closeables.closeQuietly(tableFactory);
+    try {
+
+      tableFactory.close();
+
+    } catch (Exception ignored) {
+
+    }
     LOG.info("Core Messaging Service stopped");
   }
 
@@ -441,9 +447,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     try {
       return topicCache.get(topicId);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
-      throw Throwables.propagate(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -659,7 +665,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
               // The start offset is only used for the first payloadIterator being constructed.
               startOffset = null;
             } catch (IOException e) {
-              throw Throwables.propagate(e);
+              throw new RuntimeException(e);
             }
           } else {
             // Otherwise, the message entry is the next message

@@ -120,7 +120,7 @@
     <geronimo.version>2.0.0</geronimo.version>
     <grok.version>0.1.0</grok.version>
     <gson.version>2.3.1</gson.version>
-    <guava.version>13.0.1</guava.version>
+    <guava.version>32.0.0-jre</guava.version>
     <guice.version>4.0</guice.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
@@ -145,7 +145,7 @@
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
-    <scala2.12.version>2.12.15</scala2.12.version>
+    <scala2.12.version>2.12.18</scala2.12.version>
     <servlet.api.version>3.1.0</servlet.api.version>
     <slf4j.version>1.7.15</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
@@ -283,6 +283,11 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>failureaccess</artifactId>
+        <version>1.0.2</version>
       </dependency>
       <dependency>
         <groupId>com.google.inject</groupId>

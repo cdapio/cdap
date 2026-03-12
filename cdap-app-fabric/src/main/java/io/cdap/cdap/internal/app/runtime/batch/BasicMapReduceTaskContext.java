@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -485,7 +484,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
             flushOperations();
           }
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
 
@@ -501,7 +500,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                 flushOperations();
               }
             } catch (Exception e) {
-              throw Throwables.propagate(e);
+              throw new RuntimeException(e);
             }
           }
         };
@@ -531,7 +530,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
         try {
           flushOperations();
         } catch (Exception e) {
-          Throwables.propagateIfInstanceOf(e, IOException.class);
+          if (e instanceof IOException) {
+
+            throw (IOException) e;
+
+          }
           throw new IOException(e);
         }
       }

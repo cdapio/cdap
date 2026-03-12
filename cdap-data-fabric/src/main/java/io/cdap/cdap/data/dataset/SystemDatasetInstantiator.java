@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data.dataset;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -74,7 +74,7 @@ public class SystemDatasetInstantiator implements Closeable {
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;
     this.parentClassLoader = parentClassLoader == null
-        ? Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+        ? MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
         getClass().getClassLoader()) :
         parentClassLoader;
   }
@@ -110,7 +110,11 @@ public class SystemDatasetInstantiator implements Closeable {
       }
       return dataset;
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, ServiceUnavailableException.class);
+      if (e instanceof ServiceUnavailableException) {
+
+        throw (ServiceUnavailableException) e;
+
+      }
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
   }

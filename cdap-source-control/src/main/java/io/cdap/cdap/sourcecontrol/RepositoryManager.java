@@ -19,7 +19,6 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
@@ -204,8 +203,11 @@ public class RepositoryManager implements AutoCloseable {
           "Failed to list remotes in remote repository: " + e.getMessage(),
           e);
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e,
-          RepositoryConfigValidationException.class);
+      if (e instanceof RepositoryConfigValidationException) {
+
+        throw (RepositoryConfigValidationException) e;
+
+      }
       throw new RemoteRepositoryValidationException(
           "Failed to list remotes in remote repository.",
           e);
@@ -233,7 +235,7 @@ public class RepositoryManager implements AutoCloseable {
       CommitMeta commitMeta, Collection<S> filesChanged, BiFunction<S, String, T> hashConsumer)
       throws NoChangesToPushException, GitAPIException {
     validateInitialized();
-    final Stopwatch stopwatch = new Stopwatch().start();
+    final Stopwatch stopwatch = Stopwatch.createUnstarted().start();
 
     // if the status is clean skip
     Status preStageStatus = git.status().call();
@@ -275,7 +277,7 @@ public class RepositoryManager implements AutoCloseable {
 
     metricsContext.event(
         SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS,
-        stopwatch.stop().elapsedTime(TimeUnit.MILLISECONDS));
+        stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
     return new CommitResult<>(commit.getName(), output);
   }
 
@@ -318,10 +320,10 @@ public class RepositoryManager implements AutoCloseable {
           .setBranch(branch);
     }
 
-    final Stopwatch stopwatch = new Stopwatch().start();
+    final Stopwatch stopwatch = Stopwatch.createUnstarted().start();
     git = command.call();
     final long cloneTimeMillis = stopwatch.stop()
-        .elapsedTime(TimeUnit.MILLISECONDS);
+        .elapsed(TimeUnit.MILLISECONDS);
 
     // Record the repository size metric.
     try {

@@ -21,7 +21,6 @@ import ch.qos.logback.classic.util.ContextInitializer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -335,7 +334,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     } catch (Exception e) {
       deleteDirectory(tempDir);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

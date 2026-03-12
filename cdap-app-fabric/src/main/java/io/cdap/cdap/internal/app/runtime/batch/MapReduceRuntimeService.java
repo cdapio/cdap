@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -190,7 +189,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "MapReduceRunner-" + specification.getName();
   }
 
@@ -434,7 +433,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
     } catch (IOException e) {
       LOG.error("Failed to kill MapReduce job {}", context, e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -454,7 +453,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           }
         });
         t.setDaemon(true);
-        t.setName(getServiceName());
+        t.setName(serviceName());
         t.start();
       }
     };
@@ -1012,7 +1011,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
-    Files.copy(file, Locations.newOutputSupplier(targetLocation));
+    try (java.io.InputStream in = new java.io.FileInputStream(file);
+         java.io.OutputStream out = Locations.newOutputSupplier(targetLocation).getOutput()) {
+      ByteStreams.copy(in, out);
+    }
     return targetLocation;
   }
 
@@ -1024,8 +1026,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    ByteStreams.copy(Locations.newInputSupplier(programJarLocation),
-        Locations.newOutputSupplier(programJarCopy));
+    try (java.io.InputStream in = Locations.newInputSupplier(programJarLocation).getInput();
+         java.io.OutputStream out = Locations.newOutputSupplier(programJarCopy).getOutput()) {
+      ByteStreams.copy(in, out);
+    }
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }
@@ -1222,7 +1226,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         } catch (URISyntaxException e) {
           // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
           // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
         if (entry.getValue().isArchive()) {
           job.addCacheArchive(actualURI);

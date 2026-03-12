@@ -21,7 +21,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
+import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,7 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   @Override
   protected void doStop() throws Exception {
-    driver.stopAndWait();
+    driver.stopAsync().awaitTerminated();
   }
 
   @Override
@@ -64,7 +64,7 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   private void startListen(Service service) {
     // Forward state changes from the given service to this controller.
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void running() {
 

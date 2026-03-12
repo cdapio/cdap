@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import io.cdap.cdap.common.logging.LoggingContext;
 import java.util.Map;
@@ -130,7 +131,7 @@ public class LogMessage implements ILoggingEvent {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("loggingEvent", loggingEvent)
         .add("loggingContext", loggingContext)
         .toString();

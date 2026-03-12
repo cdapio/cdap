@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import com.google.common.base.Throwables;
+import java.nio.charset.StandardCharsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -150,7 +150,7 @@ final class HttpHandlerGenerator {
     ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     String internalName = Type.getInternalName(rawType);
-    String className = internalName + Hashing.md5().hashString(internalName);
+    String className = internalName + Hashing.md5().hashString(internalName, StandardCharsets.UTF_8);
 
     // Generate the class
     Type classType = Type.getObjectType(className);
@@ -472,7 +472,7 @@ final class HttpHandlerGenerator {
         } catch (ClassNotFoundException e) {
           // Shouldn't happen since the delegateType (user handler class) is already loaded and the method return
           // type should be loadable through the same classloader
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       } else if (!returnType.equals(Type.VOID_TYPE)) {
         throw new IllegalArgumentException("Handler method must either return void or a "
@@ -529,7 +529,7 @@ final class HttpHandlerGenerator {
         }
       } catch (ClassNotFoundException e) {
         // Shouldn't happen, as the parameter class should be loading from the user handler ClassLoader
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

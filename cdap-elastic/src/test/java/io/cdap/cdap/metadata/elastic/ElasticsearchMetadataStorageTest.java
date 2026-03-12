@@ -18,7 +18,6 @@ package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -86,7 +85,13 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
       try {
         elasticStore.dropIndex();
       } finally {
-        Closeables.closeQuietly(elasticStore);
+        try {
+
+          elasticStore.close();
+
+        } catch (Exception ignored) {
+
+        }
       }
     }
   }

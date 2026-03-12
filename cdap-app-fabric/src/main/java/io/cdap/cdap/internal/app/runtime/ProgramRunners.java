@@ -75,10 +75,10 @@ public final class ProgramRunners {
    */
   public static void startAsUser(String user, final Service service)
       throws IOException, InterruptedException {
-    runAsUser(user, new Callable<ListenableFuture<Service.State>>() {
+    runAsUser(user, new Callable<Service>() {
       @Override
-      public ListenableFuture<Service.State> call() throws Exception {
-        return service.start();
+      public Service call() throws Exception {
+        return service.startAsync();
       }
     });
   }

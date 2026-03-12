@@ -137,7 +137,11 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       try {
         stats.collect();
       } catch (Throwable t) {
-        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
+        if (t instanceof InterruptedException) {
+
+          throw (InterruptedException) t;
+
+        }
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ServiceUnavailableException || rootCause instanceof TException) {
           // Required service (for example DatasetService in case of ServiceUnavailableException
@@ -214,7 +218,7 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       return new ObjectName(OperationalStatsUtils.JMX_DOMAIN, properties);
     } catch (MalformedObjectNameException e) {
       // should never happen, since we're constructing a valid domain name, and properties is non-empty
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

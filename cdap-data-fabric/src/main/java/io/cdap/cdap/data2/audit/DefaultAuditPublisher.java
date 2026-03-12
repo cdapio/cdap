@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.audit;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -69,7 +70,7 @@ public final class DefaultAuditPublisher implements AuditPublisher {
   @Override
   public void publish(MetadataEntity metadataEntity, AuditType auditType,
       AuditPayload auditPayload) {
-    String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
+    String userId = MoreObjects.firstNonNull(SecurityRequestContext.getUserId(), "");
     AuditMessage auditMessage = new AuditMessage(System.currentTimeMillis(), metadataEntity, userId,
         auditType, auditPayload);
     LOG.trace("Publishing audit message {}", auditMessage);

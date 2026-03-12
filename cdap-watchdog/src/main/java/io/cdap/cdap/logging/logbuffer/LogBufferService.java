@@ -102,7 +102,12 @@ public class LogBufferService extends AbstractIdleService {
     // load log pipelines
     List<LogBufferProcessorPipeline> bufferPipelines = loadLogPipelines();
     // start all the log pipelines
-    validateAllFutures(Iterables.transform(pipelines, Service::start));
+    for (Service pipeline : pipelines) {
+      pipeline.startAsync();
+    }
+    for (Service pipeline : pipelines) {
+      pipeline.awaitRunning();
+    }
 
     // recovery service and http handler will send log events to log pipelines. In order to avoid deleting file while
     // reading them in recovery service, we will pass in an atomic boolean will be set to true by recovery service
@@ -111,7 +116,7 @@ public class LogBufferService extends AbstractIdleService {
     // start log recovery service to recover all the pending logs.
     recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers,
         startCleanup);
-    recoveryService.startAndWait();
+    recoveryService.startAsync().awaitRunning();
 
     // create concurrent writer
     ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf,
@@ -231,9 +236,14 @@ public class LogBufferService extends AbstractIdleService {
       httpService.stop();
     }
     if (recoveryService != null) {
-      recoveryService.stopAndWait();
+      recoveryService.stopAsync().awaitTerminated();
     }
     // Stops all pipeline
-    validateAllFutures(Iterables.transform(pipelines, Service::stop));
+    for (Service pipeline : pipelines) {
+      pipeline.stopAsync();
+    }
+    for (Service pipeline : pipelines) {
+      pipeline.awaitTerminated();
+    }
   }
 }

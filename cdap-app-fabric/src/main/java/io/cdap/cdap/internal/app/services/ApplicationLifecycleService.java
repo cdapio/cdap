@@ -346,7 +346,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         consumer.accept(applicationDetail);
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -825,7 +825,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       applicationWithPrograms = manager.deploy(deploymentInfo).get();
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), Exception.class);
-      throw Throwables.propagate(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
         applicationWithPrograms.getSpecification());
@@ -1147,7 +1147,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       applicationWithPrograms = manager.deploy(deploymentInfo).get();
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), Exception.class);
-      throw Throwables.propagate(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
 
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),

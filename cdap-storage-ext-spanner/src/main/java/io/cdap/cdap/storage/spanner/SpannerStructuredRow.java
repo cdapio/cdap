@@ -82,7 +82,7 @@ public class SpannerStructuredRow implements StructuredRow {
     try {
       value = compressor.decompress(value);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return value;
   }
@@ -116,7 +116,7 @@ public class SpannerStructuredRow implements StructuredRow {
       Compressor compressor = CompressorFactory.getCompressor(compressorType);
       value = compressor.decompress(value);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return value;
   }

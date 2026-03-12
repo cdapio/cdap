@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table.leveldb;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.table.Result;
 import io.cdap.cdap.api.dataset.table.Row;
@@ -618,7 +617,7 @@ public class LevelDBTableCore {
           return new Result(result.getFirst(), result.getSecond());
         }
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

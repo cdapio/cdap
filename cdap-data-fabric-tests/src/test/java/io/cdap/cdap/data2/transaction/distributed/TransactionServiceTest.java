@@ -91,7 +91,7 @@ public class TransactionServiceTest {
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @After
@@ -100,7 +100,7 @@ public class TransactionServiceTest {
       miniDfsCluster.shutdown();
     } finally {
       if (zkServer != null) {
-        zkServer.stopAndWait();
+        zkServer.stopAsync().awaitTerminated();
       }
     }
   }
@@ -146,7 +146,7 @@ public class TransactionServiceTest {
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     try {
       final Table table = createTable("myTable");
@@ -161,7 +161,7 @@ public class TransactionServiceTest {
       TransactionService first = createTxService(zkServer.getConnectionStr(),
           Networks.getRandomPort(),
           hConf, tmpFolder.newFolder());
-      first.startAndWait();
+      first.startAsync().awaitRunning();
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, null, "val1");
 
@@ -171,7 +171,7 @@ public class TransactionServiceTest {
           hConf, tmpFolder.newFolder());
       // NOTE: we don't have to wait for start as client should pick it up anyways, but we do wait to ensure
       //       the case with two active is handled well
-      second.startAndWait();
+      second.startAsync().awaitRunning();
       // wait for affect a bit
       TimeUnit.SECONDS.sleep(1);
 
@@ -179,7 +179,7 @@ public class TransactionServiceTest {
       verifyGetAndPut(table, txExecutor, "val1", "val2");
 
       // shutting down the first one is fine: we have another one to pick up the leader role
-      first.stopAndWait();
+      first.stopAsync().awaitTerminated();
 
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, "val2", "val3");
@@ -191,7 +191,7 @@ public class TransactionServiceTest {
       // NOTE: we don't have to wait for start as client should pick it up anyways
       third.start();
       // stopping second one
-      second.stopAndWait();
+      second.stopAsync().awaitTerminated();
 
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, "val3", "val4");
@@ -203,7 +203,7 @@ public class TransactionServiceTest {
       try {
         dropTable("myTable");
       } finally {
-        zkClient.stopAndWait();
+        zkClient.stopAsync().awaitTerminated();
       }
     }
   }
@@ -268,7 +268,7 @@ public class TransactionServiceTest {
             new AuthorizationTestModule(),
             new AuthorizationEnforcementModule().getInMemoryModules(),
             new AuthenticationContextModules().getNoOpModule());
-    injector.getInstance(ZKClientService.class).startAndWait();
+    injector.getInstance(ZKClientService.class).startAsync().awaitRunning();
 
     return injector.getInstance(TransactionService.class);
   }

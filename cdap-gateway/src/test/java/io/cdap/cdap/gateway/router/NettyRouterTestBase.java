@@ -531,7 +531,7 @@ public abstract class NettyRouterTestBase {
       });
       t.start();
 
-      defaultServer1.stopAndWait();
+      defaultServer1.stopAsync().awaitTerminated();
       Assert.assertEquals(200, result.get().intValue());
       Assert.assertEquals(1, defaultServer1.getNumRequests());
       Assert.assertEquals(1, defaultServer2.getNumRequests());
@@ -561,7 +561,7 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router1.startAndWait();
+    router1.startAsync().awaitRunning();
 
     // Configure router with config-reloading time set to 0
     CConfiguration cConfSpy2 = Mockito.spy(CConfiguration.create());
@@ -573,15 +573,15 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router2.startAndWait();
+    router2.startAsync().awaitRunning();
 
     // Wait sometime for cConf to reload
     Thread.sleep(TimeUnit.MILLISECONDS.convert(reloadIntervalSeconds + 2, TimeUnit.SECONDS));
 
     Mockito.verify(cConfSpy1, Mockito.times(1)).reloadConfiguration();
     Mockito.verify(cConfSpy2, Mockito.never()).reloadConfiguration();
-    router1.stopAndWait();
-    router2.stopAndWait();
+    router1.stopAsync().awaitTerminated();
+    router2.stopAsync().awaitTerminated();
   }
 
   protected HttpURLConnection openUrl(URL url) throws Exception {

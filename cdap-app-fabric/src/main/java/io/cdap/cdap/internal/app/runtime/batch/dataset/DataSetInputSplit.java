@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.Splits;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -72,7 +71,7 @@ public class DataSetInputSplit extends InputSplit implements Writable {
       }
       split = Splits.deserialize(in, classLoader);
     } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

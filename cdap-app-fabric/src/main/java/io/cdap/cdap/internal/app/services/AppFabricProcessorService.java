@@ -146,29 +146,42 @@ public class AppFabricProcessorService extends AbstractIdleService {
             Constants.Logging.COMPONENT_NAME,
             Service.APP_FABRIC_PROCESSOR));
     LOG.info("Starting AppFabric processor service.");
-    List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     // Only for RBAC instances
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
-      futuresList.add(auditLogSubscriberService.start());
+      auditLogSubscriberService.startAsync();
     }
 
-    futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
-        runRecordCounterService.start(),
-        runDataTimeToLiveService.start(),
-        operationNotificationSubscriberService.start()
-    ));
-    Futures.allAsList(futuresList).get();
+    provisioningService.startAsync();
+    applicationLifecycleService.startAsync();
+    bootstrapService.startAsync();
+    programRuntimeService.startAsync();
+    programNotificationSubscriberService.startAsync();
+    programStopSubscriberService.startAsync();
+    runRecordCorrectorService.startAsync();
+    programRunStatusMonitorService.startAsync();
+    coreSchedulerService.startAsync();
+    runRecordCounterService.startAsync();
+    runDataTimeToLiveService.startAsync();
+    operationNotificationSubscriberService.startAsync();
+
+    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
+        && cConf.getBoolean(Constants.Security.ENABLED)) {
+      auditLogSubscriberService.awaitRunning();
+    }
+    provisioningService.awaitRunning();
+    applicationLifecycleService.awaitRunning();
+    bootstrapService.awaitRunning();
+    programRuntimeService.awaitRunning();
+    programNotificationSubscriberService.awaitRunning();
+    programStopSubscriberService.awaitRunning();
+    runRecordCorrectorService.awaitRunning();
+    programRunStatusMonitorService.awaitRunning();
+    coreSchedulerService.awaitRunning();
+    runRecordCounterService.awaitRunning();
+    runDataTimeToLiveService.awaitRunning();
+    operationNotificationSubscriberService.awaitRunning();
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
@@ -196,20 +209,20 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    coreSchedulerService.stopAndWait();
-    bootstrapService.stopAndWait();
-    systemAppManagementService.stopAndWait();
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    runRecordCorrectorService.stopAndWait();
-    programRunStatusMonitorService.stopAndWait();
-    provisioningService.stopAndWait();
-    runRecordCounterService.stopAndWait();
-    runDataTimeToLiveService.stopAndWait();
-    operationNotificationSubscriberService.stopAndWait();
-    auditLogSubscriberService.stopAndWait();
+    coreSchedulerService.stopAsync().awaitTerminated();
+    bootstrapService.stopAsync().awaitTerminated();
+    systemAppManagementService.stopAsync().awaitTerminated();
+    programRuntimeService.stopAsync().awaitTerminated();
+    applicationLifecycleService.stopAsync().awaitTerminated();
+    programNotificationSubscriberService.stopAsync().awaitTerminated();
+    programStopSubscriberService.stopAsync().awaitTerminated();
+    runRecordCorrectorService.stopAsync().awaitTerminated();
+    programRunStatusMonitorService.stopAsync().awaitTerminated();
+    provisioningService.stopAsync().awaitTerminated();
+    runRecordCounterService.stopAsync().awaitTerminated();
+    runDataTimeToLiveService.stopAsync().awaitTerminated();
+    operationNotificationSubscriberService.stopAsync().awaitTerminated();
+    auditLogSubscriberService.stopAsync().awaitTerminated();
     LOG.info("AppFabric processor service stopped.");
   }
 

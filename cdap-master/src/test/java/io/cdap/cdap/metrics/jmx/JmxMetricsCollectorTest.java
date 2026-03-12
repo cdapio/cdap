@@ -98,7 +98,7 @@ public class JmxMetricsCollectorTest {
     cConf.setInt(Constants.JmxMetricsCollector.POLL_INTERVAL_SECS, 1);
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
     JmxMetricsCollector jmxMetrics = new JmxMetricsCollector(cConf, publisher, metricTags);
-    jmxMetrics.startAndWait();
+    jmxMetrics.startAsync().awaitRunning();
     verify(publisher, times(1)).initialize();
     // Poll should run at 0, 1. 2 secs buffer.
     Tasks.waitFor(true, () -> {

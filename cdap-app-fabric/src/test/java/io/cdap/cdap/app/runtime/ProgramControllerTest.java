@@ -87,7 +87,7 @@ public class ProgramControllerTest {
       }, executor);
 
       startCompletion.get();
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
 
     Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));

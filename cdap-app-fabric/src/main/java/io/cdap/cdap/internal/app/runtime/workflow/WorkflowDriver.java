@@ -356,7 +356,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       future.get();
     } catch (Throwable t) {
       Throwables.propagateIfPossible(t, Exception.class);
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     } finally {
       executorService.shutdownNow();
       executorTerminateLatch.await();
@@ -402,7 +402,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } catch (ExecutionException e) {
           // Unwrap the cause
           Throwables.propagateIfPossible(e.getCause(), Exception.class);
-          throw Throwables.propagate(e.getCause());
+          throw new RuntimeException(e.getCause());
         }
       }
     } finally {

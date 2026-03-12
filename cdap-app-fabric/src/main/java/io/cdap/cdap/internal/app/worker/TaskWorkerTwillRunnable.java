@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -65,7 +64,7 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
+import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,7 +138,11 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
       doInitialize(context);
     } catch (Exception e) {
       LOG.error("Encountered error while initializing TaskWorkerTwillRunnable", e);
-      Throwables.propagateIfPossible(e);
+      if (e instanceof RuntimeException) {
+
+        throw (RuntimeException) e;
+
+      }
       throw new RuntimeException(e);
     }
   }
@@ -147,7 +150,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    taskWorker.addListener(new ServiceListenerAdapter() {
+    taskWorker.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -160,7 +163,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting task worker");
-    taskWorker.start();
+    taskWorker.startAsync();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -173,9 +176,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping task worker");
-    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
+    Optional.ofNullable(metricsCollectionService).ifPresent(MetricsCollectionService::stopAsync);
     if (taskWorker != null) {
-      taskWorker.stop();
+      taskWorker.stopAsync();
     }
   }
 
@@ -203,7 +206,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,

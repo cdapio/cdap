@@ -250,7 +250,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       String localizedFile = localizedFiles.get(uri);
       if (localizedFile == null) {
         String fileName =
-            Hashing.md5().hashString(uri.toString()).toString() + "-" + getFileName(uri);
+            Hashing.md5().hashString(uri.toString(), StandardCharsets.UTF_8).toString() + "-" + getFileName(uri);
         localizedFile = localizedDir + "/" + fileName;
         try (InputStream inputStream = openUri(uri)) {
           LOG.debug(

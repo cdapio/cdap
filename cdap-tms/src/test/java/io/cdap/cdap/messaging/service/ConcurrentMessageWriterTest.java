@@ -232,14 +232,14 @@ public class ConcurrentMessageWriterTest {
       executor.submit(new Runnable() {
         @Override
         public void run() {
-          Stopwatch stopwatch = new Stopwatch();
+          Stopwatch stopwatch = Stopwatch.createUnstarted();
           try {
             barrier.await();
             stopwatch.start();
             for (int i = 0; i < requestPerThread; i++) {
               writer.persist(new TestStoreRequest(topicId, payload), metadata);
             }
-            LOG.info("Complete time for thread {} is {} ms", threadId, stopwatch.elapsedMillis());
+            LOG.info("Complete time for thread {} is {} ms", threadId, stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS));
           } catch (Exception e) {
             LOG.error("Exception raised when persisting.", e);
           }
@@ -247,13 +247,13 @@ public class ConcurrentMessageWriterTest {
       });
     }
 
-    Stopwatch stopwatch = new Stopwatch();
+    Stopwatch stopwatch = Stopwatch.createUnstarted();
     barrier.await();
     stopwatch.start();
     executor.shutdown();
     Assert.assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
 
-    LOG.info("Total time passed: {} ms", stopwatch.elapsedMillis());
+    LOG.info("Total time passed: {} ms", stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS));
 
     // Validate that the total number of messages written is correct
     List<RawMessage> messages = testWriter.getMessages().get(topicId);
