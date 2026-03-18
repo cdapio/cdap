@@ -101,16 +101,41 @@ public class SpannerStructuredTable implements StructuredTable {
    */
   private String getCaller() {
     StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-    // Index 0 is getStackTrace, Index 1 is getCaller, so start at 2
+    StringBuilder callerPath = new StringBuilder();
+    int depth = 0;
+
     for (int i = 2; i < elements.length; i++) {
       String className = elements[i].getClassName();
-      // Skip Spanner storage classes and native Thread calls to find the actual CDAP caller
+
+      // Skip Spanner storage classes, base Java internals, and Netty web server internals
       if (!className.startsWith("io.cdap.cdap.storage.spanner") &&
-          !className.startsWith("java.lang.Thread")) {
-        return className + "." + elements[i].getMethodName() + ":" + elements[i].getLineNumber();
+          !className.startsWith("java.") &&
+          !className.startsWith("javax.") &&
+          !className.startsWith("sun.") &&
+          !className.startsWith("jdk.") &&
+          !className.startsWith("io.netty.")) {
+
+        // Strip the long package name for readability (e.g., just "AppMetadataStore")
+        String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
+
+        if (callerPath.length() > 0) {
+          callerPath.append(" <- ");
+        }
+
+        callerPath.append(simpleClassName)
+            .append(".")
+            .append(elements[i].getMethodName())
+            .append(":")
+            .append(elements[i].getLineNumber());
+
+        depth++;
+        // Capture up to 4 levels deep. This is usually enough to hit the HttpHandler
+        if (depth >= 4) {
+          break;
+        }
       }
     }
-    return "UnknownCaller";
+    return callerPath.length() > 0 ? callerPath.toString() : "UnknownCaller";
   }
 
   @Override
