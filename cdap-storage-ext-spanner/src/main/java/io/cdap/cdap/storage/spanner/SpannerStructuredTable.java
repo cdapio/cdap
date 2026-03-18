@@ -96,29 +96,53 @@ public class SpannerStructuredTable implements StructuredTable {
     this.dbClient = dbClient;
   }
 
+  /**
+   * Helper method to dynamically extract the caller outside of this package.
+   */
+  private String getCaller() {
+    StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+    // Index 0 is getStackTrace, Index 1 is getCaller, so start at 2
+    for (int i = 2; i < elements.length; i++) {
+      String className = elements[i].getClassName();
+      // Skip Spanner storage classes and native Thread calls to find the actual CDAP caller
+      if (!className.startsWith("io.cdap.cdap.storage.spanner") &&
+          !className.startsWith("java.lang.Thread")) {
+        return className + "." + elements[i].getMethodName() + ":" + elements[i].getLineNumber();
+      }
+    }
+    return "UnknownCaller";
+  }
+
   @Override
   public void upsert(Collection<Field<?>> fields) throws InvalidFieldException {
-    Map<String, Field<?>> fieldMap = fields.stream()
-        .collect(Collectors.toMap(Field::getName, Function.identity()));
-    List<Field<?>> primaryKeyFields = new ArrayList<>();
+    long startTime = System.currentTimeMillis();
+    try {
+      Map<String, Field<?>> fieldMap = fields.stream()
+          .collect(Collectors.toMap(Field::getName, Function.identity()));
+      List<Field<?>> primaryKeyFields = new ArrayList<>();
 
-    for (String key : schema.getPrimaryKeys()) {
-      Field<?> field = fieldMap.get(key);
-      if (field == null) {
-        throw new InvalidFieldException(schema.getTableId(), key,
-            "Missing primary key field " + key);
+      for (String key : schema.getPrimaryKeys()) {
+        Field<?> field = fieldMap.get(key);
+        if (field == null) {
+          throw new InvalidFieldException(schema.getTableId(), key,
+              "Missing primary key field " + key);
+        }
+        primaryKeyFields.add(field);
       }
-      primaryKeyFields.add(field);
-    }
 
-    // Cloud Spanner doesn't support upsert. The best we can do is to read the existing row and update it if it exists
-    // in the same transaction.
-    Optional<StructuredRow> row = read(primaryKeyFields,
-        Collections.singleton(primaryKeyFields.get(0).getName()));
-    if (row.isPresent()) {
-      update(fields);
-    } else {
-      insert(fields);
+      // Cloud Spanner doesn't support upsert. The best we can do is to read the existing row and update it if it exists
+      // in the same transaction.
+      Optional<StructuredRow> row = read(primaryKeyFields,
+          Collections.singleton(primaryKeyFields.get(0).getName()));
+      if (row.isPresent()) {
+        update(fields);
+      } else {
+        insert(fields);
+      }
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: upsert | Time: {} ms | Table: {}",
+          Thread.currentThread().getName(), getCaller(), duration, schema.getTableId().getName());
     }
   }
 
@@ -156,8 +180,6 @@ public class SpannerStructuredTable implements StructuredTable {
         + " WHERE " + primaryKeyFields.stream().map(this::fieldToParam)
         .collect(Collectors.joining(" AND "));
 
-    LOG.trace("Updating row: {}", sql);
-
     Statement.Builder builder = Statement.newBuilder(sql);
     // Bind values for updateFields.
     for (Field<?> field : updateFields) {
@@ -169,7 +191,14 @@ public class SpannerStructuredTable implements StructuredTable {
     }
     Statement statement = builder.build();
 
-    transactionContext.executeUpdate(statement);
+    long startTime = System.currentTimeMillis();
+    try {
+      transactionContext.executeUpdate(statement);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: update | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
@@ -198,9 +227,16 @@ public class SpannerStructuredTable implements StructuredTable {
     Set<String> queryColumns = keys.stream().map(Field::getName).collect(Collectors.toSet());
     queryColumns.addAll(columns);
 
-    Struct row = transactionContext.readRow(schema.getTableId().getName(), createKey(keys),
-        queryColumns);
-    return Optional.ofNullable(row).map(r -> new SpannerStructuredRow(schema, r));
+    long startTime = System.currentTimeMillis();
+    try {
+      Struct row = transactionContext.readRow(schema.getTableId().getName(), createKey(keys),
+          queryColumns);
+      return Optional.ofNullable(row).map(r -> new SpannerStructuredRow(schema, r));
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: read (Point) | Time: {} ms | Table: {}",
+          Thread.currentThread().getName(), getCaller(), duration, schema.getTableId().getName());
+    }
   }
 
   @Override
@@ -223,8 +259,15 @@ public class SpannerStructuredTable implements StructuredTable {
           .build());
     }
 
-    return new ResultSetIterator(schema, transactionContext.read(schema.getTableId().getName(),
-        keySet, schema.getFieldNames()));
+    long startTime = System.currentTimeMillis();
+    try {
+      return new ResultSetIterator(schema, transactionContext.read(schema.getTableId().getName(),
+          keySet, schema.getFieldNames()));
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: scan (KeySet) | Time: {} ms | Table: {}",
+          Thread.currentThread().getName(), getCaller(), duration, schema.getTableId().getName());
+    }
   }
 
   private boolean isPrefixedPrimaryKeyRange(Range range) {
@@ -249,10 +292,18 @@ public class SpannerStructuredTable implements StructuredTable {
     KeySet keySet = KeySet.singleKey(createKey(Collections.singleton(index)));
     String indexName = SpannerStructuredTableAdmin.getIndexName(schema.getTableId(),
         index.getName());
-    ResultSet resultSet = transactionContext.readUsingIndex(schema.getTableId().getName(),
-        indexName,
-        keySet, schema.getFieldNames());
-    return new ResultSetIterator(schema, resultSet);
+
+    long startTime = System.currentTimeMillis();
+    try {
+      ResultSet resultSet = transactionContext.readUsingIndex(schema.getTableId().getName(),
+          indexName,
+          keySet, schema.getFieldNames());
+      return new ResultSetIterator(schema, resultSet);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: scan (Index) | Time: {} ms | Index: {}",
+          Thread.currentThread().getName(), getCaller(), duration, indexName);
+    }
   }
 
   @Override
@@ -279,7 +330,16 @@ public class SpannerStructuredTable implements StructuredTable {
             .collect(Collectors.joining(","))
             + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
-    return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
+
+    Statement statement = builder.build();
+    long startTime = System.currentTimeMillis();
+    try {
+      return new ResultSetIterator(schema, transactionContext.executeQuery(statement));
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: scan (Filtered SQL) | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
@@ -301,7 +361,16 @@ public class SpannerStructuredTable implements StructuredTable {
             + " ORDER BY " + (sortOrder == SortOrder.ASC ? orderByField : orderByField + " DESC")
             + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
-    return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
+
+    Statement statement = builder.build();
+    long startTime = System.currentTimeMillis();
+    try {
+      return new ResultSetIterator(schema, transactionContext.executeQuery(statement));
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: scan (Ordered SQL) | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
@@ -325,74 +394,97 @@ public class SpannerStructuredTable implements StructuredTable {
             .collect(Collectors.joining(","))
             + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
-    return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
+
+    Statement statement = builder.build();
+    long startTime = System.currentTimeMillis();
+    try {
+      return new ResultSetIterator(schema, transactionContext.executeQuery(statement));
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: multiScan | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue,
       Field<?> newValue) throws InvalidFieldException, IllegalArgumentException {
-    if (oldValue.getFieldType() != newValue.getFieldType()) {
-      throw new IllegalArgumentException(
-          String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
-              oldValue.getFieldType(), newValue.getFieldType()));
-    }
-    if (!oldValue.getName().equals(newValue.getName())) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Trying to compare and swap different fields. Old Value = %s, New Value = %s",
-              oldValue, newValue));
-    }
-    if (schema.isPrimaryKeyColumn(oldValue.getName())) {
-      throw new IllegalArgumentException("Cannot use compare and swap on a primary key field");
-    }
+    long startTime = System.currentTimeMillis();
+    try {
+      if (oldValue.getFieldType() != newValue.getFieldType()) {
+        throw new IllegalArgumentException(
+            String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
+                oldValue.getFieldType(), newValue.getFieldType()));
+      }
+      if (!oldValue.getName().equals(newValue.getName())) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Trying to compare and swap different fields. Old Value = %s, New Value = %s",
+                oldValue, newValue));
+      }
+      if (schema.isPrimaryKeyColumn(oldValue.getName())) {
+        throw new IllegalArgumentException("Cannot use compare and swap on a primary key field");
+      }
 
-    StructuredRow existing = read(keys, Collections.singleton(oldValue.getName())).orElse(null);
+      StructuredRow existing = read(keys, Collections.singleton(oldValue.getName())).orElse(null);
 
-    // Check if the existing value is as expected in the oldValue
-    if (!isFieldEquals(oldValue, existing)) {
-      return false;
-    }
+      // Check if the existing value is as expected in the oldValue
+      if (!isFieldEquals(oldValue, existing)) {
+        return false;
+      }
 
-    List<Field<?>> updateFields = new ArrayList<>(keys);
-    updateFields.add(newValue);
-    if (existing == null) {
-      insert(updateFields);
-    } else {
-      update(updateFields);
+      List<Field<?>> updateFields = new ArrayList<>(keys);
+      updateFields.add(newValue);
+      if (existing == null) {
+        insert(updateFields);
+      } else {
+        update(updateFields);
+      }
+      return true;
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: compareAndSwap | Time: {} ms",
+          Thread.currentThread().getName(), getCaller(), duration);
     }
-    return true;
   }
 
   @Override
   public void increment(Collection<Field<?>> keys,
       String column, long amount) throws InvalidFieldException, IllegalArgumentException {
-    if (schema.isPrimaryKeyColumn(column)) {
-      throw new IllegalArgumentException("Cannot use increment on a primary key field");
-    }
-    FieldType.Type type = schema.getType(column);
-    if (type == null) {
-      throw new InvalidFieldException(schema.getTableId(), column,
-          "Column " + column + " does not exist");
-    }
-    if (type != FieldType.Type.LONG) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Trying to increment a column of type %s. Only %s column type can be incremented",
-              type, FieldType.Type.LONG));
-    }
-    fieldValidator.validatePrimaryKeys(keys, false);
+    long startTime = System.currentTimeMillis();
+    try {
+      if (schema.isPrimaryKeyColumn(column)) {
+        throw new IllegalArgumentException("Cannot use increment on a primary key field");
+      }
+      FieldType.Type type = schema.getType(column);
+      if (type == null) {
+        throw new InvalidFieldException(schema.getTableId(), column,
+            "Column " + column + " does not exist");
+      }
+      if (type != FieldType.Type.LONG) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Trying to increment a column of type %s. Only %s column type can be incremented",
+                type, FieldType.Type.LONG));
+      }
+      fieldValidator.validatePrimaryKeys(keys, false);
 
-    StructuredRow existing = read(keys, Collections.singleton(column)).orElse(null);
-    List<Field<?>> fields = new ArrayList<>(keys);
-    fields.add(Fields.longField(column,
-        amount + (existing == null ? 0L : Objects.requireNonNull(existing.getLong(column)))));
+      StructuredRow existing = read(keys, Collections.singleton(column)).orElse(null);
+      List<Field<?>> fields = new ArrayList<>(keys);
+      fields.add(Fields.longField(column,
+          amount + (existing == null ? 0L : Objects.requireNonNull(existing.getLong(column)))));
 
-    if (existing == null) {
-      // Insert a new row if there is no existing row
-      insert(fields);
-    } else {
-      // Update the row by incrementing the amount
-      update(fields);
+      if (existing == null) {
+        // Insert a new row if there is no existing row
+        insert(fields);
+      } else {
+        // Update the row by incrementing the amount
+        update(fields);
+      }
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: increment | Time: {} ms",
+          Thread.currentThread().getName(), getCaller(), duration);
     }
   }
 
@@ -409,14 +501,29 @@ public class SpannerStructuredTable implements StructuredTable {
             (builder1, builder2) -> builder1)
         .build();
 
-    transactionContext.executeUpdate(statement);
+    long startTime = System.currentTimeMillis();
+    try {
+      transactionContext.executeUpdate(statement);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: delete | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
   public void deleteAll(Range range) throws InvalidFieldException {
     fieldValidator.validateScanRange(range);
     Statement statement = buildRangeDeleteStatement(range);
-    transactionContext.executeUpdate(statement);
+
+    long startTime = System.currentTimeMillis();
+    try {
+      transactionContext.executeUpdate(statement);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: deleteAll | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
@@ -425,8 +532,15 @@ public class SpannerStructuredTable implements StructuredTable {
     keyRange.getBegin().forEach(fieldValidator::validateField);
     keyRange.getEnd().forEach(fieldValidator::validateField);
     Statement statement = buildRangeDeleteStatement(keyRange);
-    LOG.trace("Executing scanDeleteAll statement: {}", statement);
-    transactionContext.executeUpdate(statement);
+
+    long startTime = System.currentTimeMillis();
+    try {
+      transactionContext.executeUpdate(statement);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: scanDeleteAll | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   private Statement buildRangeDeleteStatement(Range range) {
@@ -455,24 +569,36 @@ public class SpannerStructuredTable implements StructuredTable {
         + " SET " + fields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
         + " WHERE " + (condition.isEmpty() ? "true" : condition);
 
-    LOG.trace("Updating rows: {}", sql);
-
     Statement.Builder stmtBuilder = fields.stream().reduce(Statement.newBuilder(sql),
         (builder, field) -> builder.bind(field.getName())
             .to(getValue(field)),
         (builder1, builder2) -> builder1);
     parameters.forEach((name, value) -> stmtBuilder.bind(name).to(value));
-    transactionContext.executeUpdate(stmtBuilder.build());
+
+    Statement statement = stmtBuilder.build();
+    long startTime = System.currentTimeMillis();
+    try {
+      transactionContext.executeUpdate(statement);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: updateAll | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   @Override
   public long count(Collection<Range> keyRanges) {
-    try (ResultSet resultSet = transactionContext.executeQuery(
-        getCountStatement(keyRanges, Collections.emptyList()))) {
+    Statement statement = getCountStatement(keyRanges, Collections.emptyList());
+    long startTime = System.currentTimeMillis();
+    try (ResultSet resultSet = transactionContext.executeQuery(statement)) {
       if (!resultSet.next()) {
         return 0L;
       }
       return resultSet.getCurrentRowAsStruct().getLong(0);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: count | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
     }
   }
 
@@ -480,12 +606,17 @@ public class SpannerStructuredTable implements StructuredTable {
   public long count(Collection<Range> keyRanges, Collection<Field<?>> filterIndexes)
       throws InvalidFieldException, IOException {
     fieldValidator.validateFilterIndexes(filterIndexes);
-    try (ResultSet resultSet = transactionContext.executeQuery(
-        getCountStatement(keyRanges, filterIndexes))) {
+    Statement statement = getCountStatement(keyRanges, filterIndexes);
+    long startTime = System.currentTimeMillis();
+    try (ResultSet resultSet = transactionContext.executeQuery(statement)) {
       if (!resultSet.next()) {
         return 0L;
       }
       return resultSet.getCurrentRowAsStruct().getLong(0);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: count (Filtered) | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
     }
   }
 
@@ -503,14 +634,20 @@ public class SpannerStructuredTable implements StructuredTable {
     TimestampBound staleness = TimestampBound.ofMaxStaleness(
         staleOption.get().getMaxStalenessInSeconds(), TimeUnit.SECONDS);
     // Use a single-use snapshot to bypass transaction locks.
+
+    Statement sqlStatement = getCountStatement(keyRanges, filterIndexes);
+    long startTime = System.currentTimeMillis();
     try (ReadContext readContext = dbClient.singleUse(staleness)) {
-      Statement sqlStatement = getCountStatement(keyRanges, filterIndexes);
       try (ResultSet resultSet = readContext.executeQuery(sqlStatement)) {
         if (!resultSet.next()) {
           return 0L;
         }
         return resultSet.getCurrentRowAsStruct().getLong(0);
       }
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: count (Stale Read) | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, sqlStatement.getSql());
     }
   }
 
@@ -538,7 +675,6 @@ public class SpannerStructuredTable implements StructuredTable {
       builder.append(getIndexesFilterClause(filterIndexes, parameters));
     }
     parameters.forEach((name, value) -> builder.bind(name).to(value));
-    LOG.trace("SQL statement: {}", builder.build().getSql());
     return builder.build();
   }
 
@@ -548,37 +684,21 @@ public class SpannerStructuredTable implements StructuredTable {
 
     if (!range.getBegin().isEmpty()) {
       conditions.add(getCompositeKeyCondition(new ArrayList<>(range.getBegin()), range.getBeginBound(),
-                                                      true, parameters, paramIndex));
+          true, parameters, paramIndex));
       paramIndex += range.getBegin().size();
     }
 
     if (!range.getEnd().isEmpty()) {
       conditions.add(getCompositeKeyCondition(new ArrayList<>(range.getEnd()), range.getEndBound(),
-                                                      false, parameters, paramIndex));
+          false, parameters, paramIndex));
     }
 
     return String.join(" AND ", conditions);
   }
 
-  /**
-   * Builds a SQL fragment for one bound (lower or upper) of a range on a compound key,
-   * handling lexicographical ordering.
-   *
-   * <p>Example: For a lower bound `(Key1, Key2) >= ('A', 10)`, this generates:
-   * `((`Key1` > @p_0) OR (`Key1` = @p_0 AND `Key2` >= @p_1))`.</p>
-   * The parameters map will contain mappings for `p_0` to 'A' and `p_1` to 10.
-   *
-   * @param fields The fields forming the compound key (e.g., namespace, application, version).
-   * @param bound The bound type (INCLUSIVE or EXCLUSIVE).
-   * @param isLowerBound True if building the condition for the beginning of the range (lower bound),
-   *                     false if for the end of the range (upper bound).
-   * @param parameters The map to add Spanner parameters to. Parameter names will be generated
-   *                   starting from the current size of this map.
-   * @return A SQL fragment for the composite range bound.
-   */
   @VisibleForTesting
   String getCompositeKeyCondition(List<Field<?>> fields, Range.Bound bound, boolean isLowerBound,
-                                      Map<String, Value> parameters, int startParamIndex) {
+      Map<String, Value> parameters, int startParamIndex) {
     if (fields.isEmpty()) {
       return "";
     }
@@ -653,13 +773,6 @@ public class SpannerStructuredTable implements StructuredTable {
     return conditions.stream().collect(Collectors.joining(" OR ", "(", ")"));
   }
 
-  /**
-   * Generates the WHERE clause for a set of ranges.
-   *
-   * @param ranges     the set of ranges to query for
-   * @param parameters the parameters name and value used in the WHERE clause
-   * @return the WHERE clause or {@code null} if the ranges resulted in a full table query.
-   */
   @Nullable
   private String getRangesWhereClause(Collection<Range> ranges, Map<String, Value> parameters) {
     // Validate all ranges. Also, find if there is any range that is open on both ends.
@@ -729,15 +842,20 @@ public class SpannerStructuredTable implements StructuredTable {
         + insertFields.stream().map(f -> "@" + f.getName()).collect(Collectors.joining(","))
         + ")";
 
-    LOG.trace("Inserting row: {}", sql);
-
     Statement statement = insertFields.stream()
         .reduce(Statement.newBuilder(sql),
             (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
             (builder1, builder2) -> builder1)
         .build();
 
-    transactionContext.executeUpdate(statement);
+    long startTime = System.currentTimeMillis();
+    try {
+      transactionContext.executeUpdate(statement);
+    } finally {
+      long duration = System.currentTimeMillis() - startTime;
+      LOG.info("[PROFILER] Thread: [{}] | Caller: [{}] | Method: insert | Time: {} ms | Query: {}",
+          Thread.currentThread().getName(), getCaller(), duration, statement.getSql());
+    }
   }
 
   private CompressorType determineCompressorForField(Field field) {
