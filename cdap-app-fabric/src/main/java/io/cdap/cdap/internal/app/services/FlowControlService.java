@@ -32,6 +32,8 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,9 @@ public class FlowControlService extends AbstractIdleService {
   private final MetricsCollectionService metricsCollectionService;
   private final TransactionRunner transactionRunner;
   private final int readStalenessSeconds;
+
+  private volatile Counter cachedCounter = new Counter(0, 0);
+  private ScheduledExecutorService pollerExecutor;
 
   private static final Map<String, String> tags = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace()
@@ -69,11 +74,39 @@ public class FlowControlService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("FlowControlService started.");
+
+    // 2. START THE BACKGROUND THREAD
+    pollerExecutor = Executors.newSingleThreadScheduledExecutor();
+
+    // Poll every 2 seconds. The initial delay is 0 so it populates immediately on startup.
+    pollerExecutor.scheduleWithFixedDelay(this::refreshCounterCache, 0, 2, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("FlowControlService successfully shut down.");
+  }
+
+  // 3. THE BACKGROUND POLLING LOGIC
+  private void refreshCounterCache() {
+    try {
+      // It is CRITICAL this executes cleanly. Since readStalenessSeconds is > 0,
+      // this will safely hit the lock-free dbClient.singleUse() path.
+      Counter latestCounts = TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        return new Counter(
+            store.getFlowControlLaunchingCount(readStalenessSeconds),
+            store.getFlowControlRunningCount(readStalenessSeconds)
+        );
+      });
+
+      // Atomically update the volatile cache
+      this.cachedCounter = latestCounts;
+
+    } catch (Exception e) {
+      // Catch all exceptions so the ScheduledExecutor doesn't silently die on a transient network glitch
+      LOG.error("Failed to refresh flow control cached counter from Spanner", e);
+    }
   }
 
   /**
@@ -96,12 +129,7 @@ public class FlowControlService extends AbstractIdleService {
           programDescriptor.getArtifactId().toApiArtifactId());
     });
 
-    Counter counter = TransactionRunners.run(transactionRunner, context -> {
-      AppMetadataStore store = AppMetadataStore.create(context);
-      int launchingCount = store.getFlowControlLaunchingCount(readStalenessSeconds);
-      int runningCount = store.getFlowControlRunningCount(readStalenessSeconds);
-      return new Counter(launchingCount, runningCount);
-    });
+    Counter counter = this.cachedCounter;
 
     LOG.info("Added request with runId {}.", programRunId);
     emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, counter.getLaunchingCount());
@@ -119,11 +147,16 @@ public class FlowControlService extends AbstractIdleService {
    * @return Counter with total number of launching and running program runs.
    */
   public Counter getCounter() {
+    // Instantly return from memory. No database hits.
+    return this.cachedCounter;
+    /*
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
       return new Counter(store.getFlowControlLaunchingCount(readStalenessSeconds),
           store.getFlowControlRunningCount(readStalenessSeconds));
     });
+
+     */
   }
 
   public void emitFlowControlMetrics() {
