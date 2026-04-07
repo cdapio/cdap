@@ -114,6 +114,7 @@
     <commons.collections.version>3.2.2</commons.collections.version>
     <commons.compress.version>1.22</commons.compress.version>
     <commons.lang3.version>3.12.0</commons.lang3.version>
+    <commons-configuration2.version>2.10.1</commons-configuration2.version>
     <dropwizard.version>3.1.2</dropwizard.version>
     <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
@@ -182,6 +183,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-configuration2</artifactId>
+        <version>${commons-configuration2.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
