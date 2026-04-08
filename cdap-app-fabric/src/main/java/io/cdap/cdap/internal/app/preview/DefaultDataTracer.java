@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.gson.Gson;
@@ -30,12 +31,28 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
- * Default implementation of {@link DataTracer}, the data are preserved using {@link PreviewStore}
+ * Default implementation of {@link DataTracer}, the data are preserved using {@link PreviewStore}.
  */
 class DefaultDataTracer implements DataTracer {
 
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class,
           new SchemaTypeAdapter())
+      // Starting java 9, some java internal modules are private and cannot be used by current
+      // version of gson. https://cdap.atlassian.net/browse/CDAP-21212
+      .setExclusionStrategies(new com.google.gson.ExclusionStrategy() {
+        @Override
+        public boolean shouldSkipField(com.google.gson.FieldAttributes f) {
+          return false;
+        }
+
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+          String name = clazz.getName();
+          return name.startsWith("java.lang.module")
+              || name.startsWith("jdk.internal")
+              || name.startsWith("sun.");
+        }
+      })
       .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
 
   private final String tracerName;
