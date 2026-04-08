@@ -239,7 +239,8 @@ public class ConcurrentMessageWriterTest {
             for (int i = 0; i < requestPerThread; i++) {
               writer.persist(new TestStoreRequest(topicId, payload), metadata);
             }
-            LOG.info("Complete time for thread {} is {} ms", threadId, stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS));
+            LOG.info("Complete time for thread {} is {} ms", threadId,
+                stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS));
           } catch (Exception e) {
             LOG.error("Exception raised when persisting.", e);
           }

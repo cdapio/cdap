@@ -160,37 +160,7 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
     return future;
   }
 
-  @Override
-  public void awaitRunning() {
-    // no-op
-  }
 
-  @Override
-  public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
-    // no-op
-  }
-
-  @Override
-  public void awaitTerminated() {
-    // no-op
-  }
-
-  @Override
-  public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
-    // no-op
-  }
-
-  @Override
-  public Service startAsync() {
-    start();
-    return this;
-  }
-
-  @Override
-  public Service stopAsync() {
-    stop();
-    return this;
-  }
 
   @Override
   protected void startUp() {
@@ -212,11 +182,7 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
     return CompletableFuture.completedFuture(command);
   }
 
-  @Nullable
-  @Override
-  public Throwable failureCause() {
-    return null;
-  }
+
 
   @Override
   public void kill() {
