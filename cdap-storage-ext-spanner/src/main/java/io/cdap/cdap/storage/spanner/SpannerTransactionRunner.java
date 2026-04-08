@@ -17,6 +17,7 @@
 package io.cdap.cdap.storage.spanner;
 
 import com.google.cloud.spanner.ErrorCode;
+import com.google.cloud.spanner.Options;
 import com.google.cloud.spanner.SpannerException;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -36,7 +37,7 @@ public class SpannerTransactionRunner implements TransactionRunner {
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     try {
-      admin.getDatabaseClient().readWriteTransaction().allowNestedTransaction().run(context -> {
+      admin.getDatabaseClient().readWriteTransaction(Options.optimisticLock()).allowNestedTransaction().run(context -> {
         runnable.run(new SpannerStructuredTableContext(context, admin));
         return null;
       });
