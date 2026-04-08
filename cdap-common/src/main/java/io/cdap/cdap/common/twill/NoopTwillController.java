@@ -137,7 +137,7 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
 
   @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
-      Map<String, LogEntry.Level> logLevelsForRunnable) {
+                                                             Map<String, LogEntry.Level> logLevelsForRunnable) {
     CompletableFuture<Map<String, LogEntry.Level>> future = new CompletableFuture<>();
     future.completeExceptionally(
         new UnsupportedOperationException("Update log levels is not supported"));
