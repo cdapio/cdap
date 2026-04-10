@@ -171,14 +171,21 @@ public class ProgramRunStatusMonitorService extends AbstractRetryableScheduledSe
         programScannedForTermination.add(programRunId);
         RuntimeInfo runtimeInfo = runtimeService.lookup(programRunId.getParent(),
                                                         RunIds.fromString(programRunId.getRun()));
-        if (runtimeInfo != null && runtimeInfo.getController() != null) {
-          executorService.submit(() -> {
-            LOG.info("Forcing the termination of program run {} as it should have stopped at {} ",
-                     programRunId, record.getTerminateTs());
-            runtimeInfo.getController().kill();
-            emitForceTerminatedRunsMetric(programRunId, record);
-          });
+        if (runtimeInfo == null || runtimeInfo.getController() == null) {
+          LOG.warn("Program run {} is in STOPPING state beyond terminate time {}, but no runtime "
+                     + "controller exists. Marking it as KILLED.",
+                   programRunId, record.getTerminateTs());
+          programStateWriter.killed(programRunId);
+          emitForceTerminatedRunsMetric(programRunId, record);
+          continue;
         }
+
+        executorService.submit(() -> {
+          LOG.info("Forcing the termination of program run {} as it should have stopped at {} ",
+                   programRunId, record.getTerminateTs());
+          runtimeInfo.getController().kill();
+          emitForceTerminatedRunsMetric(programRunId, record);
+        });
       }
     }
     return programScannedForTermination;

@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
@@ -133,6 +134,57 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     ProfileId myProfile = NamespaceId.SYSTEM.profile("native");
     Tasks.waitFor(true, () -> getMetric(metricStore, wfId, myProfile, new HashMap<>(),
                                SYSTEM_METRIC_PREFIX + Constants.Metrics.Program.PROGRAM_FORCE_TERMINATED_RUNS) > 0,
+                  10, TimeUnit.SECONDS);
+    metricStore.deleteAll();
+  }
+
+  @Test
+  public void testStoppingProgramsWithoutRuntimeInfoAreMarkedKilled() throws Exception {
+    AtomicInteger sourceId = new AtomicInteger(0);
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
+    Map<String, String> wfSystemArg = ImmutableMap.of(
+      ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+      SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    ProgramRunId wfId = NamespaceId.DEFAULT.app("test").workflow("testWF").run(randomRunId());
+    store.setProvisioning(wfId, Collections.emptyMap(), wfSystemArg,
+                          Bytes.toBytes(sourceId.getAndIncrement()), artifactId);
+    store.setProvisioned(wfId, 0, Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setStart(wfId, null, Collections.emptyMap(), Bytes.toBytes(sourceId.getAndIncrement()));
+    store.setRunning(wfId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), null,
+                     Bytes.toBytes(sourceId.getAndIncrement()));
+    long currentTimeInSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    store.setStopping(wfId, Bytes.toBytes(sourceId.getAndIncrement()), currentTimeInSecs, currentTimeInSecs);
+
+    CountDownLatch latch = new CountDownLatch(1);
+    ProgramRuntimeService testService = new AbstractProgramRuntimeService(
+      cConf, null, new NoOpProgramStateWriter(), null) {
+
+      @Override
+      protected boolean isDistributed() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public RuntimeInfo lookup(ProgramId programId, RunId runId) {
+        return null;
+      }
+    };
+    ProgramStateWriter psw = getProgramStateWriter(latch);
+    ProgramRunStatusMonitorService programRunStatusMonitorService
+      = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, psw,
+                                           5, 3, 2, 2);
+    programRunStatusMonitorService.startAndWait();
+
+    Set<ProgramRunId> terminatedRuns = programRunStatusMonitorService.terminatePrograms();
+    Assert.assertEquals(Collections.singleton(wfId), terminatedRuns);
+    Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
+
+    MetricStore metricStore = getInjector().getInstance(MetricStore.class);
+    ProfileId myProfile = NamespaceId.SYSTEM.profile("native");
+    Tasks.waitFor(true, () -> getMetric(metricStore, wfId, myProfile, new HashMap<>(),
+                                        SYSTEM_METRIC_PREFIX +
+                                          Constants.Metrics.Program.PROGRAM_FORCE_TERMINATED_RUNS) > 0,
                   10, TimeUnit.SECONDS);
     metricStore.deleteAll();
   }
