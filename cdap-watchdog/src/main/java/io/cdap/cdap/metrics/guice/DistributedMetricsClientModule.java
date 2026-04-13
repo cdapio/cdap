@@ -23,11 +23,9 @@ import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
-import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 

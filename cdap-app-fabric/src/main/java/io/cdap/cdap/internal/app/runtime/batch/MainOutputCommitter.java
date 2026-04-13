@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
 import io.cdap.cdap.app.guice.ClusterMode;

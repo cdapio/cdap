@@ -486,7 +486,9 @@ public class HttpHandlerGeneratorTest {
         String.format("http://%s:%d/content/download/test.txt",
                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       try {
-        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        try (FileOutputStream fos = new FileOutputStream(downloadFile)) {
+          ByteStreams.copy(urlConn.getInputStream(), fos);
+        }
       } finally {
         urlConn.disconnect();
       }
@@ -510,8 +512,10 @@ public class HttpHandlerGeneratorTest {
       try {
         urlConn.setDoOutput(true);
         urlConn.setRequestMethod("POST");
-        Files.copy(file, urlConn.getOutputStream());
-        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        java.nio.file.Files.copy(file.toPath(), urlConn.getOutputStream());
+        try (FileOutputStream fos = new FileOutputStream(downloadFile)) {
+          ByteStreams.copy(urlConn.getInputStream(), fos);
+        }
         Assert.assertEquals(200, urlConn.getResponseCode());
         Assert.assertTrue(Files.equal(file, downloadFile));
       } finally {
@@ -563,8 +567,9 @@ public class HttpHandlerGeneratorTest {
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
-      ByteStreams.copy(ByteStreams.newInputStreamSupplier("Hello".getBytes(Charsets.UTF_8)),
-                       urlConn.getOutputStream());
+      try (java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream("Hello".getBytes(Charsets.UTF_8))) {
+        ByteStreams.copy(bais, urlConn.getOutputStream());
+      }
 
       Assert.assertEquals("Hello test",
                           new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));

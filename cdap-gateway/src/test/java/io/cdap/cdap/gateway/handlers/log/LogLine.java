@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers.log;
 
+import com.google.common.base.MoreObjects;
 import io.cdap.cdap.logging.read.LogOffset;
 
 /**

@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.common.utils;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;

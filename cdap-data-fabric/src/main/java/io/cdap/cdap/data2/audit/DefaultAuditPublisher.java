@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.audit;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;

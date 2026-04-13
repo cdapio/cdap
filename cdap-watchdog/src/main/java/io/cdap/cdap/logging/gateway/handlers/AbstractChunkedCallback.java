@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import com.google.common.collect.Multimap;
 import io.cdap.cdap.logging.read.Callback;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.ChunkResponder;

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.twill;
 
-import com.google.common.util.concurrent.Service;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,8 +23,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;

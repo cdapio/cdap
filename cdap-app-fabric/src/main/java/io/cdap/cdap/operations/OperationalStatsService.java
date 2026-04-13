@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MXBean;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.apache.thrift.TException;

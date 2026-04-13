@@ -35,7 +35,6 @@ import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.cdap.internal.asm.Methods;
 import io.cdap.cdap.internal.asm.Signatures;
 import io.cdap.http.BodyConsumer;
-import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import java.io.IOException;

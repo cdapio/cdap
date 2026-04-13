@@ -180,11 +180,19 @@ public class KafkaClientModule extends PrivateModule {
 
     @Override
     public void awaitTerminated() {
+      // If the delegate was not actually stopped (ref count > 0), return immediately
+      if (startedCount.get() > 0) {
+        return;
+      }
       delegate.awaitTerminated();
     }
 
     @Override
     public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+      // If the delegate was not actually stopped (ref count > 0), return immediately
+      if (startedCount.get() > 0) {
+        return;
+      }
       delegate.awaitTerminated(timeout, unit);
     }
 

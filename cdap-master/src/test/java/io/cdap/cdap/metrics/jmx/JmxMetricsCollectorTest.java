@@ -109,6 +109,6 @@ public class JmxMetricsCollectorTest {
       }
       return true;
     }, 3, TimeUnit.SECONDS);
-    jmxMetrics.stop();
+    jmxMetrics.stopAsync().awaitTerminated();
   }
 }

@@ -20,7 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.InputSupplier;
+import io.cdap.cdap.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -532,7 +532,7 @@ public abstract class AppFabricTestBase {
     if (pluginClassesJson != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJson);
     }
-    builder.withBody(artifactContents);
+    builder.withBody(artifactContents::getInput);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 

@@ -17,8 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.distributed;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.Tasks;
@@ -122,7 +120,7 @@ public class SparkExecutionServiceTest {
       }
 
       // Stop the program from the service side
-      ListenableFuture<Service.State> stopFuture = service.stop();
+      service.stopAsync();
 
       // Expect some future heartbeats will receive the STOP command
       Tasks.waitFor(true, new Callable<Boolean>() {
@@ -136,8 +134,8 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
 
-      // The stop future of the service should be completed after the client.completed call.
-      stopFuture.get(5, TimeUnit.SECONDS);
+      // The service should be terminated after the client.completed call.
+      service.awaitTerminated(5, TimeUnit.SECONDS);
     } finally {
       service.stopAsync().awaitTerminated();
     }

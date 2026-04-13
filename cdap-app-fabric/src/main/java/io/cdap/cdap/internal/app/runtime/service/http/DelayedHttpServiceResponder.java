@@ -22,7 +22,6 @@ import com.google.common.base.Preconditions;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.http.HttpContentProducer;
-import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

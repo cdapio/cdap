@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -486,9 +485,9 @@ public class RuntimeClientServiceTest {
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
 
-    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    runtimeClientService.stopAsync();
     try {
-      stopFuture.get(2, TimeUnit.SECONDS);
+      runtimeClientService.awaitTerminated(2, TimeUnit.SECONDS);
       Assert.fail("Expected runtime client service not stopped");
     } catch (TimeoutException e) {
       // Expected
@@ -496,7 +495,7 @@ public class RuntimeClientServiceTest {
 
     // Publish a program completed state, which should unblock the client service stop.
     programStateWriter.completed(PROGRAM_RUN_ID);
-    stopFuture.get();
+    runtimeClientService.awaitTerminated();
   }
 
   /**
@@ -526,9 +525,9 @@ public class RuntimeClientServiceTest {
     messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
         "msg1" + topic, "msg2" + topic);
 
-    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    runtimeClientService.stopAsync();
     try {
-      stopFuture.get(2, TimeUnit.SECONDS);
+      runtimeClientService.awaitTerminated(2, TimeUnit.SECONDS);
       Assert.fail("Expected runtime client service not stopped");
     } catch (TimeoutException e) {
       // Expected
@@ -536,7 +535,7 @@ public class RuntimeClientServiceTest {
 
     // Publish a program completed state, which should unblock the client service stop.
     programStateWriter.completed(PROGRAM_RUN_ID);
-    stopFuture.get();
+    runtimeClientService.awaitTerminated();
   }
 
   private List<Message> fetchMessages(MessagingContext messagingContext,

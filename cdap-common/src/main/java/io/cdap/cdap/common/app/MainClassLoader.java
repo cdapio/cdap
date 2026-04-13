@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.app;
 
-import com.google.common.base.Splitter;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
@@ -26,13 +25,10 @@ import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.InterceptableClassLoader;
 import io.cdap.cdap.common.leveldb.LevelDBClassRewriter;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
-import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.Classes;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;

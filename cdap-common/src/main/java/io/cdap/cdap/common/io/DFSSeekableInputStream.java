@@ -20,7 +20,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Seekable;
-import org.apache.twill.filesystem.Location;
 
 /**
  * Implementation of {@link SeekableInputStream} for {@link Location}.

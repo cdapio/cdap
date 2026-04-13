@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2.lib.file;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;

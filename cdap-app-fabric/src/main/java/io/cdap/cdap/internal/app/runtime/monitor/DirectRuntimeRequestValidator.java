@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;

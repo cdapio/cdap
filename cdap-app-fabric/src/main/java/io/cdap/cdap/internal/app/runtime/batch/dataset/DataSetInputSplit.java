@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.batch.dataset;
 
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.Splits;
-import io.cdap.cdap.api.dataset.Dataset;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

@@ -23,7 +23,6 @@ import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
-import io.cdap.cdap.api.dataset.module.DatasetType;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.DatasetModuleCannotBeDeletedException;
 import io.cdap.cdap.common.DatasetModuleNotFoundException;

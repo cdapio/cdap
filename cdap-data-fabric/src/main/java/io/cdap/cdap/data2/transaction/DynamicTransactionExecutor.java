@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.apache.tephra.AbstractTransactionExecutor;
-import org.apache.tephra.RetryOnConflictStrategy;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.RetryStrategy;
 import org.apache.tephra.TransactionContext;

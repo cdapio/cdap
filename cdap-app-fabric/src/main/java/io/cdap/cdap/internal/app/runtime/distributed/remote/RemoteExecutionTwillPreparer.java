@@ -53,8 +53,6 @@ import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillPreparer;
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

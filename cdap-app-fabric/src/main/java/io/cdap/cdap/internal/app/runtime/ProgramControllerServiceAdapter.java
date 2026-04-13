@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.exception.WrappedStageException;
-import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.proto.id.ProgramRunId;

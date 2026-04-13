@@ -18,8 +18,6 @@ package io.cdap.cdap.common.service;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -135,10 +133,17 @@ public class RetryOnStartFailureService extends AbstractService {
       return;
     }
 
-    // If there is no started service, stop the current delete, but no need to propagate the stop state
+    // If there is no started service, stop the current delegate, but no need to propagate the stop state
     // because if the underlying service is not yet started due to failure, it shouldn't affect the stop state
     // of this retrying service.
     if (currentDelegate != null) {
+      // If the delegate is already in a terminal state (FAILED or TERMINATED), stopAsync() won't
+      // trigger any listener callbacks, so we need to notify directly.
+      State delegateState = currentDelegate.state();
+      if (delegateState == State.TERMINATED || delegateState == State.FAILED) {
+        notifyStopped();
+        return;
+      }
       currentDelegate.addListener(new Service.Listener() {
         @Override
         public void starting() {}

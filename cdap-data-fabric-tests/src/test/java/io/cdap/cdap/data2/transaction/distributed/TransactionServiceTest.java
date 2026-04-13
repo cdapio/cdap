@@ -189,7 +189,7 @@ public class TransactionServiceTest {
           Networks.getRandomPort(),
           hConf, tmpFolder.newFolder());
       // NOTE: we don't have to wait for start as client should pick it up anyways
-      third.start();
+      third.startAsync();
       // stopping second one
       second.stopAsync().awaitTerminated();
 
@@ -197,7 +197,7 @@ public class TransactionServiceTest {
       verifyGetAndPut(table, txExecutor, "val3", "val4");
 
       // releasing resources
-      third.stop();
+      third.stopAsync().awaitTerminated();
 
     } finally {
       try {

@@ -259,7 +259,7 @@ public class TetheringClientHandlerTest {
     tetheringEventPublisher = new TetheringProgramEventPublisher(cConf, tetheringStore, messagingService,
                                                                  injector.getInstance(ProgramRunRecordFetcher.class),
                                                                  transactionRunner);
-    Assert.assertEquals(Service.State.RUNNING, tetheringEventPublisher.startAsync().awaitRunning());
+    tetheringEventPublisher.startAsync().awaitRunning();
     tetheringAgentService = new TetheringAgentService(cConf,
                                                       tetheringStore,
                                                       injector.getInstance(ProgramStateWriter.class),
@@ -268,14 +268,14 @@ public class TetheringClientHandlerTest {
                                                       injector.getInstance(LocationFactory.class),
                                                       injector.getInstance(ProvisionerNotifier.class),
                                                       injector.getInstance(NamespaceQueryAdmin.class));
-    Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAsync().awaitRunning());
+    tetheringAgentService.startAsync().awaitRunning();
   }
 
   @After
   public void tearDown() throws Exception {
     deleteTetheringIfNeeded(SERVER_INSTANCE);
-    Assert.assertEquals(Service.State.TERMINATED, tetheringEventPublisher.stopAsync().awaitTerminated());
-    Assert.assertEquals(Service.State.TERMINATED, tetheringAgentService.stopAsync().awaitTerminated());
+    tetheringEventPublisher.stopAsync().awaitTerminated();
+    tetheringAgentService.stopAsync().awaitTerminated();
   }
 
   @Test

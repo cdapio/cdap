@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
