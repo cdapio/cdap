@@ -88,9 +88,7 @@ public class FlowControlService extends AbstractIdleService {
       throw new Exception("None time-based UUIDs are not supported");
     }
 
-    Counter counter = new Counter(5, 5);
-    /*
-    TransactionRunners.run(transactionRunner, context -> {
+    Counter counter = TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
       store.recordProgramPending(programRunId,
           programOptions.getArguments().asMap(),
@@ -100,8 +98,6 @@ public class FlowControlService extends AbstractIdleService {
       int runningCount = store.getFlowControlRunningCount(readStalenessSeconds);
       return new Counter(launchingCount, runningCount);
     });
-
-     */
     LOG.info("Added request with runId {}.", programRunId);
     emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, counter.getLaunchingCount());
 
