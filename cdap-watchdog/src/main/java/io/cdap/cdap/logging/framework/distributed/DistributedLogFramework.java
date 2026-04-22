@@ -17,10 +17,7 @@
 package io.cdap.cdap.logging.framework.distributed;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -42,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.kafka.client.BrokerService;
@@ -112,46 +108,41 @@ public class DistributedLogFramework extends ResourceBalancerService {
       @Override
       protected void startUp() throws Exception {
         // Starts all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::start));
+        List<Exception> failures = new ArrayList<>();
+        for (Service pipeline : pipelines) {
+          try {
+            pipeline.startAsync().awaitRunning();
+          } catch (Exception e) {
+            failures.add(e);
+          }
+        }
+        throwIfNeeded(failures);
       }
 
       @Override
       protected void shutDown() throws Exception {
         // Stops all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::stop));
+        List<Exception> failures = new ArrayList<>();
+        for (Service pipeline : pipelines) {
+          try {
+            pipeline.stopAsync().awaitTerminated();
+          } catch (Exception e) {
+            failures.add(e);
+          }
+        }
+        throwIfNeeded(failures);
       }
-    };
-  }
 
-  /**
-   * Blocks and validates all the given futures completed successfully.
-   */
-  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures)
-      throws Exception {
-    // The get call shouldn't throw exception. It just block until all futures completed.
-    Futures.successfulAsList(futures).get();
-
-    // Iterates all futures to make sure all of them completed successfully
-    Throwable exception = null;
-    for (ListenableFuture<?> future : futures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        if (exception == null) {
-          exception = e.getCause();
-        } else {
-          exception.addSuppressed(e.getCause());
+      private void throwIfNeeded(List<Exception> failures) throws Exception {
+        if (!failures.isEmpty()) {
+          Exception first = failures.get(0);
+          for (int i = 1; i < failures.size(); i++) {
+            first.addSuppressed(failures.get(i));
+          }
+          throw first;
         }
       }
-    }
-
-    // Throw exception if any of the future failed.
-    if (exception != null) {
-      if (exception instanceof Exception) {
-        throw (Exception) exception;
-      }
-      throw new RuntimeException(exception);
-    }
+    };
   }
 
   /**

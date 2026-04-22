@@ -174,20 +174,20 @@ public abstract class MetricsSuiteTestBase {
     }));
 
     transactionManager = injector.getInstance(TransactionManager.class);
-    transactionManager.startAndWait();
+    transactionManager.startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    dsOpService.startAsync().awaitRunning();
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
 
     metrics = injector.getInstance(MetricsQueryService.class);
-    metrics.startAndWait();
+    metrics.startAsync().awaitRunning();
 
     collectionService = injector.getInstance(MetricsCollectionService.class);
-    collectionService.startAndWait();
+    collectionService.startAsync().awaitRunning();
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -202,11 +202,11 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stopMetricsService(CConfiguration conf) {
-    collectionService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    transactionManager.stopAndWait();
-    metrics.stopAndWait();
+    collectionService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    transactionManager.stopAsync().awaitTerminated();
+    metrics.stopAsync().awaitTerminated();
     conf.clear();
   }
 

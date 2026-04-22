@@ -127,7 +127,7 @@ public class RemoteExecutionJobMain {
   @VisibleForTesting
   RemoteExecutionRuntimeJobEnvironment initialize(CConfiguration cConf) throws Exception {
     zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
 
     InetSocketAddress zkAddr = ResolvingDiscoverable.resolve(zkServer.getLocalAddress());
     String zkConnectStr = String.format("%s:%d", zkAddr.getHostString(), zkAddr.getPort());
@@ -214,7 +214,7 @@ public class RemoteExecutionJobMain {
 
     if (zkServer != null) {
       try {
-        zkServer.stopAndWait();
+        zkServer.stopAsync().awaitTerminated();
       } catch (Exception e) {
         LOG.warn("Failed to stop ZK server", e);
       }

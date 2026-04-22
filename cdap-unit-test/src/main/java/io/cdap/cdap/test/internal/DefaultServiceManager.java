@@ -17,7 +17,6 @@
 package io.cdap.cdap.test.internal;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.RuntimeMetrics;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
@@ -59,7 +58,7 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
       appFabricClient.setServiceInstances(programId.getNamespace(), programId.getApplication(),
           programId.getProgram(), instances);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -81,7 +80,7 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
           programId.getApplication(),
           programId.getProgram());
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

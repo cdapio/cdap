@@ -801,7 +801,7 @@ public class SpannerStructuredTable implements StructuredTable {
       try {
         val = compressor.compress(val);
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -821,7 +821,7 @@ public class SpannerStructuredTable implements StructuredTable {
       try {
         val = compressor.compress(val);
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

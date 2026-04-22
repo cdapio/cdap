@@ -16,12 +16,10 @@
 
 package io.cdap.cdap.common.io;
 
-import com.google.common.io.Closeables;
 import java.io.Closeable;
 import java.io.IOException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Seekable;
-import org.apache.twill.filesystem.Location;
 
 /**
  * Implementation of {@link SeekableInputStream} for {@link Location}.
@@ -69,7 +67,13 @@ final class DFSSeekableInputStream extends SeekableInputStream {
       super.close();
     } finally {
       if (sizeProvider instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) sizeProvider);
+        try {
+
+          ((Closeable) sizeProvider).close();
+
+        } catch (Exception ignored) {
+
+        }
       }
     }
   }

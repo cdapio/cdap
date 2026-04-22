@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.store.leveldb;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -195,12 +194,22 @@ public final class LevelDBTableFactory implements TableFactory {
       this.metadataTable = null;
     }
     if (metadataTable != null) {
-      Closeables.closeQuietly(metadataTable.getLevelDB());
+      try {
+
+        metadataTable.getLevelDB().close();
+
+      } catch (Exception ignored) {
+
+      }
     }
     Collection<DB> dbs = levelDBs.values();
-    dbs.forEach(Closeables::closeQuietly);
+    dbs.forEach(db -> {
+      try { db.close(); } catch (Exception ignored) { }
+    });
     dbs.clear();
-    partitionedLevelDBs.values().forEach(Closeables::closeQuietly);
+    partitionedLevelDBs.values().forEach(db -> {
+      try { db.close(); } catch (Exception ignored) { }
+    });
     partitionedLevelDBs.clear();
   }
 
@@ -312,7 +321,13 @@ public final class LevelDBTableFactory implements TableFactory {
               break;
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
-            Closeables.closeQuietly(levelDBs.remove(dataDBPath));
+            try {
+
+              levelDBs.remove(dataDBPath).close();
+
+            } catch (Exception ignored) {
+
+            }
             filesToDelete.add(dataDBPath);
 
             // Payload table
@@ -321,7 +336,13 @@ public final class LevelDBTableFactory implements TableFactory {
               break;
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
-            Closeables.closeQuietly(levelDBs.remove(dataDBPath));
+            try {
+
+              levelDBs.remove(dataDBPath).close();
+
+            } catch (Exception ignored) {
+
+            }
             filesToDelete.add(dataDBPath);
           }
 

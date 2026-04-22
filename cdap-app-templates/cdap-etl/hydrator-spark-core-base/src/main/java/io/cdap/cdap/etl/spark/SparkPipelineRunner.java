@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.etl.spark;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -248,7 +248,7 @@ public abstract class SparkPipelineRunner {
     }
     executorService.shutdownNow();
     if (error != null) {
-      throw Throwables.propagate(error);
+      throw new RuntimeException(error);
     }
   }
 

@@ -76,12 +76,12 @@ public class StorageProviderNamespaceAdminTest {
     storageProviderNamespaceAdmin = injector.getInstance(StorageProviderNamespaceAdmin.class);
     // start the dataset service for namespace store to work
     transactionManager = injector.getInstance(TransactionManager.class);
-    transactionManager.startAndWait();
+    transactionManager.startAsync().awaitRunning();
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
     // we don't use namespace admin here but the store because namespaceadmin will try to create the
     // home directory for namespace which we don't want. We just want to store the namespace meta in store
     // to look up during the delete.
@@ -234,7 +234,7 @@ public class StorageProviderNamespaceAdminTest {
 
   @AfterClass
   public static void cleanup() throws Exception {
-    transactionManager.stopAndWait();
-    datasetService.stopAndWait();
+    transactionManager.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
   }
 }

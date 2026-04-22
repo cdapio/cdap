@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.batch.mapreduce;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.SetMultimap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -248,9 +247,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         transformRunner.transform(key, value);
       } catch (StageFailureException e) {
         PIPELINE_LOG.error("{}", e.getMessage(), e.getCause());
-        throw Throwables.propagate(e.getCause());
+        throw new RuntimeException(e.getCause());
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -287,9 +286,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         transformRunner.transform(key, values.iterator());
       } catch (StageFailureException e) {
         PIPELINE_LOG.error("{}", e.getMessage(), e.getCause());
-        throw Throwables.propagate(e.getCause());
+        throw new RuntimeException(e.getCause());
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

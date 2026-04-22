@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.support.task;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -101,7 +100,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
           try {
             processApplicationDetail(namespaceId, d);
           } catch (Exception e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         }, BATCH_SIZE);
       } else {

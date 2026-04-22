@@ -104,7 +104,7 @@ public class ErrorTagProviderLoggingTest {
 
   @AfterClass
   public static void cleanUp() throws Exception {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
 }

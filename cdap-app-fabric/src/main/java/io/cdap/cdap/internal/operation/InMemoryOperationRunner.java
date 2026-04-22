@@ -45,7 +45,7 @@ public class InMemoryOperationRunner extends AbstractOperationRunner {
     OperationDriver driver = new OperationDriver(createOperation(detail), context);
     OperationController controller = new InMemoryOperationController(context.getRunId(),
         statePublisher, driver);
-    driver.start();
+    driver.startAsync();
     return controller;
   }
 }

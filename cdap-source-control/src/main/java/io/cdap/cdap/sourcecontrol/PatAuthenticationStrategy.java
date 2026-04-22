@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -79,7 +78,11 @@ public class PatAuthenticationStrategy implements AuthenticationStrategy {
       try {
         data = secureStore.getData(namespaceId, passwordKeyName);
       } catch (Exception e) {
-        Throwables.propagateIfInstanceOf(e, IOException.class);
+        if (e instanceof IOException) {
+
+          throw (IOException) e;
+
+        }
         throw new AuthenticationConfigException("Failed to get password from secure store", e);
       }
       if (data == null) {

@@ -18,7 +18,6 @@ package io.cdap.cdap.test;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -216,7 +215,7 @@ public class IntegrationTestManager extends AbstractTestManager {
       }
       return manager;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -436,7 +435,7 @@ public class IntegrationTestManager extends AbstractTestManager {
         jarConn.getJarFile().close();
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

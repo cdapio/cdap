@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.guice;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -32,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.client.ZKBrokerService;
@@ -129,23 +128,87 @@ public class KafkaClientModule extends PrivateModule {
       // The logic doesn't need to be sophisticated since it is a private binding and only used by the
       // wrapping KafkaClientService and BrokerService, which they will make sure no duplicate calls will be
       // made to the start/stop methods.
-      return new ForwardingZKClientService(zkClientService) {
-        @Override
-        public ListenableFuture<State> start() {
-          if (startedCount.getAndIncrement() == 0) {
-            return super.start();
-          }
-          return Futures.immediateFuture(State.RUNNING);
-        }
+      final ZKClientService delegate = zkClientService;
+      return new RefCountZKClientService(delegate, startedCount);
+    }
+  }
 
-        @Override
-        public ListenableFuture<State> stop() {
-          if (startedCount.decrementAndGet() == 0) {
-            return super.stop();
-          }
-          return Futures.immediateFuture(State.TERMINATED);
-        }
-      };
+  /**
+   * A {@link ZKClientService} wrapper using simple reference counting for start/stop.
+   */
+  private static final class RefCountZKClientService extends ForwardingZKClientService {
+
+    private final ZKClientService delegate;
+    private final AtomicInteger startedCount;
+
+    RefCountZKClientService(ZKClientService delegate, AtomicInteger startedCount) {
+      super(delegate);
+      this.delegate = delegate;
+      this.startedCount = startedCount;
+    }
+
+    @Override
+    public Service startAsync() {
+      if (startedCount.getAndIncrement() == 0) {
+        delegate.startAsync();
+      }
+      return this;
+    }
+
+    @Override
+    public Service stopAsync() {
+      if (startedCount.decrementAndGet() == 0) {
+        delegate.stopAsync();
+      }
+      return this;
+    }
+
+    @Override
+    public Throwable failureCause() {
+      return delegate.failureCause();
+    }
+
+    @Override
+    public void awaitRunning() {
+      delegate.awaitRunning();
+    }
+
+    @Override
+    public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+      delegate.awaitRunning(timeout, unit);
+    }
+
+    @Override
+    public void awaitTerminated() {
+      // If the delegate was not actually stopped (ref count > 0), return immediately
+      if (startedCount.get() > 0) {
+        return;
+      }
+      delegate.awaitTerminated();
+    }
+
+    @Override
+    public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+      // If the delegate was not actually stopped (ref count > 0), return immediately
+      if (startedCount.get() > 0) {
+        return;
+      }
+      delegate.awaitTerminated(timeout, unit);
+    }
+
+    @Override
+    public State state() {
+      return delegate.state();
+    }
+
+    @Override
+    public boolean isRunning() {
+      return delegate.isRunning();
+    }
+
+    @Override
+    public void addListener(Listener listener, Executor executor) {
+      delegate.addListener(listener, executor);
     }
   }
 
@@ -166,12 +229,12 @@ public class KafkaClientModule extends PrivateModule {
 
     @Override
     protected final void startUp() throws Exception {
-      zkClientService.startAndWait();
+      zkClientService.startAsync().awaitRunning();
       try {
-        delegate.startAndWait();
+        delegate.startAsync().awaitRunning();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
@@ -182,16 +245,16 @@ public class KafkaClientModule extends PrivateModule {
     @Override
     protected final void shutDown() throws Exception {
       try {
-        delegate.stopAndWait();
+        delegate.stopAsync().awaitTerminated();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
         throw e;
       }
-      zkClientService.stopAndWait();
+      zkClientService.stopAsync().awaitTerminated();
     }
 
     protected T getDelegate() {

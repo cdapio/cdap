@@ -16,6 +16,7 @@
 package io.cdap.cdap.data2.queue;
 
 
+import java.util.Collections;
 import com.google.common.collect.Iterators;
 import java.util.Iterator;
 
@@ -88,7 +89,7 @@ public interface DequeueResult<T> extends Iterable<T> {
 
         @Override
         public Iterator<T> iterator() {
-          return Iterators.emptyIterator();
+          return Collections.emptyIterator();
         }
       };
     }

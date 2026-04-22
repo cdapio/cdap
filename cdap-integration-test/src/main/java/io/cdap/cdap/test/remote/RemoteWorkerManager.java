@@ -17,7 +17,6 @@
 package io.cdap.cdap.test.remote;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
@@ -47,7 +46,7 @@ public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> i
     try {
       programClient.setWorkerInstances(workerId, instances);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -56,7 +55,7 @@ public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> i
     try {
       return programClient.getWorkerInstances(workerId);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -1670,7 +1670,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
           return response.getResponseCode();
         } catch (Exception e) {
           LOG.error("Request thread got exception.", e);
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
     });

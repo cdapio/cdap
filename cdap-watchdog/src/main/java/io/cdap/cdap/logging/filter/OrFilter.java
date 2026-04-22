@@ -17,7 +17,7 @@
 package io.cdap.cdap.logging.filter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class OrFilter implements Filter {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("expressions", expressions)
         .toString();
   }

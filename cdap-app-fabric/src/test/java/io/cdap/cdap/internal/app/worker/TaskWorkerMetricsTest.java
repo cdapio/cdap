@@ -84,7 +84,7 @@ public class TaskWorkerMetricsTest {
       }
     };
 
-    mockMetricsCollector.startAndWait();
+    mockMetricsCollector.startAsync().awaitRunning();
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     AeadCipher aeadCipher = new NoOpAeadCipher();
     taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
@@ -93,7 +93,7 @@ public class TaskWorkerMetricsTest {
                                                                                 auditLogContexts -> {}, aeadCipher));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     this.uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
   }
@@ -101,7 +101,7 @@ public class TaskWorkerMetricsTest {
   @After
   public void afterTest() {
     if (taskWorkerService != null) {
-      taskWorkerService.stopAndWait();
+      taskWorkerService.stopAsync().awaitTerminated();
     }
   }
 

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.report.main;
 
-import com.google.common.io.Closeables;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
@@ -62,8 +61,20 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
       this.createTime = createTime;
       this.fileSize = 0;
     } catch (IOException e) {
-      Closeables.closeQuietly(outputStream);
-      Closeables.closeQuietly(dataFileWriter);
+      try {
+
+        outputStream.close();
+
+      } catch (Exception ignored) {
+
+      }
+      try {
+
+        dataFileWriter.close();
+
+      } catch (Exception ignored) {
+
+      }
       throw e;
     }
   }
