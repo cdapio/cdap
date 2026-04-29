@@ -69,6 +69,10 @@ import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.AppSummaryRecord;
+import io.cdap.cdap.proto.AppSummaryResponse;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.internal.app.store.AppSummary;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
@@ -100,6 +104,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -144,6 +149,7 @@ public class ProgramLifecycleService {
   private final int maxConcurrentLaunching;
   private final int defaultStopTimeoutSecs;
   private final int batchSize;
+  private final int summaryBatchSize;
 
   private final boolean userProgramLaunchDisabled;
 
@@ -170,11 +176,133 @@ public class ProgramLifecycleService {
     this.userProgramLaunchDisabled = cConf.getBoolean(
         Constants.AppFabric.USER_PROGRAM_LAUNCH_DISABLED, false);
     this.batchSize = cConf.getInt(Constants.AppFabric.STREAMING_BATCH_SIZE);
+    this.summaryBatchSize = cConf.getInt(Constants.AppFabric.SUMMARY_STREAMING_BATCH_SIZE);
     this.profileService = profileService;
     this.preferencesService = preferencesService;
     this.provisionerNotifier = provisionerNotifier;
     this.provisioningService = provisioningService;
     this.flowControlService = flowControlService;
+  }
+
+  /**
+   * Returns a summary of applications in the namespace, including metadata, run status, and run
+   * counts. This method is optimized to avoid full deserialization of application specifications.
+   *
+   * @param request the scan request
+   * @return the response with pipelines and next page token
+   */
+  public AppSummaryResponse getAppSummaries(final ScanApplicationsRequest request)
+      throws Exception {
+    List<AppSummary> appSummaries = new ArrayList<>();
+    store.scanApplicationSummaries(request, summaryBatchSize, appSummaries::add);
+    if (appSummaries.isEmpty()) {
+      return new AppSummaryResponse(Collections.emptyList(), null);
+    }
+
+    List<AppSummary> visibleAppSummaries = filterVisibleSummaries(appSummaries);
+    List<ProgramReference> visibleProgramReferences = visibleAppSummaries.stream()
+        .map(AppSummary::getPrimaryProgram)
+        .filter(Objects::nonNull)
+        .map(ProgramId::getProgramReference)
+        .collect(Collectors.toList());
+
+    Map<ProgramReference, Long> runCounts = fetchRunCounts(visibleProgramReferences);
+    Map<ProgramReference, RunRecord> latestRuns = fetchLatestRuns(visibleProgramReferences);
+    List<AppSummaryRecord> pipelines = createResponseRecords(visibleAppSummaries, runCounts,
+        latestRuns);
+
+    String nextPageToken = generateNextPageToken(appSummaries);
+    return new AppSummaryResponse(pipelines, nextPageToken);
+  }
+
+  private List<AppSummary> filterVisibleSummaries(List<AppSummary> appSummaries) {
+    Set<ProgramId> allProgramIds = appSummaries.stream()
+        .map(AppSummary::getPrimaryProgram)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    Set<? extends EntityId> visiblePrograms = allProgramIds.isEmpty()
+        ? Collections.emptySet()
+        : accessEnforcer.isVisible(allProgramIds, authenticationContext.getPrincipal());
+
+    return appSummaries.stream()
+        .filter(summary -> {
+          ProgramId programId = summary.getPrimaryProgram();
+          return programId == null || visiblePrograms.contains(programId);
+        })
+        .collect(Collectors.toList());
+  }
+
+  private Map<ProgramReference, Long> fetchRunCounts(List<ProgramReference> programRefs)
+      throws Exception {
+    Map<ProgramReference, Long> runCounts = new HashMap<>();
+    if (programRefs.isEmpty()) {
+      return runCounts;
+    }
+
+    for (RunCountResult countResult : getProgramTotalRunCounts(programRefs)) {
+      if (countResult.getException() == null) {
+        runCounts.put(countResult.getProgramReference(), countResult.getCount());
+      }
+    }
+    return runCounts;
+  }
+
+  private Map<ProgramReference, RunRecord> fetchLatestRuns(List<ProgramReference> programRefs)
+      throws Exception {
+    Map<ProgramReference, RunRecord> latestRuns = new HashMap<>();
+    if (programRefs.isEmpty()) {
+      return latestRuns;
+    }
+
+    List<ProgramHistory> histories = getRunRecords(
+        programRefs, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    for (ProgramHistory history : histories) {
+      if (history.getException() == null && !history.getRuns().isEmpty()) {
+        latestRuns.put(history.getProgramId().getProgramReference(), history.getRuns().get(0));
+      }
+    }
+    return latestRuns;
+  }
+
+  private List<AppSummaryRecord> createResponseRecords(
+      List<AppSummary> visibleAppSummaries,
+      Map<ProgramReference, Long> runCounts,
+      Map<ProgramReference, RunRecord> latestRuns) {
+    return visibleAppSummaries.stream().map(summary -> {
+      ProgramId programId = summary.getPrimaryProgram();
+      ArtifactSummary artifactSummary = ArtifactSummary.from(summary.getArtifactId());
+      if (programId == null) {
+        return new AppSummaryRecord(
+            summary.getAppId().getApplication(),
+            summary.getAppId().getVersion(),
+            summary.getDescription(),
+            artifactSummary,
+            0L,
+            null
+        );
+      }
+
+      ProgramReference programRef = programId.getProgramReference();
+      return new AppSummaryRecord(
+          summary.getAppId().getApplication(),
+          summary.getAppId().getVersion(),
+          summary.getDescription(),
+          artifactSummary,
+          runCounts.getOrDefault(programRef, 0L),
+          latestRuns.get(programRef)
+      );
+    }).collect(Collectors.toList());
+  }
+
+  private String generateNextPageToken(List<AppSummary> appSummaries) {
+    ProgramId lastProgramId = appSummaries.get(appSummaries.size() - 1).getPrimaryProgram();
+    if (lastProgramId == null) {
+      return null;
+    }
+
+    return lastProgramId.getApplication()
+        + EntityId.IDSTRING_PART_SEPARATOR
+        + lastProgramId.getVersion();
   }
 
   /**

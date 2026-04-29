@@ -3134,10 +3134,22 @@ public class AppMetadataStore {
     }
   }
 
-  private static final class AppScanEntry implements Map.Entry<ApplicationId, ApplicationMeta> {
+  static final class AppScanEntry implements Map.Entry<ApplicationId, ApplicationMeta> {
 
     private static final String SPEC_KEY = "spec";
     private static final String ARTIFACT_ID_KEY = "artifactId";
+    private static final String DESCRIPTION_KEY = "description";
+    private static final String WORKFLOWS_KEY = "workflows";
+    private static final String SPARKS_KEY = "sparks";
+    private static final String MAPREDUCE_KEY = "mapReduces";
+    private static final String SERVICES_KEY = "services";
+    private static final String WORKERS_KEY = "workers";
+    private static final Map<String, ProgramType> KEY_TO_TYPE_MAP = ImmutableMap.of(
+        WORKFLOWS_KEY, ProgramType.WORKFLOW,
+        SPARKS_KEY, ProgramType.SPARK,
+        MAPREDUCE_KEY, ProgramType.MAPREDUCE,
+        SERVICES_KEY, ProgramType.SERVICE,
+        WORKERS_KEY, ProgramType.WORKER);
 
     private final ApplicationId appId;
     private final String rawAppMeta;
@@ -3150,6 +3162,7 @@ public class AppMetadataStore {
     private final StructuredTable universalPluginDataTable;
     private final boolean appSpecReductionEnabled;
     private ArtifactId artifactId;
+    private AppSummary appSummary;
 
     private AppScanEntry(StructuredRow row, StructuredTable pluginDataTable,
         StructuredTable universalPluginDataTable, boolean appSpecReductionEnabled) {
@@ -3231,6 +3244,85 @@ public class AppMetadataStore {
       }
 
       return Optional.empty();
+    }
+
+    /**
+     * Returns the {@link AppSummary} by parsing the raw application metadata JSON string. This
+     * method uses a streaming parser to avoid full deserialization of the application
+     * specification.
+     *
+     * @return the {@link AppSummary} if parsing is successful
+     * @throws IllegalStateException if parsing fails
+     */
+    public Optional<AppSummary> getAppSummary() {
+      if (appSummary != null) {
+        return Optional.of(appSummary);
+      }
+
+      ArtifactId parsedArtifactId = artifactId;
+      String description = null;
+      ProgramId primaryProgram = null;
+
+      try (JsonReader reader = new JsonReader(new StringReader(rawAppMeta))) {
+        reader.beginObject();
+        advanceToSpec(reader);
+        while (reader.hasNext()) {
+          String name = reader.nextName();
+          ProgramType matchedProgramType = KEY_TO_TYPE_MAP.get(name);
+
+          if (ARTIFACT_ID_KEY.equals(name)) {
+            parsedArtifactId = GSON.fromJson(reader, ArtifactId.class);
+            artifactId = parsedArtifactId;
+          } else if (DESCRIPTION_KEY.equals(name)) {
+            description = reader.nextString();
+          } else if (matchedProgramType != null) {
+            primaryProgram = extractPrimaryProgram(reader, matchedProgramType, primaryProgram);
+          } else {
+            reader.skipValue();
+          }
+
+          if (isParseComplete(parsedArtifactId, description, primaryProgram)) {
+            break;
+          }
+        }
+      } catch (IOException | IllegalStateException e) {
+        throw new IllegalStateException("Failed to parse app summary from app meta", e);
+      }
+
+      appSummary = new AppSummary(appId, parsedArtifactId, description, primaryProgram);
+      return Optional.of(appSummary);
+    }
+
+    private void advanceToSpec(JsonReader reader) throws IOException {
+      while (reader.hasNext()) {
+        if (SPEC_KEY.equals(reader.nextName())) {
+          reader.beginObject();
+          return;
+        }
+        reader.skipValue();
+      }
+    }
+
+    private ProgramId extractPrimaryProgram(JsonReader reader, ProgramType type,
+        ProgramId currentPrimary)
+        throws IOException {
+      reader.beginObject();
+      ProgramId result = currentPrimary;
+      while (reader.hasNext()) {
+        String programName = reader.nextName();
+        if (result == null) {
+          result = appId.program(type, programName);
+        }
+        reader.skipValue();
+      }
+
+      reader.endObject();
+      return result;
+    }
+
+    private boolean isParseComplete(ArtifactId artifactId, String description,
+        ProgramId programId) {
+      return artifactId != null && description != null && programId != null;
     }
 
     @Override
