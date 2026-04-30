@@ -26,6 +26,7 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.QueryOption;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
@@ -204,6 +205,14 @@ public class MetricStructuredTable implements StructuredTable {
       Collection<Field<?>> filterIndexes, SortOrder sortOrder)
       throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(keyRange, limit, filterIndexes, sortOrder),
+        "sort.index.range.scan.");
+  }
+
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes, SortOrder sortOrder, QueryOption... options)
+      throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(keyRange, limit, filterIndexes, sortOrder, options),
         "sort.index.range.scan.");
   }
 

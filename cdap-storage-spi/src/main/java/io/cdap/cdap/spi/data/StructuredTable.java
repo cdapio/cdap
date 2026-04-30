@@ -196,6 +196,27 @@ public interface StructuredTable extends Closeable {
   }
 
   /**
+   * Read a set of rows from the table matching the index and the key range, with additional query
+   * options. The rows returned will be sorted on the primary key order.
+   *
+   * @param keyRange      key range for the scan
+   * @param limit         maximum number of rows to return
+   * @param filterIndexes the index to filter upon
+   * @param sortOrder     defined primary key sort order. Note that the comparator used is specific
+   *                      to the underlying store and is not necessarily lexicographic.
+   * @param options       optional {@link QueryOption}s to modify the query behavior
+   * @return a {@link CloseableIterator} of rows
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
+   *                               indexed column, or the type does not match the schema
+   * @throws IOException           if there is an error scanning the table
+   */
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes, SortOrder sortOrder, QueryOption... options)
+      throws InvalidFieldException, IOException {
+    return scan(keyRange, limit, filterIndexes, sortOrder);
+  }
+
+  /**
    * Read a set of rows from the table matching the key range, return by sortOrder of specified
    * index field.
    *
