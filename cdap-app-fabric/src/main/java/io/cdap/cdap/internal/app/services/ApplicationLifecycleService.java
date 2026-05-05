@@ -742,6 +742,43 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Checks if the application already exists with the exact same artifact and
+   * configuration.
+   */
+  public boolean isAppAlreadyDeployed(ApplicationId appId, AppRequest<?> appRequest) throws Exception {
+    ApplicationMeta appMeta = store.getLatest(appId.getAppReference());
+    if (appMeta == null || appMeta.getSpec() == null) {
+      return false;
+    }
+
+    ArtifactSummary requestedArtifact = appRequest.getArtifact();
+    if (requestedArtifact == null) {
+      return false;
+    }
+
+    ArtifactId currentArtifactId = appMeta.getSpec().getArtifactId();
+    if (!currentArtifactId.getName().equals(requestedArtifact.getName()) ||
+      !currentArtifactId.getVersion().getVersion().equals(requestedArtifact.getVersion()) ||
+      !currentArtifactId.getScope().equals(requestedArtifact.getScope())) {
+      return false;
+    }
+
+    Object config = appRequest.getConfig();
+    String requestedConfigStr = config == null ? null
+      : config instanceof String ? (String) config : GSON.toJson(config);
+    String currentConfigStr = appMeta.getSpec().getConfiguration();
+
+    String normRequestedConfig = requestedConfigStr == null ? "" : requestedConfigStr.trim();
+    String normCurrentConfig = currentConfigStr == null ? "" : currentConfigStr.trim();
+
+    if (!normRequestedConfig.equals(normCurrentConfig)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Updates an application config by applying given update actions. The app should know how to
    * apply these actions to its config.
    */
