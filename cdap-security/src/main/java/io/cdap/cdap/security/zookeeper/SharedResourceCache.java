@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.zookeeper.ZKExtOperations;
@@ -91,7 +92,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       }
     } catch (ExecutionException ee) {
       // recheck if already created
-      throw Throwables.propagate(ee.getCause());
+      throw new RuntimeException(ee.getCause());
     }
     this.resources = reloadAll();
     listeners.notifyUpdate();
@@ -117,7 +118,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
                 loaded.put(nodeName, resource);
                 listeners.notifyResourceUpdate(nodeName, resource);
               } catch (IOException ioe) {
-                throw Throwables.propagate(ioe);
+                throw new RuntimeException(ioe);
               }
             }
 
@@ -126,7 +127,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               LOG.error("Failed to get data for child node {}", nodeName, t);
               listeners.notifyError(nodeName, t);
             }
-          });
+          },
+              MoreExecutors.directExecutor());
           LOG.debug("Added future for {}", child);
         }
       }
@@ -192,14 +194,14 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               listeners.notifyError(name, t);
               completion.setException(t);
             }
-          }
-      );
+          },
+              MoreExecutors.directExecutor());
 
-      // Block until it is done
+        // Block until it is done
       completion.get();
 
     } catch (Exception ioe) {
-      throw Throwables.propagate(ioe);
+        throw new RuntimeException(ioe);
     }
   }
 
@@ -228,7 +230,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
         LOG.error("Failed to remove znode {}", znode, t);
         listeners.notifyError(name, t);
       }
-    });
+    },
+        MoreExecutors.directExecutor());
   }
 
   /**
@@ -348,7 +351,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       public void onFailure(Throwable t) {
         resourceCallback.onFailure(t);
       }
-    });
+    },
+        MoreExecutors.directExecutor());
   }
 
   private class ZKWatcher implements Watcher {
@@ -403,7 +407,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               listener.onUpdate();
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
-              Throwables.propagateIfInstanceOf(t, Error.class);
+              if (t instanceof Error) {
+
+                throw (Error) t;
+
+              }
             }
           }
         }
@@ -419,7 +427,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               listener.onResourceUpdate(name, resource);
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
-              Throwables.propagateIfInstanceOf(t, Error.class);
+              if (t instanceof Error) {
+
+                throw (Error) t;
+
+              }
             }
           }
         }
@@ -435,7 +447,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               listener.onResourceDelete(name);
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
-              Throwables.propagateIfInstanceOf(t, Error.class);
+              if (t instanceof Error) {
+
+                throw (Error) t;
+
+              }
             }
           }
         }
@@ -451,7 +467,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               listener.onError(name, throwable);
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
-              Throwables.propagateIfInstanceOf(t, Error.class);
+              if (t instanceof Error) {
+
+                throw (Error) t;
+
+              }
             }
           }
         }

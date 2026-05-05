@@ -149,18 +149,18 @@ public class LogHttpHandlerTest {
     }));
 
     transactionManager = injector.getInstance(TransactionManager.class);
-    transactionManager.startAndWait();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    transactionManager.startAsync().awaitRunning();
+      StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    dsOpService.startAsync().awaitRunning();
 
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+      datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAsync().awaitRunning();
 
-    logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+      logQueryService = injector.getInstance(LogQueryService.class);
+    logQueryService.startAsync().awaitRunning();
 
-    mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
+      mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
     mockLogReader.generateLogs();
 
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -168,11 +168,11 @@ public class LogHttpHandlerTest {
 
   @AfterClass
   public static void tearDown() {
-    logQueryService.stopAndWait();
+    logQueryService.stopAsync().awaitTerminated();
 
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    transactionManager.stopAndWait();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    transactionManager.stopAsync().awaitTerminated();
   }
 
   @Test

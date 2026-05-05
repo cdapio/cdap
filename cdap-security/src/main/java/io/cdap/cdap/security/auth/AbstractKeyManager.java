@@ -18,7 +18,6 @@ package io.cdap.cdap.security.auth;
 
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -157,7 +156,7 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
         throw new InvalidDigestException("Token signature is not valid!");
       }
     } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
+      throw new RuntimeException(ioe);
     }
   }
 

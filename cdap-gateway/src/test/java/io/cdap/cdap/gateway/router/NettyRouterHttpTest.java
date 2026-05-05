@@ -107,12 +107,12 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
                   new RouterPathLookup()),
               new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
               new NoOpAeadCipher());
-      router.startAndWait();
+      router.startAsync().awaitRunning();
     }
 
     @Override
     protected void shutDown() {
-      router.stopAndWait();
+        router.stopAsync().awaitTerminated();
     }
 
     public InetSocketAddress getRouterAddress() {

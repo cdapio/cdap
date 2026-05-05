@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.auth.context;
 
-import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -158,7 +157,8 @@ public class AuthenticationContextModules {
     try {
       return UserGroupInformation.getCurrentUser().getShortUserName();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
+
     }
   }
 

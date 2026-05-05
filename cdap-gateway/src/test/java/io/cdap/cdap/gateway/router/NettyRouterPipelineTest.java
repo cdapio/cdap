@@ -209,7 +209,7 @@ public class NettyRouterPipelineTest {
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location programJar = AppJarHelper.createDeploymentJar(lf, DummyApp.class);
-    GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(Locations.newInputSupplier(programJar)));
+    GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(Locations.newInputSupplier(programJar).getInput()));
 
     for (int i = 0; i < num; i++) {
       LOG.info("Deploying {}/{}", i, num);
@@ -220,7 +220,7 @@ public class NettyRouterPipelineTest {
       urlConn.setDoOutput(true);
       urlConn.setDoInput(true);
 
-      ByteStreams.copy(Locations.newInputSupplier(programJar), urlConn.getOutputStream());
+      ByteStreams.copy(Locations.newInputSupplier(programJar).getInput(), urlConn.getOutputStream());
       Assert.assertEquals(200, urlConn.getResponseCode());
       urlConn.getInputStream().close();
       urlConn.disconnect();
