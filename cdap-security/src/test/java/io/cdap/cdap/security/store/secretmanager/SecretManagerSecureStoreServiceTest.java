@@ -48,12 +48,12 @@ public class SecretManagerSecureStoreServiceTest {
     namespaceClient.create(namespaceMeta);
     secureStoreService = new SecretManagerSecureStoreService(namespaceClient, new MockSecretManagerContext(),
                                                              "mock", new MockSecretManager());
-    secureStoreService.startAndWait();
+    io.cdap.cdap.common.service.Services.startAndWait(secureStoreService);
   }
 
   @AfterClass
   public static void cleanUp() {
-    secureStoreService.stopAndWait();
+    io.cdap.cdap.common.service.Services.stopAndWait(secureStoreService);
   }
 
   @Test

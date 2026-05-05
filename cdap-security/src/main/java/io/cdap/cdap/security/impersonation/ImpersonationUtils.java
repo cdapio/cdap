@@ -50,7 +50,17 @@ public final class ImpersonationUtils {
     } catch (UndeclaredThrowableException e) {
       // UserGroupInformation#doAs will wrap any checked exceptions, so unwrap and rethrow here
       Throwable wrappedException = e.getUndeclaredThrowable();
-      Throwables.propagateIfPossible(wrappedException);
+      if (wrappedException instanceof RuntimeException) {
+
+        throw (RuntimeException) wrappedException;
+
+      }
+
+      if (wrappedException instanceof Error) {
+
+        throw (Error) wrappedException;
+
+      }
 
       if (wrappedException instanceof Exception) {
         throw (Exception) wrappedException;
@@ -59,7 +69,8 @@ public final class ImpersonationUtils {
       // this should never happen
       LOG.warn("Unexpected exception while executing callable as {}.",
           ugi.getUserName(), wrappedException);
-      throw Throwables.propagate(wrappedException);
+      Throwables.propagateIfUnchecked(wrappedException);
+      throw new RuntimeException(wrappedException);
     }
   }
 

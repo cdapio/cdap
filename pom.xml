@@ -1596,6 +1596,7 @@
                   <exclude>third-party-licenses/**</exclude>
                   <exclude>.gitpod.yml</exclude>
                   <exclude>.gitpod.Dockerfile</exclude>
+                  <exclude>**/target/**</exclude>
                 </excludes>
               </configuration>
             </execution>

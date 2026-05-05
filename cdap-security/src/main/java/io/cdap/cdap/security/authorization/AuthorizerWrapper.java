@@ -54,7 +54,8 @@ public class AuthorizerWrapper implements AccessController {
     try {
       authorizer.initialize(context);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.propagateIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -117,7 +118,8 @@ public class AuthorizerWrapper implements AccessController {
     try {
       authorizer.destroy();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.propagateIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
