@@ -269,7 +269,8 @@ public class RuntimeServiceRoutingTest {
 
     @Override
     public Credential getCredentials() {
-      String credentialValue = Base64.getEncoder().encodeToString(Hashing.md5().hashString(programRunId.toString(), StandardCharsets.UTF_8)
+      String credentialValue = Base64.getEncoder().encodeToString(Hashing.md5().hashString(programRunId.toString(),
+              StandardCharsets.UTF_8)
                                                                     .asBytes());
       return new Credential(credentialValue, Credential.CredentialType.EXTERNAL_BEARER);
     }

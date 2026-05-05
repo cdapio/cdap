@@ -24,7 +24,6 @@ import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationError;
 import java.util.Collections;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

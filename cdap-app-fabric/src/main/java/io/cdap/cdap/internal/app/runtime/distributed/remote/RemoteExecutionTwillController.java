@@ -47,7 +47,6 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.ServiceDiscovered;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

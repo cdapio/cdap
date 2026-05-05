@@ -133,7 +133,6 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.kafka.client.KafkaClientService;

@@ -21,7 +21,6 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

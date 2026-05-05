@@ -149,7 +149,6 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;

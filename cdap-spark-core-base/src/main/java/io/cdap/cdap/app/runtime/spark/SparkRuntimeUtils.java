@@ -61,7 +61,6 @@ import org.apache.spark.scheduler.EventLoggingListener;
 import org.apache.spark.scheduler.SparkListenerApplicationStart;
 import org.apache.spark.streaming.DStreamGraph;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;

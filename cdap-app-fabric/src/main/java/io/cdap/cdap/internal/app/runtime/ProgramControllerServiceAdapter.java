@@ -22,7 +22,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

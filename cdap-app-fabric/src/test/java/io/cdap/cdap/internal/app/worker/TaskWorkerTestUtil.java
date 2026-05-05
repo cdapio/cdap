@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.CompletableFuture;
 import org.apache.twill.common.Threads;
-import com.google.common.util.concurrent.Service;
 
 /**
  * Common TaskWorker test utility functions

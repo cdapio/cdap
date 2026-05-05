@@ -119,7 +119,6 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.internal.SingleRunnableApplication;
 import org.apache.twill.internal.io.BasicLocationCache;
 import org.apache.twill.internal.io.LocationCache;

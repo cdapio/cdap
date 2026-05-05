@@ -63,7 +63,6 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

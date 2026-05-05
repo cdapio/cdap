@@ -24,7 +24,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import java.io.Closeable;
 import java.io.File;
 import javax.annotation.Nullable;
-import com.google.common.util.concurrent.Service;
 
 /**
  * Provides method to create {@link PluginInstantiator} for Program Runners
