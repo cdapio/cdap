@@ -184,6 +184,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
 
           try {
             if (applicationLifecycleService.isAppAlreadyDeployed(appId, appRequest)) {
+              LOG.warn("Application {} is already deployed",appId );
               io.cdap.cdap.proto.ApplicationDetail existingApp =
                 applicationLifecycleService.getLatestAppDetail(appId.getAppReference());
               responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new io.cdap.cdap.proto.ApplicationRecord(existingApp)));

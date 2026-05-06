@@ -758,8 +758,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ArtifactId currentArtifactId = appMeta.getSpec().getArtifactId();
     if (!currentArtifactId.getName().equals(requestedArtifact.getName()) ||
-      !currentArtifactId.getVersion().getVersion().equals(requestedArtifact.getVersion()) ||
       !currentArtifactId.getScope().equals(requestedArtifact.getScope())) {
+      return false;
+    }
+
+    try {
+      io.cdap.cdap.api.artifact.ArtifactVersionRange range = io.cdap.cdap.api.artifact.ArtifactVersionRange
+        .parse(requestedArtifact.getVersion());
+      if (!range.versionIsInRange(currentArtifactId.getVersion())) {
+        return false;
+      }
+    } catch (Exception e) {
       return false;
     }
 
