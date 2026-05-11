@@ -37,6 +37,7 @@ public class SpannerTransactionRunner implements TransactionRunner {
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     try {
+      // enforce lock
       admin.getDatabaseClient().readWriteTransaction(Options.optimisticLock()).allowNestedTransaction().run(context -> {
         runnable.run(new SpannerStructuredTableContext(context, admin));
         return null;
