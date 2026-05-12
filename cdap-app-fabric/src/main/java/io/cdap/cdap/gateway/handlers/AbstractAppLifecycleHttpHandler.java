@@ -183,6 +183,14 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
 
           try {
+            if (applicationLifecycleService.isAppAlreadyDeployed(appId, appRequest)) {
+              LOG.warn("Application {} is already deployed",appId );
+              io.cdap.cdap.proto.ApplicationDetail existingApp =
+                applicationLifecycleService.getLatestAppDetail(appId.getAppReference());
+              responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new io.cdap.cdap.proto.ApplicationRecord(existingApp)));
+              return;
+            }
+
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
                 null, createProgramTerminator(), skipMarkingLatest);
             responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
