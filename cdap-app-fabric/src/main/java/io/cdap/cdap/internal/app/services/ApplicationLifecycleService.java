@@ -742,6 +742,61 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Checks if the application already exists with the exact same artifact and
+   * configuration. If yes, returns the ApplicationDetail of the existing application;
+   * otherwise returns null.
+   */
+  @Nullable
+  public ApplicationDetail getAppDetailIfAlreadyDeployed(ApplicationId appId, AppRequest<?> appRequest) throws Exception {
+    if (!Feature.SKIP_DUPLICATE_APP_DEPLOYMENT.isEnabled(featureFlagsProvider)) {
+      return null;
+    }
+    ApplicationMeta appMeta = store.getLatest(appId.getAppReference());
+    if (appMeta == null || appMeta.getSpec() == null) {
+      return null;
+    }
+
+    ArtifactSummary requestedArtifact = appRequest.getArtifact();
+    if (requestedArtifact == null) {
+      return null;
+    }
+
+    ArtifactId currentArtifactId = appMeta.getSpec().getArtifactId();
+    if (!currentArtifactId.getName().equals(requestedArtifact.getName()) ||
+      !currentArtifactId.getScope().equals(requestedArtifact.getScope())) {
+      return null;
+    }
+
+    try {
+      io.cdap.cdap.api.artifact.ArtifactVersionRange range = io.cdap.cdap.api.artifact.ArtifactVersionRange
+        .parse(requestedArtifact.getVersion());
+      if (!range.versionIsInRange(currentArtifactId.getVersion())) {
+        return null;
+      }
+    } catch (Exception e) {
+      return null;
+    }
+
+    Object config = appRequest.getConfig();
+    String requestedConfigStr = config == null ? null
+      : config instanceof String ? (String) config : GSON.toJson(config);
+    String currentConfigStr = appMeta.getSpec().getConfiguration();
+
+    String normRequestedConfig = requestedConfigStr == null ? "" : requestedConfigStr.trim();
+    String normCurrentConfig = currentConfigStr == null ? "" : currentConfigStr.trim();
+
+    if (!normRequestedConfig.equals(normCurrentConfig)) {
+      return null;
+    }
+
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId.getAppReference().app(appMeta.getSpec().getAppVersion()));
+    return enforceApplicationDetailAccess(appId,
+        ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
+            appMeta.getChange(),
+            appMeta.getSourceControlMeta()));
+  }
+
+  /**
    * Updates an application config by applying given update actions. The app should know how to
    * apply these actions to its config.
    */

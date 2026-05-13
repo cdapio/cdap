@@ -29,11 +29,14 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -73,6 +76,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
   protected final ProgramRuntimeService runtimeService;
   protected final ApplicationLifecycleService applicationLifecycleService;
   protected final File tmpDir;
+  protected final FeatureFlagsProvider featureFlagsProvider;
 
   /**
    * Constructor for the abstract class.
@@ -91,6 +95,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
     this.applicationLifecycleService = applicationLifecycleService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
         configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(configuration);
   }
 
   protected ApplicationId validateApplicationVersionId(NamespaceId namespaceId, String appId,
@@ -183,6 +188,16 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
 
           try {
+            if (Feature.SKIP_DUPLICATE_APP_DEPLOYMENT.isEnabled(featureFlagsProvider)) {
+              io.cdap.cdap.proto.ApplicationDetail existingApp =
+                  applicationLifecycleService.getAppDetailIfAlreadyDeployed(appId, appRequest);
+              if (existingApp != null) {
+                LOG.warn("Application {} is already deployed", appId);
+                responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new io.cdap.cdap.proto.ApplicationRecord(existingApp)));
+                return;
+              }
+            }
+
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
                 null, createProgramTerminator(), skipMarkingLatest);
             responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
