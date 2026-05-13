@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
@@ -40,6 +41,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -742,15 +744,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Checks if the application already exists with the exact same artifact and
-   * configuration. If yes, returns the ApplicationDetail of the existing application;
-   * otherwise returns null.
+   * Checks if the application already exists with the exact same artifact and configuration. If
+   * yes, returns the ApplicationDetail of the existing application; otherwise returns null.
    */
   @Nullable
-  public ApplicationDetail getAppDetailIfAlreadyDeployed(ApplicationId appId, AppRequest<?> appRequest) throws Exception {
-    if (!Feature.SKIP_DUPLICATE_APP_DEPLOYMENT.isEnabled(featureFlagsProvider)) {
-      return null;
-    }
+  public ApplicationDetail getAppDetailIfAlreadyDeployed(ApplicationId appId,
+      AppRequest<?> appRequest) throws Exception {
     ApplicationMeta appMeta = store.getLatest(appId.getAppReference());
     if (appMeta == null || appMeta.getSpec() == null) {
       return null;
@@ -763,33 +762,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ArtifactId currentArtifactId = appMeta.getSpec().getArtifactId();
     if (!currentArtifactId.getName().equals(requestedArtifact.getName()) ||
-      !currentArtifactId.getScope().equals(requestedArtifact.getScope())) {
+        !currentArtifactId.getScope().equals(requestedArtifact.getScope())) {
       return null;
     }
 
     try {
-      io.cdap.cdap.api.artifact.ArtifactVersionRange range = io.cdap.cdap.api.artifact.ArtifactVersionRange
-        .parse(requestedArtifact.getVersion());
+      ArtifactVersionRange range = ArtifactVersionRange.parse(requestedArtifact.getVersion());
       if (!range.versionIsInRange(currentArtifactId.getVersion())) {
         return null;
       }
-    } catch (Exception e) {
+    } catch (InvalidArtifactRangeException e) {
       return null;
     }
 
     Object config = appRequest.getConfig();
     String requestedConfigStr = config == null ? null
-      : config instanceof String ? (String) config : GSON.toJson(config);
+        : config instanceof String ? (String) config : GSON.toJson(config);
     String currentConfigStr = appMeta.getSpec().getConfiguration();
 
-    String normRequestedConfig = requestedConfigStr == null ? "" : requestedConfigStr.trim();
-    String normCurrentConfig = currentConfigStr == null ? "" : currentConfigStr.trim();
-
-    if (!normRequestedConfig.equals(normCurrentConfig)) {
+    if (!AppRequest.areConfigsEqual(requestedConfigStr, currentConfigStr)) {
       return null;
     }
 
-    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId.getAppReference().app(appMeta.getSpec().getAppVersion()));
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(
+        appId.getAppReference().app(appMeta.getSpec().getAppVersion()));
     return enforceApplicationDetailAccess(appId,
         ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
             appMeta.getChange(),

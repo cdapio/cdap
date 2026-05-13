@@ -6276,6 +6276,14 @@
   </property>
 
   <property>
+    <name>skip.duplicate.app.deployment.enabled</name>
+    <value>false</value>
+    <description>
+      Enables skipping deployment operation for a duplicate application create request
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>

@@ -121,7 +121,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void setSkipDuplicateDeployFlag(boolean skipDeployFlag) {
-    cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.SKIP_DUPLICATE_APP_DEPLOYMENT.getFeatureFlagString(), skipDeployFlag);
+    cConf.setBoolean(Constants.AppFabric.SKIP_DUPLICATE_APP_DEPLOYMENT, skipDeployFlag);
   }
 
   @Before
@@ -265,6 +265,43 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     ArtifactSummary rangeSummary = new ArtifactSummary(artifactId.getName(), "[0.9.0, 1.1.0]");
     AppRequest<ConfigTestApp.ConfigClass> rangeRequest = new AppRequest<>(rangeSummary, config);
     HttpResponse secondResponse = deploy(appId, rangeRequest);
+    Assert.assertEquals(200, secondResponse.getResponseCode());
+
+    // The deployApp should NOT be called again
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestWithConfigFormattingDifference() throws Exception {
+    setSkipDuplicateDeployFlag(true);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JSONEqualDeployApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "jsonEqualDeployArtifact", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    // Two semantically identical configurations but with different whitespaces and key ordering
+    String config1 = "{\n  \"a\": \"xyz\",\n  \"b\": \"123\"\n}";
+    String config2 = "{\"b\":\"123\",\"a\":\"xyz\"}";
+
+    // Deploy using configuration 1 first
+    AppRequest<String> firstRequest = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config1);
+    HttpResponse firstResponse = deploy(appId, firstRequest);
+    Assert.assertEquals(200, firstResponse.getResponseCode());
+
+    // Mock verify: check that deployApp spy was called once
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+
+    // Second deployment using configuration 2
+    AppRequest<String> secondRequest = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config2);
+    HttpResponse secondResponse = deploy(appId, secondRequest);
     Assert.assertEquals(200, secondResponse.getResponseCode());
 
     // The deployApp should NOT be called again

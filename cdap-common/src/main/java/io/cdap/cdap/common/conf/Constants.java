@@ -376,6 +376,8 @@ public final class Constants {
 
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
 
+    public static final String SKIP_DUPLICATE_APP_DEPLOYMENT = "skip.duplicate.app.deployment.enabled";
+
     /**
      * Topic prefix for publishing status transitioning events of program runs to the messaging
      * system.

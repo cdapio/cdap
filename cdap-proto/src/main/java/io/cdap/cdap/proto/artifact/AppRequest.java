@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.proto.artifact;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
@@ -118,5 +120,31 @@ public class AppRequest<T> {
       throw new IllegalArgumentException("An artifact must be specified to create an application.");
     }
     artifact.validate();
+  }
+
+  private static final Gson GSON_HELPER = new Gson();
+
+  /**
+   * Returns true if the two configurations are semantically identical JSON strings.
+   */
+  public static boolean areConfigsEqual(@Nullable String config1, @Nullable String config2) {
+    String normConfig1 = config1 == null ? "" : config1.trim();
+    String normConfig2 = config2 == null ? "" : config2.trim();
+
+    if (normConfig1.equals(normConfig2)) {
+      return true;
+    }
+
+    if (normConfig1.isEmpty() || normConfig2.isEmpty()) {
+      return false;
+    }
+
+    try {
+      JsonElement element1 = GSON_HELPER.fromJson(normConfig1, JsonElement.class);
+      JsonElement element2 = GSON_HELPER.fromJson(normConfig2, JsonElement.class);
+      return element1.equals(element2);
+    } catch (Exception e) {
+      return false;
+    }
   }
 }
