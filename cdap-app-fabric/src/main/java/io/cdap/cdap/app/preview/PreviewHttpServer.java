@@ -101,7 +101,7 @@ public class PreviewHttpServer extends AbstractIdleService {
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
     if (previewManager instanceof Service) {
-      ((Service) previewManager).startAndWait();
+      ((Service) previewManager).startAsync().awaitRunning();
     }
 
     httpService.start();
@@ -117,7 +117,7 @@ public class PreviewHttpServer extends AbstractIdleService {
     try {
       cancelHttpService.cancel();
       if (previewManager instanceof Service) {
-        ((Service) previewManager).stopAndWait();
+        ((Service) previewManager).stopAsync().awaitTerminated();
       }
     } finally {
       httpService.stop();

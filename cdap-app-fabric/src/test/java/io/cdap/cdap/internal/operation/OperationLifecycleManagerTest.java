@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.operation;
 
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -98,7 +97,11 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
 
   @AfterClass
   public static void afterClass() {
-    Closeables.closeQuietly(postgres);
+    try {
+      postgres.close();
+    } catch (Exception ignored) {
+      // Ignored because we are shutting down the test class and cleaning up the embedded postgres.
+    }
   }
 
   @Test
