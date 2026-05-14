@@ -71,6 +71,7 @@ import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.PreferUnionForDisjunctionOption;
 import io.cdap.cdap.spi.data.table.options.StaleReadOption;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
@@ -415,7 +416,8 @@ public class AppMetadataStore {
       Collection<Field<?>> filterIndexes =
           ImmutableList.of(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true),
               Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
-      return table.scan(range, Integer.MAX_VALUE, filterIndexes, sortOrder);
+      return table.scan(range, Integer.MAX_VALUE, filterIndexes, sortOrder,
+          PreferUnionForDisjunctionOption.INSTANCE);
     }
     if (sortCreationTime) {
       // sort on Creation Time
