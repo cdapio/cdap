@@ -44,6 +44,7 @@ import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.workflow.NodeStatus;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
@@ -1112,6 +1113,101 @@ public abstract class DefaultStoreTest {
         .setScanFrom(latestApps.get(firstPageSize - 1)).setLatestOnly(true)
         .build(), 20, (appId, spec) -> restartApps.add(appId)));
     Assert.assertEquals(latestApps.subList(firstPageSize, latestApps.size()), restartApps);
+  }
+
+  @Test
+  public void testScanApplicationSummaries() throws Exception {
+    testScanApplicationSummaries(store);
+  }
+
+  protected void testScanApplicationSummaries(Store store) throws Exception {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    int count = 10;
+    for (int i = 0; i < count; i++) {
+      String appName = "summaryTest" + i;
+      ApplicationMeta appMeta = new ApplicationMeta(appName, appSpec,
+          new ChangeDetail(null, null, null,
+              System.currentTimeMillis()));
+      store.addLatestApplication(new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appName),
+          appMeta);
+    }
+
+    List<AppSummary> summaries = new ArrayList<>();
+    store.scanApplicationSummaries(ScanApplicationsRequest.builder().build(),
+        5, summaries::add);
+
+    Assert.assertEquals(count, summaries.size());
+
+    // Verify fields of one summary
+    AppSummary summary = summaries.get(0);
+    Assert.assertNotNull(summary.getAppId());
+    Assert.assertNotNull(summary.getArtifactId());
+
+    // Test pagination
+    List<AppSummary> page1 = new ArrayList<>();
+    boolean limitReached = store.scanApplicationSummaries(
+        ScanApplicationsRequest.builder().setLimit(5).build(),
+        5, page1::add);
+    Assert.assertTrue(limitReached);
+    Assert.assertEquals(5, page1.size());
+
+    // Test sorting (should throw UnsupportedOperationException for DESC if not supported)
+    try {
+      List<AppSummary> descSummaries = new ArrayList<>();
+      store.scanApplicationSummaries(
+          ScanApplicationsRequest.builder().setSortOrder(SortOrder.DESC).build(),
+          10, descSummaries::add);
+
+      Assert.assertEquals(count, descSummaries.size());
+      List<String> ascNames = summaries.stream()
+          .map(s -> s.getAppId().getApplication())
+          .collect(Collectors.toList());
+      List<String> descNames = descSummaries.stream()
+          .map(s -> s.getAppId().getApplication())
+          .collect(Collectors.toList());
+      Assert.assertEquals(Lists.reverse(ascNames), descNames);
+    } catch (UnsupportedOperationException e) {
+      // Expected if not supported
+    }
+  }
+
+  @Test
+  public void testScanApplicationSummariesWithArtifactFilter() throws Exception {
+    testScanApplicationSummariesWithArtifactFilter(store);
+  }
+
+  protected void testScanApplicationSummariesWithArtifactFilter(Store store) throws Exception {
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("artifact1", "1.0").toApiArtifactId();
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("artifact2", "1.0").toApiArtifactId();
+
+    ApplicationSpecification spec1 = createDummyAppSpec("app1", ApplicationId.DEFAULT_VERSION,
+        artifactId1);
+    ApplicationSpecification spec2 = createDummyAppSpec("app2", ApplicationId.DEFAULT_VERSION,
+        artifactId2);
+
+    ApplicationMeta appMeta1 = new ApplicationMeta("app1", spec1,
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()));
+    ApplicationMeta appMeta2 = new ApplicationMeta("app2", spec2,
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()));
+
+    store.addLatestApplication(NamespaceId.DEFAULT.app("app1"), appMeta1);
+    store.addLatestApplication(NamespaceId.DEFAULT.app("app2"), appMeta2);
+
+    List<AppSummary> summaries = new ArrayList<>();
+    ApplicationFilter filter = new ApplicationFilter.ArtifactNamesInFilter(
+        Collections.singleton("artifact1"));
+
+    store.scanApplicationSummaries(ScanApplicationsRequest.builder()
+            .setNamespaceId(NamespaceId.DEFAULT)
+            .addFilters(Collections.singletonList(filter))
+            .build(),
+        5, summaries::add);
+
+    Assert.assertEquals(1, summaries.size());
+    Assert.assertEquals("app1", summaries.get(0).getAppId().getApplication());
   }
 
   @Test

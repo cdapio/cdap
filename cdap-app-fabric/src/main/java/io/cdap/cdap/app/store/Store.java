@@ -29,6 +29,7 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.internal.app.store.AppSummary;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
@@ -494,6 +495,17 @@ public interface Store {
    */
   boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
                            BiConsumer<ApplicationId, ApplicationMeta> consumer);
+
+  /**
+   * Scans for application summaries according to the parameters passed in request.
+   *
+   * @param request     parameters defining filters and sorting
+   * @param txBatchSize maximum number of applications to scan in one transaction
+   * @param consumer    a {@link Consumer} to consume each application summary being scanned
+   * @return if limit was reached (true) or all items were scanned before reaching the limit (false)
+   */
+  boolean scanApplicationSummaries(ScanApplicationsRequest request, int txBatchSize,
+      Consumer<AppSummary> consumer);
 
   /**
    * Returns a Map of {@link ApplicationMeta} for the given set of {@link ApplicationId}.

@@ -72,6 +72,8 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProtoConstraint;
 import io.cdap.cdap.proto.ProtoTrigger;
+import io.cdap.cdap.proto.AppSummaryRecord;
+import io.cdap.cdap.proto.AppSummaryResponse;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.ServiceInstances;
@@ -1992,6 +1994,109 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getResponseCode());
     argsRead = GSON.fromJson(response.getResponseBodyAsString(), mapStringStringType);
     Assert.assertEquals(0, argsRead.size());
+  }
+
+  @Test
+  public void testPipelineSummary() throws Exception {
+    deploy(AppWithWorkflow.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationDetail appDetails = getAppDetails(TEST_NAMESPACE1, AppWithWorkflow.NAME);
+    ProgramId programId = new NamespaceId(TEST_NAMESPACE1)
+        .app(AppWithWorkflow.NAME, appDetails.getAppVersion())
+        .workflow(AppWithWorkflow.SampleWorkflow.NAME);
+
+    String path = "apps/summary";
+    HttpResponse response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+
+    AppSummaryResponse summaryResponse = GSON.fromJson(response.getResponseBodyAsString(),
+        AppSummaryResponse.class);
+    Assert.assertNotNull(summaryResponse);
+    Assert.assertFalse(summaryResponse.getApps().isEmpty());
+
+    AppSummaryRecord appRecord = summaryResponse.getApps().stream()
+        .filter(r -> r.getName().equals(AppWithWorkflow.NAME))
+        .findFirst().orElse(null);
+    Assert.assertNotNull(appRecord);
+    Assert.assertEquals(AppWithWorkflow.NAME, appRecord.getName());
+    Assert.assertEquals(0L, appRecord.getTotalRunCount());
+    Assert.assertNull(appRecord.getLatestRun());
+
+    startProgram(programId, 200);
+    waitState(programId, RUNNING);
+
+    stopProgram(Id.Program.fromEntityId(programId), 200);
+    waitState(programId, STOPPED);
+
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    appRecord = summaryResponse.getApps().stream()
+        .filter(r -> r.getName().equals(AppWithWorkflow.NAME))
+        .findFirst().orElse(null);
+    Assert.assertNotNull(appRecord);
+    Assert.assertTrue(appRecord.getTotalRunCount() >= 1);
+    Assert.assertNotNull(appRecord.getLatestRun());
+
+    path = "apps/summary?nameFilter=" + AppWithWorkflow.NAME;
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    Assert.assertEquals(1, summaryResponse.getApps().size());
+    Assert.assertEquals(AppWithWorkflow.NAME, summaryResponse.getApps().get(0).getName());
+
+    path = "apps/summary?pageSize=1";
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    Assert.assertEquals(1, summaryResponse.getApps().size());
+  }
+
+  @Test
+  public void testPipelineSummaryWithFilters() throws Exception {
+    Id.Artifact artifactId1 = Id.Artifact.from(Id.Namespace.from(TEST_NAMESPACE1), "art1", "1.0.0");
+    addAppArtifact(artifactId1, AppWithWorkflow.class);
+    AppRequest<Config> request1 = new AppRequest<>(new ArtifactSummary("art1", "1.0.0"), null);
+    ApplicationId appId1 = new ApplicationId(TEST_NAMESPACE1, "app1");
+    Assert.assertEquals(200, deploy(appId1, request1).getResponseCode());
+
+    Id.Artifact artifactId2 = Id.Artifact.from(Id.Namespace.from(TEST_NAMESPACE1), "art2", "1.0.0");
+    addAppArtifact(artifactId2, AppWithWorkflow.class);
+    AppRequest<Config> request2 = new AppRequest<>(new ArtifactSummary("art2", "1.0.0"), null);
+    ApplicationId appId2 = new ApplicationId(TEST_NAMESPACE1, "app2");
+    Assert.assertEquals(200, deploy(appId2, request2).getResponseCode());
+
+    String path = "apps/summary?artifactName=art1";
+    HttpResponse response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    AppSummaryResponse summaryResponse = GSON.fromJson(response.getResponseBodyAsString(),
+        AppSummaryResponse.class);
+    Assert.assertEquals(1, summaryResponse.getApps().size());
+    Assert.assertEquals("app1", summaryResponse.getApps().get(0).getName());
+
+    path = "apps/summary?artifactName=art1,art2";
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    Assert.assertEquals(2, summaryResponse.getApps().size());
+
+    path = "apps/summary?artifactVersion=1.0.0";
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    Assert.assertEquals(2, summaryResponse.getApps().size());
+
+    path = "apps/summary?nameFilter=APP1&nameFilterType=EQUALS_IGNORE_CASE";
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    Assert.assertEquals(1, summaryResponse.getApps().size());
+    Assert.assertEquals("app1", summaryResponse.getApps().get(0).getName());
+
+    path = "apps/summary?nameFilter=APP1&nameFilterType=EQUALS";
+    response = doGet(getVersionedApiPath(path, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getResponseCode());
+    summaryResponse = GSON.fromJson(response.getResponseBodyAsString(), AppSummaryResponse.class);
+    Assert.assertEquals(0, summaryResponse.getApps().size());
   }
 
   private int getResponseStatusCode(String json, int position) {

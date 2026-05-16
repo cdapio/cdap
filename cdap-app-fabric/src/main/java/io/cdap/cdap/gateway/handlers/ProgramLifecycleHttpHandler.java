@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -26,6 +29,8 @@ import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
+import io.cdap.cdap.app.store.ApplicationFilter;
+import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
@@ -60,10 +65,13 @@ import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -71,11 +79,15 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.ws.rs.DefaultValue;
@@ -1062,6 +1074,108 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramHandlerUtil.toJson(
             lifecycleService.list(NamespaceHelper.validateNamespace(namespaceQueryAdmin,namespaceId),
                 ProgramType.WORKER)));
+  }
+
+  /**
+   * Returns a summary of pipelines in the namespace, including metadata, run status, and run
+   * counts.
+   *
+   * <p>This endpoint is optimized to avoid full deserialization of application specifications.
+   *
+   * @param request          the HTTP request
+   * @param responder        the HTTP responder used to send the JSON response
+   * @param namespaceId      the ID of the namespace to scan
+   * @param artifactName     optional comma-separated list of artifact names to filter by
+   * @param artifactVersion  optional artifact version to filter by
+   * @param pageToken        optional page token for pagination
+   * @param pageSize         optional page size, defaults to 25
+   * @param orderBy          optional sort order
+   * @param nameFilter       optional filter for application name
+   * @param nameFilterType   optional type of name filter (e.g., EQUALS, CONTAINS)
+   * @param latestOnly       optional flag to return only the latest version, defaults to true
+   * @param sortCreationTime optional flag to sort by creation time
+   * @throws Exception if any error occurs during execution
+   */
+  @GET
+  @Path("/apps/summary")
+  public void getPipelineSummaries(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @QueryParam("artifactName") String artifactName,
+      @QueryParam("artifactVersion") String artifactVersion,
+      @QueryParam("pageToken") String pageToken,
+      @QueryParam("pageSize") @DefaultValue("25") Integer pageSize,
+      @QueryParam("orderBy") SortOrder orderBy,
+      @QueryParam("nameFilter") String nameFilter,
+      @QueryParam("nameFilterType") NameFilterType nameFilterType,
+      @QueryParam("latestOnly") @DefaultValue("true") Boolean latestOnly,
+      @QueryParam("sortCreationTime") Boolean sortCreationTime) throws Exception {
+
+    ScanApplicationsRequest scanRequest = getSummaryScanRequest(namespaceId, artifactName,
+        artifactVersion,
+        pageToken, pageSize, orderBy, nameFilter, nameFilterType, latestOnly, sortCreationTime);
+
+    responder.sendJson(HttpResponseStatus.OK,
+        ProgramHandlerUtil.toJson(lifecycleService.getAppSummaries(scanRequest)));
+  }
+
+  private ScanApplicationsRequest getSummaryScanRequest(String namespaceId, String artifactName,
+      String artifactVersion, String pageToken,
+      Integer pageSize, SortOrder orderBy, String nameFilter,
+      NameFilterType nameFilterType, Boolean latestOnly, Boolean sortCreationTime) {
+    Set<String> names = new HashSet<>();
+    if (!Strings.isNullOrEmpty(artifactName)) {
+      for (String name : Splitter.on(',').omitEmptyStrings().trimResults()
+          .split(Objects.requireNonNull(artifactName))) {
+        names.add(name);
+      }
+    }
+
+    ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
+    builder.setNamespaceId(new NamespaceId(namespaceId));
+    if (pageSize != null) {
+      builder.setLimit(pageSize);
+    }
+    if (latestOnly != null) {
+      builder.setLatestOnly(latestOnly);
+    }
+    if (orderBy != null) {
+      builder.setSortOrder(orderBy);
+    }
+    if (sortCreationTime != null) {
+      builder.setSortCreationTime(sortCreationTime);
+    }
+    if (!Strings.isNullOrEmpty(pageToken)) {
+      builder.setScanFrom(ApplicationId.fromIdParts(Iterables.concat(
+          Collections.singleton(namespaceId),
+          Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(pageToken.trim())))));
+    }
+
+    List<ApplicationFilter> filters = new ArrayList<>();
+    if (!names.isEmpty()) {
+      filters.add(new ApplicationFilter.ArtifactNamesInFilter(names));
+    }
+    if (!Strings.isNullOrEmpty(artifactVersion)) {
+      filters.add(new ApplicationFilter.ArtifactVersionFilter(artifactVersion.trim()));
+    }
+    if (!Strings.isNullOrEmpty(nameFilter)) {
+      String cleanNameFilter = nameFilter.trim();
+      NameFilterType type = nameFilterType != null ? nameFilterType : NameFilterType.CONTAINS;
+
+      switch (type) {
+        case EQUALS:
+          builder.setApplicationReference(new ApplicationReference(namespaceId, cleanNameFilter));
+          break;
+        case EQUALS_IGNORE_CASE:
+          filters.add(new ApplicationFilter.ApplicationIdEqualsFilter(cleanNameFilter));
+          break;
+        case CONTAINS:
+        default:
+          filters.add(new ApplicationFilter.ApplicationIdContainsFilter(cleanNameFilter));
+          break;
+      }
+    }
+    builder.addFilters(filters);
+    return builder.build();
   }
 
   /**

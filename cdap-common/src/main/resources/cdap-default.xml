@@ -1807,6 +1807,14 @@
   </property>
 
   <property>
+    <name>app.summary.streaming.batch.size</name>
+    <value>30</value>
+    <description>
+      Batch size for scanning applications for the Summary API.
+    </description>
+  </property>
+
+  <property>
     <name>app.exec.threads</name>
     <value>20</value>
     <description>

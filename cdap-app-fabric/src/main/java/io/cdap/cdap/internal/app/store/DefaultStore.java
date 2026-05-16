@@ -89,6 +89,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.twill.api.RunId;
@@ -810,7 +812,29 @@ public class DefaultStore implements Store {
   @Override
   public boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
       BiConsumer<ApplicationId, ApplicationMeta> consumer) {
+    return scanApplicationsInternal(request, txBatchSize,
+        Optional::of,
+        entry -> consumer.accept(entry.getKey(), entry.getValue()),
+        (req, batch) -> scanApplicationsWithReorder(req, batch, consumer));
+  }
 
+  @Override
+  public boolean scanApplicationSummaries(ScanApplicationsRequest request, int txBatchSize,
+      Consumer<AppSummary> consumer) {
+    return scanApplicationsInternal(request, txBatchSize,
+        entry -> ((AppMetadataStore.AppScanEntry) entry).getAppSummary(),
+        consumer,
+        (req, batch) -> {
+          // TODO: Implement in-memory reordering for DESC sort if needed.
+          throw new UnsupportedOperationException(
+              "DESC sort order is not supported yet for summaries");
+        });
+  }
+
+  private <T> boolean scanApplicationsInternal(ScanApplicationsRequest request, int txBatchSize,
+      Function<Map.Entry<ApplicationId, ApplicationMeta>, Optional<T>> extractor,
+      Consumer<T> consumer,
+      BiFunction<ScanApplicationsRequest, Integer, Boolean> fallback) {
     AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
     AtomicReference<ApplicationId> lastKey = new AtomicReference<>();
     AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
@@ -823,7 +847,7 @@ public class DefaultStore implements Store {
           getAppMetadataStore(context).scanApplications(requestRef.get(), entry -> {
             lastKey.set(entry.getKey());
             currentLimit.decrementAndGet();
-            consumer.accept(entry.getKey(), entry.getValue());
+            extractor.apply(entry).ifPresent(consumer);
             return count.incrementAndGet() < txBatchSize && currentLimit.get() > 0;
           });
         });
@@ -831,7 +855,7 @@ public class DefaultStore implements Store {
         if (requestRef.get().getSortOrder() != SortOrder.DESC || count.get() != 0) {
           throw e;
         }
-        return scanApplicationsWithReorder(requestRef.get(), txBatchSize, consumer);
+        return fallback.apply(requestRef.get(), txBatchSize);
       }
 
       if (lastKey.get() == null) {
