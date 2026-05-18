@@ -62,6 +62,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
+import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.Retries;
@@ -328,29 +329,36 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ExecutorService executorService = createExecutor(1, executorTerminateLatch,
         "action-" + node.getNodeId() + "-%d");
 
+    // Capture context for propagation
+    final LoggingContext parentLoggingContext = LoggingContextAccessor.getLoggingContext();
+
     try {
       // Run the action in new thread
       Future<?> future = executorService.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          SchedulableProgramType programType = node.getProgram().getProgramType();
-          String programName = node.getProgram().getProgramName();
-          String prettyProgramType = ProgramType.valueOf(programType.name()).getPrettyName();
-          ProgramWorkflowRunner programWorkflowRunner =
-              workflowProgramRunnerFactory.getProgramWorkflowRunner(programType, token,
-                  node.getNodeId(), nodeStates);
+          try (LoggingContextAccessor.LoggingContextRestorer ignored =
+              parentLoggingContext != null ? LoggingContextAccessor.setLoggingContext(parentLoggingContext)
+                  : null) {
+            SchedulableProgramType programType = node.getProgram().getProgramType();
+            String programName = node.getProgram().getProgramName();
+            String prettyProgramType = ProgramType.valueOf(programType.name()).getPrettyName();
+            ProgramWorkflowRunner programWorkflowRunner =
+                workflowProgramRunnerFactory.getProgramWorkflowRunner(programType, token,
+                    node.getNodeId(), nodeStates);
 
-          // this should not happen, since null is only passed in from WorkflowDriver, only when calling configure
-          if (programWorkflowRunner == null) {
-            throw new UnsupportedOperationException("Operation not allowed.");
+            // this should not happen, since null is only passed in from WorkflowDriver, only when calling configure
+            if (programWorkflowRunner == null) {
+              throw new UnsupportedOperationException("Operation not allowed.");
+            }
+
+            Runnable programRunner = programWorkflowRunner.create(programName);
+            LOG.info("Starting {} Program '{}' in workflow", prettyProgramType, programName);
+            programRunner.run();
+
+            LOG.info("{} Program '{}' in workflow completed", prettyProgramType, programName);
+            return null;
           }
-
-          Runnable programRunner = programWorkflowRunner.create(programName);
-          LOG.info("Starting {} Program '{}' in workflow", prettyProgramType, programName);
-          programRunner.run();
-
-          LOG.info("{} Program '{}' in workflow completed", prettyProgramType, programName);
-          return null;
         }
       });
       future.get();
@@ -376,14 +384,22 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     CompletionService<Map.Entry<String, WorkflowToken>> completionService =
         new ExecutorCompletionService<>(executorService);
 
+    // Capture the logging context from the parent thread to propagate to fork branches
+    final LoggingContext parentLoggingContext = LoggingContextAccessor.getLoggingContext();
+
     try {
       for (final List<WorkflowNode> branch : fork.getBranches()) {
         completionService.submit(new Callable<Map.Entry<String, WorkflowToken>>() {
           @Override
           public Map.Entry<String, WorkflowToken> call() throws Exception {
-            WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy();
-            executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
-            return Maps.immutableEntry(branch.toString(), copiedToken);
+            // Set the logging context on the worker thread
+            try (LoggingContextAccessor.LoggingContextRestorer ignored =
+                parentLoggingContext != null ? LoggingContextAccessor.setLoggingContext(parentLoggingContext)
+                    : null) {
+              WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy();
+              executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
+              return Maps.immutableEntry(branch.toString(), copiedToken);
+            }
           }
         });
       }
