@@ -17,8 +17,8 @@
 package io.cdap.cdap;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -248,25 +248,25 @@ public class StandaloneMain {
     ConfigurationLogger.logImportantConfig(cConf);
 
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     // TODO: CDAP-7688, remove next line after the issue is resolved
-    injector.getInstance(MessagingHttpService.class).startAndWait();
+    injector.getInstance(MessagingHttpService.class).startAsync().awaitRunning();
 
     if (txService != null) {
-      txService.startAndWait();
+      txService.startAsync().awaitRunning();
     }
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage.createIndex();
 
-    metricsCollectionService.startAndWait();
-    datasetOpExecutorService.startAndWait();
-    datasetService.startAndWait();
-    serviceStore.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
+    datasetOpExecutorService.startAsync().awaitRunning();
+    datasetService.startAsync().awaitRunning();
+    serviceStore.startAsync().awaitRunning();
 
     remoteExecutionTwillRunnerService.start();
-    metadataSubscriberService.startAndWait();
+    metadataSubscriberService.startAsync().awaitRunning();
 
     // Validate the logging pipeline configuration.
     // Do it explicitly as Standalone doesn't have a separate master check phase as the distributed does.
@@ -275,18 +275,11 @@ public class StandaloneMain {
     // since log appender instantiates a dataset.
     logAppenderInitializer.initialize();
 
-    runtimeServer.startAndWait();
-    Service.State state = appFabricServer.startAndWait();
-    if (state != Service.State.RUNNING) {
-      throw new Exception("Failed to start Application Fabric");
-    }
+    runtimeServer.startAsync().awaitRunning();
+    appFabricServer.startAsync().awaitRunning();
+    appFabricProcessorService.startAsync().awaitRunning();
 
-    state = appFabricProcessorService.startAndWait();
-    if (state != Service.State.RUNNING) {
-      throw new Exception("Failed to start Application Fabric Processor");
-    }
-
-    artifactLocalizerService.startAndWait();
+    artifactLocalizerService.startAsync().awaitRunning();
     // NOTE: As the artifact localizer client does not use service discovery for port discovery,
     // We need to set the port after starting the localizer service.
     cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
@@ -294,27 +287,27 @@ public class StandaloneMain {
     injector.getInstance(
         Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
         .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
-    previewHttpServer.startAndWait();
-    previewRunnerManager.startAndWait();
+    previewHttpServer.startAsync().awaitRunning();
+    previewRunnerManager.startAsync().awaitRunning();
 
-    metricsQueryService.startAndWait();
-    logQueryService.startAndWait();
-    router.startAndWait();
+    metricsQueryService.startAsync().awaitRunning();
+    logQueryService.startAsync().awaitRunning();
+    router.startAsync().awaitRunning();
 
     if (userInterfaceService != null) {
-      userInterfaceService.startAndWait();
+      userInterfaceService.startAsync().awaitRunning();
     }
 
     if (SecurityUtil.isManagedSecurity(cConf)) {
-      externalAuthenticationServer.startAndWait();
+      externalAuthenticationServer.startAsync().awaitRunning();
     }
 
-    metadataService.startAndWait();
-    operationalStatsService.startAndWait();
-    secureStoreService.startAndWait();
-    supportBundleInternalService.startAndWait();
-    eventPublishManager.startAndWait();
-    eventSubscriberManager.startAndWait();
+    metadataService.startAsync().awaitRunning();
+    operationalStatsService.startAsync().awaitRunning();
+    secureStoreService.startAsync().awaitRunning();
+    supportBundleInternalService.startAsync().awaitRunning();
+    eventPublishManager.startAsync().awaitRunning();
+    eventSubscriberManager.startAsync().awaitRunning();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled
@@ -334,52 +327,52 @@ public class StandaloneMain {
     try {
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
-        userInterfaceService.stopAndWait();
+        userInterfaceService.stopAsync().awaitTerminated();
       }
 
       //  shut down router to stop all incoming traffic
-      router.stopAndWait();
+      router.stopAsync().awaitTerminated();
 
-      secureStoreService.stopAndWait();
-      supportBundleInternalService.stopAndWait();
-      operationalStatsService.stopAndWait();
+      secureStoreService.stopAsync().awaitTerminated();
+      supportBundleInternalService.stopAsync().awaitTerminated();
+      operationalStatsService.stopAsync().awaitTerminated();
 
       // Stop all services that requires tx service
-      metadataSubscriberService.stopAndWait();
-      metadataService.stopAndWait();
+      metadataSubscriberService.stopAsync().awaitTerminated();
+      metadataService.stopAsync().awaitTerminated();
       remoteExecutionTwillRunnerService.stop();
-      serviceStore.stopAndWait();
-      previewRunnerManager.stopAndWait();
-      previewHttpServer.stopAndWait();
-      artifactLocalizerService.stopAndWait();
-      eventPublishManager.stopAndWait();
-      eventSubscriberManager.stopAndWait();
+      serviceStore.stopAsync().awaitTerminated();
+      previewRunnerManager.stopAsync().awaitTerminated();
+      previewHttpServer.stopAsync().awaitTerminated();
+      artifactLocalizerService.stopAsync().awaitTerminated();
+      eventPublishManager.stopAsync().awaitTerminated();
+      eventSubscriberManager.stopAsync().awaitTerminated();
       // app fabric will also stop all programs
-      appFabricServer.stopAndWait();
-      appFabricProcessorService.stopAndWait();
-      runtimeServer.stopAndWait();
+      appFabricServer.stopAsync().awaitTerminated();
+      appFabricProcessorService.stopAsync().awaitTerminated();
+      runtimeServer.stopAsync().awaitTerminated();
       // all programs are stopped: dataset service, metrics, transactions can stop now
-      datasetService.stopAndWait();
-      datasetOpExecutorService.stopAndWait();
+      datasetService.stopAsync().awaitTerminated();
+      datasetOpExecutorService.stopAsync().awaitTerminated();
 
-      logQueryService.stopAndWait();
+      logQueryService.stopAsync().awaitTerminated();
 
-      metricsCollectionService.stopAndWait();
-      metricsQueryService.stopAndWait();
+      metricsCollectionService.stopAsync().awaitTerminated();
+      metricsQueryService.stopAsync().awaitTerminated();
 
       if (txService != null) {
-        txService.stopAndWait();
+        txService.stopAsync().awaitTerminated();
       }
 
       if (SecurityUtil.isManagedSecurity(cConf)) {
         // auth service is on the side anyway
-        externalAuthenticationServer.stopAndWait();
+        externalAuthenticationServer.stopAsync().awaitTerminated();
       }
 
       // TODO: CDAP-7688, remove next line after the issue is resolved
-      injector.getInstance(MessagingHttpService.class).startAndWait();
+      injector.getInstance(MessagingHttpService.class).startAsync().awaitRunning();
       if (messagingService instanceof Service) {
-        ((Service) messagingService).stopAndWait();
+        ((Service) messagingService).stopAsync().awaitTerminated();
       }
 
       logAppenderInitializer.close();

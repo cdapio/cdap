@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -150,7 +149,6 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -291,7 +289,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
         programCompletion.get();
       } finally {
         if (programRunner instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) programRunner);
+          try {
+
+            ((Closeable) programRunner).close();
+
+          } catch (Exception ignored) {
+
+          }
         }
       }
     } catch (Throwable t) {
@@ -527,7 +531,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     // Starts the core services
     for (Service service : coreServices) {
       LOG.debug("Starting core service {}", service);
-      service.startAndWait();
+      service.startAsync().awaitRunning();
     }
   }
 
@@ -540,7 +544,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       LOG.debug("Stopping core service {}", service);
       try {
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
       } catch (Exception e) {
         LOG.warn(
             "Exception raised when stopping service {} during program termination.",
@@ -624,7 +628,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       ProgramController controller) {
 
     for (Service service : services) {
-      service.addListener(new ServiceListenerAdapter() {
+      service.addListener(new Service.Listener() {
         @Override
         public void failed(Service.State from, Throwable failure) {
           LOG.error(
@@ -721,7 +725,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     protected void startUp() throws Exception {
       // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
       relayServer = new TrafficRelayServer(InetAddress.getLocalHost(), this::getTrafficRelayTarget);
-      relayServer.startAndWait();
+      relayServer.startAsync().awaitRunning();
 
       // Set the traffic relay service address to cConf. It will be used as the proxy address for all worker processes
       Networks.setAddress(cConf, Constants.RuntimeMonitor.SERVICE_PROXY_ADDRESS,
@@ -732,7 +736,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     @Override
     protected void shutDown() {
-      relayServer.stopAndWait();
+      relayServer.stopAsync().awaitTerminated();
       getServiceProxyFile().delete();
     }
 

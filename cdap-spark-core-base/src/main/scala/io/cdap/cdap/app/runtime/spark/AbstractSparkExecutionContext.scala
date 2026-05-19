@@ -113,7 +113,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private var sparkHttpServiceServer: Option[SparkHttpServiceServer] = None
 
   // Start the Spark driver http service
-  sparkDriveHttpService.startAndWait()
+  sparkDriveHttpService.startAsync().awaitRunning()
 
   // Set the spark.repl.class.uri that points to the http service if spark-repl is present
   try {
@@ -132,13 +132,13 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       if (!handlers.isEmpty) {
         val httpServer = new SparkHttpServiceServer(
           runtimeContext, new DefaultSparkHttpServiceContext(AbstractSparkExecutionContext.this))
-        httpServer.startAndWait()
+        httpServer.startAsync().awaitRunning()
         sparkHttpServiceServer = Some(httpServer)
       }
     }
 
     override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-      sparkHttpServiceServer.foreach(_.stopAndWait())
+      sparkHttpServiceServer.foreach(_.stopAsync().awaitTerminated())
       applicationEndLatch.countDown
     }
 
@@ -183,7 +183,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       SparkRuntimeEnv.stop().foreach(sc => applicationEndLatch.await())
     } finally {
       try {
-        sparkDriveHttpService.stopAndWait()
+        sparkDriveHttpService.stopAsync().awaitTerminated()
       } finally {
         eventLoggerCloseable.close()
       }

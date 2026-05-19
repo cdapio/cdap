@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.ProgramLifecycle;
@@ -151,7 +150,7 @@ final class BasicSparkClientContext implements SparkClientContext {
     } catch (URISyntaxException e) {
       // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
       // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

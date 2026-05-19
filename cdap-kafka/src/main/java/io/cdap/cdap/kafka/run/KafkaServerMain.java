@@ -17,8 +17,7 @@
 package io.cdap.cdap.kafka.run;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Service;
+
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
@@ -78,12 +77,12 @@ public class KafkaServerMain extends DaemonMain {
             client.create(path, null, CreateMode.PERSISTENT),
             KeeperException.NodeExistsException.class, path).get();
 
-        client.stopAndWait();
+        client.stopAsync().awaitTerminated();
         zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       } finally {
-        client.stopAndWait();
+        client.stopAsync().awaitTerminated();
       }
     }
 
@@ -104,7 +103,7 @@ public class KafkaServerMain extends DaemonMain {
         try {
           address = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       } else {
         hostname = address.getCanonicalHostName();
@@ -122,11 +121,7 @@ public class KafkaServerMain extends DaemonMain {
     LOG.info("Starting embedded kafka server...");
 
     kafkaServer = new EmbeddedKafkaServer(kafkaProperties);
-    Service.State state = kafkaServer.startAndWait();
-
-    if (state != Service.State.RUNNING) {
-      throw new IllegalStateException("Kafka server has not started... terminating.");
-    }
+    kafkaServer.startAsync().awaitRunning();
 
     LOG.info("Embedded kafka server started successfully.");
   }
@@ -135,7 +130,7 @@ public class KafkaServerMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping embedded kafka server...");
     if (kafkaServer != null && kafkaServer.isRunning()) {
-      kafkaServer.stopAndWait();
+      kafkaServer.stopAsync().awaitTerminated();
     }
   }
 

@@ -101,7 +101,7 @@ public class RouterMain extends DaemonMain {
       LOG.info("Router initialized.");
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -116,7 +116,7 @@ public class RouterMain extends DaemonMain {
                 + "ZooKeeper quorum settings are correct in "
                 + "cdap-site.xml. Currently configured as: %s",
             zkClientService.getConnectString()));
-    router.startAndWait();
+    router.startAsync().awaitRunning();
     LOG.info("Router started.");
   }
 

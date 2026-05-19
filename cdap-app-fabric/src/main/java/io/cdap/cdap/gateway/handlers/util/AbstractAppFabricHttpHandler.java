@@ -16,12 +16,11 @@
 
 package io.cdap.cdap.gateway.handlers.util;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -111,7 +110,13 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       LOG.info("Failed to parse body on {} as {}", request.uri(), type, e);
       throw e;
     } finally {
-      Closeables.closeQuietly(reader);
+      try {
+
+        reader.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 

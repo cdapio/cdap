@@ -48,12 +48,12 @@ public class SecretManagerSecureStoreServiceTest {
     namespaceClient.create(namespaceMeta);
     secureStoreService = new SecretManagerSecureStoreService(namespaceClient, new MockSecretManagerContext(),
                                                              "mock", new MockSecretManager());
-    secureStoreService.startAndWait();
+    secureStoreService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void cleanUp() {
-    secureStoreService.stopAndWait();
+    secureStoreService.stopAsync().awaitTerminated();
   }
 
   @Test

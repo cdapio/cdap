@@ -19,7 +19,6 @@ package io.cdap.cdap.test;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
@@ -134,8 +133,8 @@ public class MetricsManager {
     // Min sleep time is 10ms, max sleep time is 1 seconds
     long sleepMillis = Math.max(10,
         Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
-    Stopwatch stopwatch = new Stopwatch().start();
-    while (value < count && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+    Stopwatch stopwatch = Stopwatch.createUnstarted().start();
+    while (value < count && stopwatch.elapsed(timeoutUnit) < timeout) {
       TimeUnit.MILLISECONDS.sleep(sleepMillis);
       value = getTotalMetric(tags, metricName);
     }
@@ -239,7 +238,7 @@ public class MetricsManager {
       // since it is totals, we know there's one value only
       return timeValues.get(0).getValue();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

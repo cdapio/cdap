@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.spark.service;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -89,7 +88,13 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
                                                                       String.valueOf(num))).openConnection();
           BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
           String squaredVale = reader.readLine();
-          Closeables.closeQuietly(reader);
+          try {
+
+            reader.close();
+
+          } catch (Exception ignored) {
+
+          }
           return new Tuple2<>(Bytes.toBytes(String.valueOf(num)),
                               Bytes.toBytes(squaredVale));
         }

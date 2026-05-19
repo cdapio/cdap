@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import io.cdap.cdap.DummyAppWithTrackingTable;
@@ -73,7 +72,7 @@ public class OpenCloseDataSetTest {
     try {
       return TEMP_FOLDER.newFolder();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   };
 

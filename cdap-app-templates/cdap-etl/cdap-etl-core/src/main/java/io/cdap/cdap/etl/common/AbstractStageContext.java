@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.common;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metadata.Metadata;
@@ -116,8 +115,12 @@ public abstract class AbstractStageContext implements StageContext {
           () -> pipelineRuntime.getPluginContext()
               .newPluginInstance(scopePluginId(pluginId), macroEvaluator));
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, InstantiationException.class);
-      throw Throwables.propagate(e);
+      if (e instanceof InstantiationException) {
+
+        throw (InstantiationException) e;
+
+      }
+      throw new RuntimeException(e);
     }
   }
 
