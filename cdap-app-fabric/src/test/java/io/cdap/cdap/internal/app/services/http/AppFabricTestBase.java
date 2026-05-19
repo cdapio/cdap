@@ -618,8 +618,8 @@ public abstract class AppFabricTestBase {
     return response;
   }
 
-  private HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
-                                     AppRequest<?> appRequest) throws Exception {
+  protected HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
+      AppRequest<?> appRequest) throws Exception {
     requestBuilder.addHeader(Constants.Gateway.API_KEY, "api-key-example");
     requestBuilder.addHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON);
     requestBuilder.withBody(GSON.toJson(appRequest));

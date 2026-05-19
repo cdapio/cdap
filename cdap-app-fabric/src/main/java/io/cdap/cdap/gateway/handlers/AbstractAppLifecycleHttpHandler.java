@@ -174,7 +174,8 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
 
   protected BodyConsumer deployAppFromArtifact(
       final ApplicationId appId,
-      final boolean skipMarkingLatest)
+      final boolean skipMarkingLatest,
+      final boolean skipDuplicateDeploy)
       throws IOException {
     return new AbstractBodyConsumer(
         File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
@@ -184,7 +185,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
 
           try {
-            if (configuration.getBoolean(Constants.AppFabric.SKIP_DUPLICATE_APP_DEPLOYMENT)) {
+            if (skipDuplicateDeploy) {
               ApplicationDetail existingApp = applicationLifecycleService
                   .getAppDetailIfAlreadyDeployed(appId, appRequest);
               if (existingApp != null) {
