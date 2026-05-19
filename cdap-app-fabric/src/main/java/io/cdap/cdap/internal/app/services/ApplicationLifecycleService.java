@@ -180,6 +180,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final Impersonator impersonator;
   private final CapabilityReader capabilityReader;
   private final int batchSize;
+  private final int appsScanBatchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
 
@@ -202,6 +203,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
+    this.appsScanBatchSize = cConf.getInt(AppFabric.APPS_SCAN_BATCH_SIZE);
     this.store = store;
     this.scheduleManager = scheduleManager;
     this.usageRegistry = usageRegistry;
@@ -290,11 +292,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     try (
         BatchingConsumer<Entry<ApplicationId, ApplicationMeta>> batchingConsumer = new BatchingConsumer<>(
-            list -> processApplications(list, consumer), batchSize
+            list -> processApplications(list, consumer), appsScanBatchSize
         )
     ) {
 
-      return store.scanApplications(request, batchSize,
+      return store.scanApplications(request, appsScanBatchSize,
           (appId, appMeta) -> batchingConsumer.accept(new SimpleEntry<>(appId, appMeta)));
     }
   }

@@ -471,6 +471,16 @@
   </property>
 
   <property>
+    <name>app.scan.batch.size</name>
+    <value>25</value>
+    <description>
+      Batch size for scanning applications in the database. This defines the maximum number of
+      records processed per database transaction chunk when listing applications. This is
+      independent of the pagination page size requested by client APIs.
+    </description>
+  </property>
+
+  <property>
     <name>app.artifact.compute.hash.time.bucket.days</name>
     <value>15</value>
     <description>
