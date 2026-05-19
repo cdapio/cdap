@@ -224,6 +224,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // First deployment - passing true for skipDuplicateDeploy
     HttpResponse firstResponse = deploy(appId, request, true);
     Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
 
     // Mock verify: check that the deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -234,6 +235,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Second deployment (exact same request) - passing true for skipDuplicateDeploy
     HttpResponse secondResponse = deploy(appId, request, true);
     Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
 
     // The deployApp should NOT be called again (still only called once)
     Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
@@ -258,6 +260,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         ArtifactSummary.from(artifactId.toArtifactId()), config);
     HttpResponse firstResponse = deploy(appId, firstRequest, true);
     Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
 
     // Mock verify: check that deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -270,6 +273,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     AppRequest<ConfigTestApp.ConfigClass> rangeRequest = new AppRequest<>(rangeSummary, config);
     HttpResponse secondResponse = deploy(appId, rangeRequest, true);
     Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
 
     // The deployApp should NOT be called again
     Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
@@ -296,6 +300,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config1);
     HttpResponse firstResponse = deploy(appId, firstRequest, true);
     Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
 
     // Mock verify: check that deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -308,6 +313,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config2);
     HttpResponse secondResponse = deploy(appId, secondRequest, true);
     Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
 
     // The deployApp should NOT be called again
     Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(

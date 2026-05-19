@@ -6275,7 +6275,6 @@
     </description>
   </property>
 
-
   <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>

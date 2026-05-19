@@ -376,7 +376,6 @@ public final class Constants {
 
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
 
-
     /**
      * Topic prefix for publishing status transitioning events of program runs to the messaging
      * system.

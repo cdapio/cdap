@@ -1709,8 +1709,7 @@ public abstract class AppFabricTestBase {
    * Returns the first value of the given header from the given response. If there is no such header, {@code null} is
    * returned.
    */
-  @Nullable
-  private static String getFirstHeaderValue(HttpResponse response, String name) {
+  protected static String getFirstHeaderValue(HttpResponse response, String name) {
     return response.getHeaders().get(name).stream().findFirst().orElse(null);
   }
 

@@ -49,6 +49,8 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.FileReader;
@@ -190,15 +192,17 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
                   .getAppDetailIfAlreadyDeployed(appId, appRequest);
               if (existingApp != null) {
                 LOG.info("Application {} is already deployed", appId);
-                responder.sendJson(HttpResponseStatus.OK,
-                    GSON.toJson(new ApplicationRecord(existingApp)));
+                HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped", "true");
+                responder.sendString(HttpResponseStatus.OK,
+                    GSON.toJson(new ApplicationRecord(existingApp)), headers);
                 return;
               }
             }
 
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
                 null, createProgramTerminator(), skipMarkingLatest);
-            responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
+            HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped", "false");
+            responder.sendString(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)), headers);
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();
