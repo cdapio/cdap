@@ -127,7 +127,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       throws Exception {
     String deployPath = getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId())
         + "?skipDuplicateDeployPolicy=" + skipDuplicateDeployPolicy.name();
-    return executeDeploy(io.cdap.common.http.HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
+    return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
   }
 
   @Before
@@ -214,7 +214,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testDeployDuplicateRequest() throws Exception {
+  public void testDeployDuplicateRequestBypassed() throws Exception {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DuplicateDeployApp");
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "duplicateDeployArtifact", "1.0.0-SNAPSHOT");
     HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
@@ -228,6 +228,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse firstResponse = deploy(appId, request, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
     Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
 
     // Mock verify: check that the deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -239,9 +240,51 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse secondResponse = deploy(appId, request, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
     Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
+    Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
 
     // The deployApp should NOT be called again (still only called once)
     Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestAlwaysDeployedOnDifferentConfig() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DiffDeployApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "diffDeployArtifact", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass config1 = new ConfigTestApp.ConfigClass("xyz", "123");
+    AppRequest<ConfigTestApp.ConfigClass> request1 = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config1);
+
+    // First deployment
+    HttpResponse firstResponse = deploy(appId, request1, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+
+    // Mock verify: check that the deployApp spy was called once
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+
+    // Second deployment with a DIFFERENT configuration config2
+    ConfigTestApp.ConfigClass config2 = new ConfigTestApp.ConfigClass("xyz", "456");
+    AppRequest<ConfigTestApp.ConfigClass> request2 = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config2);
+
+    HttpResponse secondResponse = deploy(appId, request2, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+
+    // The deployApp spy MUST have been called a second time (2 times total)
+    Mockito.verify(lifecycleService, Mockito.times(2)).deployApp(
         Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
         Mockito.any(), Mockito.any(), Mockito.anyBoolean());
 
@@ -264,6 +307,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse firstResponse = deploy(appId, firstRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
     Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
 
     // Mock verify: check that deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -277,6 +321,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse secondResponse = deploy(appId, rangeRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
     Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
+    Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
 
     // The deployApp should NOT be called again
     Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
@@ -304,6 +350,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse firstResponse = deploy(appId, firstRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
     Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
 
     // Mock verify: check that deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -317,6 +364,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse secondResponse = deploy(appId, secondRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
     Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
+    Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
 
     // The deployApp should NOT be called again
     Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
