@@ -48,6 +48,7 @@ import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import io.cdap.cdap.gateway.handlers.SkipDuplicateDeployPolicy;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -82,6 +83,7 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -120,10 +122,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), lcmFlag);
   }
 
-  protected HttpResponse deploy(Id.Application appId, AppRequest<?> appRequest, boolean skipDuplicateDeploy)
+  protected HttpResponse deploy(Id.Application appId, AppRequest<?> appRequest,
+                                SkipDuplicateDeployPolicy skipDuplicateDeployPolicy)
       throws Exception {
     String deployPath = getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId())
-        + "?skipDuplicateDeploy=" + skipDuplicateDeploy;
+        + "?skipDuplicateDeployPolicy=" + skipDuplicateDeployPolicy.name();
     return executeDeploy(io.cdap.common.http.HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
   }
 
@@ -221,8 +224,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
         ArtifactSummary.from(artifactId.toArtifactId()), config);
 
-    // First deployment - passing true for skipDuplicateDeploy
-    HttpResponse firstResponse = deploy(appId, request, true);
+    // First deployment - passing SKIP_ON_NO_CHANGE
+    HttpResponse firstResponse = deploy(appId, request, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
     Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
 
@@ -232,8 +235,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
         Mockito.any(), Mockito.any(), Mockito.anyBoolean());
 
-    // Second deployment (exact same request) - passing true for skipDuplicateDeploy
-    HttpResponse secondResponse = deploy(appId, request, true);
+    // Second deployment (exact same request) - passing SKIP_ON_NO_CHANGE
+    HttpResponse secondResponse = deploy(appId, request, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
     Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
 
@@ -258,7 +261,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Deploy using exact version first
     AppRequest<ConfigTestApp.ConfigClass> firstRequest = new AppRequest<>(
         ArtifactSummary.from(artifactId.toArtifactId()), config);
-    HttpResponse firstResponse = deploy(appId, firstRequest, true);
+    HttpResponse firstResponse = deploy(appId, firstRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
     Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
 
@@ -271,7 +274,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Second deployment using a version range
     ArtifactSummary rangeSummary = new ArtifactSummary(artifactId.getName(), "[0.9.0, 1.1.0]");
     AppRequest<ConfigTestApp.ConfigClass> rangeRequest = new AppRequest<>(rangeSummary, config);
-    HttpResponse secondResponse = deploy(appId, rangeRequest, true);
+    HttpResponse secondResponse = deploy(appId, rangeRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
     Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
 
@@ -298,7 +301,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Deploy using configuration 1 first
     AppRequest<String> firstRequest = new AppRequest<>(
         ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config1);
-    HttpResponse firstResponse = deploy(appId, firstRequest, true);
+    HttpResponse firstResponse = deploy(appId, firstRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
     Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
 
@@ -311,7 +314,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Second deployment using configuration 2
     AppRequest<String> secondRequest = new AppRequest<>(
         ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config2);
-    HttpResponse secondResponse = deploy(appId, secondRequest, true);
+    HttpResponse secondResponse = deploy(appId, secondRequest, SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
     Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
 
@@ -321,6 +324,29 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         Mockito.any(), Mockito.any(), Mockito.anyBoolean());
 
     deleteApp(appId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestWithInvalidPolicy() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidPolicyApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalidPolicyArtifact",
+        "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("xyz", "123");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config);
+
+    // Deployment with invalid policy string
+    String deployPath = getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId())
+        + "?skipDuplicateDeployPolicy=SKIP_ON_NO2_CHANGE";
+    HttpResponse invalidResponse = executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()),
+        request);
+    Assert.assertEquals(400, invalidResponse.getResponseCode());
+    Assert.assertTrue(invalidResponse.getResponseBodyAsString()
+        .contains("Invalid value 'SKIP_ON_NO2_CHANGE'"));
+
     deleteArtifact(artifactId, 200);
   }
 

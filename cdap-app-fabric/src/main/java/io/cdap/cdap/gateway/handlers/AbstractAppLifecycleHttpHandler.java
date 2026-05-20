@@ -177,7 +177,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
   protected BodyConsumer deployAppFromArtifact(
       final ApplicationId appId,
       final boolean skipMarkingLatest,
-      final boolean skipDuplicateDeploy)
+      final SkipDuplicateDeployPolicy skipDuplicateDeployPolicy)
       throws IOException {
     return new AbstractBodyConsumer(
         File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
@@ -187,21 +187,15 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
 
           try {
-            if (skipDuplicateDeploy) {
-              ApplicationDetail existingApp = applicationLifecycleService
-                  .getAppDetailIfAlreadyDeployed(appId, appRequest);
-              if (existingApp != null) {
-                LOG.info("Application {} is already deployed", appId);
-                HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped", "true");
-                responder.sendString(HttpResponseStatus.OK,
-                    GSON.toJson(new ApplicationRecord(existingApp)), headers);
-                return;
-              }
+            ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
+                null, createProgramTerminator(), skipMarkingLatest, skipDuplicateDeployPolicy);
+
+            if (app.isDeploySkipped()) {
+              LOG.info("Application {} is already deployed", appId);
             }
 
-            ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
-                null, createProgramTerminator(), skipMarkingLatest);
-            HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped", "false");
+            HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped",
+                String.valueOf(app.isDeploySkipped()));
             responder.sendString(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)), headers);
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {

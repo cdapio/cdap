@@ -157,8 +157,17 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public BodyConsumer create(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appId,
-      @QueryParam("skipDuplicateDeploy") @DefaultValue("false") boolean skipDuplicateDeploy)
+      @QueryParam("skipDuplicateDeployPolicy") @DefaultValue("ALWAYS_DEPLOY") String skipDuplicateDeployPolicyStr)
       throws BadRequestException, NamespaceNotFoundException, AccessException {
+    SkipDuplicateDeployPolicy skipDuplicateDeployPolicy;
+    try {
+      skipDuplicateDeployPolicy = SkipDuplicateDeployPolicy.valueOf(skipDuplicateDeployPolicyStr.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(String.format(
+          "Invalid value '%s' for query parameter 'skipDuplicateDeployPolicy'. Allowed values are: %s",
+          skipDuplicateDeployPolicyStr, SkipDuplicateDeployPolicy.getAllowedValues()));
+    }
+
     String versionId = ApplicationId.DEFAULT_VERSION;
     // If LCM flow is enabled - we generate specific versions of the app.
     if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
@@ -167,7 +176,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
 
     try {
-      return deployAppFromArtifact(applicationId, skipDuplicateDeploy);
+      return deployAppFromArtifact(applicationId, skipDuplicateDeployPolicy);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
           "Deploy failed: " + ex.getMessage());
@@ -216,7 +225,8 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
 
     // If LCM flow is enabled - Ignore the version provided by the user. Treating it the same as deploy without version
     if (Feature.LIFECYCLE_MANAGEMENT_EDIT.isEnabled(featureFlagsProvider)) {
-      return create(request, responder, namespaceId, appId, false);
+      return create(request, responder, namespaceId, appId,
+          String.valueOf(SkipDuplicateDeployPolicy.ALWAYS_DEPLOY));
     }
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
@@ -756,11 +766,11 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final ApplicationId appId) throws IOException {
-    return deployAppFromArtifact(appId, false);
+    return deployAppFromArtifact(appId, SkipDuplicateDeployPolicy.ALWAYS_DEPLOY);
   }
 
   private BodyConsumer deployAppFromArtifact(final ApplicationId appId,
-                                              final boolean skipDuplicateDeploy) throws IOException {
+      final SkipDuplicateDeployPolicy skipDuplicateDeployPolicy) throws IOException {
     // Perform auth checks outside BodyConsumer as only the first http request containing auth header
     // to populate SecurityRequestContext while http chunk doesn't. BodyConsumer runs in the thread
     // that processes the last http chunk.
@@ -769,7 +779,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
         appId.getParent(),
         applicationLifecycleService.decodeUserId(authenticationContext));
     // createTempFile() needs a prefix of at least 3 characters
-    return deployAppFromArtifact(appId, false, skipDuplicateDeploy);
+    return deployAppFromArtifact(appId, false, skipDuplicateDeployPolicy);
   }
 
   private BodyConsumer deployApplication(final HttpResponder responder,
