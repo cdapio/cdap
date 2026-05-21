@@ -72,7 +72,7 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
-import io.cdap.cdap.gateway.handlers.SkipDuplicateDeployPolicy;
+import io.cdap.cdap.gateway.handlers.AppDeployStrategy;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -750,7 +750,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * yes, returns the ApplicationMeta of the existing application; otherwise returns null.
    */
   @Nullable
-  public ApplicationMeta getAppMetaIfAlreadyDeployed(ApplicationId appId,
+  private ApplicationMeta getAppMetaIfAlreadyDeployed(ApplicationId appId,
       AppRequest<?> appRequest) throws Exception {
     ApplicationMeta appMeta = store.getLatest(appId.getAppReference());
     if (appMeta == null || appMeta.getSpec() == null) {
@@ -1103,8 +1103,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AppRequest<?> appRequest,
       @Nullable SourceControlMeta sourceControlMeta,
       ProgramTerminator programTerminator, boolean skipMarkingLatest,
-      SkipDuplicateDeployPolicy skipDuplicateDeployPolicy) throws Exception {
-    if (skipDuplicateDeployPolicy == SkipDuplicateDeployPolicy.SKIP_ON_NO_CHANGE) {
+      AppDeployStrategy appDeployStrategy) throws Exception {
+    if (appDeployStrategy == AppDeployStrategy.SKIP_ON_NO_CHANGE) {
       ApplicationMeta appMeta = getAppMetaIfAlreadyDeployed(appId, appRequest);
       if (appMeta != null) {
           KerberosPrincipalId ownerPrincipalId =
@@ -1159,7 +1159,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       @Nullable SourceControlMeta sourceControlMeta,
       ProgramTerminator programTerminator, boolean skipMarkingLatest) throws Exception {
     return deployApp(appId, appRequest, sourceControlMeta, programTerminator, skipMarkingLatest,
-        SkipDuplicateDeployPolicy.ALWAYS_DEPLOY);
+        AppDeployStrategy.ALWAYS_DEPLOY);
   }
 
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,

@@ -38,7 +38,6 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -177,7 +176,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
   protected BodyConsumer deployAppFromArtifact(
       final ApplicationId appId,
       final boolean skipMarkingLatest,
-      final SkipDuplicateDeployPolicy skipDuplicateDeployPolicy)
+      final AppDeployStrategy appDeployStrategy)
       throws IOException {
     return new AbstractBodyConsumer(
         File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
@@ -188,10 +187,10 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
 
           try {
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
-                null, createProgramTerminator(), skipMarkingLatest, skipDuplicateDeployPolicy);
+                null, createProgramTerminator(), skipMarkingLatest, appDeployStrategy);
 
             if (app.isDeploySkipped()) {
-              LOG.info("Application {} is already deployed", appId);
+              LOG.debug("Application {} is already deployed", appId);
             }
 
             HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped",

@@ -261,7 +261,7 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppLifecycleHttpHan
     }
     ApplicationId applicationId = validateApplicationVersionId(validateNamespace(namespaceId), appId, versionId);
 
-    return deployAppFromArtifact(applicationId, skipMarkingLatest, SkipDuplicateDeployPolicy.ALWAYS_DEPLOY);
+    return deployAppFromArtifact(applicationId, skipMarkingLatest, AppDeployStrategy.ALWAYS_DEPLOY);
   }
 
   /**

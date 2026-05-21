@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Policy to control skipping of duplicate application deployments.
  */
-public enum SkipDuplicateDeployPolicy {
+public enum AppDeployStrategy {
   SKIP_ON_NO_CHANGE,
   ALWAYS_DEPLOY;
 
@@ -27,8 +30,8 @@ public enum SkipDuplicateDeployPolicy {
    * Returns a comma-separated string of all allowed policy values.
    */
   public static String getAllowedValues() {
-    return java.util.Arrays.stream(values())
+    return Arrays.stream(values())
         .map(Enum::name)
-        .collect(java.util.stream.Collectors.joining(", "));
+        .collect(Collectors.joining(", "));
   }
 }
