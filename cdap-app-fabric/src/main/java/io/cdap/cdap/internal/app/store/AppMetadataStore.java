@@ -72,6 +72,7 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.table.options.StaleReadOption;
+import io.cdap.cdap.spi.data.table.options.PartitionedUpdateOption;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.io.StringReader;
@@ -2168,7 +2169,8 @@ public class AppMetadataStore {
             Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
 
     getRunRecordsTable()
-        .deleteAll(createRunRecordScanRange(keyPrefixFields, 0L, timeUpperBound.getEpochSecond()));
+        .deleteAll(createRunRecordScanRange(keyPrefixFields, 0L, timeUpperBound.getEpochSecond()),
+            new PartitionedUpdateOption());
   }
 
   /**
