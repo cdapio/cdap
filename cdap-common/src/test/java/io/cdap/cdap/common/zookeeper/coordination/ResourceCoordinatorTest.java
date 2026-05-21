@@ -185,12 +185,12 @@ public class ResourceCoordinatorTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    zkServer.startAndWait();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    zkServer.stopAndWait();
   }
 
   private Cancellable subscribe(ResourceCoordinatorClient client,

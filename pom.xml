@@ -1569,6 +1569,7 @@
               </goals>
               <configuration>
                 <excludes>
+                  <exclude>**/target/**</exclude>
                   <exclude>travis_wait*.log</exclude>
                   <exclude>build-number.txt</exclude>
                   <exclude>LICENSE*.txt</exclude>

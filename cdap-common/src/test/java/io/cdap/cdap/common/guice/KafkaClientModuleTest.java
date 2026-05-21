@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.guice;
 
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -62,7 +63,7 @@ public class KafkaClientModuleTest {
   @Before
   public void beforeTest() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    zkServer.startAndWait();
 
     CConfiguration cConf = CConfiguration.create();
     String kafkaZkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
@@ -85,7 +86,7 @@ public class KafkaClientModuleTest {
   @After
   public void afterTest() {
     kafkaServer.stopAsync().awaitTerminated();
-    zkServer.stopAsync().awaitTerminated();
+    zkServer.stopAndWait();
   }
 
   @Test

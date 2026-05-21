@@ -184,4 +184,39 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   public void kill() {
     terminate();
   }
+
+  @Override
+  public Throwable failureCause() {
+    return null;
+  }
+
+  @Override
+  public void awaitRunning() {
+    // no-op
+  }
+
+  @Override
+  public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+    // no-op
+  }
+
+  @Override
+  public void awaitTerminated() {
+    // no-op
+  }
+
+  @Override
+  public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+    // no-op
+  }
+
+  @Override
+  public Service startAsync() {
+    return this;
+  }
+
+  @Override
+  public Service stopAsync() {
+    return this;
+  }
 }

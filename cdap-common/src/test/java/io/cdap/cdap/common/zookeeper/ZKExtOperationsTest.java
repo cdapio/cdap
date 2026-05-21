@@ -58,7 +58,7 @@ public class ZKExtOperationsTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    zkServer.startAndWait();
   }
 
   @Test
@@ -181,6 +181,6 @@ public class ZKExtOperationsTest {
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    zkServer.stopAndWait();
   }
 }

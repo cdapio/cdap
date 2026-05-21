@@ -55,12 +55,12 @@ public class LeaderElectionInfoServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    zkServer.startAndWait();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    zkServer.stopAndWait();
   }
 
   @Test

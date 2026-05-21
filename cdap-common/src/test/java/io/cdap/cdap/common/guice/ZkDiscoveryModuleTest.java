@@ -59,7 +59,7 @@ public class ZkDiscoveryModuleTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    zkServer.startAndWait();
 
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -68,7 +68,7 @@ public class ZkDiscoveryModuleTest {
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    zkServer.stopAndWait();
   }
 
   @Test
