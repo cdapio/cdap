@@ -48,6 +48,8 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.FileReader;
@@ -173,7 +175,8 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
 
   protected BodyConsumer deployAppFromArtifact(
       final ApplicationId appId,
-      final boolean skipMarkingLatest)
+      final boolean skipMarkingLatest,
+      final AppDeployStrategy appDeployStrategy)
       throws IOException {
     return new AbstractBodyConsumer(
         File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
@@ -184,8 +187,15 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
 
           try {
             ApplicationWithPrograms app = applicationLifecycleService.deployApp(appId, appRequest,
-                null, createProgramTerminator(), skipMarkingLatest);
-            responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
+                null, createProgramTerminator(), skipMarkingLatest, appDeployStrategy);
+
+            if (app.isDeploySkipped()) {
+              LOG.debug("Application {} is already deployed", appId);
+            }
+
+            HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped",
+                String.valueOf(app.isDeploySkipped()));
+            responder.sendString(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)), headers);
           } catch (DatasetManagementException e) {
             if (e.getCause() instanceof UnauthorizedException) {
               throw (UnauthorizedException) e.getCause();

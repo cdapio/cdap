@@ -40,6 +40,7 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -71,10 +72,13 @@ import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
+import io.cdap.cdap.gateway.handlers.AppDeployStrategy;
 import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationDeployable;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -744,6 +748,50 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Checks if the application already exists with the exact same artifact and configuration. If
+   * yes, returns the ApplicationMeta of the existing application; otherwise returns null.
+   */
+  @Nullable
+  private ApplicationMeta getAppMetaIfAlreadyDeployed(ApplicationId appId,
+      AppRequest<?> appRequest) throws Exception {
+    ApplicationMeta appMeta = store.getLatest(appId.getAppReference());
+    if (appMeta == null || appMeta.getSpec() == null) {
+      return null;
+    }
+
+    ArtifactSummary requestedArtifact = appRequest.getArtifact();
+    if (requestedArtifact == null) {
+      return null;
+    }
+
+    ArtifactId currentArtifactId = appMeta.getSpec().getArtifactId();
+    if (!currentArtifactId.getName().equals(requestedArtifact.getName()) ||
+        !currentArtifactId.getScope().equals(requestedArtifact.getScope())) {
+      return null;
+    }
+
+    try {
+      ArtifactVersionRange range = ArtifactVersionRange.parse(requestedArtifact.getVersion());
+      if (!range.versionIsInRange(currentArtifactId.getVersion())) {
+        return null;
+      }
+    } catch (InvalidArtifactRangeException e) {
+      return null;
+    }
+
+    Object config = appRequest.getConfig();
+    String requestedConfigStr = config == null ? null
+        : config instanceof String ? (String) config : GSON.toJson(config);
+    String currentConfigStr = appMeta.getSpec().getConfiguration();
+
+    if (!AppRequest.areConfigsEqual(requestedConfigStr, currentConfigStr)) {
+      return null;
+    }
+
+    return appMeta;
+  }
+
+  /**
    * Updates an application config by applying given update actions. The app should know how to
    * apply these actions to its config.
    */
@@ -1056,7 +1104,38 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms deployApp(ApplicationId appId,
       AppRequest<?> appRequest,
       @Nullable SourceControlMeta sourceControlMeta,
-      ProgramTerminator programTerminator, boolean skipMarkingLatest) throws Exception {
+      ProgramTerminator programTerminator, boolean skipMarkingLatest,
+      AppDeployStrategy appDeployStrategy) throws Exception {
+    if (appDeployStrategy == AppDeployStrategy.SKIP_ON_NO_CHANGE) {
+      ApplicationMeta appMeta = getAppMetaIfAlreadyDeployed(appId, appRequest);
+      if (appMeta != null) {
+          KerberosPrincipalId ownerPrincipalId =
+              appRequest.getOwnerPrincipal() == null ? null
+                  : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
+          ApplicationId actualAppId = new ApplicationId(appId.getParent().getEntityName(),
+              appId.getApplication(),
+              appMeta.getSpec().getAppVersion());
+          ApplicationDeployable deployable = new ApplicationDeployable(
+              Artifacts.toProtoArtifactId(appId.getParent(), appMeta.getSpec().getArtifactId()),
+              null,
+              actualAppId,
+              appMeta.getSpec(),
+              null,
+              ApplicationDeployScope.USER,
+              null,
+              ownerPrincipalId,
+              false,
+              Collections.emptyList(),
+              Collections.emptyMap(),
+              appMeta.getChange(),
+              appMeta.getSourceControlMeta(),
+              false,
+              false
+          );
+          return new ApplicationWithPrograms(deployable, Collections.emptyList(), true);
+      }
+    }
+
     ArtifactSummary artifactSummary = appRequest.getArtifact();
 
     KerberosPrincipalId ownerPrincipalId =
@@ -1075,6 +1154,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         configString,
         changeSummary, sourceControlMeta, programTerminator, ownerPrincipalId,
         appRequest.canUpdateSchedules(), false, skipMarkingLatest, Collections.emptyMap());
+  }
+
+  public ApplicationWithPrograms deployApp(ApplicationId appId,
+      AppRequest<?> appRequest,
+      @Nullable SourceControlMeta sourceControlMeta,
+      ProgramTerminator programTerminator, boolean skipMarkingLatest) throws Exception {
+    return deployApp(appId, appRequest, sourceControlMeta, programTerminator, skipMarkingLatest,
+        AppDeployStrategy.ALWAYS_DEPLOY);
   }
 
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
