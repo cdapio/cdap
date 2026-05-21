@@ -82,7 +82,7 @@ public final class Classes {
         cr = new ClassReader(input);
       } catch (Exception e) {
         LOG.error("Failed to create classreader. className: {}, superTypeName: {}, url: {}",
-            className, superTypeName, url.toString());
+            className, superTypeName, url.toString(), e);
       }
       String superName = cr.getSuperName();
       if (superName != null) {
