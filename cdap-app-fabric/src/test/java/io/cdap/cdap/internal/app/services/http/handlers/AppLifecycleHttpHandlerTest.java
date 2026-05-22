@@ -48,6 +48,7 @@ import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import io.cdap.cdap.gateway.handlers.AppDeployStrategy;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -82,6 +83,7 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -118,6 +120,14 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private void setLCMFlag(boolean lcmFlag) {
     cConf.setBoolean(FEATURE_FLAG_PREFIX + Feature.LIFECYCLE_MANAGEMENT_EDIT.getFeatureFlagString(), lcmFlag);
+  }
+
+  protected HttpResponse deploy(Id.Application appId, AppRequest<?> appRequest,
+                                AppDeployStrategy appDeployStrategy)
+      throws Exception {
+    String deployPath = getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId())
+        + "?deployStrategy=" + appDeployStrategy.name();
+    return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
   }
 
   @Before
@@ -200,6 +210,200 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(GSON.toJson(config), appDetails.getConfiguration());
 
     deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestBypassed() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DuplicateDeployApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "duplicateDeployArtifact", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("xyz", "123");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config);
+
+    // First deployment - passing SKIP_ON_NO_CHANGE
+    HttpResponse firstResponse = deploy(appId, request, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+    ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
+
+    // Mock verify: check that the deployApp spy was called once
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    // Second deployment (exact same request) - passing SKIP_ON_NO_CHANGE
+    HttpResponse secondResponse = deploy(appId, request, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+    ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
+    Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
+
+    // The deployApp should NOT be called again (still only called once)
+    Mockito.verify(lifecycleService, Mockito.times(2)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestAlwaysDeployedOnDifferentConfig() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DiffDeployApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "diffDeployArtifact", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass config1 = new ConfigTestApp.ConfigClass("xyz", "123");
+    AppRequest<ConfigTestApp.ConfigClass> request1 = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config1);
+
+    // First deployment
+    HttpResponse firstResponse = deploy(appId, request1, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+
+    // Mock verify: check that the deployApp spy was called once
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    // Second deployment with a DIFFERENT configuration config2
+    ConfigTestApp.ConfigClass config2 = new ConfigTestApp.ConfigClass("xyz", "456");
+    AppRequest<ConfigTestApp.ConfigClass> request2 = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config2);
+
+    HttpResponse secondResponse = deploy(appId, request2, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+
+    // The deployApp spy MUST have been called a second time (2 times total)
+    Mockito.verify(lifecycleService, Mockito.times(2)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestWithVersionRange() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "RangeDeployApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "rangeDeployArtifact", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "789");
+    
+    // Deploy using exact version first
+    AppRequest<ConfigTestApp.ConfigClass> firstRequest = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config);
+    HttpResponse firstResponse = deploy(appId, firstRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+    ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
+
+    // Mock verify: check that deployApp spy was called once
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    // Second deployment using a version range
+    ArtifactSummary rangeSummary = new ArtifactSummary(artifactId.getName(), "[0.9.0, 1.1.0]");
+    AppRequest<ConfigTestApp.ConfigClass> rangeRequest = new AppRequest<>(rangeSummary, config);
+    HttpResponse secondResponse = deploy(appId, rangeRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+    ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
+    Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
+
+    // The deployApp should NOT be called again
+    Mockito.verify(lifecycleService, Mockito.times(2)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestWithConfigFormattingDifference() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JSONEqualDeployApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "jsonEqualDeployArtifact", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    // Two semantically identical configurations but with different whitespaces and key ordering
+    String config1 = "{\n  \"a\": \"xyz\",\n  \"b\": \"123\"\n}";
+    String config2 = "{\"b\":\"123\",\"a\":\"xyz\"}";
+
+    // Deploy using configuration 1 first
+    AppRequest<String> firstRequest = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config1);
+    HttpResponse firstResponse = deploy(appId, firstRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, firstResponse.getResponseCode());
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+    ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
+
+    // Mock verify: check that deployApp spy was called once
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
+    Mockito.verify(lifecycleService, Mockito.times(1)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    // Second deployment using configuration 2
+    AppRequest<String> secondRequest = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config2);
+    HttpResponse secondResponse = deploy(appId, secondRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
+    Assert.assertEquals(200, secondResponse.getResponseCode());
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
+    ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
+    Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
+
+    // The deployApp should NOT be called again
+    Mockito.verify(lifecycleService, Mockito.times(2)).deployApp(
+        Mockito.any(ApplicationId.class), Mockito.any(AppRequest.class),
+        Mockito.any(), Mockito.any(), Mockito.anyBoolean(),
+        Mockito.any(AppDeployStrategy.class));
+
+    deleteApp(appId, 200);
+  }
+
+  @Test
+  public void testDeployDuplicateRequestWithInvalidPolicy() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidPolicyApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalidPolicyArtifact",
+        "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("xyz", "123");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+        ArtifactSummary.from(artifactId.toArtifactId()), config);
+
+    // Deployment with invalid policy string
+    String deployPath = getVersionedApiPath("apps/" + appId.getId(), appId.getNamespaceId())
+        + "?deployStrategy=SKIP_ON_NO2_CHANGE";
+    HttpResponse invalidResponse = executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()),
+        request);
+    Assert.assertEquals(400, invalidResponse.getResponseCode());
+    Assert.assertTrue(invalidResponse.getResponseBodyAsString()
+        .contains("Invalid value 'SKIP_ON_NO2_CHANGE'"));
+
     deleteArtifact(artifactId, 200);
   }
 

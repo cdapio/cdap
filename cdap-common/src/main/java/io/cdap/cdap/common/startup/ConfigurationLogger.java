@@ -17,8 +17,6 @@ package io.cdap.cdap.common.startup;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import java.net.URL;
-import java.net.URLClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,17 +28,10 @@ public class ConfigurationLogger {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurationLogger.class);
 
   public static void logImportantConfig(CConfiguration cConf) {
-    ClassLoader cl = ClassLoader.getSystemClassLoader();
 
-    URL[] urls = ((URLClassLoader) cl).getURLs();
+    String classPath = System.getProperty("java.class.path");
 
-    StringBuilder classPath = new StringBuilder();
-    LOG.info("Master classpath:");
-    for (URL url : urls) {
-      classPath.append(url.getFile()).append(":");
-    }
-    classPath.deleteCharAt(classPath.length() - 1);
-    LOG.info(classPath.toString());
+    LOG.info("Master classpath: {}", classPath);
 
     LOG.info("Important config settings:");
     for (String featureToggleProp : Constants.FEATURE_TOGGLE_PROPS) {

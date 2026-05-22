@@ -471,6 +471,16 @@
   </property>
 
   <property>
+    <name>app.scan.batch.size</name>
+    <value>25</value>
+    <description>
+      Batch size for scanning applications in the database. This defines the maximum number of
+      records processed per database transaction chunk when listing applications. This is
+      independent of the pagination page size requested by client APIs.
+    </description>
+  </property>
+
+  <property>
     <name>app.artifact.compute.hash.time.bucket.days</name>
     <value>15</value>
     <description>
@@ -1280,7 +1290,7 @@
 
   <property>
     <name>data.storage.properties.gcp-spanner.compression.config</name>
-    <value>application_specs:application_data:SNAPPY,provisioner_data:provisioner_task_info:SNAPPY,destination_fields_table:destination_data:SNAPPY,summary_fields_table:destination_data:SNAPPY,run_records:run_record_data:SNAPPY,workflows:workflow_data:SNAPPY</value>
+    <value>application_specs:application_data:SNAPPY,provisioner_data:provisioner_task_info:SNAPPY,destination_fields_table:destination_data:SNAPPY,summary_fields_table:destination_data:SNAPPY,run_records:run_record_data:SNAPPY,workflows:workflow_data:SNAPPY,operations_table:operations:SNAPPY</value>
     <description>
       Represents table_name:column_name:compressor_type which possibly can cross spanner cell limit
       and will need compression to reduce size.
@@ -1301,6 +1311,10 @@
     <value>${app.run.records.ttl.frequency.hours}</value>
     <description>
       The timeout duration in hours specifically for Spanner Partitioned DML update and delete operations.
+    <name>data.storage.properties.gcp-spanner.tx.runner.optimistic.lock.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable optimistic locking for Spanner transactions.
     </description>
   </property>
 

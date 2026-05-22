@@ -252,6 +252,7 @@ public final class Constants {
     public static final String PROGRAM_JVM_OPTS_PREFIX = "app.program.jvm.opts.";
     public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
     public static final String STREAMING_BATCH_SIZE = "app.streaming.batch.size";
+    public static final String APPS_SCAN_BATCH_SIZE = "app.scan.batch.size";
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
@@ -868,6 +869,7 @@ public final class Constants {
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
     public static final String API_KEY = "X-ApiKey";
+    public static final String APP_DEPLOYMENT_SKIPPED_HEADER = "X-CDAP-App-Deployment-Skipped";
 
     /**
      * Internal API.
