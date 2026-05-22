@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.PartitionedUpdateOption;
 import io.cdap.cdap.spi.data.table.options.StaleReadOption;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -1036,6 +1037,35 @@ public abstract class StructuredTableTest {
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
       table.deleteAll(Range.all());
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+  }
+
+  @Test
+  public void testDeleteAllWithOptions() throws Exception {
+    int max = 10;
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    Assert.assertEquals(max, expected.size());
+
+    // Delete 6-8 (both inclusive) passing PartitionedUpdateOption
+    expected.subList(6, 9).clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Arrays.asList(Fields.intField(KEY, 6), Fields.longField(KEY2, 6L)),
+                                 Range.Bound.INCLUSIVE,
+                                 Arrays.asList(Fields.intField(KEY, 8), Fields.longField(KEY2, 8L)),
+                                 Range.Bound.INCLUSIVE);
+      table.deleteAll(range, new PartitionedUpdateOption());
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Delete all the remaining
+    expected.clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.deleteAll(Range.all(), new PartitionedUpdateOption());
     });
     // Verify the deletion
     Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
