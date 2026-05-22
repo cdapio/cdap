@@ -226,7 +226,11 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public void close() {
-    Closeables.closeQuietly(client);
+    try {
+      client.close();
+    } catch (IOException e) {
+      // ignore
+    }
   }
 
   @Override

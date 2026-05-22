@@ -41,7 +41,9 @@
   <suppress checks=".*" files=".*[/\\]transaction[/\\]distributed[/\\]thrift[/\\].*" />
 
   <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](thrift)[/\\].*" />
-  <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](java)[/\\](co|org)[/\\](cask|apache)[/\\](tephra|thrift)[/\\].*" />
+  <suppress checks=".*" files=".*/(tephra|twill|thrift)/.*" />
+  <suppress checks=".*" files=".*/co/cask/.*" />
+  <suppress checks=".*" files=".*/com/google/common/.*" />
 
   <suppress checks=".*" files=".*[/\\]src[/\\](main)[/\\](java)[/\\](io)[/\\](cdap)[/\\](cdap)[/\\](internal)[/\\](guava)[/\\].*" />
 

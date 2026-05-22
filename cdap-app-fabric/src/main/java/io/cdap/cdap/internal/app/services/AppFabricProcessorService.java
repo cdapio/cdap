@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -86,6 +87,19 @@ public class AppFabricProcessorService extends AbstractIdleService {
   private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
+  private boolean auditLogSubscriberServiceStartedByMe = false;
+  private boolean provisioningServiceStartedByMe = false;
+  private boolean applicationLifecycleServiceStartedByMe = false;
+  private boolean bootstrapServiceStartedByMe = false;
+  private boolean programRuntimeServiceStartedByMe = false;
+  private boolean programNotificationSubscriberServiceStartedByMe = false;
+  private boolean programStopSubscriberServiceStartedByMe = false;
+  private boolean runRecordCorrectorServiceStartedByMe = false;
+  private boolean programRunStatusMonitorServiceStartedByMe = false;
+  private boolean coreSchedulerServiceStartedByMe = false;
+  private boolean runRecordCounterServiceStartedByMe = false;
+  private boolean runDataTimeToLiveServiceStartedByMe = false;
+  private boolean operationNotificationSubscriberServiceStartedByMe = false;
 
   /**
    * Construct the AppFabricProcessorService with service factory and cConf coming from guice injection.
@@ -146,29 +160,108 @@ public class AppFabricProcessorService extends AbstractIdleService {
             Constants.Logging.COMPONENT_NAME,
             Service.APP_FABRIC_PROCESSOR));
     LOG.info("Starting AppFabric processor service.");
-    List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    // Only for RBAC instances
-    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
-        && cConf.getBoolean(Constants.Security.ENABLED)) {
-      futuresList.add(auditLogSubscriberService.start());
+    boolean auditLoggingEnabled = Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
+        && cConf.getBoolean(Constants.Security.ENABLED);
+
+    if (auditLoggingEnabled && auditLogSubscriberService.state() == State.NEW) {
+      auditLogSubscriberService.startAsync();
+      auditLogSubscriberServiceStartedByMe = true;
     }
 
-    futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
-        runRecordCounterService.start(),
-        runDataTimeToLiveService.start(),
-        operationNotificationSubscriberService.start()
-    ));
-    Futures.allAsList(futuresList).get();
+    if (provisioningService.state() == State.NEW) {
+      provisioningService.startAsync();
+      provisioningServiceStartedByMe = true;
+    }
+    if (applicationLifecycleService.state() == State.NEW) {
+      applicationLifecycleService.startAsync();
+      applicationLifecycleServiceStartedByMe = true;
+    }
+    if (bootstrapService.state() == State.NEW) {
+      bootstrapService.startAsync();
+      bootstrapServiceStartedByMe = true;
+    }
+    if (programRuntimeService.state() == State.NEW) {
+      programRuntimeService.startAsync();
+      programRuntimeServiceStartedByMe = true;
+    }
+    if (programNotificationSubscriberService.state() == State.NEW) {
+      programNotificationSubscriberService.startAsync();
+      programNotificationSubscriberServiceStartedByMe = true;
+    }
+    if (programStopSubscriberService.state() == State.NEW) {
+      programStopSubscriberService.startAsync();
+      programStopSubscriberServiceStartedByMe = true;
+    }
+    if (runRecordCorrectorService.state() == State.NEW) {
+      runRecordCorrectorService.startAsync();
+      runRecordCorrectorServiceStartedByMe = true;
+    }
+    if (programRunStatusMonitorService.state() == State.NEW) {
+      programRunStatusMonitorService.startAsync();
+      programRunStatusMonitorServiceStartedByMe = true;
+    }
+    if (coreSchedulerService.state() == State.NEW) {
+      coreSchedulerService.startAsync();
+      coreSchedulerServiceStartedByMe = true;
+    }
+    if (runRecordCounterService.state() == State.NEW) {
+      runRecordCounterService.startAsync();
+      runRecordCounterServiceStartedByMe = true;
+    }
+    if (runDataTimeToLiveService.state() == State.NEW) {
+      runDataTimeToLiveService.startAsync();
+      runDataTimeToLiveServiceStartedByMe = true;
+    }
+    if (operationNotificationSubscriberService.state() == State.NEW) {
+      operationNotificationSubscriberService.startAsync();
+      operationNotificationSubscriberServiceStartedByMe = true;
+    }
+
+    if (auditLoggingEnabled
+        && (auditLogSubscriberServiceStartedByMe
+            || auditLogSubscriberService.state() == State.STARTING)) {
+      auditLogSubscriberService.awaitRunning();
+    }
+    if (provisioningServiceStartedByMe || provisioningService.state() == State.STARTING) {
+      provisioningService.awaitRunning();
+    }
+    if (applicationLifecycleServiceStartedByMe || applicationLifecycleService.state() == State.STARTING) {
+      applicationLifecycleService.awaitRunning();
+    }
+    if (bootstrapServiceStartedByMe || bootstrapService.state() == State.STARTING) {
+      bootstrapService.awaitRunning();
+    }
+    if (programRuntimeServiceStartedByMe || programRuntimeService.state() == State.STARTING) {
+      programRuntimeService.awaitRunning();
+    }
+    if (programNotificationSubscriberServiceStartedByMe
+        || programNotificationSubscriberService.state() == State.STARTING) {
+      programNotificationSubscriberService.awaitRunning();
+    }
+    if (programStopSubscriberServiceStartedByMe || programStopSubscriberService.state() == State.STARTING) {
+      programStopSubscriberService.awaitRunning();
+    }
+    if (runRecordCorrectorServiceStartedByMe || runRecordCorrectorService.state() == State.STARTING) {
+      runRecordCorrectorService.awaitRunning();
+    }
+    if (programRunStatusMonitorServiceStartedByMe
+        || programRunStatusMonitorService.state() == State.STARTING) {
+      programRunStatusMonitorService.awaitRunning();
+    }
+    if (coreSchedulerServiceStartedByMe || coreSchedulerService.state() == State.STARTING) {
+      coreSchedulerService.awaitRunning();
+    }
+    if (runRecordCounterServiceStartedByMe || runRecordCounterService.state() == State.STARTING) {
+      runRecordCounterService.awaitRunning();
+    }
+    if (runDataTimeToLiveServiceStartedByMe || runDataTimeToLiveService.state() == State.STARTING) {
+      runDataTimeToLiveService.awaitRunning();
+    }
+    if (operationNotificationSubscriberServiceStartedByMe
+        || operationNotificationSubscriberService.state() == State.STARTING) {
+      operationNotificationSubscriberService.awaitRunning();
+    }
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
@@ -196,20 +289,46 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    coreSchedulerService.stopAndWait();
-    bootstrapService.stopAndWait();
-    systemAppManagementService.stopAndWait();
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    runRecordCorrectorService.stopAndWait();
-    programRunStatusMonitorService.stopAndWait();
-    provisioningService.stopAndWait();
-    runRecordCounterService.stopAndWait();
-    runDataTimeToLiveService.stopAndWait();
-    operationNotificationSubscriberService.stopAndWait();
-    auditLogSubscriberService.stopAndWait();
+    if (coreSchedulerServiceStartedByMe) {
+      coreSchedulerService.stopAsync().awaitTerminated();
+    }
+    if (bootstrapServiceStartedByMe) {
+      bootstrapService.stopAsync().awaitTerminated();
+    }
+    systemAppManagementService.stopAsync().awaitTerminated();
+    if (programRuntimeServiceStartedByMe) {
+      programRuntimeService.stopAsync().awaitTerminated();
+    }
+    if (applicationLifecycleServiceStartedByMe) {
+      applicationLifecycleService.stopAsync().awaitTerminated();
+    }
+    if (programNotificationSubscriberServiceStartedByMe) {
+      programNotificationSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (programStopSubscriberServiceStartedByMe) {
+      programStopSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (runRecordCorrectorServiceStartedByMe) {
+      runRecordCorrectorService.stopAsync().awaitTerminated();
+    }
+    if (programRunStatusMonitorServiceStartedByMe) {
+      programRunStatusMonitorService.stopAsync().awaitTerminated();
+    }
+    if (provisioningServiceStartedByMe) {
+      provisioningService.stopAsync().awaitTerminated();
+    }
+    if (runRecordCounterServiceStartedByMe) {
+      runRecordCounterService.stopAsync().awaitTerminated();
+    }
+    if (runDataTimeToLiveServiceStartedByMe) {
+      runDataTimeToLiveService.stopAsync().awaitTerminated();
+    }
+    if (operationNotificationSubscriberServiceStartedByMe) {
+      operationNotificationSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (auditLogSubscriberServiceStartedByMe) {
+      auditLogSubscriberService.stopAsync().awaitTerminated();
+    }
     LOG.info("AppFabric processor service stopped.");
   }
 

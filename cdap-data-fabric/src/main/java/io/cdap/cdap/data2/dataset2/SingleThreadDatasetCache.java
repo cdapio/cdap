@@ -24,9 +24,7 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.metrics.MeteredDataset;
@@ -39,6 +37,7 @@ import io.cdap.cdap.data2.transaction.AbstractTransactionContext;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.EnumSet;
@@ -367,7 +366,11 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   public void close() {
     for (TransactionAware txAware : extraTxAwares) {
       if (txAware instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) txAware);
+        try {
+          ((Closeable) txAware).close();
+        } catch (IOException e) {
+          // Ignore
+        }
       }
     }
     invalidate();

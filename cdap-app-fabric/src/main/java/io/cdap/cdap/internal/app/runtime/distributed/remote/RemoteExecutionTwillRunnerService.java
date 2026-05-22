@@ -217,7 +217,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
     try {
       if (EnumSet.of(Service.State.STARTING, Service.State.RUNNING)
           .contains(serviceSocksProxy.state())) {
-        serviceSocksProxy.stopAndWait();
+        serviceSocksProxy.stopAsync().awaitTerminated();
       }
     } catch (Exception e) {
       LOG.warn("Exception raised when stopping runtime monitor socks proxy", e);
@@ -389,7 +389,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
   private int getServiceSocksProxyPort() {
     if (serviceSocksProxy.state() == Service.State.NEW) {
       // It's ok to have multiple threads calling start if the proxy is not running.
-      serviceSocksProxy.startAndWait();
+      serviceSocksProxy.startAsync().awaitRunning();
     }
     return serviceSocksProxy.getBindAddress().getPort();
   }
@@ -428,7 +428,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
       String secret = Hashing.sha1().newHasher()
           .putBytes(salt)
-          .putString(programRunId.getRun())
+          .putString(programRunId.getRun(), StandardCharsets.UTF_8)
           .hash().toString();
 
       Location location = keysDir.append(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
@@ -549,7 +549,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       CompletableFuture<Void> startupTaskCompletion,
       RemoteExecutionTwillController controller,
       RemoteExecutionService remoteExecutionService) {
-    startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+    startupTaskCompletion.thenAccept(o -> remoteExecutionService.startAsync());
 
     // On this controller termination, make sure it is removed from the controllers map and have resources released.
     controller.onTerminated(() -> {
@@ -751,7 +751,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
           programStateWriter, scheduler);
       LOG.debug("Monitor program run {} with SSH config {}", programRunId, sshConfig);
       String proxySecret = clusterKeyInfo.getServerProxySecret();
-      remoteExecutionService.addListener(new ServiceListenerAdapter() {
+      remoteExecutionService.addListener(new Service.Listener() {
         @Override
         public void running() {
           serviceSocksProxyAuthenticator.add(proxySecret);

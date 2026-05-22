@@ -20,8 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -67,6 +65,7 @@ import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.ThrowingSupplier;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
@@ -268,38 +267,38 @@ public abstract class AppFabricTestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    dsOpService.startAsync().awaitRunning();
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessorService.startAndWait();
+    appFabricProcessorService.startAsync().awaitRunning();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
     serviceStore = injector.getInstance(ServiceStore.class);
-    serviceStore.startAndWait();
+    serviceStore.startAsync().awaitRunning();
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    metadataService.startAsync().awaitRunning();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    metadataSubscriberService.startAsync().awaitRunning();
     logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+    logQueryService.startAsync().awaitRunning();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -323,20 +322,26 @@ public abstract class AppFabricTestBase {
 
   @AfterClass
   public static void afterClass() {
-    appFabricServer.stopAndWait();
-    appFabricProcessorService.stopAndWait();
-    metricsCollectionService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    txManager.stopAndWait();
-    serviceStore.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    metadataService.stopAndWait();
-    logQueryService.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessorService.stopAsync().awaitTerminated();
+    metricsCollectionService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
+    serviceStore.stopAsync().awaitTerminated();
+    metadataSubscriberService.stopAsync().awaitTerminated();
+    metadataService.stopAsync().awaitTerminated();
+    logQueryService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
-    Closeables.closeQuietly(metadataStorage);
+    try {
+      if (metadataStorage != null) {
+        metadataStorage.close();
+      }
+    } catch (Exception e) {
+      // ignore
+    }
   }
 
   protected static CConfiguration createBasicCconf() throws IOException {
@@ -502,7 +507,8 @@ public abstract class AppFabricTestBase {
   }
 
   // add an artifact and return the response code
-  protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
+  protected HttpResponse addArtifact(Id.Artifact artifactId,
+                                     ThrowingSupplier<? extends InputStream, IOException> artifactContents,
                                      Set<ArtifactRange> parents) throws Exception {
     return addArtifact(artifactId, artifactContents, parents, null);
   }
@@ -510,7 +516,8 @@ public abstract class AppFabricTestBase {
   /**
    * This method accepts GSON serialized form of plugin classes for testing purpose.
    */
-  private HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
+  private HttpResponse addArtifact(Id.Artifact artifactId,
+                                   ThrowingSupplier<? extends InputStream, IOException> artifactContents,
                                    Set<ArtifactRange> parents, @Nullable String pluginClassesJson)
     throws Exception {
     String path = getVersionedApiPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
@@ -527,7 +534,12 @@ public abstract class AppFabricTestBase {
     if (pluginClassesJson != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJson);
     }
-    builder.withBody(artifactContents);
+    builder.withBody(new io.cdap.common.ContentProvider<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return artifactContents.get();
+      }
+    });
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 

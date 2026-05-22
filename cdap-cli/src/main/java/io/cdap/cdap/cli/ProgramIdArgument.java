@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.cli;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * Represents a program information, such as the app id and program id.
@@ -49,18 +49,18 @@ public class ProgramIdArgument {
     }
 
     ProgramIdArgument other = (ProgramIdArgument) o;
-    return Objects.equal(appId, other.getAppId())
-        && Objects.equal(programId, other.getProgramId());
+    return java.util.Objects.equals(appId, other.getAppId())
+        && java.util.Objects.equals(programId, other.getProgramId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(appId, programId);
+    return java.util.Objects.hash(appId, programId);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("appId", appId)
         .add("programId", programId)
         .toString();

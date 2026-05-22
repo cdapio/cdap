@@ -17,3 +17,6 @@ export KILL_ON_OOM_OPTS="-XX:OnOutOfMemoryError=\"kill -9 %p\""
 
 # Uncomment to perform Java heap dump on OutOfMemory errors
 # export HEAPDUMP_ON_OOM=true
+
+# Java 17 support for Wrangler system app and Apache Spark local execution deployment
+export JAVA_OPTS="${JAVA_OPTS} --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.security/java.security=ALL-UNNAMED"

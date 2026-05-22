@@ -166,7 +166,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
       programStateWriter.error(program.getId().run(runId), t);
-      Closeables.closeQuietly(closeable);
+      try {
+        closeable.close();
+      } catch (IOException e) {
+        // Ignore
+      }
       throw t;
     }
     blockForCompletion(closeable, controller);
@@ -210,7 +214,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void completed() {
-        Closeables.closeQuietly(closeable);
+        try {
+          closeable.close();
+        } catch (IOException e) {
+          // Ignore
+        }
         Set<Operation> fieldLineageOperations = new HashSet<>();
         if (controller instanceof WorkflowDataProvider) {
           fieldLineageOperations.addAll(
@@ -224,7 +232,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void killed() {
-        Closeables.closeQuietly(closeable);
+        try {
+          closeable.close();
+        } catch (IOException e) {
+          // Ignore
+        }
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
@@ -232,7 +244,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void error(Throwable cause) {
-        Closeables.closeQuietly(closeable);
+        try {
+          closeable.close();
+        } catch (IOException e) {
+          // Ignore
+        }
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
@@ -271,7 +287,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     return new Closeable() {
       @Override
       public void close() throws IOException {
-        Closeables.closeQuietly(program);
+        try {
+          program.close();
+        } catch (IOException e) {
+          // Ignore
+        }
         closeProgramRunner(programRunner);
       }
     };
@@ -282,7 +302,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    */
   private void closeProgramRunner(ProgramRunner programRunner) {
     if (programRunner instanceof Closeable) {
-      Closeables.closeQuietly((Closeable) programRunner);
+      try {
+        ((Closeable) programRunner).close();
+      } catch (IOException e) {
+        // Ignore
+      }
     }
   }
 }

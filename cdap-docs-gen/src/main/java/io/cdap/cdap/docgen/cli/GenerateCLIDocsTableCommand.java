@@ -18,13 +18,8 @@ package io.cdap.cdap.docgen.cli;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.system.HelpCommand;
 import io.cdap.cdap.cli.util.table.TableRendererConfig;
@@ -32,10 +27,12 @@ import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -44,18 +41,17 @@ import javax.annotation.Nullable;
 public class GenerateCLIDocsTableCommand extends HelpCommand {
 
   public GenerateCLIDocsTableCommand(CommandSet commands, TableRendererConfig tableRendererConfig) {
-    super(Suppliers.<Iterable<CommandSet<Command>>>ofInstance(
-            ImmutableList.<CommandSet<Command>>of(commands)),
-        tableRendererConfig);
+    super(() -> Collections.singletonList(commands), tableRendererConfig);
   }
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    Multimap<String, Command> categorizedCommands = categorizeCommands(
-        commands.get(), CommandCategory.GENERAL, Predicates.<Command>alwaysTrue());
+    Map<String, List<Command>> categorizedCommands = categorizeCommands(
+        commands.get(), CommandCategory.GENERAL, c -> true);
     for (CommandCategory category : CommandCategory.values()) {
       output.printf("   **%s**\n", category.getOriginalName());
-      List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
+      List<Command> commandList = new ArrayList<>(
+          categorizedCommands.getOrDefault(category.getName(), Collections.emptyList()));
       Collections.sort(commandList, new Comparator<Command>() {
         @Override
         public int compare(Command command, Command command2) {

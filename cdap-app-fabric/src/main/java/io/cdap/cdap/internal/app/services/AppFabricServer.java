@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -92,6 +93,13 @@ public class AppFabricServer extends AbstractIdleService {
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
   private CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
+  private boolean namespaceCredentialProviderServiceStartedByMe = false;
+  private boolean provisioningServiceStartedByMe = false;
+  private boolean applicationLifecycleServiceStartedByMe = false;
+  private boolean bootstrapServiceStartedByMe = false;
+  private boolean credentialProviderServiceStartedByMe = false;
+  private boolean sourceControlOperationRunnerStartedByMe = false;
+  private boolean repositoryCleanupServiceStartedByMe = false;
 
   /**
    * Construct the AppFabricServer with service factory and cConf coming from guice
@@ -143,20 +151,62 @@ public class AppFabricServer extends AbstractIdleService {
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.APP_FABRIC_HTTP));
-    List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      futuresList.add(namespaceCredentialProviderService.start());
+    boolean namespacedServiceAccountsEnabled = Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider);
+    
+    if (namespacedServiceAccountsEnabled && namespaceCredentialProviderService.state() == Service.State.NEW) {
+      namespaceCredentialProviderService.startAsync();
+      namespaceCredentialProviderServiceStartedByMe = true;
     }
-    futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        credentialProviderService.start(),
-        sourceControlOperationRunner.start(),
-        repositoryCleanupService.start()
-    ));
-    Futures.allAsList(futuresList).get();
+    
+    if (provisioningService.state() == Service.State.NEW) {
+      provisioningService.startAsync();
+      provisioningServiceStartedByMe = true;
+    }
+    if (applicationLifecycleService.state() == Service.State.NEW) {
+      applicationLifecycleService.startAsync();
+      applicationLifecycleServiceStartedByMe = true;
+    }
+    if (bootstrapService.state() == Service.State.NEW) {
+      bootstrapService.startAsync();
+      bootstrapServiceStartedByMe = true;
+    }
+    if (credentialProviderService.state() == Service.State.NEW) {
+      credentialProviderService.startAsync();
+      credentialProviderServiceStartedByMe = true;
+    }
+    if (sourceControlOperationRunner.state() == Service.State.NEW) {
+      sourceControlOperationRunner.startAsync();
+      sourceControlOperationRunnerStartedByMe = true;
+    }
+    if (repositoryCleanupService.state() == Service.State.NEW) {
+      repositoryCleanupService.startAsync();
+      repositoryCleanupServiceStartedByMe = true;
+    }
+
+    if (namespacedServiceAccountsEnabled
+        && (namespaceCredentialProviderServiceStartedByMe
+            || namespaceCredentialProviderService.state() == Service.State.STARTING)) {
+      namespaceCredentialProviderService.awaitRunning();
+    }
+    if (provisioningServiceStartedByMe || provisioningService.state() == Service.State.STARTING) {
+      provisioningService.awaitRunning();
+    }
+    if (applicationLifecycleServiceStartedByMe || applicationLifecycleService.state() == Service.State.STARTING) {
+      applicationLifecycleService.awaitRunning();
+    }
+    if (bootstrapServiceStartedByMe || bootstrapService.state() == Service.State.STARTING) {
+      bootstrapService.awaitRunning();
+    }
+    if (credentialProviderServiceStartedByMe || credentialProviderService.state() == Service.State.STARTING) {
+      credentialProviderService.awaitRunning();
+    }
+    if (sourceControlOperationRunnerStartedByMe || sourceControlOperationRunner.state() == Service.State.STARTING) {
+      sourceControlOperationRunner.awaitRunning();
+    }
+    if (repositoryCleanupServiceStartedByMe || repositoryCleanupService.state() == Service.State.STARTING) {
+      repositoryCleanupService.awaitRunning();
+    }
 
     // Create handler hooks
     List<AbstractHandlerHook> handlerHooks = handlerHookNames.stream()
@@ -212,13 +262,27 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     cancelHttpService.cancel();
-    applicationLifecycleService.stopAndWait();
-    bootstrapService.stopAndWait();
-    provisioningService.stopAndWait();
-    sourceControlOperationRunner.stopAndWait();
-    repositoryCleanupService.stopAndWait();
-    credentialProviderService.stopAndWait();
-    namespaceCredentialProviderService.stopAndWait();
+    if (applicationLifecycleServiceStartedByMe) {
+      applicationLifecycleService.stopAsync().awaitTerminated();
+    }
+    if (bootstrapServiceStartedByMe) {
+      bootstrapService.stopAsync().awaitTerminated();
+    }
+    if (provisioningServiceStartedByMe) {
+      provisioningService.stopAsync().awaitTerminated();
+    }
+    if (sourceControlOperationRunnerStartedByMe) {
+      sourceControlOperationRunner.stopAsync().awaitTerminated();
+    }
+    if (repositoryCleanupServiceStartedByMe) {
+      repositoryCleanupService.stopAsync().awaitTerminated();
+    }
+    if (credentialProviderServiceStartedByMe) {
+      credentialProviderService.stopAsync().awaitTerminated();
+    }
+    if (namespaceCredentialProviderServiceStartedByMe) {
+      namespaceCredentialProviderService.stopAsync().awaitTerminated();
+    }
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

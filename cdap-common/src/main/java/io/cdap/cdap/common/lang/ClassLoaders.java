@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.common.lang;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import java.io.File;
@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
@@ -67,7 +68,7 @@ public final class ClassLoaders {
    */
   public static Class<?> loadClass(String className, @Nullable ClassLoader classLoader,
       Object caller) throws ClassNotFoundException {
-    ClassLoader cl = Objects.firstNonNull(classLoader, caller.getClass().getClassLoader());
+    ClassLoader cl = MoreObjects.firstNonNull(classLoader, caller.getClass().getClassLoader());
     return cl.loadClass(className);
   }
 
@@ -173,15 +174,25 @@ public final class ClassLoaders {
    */
   public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader,
       boolean childFirst, T urls) {
-    Deque<URLClassLoader> classLoaders = collectURLClassLoaders(classLoader, new LinkedList<>());
+    Deque<ClassLoader> classLoaders = collectClassLoaders(classLoader, new LinkedList<>());
 
-    Iterator<URLClassLoader> iterator =
+    Iterator<ClassLoader> iterator =
         childFirst ? classLoaders.iterator() : classLoaders.descendingIterator();
     while (iterator.hasNext()) {
-      URLClassLoader cl = iterator.next();
-      for (URL url : cl.getURLs()) {
-        if (urls.add(url) && (url.getProtocol().equals("file"))) {
-          addClassPathFromJar(url, urls);
+      ClassLoader cl = iterator.next();
+      if (cl instanceof URLClassLoader) {
+        for (URL url : ((URLClassLoader) cl).getURLs()) {
+          if (urls.add(url) && (url.getProtocol().equals("file"))) {
+            addClassPathFromJar(url, urls);
+          }
+        }
+      } else if (cl == ClassLoader.getSystemClassLoader()) {
+        // For Java 9+, the system classloader is not a URLClassLoader.
+        // We retrieve the URLs from "java.class.path" system property.
+        for (URL url : getSystemClassLoaderURLs()) {
+          if (urls.add(url) && (url.getProtocol().equals("file"))) {
+            addClassPathFromJar(url, urls);
+          }
         }
       }
     }
@@ -190,16 +201,16 @@ public final class ClassLoaders {
   }
 
   /**
-   * Collects {@link URLClassLoader} along the {@link ClassLoader} chain. This method recognizes
+   * Collects {@link ClassLoader} along the {@link ClassLoader} chain. This method recognizes
    * both {@link Delegator} and {@link CombineClassLoader} and will unfold the delegating
-   * classloaders inside it. The order of insertion
+   * classloaders inside it.
    *
    * @param classLoader the classloader to start the search from
    * @param result a collection for storing the result
    * @param <T> type of the collection
    * @return the result collection
    */
-  private static <T extends Collection<? super URLClassLoader>> T collectURLClassLoaders(
+  private static <T extends Collection<? super ClassLoader>> T collectClassLoaders(
       ClassLoader classLoader,
       T result) {
     // Do BFS from the bottom of the ClassLoader chain
@@ -226,8 +237,8 @@ public final class ClassLoaders {
           // Use add first for delegate, which effectively is replacing the current classloader
           queue.addFirst((ClassLoader) delegate);
         }
-      } else if (cl instanceof URLClassLoader) {
-        result.add((URLClassLoader) cl);
+      } else {
+        result.add(cl);
       }
 
       if (cl.getParent() != null) {
@@ -236,6 +247,21 @@ public final class ClassLoaders {
     }
 
     return result;
+  }
+
+  private static List<URL> getSystemClassLoaderURLs() {
+    List<URL> urls = new ArrayList<>();
+    String classpath = System.getProperty("java.class.path");
+    if (classpath != null) {
+      for (String path : Splitter.on(File.pathSeparatorChar).omitEmptyStrings().split(classpath)) {
+        try {
+          urls.add(new File(path).toURI().toURL());
+        } catch (MalformedURLException e) {
+          // ignore
+        }
+      }
+    }
+    return urls;
   }
 
   /**

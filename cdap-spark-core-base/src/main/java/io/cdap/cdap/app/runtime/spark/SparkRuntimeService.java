@@ -205,7 +205,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "Spark - " + runtimeContext.getSparkSpecification().getName();
   }
 
@@ -285,7 +285,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           // In case of spark-on-k8s, artifactFetcherService is used by spark-drivers for fetching artifacts bundle.
           Location location = createBundle(new File("./artifacts").getAbsoluteFile().toPath());
           artifactFetcherService = new ArtifactFetcherService(cConf, location, commonNettyHttpServiceFactory);
-          artifactFetcherService.startAndWait();
+          artifactFetcherService.startAsync().awaitRunning();
         }
 
       } else if (isLocal) {
@@ -472,7 +472,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } finally {
       try {
         if (artifactFetcherService != null) {
-          artifactFetcherService.stopAndWait();
+          artifactFetcherService.stopAsync().awaitTerminated();
         }
       } finally {
         cleanupTask.run();
@@ -511,7 +511,20 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   public ListenableFuture<State> stop(long timeout, TimeUnit timeoutUnit) {
     gracefulTimeoutMillis = timeoutUnit.toMillis(timeout);
-    return stop();
+    stopAsync();
+    com.google.common.util.concurrent.SettableFuture<State> future =
+        com.google.common.util.concurrent.SettableFuture.create();
+    addListener(new com.google.common.util.concurrent.Service.Listener() {
+      @Override
+      public void terminated(State from) {
+        future.set(State.TERMINATED);
+      }
+      @Override
+      public void failed(State from, Throwable failure) {
+        future.setException(failure);
+      }
+    }, org.apache.twill.common.Threads.SAME_THREAD_EXECUTOR);
+    return future;
   }
 
   @Override
@@ -856,9 +869,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       hConf.set(String.format("fs.%s.impl.disable.cache", scriptURI.getScheme()), "true");
       try (
         FileSystem fs = FileSystem.get(scriptURI, hConf);
-        InputStream is = fs.open(new Path(scriptURI))
+        InputStream is = fs.open(new Path(scriptURI));
+        FileOutputStream os = new FileOutputStream(pythonFile)
       ) {
-        ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+        ByteStreams.copy(is, os);
         return pythonFile.toURI();
       }
     } catch (IOException e) {
@@ -867,8 +881,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     // Last resort, turn the URI to URL and try to copy from it.
-    try (InputStream is = scriptURI.toURL().openStream()) {
-      ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+    try (InputStream is = scriptURI.toURL().openStream();
+         FileOutputStream os = new FileOutputStream(pythonFile)) {
+      ByteStreams.copy(is, os);
     }
     return pythonFile.toURI();
   }

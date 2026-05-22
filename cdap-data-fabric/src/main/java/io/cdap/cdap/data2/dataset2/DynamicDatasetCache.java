@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import com.google.common.base.Objects;
-import com.google.common.io.Closeables;
+import com.google.common.base.MoreObjects;
 import io.cdap.cdap.api.common.RuntimeArguments;
+import java.util.Objects;
 import io.cdap.cdap.api.common.Scope;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
@@ -300,7 +300,13 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    */
   @Override
   public void close() {
-    Closeables.closeQuietly(instantiator);
+    try {
+      if (instantiator != null) {
+        instantiator.close();
+      }
+    } catch (Exception e) {
+      // Ignore
+    }
   }
 
   /**
@@ -366,19 +372,19 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
 
       // Omit accessType here since we don't have to request a another dataset instance just because
       // of the different accessType. Same for the hashCode() method
-      return Objects.equal(this.namespace, that.namespace)
-          && Objects.equal(this.name, that.name)
-          && Objects.equal(this.arguments, that.arguments);
+      return Objects.equals(this.namespace, that.namespace)
+          && Objects.equals(this.name, that.name)
+          && Objects.equals(this.arguments, that.arguments);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(namespace, name, arguments);
+      return Objects.hash(namespace, name, arguments);
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("namespace", namespace)
           .add("name", name)
           .add("arguments", arguments)

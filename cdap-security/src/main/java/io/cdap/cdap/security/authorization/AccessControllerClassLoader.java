@@ -156,7 +156,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
 
     ClassReader cr = new ClassReader(input);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       private String superName;
 
@@ -232,7 +232,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
        */
       private MethodVisitor rewriteMethod(int access, String name, String descriptor,
           MethodVisitor mv) {
-        return new FinallyAdapter(Opcodes.ASM7, mv, access, name, descriptor) {
+        return new FinallyAdapter(Opcodes.ASM9, mv, access, name, descriptor) {
 
           int currentThread;
           int oldClassLoader;

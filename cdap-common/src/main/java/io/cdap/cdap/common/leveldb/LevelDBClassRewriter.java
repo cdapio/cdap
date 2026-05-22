@@ -96,7 +96,7 @@ public class LevelDBClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(input);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
           String signature, String[] exceptions) {
@@ -105,7 +105,7 @@ public class LevelDBClassRewriter implements ClassRewriter {
         if (!FILE_META_DATA_CONSTRUCTOR.equals(new Method(name, descriptor))) {
           return mv;
         }
-        return new AdviceAdapter(Opcodes.ASM7, mv, access, name, descriptor) {
+        return new AdviceAdapter(Opcodes.ASM9, mv, access, name, descriptor) {
           @Override
           protected void onMethodEnter() {
             loadArg(SMALLEST_KEY_PARAM);

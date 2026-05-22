@@ -82,9 +82,9 @@ class MessagingSpark extends AbstractSpark with SparkMain {
   private def fetchMessage(fetcher: MessageFetcher, namespace: String, topic: String,
                            afterMessageId: Option[String], timeout: Long, unit: TimeUnit): Message = {
     var iterator = fetcher.fetch(namespace, topic, 1, afterMessageId.orNull)
-    val stopwatch = new Stopwatch().start
+    val stopwatch = Stopwatch.createStarted()
     try {
-      while (!iterator.hasNext && stopwatch.elapsedTime(unit) < timeout) {
+      while (!iterator.hasNext && stopwatch.elapsed(unit) < timeout) {
         TimeUnit.MILLISECONDS.sleep(100)
         iterator = fetcher.fetch(namespace, topic, 1, afterMessageId.orNull)
       }

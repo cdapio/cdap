@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -380,7 +380,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
       DatasetClassLoaderProvider classLoaderProvider) {
 
     if (classLoader == null) {
-      classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+      classLoader = MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
           getClass().getClassLoader());
     }
 

@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.security.auth;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -146,15 +146,15 @@ public class UserIdentity {
     }
     UserIdentity otherToken = (UserIdentity) other;
 
-    return Objects.equal(username, otherToken.username)
-        && Objects.equal(groups, otherToken.groups)
+    return java.util.Objects.equals(username, otherToken.username)
+        && java.util.Objects.equals(groups, otherToken.groups)
         && issueTimestamp == otherToken.issueTimestamp
         && expireTimestamp == otherToken.expireTimestamp;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getUsername(),
+    return java.util.Objects.hash(getUsername(),
         getGroups(),
         getIssueTimestamp(),
         getExpireTimestamp());
@@ -162,7 +162,7 @@ public class UserIdentity {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("username", username)
         .add("tokenType", identifierType)
         .add("groups", groups)

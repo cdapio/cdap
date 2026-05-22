@@ -328,7 +328,7 @@ public final class ClassPath {
         String innerClassName = className.substring(lastDollarSign + 1);
         // local and anonymous classes are prefixed with number (1,2,3...), anonymous classes are 
         // entirely numeric whereas local classes have the user supplied name as a suffix
-        return CharMatcher.DIGIT.trimLeadingFrom(innerClassName);
+        return CharMatcher.digit().trimLeadingFrom(innerClassName);
       }
       String packageName = getPackageName();
       if (packageName.isEmpty()) {
@@ -393,6 +393,26 @@ public final class ClassPath {
         }
         if (!entries.containsKey(uri)) {
           entries.put(uri, classloader);
+        }
+      }
+    } else if (classloader == ClassLoader.getSystemClassLoader()) {
+      // Fallback for Java 9+ where System ClassLoader is not a URLClassLoader
+      String classpath = System.getProperty("java.class.path");
+      if (classpath != null) {
+        for (String path : Splitter.on(File.pathSeparator).split(classpath)) {
+          try {
+            File file = new File(path);
+            URI uri = file.toURI();
+            if (!predicate.apply(uri)) {
+              continue;
+            }
+            if (!entries.containsKey(uri)) {
+              entries.put(uri, classloader);
+            }
+          } catch (Exception e) {
+            // Ignore bad entry
+            LOG.warn("Failed to parse classpath entry: " + path, e);
+          }
         }
       }
     }

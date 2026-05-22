@@ -16,8 +16,9 @@
 
 package io.cdap.cdap.internal.app.store;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import java.util.Objects;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.artifact.ChangeDetail;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
@@ -69,7 +70,7 @@ public class ApplicationMeta {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("id", id)
         .add("spec", ADAPTER.toJson(spec))
         .add("change", change)
@@ -86,14 +87,14 @@ public class ApplicationMeta {
       return false;
     }
     ApplicationMeta that = (ApplicationMeta) o;
-    return Objects.equal(id, that.id)
-        && Objects.equal(spec, that.spec)
-        && Objects.equal(change, that.change)
-        && Objects.equal(sourceControlMeta, that.sourceControlMeta);
+    return Objects.equals(id, that.id)
+        && Objects.equals(spec, that.spec)
+        && Objects.equals(change, that.change)
+        && Objects.equals(sourceControlMeta, that.sourceControlMeta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, spec, change, sourceControlMeta);
+    return Objects.hash(id, spec, change, sourceControlMeta);
   }
 }

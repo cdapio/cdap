@@ -119,7 +119,13 @@ public final class LogFileManager implements Flushable, Syncable {
           location.getLocation());
     } catch (Throwable e) {
       // delete created file as there was exception while writing meta data
-      Closeables.closeQuietly(logFileOutputStream);
+      if (logFileOutputStream instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) logFileOutputStream).close();
+        } catch (Exception ex) {
+          // Ignore
+        }
+      }
       Locations.deleteQuietly(location.getLocation());
       throw new IOException(e);
     }
@@ -173,7 +179,13 @@ public final class LogFileManager implements Flushable, Syncable {
     outputStreamMap.clear();
 
     for (LogFileOutputStream stream : streams) {
-      Closeables.closeQuietly(stream);
+      if (stream instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) stream).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
     }
   }
 

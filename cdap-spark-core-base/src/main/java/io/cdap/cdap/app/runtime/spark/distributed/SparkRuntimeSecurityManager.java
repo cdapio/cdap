@@ -66,7 +66,11 @@ final class SparkRuntimeSecurityManager extends SecurityManager {
     if (delegate != null) {
       delegate.checkExit(status);
     }
-    Closeables.closeQuietly(closeable);
+    try {
+      closeable.close();
+    } catch (java.io.IOException e) {
+      // ignore
+    }
   }
 
   /**

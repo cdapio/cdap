@@ -100,7 +100,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
     programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
     runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
-    capabilityManagementService.stopAndWait();
+    capabilityManagementService.stopAsync().awaitTerminated();
   }
 
   @AfterClass

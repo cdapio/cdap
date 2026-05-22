@@ -94,13 +94,13 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
             coordinator = new ResourceCoordinator(zk,
                 discoveryServiceClient,
                 new BalancedAssignmentStrategy());
-            coordinator.startAndWait();
+            coordinator.startAsync().awaitRunning();
           }
 
           @Override
           public void follower() {
             if (coordinator != null) {
-              coordinator.stopAndWait();
+              coordinator.stopAsync().awaitTerminated();
               coordinator = null;
             }
           }
@@ -130,8 +130,8 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     Discoverable discoverable = createDiscoverable(serviceName);
     cancelDiscoverable = discoveryService.register(ResolvingDiscoverable.of(discoverable));
 
-    election.start();
-    resourceClient.startAndWait();
+    election.startAsync().awaitRunning();
+    resourceClient.startAsync().awaitRunning();
 
     cancelResourceHandler = resourceClient.subscribe(serviceName,
         createResourceHandler(discoverable));
@@ -181,18 +181,18 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
         LOG.info("Partitions changed {}, service: {}", partitions, serviceName);
         try {
           if (service != null) {
-            service.stopAndWait();
+            service.stopAsync().awaitTerminated();
           }
           if (partitions.isEmpty() || !election.isRunning()) {
             service = null;
           } else {
             service = createService(partitions);
-            service.startAndWait();
+            service.startAsync().awaitRunning();
           }
         } catch (Throwable t) {
           LOG.error("Failed to change partitions, service: {}.", serviceName, t);
           completion.setException(t);
-          stop();
+          stopAsync();
         }
       }
 
@@ -200,7 +200,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
       public void finished(Throwable failureCause) {
         try {
           if (service != null) {
-            service.stopAndWait();
+            service.stopAsync().awaitTerminated();
             service = null;
           }
           completion.set(null);

@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.cli;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +45,7 @@ public class CLIMainArgs {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(Arrays.hashCode(optionTokens), Arrays.hashCode(commandTokens));
+    return java.util.Objects.hash(Arrays.hashCode(optionTokens), Arrays.hashCode(commandTokens));
   }
 
   @Override
@@ -63,7 +63,7 @@ public class CLIMainArgs {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("optionTokens", Arrays.toString(optionTokens))
+    return MoreObjects.toStringHelper(this).add("optionTokens", Arrays.toString(optionTokens))
         .add("commandTokens", Arrays.toString(commandTokens)).toString();
   }
 

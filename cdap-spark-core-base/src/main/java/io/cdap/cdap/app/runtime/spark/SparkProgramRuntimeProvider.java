@@ -141,7 +141,11 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
                                             SparkProgramRunner.class.getName(), classLoader);
           } catch (Throwable t) {
             // If there is any exception, close the classloader
-            Closeables.closeQuietly(classLoader);
+            try {
+              classLoader.close();
+            } catch (IOException e) {
+              // ignore
+            }
             throw t;
           }
         } catch (IOException e) {

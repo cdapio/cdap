@@ -112,13 +112,47 @@ public class DistributedLogFramework extends ResourceBalancerService {
       @Override
       protected void startUp() throws Exception {
         // Starts all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::start));
+        List<com.google.common.util.concurrent.SettableFuture<Void>> startFutures = new java.util.ArrayList<>();
+        for (Service pipeline : pipelines) {
+          final com.google.common.util.concurrent.SettableFuture<Void> future =
+              com.google.common.util.concurrent.SettableFuture.create();
+          pipeline.addListener(new Service.Listener() {
+            @Override
+            public void running() {
+              future.set(null);
+            }
+            @Override
+            public void failed(Service.State from, Throwable failure) {
+              future.setException(failure);
+            }
+          }, com.google.common.util.concurrent.MoreExecutors.directExecutor());
+          pipeline.startAsync();
+          startFutures.add(future);
+        }
+        validateAllFutures(startFutures);
       }
 
       @Override
       protected void shutDown() throws Exception {
         // Stops all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::stop));
+        List<com.google.common.util.concurrent.SettableFuture<Void>> stopFutures = new java.util.ArrayList<>();
+        for (Service pipeline : pipelines) {
+          final com.google.common.util.concurrent.SettableFuture<Void> future =
+              com.google.common.util.concurrent.SettableFuture.create();
+          pipeline.addListener(new Service.Listener() {
+            @Override
+            public void terminated(Service.State from) {
+              future.set(null);
+            }
+            @Override
+            public void failed(Service.State from, Throwable failure) {
+              future.setException(failure);
+            }
+          }, com.google.common.util.concurrent.MoreExecutors.directExecutor());
+          pipeline.stopAsync();
+          stopFutures.add(future);
+        }
+        validateAllFutures(stopFutures);
       }
     };
   }

@@ -125,12 +125,12 @@ public class JobQueueDebugger extends AbstractIdleService {
 
   @Override
   protected void startUp() {
-    zkClientService.startAndWait();
+    zkClientService.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() {
-    zkClientService.stopAndWait();
+    zkClientService.stopAsync().awaitTerminated();
   }
 
   private JobQueueScanner getJobQueueScanner() {
@@ -221,8 +221,8 @@ public class JobQueueDebugger extends AbstractIdleService {
     private boolean scanJobQueue(JobQueue jobQueue, int partition, JobStatistics jobStatistics)
         throws IOException {
       try (CloseableIterator<Job> jobs = jobQueue.getJobs(partition, lastJobConsumed)) {
-        Stopwatch stopwatch = new Stopwatch().start();
-        while (stopwatch.elapsedMillis() < 1000) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        while (stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS) < 1000) {
           if (!jobs.hasNext()) {
             lastJobConsumed = null;
             return false;
@@ -422,7 +422,7 @@ public class JobQueueDebugger extends AbstractIdleService {
     }
 
     JobQueueDebugger debugger = createDebugger();
-    debugger.startAndWait();
+    debugger.startAsync().awaitRunning();
 
     debugger.printTopicMessageIds();
 
@@ -431,6 +431,6 @@ public class JobQueueDebugger extends AbstractIdleService {
     } else {
       debugger.scanPartition(partition, trace);
     }
-    debugger.stopAndWait();
+    debugger.stopAsync().awaitTerminated();
   }
 }

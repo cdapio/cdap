@@ -145,7 +145,13 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
 
       @Override
       protected void doStop() {
-        Closeables.closeQuietly(metadataStorage);
+        if (metadataStorage instanceof AutoCloseable) {
+          try {
+            ((AutoCloseable) metadataStorage).close();
+          } catch (Exception e) {
+            // Ignore
+          }
+        }
         notifyStopped();
       }
     });

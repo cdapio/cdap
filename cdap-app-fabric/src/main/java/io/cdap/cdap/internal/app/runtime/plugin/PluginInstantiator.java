@@ -517,7 +517,13 @@ public class PluginInstantiator implements Closeable {
     // Cleanup the ClassLoader cache and the temporary directory for the expanded plugin jar.
     classLoaders.invalidateAll();
     if (ownedParentClassLoader) {
-      Closeables.closeQuietly((Closeable) parentClassLoader);
+      try {
+        if (parentClassLoader instanceof Closeable) {
+          ((Closeable) parentClassLoader).close();
+        }
+      } catch (IOException e) {
+        // Ignore
+      }
     }
     try {
       DirUtils.deleteDirectoryContents(tmpDir);
@@ -618,7 +624,13 @@ public class PluginInstantiator implements Closeable {
 
     @Override
     public void onRemoval(RemovalNotification<ClassLoaderKey, PluginClassLoader> notification) {
-      Closeables.closeQuietly(notification.getValue());
+      try {
+        if (notification.getValue() != null) {
+          notification.getValue().close();
+        }
+      } catch (IOException e) {
+        // Ignore
+      }
     }
   }
 

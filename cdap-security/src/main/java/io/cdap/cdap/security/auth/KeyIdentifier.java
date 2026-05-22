@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.security.auth;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.data.schema.Schema;
 import java.util.Arrays;
@@ -93,20 +93,20 @@ public final class KeyIdentifier {
       KeyIdentifier other = (KeyIdentifier) object;
       return Arrays.equals(encodedKey, other.encodedKey)
           && keyId == other.keyId && algorithm.equals(other.algorithm)
-          && Objects.equal(getKey(), other.getKey())
-          && Objects.equal(expiration, other.expiration);
+          && java.util.Objects.equals(getKey(), other.getKey())
+          && java.util.Objects.equals(expiration, other.expiration);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getKey(), getKeyId(), encodedKey, algorithm, expiration);
+    return java.util.Objects.hash(getKey(), getKeyId(), encodedKey, algorithm, expiration);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("keyId", keyId)
         .add("expiration", expiration)
         .toString();

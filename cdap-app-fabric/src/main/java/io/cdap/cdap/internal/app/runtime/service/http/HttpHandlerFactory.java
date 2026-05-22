@@ -111,7 +111,7 @@ public final class HttpHandlerFactory {
             createHttpHandler(type, new VerificationDelegateContext<>(handler), metricsContext));
       } catch (Exception e) {
         throw new IllegalArgumentException(
-            "Invalid http handler class " + handler.getClass().getName());
+            "Invalid http handler class " + handler.getClass().getName(), e);
       }
     }
 

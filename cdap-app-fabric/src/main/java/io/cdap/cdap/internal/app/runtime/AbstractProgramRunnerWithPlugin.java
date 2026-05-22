@@ -61,7 +61,7 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    * Creates a service listener to cleanup closeables.
    */
   protected Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
-    return new ServiceListenerAdapter() {
+    return new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         closeAllQuietly(closeables);
@@ -76,7 +76,13 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
 
   protected void closeAllQuietly(Iterable<Closeable> closeables) {
     for (Closeable c : closeables) {
-      Closeables.closeQuietly(c);
+      try {
+        if (c != null) {
+          c.close();
+        }
+      } catch (java.io.IOException e) {
+        // Ignore
+      }
     }
   }
 }

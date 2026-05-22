@@ -70,7 +70,10 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
   private List<String> readFromOutput(FileSet fileSet, String relativePath) throws IOException {
     // small amount of data, so expect all data from just 1 file
     Location location = fileSet.getLocation(relativePath).append("part-m-00000");
-    return CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(location), Charsets.UTF_8));
+    try (java.io.BufferedReader reader = new java.io.BufferedReader(
+      new java.io.InputStreamReader(location.getInputStream(), Charsets.UTF_8))) {
+      return CharStreams.readLines(reader);
+    }
   }
 
   @Test

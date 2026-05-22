@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -212,7 +212,13 @@ public class LevelDBTableService implements AutoCloseable {
    */
   public void clearTables() {
     for (DB entries : tables.values()) {
-      Closeables.closeQuietly(entries);
+      try {
+        if (entries != null) {
+          entries.close();
+        }
+      } catch (Exception e) {
+        // Ignore
+      }
     }
     tables.clear();
   }

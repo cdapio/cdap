@@ -159,7 +159,9 @@ public class MasterEnvironmentMain {
             runnable.stop();
             Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
-          Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
+          if (tokenManager != null) {
+            tokenManager.stopAsync().awaitTerminated();
+          }
         }));
         runnable.run(runnableArgs);
         completed.set(true);
@@ -192,7 +194,7 @@ public class MasterEnvironmentMain {
           new AuthenticationContextModules().getMasterModule());
       if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
         tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startAndWait();
+        tokenManager.startAsync().awaitRunning();
       }
     } else {
       // cdap-secret is NOT mounted, use worker authentication context

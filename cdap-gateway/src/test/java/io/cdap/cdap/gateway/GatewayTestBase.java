@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.gateway;
 
-import com.google.common.io.Closeables;
+
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -179,38 +179,38 @@ public abstract class GatewayTestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
+    txService.startAsync().awaitRunning();
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    metadataService.startAsync().awaitRunning();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    dsOpService.startAsync().awaitRunning();
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessorService.startAndWait();
+    appFabricProcessorService.startAsync().awaitRunning();
     logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+    logQueryService.startAsync().awaitRunning();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    metricsQueryService.startAndWait();
+    metricsQueryService.startAsync().awaitRunning();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(TEST_NAMESPACE_META1);
     namespaceAdmin.create(TEST_NAMESPACE_META2);
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
-    router.startAndWait();
+    router.startAsync().awaitRunning();
     port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
 
     return injector;
@@ -220,19 +220,25 @@ public abstract class GatewayTestBase {
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE1));
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE2));
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    appFabricServer.stopAndWait();
-    appFabricProcessorService.stopAndWait();
-    metricsCollectionService.stopAndWait();
-    metricsQueryService.stopAndWait();
-    logQueryService.stopAndWait();
-    router.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    metadataService.stopAndWait();
-    Closeables.closeQuietly(metadataStorage);
-    txService.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessorService.stopAsync().awaitTerminated();
+    metricsCollectionService.stopAsync().awaitTerminated();
+    metricsQueryService.stopAsync().awaitTerminated();
+    logQueryService.stopAsync().awaitTerminated();
+    router.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    metadataService.stopAsync().awaitTerminated();
+    try {
+      if (metadataStorage != null) {
+        metadataStorage.close();
+      }
+    } catch (Exception e) {
+      // ignore
+    }
+    txService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
     conf.clear();
   }

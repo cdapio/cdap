@@ -153,7 +153,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       // service can be fully captured by the controller.
       ProgramController controller = new WorkflowProgramController(program.getId().run(runId),
           driver);
-      driver.start();
+      driver.startAsync();
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);

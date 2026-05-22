@@ -180,7 +180,11 @@ public class HubPackage {
 
         @Override
         public void onFinished() {
-          Closeables.closeQuietly(channel);
+          try {
+            channel.close();
+          } catch (IOException e) {
+            // Ignore
+          }
         }
       }).build();
       HttpClients.executeStreamingRequest(request);

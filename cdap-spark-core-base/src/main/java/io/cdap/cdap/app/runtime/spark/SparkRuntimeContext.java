@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -115,7 +115,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   @Override
   public void close() {
     super.close();
-    Closeables.closeQuietly(closeable);
+    try {
+      closeable.close();
+    } catch (java.io.IOException e) {
+      // ignore
+    }
   }
 
   @Override
@@ -264,7 +268,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(SparkRuntimeContext.class)
+    return MoreObjects.toStringHelper(SparkRuntimeContext.class)
       .add("id", getProgram().getId())
       .add("runId", getRunId())
       .toString();

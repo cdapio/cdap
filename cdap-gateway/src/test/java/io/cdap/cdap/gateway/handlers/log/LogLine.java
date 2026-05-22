@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers.log;
 
-import com.google.common.base.Objects;
+
 import io.cdap.cdap.logging.read.LogOffset;
 
 /**
@@ -36,7 +36,7 @@ class LogLine extends OffsetLine {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return com.google.common.base.MoreObjects.toStringHelper(this)
       .add("offset", getOffset())
       .add("log", log)
       .toString();

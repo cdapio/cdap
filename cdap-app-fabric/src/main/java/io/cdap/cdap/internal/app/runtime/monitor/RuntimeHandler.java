@@ -227,7 +227,11 @@ public class RuntimeHandler extends AbstractHttpHandler {
       @Override
       public void handleError(Throwable cause) {
         LOG.error("Failed to write spark event logs for {}", programRunId, cause);
-        Closeables.closeQuietly(os);
+        try {
+          os.close();
+        } catch (IOException e) {
+          // Ignore
+        }
         try {
           location.delete();
         } catch (IOException e) {

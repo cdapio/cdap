@@ -144,7 +144,7 @@ public class ReflectionTableTest {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return com.google.common.base.MoreObjects.toStringHelper(this)
         .add("firstName", firstName)
         .add("lastName", lastName)
         .add("id", id)

@@ -33,6 +33,6 @@ public class AlertPassFilter implements FlatMapFunction<RecordInfo<Object>, Aler
   public Iterator<Alert> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
     return input.getType() == RecordType.ALERT
-      ? Iterators.singletonIterator(((Alert) input.getValue())) : Iterators.emptyIterator();
+      ? Iterators.singletonIterator(((Alert) input.getValue())) : java.util.Collections.emptyIterator();
   }
 }

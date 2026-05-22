@@ -28,6 +28,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.TimeZone;
 import org.junit.Assert;
@@ -108,27 +109,29 @@ public class StructuredRecordBuilderTest {
                                     Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("time", Schema.of(Schema.LogicalType.TIME_MILLIS)));
 
-    LocalTime expected = LocalTime.now();
+    LocalTime baseTime = LocalTime.now();
+    LocalTime expectedMillis = baseTime.truncatedTo(ChronoUnit.MILLIS);
     StructuredRecord record = StructuredRecord.builder(schema)
       .set("id", 1)
       .set("name", "test")
-      .setTime("time", expected).build();
+      .setTime("time", expectedMillis).build();
 
     LocalTime actual = record.getTime("time");
 
-    Assert.assertEquals(expected, actual);
+    Assert.assertEquals(expectedMillis, actual);
 
     schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
                              Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                              Schema.Field.of("time", Schema.of(Schema.LogicalType.TIME_MICROS)));
+    LocalTime expectedMicros = baseTime.truncatedTo(ChronoUnit.MICROS);
     record = StructuredRecord.builder(schema)
       .set("id", 1)
       .set("name", "test")
-      .setTime("time", expected).build();
+      .setTime("time", expectedMicros).build();
 
     actual = record.getTime("time");
 
-    Assert.assertEquals(expected, actual);
+    Assert.assertEquals(expectedMicros, actual);
   }
 
   @Test

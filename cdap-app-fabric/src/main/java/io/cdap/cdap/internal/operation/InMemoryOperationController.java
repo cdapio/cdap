@@ -52,7 +52,7 @@ public class InMemoryOperationController implements
   @Override
   public ListenableFuture<OperationController> stop() {
     LOG.trace("Stopping operation {}", runId);
-    driver.stop();
+    driver.stopAsync();
     return completionFuture;
   }
 
@@ -62,7 +62,7 @@ public class InMemoryOperationController implements
   }
 
   private void startListen(Service service) {
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void running() {
         statePublisher.publishRunning(runId);

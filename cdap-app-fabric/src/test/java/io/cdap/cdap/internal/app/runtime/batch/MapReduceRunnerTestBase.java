@@ -120,7 +120,7 @@ public class MapReduceRunnerTestBase {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
 
     metricStore = injector.getInstance(MetricStore.class);
-    txService.startAndWait();
+    txService.startAsync().awaitRunning();
 
     // Always create the default namespace
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
@@ -128,7 +128,7 @@ public class MapReduceRunnerTestBase {
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAndWait();
+    txService.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

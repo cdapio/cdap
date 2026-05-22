@@ -15,8 +15,9 @@
  */
 package io.cdap.cdap.data2.queue;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Contains queue consumer instance configuration.
@@ -52,7 +53,7 @@ public final class ConsumerConfig extends ConsumerGroupConfig {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("groupId", getGroupId())
         .add("instanceId", instanceId)
         .add("groupSize", getGroupSize())
@@ -76,6 +77,6 @@ public final class ConsumerConfig extends ConsumerGroupConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), instanceId);
+    return Objects.hash(super.hashCode(), instanceId);
   }
 }

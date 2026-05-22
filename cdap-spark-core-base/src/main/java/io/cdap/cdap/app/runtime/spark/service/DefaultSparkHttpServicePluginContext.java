@@ -91,7 +91,11 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
     TaskContext.get().addTaskCompletionListener(new TaskCompletionListener() {
       @Override
       public void onTaskCompletion(TaskContext context) {
-        Closeables.closeQuietly(pluginInstantiator);
+        try {
+          pluginInstantiator.close();
+        } catch (IOException e) {
+          // ignore
+        }
       }
     });
   }
@@ -261,7 +265,11 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
 
   @Override
   public void close() {
-    Closeables.closeQuietly(pluginInstantiator);
+    try {
+      pluginInstantiator.close();
+    } catch (IOException e) {
+      // ignore
+    }
   }
 
   @Override

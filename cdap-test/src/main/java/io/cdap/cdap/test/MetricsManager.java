@@ -134,8 +134,8 @@ public class MetricsManager {
     // Min sleep time is 10ms, max sleep time is 1 seconds
     long sleepMillis = Math.max(10,
         Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
-    Stopwatch stopwatch = new Stopwatch().start();
-    while (value < count && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    while (value < count && stopwatch.elapsed(timeoutUnit) < timeout) {
       TimeUnit.MILLISECONDS.sleep(sleepMillis);
       value = getTotalMetric(tags, metricName);
     }

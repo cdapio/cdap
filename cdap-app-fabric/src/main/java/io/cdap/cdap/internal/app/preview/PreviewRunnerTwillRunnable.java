@@ -124,7 +124,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    previewRunnerManager.addListener(new ServiceListenerAdapter() {
+    previewRunnerManager.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -137,7 +137,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting preview runner manager");
-    previewRunnerManager.start();
+    previewRunnerManager.startAsync();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -150,7 +150,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping preview runner manager");
-    previewRunnerManager.stop();
+    previewRunnerManager.stopAsync();
   }
 
   @Override

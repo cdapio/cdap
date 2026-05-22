@@ -560,8 +560,19 @@ public abstract class AbstractCubeTest {
                           null);
     List<TimeSeries> result = new ArrayList<>(cube.query(query));
     Assert.assertEquals(2, result.size());
-    verifySumAggregation(result.get(0), "metric1", 100, 1, 1, 0, 0);
-    verifySumAggregation(result.get(1), "metric2", 100, 2, 1, 0, 0);
+    TimeSeries m1Series = null;
+    TimeSeries m2Series = null;
+    for (TimeSeries ts : result) {
+      if ("metric1".equals(ts.getMeasureName())) {
+        m1Series = ts;
+      } else if ("metric2".equals(ts.getMeasureName())) {
+        m2Series = ts;
+      }
+    }
+    Assert.assertNotNull(m1Series);
+    Assert.assertNotNull(m2Series);
+    verifySumAggregation(m1Series, "metric1", 100, 1, 1, 0, 0);
+    verifySumAggregation(m2Series, "metric2", 100, 2, 1, 0, 0);
 
     // test aggregation option with sum for metric1 and metric2 for agg1, 5 data points for agg1 should get returned
     // for both metric1 and metric2
@@ -573,10 +584,21 @@ public abstract class AbstractCubeTest {
                                     null);
     result = new ArrayList<>(cube.query(query));
     Assert.assertEquals(2, result.size());
+    m1Series = null;
+    m2Series = null;
+    for (TimeSeries ts : result) {
+      if ("metric1".equals(ts.getMeasureName())) {
+        m1Series = ts;
+      } else if ("metric2".equals(ts.getMeasureName())) {
+        m2Series = ts;
+      }
+    }
+    Assert.assertNotNull(m1Series);
+    Assert.assertNotNull(m2Series);
     // metric1 increment by 1 per second, so sum will be 100/5=20, metric2 increment by 2 per second, so sum will be
     // 200/5=40
-    verifySumAggregation(result.get(0), "metric1", 5, 20, 20, 0, 0);
-    verifySumAggregation(result.get(1), "metric2", 5, 40, 20, 0, 0);
+    verifySumAggregation(m1Series, "metric1", 5, 20, 20, 0, 0);
+    verifySumAggregation(m2Series, "metric2", 5, 40, 20, 0, 0);
 
     // test aggregation option with sum for metric1 with tag name dim1, it should return two time series for agg1 and
     // agg2 for metric1, each with 5 data points
@@ -587,10 +609,21 @@ public abstract class AbstractCubeTest {
                           null);
     result = new ArrayList<>(cube.query(query));
     Assert.assertEquals(2, result.size());
+    TimeSeries agg1Series = null;
+    TimeSeries agg2Series = null;
+    for (TimeSeries ts : result) {
+      if ("tag2".equals(ts.getDimensionValues().get("dim2"))) {
+        agg1Series = ts;
+      } else if ("tag4".equals(ts.getDimensionValues().get("dim2"))) {
+        agg2Series = ts;
+      }
+    }
+    Assert.assertNotNull(agg1Series);
+    Assert.assertNotNull(agg2Series);
     // agg1 gets increment by 1 for 100 seconds, so sum will be 100/5=20, agg2 gets increment by 3 for 50 seconds, so
     // sum will be 3*50/5=30
-    verifySumAggregation(result.get(0), "metric1", 5, 30, 10, 0, 0);
-    verifySumAggregation(result.get(1), "metric1", 5, 20, 20, 0, 0);
+    verifySumAggregation(agg2Series, "metric1", 5, 30, 10, 0, 0);
+    verifySumAggregation(agg1Series, "metric1", 5, 20, 20, 0, 0);
 
     // test metric1 with count 9, this will have a remainder 100%9=1, so there will be 9 aggregated data points, each
     // with partition size 11

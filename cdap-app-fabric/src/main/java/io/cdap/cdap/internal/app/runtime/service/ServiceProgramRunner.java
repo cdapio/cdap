@@ -195,10 +195,14 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       ProgramController controller = new ServiceProgramControllerAdapter(component,
           program.getId().run(runId));
-      component.start();
+      component.startAsync();
       return controller;
     } catch (Throwable t) {
-      Closeables.closeQuietly(pluginInstantiator);
+      try {
+        pluginInstantiator.close();
+      } catch (java.io.IOException e) {
+        // Ignore to avoid masking original exception
+      }
       throw t;
     }
   }

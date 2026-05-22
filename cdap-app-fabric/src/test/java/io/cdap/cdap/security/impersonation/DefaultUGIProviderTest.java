@@ -236,7 +236,9 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   private Location copyFileToHDFS(Location hdfsKeytabDir, File localFile) throws IOException {
     Location remoteFile = hdfsKeytabDir.append(localFile.getName());
     Assert.assertTrue(remoteFile.createNew());
-    Files.copy(localFile, Locations.newOutputSupplier(remoteFile));
+    try (java.io.OutputStream out = remoteFile.getOutputStream()) {
+      Files.copy(localFile, out);
+    }
     return remoteFile;
   }
 

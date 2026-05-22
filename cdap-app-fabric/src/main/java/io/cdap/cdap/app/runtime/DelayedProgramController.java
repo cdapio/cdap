@@ -189,7 +189,7 @@ public final class DelayedProgramController implements ProgramController,
             public void onFailure(Throwable t) {
               resultFuture.setException(t);
             }
-          });
+          }, com.google.common.util.concurrent.MoreExecutors.directExecutor());
     });
     return resultFuture;
   }

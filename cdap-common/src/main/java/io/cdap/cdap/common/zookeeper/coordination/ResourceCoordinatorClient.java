@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import java.util.EnumSet;
@@ -132,7 +133,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
     return Futures.transform(
         ZKOperations.ignoreError(zkClient.getData(zkPath), KeeperException.NoNodeException.class,
             null),
-        NODE_DATA_TO_REQUIREMENT
+        NODE_DATA_TO_REQUIREMENT,
+        MoreExecutors.directExecutor()
     );
   }
 
@@ -150,7 +152,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
     return Futures.transform(
         ZKOperations.ignoreError(zkClient.delete(zkPath), KeeperException.NoNodeException.class,
             resourceName),
-        Functions.constant(resourceName)
+        Functions.constant(resourceName),
+        MoreExecutors.directExecutor()
     );
   }
 

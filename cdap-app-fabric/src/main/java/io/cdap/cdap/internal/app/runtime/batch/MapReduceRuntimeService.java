@@ -190,7 +190,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "MapReduceRunner-" + specification.getName();
   }
 
@@ -454,7 +454,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           }
         });
         t.setDaemon(true);
-        t.setName(getServiceName());
+        t.setName(serviceName());
         t.start();
       }
     };
@@ -1012,7 +1012,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
-    Files.copy(file, Locations.newOutputSupplier(targetLocation));
+    try (java.io.InputStream in = new java.io.FileInputStream(file);
+         java.io.OutputStream out = targetLocation.getOutputStream()) {
+      com.google.common.io.ByteStreams.copy(in, out);
+    }
     return targetLocation;
   }
 
@@ -1024,8 +1027,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    ByteStreams.copy(Locations.newInputSupplier(programJarLocation),
-        Locations.newOutputSupplier(programJarCopy));
+    try (java.io.InputStream in = programJarLocation.getInputStream();
+         java.io.OutputStream out = programJarCopy.getOutputStream()) {
+      com.google.common.io.ByteStreams.copy(in, out);
+    }
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }

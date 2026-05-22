@@ -114,7 +114,7 @@ public class RemoteLogsFetcher implements LogsFetcher {
 
         @Override
         public void onFinished() {
-          Closeables.closeQuietly(channel);
+          // Channel will be closed by try-with-resources block in execute method
         }
       }).build();
       remoteClient.executeStreamingRequest(request);

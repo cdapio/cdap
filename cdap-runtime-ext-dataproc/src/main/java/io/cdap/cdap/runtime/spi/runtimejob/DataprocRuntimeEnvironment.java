@@ -70,7 +70,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     addConsoleAppender();
     System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
     zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
 
     InetSocketAddress resolved = resolve(zkServer.getLocalAddress());
     String connectionStr = resolved.getHostString() + ":" + resolved.getPort();
@@ -111,7 +111,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
       yarnTwillRunnerService.stop();
     }
     if (zkServer != null) {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
     if (locationFactory != null) {
       Location location = locationFactory.create("/");

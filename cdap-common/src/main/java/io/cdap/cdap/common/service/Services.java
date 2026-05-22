@@ -51,9 +51,8 @@ public class Services {
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit,
       @Nullable String timeoutErrorMessage)
       throws TimeoutException, InterruptedException, ExecutionException {
-    ListenableFuture<Service.State> startFuture = service.start();
     try {
-      startFuture.get(timeout, timeoutUnit);
+      service.startAsync().awaitRunning(timeout, timeoutUnit);
     } catch (TimeoutException e) {
       LOG.error(timeoutErrorMessage != null ? timeoutErrorMessage
           : "Timeout while waiting to start service.", e);
@@ -62,19 +61,19 @@ public class Services {
         timeoutException.setStackTrace(e.getStackTrace());
       }
       try {
-        service.stop();
+        service.stopAsync();
       } catch (Exception stopException) {
         LOG.error("Error while trying to stop service: ", stopException);
       }
       throw timeoutException;
-    } catch (InterruptedException e) {
-      LOG.error("Interrupted while waiting to start service.", e);
+    } catch (IllegalStateException e) {
+      LOG.error("Service failed to start.", e);
       try {
-        service.stop();
+        service.stopAsync();
       } catch (Exception stopException) {
         LOG.error("Error while trying to stop service:", stopException);
       }
-      throw e;
+      throw new ExecutionException(e);
     }
   }
 

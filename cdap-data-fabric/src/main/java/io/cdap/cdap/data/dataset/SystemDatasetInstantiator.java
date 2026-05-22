@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data.dataset;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -74,7 +74,7 @@ public class SystemDatasetInstantiator implements Closeable {
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;
     this.parentClassLoader = parentClassLoader == null
-        ? Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+        ? MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
         getClass().getClassLoader()) :
         parentClassLoader;
   }

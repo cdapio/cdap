@@ -16,8 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import io.cdap.cdap.proto.id.ScheduleId;
+import java.util.Objects;
 
 /**
  * Uniquely identifies a Job.
@@ -57,18 +58,18 @@ public class JobKey {
 
     JobKey that = (JobKey) o;
 
-    return Objects.equal(this.scheduleId, that.scheduleId)
-        && Objects.equal(this.generationId, that.generationId);
+    return Objects.equals(this.scheduleId, that.scheduleId)
+        && Objects.equals(this.generationId, that.generationId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(scheduleId, generationId);
+    return Objects.hash(scheduleId, generationId);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("scheduleId", scheduleId)
         .add("generationId", generationId)
         .toString();

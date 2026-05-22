@@ -104,7 +104,7 @@
     <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
     <apache.jdbm1.version>2.0.0-M2</apache.jdbm1.version>
-    <asm.version>7.1</asm.version>
+    <asm.version>9.6</asm.version>
     <async.http.version>1.9.40</async.http.version>
     <avro.version>1.11.4</avro.version>
     <bouncycastle.version>1.70</bouncycastle.version>
@@ -123,7 +123,7 @@
     <geronimo.version>2.0.0</geronimo.version>
     <grok.version>0.1.0</grok.version>
     <gson.version>2.3.1</gson.version>
-    <guava.version>13.0.1</guava.version>
+    <guava.version>32.0.0-jre</guava.version>
     <guice.version>4.0</guice.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
@@ -148,7 +148,7 @@
     <resteasy.version>3.0.8.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
-    <scala2.12.version>2.12.15</scala2.12.version>
+    <scala2.12.version>2.12.18</scala2.12.version>
     <servlet.api.version>3.1.0</servlet.api.version>
     <slf4j.version>1.7.15</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
@@ -158,7 +158,7 @@
     <tephra.version>0.15.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>1.4.0</twill.version>
+    <twill.version>1.5.0-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <embedded-postgres.version>1.3.1</embedded-postgres.version>
@@ -180,7 +180,7 @@
     <sonar.scm.exclusions.disabled>true</sonar.scm.exclusions.disabled>
 
     <!-- Need default value when coverage is not collected -->
-    <argLine/>
+    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED -Djava.locale.providers=COMPAT,CLDR</argLine>
   </properties>
 
   <dependencyManagement>
@@ -446,7 +446,17 @@
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
         <artifactId>asm-commons</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-tree</artifactId>
         <version>${asm.version}</version>
       </dependency>
       <dependency>
@@ -483,6 +493,16 @@
       <dependency>
         <groupId>org.scala-lang</groupId>
         <artifactId>scala-library</artifactId>
+        <version>${scala2.12.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-compiler</artifactId>
+        <version>${scala2.12.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-reflect</artifactId>
         <version>${scala2.12.version}</version>
       </dependency>
       <dependency>
@@ -1508,7 +1528,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.0.0-M6</version>
           <configuration>
-            <argLine>@{argLine}  -Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
+            <argLine>@{argLine}  -Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <forkCount>3</forkCount>
@@ -1579,7 +1599,7 @@
                   <exclude>plugins/**</exclude>
                   <exclude>**/LICENSES/**</exclude>
                   <exclude>**/VERSION</exclude>
-                  <exlcude>**/*.patch</exlcude>
+                  <exclude>**/*.patch</exclude>
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
                   <!-- Excludes AVRO schema files -->
@@ -1596,6 +1616,8 @@
                   <exclude>third-party-licenses/**</exclude>
                   <exclude>.gitpod.yml</exclude>
                   <exclude>.gitpod.Dockerfile</exclude>
+                  <exclude>.mvn/**</exclude>
+                  <exclude>*thread_dump.txt</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -1695,6 +1717,11 @@
             <autoPublish>false</autoPublish>
             <ignorePublishedComponents>true</ignorePublishedComponents>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.5.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -1836,7 +1863,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>2.9.1</version>
+              <version>3.6.3</version>
               <configuration>
                 <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
                 <bottom>
@@ -1845,11 +1872,14 @@
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
                   <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
-                  <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
-                  <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
-                  <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
-                  <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+                  <link>https://avro.apache.org/docs/${avro.version}/api/java/</link>
+                  <link>https://javaee.github.io/javaee-spec/javadocs/</link>
+                  <link>https://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
+                  <link>https://twill.apache.org/apidocs-${twill.version}/</link>
                 </links>
+                <doclint>none</doclint>
+                <failOnError>false</failOnError>
+                <detectOfflineLinks>false</detectOfflineLinks>
                 <quiet>true</quiet>
               </configuration>
               <executions>
@@ -1878,7 +1908,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
+            <version>3.6.3</version>
           </plugin>
         </plugins>
       </build>
@@ -1915,10 +1945,9 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-jar-plugin</artifactId>
-              <version>2.4</version>
               <executions>
                 <execution>
-                  <id>jar</id>
+                  <id>default-jar</id>
                   <phase>prepare-package</phase>
                   <configuration>
                     <outputDirectory>${stage.lib.dir}</outputDirectory>
@@ -2645,9 +2674,9 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>3.1.0</version>
+              <version>3.6.3</version>
               <configuration>
-                <additionalparam>-Xdoclint:none</additionalparam>
+                <doclint>none</doclint>
                 <failOnError>false</failOnError>
               </configuration>
             </plugin>
@@ -2698,9 +2727,9 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
+        <version>3.6.3</version>
         <configuration>
-          <additionalparam>-Xdoclint:none</additionalparam>
+          <doclint>none</doclint>
           <failOnError>false</failOnError>
           <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
           <bottom>
@@ -2709,11 +2738,12 @@
           <doctitle>${project.name} ${project.version}</doctitle>
           <links>
             <link>https://cdapio.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
-            <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
-            <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
-            <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
-            <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+            <link>https://avro.apache.org/docs/${avro.version}/api/java/</link>
+            <link>https://javaee.github.io/javaee-spec/javadocs/</link>
+            <link>https://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
+            <link>https://twill.apache.org/apidocs-${twill.version}/</link>
           </links>
+          <detectOfflineLinks>false</detectOfflineLinks>
           <quiet>true</quiet>
           <groups>
             <group>

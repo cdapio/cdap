@@ -78,7 +78,20 @@ public final class ProgramRunners {
     runAsUser(user, new Callable<ListenableFuture<Service.State>>() {
       @Override
       public ListenableFuture<Service.State> call() throws Exception {
-        return service.start();
+        com.google.common.util.concurrent.SettableFuture<Service.State> future =
+            com.google.common.util.concurrent.SettableFuture.create();
+        service.addListener(new Service.Listener() {
+          @Override
+          public void running() {
+            future.set(Service.State.RUNNING);
+          }
+          @Override
+          public void failed(Service.State from, Throwable failure) {
+            future.setException(failure);
+          }
+        }, com.google.common.util.concurrent.MoreExecutors.directExecutor());
+        service.startAsync();
+        return future;
       }
     });
   }

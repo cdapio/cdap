@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.security.auth;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -110,7 +110,7 @@ public class AccessToken implements Signed<UserIdentity> {
   public boolean equals(Object object) {
     if (object instanceof AccessToken) {
       AccessToken other = (AccessToken) object;
-      return Objects.equal(identifier, other.identifier)
+      return java.util.Objects.equals(identifier, other.identifier)
           && keyId == other.keyId
           && Bytes.equals(digest, other.digest);
     }
@@ -119,12 +119,12 @@ public class AccessToken implements Signed<UserIdentity> {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getIdentifier(), getKeyId(), Bytes.hashCode(getDigestBytes()));
+    return java.util.Objects.hash(getIdentifier(), getKeyId(), Bytes.hashCode(getDigestBytes()));
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("identifier", identifier)
         .add("keyId", keyId)
         .add("digest", Bytes.toStringBinary(digest))

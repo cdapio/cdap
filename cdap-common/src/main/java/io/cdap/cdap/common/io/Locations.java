@@ -21,9 +21,8 @@ import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
+import io.cdap.cdap.common.lang.ThrowingSupplier;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
@@ -105,11 +104,11 @@ public final class Locations {
    *     requested.
    * @return A {@link InputSupplier}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs,
+  public static ThrowingSupplier<? extends SeekableInputStream, IOException> newInputSupplier(final FileSystem fs,
       final Path path) {
-    return new InputSupplier<SeekableInputStream>() {
+    return new ThrowingSupplier<SeekableInputStream, IOException>() {
       @Override
-      public SeekableInputStream getInput() throws IOException {
+      public SeekableInputStream get() throws IOException {
         FSDataInputStream input = fs.open(path);
         try {
           return new DFSSeekableInputStream(input,
@@ -130,11 +129,11 @@ public final class Locations {
    * @param location Location for the input stream.
    * @return A {@link InputSupplier}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(
+  public static ThrowingSupplier<? extends SeekableInputStream, IOException> newInputSupplier(
       final Location location) {
-    return new InputSupplier<SeekableInputStream>() {
+    return new ThrowingSupplier<SeekableInputStream, IOException>() {
       @Override
-      public SeekableInputStream getInput() throws IOException {
+      public SeekableInputStream get() throws IOException {
         InputStream input = location.getInputStream();
         try {
           if (input instanceof FileInputStream) {
@@ -343,7 +342,9 @@ public final class Locations {
         DirUtils.mkdirs(output);
       } else {
         DirUtils.mkdirs(output.getParentFile());
-        ByteStreams.copy(tis, com.google.common.io.Files.newOutputStreamSupplier(output));
+        try (OutputStream os = Files.newOutputStream(output.toPath())) {
+          ByteStreams.copy(tis, os);
+        }
       }
       entry = tis.getNextTarEntry();
     }
@@ -418,7 +419,7 @@ public final class Locations {
    * @param location Location for the output.
    * @return A {@link OutputSupplier}.
    */
-  public static OutputSupplier<? extends OutputStream> newOutputSupplier(final Location location) {
+  public static ThrowingSupplier<? extends OutputStream, IOException> newOutputSupplier(final Location location) {
     return location::getOutputStream;
   }
 

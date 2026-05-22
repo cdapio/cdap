@@ -112,7 +112,13 @@ public abstract class AbstractChunkedCallback implements Callback {
       // Just log the error as debug.
       LOG.debug("Failed to send chunk", e);
     } finally {
-      Closeables.closeQuietly(chunkResponder);
+      if (chunkResponder instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) chunkResponder).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
     }
   }
 

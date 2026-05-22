@@ -115,25 +115,25 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
 
       @Override
-      protected Executor executor(final State state) {
-        return command -> new Thread(command, "core scheduler service " + state).start();
+      protected java.util.concurrent.Executor executor() {
+        return command -> new Thread(command, "core scheduler service " + state()).start();
       }
 
       @Override
       protected void startUp() {
-        timeSchedulerService.startAndWait();
+        timeSchedulerService.startAsync().awaitRunning();
         cleanupJobs();
-        constraintCheckerService.startAndWait();
-        scheduleNotificationSubscriberService.startAndWait();
+        constraintCheckerService.startAsync().awaitRunning();
+        scheduleNotificationSubscriberService.startAsync().awaitRunning();
         startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
       @Override
       protected void shutDown() {
-        scheduleNotificationSubscriberService.stopAndWait();
-        constraintCheckerService.stopAndWait();
-        timeSchedulerService.stopAndWait();
+        scheduleNotificationSubscriberService.stopAsync().awaitTerminated();
+        constraintCheckerService.stopAsync().awaitTerminated();
+        timeSchedulerService.stopAsync().awaitTerminated();
         LOG.info("Stopped core scheduler service.");
       }
     }, io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000,
@@ -203,12 +203,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   protected void startUp() throws Exception {
-    internalService.startAndWait();
+    internalService.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    internalService.stopAndWait();
+    internalService.stopAsync().awaitTerminated();
   }
 
   @Override

@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.common;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
@@ -76,7 +76,7 @@ public class HttpExceptionHandler extends ExceptionHandler {
 
     // If it is not some known exception type, response with 500.
     LOG.error("Unexpected error: request={} {} user={}:", request.method().name(), request.getUri(),
-        Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
+        MoreObjects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
     responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
         Throwables.getRootCause(t).getMessage());
   }
@@ -84,6 +84,6 @@ public class HttpExceptionHandler extends ExceptionHandler {
   private void logWithTrace(HttpRequest request, Throwable t) {
     LOG.trace("Error in handling request={} {} for user={}:", request.method().name(),
         request.getUri(),
-        Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
+        MoreObjects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
   }
 }

@@ -199,7 +199,7 @@ public final class SparkRuntimeUtils {
     // (via SparkMainWraper).
     // We use a service listener so that it can handle all cases.
     final CountDownLatch secStopLatch = new CountDownLatch(1);
-    driverService.addListener(new ServiceListenerAdapter() {
+    driverService.addListener(new Service.Listener() {
 
       @Override
       public void stopping(Service.State from) {
@@ -240,7 +240,7 @@ public final class SparkRuntimeUtils {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    driverService.startAndWait();
+    driverService.startAsync().awaitRunning();
     return new SparkProgramCompletion() {
       @Override
       public void completed() {
@@ -267,7 +267,7 @@ public final class SparkRuntimeUtils {
             delegate.completedWithException(t);
           }
         } else {
-          driverService.stop();
+          driverService.stopAsync();
         }
 
         // Wait for the spark execution context to stop to make sure everything related

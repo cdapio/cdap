@@ -23,26 +23,36 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
+import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.internal.AbstractExecutionServiceController;
 import org.apache.twill.internal.RunIds;
 
 /**
  * A no-op {@link TwillController}.
  */
-final class NoopTwillController extends AbstractExecutionServiceController implements
-    TwillController {
+final class NoopTwillController implements TwillController {
+
+  private final RunId runId;
 
   NoopTwillController() {
-    super(RunIds.generate());
+    this.runId = RunIds.generate();
+  }
+
+  @Override
+  public RunId getRunId() {
+    return runId;
   }
 
   @Override
@@ -158,16 +168,6 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   }
 
   @Override
-  protected void startUp() {
-    // no-op
-  }
-
-  @Override
-  protected void shutDown() {
-    // no-op
-  }
-
-  @Override
   public Future<Command> sendCommand(Command command) {
     return CompletableFuture.completedFuture(command);
   }
@@ -178,7 +178,43 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   }
 
   @Override
+  public Future<? extends ServiceController> terminate() {
+    return CompletableFuture.completedFuture(this);
+  }
+
+  @Override
+  public Future<? extends ServiceController> terminate(long gracefulTimeout, TimeUnit gracefulTimeoutUnit) {
+    return CompletableFuture.completedFuture(this);
+  }
+
+  @Override
   public void kill() {
-    terminate();
+    // no-op
+  }
+
+  @Override
+  public void onRunning(Runnable runnable, Executor executor) {
+    executor.execute(runnable);
+  }
+
+  @Override
+  public void onTerminated(Runnable runnable, Executor executor) {
+    executor.execute(runnable);
+  }
+
+  @Override
+  public void awaitTerminated() throws ExecutionException {
+    // no-op
+  }
+
+  @Override
+  public void awaitTerminated(long timeout, TimeUnit timeoutUnit) throws TimeoutException, ExecutionException {
+    // no-op
+  }
+
+  @Nullable
+  @Override
+  public TerminationStatus getTerminationStatus() {
+    return TerminationStatus.SUCCEEDED;
   }
 }

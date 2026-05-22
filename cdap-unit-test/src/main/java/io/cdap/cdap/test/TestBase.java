@@ -348,32 +348,42 @@ public class TestBase {
     );
 
     messagingService = injector.getInstance(MessagingService.class);
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+    if (messagingService instanceof Service && ((Service) messagingService).state() == Service.State.NEW) {
+      ((Service) messagingService).startAsync().awaitRunning();
     }
 
     txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
+    if (txService.state() == Service.State.NEW) {
+      txService.startAsync().awaitRunning();
+    }
 
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataAdmin = injector.getInstance(MetadataAdmin.class);
     metadataStorage.createIndex();
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    if (metadataService.state() == Service.State.NEW) {
+      metadataService.startAsync().awaitRunning();
+    }
 
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    if (dsOpService.state() == Service.State.NEW) {
+      dsOpService.startAsync().awaitRunning();
+    }
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    if (datasetService.state() == Service.State.NEW) {
+      datasetService.startAsync().awaitRunning();
+    }
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    if (metricsCollectionService.state() == Service.State.NEW) {
+      metricsCollectionService.startAsync().awaitRunning();
+    }
     programScheduler = injector.getInstance(Scheduler.class);
-    if (programScheduler instanceof Service) {
-      ((Service) programScheduler).startAndWait();
+    if (programScheduler instanceof Service && ((Service) programScheduler).state() == Service.State.NEW) {
+      ((Service) programScheduler).startAsync().awaitRunning();
     }
 
     testManager = injector.getInstance(UnitTestManager.class);
@@ -411,12 +421,18 @@ public class TestBase {
     messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
-    previewHttpServer.startAndWait();
+    if (previewHttpServer.state() == Service.State.NEW) {
+      previewHttpServer.startAsync().awaitRunning();
+    }
     fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
     lineageAdmin = injector.getInstance(LineageAdmin.class);
-    metadataSubscriberService.startAndWait();
+    if (metadataSubscriberService.state() == Service.State.NEW) {
+      metadataSubscriberService.startAsync().awaitRunning();
+    }
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
-    artifactLocalizerService.startAndWait();
+    if (artifactLocalizerService.state() == Service.State.NEW) {
+      artifactLocalizerService.startAsync().awaitRunning();
+    }
     // NOTE: As the artifact localizer client does not use service discovery for port discovery,
     // We need to set the port after starting the localizer service.
     cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
@@ -426,16 +442,22 @@ public class TestBase {
         .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
 
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
-    previewRunnerManager.startAndWait();
+    if (previewRunnerManager.state() == Service.State.NEW) {
+      previewRunnerManager.startAsync().awaitRunning();
+    }
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    if (appFabricServer.state() == Service.State.NEW) {
+      appFabricServer.startAsync().awaitRunning();
+    }
     appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessorService.startAndWait();
+    if (appFabricProcessorService.state() == Service.State.NEW) {
+      appFabricProcessorService.startAsync().awaitRunning();
+    }
     preferencesService = injector.getInstance(PreferencesService.class);
 
     scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
+    if (scheduler instanceof Service && ((Service) scheduler).state() == Service.State.NEW) {
+      ((Service) scheduler).startAsync().awaitRunning();
     }
     if (scheduler instanceof CoreSchedulerService) {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
@@ -604,7 +626,10 @@ public class TestBase {
       throw new IOException("Failed to get resource for " + infileName);
     }
     File outFile = new File(outDir, infileName);
-    ByteStreams.copy(Resources.newInputStreamSupplier(url), Files.newOutputStreamSupplier(outFile));
+    try (java.io.InputStream in = url.openStream();
+         java.io.OutputStream out = new java.io.FileOutputStream(outFile)) {
+      ByteStreams.copy(in, out);
+    }
   }
 
   /**
@@ -617,11 +642,11 @@ public class TestBase {
     }
 
     if (previewRunnerManager instanceof Service) {
-      previewRunnerManager.stopAndWait();
+      previewRunnerManager.stopAsync().awaitTerminated();
     }
 
-    artifactLocalizerService.stopAndWait();
-    previewHttpServer.stopAndWait();
+    artifactLocalizerService.stopAsync().awaitTerminated();
+    previewHttpServer.stopAsync().awaitTerminated();
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
@@ -636,23 +661,23 @@ public class TestBase {
     namespaceAdmin.delete(NamespaceId.DEFAULT);
 
     if (programScheduler instanceof Service) {
-      ((Service) programScheduler).stopAndWait();
+      ((Service) programScheduler).stopAsync().awaitTerminated();
     }
-    metricsCollectionService.stopAndWait();
+    metricsCollectionService.stopAsync().awaitTerminated();
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
+      ((Service) scheduler).stopAsync().awaitTerminated();
     }
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    metadataService.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    Closeables.closeQuietly(metadataStorage);
-    txService.stopAndWait();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    metadataService.stopAsync().awaitTerminated();
+    metadataSubscriberService.stopAsync().awaitTerminated();
+    metadataStorage.close();
+    txService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
-    appFabricServer.stopAndWait();
-    appFabricProcessorService.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessorService.stopAsync().awaitTerminated();
   }
 
   protected MetricsManager getMetricsManager() {

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import java.util.Objects;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -471,7 +471,7 @@ public abstract class AbstractProgramController implements ProgramController {
 
       // Only compare with the listener
       ListenerCaller other = (ListenerCaller) o;
-      return Objects.equal(listener, other.listener);
+      return Objects.equals(listener, other.listener);
     }
 
     @Override

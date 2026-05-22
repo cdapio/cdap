@@ -297,10 +297,14 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       if (artifactsComputeHash && (artifactsComputeHashSnapshot
           || !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
         Hasher hasher = Hashing.sha256().newHasher();
-        hasher.putString(artifactDescriptor.getNamespace());
-        hasher.putString(artifactDescriptor.getArtifactId().getName());
-        hasher.putString(artifactDescriptor.getArtifactId().getScope().name());
-        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion());
+        hasher.putString(artifactDescriptor.getNamespace(),
+            java.nio.charset.StandardCharsets.UTF_8);
+        hasher.putString(artifactDescriptor.getArtifactId().getName(),
+            java.nio.charset.StandardCharsets.UTF_8);
+        hasher.putString(artifactDescriptor.getArtifactId().getScope().name(),
+            java.nio.charset.StandardCharsets.UTF_8);
+        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion(),
+            java.nio.charset.StandardCharsets.UTF_8);
         Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
         arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
@@ -493,7 +497,11 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
               file.delete();
             }
           } else if (resource instanceof Closeable) {
-            Closeables.closeQuietly((Closeable) resource);
+            try {
+              ((Closeable) resource).close();
+            } catch (IOException e) {
+              // Ignore
+            }
           } else if (resource instanceof Runnable) {
             ((Runnable) resource).run();
           }
@@ -558,9 +566,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private static void hashArtifactId(Hasher hasher, ArtifactId artifactId) {
-    hasher.putString(artifactId.getParent().toString());
-    hasher.putString(artifactId.getArtifact());
-    hasher.putString(artifactId.getVersion());
+    hasher.putString(artifactId.getParent().toString(), java.nio.charset.StandardCharsets.UTF_8);
+    hasher.putString(artifactId.getArtifact(), java.nio.charset.StandardCharsets.UTF_8);
+    hasher.putString(artifactId.getVersion(), java.nio.charset.StandardCharsets.UTF_8);
   }
 
   /**

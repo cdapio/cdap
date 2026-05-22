@@ -195,12 +195,35 @@ public final class LevelDBTableFactory implements TableFactory {
       this.metadataTable = null;
     }
     if (metadataTable != null) {
-      Closeables.closeQuietly(metadataTable.getLevelDB());
+      DB db = metadataTable.getLevelDB();
+      if (db instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) db).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
     }
     Collection<DB> dbs = levelDBs.values();
-    dbs.forEach(Closeables::closeQuietly);
+    for (DB db : dbs) {
+      if (db instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) db).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
+    }
     dbs.clear();
-    partitionedLevelDBs.values().forEach(Closeables::closeQuietly);
+    for (LevelDBPartitionManager pm : partitionedLevelDBs.values()) {
+      if (pm instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) pm).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
+    }
     partitionedLevelDBs.clear();
   }
 
@@ -312,7 +335,14 @@ public final class LevelDBTableFactory implements TableFactory {
               break;
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
-            Closeables.closeQuietly(levelDBs.remove(dataDBPath));
+            DB db = levelDBs.remove(dataDBPath);
+            if (db instanceof AutoCloseable) {
+              try {
+                ((AutoCloseable) db).close();
+              } catch (Exception e) {
+                // Ignore
+              }
+            }
             filesToDelete.add(dataDBPath);
 
             // Payload table
@@ -321,7 +351,14 @@ public final class LevelDBTableFactory implements TableFactory {
               break;
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
-            Closeables.closeQuietly(levelDBs.remove(dataDBPath));
+            db = levelDBs.remove(dataDBPath);
+            if (db instanceof AutoCloseable) {
+              try {
+                ((AutoCloseable) db).close();
+              } catch (Exception e) {
+                // Ignore
+              }
+            }
             filesToDelete.add(dataDBPath);
           }
 

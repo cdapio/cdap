@@ -316,4 +316,14 @@
     </description>
   </property>
 
+  <!-- JVM options to enable Spark running under Java 17 (encapsulation overrides) -->
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:+IgnoreUnrecognizedVMOptions --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.security/java.security=ALL-UNNAMED</value>
+    <description>
+      JVM options used by spawned program execution containers.
+      These encapsulation bypass open flags are mandatory to execute Spark 3.x workflows under Java 17.
+    </description>
+  </property>
+
 </configuration>
