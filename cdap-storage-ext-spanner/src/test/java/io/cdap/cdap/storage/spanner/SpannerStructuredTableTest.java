@@ -74,6 +74,7 @@ public class SpannerStructuredTableTest extends StructuredTableTest {
     configs.put(SpannerStorageProvider.PROJECT, project);
     configs.put(SpannerStorageProvider.INSTANCE, instance);
     configs.put(SpannerStorageProvider.DATABASE, database);
+    configs.put(RetryingSpannerTransactionRunner.OPTIMISTIC_LOCK_ENABLED, "true");
 
     if (credentialsPath != null) {
       configs.put(SpannerStorageProvider.CREDENTIALS_PATH, credentialsPath);
