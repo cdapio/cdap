@@ -41,6 +41,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -2222,5 +2225,57 @@ public abstract class StructuredTableTest {
       }
     });
     return actual;
+  }
+
+  /**
+   * Tests that concurrent increment operations on the same row resolve correctly
+   * without data loss. This stresses the transaction runner's conflict resolution
+   * and retry mechanism (e.g., Spanner's optimistic locking or SQL serialization).
+   */
+  @Test
+  public void testConcurrentIncrement() throws Exception {
+    Collection<Field<?>> keys = Arrays.asList(
+        Fields.intField(KEY, 999),
+        Fields.longField(KEY2, 999L),
+        Fields.stringField(KEY3, "key3")
+    );
+
+    // Initialize row using the existing keys collection
+    getTransactionRunner().run(context -> {
+      List<Field<?>> rowFields = new ArrayList<>(keys);
+      rowFields.add(Fields.longField(LONG_COL, 0L));
+      context.getTable(SIMPLE_TABLE).upsert(rowFields);
+    });
+
+    int numThreads = 3;
+    int incrementsPerThread = 10;
+
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    try {
+      List<CompletableFuture<Void>> futures = IntStream.range(0, numThreads)
+          .mapToObj(i -> CompletableFuture.runAsync(() -> {
+            for (int j = 0; j < incrementsPerThread; j++) {
+              try {
+                getTransactionRunner().run(context ->
+                    context.getTable(SIMPLE_TABLE).increment(keys, LONG_COL, 1L));
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            }
+          }, executor))
+          .collect(Collectors.toList());
+
+      // Wait for all threads to complete successfully
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    } finally {
+      executor.shutdown();
+    }
+
+    // Verify final value
+    getTransactionRunner().run(context -> {
+      Optional<StructuredRow> row = context.getTable(SIMPLE_TABLE).read(keys);
+      Assert.assertTrue(row.isPresent());
+      Assert.assertEquals(Long.valueOf(numThreads * incrementsPerThread), row.get().getLong(LONG_COL));
+    });
   }
 }
