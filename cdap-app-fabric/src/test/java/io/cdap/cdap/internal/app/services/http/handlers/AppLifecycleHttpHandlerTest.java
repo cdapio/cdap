@@ -227,7 +227,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // First deployment - passing SKIP_ON_NO_CHANGE
     HttpResponse firstResponse = deploy(appId, request, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
-    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
     ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
 
     // Mock verify: check that the deployApp spy was called once
@@ -240,7 +240,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Second deployment (exact same request) - passing SKIP_ON_NO_CHANGE
     HttpResponse secondResponse = deploy(appId, request, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
-    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
     ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
     Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
 
@@ -268,7 +268,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // First deployment
     HttpResponse firstResponse = deploy(appId, request1, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
-    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
 
     // Mock verify: check that the deployApp spy was called once
     ApplicationLifecycleService lifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
@@ -284,7 +284,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     HttpResponse secondResponse = deploy(appId, request2, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
-    Assert.assertEquals("false", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("false", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
 
     // The deployApp spy MUST have been called a second time (2 times total)
     Mockito.verify(lifecycleService, Mockito.times(2)).deployApp(
@@ -310,7 +310,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         ArtifactSummary.from(artifactId.toArtifactId()), config);
     HttpResponse firstResponse = deploy(appId, firstRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
-    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
     ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
 
     // Mock verify: check that deployApp spy was called once
@@ -325,7 +325,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     AppRequest<ConfigTestApp.ConfigClass> rangeRequest = new AppRequest<>(rangeSummary, config);
     HttpResponse secondResponse = deploy(appId, rangeRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
-    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
     ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
     Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
 
@@ -355,7 +355,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config1);
     HttpResponse firstResponse = deploy(appId, firstRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, firstResponse.getResponseCode());
-    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("false", getFirstHeaderValue(firstResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
     ApplicationRecord firstRecord = readResponse(firstResponse, ApplicationRecord.class);
 
     // Mock verify: check that deployApp spy was called once
@@ -370,7 +370,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
         ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null, config2);
     HttpResponse secondResponse = deploy(appId, secondRequest, AppDeployStrategy.SKIP_ON_NO_CHANGE);
     Assert.assertEquals(200, secondResponse.getResponseCode());
-    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, "X-Deployment-Skipped"));
+    Assert.assertEquals("true", getFirstHeaderValue(secondResponse, Gateway.APP_DEPLOYMENT_SKIPPED_HEADER));
     ApplicationRecord secondRecord = readResponse(secondResponse, ApplicationRecord.class);
     Assert.assertEquals(firstRecord.getAppVersion(), secondRecord.getAppVersion());
 

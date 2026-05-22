@@ -193,7 +193,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
               LOG.debug("Application {} is already deployed", appId);
             }
 
-            HttpHeaders headers = new DefaultHttpHeaders().add("X-Deployment-Skipped",
+            HttpHeaders headers = new DefaultHttpHeaders().add(Constants.Gateway.APP_DEPLOYMENT_SKIPPED_HEADER,
                 String.valueOf(app.isDeploySkipped()));
             responder.sendString(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)), headers);
           } catch (DatasetManagementException e) {
