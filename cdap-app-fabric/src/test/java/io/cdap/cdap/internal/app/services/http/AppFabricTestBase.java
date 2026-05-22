@@ -613,8 +613,8 @@ public abstract class AppFabricTestBase {
     return response;
   }
 
-  private HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
-                                     AppRequest<?> appRequest) throws Exception {
+  protected HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
+      AppRequest<?> appRequest) throws Exception {
     requestBuilder.addHeader(Constants.Gateway.API_KEY, "api-key-example");
     requestBuilder.addHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON);
     requestBuilder.withBody(GSON.toJson(appRequest));
@@ -1704,8 +1704,7 @@ public abstract class AppFabricTestBase {
    * Returns the first value of the given header from the given response. If there is no such header, {@code null} is
    * returned.
    */
-  @Nullable
-  private static String getFirstHeaderValue(HttpResponse response, String name) {
+  protected static String getFirstHeaderValue(HttpResponse response, String name) {
     return response.getHeaders().get(name).stream().findFirst().orElse(null);
   }
 
