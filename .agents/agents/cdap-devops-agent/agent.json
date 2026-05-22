@@ -1,0 +1,7 @@
+{
+  "name": "cdap-devops-agent",
+  "description": "Agent for CDAP deployment and verification",
+  "configPath": {
+    "relativePathToConfig": "config.yaml"
+  }
+}
