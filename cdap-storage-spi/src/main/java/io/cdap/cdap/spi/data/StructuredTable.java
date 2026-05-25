@@ -303,6 +303,19 @@ public interface StructuredTable extends Closeable {
   void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
 
   /**
+   * Delete a range of rows from the table with optional query options to modify behavior.
+   *
+   * @param keyRange key range of the rows to delete
+   * @param options optional query options
+   * @throws InvalidFieldException if any of the keys are not part of table schema, or their
+   *     types do not match the schema
+   * @throws IOException if there is an error reading or deleting from the table
+   */
+  default void deleteAll(Range keyRange, QueryOption... options) throws InvalidFieldException, IOException {
+    deleteAll(keyRange);
+  }
+
+  /**
    * Delete a range of rows from the table based on a potentially non indexed column.
    *
    * <p>

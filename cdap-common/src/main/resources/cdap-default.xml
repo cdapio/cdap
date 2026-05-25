@@ -1307,6 +1307,14 @@
   </property>
 
   <property>
+    <name>data.storage.properties.gcp-spanner.partitioned.dml.timeout.hours</name>
+    <value>${app.run.records.ttl.frequency.hours}</value>
+    <description>
+      The timeout duration in hours specifically for Spanner Partitioned DML update and delete operations.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.enabled</name>
     <value>true</value>
     <description>
