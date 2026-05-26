@@ -248,7 +248,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         SparkRuntimeEnv.setProperty(key, sparkDefaultConf.getProperty(key));
       }
 
+      LOG.warn("SANKET : jobFile : " + jobFile.getPath());
+
       if (masterEnv != null) {
+        LOG.warn("SANKET : masterEnv != null : ");
         // Add cconf, hconf, metrics.properties, logback for master environment
         localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
         Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
@@ -278,6 +281,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Localize all the files from user resources
         List<File> files = copyUserResources(context.getLocalizeResources(), tempDir);
         for (File file : files) {
+          LOG.warn("SANKET : local files for loop : " + file.getAbsolutePath());
           localizeResources.add(new LocalizeResource(file));
         }
 
@@ -289,6 +293,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
 
       } else if (isLocal) {
+        LOG.warn("SANKET : islocal");
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
 
@@ -299,6 +304,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         extractPySparkLibrary(tempDir, extraPySparkFiles);
       } else {
+        LOG.warn("SANKET : Master is NUL and not LOCAL : ");
         // Localize all user requested files in distributed mode
         distributedUserResources(context.getLocalizeResources(), localizeResources);
 
@@ -342,6 +348,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         // Localize the spark.jar archive, which contains all CDAP and dependency jars
         File sparkJar = new File(tempDir, CDAP_SPARK_JAR);
+        LOG.warn("SANKET : sparkJar : " + sparkJar.getPath());
         classpath = joiner.join(Iterables.transform(buildDependencyJar(sparkJar),
                                                     name -> Paths.get("$PWD", CDAP_SPARK_JAR, name).toString()));
         localizeResources.add(new LocalizeResource(sparkJar, true));
@@ -356,6 +363,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Localize extra jars and append to the end of the classpath
         List<String> extraJars = new ArrayList<>();
         for (URI jarURI : CConfigurationUtil.getExtraJars(cConfCopy)) {
+          LOG.warn("SANKET : extra jarURI : " + jarURI.getPath());
           extraJars.add(Paths.get("$PWD", LocalizationUtils.getLocalizedName(jarURI)).toString());
           localizeResources.add(new LocalizeResource(jarURI, false));
         }
@@ -613,6 +621,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                                   boolean localMode,
                                                   Iterable<URI> pyFiles) {
 
+    LOG.warn("SANKET : createSubmitConfigs : classpath : " + classpath);
+
     // Setup configs from the default spark conf
     Map<String, String> configs = new HashMap<>(Maps.fromProperties(SparkPackageUtils.getSparkDefaultConf()));
 
@@ -740,7 +750,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Set<String> classpath = new TreeSet<>();
     try (JarOutputStream jarOut = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))) {
       jarOut.setLevel(Deflater.NO_COMPRESSION);
-
+      LOG.warn("SANKET : targetFile : " + targetFile.getPath());
       // Zip all the jar files under the same directory that contains the jar for this class and twill class.
       // Those are the directory created by TWILL that contains all dependency jars for this container
       for (String className : Arrays.asList(getClass().getName(), TwillRunnable.class.getName())) {
@@ -750,6 +760,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           File libDir = new File(ClassLoaders.getClassPathURL(className, classURL).toURI()).getParentFile();
 
           for (File file : DirUtils.listFiles(libDir, "jar")) {
+            LOG.warn("SANKET : buildDependencyJar : " + file.getPath());
             if (classpath.add(file.getName())) {
               jarOut.putNextEntry(new JarEntry(file.getName()));
               Files.copy(file, jarOut);
@@ -946,7 +957,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                         List<LocalizeResource> result) throws URISyntaxException {
     for (Map.Entry<String, LocalizeResource> entry : resources.entrySet()) {
       URI uri = entry.getValue().getURI();
+      LOG.warn("SANKET : distributedUserResources : " + uri.getPath());
       URI actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), entry.getKey());
+      LOG.warn("SANKET : distributedUserResources : actualURI : " + uri.getPath());
       result.add(new LocalizeResource(actualURI, entry.getValue().isArchive()));
     }
   }

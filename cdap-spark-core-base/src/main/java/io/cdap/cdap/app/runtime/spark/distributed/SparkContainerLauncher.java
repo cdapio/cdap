@@ -184,7 +184,8 @@ public final class SparkContainerLauncher {
       // that it passes executor environment via command line properties, which get resolved by yarn launcher,
       // which causes executor logs attempt to write to driver log directory
       if (System.getProperty("spark.executorEnv.CDAP_LOG_DIR") != null) {
-        System.setProperty("spark.executorEnv.CDAP_LOG_DIR", "<LOG_DIR>");
+//        System.setProperty("spark.executorEnv.CDAP_LOG_DIR", "<LOG_DIR>");
+        System.setProperty("spark.executorEnv.CDAP_LOG_DIR", "/tmp");
       }
 
       // Optionally starts Py4j Gateway server in the executor container

@@ -61,6 +61,8 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
+
+    LOG.info("SANKET start");
     Map<String, Collection<String>> arguments = fromPosixArray(args);
 
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
@@ -99,7 +101,13 @@ public class DataprocJobMain {
     String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
     String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator()
         .next();
-    String launchMode = arguments.get(LAUNCH_MODE).iterator().next();
+    //TODO from serverless job manager
+    String launchMode = "CLIENT"; //arguments.get(LAUNCH_MODE).iterator().next();
+
+    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+    if (!(cl instanceof URLClassLoader)) {
+      throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
+    }
 
     // create classpath from resources, application and twill jars
     URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
@@ -115,13 +123,15 @@ public class DataprocJobMain {
     CompletableFuture<?> completion = new CompletableFuture<>();
     try {
       Thread.currentThread().setContextClassLoader(newCl);
-
+      LOG.warn("SANKET 2");
       // load environment class and create instance of it
       String dataprocEnvClassName = DataprocRuntimeEnvironment.class.getName();
+      LOG.warn("SANKET 3");
       Class<?> dataprocEnvClass = newCl.loadClass(dataprocEnvClassName);
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
       try {
+        LOG.warn("SANKET 4");
         // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class,
             String.class);
@@ -185,6 +195,13 @@ public class DataprocJobMain {
       }
       urls.addAll(createClassPathUrls(jarDir));
     }
+
+    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+
+    if (cl instanceof URLClassLoader && cl != ClassLoader.getSystemClassLoader()) {
+      urls.addAll(Arrays.asList(((URLClassLoader) cl).getURLs()));
+    }
+
 
     // Add the system class path to the URL list
     for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
@@ -288,7 +305,8 @@ public class DataprocJobMain {
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
     URLClassLoader classLoader = new URLClassLoader(classpath,
-        DataprocJobMain.class.getClassLoader().getParent());
+//        DataprocJobMain.class.getClassLoader().getParent());
+        ClassLoader.getSystemClassLoader().getParent());
     if (containerClassLoaderName == null) {
       return classLoader;
     }
