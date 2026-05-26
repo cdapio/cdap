@@ -1307,6 +1307,14 @@
   </property>
 
   <property>
+    <name>data.storage.properties.gcp-spanner.tx.runner.optimistic.lock.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable optimistic locking for Spanner transactions.
+    </description>
+  </property>
+
+  <property>
     <name>data.storage.properties.gcp-spanner.partitioned.dml.timeout.hours</name>
     <value>${app.run.records.ttl.frequency.hours}</value>
     <description>
