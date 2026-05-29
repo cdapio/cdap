@@ -80,6 +80,8 @@ public class KubeDiscoveryService implements DiscoveryService,
 
   private final String namespace;
   private final String namePrefix;
+  @Nullable
+  private final String podName;
   private final Map<String, DefaultServiceDiscovered> serviceDiscovereds;
   private final ApiClientFactory apiClientFactory;
   private volatile CoreV1Api coreApi;
@@ -107,7 +109,7 @@ public class KubeDiscoveryService implements DiscoveryService,
       Map<String, String> podLabels,
       List<V1OwnerReference> ownerReferences,
       ApiClientFactory apiClientFactory) {
-    this(namespace, namePrefix, podLabels, ownerReferences, apiClientFactory,
+    this(namespace, namePrefix, null, podLabels, ownerReferences, apiClientFactory,
         new ArrayList<>(), new HashMap<>());
   }
 
@@ -115,8 +117,25 @@ public class KubeDiscoveryService implements DiscoveryService,
       Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
       ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
       Map<String, String> loadBalancerServiceAnnotations) {
+    this(namespace, namePrefix, null, podLabels, ownerReferences, apiClientFactory,
+         loadBalancerServiceList, loadBalancerServiceAnnotations);
+  }
+
+  public KubeDiscoveryService(String namespace, String namePrefix, @Nullable String podName,
+      Map<String, String> podLabels,
+      List<V1OwnerReference> ownerReferences,
+      ApiClientFactory apiClientFactory) {
+    this(namespace, namePrefix, podName, podLabels, ownerReferences, apiClientFactory,
+        new ArrayList<>(), new HashMap<>());
+  }
+
+  public KubeDiscoveryService(String namespace, String namePrefix, @Nullable String podName,
+      Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
+      ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
+      Map<String, String> loadBalancerServiceAnnotations) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
+    this.podName = podName;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
     this.apiClientFactory = apiClientFactory;
     this.podLabels = podLabels;
@@ -127,6 +146,11 @@ public class KubeDiscoveryService implements DiscoveryService,
 
   @Override
   public Cancellable register(Discoverable discoverable) {
+    if (isPodTerminating()) {
+      LOG.error("Priyanshuuuu- Pod {} is terminating. Skipping service registration for {}.",
+               podName, discoverable.getName());
+      return () -> {};
+    }
     // Create or update the k8s Service
     // The service is created with label selector based on the current pod labels
     String serviceName =
@@ -352,6 +376,10 @@ public class KubeDiscoveryService implements DiscoveryService,
     if (port == null || port != discoverable.getSocketAddress().getPort()) {
       return true;
     }
+    List<V1OwnerReference> currentOwners = currentService.getMetadata().getOwnerReferences();
+    if (!Objects.equals(currentOwners, ownerReferences)) {
+      return true;
+    }
     // If service type is Cluster IP no need to update. We don't check if the
     // service's Cluster IP has changed because the discoverable stores only the
     // service's hostname. We rely on Kube DNS to resolve the hostname. Kube DNS
@@ -563,6 +591,19 @@ public class KubeDiscoveryService implements DiscoveryService,
         payload);
   }
 
+
+  private boolean isPodTerminating() {
+    if (podName == null) {
+      return false;
+    }
+    try {
+      io.kubernetes.client.openapi.models.V1Pod pod = getCoreApi().readNamespacedPod(podName, namespace, null);
+      return pod.getMetadata() != null && pod.getMetadata().getDeletionTimestamp() != null;
+    } catch (Exception e) {
+      LOG.warn("Priyanshuuu - Failed to check pod termination status for {}. Assuming not terminating.", podName, e);
+      return false;
+    }
+  }
 
   /**
    * A {@link Thread} that keep watching for changes in service in Kubernetes.

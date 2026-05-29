@@ -347,6 +347,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
           conf.get(LOAD_BALANCER_SERVICES).split(","));
     }
     discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
+        podInfo.getName(),
         podLabels, podInfo.getOwnerReferences(), apiClientFactory,
         loadBalancerServiceList,
         parseLoadBalancerAnnotations(conf.get(LOAD_BALANCER_SERVICE_ANNOTATIONS)));
