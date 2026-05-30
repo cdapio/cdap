@@ -426,8 +426,13 @@ public class RouterPathLookupTest {
 
   @Test
   public void testProgramLifecycleInternalAndAppLifecycleInternalPaths() {
+    // The internal (v3Internal) API is for service-to-service calls over internal
+    // discovery and must not be routed from the external router.
     assertRouting("v3Internal/namespaces//apps//versions//workflows/DataPipelineWorkflow/runs/",
-        RouterPathLookup.APP_FABRIC_HTTP);
+        RouterPathLookup.DONT_ROUTE);
+    assertRouting("v3Internal/namespaces/default/apps/app/states/key", RouterPathLookup.DONT_ROUTE);
+    assertRouting("v3Internal/namespaces/default/apps/app/preferences", RouterPathLookup.DONT_ROUTE);
+    assertRouting("v3Internal/location/some/abs/path", RouterPathLookup.DONT_ROUTE);
   }
 
   @Test

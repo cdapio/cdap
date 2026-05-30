@@ -76,6 +76,11 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
+      if (uriParts[0].equals(Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN)) {
+        // The internal API is for service-to-service calls over internal service
+        // discovery and must never be reachable through the external router.
+        return DONT_ROUTE;
+      }
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
       }
