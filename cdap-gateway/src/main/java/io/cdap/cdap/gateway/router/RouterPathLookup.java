@@ -76,6 +76,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
+      if (uriParts.length == 0) {
+        return APP_FABRIC_HTTP;
+      }
       if (uriParts[0].equals(Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN)) {
         // The internal API is for service-to-service calls over internal service
         // discovery and must never be reachable through the external router.
