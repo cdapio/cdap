@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.dataset2;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.MoreObjects;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.lang.ClassLoaders;
