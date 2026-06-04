@@ -17,7 +17,6 @@
 
 package io.cdap.cdap.common.utils;
 
-import com.google.common.base.Throwables;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -79,7 +78,7 @@ public class BatchingConsumer<T> implements Consumer<T>, AutoCloseable {
       try {
         ((AutoCloseable) child).close();
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
   }

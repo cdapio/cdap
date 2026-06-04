@@ -15,8 +15,6 @@
  */
 package io.cdap.cdap.common.twill;
 
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
@@ -45,7 +43,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.EventHandlerContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -124,7 +121,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
       if (clusterMode == ClusterMode.ON_PREMISE) {
         zkClientService = injector.getInstance(ZKClientService.class);
-        zkClientService.startAndWait();
+        zkClientService.startAsync().awaitRunning();
       }
 
       LoggingContextAccessor.setLoggingContext(
@@ -141,7 +138,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           new ProgramStateWriterWithHeartBeat(programRunId, programStateWriter, messagingService,
               cConf);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -210,9 +207,15 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
   @Override
   public void destroy() {
-    Closeables.closeQuietly(logAppenderInitializer);
+    try {
+
+      logAppenderInitializer.close();
+
+    } catch (Exception ignored) {
+
+    }
     if (zkClientService != null) {
-      zkClientService.stop();
+      zkClientService.stopAsync();
     }
   }
 

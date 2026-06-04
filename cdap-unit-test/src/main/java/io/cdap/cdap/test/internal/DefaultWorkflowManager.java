@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.test.internal;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.common.NotFoundException;
@@ -101,7 +100,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
 
@@ -113,7 +112,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
 
@@ -126,7 +125,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
     };

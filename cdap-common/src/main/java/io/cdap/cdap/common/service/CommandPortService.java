@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.service;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.LineReader;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -25,7 +24,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -44,7 +42,7 @@ import org.slf4j.LoggerFactory;
  *   CommandPortService service = CommandPortService.builder("myservice")
  *                                                  .addCommandHandler("ruok", "Are you okay?", ruokHandler)
  *                                                  .build();
- *   service.startAndWait();
+ *   service.startAsync().awaitRunning();
  * </pre>
  *
  * To stop the service, invoke {@link #stop()} or {@link #stopAndWait()}.
@@ -109,7 +107,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
         serverSocket.close();
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

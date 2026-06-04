@@ -17,10 +17,8 @@
 package io.cdap.cdap.data.runtime.main;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -135,7 +133,6 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.internal.zookeeper.ReentrantDistributedLock;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -234,7 +231,7 @@ public class MasterServiceMain extends DaemonMain {
     this.leaderElection = new LeaderElection(zkClient, electionPath, electionHandler);
 
     // leader election will normally stay running. Will only stop if there was some issue starting up.
-    this.leaderElection.addListener(new ServiceListenerAdapter() {
+    this.leaderElection.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         if (!stopped) {
@@ -250,7 +247,7 @@ public class MasterServiceMain extends DaemonMain {
           System.exit(1);
         }
       }
-    }, MoreExecutors.sameThreadExecutor());
+    }, MoreExecutors.directExecutor());
   }
 
   @Override
@@ -273,8 +270,8 @@ public class MasterServiceMain extends DaemonMain {
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
         KeeperException.NodeExistsException.class, null));
-    electionInfoService.startAndWait();
-    leaderElection.startAndWait();
+    electionInfoService.startAsync().awaitRunning();
+    leaderElection.startAsync().awaitRunning();
   }
 
   @Override
@@ -333,7 +330,13 @@ public class MasterServiceMain extends DaemonMain {
     }
     stopQuietly(electionInfoService);
     stopQuietly(zkClient);
-    Closeables.closeQuietly(logAppenderInitializer);
+    try {
+
+      logAppenderInitializer.close();
+
+    } catch (Exception ignored) {
+
+    }
   }
 
   @Override
@@ -371,7 +374,7 @@ public class MasterServiceMain extends DaemonMain {
       // just log the exception
       LOG.error("Exception while trying to create directory at {}", path, e);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -400,7 +403,7 @@ public class MasterServiceMain extends DaemonMain {
   private static <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
     T service = injector.getInstance(cls);
     LOG.debug("Starting service in master {}", service);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     LOG.info("Service {} started in master", service);
     return service;
   }
@@ -412,7 +415,7 @@ public class MasterServiceMain extends DaemonMain {
     try {
       if (service != null) {
         LOG.debug("Stopping service in master: {}", service);
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
         LOG.info("Service {} stopped in master", service);
       }
     } catch (Exception e) {
@@ -462,7 +465,7 @@ public class MasterServiceMain extends DaemonMain {
       SecurityUtil.loginForMasterService(cConf);
     } catch (Exception e) {
       LOG.error("Failed to login as CDAP user", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -672,7 +675,7 @@ public class MasterServiceMain extends DaemonMain {
         }
         LOG.info("Starting service in master: {}", service);
         try {
-          service.startAndWait();
+          service.startAsync().awaitRunning();
         } catch (Throwable t) {
           // shut down the executor and stop the twill app,
           // then throw an exception to cause the leader election service to stop
@@ -714,9 +717,27 @@ public class MasterServiceMain extends DaemonMain {
         stopQuietly(service);
       }
       services.clear();
-      Closeables.closeQuietly(metadataStorage);
-      Closeables.closeQuietly(accessControllerInstantiator);
-      Closeables.closeQuietly(logAppenderInitializer);
+      try {
+
+        metadataStorage.close();
+
+      } catch (Exception ignored) {
+
+      }
+      try {
+
+        accessControllerInstantiator.close();
+
+      } catch (Exception ignored) {
+
+      }
+      try {
+
+        logAppenderInitializer.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
 
     /**
@@ -990,7 +1011,7 @@ public class MasterServiceMain extends DaemonMain {
           throw e;
         }
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

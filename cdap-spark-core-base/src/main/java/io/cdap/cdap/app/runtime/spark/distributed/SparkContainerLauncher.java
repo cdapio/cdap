@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
@@ -206,7 +205,13 @@ public final class SparkContainerLauncher {
       throw t;
     } finally {
       if (sparkRuntimeContext instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) sparkRuntimeContext);
+        try {
+
+          ((Closeable) sparkRuntimeContext).close();
+
+        } catch (Exception ignored) {
+
+        }
       }
     }
   }

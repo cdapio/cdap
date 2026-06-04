@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.http;
 
-import com.google.common.io.Closeables;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -65,6 +64,12 @@ public class LocationBodyProducer extends BodyProducer {
     if (throwable != null) {
       LOG.warn("Error in sending location {}", location, throwable);
     }
-    Closeables.closeQuietly(inputStream);
+    try {
+
+      inputStream.close();
+
+    } catch (Exception ignored) {
+
+    }
   }
 }

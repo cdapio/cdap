@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
 import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -27,6 +26,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.zookeeper.ZKExtOperations;
@@ -66,7 +66,7 @@ public final class ResourceCoordinatorClient extends AbstractService {
           } catch (Throwable t) {
             LOG.error("Failed to decode resource requirement: {}",
                 Bytes.toStringBinary(input.getData()), t);
-            throw Throwables.propagate(t);
+            throw new RuntimeException(t);
           }
         }
       };
@@ -132,8 +132,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
     return Futures.transform(
         ZKOperations.ignoreError(zkClient.getData(zkPath), KeeperException.NoNodeException.class,
             null),
-        NODE_DATA_TO_REQUIREMENT
-    );
+        NODE_DATA_TO_REQUIREMENT,
+        MoreExecutors.directExecutor());
   }
 
   /**
@@ -150,8 +150,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
     return Futures.transform(
         ZKOperations.ignoreError(zkClient.delete(zkPath), KeeperException.NoNodeException.class,
             resourceName),
-        Functions.constant(resourceName)
-    );
+        Functions.constant(resourceName),
+        MoreExecutors.directExecutor());
   }
 
   /**

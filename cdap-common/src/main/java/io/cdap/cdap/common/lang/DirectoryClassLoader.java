@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.lang;
 
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -135,7 +134,7 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
     } catch (MalformedURLException e) {
       // Should never happen
       LOG.error("Error in adding jar URLs to classPathUrls", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -22,7 +22,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -95,7 +94,13 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
     public void onRemoval(RemovalNotification<CacheKey, ClassLoader> notification) {
       ClassLoader cl = notification.getValue();
       if (cl instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) cl);
+        try {
+
+          ((Closeable) cl).close();
+
+        } catch (Exception ignored) {
+
+        }
       }
     }
   }

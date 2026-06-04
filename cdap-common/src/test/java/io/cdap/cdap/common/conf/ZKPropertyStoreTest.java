@@ -7,7 +7,7 @@
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicable law-or-agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.common.conf;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.zookeeper.store.ZKPropertyStore;
 import java.io.IOException;
@@ -37,17 +38,17 @@ public class ZKPropertyStoreTest extends PropertyStoreTestBase {
   private static ZKClientService zkClient;
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
 
     zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
   }
 
   @AfterClass
-  public static void finish() {
-    zkClient.stopAndWait();
+  public static void finish() throws Exception {
+    zkClient.stopAsync().awaitTerminated();
     zkServer.stopAndWait();
   }
 

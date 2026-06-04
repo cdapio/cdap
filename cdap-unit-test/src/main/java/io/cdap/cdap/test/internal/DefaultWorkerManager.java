@@ -17,7 +17,6 @@
 package io.cdap.cdap.test.internal;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.AppFabricClient;
 import io.cdap.cdap.test.AbstractProgramManager;
@@ -45,7 +44,7 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
           programId.getProgram(),
           instances);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -56,7 +55,7 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
           programId.getApplication(),
           programId.getProgram()).getInstances();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

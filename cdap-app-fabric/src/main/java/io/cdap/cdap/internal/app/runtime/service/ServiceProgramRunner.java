@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.service;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -30,7 +29,6 @@ import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.AeadCipher;
@@ -195,10 +193,16 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       ProgramController controller = new ServiceProgramControllerAdapter(component,
           program.getId().run(runId));
-      component.start();
+      component.startAsync();
       return controller;
     } catch (Throwable t) {
-      Closeables.closeQuietly(pluginInstantiator);
+      try {
+
+        pluginInstantiator.close();
+
+      } catch (Exception ignored) {
+
+      }
       throw t;
     }
   }
