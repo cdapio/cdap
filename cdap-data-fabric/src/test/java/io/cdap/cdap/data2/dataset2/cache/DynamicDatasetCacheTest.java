@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2.cache;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -295,7 +294,7 @@ public abstract class DynamicDatasetCacheTest {
         Assert.assertSame(ds, ds2);
         ref.set(ds);
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
       try {
         // get the same dataset again. It should be the same object
@@ -303,7 +302,7 @@ public abstract class DynamicDatasetCacheTest {
         Assert.assertSame(ref.get(), ds);
         cache.discardDataset(ds);
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     });
 
@@ -315,7 +314,7 @@ public abstract class DynamicDatasetCacheTest {
         // validate that we now have a different instance because the old one was discarded
         Assert.assertNotSame(ref.get(), ds);
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
       // validate that only the new instance of the dataset remained active
       Assert.assertEquals(1,
