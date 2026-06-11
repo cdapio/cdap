@@ -16,15 +16,20 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.collect.ImmutableMap;
+import com.google.longrunning.Operation;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
+import io.cdap.cdap.runtime.spi.common.DataprocMetric;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import java.util.Collections;
@@ -493,5 +498,199 @@ public class DataprocProvisionerTest {
     context.addProperty("labels", "email|user@cdapio");
     Map<String, String> labels = provisioner.getCommonDataprocLabels(context);
     Assert.assertNull(labels.get("email"));
+  }
+
+  @Test
+  public void testGetClusterStatusEmitLroMetricOnCreate() throws Exception {
+    MockProvisionerContext localContext = new MockProvisionerContext();
+    localContext.addProperty("accountKey", "testKey");
+    localContext.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    localContext.addProperty("region", "testRegion");
+    localContext.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    localContext.setProgramRunInfo(new ProgramRunInfo.Builder()
+                                     .setNamespace("ns").setApplication("app").setVersion("1.0")
+                                     .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Cluster cdapClusterInput = new Cluster("mycluster", ClusterStatus.CREATING,
+                                           Collections.emptyList(), Collections.emptyMap());
+
+    Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
+      .thenReturn(ClusterStatus.RUNNING);
+
+    Operation operation = Operation.newBuilder()
+      .setName("op-create")
+      .setDone(true)
+      .build();
+
+    Mockito.when(dataprocClient.getLatestOperation(Mockito.anyString(), Mockito.anyString()))
+      .thenReturn(Optional.of(operation));
+
+    ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
+    Assert.assertEquals(ClusterStatus.RUNNING, currentStatus);
+
+    Integer count = localContext.getMetricCounts().get("provisioner.operation.response.count");
+    Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
+    Assert.assertEquals(1, count.intValue());
+  }
+
+  @Test
+  public void testGetClusterStatusEmitLroMetricOnDelete() throws Exception {
+    MockProvisionerContext localContext = new MockProvisionerContext();
+    localContext.addProperty("accountKey", "testKey");
+    localContext.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    localContext.addProperty("region", "testRegion");
+    localContext.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.DEPROVISIONING));
+    localContext.setProgramRunInfo(new ProgramRunInfo.Builder()
+                                     .setNamespace("ns").setApplication("app").setVersion("1.0")
+                                     .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Cluster cdapClusterInput = new Cluster("mycluster", ClusterStatus.DELETING,
+                                           Collections.emptyList(), Collections.emptyMap());
+
+    Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
+      .thenReturn(ClusterStatus.NOT_EXISTS);
+
+    Operation operation = Operation.newBuilder()
+      .setName("op-delete")
+      .setDone(true)
+      .build();
+    Mockito.when(dataprocClient.getLatestOperation(Mockito.anyString(), Mockito.anyString()))
+      .thenReturn(Optional.of(operation));
+
+    ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
+    Assert.assertEquals(ClusterStatus.NOT_EXISTS, currentStatus);
+
+    Integer count = localContext.getMetricCounts().get("provisioner.operation.response.count");
+    Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
+    Assert.assertEquals(1, count.intValue());
+  }
+
+  @Test
+  public void testGetClusterStatusEmitLroMetricOnError() throws Exception {
+    MockProvisionerContext localContext = new MockProvisionerContext();
+    localContext.addProperty("accountKey", "testKey");
+    localContext.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    localContext.addProperty("region", "testRegion");
+    localContext.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    localContext.setProgramRunInfo(new ProgramRunInfo.Builder()
+                                     .setNamespace("ns").setApplication("app").setVersion("1.0")
+                                     .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Cluster cdapClusterInput = new Cluster("mycluster", ClusterStatus.CREATING,
+                                           Collections.emptyList(), Collections.emptyMap());
+
+    Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
+      .thenReturn(ClusterStatus.FAILED);
+
+    com.google.rpc.Status statusError = com.google.rpc.Status.newBuilder()
+      .setCode(3)
+      .setMessage("Invalid resource configuration")
+      .build();
+    Operation operation = Operation.newBuilder()
+      .setName("op-create")
+      .setDone(true)
+      .setError(statusError)
+      .build();
+    Mockito.when(dataprocClient.getLatestOperation(Mockito.anyString(), Mockito.anyString()))
+      .thenReturn(Optional.of(operation));
+
+    ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
+    Assert.assertEquals(ClusterStatus.FAILED, currentStatus);
+
+    Integer count = localContext.getMetricCounts().get("provisioner.operation.response.count");
+    Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
+    Assert.assertEquals(1, count.intValue());
+  }
+
+  @Test
+  public void testGetClusterStatusEmitLroMetricOperationNotDone() throws Exception {
+    MockProvisionerContext localContext = new MockProvisionerContext();
+    localContext.addProperty("accountKey", "testKey");
+    localContext.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    localContext.addProperty("region", "testRegion");
+    localContext.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    localContext.setProgramRunInfo(new ProgramRunInfo.Builder()
+                                     .setNamespace("ns").setApplication("app").setVersion("1.0")
+                                     .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Cluster cdapClusterInput = new Cluster("mycluster", ClusterStatus.CREATING,
+                                           Collections.emptyList(), Collections.emptyMap());
+
+    Mockito.when(dataprocClient.getClusterStatus("mycluster"))
+      .thenReturn(ClusterStatus.RUNNING);
+
+    Operation operation = Operation.newBuilder()
+      .setName("op-create")
+      .setDone(false)
+      .build();
+    Mockito.when(dataprocClient.getLatestOperation("mycluster", "CREATE"))
+      .thenReturn(Optional.of(operation));
+
+    ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
+    Assert.assertEquals(ClusterStatus.RUNNING, currentStatus);
+
+    Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
+    Assert.assertNull(count);
+  }
+
+  @Test
+  public void testGetClusterStatusEmitLroMetricClientThrowsException() throws Exception {
+    MockProvisionerContext localContext = new MockProvisionerContext();
+    localContext.addProperty("accountKey", "testKey");
+    localContext.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    localContext.addProperty("region", "testRegion");
+    localContext.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    localContext.setProgramRunInfo(new ProgramRunInfo.Builder()
+                                     .setNamespace("ns").setApplication("app").setVersion("1.0")
+                                     .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Cluster cdapClusterInput = new Cluster("mycluster", ClusterStatus.CREATING,
+                                           Collections.emptyList(), Collections.emptyMap());
+
+    Mockito.when(dataprocClient.getClusterStatus("mycluster"))
+      .thenReturn(ClusterStatus.RUNNING);
+
+    Mockito.when(dataprocClient.getLatestOperation("mycluster", "CREATE"))
+      .thenThrow(new RuntimeException("API connection failure"));
+
+    ClusterStatus status = provisioner.getClusterStatus(localContext, cdapClusterInput);
+    Assert.assertEquals(ClusterStatus.RUNNING, status);
+
+    Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
+    Assert.assertNull(count);
+  }
+
+  @Test
+  public void testDataprocUtilsEmitMetricWithExceptionBranches(){
+    MockProvisionerContext localContext = new MockProvisionerContext();
+
+    StatusCode statusCode = Mockito.mock(StatusCode.class);
+    StatusCode.Code realCode = StatusCode.Code.ALREADY_EXISTS;
+    Mockito.when(statusCode.getCode()).thenReturn(realCode);
+
+    ApiException apiException = Mockito.mock(ApiException.class);
+    Mockito.when(apiException.getStatusCode()).thenReturn(statusCode);
+
+    DataprocMetric metricWithApiExp = DataprocMetric.builder("test.api.metric")
+      .setRegion("us-test1")
+      .setException(new Exception(apiException))
+      .build();
+
+    DataprocUtils.emitMetric(localContext, metricWithApiExp);
+
+    DataprocMetric metricWithGenericExp = DataprocMetric.builder("test.generic.metric")
+      .setRegion("us-test1")
+      .setException(new RuntimeException("Generic connection failure"))
+      .build();
+
+    DataprocUtils.emitMetric(localContext, metricWithGenericExp);
+
+    Integer apiCount = localContext.getMetricCounts().get("test.api.metric");
+    Integer genericCount = localContext.getMetricCounts().get("test.generic.metric");
+
+    Assert.assertNotNull(apiCount);
+    Assert.assertNotNull(genericCount);
+    Assert.assertEquals(1, apiCount.intValue());
+    Assert.assertEquals(1, genericCount.intValue());
   }
 }
