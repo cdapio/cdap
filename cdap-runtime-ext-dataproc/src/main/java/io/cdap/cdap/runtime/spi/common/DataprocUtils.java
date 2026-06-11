@@ -375,19 +375,7 @@ public final class DataprocUtils {
    * Emit a dataproc metric.
    **/
   public static void emitMetric(ProvisionerContext context, DataprocMetric dataprocMetric) {
-    StatusCode.Code statusCode;
-    Exception e = dataprocMetric.getException();
-    if (e == null) {
-      statusCode = StatusCode.Code.OK;
-    } else {
-      Throwable cause = e.getCause();
-      if (cause instanceof ApiException) {
-        ApiException apiException = (ApiException) cause;
-        statusCode = apiException.getStatusCode().getCode();
-      } else {
-        statusCode = StatusCode.Code.INTERNAL;
-      }
-    }
+    StatusCode.Code statusCode = getCode(dataprocMetric);
     ImmutableMap.Builder<String, String> tags = ImmutableMap.<String, String>builder()
         .put("reg", dataprocMetric.getRegion())
         .put("sc", statusCode.toString());
@@ -397,8 +385,28 @@ public final class DataprocUtils {
     if (!Strings.isNullOrEmpty(dataprocMetric.getImageVersion())) {
       tags.put("imgVer", dataprocMetric.getImageVersion());
     }
+    if (!Strings.isNullOrEmpty(dataprocMetric.getMethod())) {
+      tags.put("method", dataprocMetric.getMethod());
+    }
     ProvisionerMetrics metrics = context.getMetrics(tags.build());
     metrics.count(dataprocMetric.getMetricName(), 1);
+  }
+
+  private static StatusCode.Code getCode(DataprocMetric dataprocMetric) {
+    StatusCode.Code statusCode = StatusCode.Code.OK;
+    Exception e = dataprocMetric.getException();
+    if (dataprocMetric.getStatusCode() != null) {
+      statusCode = dataprocMetric.getStatusCode();
+    } else if (e != null) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ApiException) {
+        ApiException apiException = (ApiException) cause;
+        statusCode = apiException.getStatusCode().getCode();
+      } else {
+        statusCode = StatusCode.Code.INTERNAL;
+      }
+    }
+    return statusCode;
   }
 
   /**
