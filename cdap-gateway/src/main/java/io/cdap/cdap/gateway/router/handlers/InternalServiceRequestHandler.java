@@ -48,21 +48,35 @@ public class InternalServiceRequestHandler extends ChannelDuplexHandler {
 
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    // One receiving messages from the internal service, forward it to the httpRequestChannel
-    httpRequestChannel.write(msg);
-
     if (msg instanceof HttpResponse) {
-      keepAlive = HttpUtil.isKeepAlive((HttpResponse) msg);
+      HttpResponse response = (HttpResponse) msg;
+      keepAlive = HttpUtil.isKeepAlive(response);
+      LOG.info("Router: Received response headers from service: status={}", response.status());
     }
+
+    // One receiving messages from the internal service, forward it to the httpRequestChannel
+    io.netty.channel.ChannelFuture writeFuture = httpRequestChannel.write(msg);
 
     // A response is completed by receiving the last http content
     if (msg instanceof LastHttpContent) {
       requestInProgress = false;
+      LOG.info("Router: Received response completion (LastHttpContent) from service. Writing to client socket...");
+      writeFuture.addListener(new io.netty.channel.ChannelFutureListener() {
+        @Override
+        public void operationComplete(io.netty.channel.ChannelFuture future) throws Exception {
+          if (future.isSuccess()) {
+            LOG.info("Router: Response bytes successfully written to client TCP socket.");
+          } else {
+            LOG.error("Router: Failed to write response bytes to client TCP socket! Error: {}", future.cause().getMessage());
+          }
+        }
+      });
     }
   }
 
   @Override
   public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+    LOG.info("Router: Flushing response packets back to client.");
     httpRequestChannel.flush();
   }
 
@@ -71,8 +85,10 @@ public class InternalServiceRequestHandler extends ChannelDuplexHandler {
       throws Exception {
     // A request starts with a HttpRequest
     if (msg instanceof HttpRequest) {
+      HttpRequest request = (HttpRequest) msg;
       requestInProgress = true;
-      keepAlive = HttpUtil.isKeepAlive((HttpRequest) msg);
+      keepAlive = HttpUtil.isKeepAlive(request);
+      LOG.info("Router: Forwarding request to service endpoint: {} {}", request.method(), request.uri());
     }
     ctx.write(msg, promise);
   }
