@@ -237,7 +237,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements Rol
     principal = getUserPrinciple(principal);
 
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
-    LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
+    LOG.info("DefaultAccessEnforcer: delegating visibility check of {} entities to the authorization extension for principal: {}", difference.size(), principal.getName());
     Set<? extends EntityId> moreVisibleEntities;
     long startTime = System.nanoTime();
     try {
@@ -252,12 +252,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements Rol
     } finally {
       long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       metricsContext.gauge(Constants.Metrics.Authorization.EXTENSION_VISIBILITY_MILLIS, timeTaken);
-      String logLine = "Checked visibility of {} for principal {}. Time spent in visibility check was {} ms.";
-      if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine, difference, principal, timeTaken);
-      } else {
-        LOG.trace(logLine, difference, principal, timeTaken);
-      }
+      LOG.info("DefaultAccessEnforcer: completed visibility check of {} entities for principal: {}. Time spent: {}ms", difference.size(), principal.getName(), timeTaken);
     }
     visibleEntities.addAll(moreVisibleEntities);
     LOG.trace("Getting {} as visible entities", visibleEntities);

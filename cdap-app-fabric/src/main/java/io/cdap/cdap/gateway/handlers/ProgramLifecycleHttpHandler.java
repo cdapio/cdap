@@ -923,6 +923,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getLatestRuns(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     List<BatchProgram> programs = ProgramHandlerUtil.validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+    LOG.info("POST /runs endpoint hit in namespace {}. Batch request contains {} programs.", namespaceId, programs.size());
     List<ProgramReference> programRefs =
         programs.stream().map(
                 p -> new ProgramReference(namespaceId, p.getAppId(), p.getProgramType(),
@@ -953,6 +954,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                 exception.getMessage(), Collections.emptyList()));
       }
     }
+    LOG.info("POST /runs completed: successfully returned runs history response for {} programs in namespace {}.", response.size(), namespaceId);
     responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(response));
   }
 

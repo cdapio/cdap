@@ -441,6 +441,8 @@ public class ProgramLifecycleService {
       long start, long end, int limit) throws Exception {
     List<ProgramHistory> result = new ArrayList<>();
 
+    LOG.info("getRunRecords batch service called: processing runs history query for {} programs total...", programs.size());
+
     // do this in batches to avoid transaction timeouts.
     List<ProgramReference> batch = new ArrayList<>(20);
 
@@ -455,13 +457,19 @@ public class ProgramLifecycleService {
     if (!batch.isEmpty()) {
       addProgramHistory(result, batch, programRunStatus, start, end, limit);
     }
+    LOG.info("getRunRecords completed: successfully retrieved runs history for all {} requested programs.", programs.size());
     return result;
   }
 
   private void addProgramHistory(List<ProgramHistory> histories, List<ProgramReference> programs,
       ProgramRunStatus programRunStatus, long start, long end, int limit) throws Exception {
+    String programNames = programs.stream().map(ProgramReference::getApplication).collect(Collectors.toList()).toString();
+    LOG.info("addProgramHistory: Executing accessEnforcer.isVisible checks for batch of {} programs: {}...", programs.size(), programNames);
+    long startTime = System.currentTimeMillis();
     Set<? extends EntityId> visibleEntities = accessEnforcer.isVisible(new HashSet<>(programs),
         authenticationContext.getPrincipal());
+    long duration = System.currentTimeMillis() - startTime;
+    LOG.info("addProgramHistory: isVisible checks completed in {}ms. Visible entities count: {}/{}", duration, visibleEntities.size(), programs.size());
 
     for (ProgramHistory programHistory : store.getRuns(programs, programRunStatus, start, end,
         limit)) {
