@@ -98,7 +98,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
 
       if (msg instanceof HttpRequest) {
         HttpRequest request = (HttpRequest) msg;
-        LOG.info("Router: Received incoming request from client {} for uri: {} {}", httpRequestChannel.remoteAddress(), request.method(), request.uri());
+        String clientChId = httpRequestChannel.id().asShortText();
+        LOG.info("Router [ClientCh:{}]: Received incoming request from client {} for uri: {} {}", clientChId, httpRequestChannel.remoteAddress(), request.method(), request.uri());
 
         // For "/" request, response with 200. This is for load balancer health check
         if ("/".equals(request.uri())) {
@@ -123,11 +124,12 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         writeCompletedListener = new ChannelFutureListener() {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
+            String clientChId = httpRequestChannel.id().asShortText();
             if (future.isSuccess()) {
-              LOG.info("Router: Successfully forwarded request bytes to backend service (AppFabric) channel.");
+              LOG.info("Router [ClientCh:{}]: Successfully forwarded request bytes to backend service (AppFabric) channel.", clientChId);
               httpRequestChannel.config().setAutoRead(true);
             } else {
-              LOG.error("Router: Failed to forward request bytes to backend service! Error: {}", future.cause() == null ? "unknown" : future.cause().getMessage());
+              LOG.error("Router [ClientCh:{}]: Failed to forward request bytes to backend service! Error: {}", clientChId, future.cause() == null ? "unknown" : future.cause().getMessage());
               getFailureResponseListener(httpRequestChannel).operationComplete(future);
             }
           }

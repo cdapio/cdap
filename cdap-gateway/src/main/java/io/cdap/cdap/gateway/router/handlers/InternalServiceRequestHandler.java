@@ -48,10 +48,11 @@ public class InternalServiceRequestHandler extends ChannelDuplexHandler {
 
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    String clientChId = httpRequestChannel.id().asShortText();
     if (msg instanceof HttpResponse) {
       HttpResponse response = (HttpResponse) msg;
       keepAlive = HttpUtil.isKeepAlive(response);
-      LOG.info("Router: Received response headers from service: status={}", response.status());
+      LOG.info("Router [ClientCh:{}]: Received response headers from service: status={}", clientChId, response.status());
     }
 
     // One receiving messages from the internal service, forward it to the httpRequestChannel
@@ -60,14 +61,14 @@ public class InternalServiceRequestHandler extends ChannelDuplexHandler {
     // A response is completed by receiving the last http content
     if (msg instanceof LastHttpContent) {
       requestInProgress = false;
-      LOG.info("Router: Received response completion (LastHttpContent) from service. Writing to client socket...");
+      LOG.info("Router [ClientCh:{}]: Received response completion (LastHttpContent) from service. Writing to client socket...", clientChId);
       writeFuture.addListener(new io.netty.channel.ChannelFutureListener() {
         @Override
         public void operationComplete(io.netty.channel.ChannelFuture future) throws Exception {
           if (future.isSuccess()) {
-            LOG.info("Router: Response bytes successfully written to client TCP socket.");
+            LOG.info("Router [ClientCh:{}]: Response bytes successfully written to client TCP socket.", clientChId);
           } else {
-            LOG.error("Router: Failed to write response bytes to client TCP socket! Error: {}", future.cause().getMessage());
+            LOG.error("Router [ClientCh:{}]: Failed to write response bytes to client TCP socket! Error: {}", clientChId, future.cause().getMessage());
           }
         }
       });
@@ -76,7 +77,7 @@ public class InternalServiceRequestHandler extends ChannelDuplexHandler {
 
   @Override
   public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-    LOG.info("Router: Flushing response packets back to client.");
+    LOG.info("Router [ClientCh:{}]: Flushing response packets back to client.", httpRequestChannel.id().asShortText());
     httpRequestChannel.flush();
   }
 
@@ -88,7 +89,7 @@ public class InternalServiceRequestHandler extends ChannelDuplexHandler {
       HttpRequest request = (HttpRequest) msg;
       requestInProgress = true;
       keepAlive = HttpUtil.isKeepAlive(request);
-      LOG.info("Router: Forwarding request to service endpoint: {} {}", request.method(), request.uri());
+      LOG.info("Router [ClientCh:{}]: Forwarding request to service endpoint: {} {}", httpRequestChannel.id().asShortText(), request.method(), request.uri());
     }
     ctx.write(msg, promise);
   }
