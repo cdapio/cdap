@@ -317,9 +317,9 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     private final Queue<OutboundMessage> pendingMessages;
     private final Bootstrap clientBootstrap;
     private volatile SslContext sslContext;
-    private Channel internalServiceChannel;
-    private boolean closed;
-    private boolean connecting;
+    private volatile Channel internalServiceChannel;
+    private volatile boolean closed;
+    private volatile boolean connecting;
 
     private MessageSender(final CConfiguration cConf, final Channel httpRequestChannel,
         final Discoverable discoverable) {
@@ -330,6 +330,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       final ChannelFutureListener onCloseResetListener = new ChannelFutureListener() {
         @Override
         public void operationComplete(ChannelFuture future) {
+          LOG.info("Channel to internal service closed: {}", future.channel().id().asShortText());
           internalServiceChannel = null;
           connecting = false;
         }
@@ -389,6 +390,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         public void operationComplete(ChannelFuture future) throws Exception {
           // Always remember the internalServiceChannel even if the connection fail.
           // This make sure any message received before the inbound channel is closed will not get forwarded
+          LOG.info("Channel to internal service opened: {}", future.channel().id().asShortText());
           internalServiceChannel = future.channel();
           connecting = false;
 
