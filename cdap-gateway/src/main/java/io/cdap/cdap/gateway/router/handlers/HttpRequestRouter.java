@@ -170,6 +170,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
 
       // Recycle the message sender
       if (currentMessageSender != null) {
+        String chId = (currentMessageSender.internalServiceChannel != null) ? currentMessageSender.internalServiceChannel.id().asShortText() : "null";
+        LOG.info("Router: Recycling MessageSender back into pool for discoverable={}. internalServiceChannel={}", currentMessageSender.discoverable.getName(), chId);
         messageSenders.get(currentMessageSender.getDiscoverable()).add(currentMessageSender);
       }
     }
@@ -274,13 +276,15 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
 
     // Found a MessageSender to reuse, return it
     if (sender != null) {
-      LOG.trace("Reuse message sender for {}", discoverable);
+      String chId = (sender.internalServiceChannel != null) ? sender.internalServiceChannel.id().asShortText() : "null";
+      boolean active = (sender.internalServiceChannel != null) && sender.internalServiceChannel.isActive();
+      LOG.info("Router [ClientCh:{}]: Reusing pooled MessageSender for discoverable={}. internalServiceChannel={}, isActive={}", httpRequestChannel.id().asShortText(), discoverable.getName(), chId, active);
       return sender;
     }
 
     // Create new MessageSender
     sender = new MessageSender(cConf, httpRequestChannel, discoverable);
-    LOG.trace("Create new message sender for {}", discoverable);
+    LOG.info("Router [ClientCh:{}]: Created new MessageSender for discoverable={}", httpRequestChannel.id().asShortText(), discoverable.getName());
     return sender;
   }
 
@@ -317,9 +321,9 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     private final Queue<OutboundMessage> pendingMessages;
     private final Bootstrap clientBootstrap;
     private volatile SslContext sslContext;
-    private volatile Channel internalServiceChannel;
-    private volatile boolean closed;
-    private volatile boolean connecting;
+    private Channel internalServiceChannel;
+    private boolean closed;
+    private boolean connecting;
 
     private MessageSender(final CConfiguration cConf, final Channel httpRequestChannel,
         final Discoverable discoverable) {
@@ -370,6 +374,10 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
      *     write completed
      */
     void send(Object msg, ChannelFutureListener writeCompletedListener) {
+      String chId = (internalServiceChannel != null) ? internalServiceChannel.id().asShortText() : "null";
+      boolean active = (internalServiceChannel != null) && internalServiceChannel.isActive();
+      LOG.info("MessageSender.send [{}]: internalServiceChannel={}, isActive={}, connecting={}, closed={}", discoverable.getName(), chId, active, connecting, closed);
+
       if (internalServiceChannel != null) {
         internalServiceChannel.write(msg).addListener(writeCompletedListener);
         return;

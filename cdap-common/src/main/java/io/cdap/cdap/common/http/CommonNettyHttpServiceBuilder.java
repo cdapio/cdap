@@ -39,6 +39,7 @@ import javax.annotation.Nullable;
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
 
+  private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(CommonNettyHttpServiceBuilder.class);
   public static final String AUTHENTICATOR_NAME = "authenticator";
 
   private ChannelPipelineModifier pipelineModifier;
@@ -54,6 +55,16 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
       pipelineModifier = new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
+          pipeline.addFirst("socket-boundary-logger", new io.netty.channel.ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(io.netty.channel.ChannelHandlerContext ctx, Object msg, io.netty.channel.ChannelPromise promise) throws Exception {
+              if (msg instanceof io.netty.buffer.ByteBuf) {
+                io.netty.buffer.ByteBuf buf = (io.netty.buffer.ByteBuf) msg;
+                LOG.info("AppFabric JVM [Ch:{}]: Writing {} raw encrypted binary bytes directly to physical OS socket.", ctx.channel().id().asShortText(), buf.readableBytes());
+              }
+              ctx.write(msg, promise);
+            }
+          });
           // Adds the AuthenticationChannelHandler before the dispatcher, using the same
           // EventExecutor to make sure they get invoked from the same thread
           // This is needed before we use a InheritableThreadLocal in SecurityRequestContext
@@ -62,6 +73,31 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
                              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
                                  .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, auditLogWriter));
+          pipeline.addBefore(executor, "dispatcher", "response-logger", new io.netty.channel.ChannelDuplexHandler() {
+            @Override
+            public void write(io.netty.channel.ChannelHandlerContext ctx, Object msg, io.netty.channel.ChannelPromise promise) throws Exception {
+              String chId = ctx.channel().id().asShortText();
+              if (msg instanceof io.netty.handler.codec.http.HttpResponse) {
+                io.netty.handler.codec.http.HttpResponse res = (io.netty.handler.codec.http.HttpResponse) msg;
+                LOG.info("AppFabric Netty [Ch:{}]: Writing HTTP response headers to channel: status={}", chId, res.status());
+              }
+              if (msg instanceof io.netty.handler.codec.http.LastHttpContent) {
+                LOG.info("AppFabric Netty [Ch:{}]: Writing LastHttpContent completion to socket channel.", chId);
+                ctx.write(msg, promise).addListener(new io.netty.channel.ChannelFutureListener() {
+                  @Override
+                  public void operationComplete(io.netty.channel.ChannelFuture future) {
+                    if (future.isSuccess()) {
+                      LOG.info("AppFabric Netty [Ch:{}]: Response successfully written to OS TCP socket buffer.", chId);
+                    } else {
+                      LOG.error("AppFabric Netty [Ch:{}]: Failed to write response bytes to socket! Error: {}", chId, future.cause() == null ? "unknown" : future.cause().getMessage());
+                    }
+                  }
+                });
+                return;
+              }
+              ctx.write(msg, promise);
+            }
+          });
         }
       };
     }
