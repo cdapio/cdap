@@ -159,17 +159,20 @@ public class OAuthStore {
   /**
    * Remove an OAuth provider.
    *
-   * @param name name of {@link OAuthProvider} to read
-   * @throws OAuthStoreException if the read fails
+   * @param name name of {@link OAuthProvider} to delete
+   * @param preserveClientCredentials whether to preserve existing secrets in secure store
+   * @throws OAuthStoreException if the delete fails
    */
-  public void deleteProvider(String name) throws OAuthStoreException {
-    // Delete associated Client Credentials with given provider.
-    try {
-      secureStoreManager.delete(NamespaceId.SYSTEM.getNamespace(), getClientCredsKey(name));
-    } catch (Exception e) {
-      // If key is not found, then we can safely delete provider. For any other exception, throw it.
-      if (!e.getClass().getName().contains("NotFoundException")) {
-        throw new OAuthStoreException("Failed to delete client credential from OAuth provider secure storage", e);
+  public void deleteProvider(String name, boolean preserveClientCredentials) throws OAuthStoreException {
+    // Delete associated Client Credentials with given provider if not preserved.
+    if (!preserveClientCredentials) {
+      try {
+        secureStoreManager.delete(NamespaceId.SYSTEM.getNamespace(), getClientCredsKey(name));
+      } catch (Exception e) {
+        // If key is not found, then we can safely delete provider. For any other exception, throw it.
+        if (!e.getClass().getName().contains("NotFoundException")) {
+          throw new OAuthStoreException("Failed to delete client credential from OAuth provider secure storage", e);
+        }
       }
     }
 
