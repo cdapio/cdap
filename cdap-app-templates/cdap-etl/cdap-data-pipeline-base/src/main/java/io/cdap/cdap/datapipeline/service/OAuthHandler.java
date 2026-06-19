@@ -161,10 +161,12 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   @DELETE
   @Path(API_VERSION + "/oauth/provider/{provider}")
   public void deleteOAuthProvider(HttpServiceRequest request, HttpServiceResponder responder,
-                               @PathParam("provider") String oauthProvider) {
+                               @PathParam("provider") String oauthProvider,
+                               @QueryParam("preserve_client_credentials") @DefaultValue("false")
+                               boolean preserveClientCredentials) {
     try {
       try {
-        oauthStore.deleteProvider(oauthProvider);
+        oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
       } catch (NullPointerException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid provider: " + e.getMessage(), e);
