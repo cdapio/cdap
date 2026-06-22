@@ -19,15 +19,23 @@ package io.cdap.cdap.gateway.handlers;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.reflect.TypeToken;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.gateway.handlers.util.ProgramHandlerUtil;
+import io.cdap.cdap.internal.MockResponder;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.proto.BatchRunnable;
+import io.cdap.cdap.proto.BatchRunnableInstances;
 import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -42,10 +50,19 @@ import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -59,9 +76,12 @@ public class ProgramRuntimeHttpHandlerAuthorizationTest {
   private static final NamespaceId NAMESPACE_ID = new NamespaceId("ns");
   private static final ApplicationId APP_ID = NAMESPACE_ID.app("app");
   private static final ProgramId PROGRAM_ID = APP_ID.service("service");
+  private static final ApplicationId UNAUTHORIZED_APP_ID = NAMESPACE_ID.app("unauthorizedApp");
+  private static final ProgramId UNAUTHORIZED_PROGRAM_ID = UNAUTHORIZED_APP_ID.service("unauthorizedService");
 
   private static ProgramRuntimeHttpHandler programRuntimeHttpHandler;
   private static ProgramRuntimeService runtimeService;
+  private static Store store;
 
   HttpRequest request;
   HttpResponder responder;
@@ -77,7 +97,7 @@ public class ProgramRuntimeHttpHandlerAuthorizationTest {
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
 
     ProgramLifecycleService lifecycleService = mock(ProgramLifecycleService.class);
-    Store store = mock(Store.class);
+    store = mock(Store.class);
     runtimeService = mock(ProgramRuntimeService.class);
     NamespaceQueryAdmin namespaceQueryAdmin = mock(NamespaceQueryAdmin.class);
 
@@ -94,7 +114,9 @@ public class ProgramRuntimeHttpHandlerAuthorizationTest {
     request = mock(HttpRequest.class);
     responder = mock(HttpResponder.class);
     exceptionThrown = null;
+    reset(store);
     reset(runtimeService);
+    when(store.getLatestApp(Matchers.any(ApplicationReference.class))).thenReturn(APP_ID);
     when(runtimeService.getLiveInfo(PROGRAM_ID)).thenReturn(new NotRunningProgramLiveInfo(PROGRAM_ID));
   }
 
@@ -122,5 +144,56 @@ public class ProgramRuntimeHttpHandlerAuthorizationTest {
     }
     Assert.assertNull(exceptionThrown);
     verify(runtimeService).getLiveInfo(PROGRAM_ID);
+  }
+
+  @Test
+  public void testBatchInstancesAuthorizationPerRunnable() throws Exception {
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+    when(store.getLatestApp(Matchers.any(ApplicationReference.class))).thenAnswer(invocation -> {
+      ApplicationReference appReference = (ApplicationReference) invocation.getArguments()[0];
+      if (UNAUTHORIZED_APP_ID.getApplication().equals(appReference.getApplication())) {
+        return UNAUTHORIZED_APP_ID;
+      }
+      return APP_ID;
+    });
+    when(store.getApplication(APP_ID)).thenReturn(createAppSpec(PROGRAM_ID));
+    when(store.getApplication(UNAUTHORIZED_APP_ID)).thenReturn(createAppSpec(UNAUTHORIZED_PROGRAM_ID));
+    when(store.getServiceInstances(PROGRAM_ID)).thenReturn(3);
+
+    List<BatchRunnable> runnables = Arrays.asList(
+      new BatchRunnable(APP_ID.getApplication(), ProgramType.SERVICE, PROGRAM_ID.getProgram(), null),
+      new BatchRunnable(UNAUTHORIZED_APP_ID.getApplication(), ProgramType.SERVICE,
+                        UNAUTHORIZED_PROGRAM_ID.getProgram(), null)
+    );
+    FullHttpRequest batchRequest = new DefaultFullHttpRequest(
+      HttpVersion.HTTP_1_1, HttpMethod.POST, "/instances",
+      Unpooled.copiedBuffer(ProgramHandlerUtil.toJson(runnables), StandardCharsets.UTF_8));
+    MockResponder batchResponder = new MockResponder();
+
+    programRuntimeHttpHandler.getInstances(batchRequest, batchResponder, NAMESPACE_ID.getNamespace());
+
+    Type responseType = new TypeToken<List<BatchRunnableInstances>>() { }.getType();
+    List<BatchRunnableInstances> response = batchResponder.decodeResponseContent(responseType);
+    Assert.assertEquals(HttpResponseStatus.OK, batchResponder.getStatus());
+    Assert.assertEquals(2, response.size());
+    Assert.assertEquals(HttpResponseStatus.OK.code(), response.get(0).getStatusCode());
+    Assert.assertEquals(Integer.valueOf(3), response.get(0).getProvisioned());
+    Assert.assertEquals(Integer.valueOf(2), response.get(0).getRequested());
+    Assert.assertNull(response.get(0).getError());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.get(1).getStatusCode());
+    Assert.assertNotNull(response.get(1).getError());
+    Assert.assertNull(response.get(1).getProvisioned());
+    Assert.assertNull(response.get(1).getRequested());
+    verify(store, times(1)).getServiceInstances(PROGRAM_ID);
+    verify(store, never()).getServiceInstances(UNAUTHORIZED_PROGRAM_ID);
+  }
+
+  private static ApplicationSpecification createAppSpec(ProgramId programId) {
+    ServiceSpecification serviceSpec = mock(ServiceSpecification.class);
+    when(serviceSpec.getInstances()).thenReturn(2);
+    ApplicationSpecification spec = mock(ApplicationSpecification.class);
+    when(spec.getServices()).thenReturn(
+        Collections.singletonMap(programId.getProgram(), serviceSpec));
+    return spec;
   }
 }

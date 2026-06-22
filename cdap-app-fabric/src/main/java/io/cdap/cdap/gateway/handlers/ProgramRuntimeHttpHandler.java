@@ -174,7 +174,12 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationSpecification spec = appSpecs.get(appId);
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
-      accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+      try {
+        accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+      } catch (UnauthorizedException e) {
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.FORBIDDEN.code(), e.getMessage()));
+        continue;
+      }
       output.add(getProgramInstances(runnable, spec, programId));
     }
     responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(output));
