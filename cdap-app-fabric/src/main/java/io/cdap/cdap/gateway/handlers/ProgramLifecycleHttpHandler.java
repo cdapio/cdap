@@ -63,6 +63,8 @@ import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -107,18 +109,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
   ProgramLifecycleHttpHandler(Store store,
       DiscoveryServiceClient discoveryServiceClient,
       ProgramLifecycleService lifecycleService,
       MRJobInfoFetcher mrJobInfoFetcher,
-      NamespaceQueryAdmin namespaceQueryAdmin) {
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.store = store;
     this.discoveryServiceClient = discoveryServiceClient;
     this.lifecycleService = lifecycleService;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   /**
@@ -133,6 +138,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("run-id") String runId) throws IOException, NotFoundException {
     ApplicationReference appRef = new ApplicationReference(namespaceId, appId);
     ProgramReference programRef = appRef.program(ProgramType.MAPREDUCE, mapreduceId);
+    contextAccessEnforcer.enforce(programRef, StandardPermission.GET);
 
     // runId is uuid, can be retrieved ignoring version
     RunRecordDetail runRecordMeta = store.getRun(programRef, runId);
@@ -461,6 +467,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramReference programRef = new ApplicationReference(namespaceId, appName).program(programType,
         programName);
+    contextAccessEnforcer.enforce(programRef, StandardPermission.GET);
     RunRecordDetail runRecordMeta = store.getRun(programRef, runId);
     if (runRecordMeta == null) {
       throw new NotFoundException(
@@ -494,6 +501,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType programType = ProgramType.valueOfCategoryName(type, BadRequestException::new);
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType,
         programName);
+    contextAccessEnforcer.enforce(progId, StandardPermission.GET);
     RunRecordDetail runRecordMeta = store.getRun(progId.run(runid));
     if (runRecordMeta != null && !isTetheredRunRecord(runRecordMeta)) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
