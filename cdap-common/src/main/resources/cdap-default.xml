@@ -6758,4 +6758,12 @@
     </description>
   </property>
 
+  <property>
+    <name>ui.wrangler.connections.browse.entities.limit</name>
+    <value>2000</value>
+    <description>
+      Number of entities displayed for a connection in the connections browser.
+    </description>
+  </property>
+
 </configuration>
