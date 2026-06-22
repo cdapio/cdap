@@ -174,6 +174,7 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationSpecification spec = appSpecs.get(appId);
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
+      accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
       output.add(getProgramInstances(runnable, spec, programId));
     }
     responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(output));
@@ -305,6 +306,7 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType type = ProgramType.valueOfCategoryName(programCategory, BadRequestException::new);
     ProgramId program = store.getLatestApp(new ApplicationReference(namespaceId, appId))
         .program(type, programId);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.GET);
     getLiveInfo(responder, program, runtimeService);
   }
 
