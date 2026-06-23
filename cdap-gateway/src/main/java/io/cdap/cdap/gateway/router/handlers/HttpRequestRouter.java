@@ -136,6 +136,10 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       }
 
       if (inflightRequests == 1 && currentMessageSender != null) {
+        if (currentMessageSender.internalServiceChannel != null) {
+          LOG.warn("TEST_LOG : Sending request on existing channel. internalServiceChannel.autoRead={}",
+              currentMessageSender.internalServiceChannel.config().isAutoRead());
+        }
         ReferenceCountUtil.retain(msg);
         currentMessageSender.send(msg, writeCompletedListener);
       }
@@ -158,6 +162,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
 
     // When the response for the first request is completed, write N failure responses for pipelining requests (if any).
     if (msg instanceof LastHttpContent) {
+      LOG.warn("TEST_LOG : write(LastHttpContent) completed. Setting inflightRequests=0");
       for (int i = 0; i < inflightRequests - 1; i++) {
         ctx.writeAndFlush(createPipeliningNotSupported());
       }
@@ -198,15 +203,19 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
    */
   @Override
   public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+    LOG.warn("TEST_LOG : channelWritabilityChanged fired. inflightRequests={}, isWritable={}",
+        inflightRequests, ctx.channel().isWritable());
     if (inflightRequests > 0 && currentMessageSender != null && currentMessageSender.internalServiceChannel != null) {
       final Channel httpRequestChannel = ctx.channel();
       ctx.executor().execute(() -> {
         // If httpRequestChannel is not saturated anymore, continue accepting
         // the incoming traffic from the internalServiceChannel for service<>router.
         if (httpRequestChannel.isWritable()) {
+          LOG.warn("TEST_LOG : Re-enabling TRUE -> currentMessageSender");
           currentMessageSender.setAutoRead(true);
         } else {
           // If httpRequestChannel is saturated, do not read internalServiceChannel
+          LOG.warn("TEST_LOG : Saturated FALSE back currentMessageSender");
           currentMessageSender.setAutoRead(false);
         }
       });
