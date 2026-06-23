@@ -198,16 +198,17 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
    */
   @Override
   public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-    if (inflightRequests > 0 && currentMessageSender != null && currentMessageSender.internalServiceChannel != null) {
+    final MessageSender sender = currentMessageSender;
+    if (sender != null && sender.internalServiceChannel != null) {
       final Channel httpRequestChannel = ctx.channel();
       ctx.executor().execute(() -> {
         // If httpRequestChannel is not saturated anymore, continue accepting
         // the incoming traffic from the internalServiceChannel for service<>router.
         if (httpRequestChannel.isWritable()) {
-          currentMessageSender.setAutoRead(true);
-        } else {
+          sender.setAutoRead(true);
+        } else if (inflightRequests > 0) {
           // If httpRequestChannel is saturated, do not read internalServiceChannel
-          currentMessageSender.setAutoRead(false);
+          sender.setAutoRead(false);
         }
       });
     }
@@ -270,6 +271,9 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     // Found a MessageSender to reuse, return it
     if (sender != null) {
       LOG.trace("Reuse message sender for {}", discoverable);
+      if (httpRequestChannel.isWritable()) {
+        sender.setAutoRead(true);
+      }
       return sender;
     }
 
@@ -479,7 +483,9 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
      */
     private void setAutoRead(Boolean isAutoRead) {
       LOG.trace("Message sender's internalServiceChannel readable is set to {}.", isAutoRead);
-      this.internalServiceChannel.config().setAutoRead(isAutoRead);
+      if (this.internalServiceChannel != null) {
+         this.internalServiceChannel.config().setAutoRead(isAutoRead);
+      }
     }
   }
 
