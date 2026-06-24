@@ -52,6 +52,8 @@ import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
@@ -59,8 +61,11 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
+  private static final Logger LOG = LoggerFactory.getLogger(
+      RemoteClient.class);
 
   private final InternalAuthenticator internalAuthenticator;
+  private final DiscoveryServiceClient discoveryClient;
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
@@ -71,6 +76,7 @@ public class RemoteClient {
       String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
       RemoteAuthenticator remoteAuthenticator) {
     this.internalAuthenticator = internalAuthenticator;
+    this.discoveryClient = discoveryClient;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     this.endpointStrategy = new RandomEndpointStrategy(
@@ -91,6 +97,15 @@ public class RemoteClient {
    */
   public HttpRequest.Builder requestBuilder(HttpMethod method, String resource) {
     return HttpRequest.builder(method, resolve(resource));
+  }
+
+  /**
+   * Create a namespace-aware {@link HttpRequest.Builder} using a routing key
+   * (namespace)
+   * to ensure sticky routing to the same pod.
+   */
+  public HttpRequest.Builder requestBuilder(HttpMethod method, String resource, @Nullable String routingKey) {
+    return HttpRequest.builder(method, resolve(resource, routingKey));
   }
 
   private void setAuthHeader(BiConsumer<String, String> headerSetter, String header,
@@ -277,6 +292,77 @@ public class RemoteClient {
   }
 
   /**
+   * Discover the service address, then append the base path and specified
+   * resource to get the URL,
+   * using a routing key (e.g. namespace) to ensure sticky routing to the same
+   * pod.
+   */
+  public URL resolve(String resource, @Nullable String routingKey) {
+    if (routingKey == null) {
+      return resolve(resource); // Fallback to random routing
+    }
+
+    LOG.info("sidhdirenge - RemoteClient resolving stickily for service {} with routingKey: {}",
+        discoverableServiceName, routingKey);
+
+    // 1. Fetch all currently discovered endpoints
+    Iterable<Discoverable> discoverables = () -> discoveryClient.discover(discoverableServiceName).iterator();
+    java.util.List<Discoverable> list = new java.util.ArrayList<>();
+    int discoveredCount = 0;
+    for (Discoverable d : discoverables) {
+      discoveredCount++;
+      // Perform DNS lookup to resolve the service hostname into individual pod IPs
+      // (for headless services)
+      try {
+        java.net.InetAddress[] addresses = java.net.InetAddress.getAllByName(d.getSocketAddress().getHostName());
+        for (java.net.InetAddress addr : addresses) {
+          list.add(new Discoverable(d.getName(),
+              new java.net.InetSocketAddress(addr.getHostAddress(), d.getSocketAddress().getPort()),
+              d.getPayload()));
+        }
+      } catch (java.net.UnknownHostException e) {
+        // Fallback to original discoverable if DNS lookup fails or is not supported
+        list.add(d);
+      }
+    }
+
+    // Log the DNS expansion results
+    java.util.List<String> resolvedIPs = new java.util.ArrayList<>();
+    for (Discoverable d : list) {
+      resolvedIPs.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
+    }
+    LOG.info("sidhdirenge - Discovered {} services. DNS expanded to {} pod endpoints: {}",
+        discoveredCount, list.size(), resolvedIPs);
+
+    if (list.isEmpty()) {
+      throw new ServiceUnavailableException(discoverableServiceName);
+    }
+
+    // 2. Sort endpoints by IP address and port to ensure consistent ordering across
+    // all client instances
+    list.sort(java.util.Comparator.comparing((Discoverable d) -> d.getSocketAddress().getHostName())
+        .thenComparingInt(d -> d.getSocketAddress().getPort()));
+
+    // 3. Select endpoint stickily using consistent hashing (modulo on hash code of
+    // routingKey)
+    int index = (routingKey.hashCode() & Integer.MAX_VALUE) % list.size();
+    Discoverable discoverable = list.get(index);
+
+    LOG.info("sidhdirenge - Selected sticky pod IP {} (index {}) for routingKey: {}",
+        discoverable.getSocketAddress(), index, routingKey);
+
+    URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
+    try {
+      return rewriteUrl(uri.toURL());
+    } catch (MalformedURLException e) {
+      throw new IllegalStateException(
+          String.format("Discovered service %s, but it announced malformed URL %s",
+              discoverableServiceName, uri),
+          e);
+    }
+  }
+
+  /**
    * Create a generic error message about a failure to make a specified request.
    *
    * @param request the request made
@@ -297,12 +383,16 @@ public class RemoteClient {
    * Rewrites the given URL based on the runtime service.
    */
   private URL rewriteUrl(URL url) {
-    if (url.getPort() != 0) {
+    if (url.getPort() != 0 && !discoverableServiceName.equals("task.worker")) {
+      LOG.info("sidhdirenge - rewriteUrl skipped for service {} because port is not 0 (port was {})",
+          discoverableServiceName, url.getPort());
       return url;
     }
 
     String baseUri = System.getProperty(RUNTIME_SERVICE_ROUTING_BASE_URI);
     if (baseUri == null) {
+      LOG.info("sidhdirenge - rewriteUrl skipped for service {} because baseUri is null",
+          discoverableServiceName);
       return url;
     }
     try {
@@ -311,8 +401,19 @@ public class RemoteClient {
       while (!path.isEmpty() && path.charAt(0) == '/') {
         path = path.substring(1);
       }
-      return URI.create(baseUri).resolve(discoverableServiceName + "/").resolve(path).toURL();
+      URL rewrittenUrl;
+      if (discoverableServiceName.equals("task.worker")) {
+        // Resolve directly to the Gateway without the service name prefix
+        rewrittenUrl = URI.create(baseUri).resolve(path).toURL();
+      } else {
+        rewrittenUrl = URI.create(baseUri).resolve(discoverableServiceName + "/").resolve(path).toURL();
+      }
+      LOG.info("sidhdirenge - Successfully rewritten URL for service {} from {} to {}",
+          discoverableServiceName, url, rewrittenUrl);
+      return rewrittenUrl;
     } catch (IllegalArgumentException | MalformedURLException e) {
+      LOG.warn("sidhdirenge - Failed to rewrite URL for service {} from {} to baseUri {}",
+          discoverableServiceName, url, baseUri, e);
       return url;
     }
   }

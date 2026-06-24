@@ -58,6 +58,10 @@ public class RemoteClientFactory {
       RemoteAuthenticator remoteAuthenticator, CConfiguration cConf) {
     this(discoveryClient, internalAuthenticator, remoteAuthenticator, "",
         cConf.getBoolean(InternalRouter.CLIENT_ENABLED));
+    String routingBaseUri = cConf.get(RemoteClient.RUNTIME_SERVICE_ROUTING_BASE_URI);
+    if (routingBaseUri != null) {
+      System.setProperty(RemoteClient.RUNTIME_SERVICE_ROUTING_BASE_URI, routingBaseUri);
+    }
     if (cConf.getBoolean(InternalRouter.CLIENT_ENABLED) && !cConf.getBoolean(
         InternalRouter.SERVER_ENABLED)) {
       throw new IllegalStateException(

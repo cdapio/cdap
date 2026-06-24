@@ -58,6 +58,7 @@ public class RemoteTaskExecutorTest {
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
   private static AeadCipher mockAeadCipher;
+  private static TaskWorkerHttpHandlerInternal taskWorkerHandler;
   Map<Map<String, String>, Map<String, Long>> metricCollectors;
   private MetricsCollectionService mockMetricsCollector;
   private Cancellable registered;
@@ -69,12 +70,11 @@ public class RemoteTaskExecutorTest {
     mockAeadCipher = createMockAeadCipher();
     remoteClientFactory = new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator());
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    taskWorkerHandler = new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
+    }, new NoOpMetricsCollectionService());
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), false,
-                                                    auditLogContexts -> {}, mockAeadCipher)
-      .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
-        }, new NoOpMetricsCollectionService())
-      )
+                                                     auditLogContexts -> {}, mockAeadCipher)
+      .setHttpHandlers(taskWorkerHandler)
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
         public void modify(ChannelPipeline pipeline) {
@@ -269,6 +269,46 @@ public class RemoteTaskExecutorTest {
       }
     }
     return false;
+  }
+
+  @Test
+  public void testSessionAffinityLeaseEnforcementAndReclamation() throws Exception {
+    // Reset the lease manager to idle state to clear any lease left by previous tests
+    taskWorkerHandler.getStickyLeaseManager().releaseLease("Reset for integration test");
+
+    // 1. Create a custom CConfiguration where we set the retry policy type to "none"
+    CConfiguration customConf = CConfiguration.copy(cConf);
+    customConf.set("task.worker.retry.policy.type", "none");
+
+    // 2. Create RemoteTaskExecutor instances using this customConf
+    RemoteTaskExecutor executor = new RemoteTaskExecutor(customConf, mockMetricsCollector, remoteClientFactory,
+                                                         RemoteTaskExecutor.Type.TASK_WORKER, mockAeadCipher);
+
+    // 3. Namespace "ns_sticky_developer" runs a task. It should succeed and lease the pod.
+    RunnableTaskRequest req1 = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName())
+        .withParam("param").withNamespace("ns_sticky_developer").build();
+    byte[] result = executor.runTask(req1);
+    Assert.assertEquals("success", new String(result, StandardCharsets.UTF_8));
+
+    // 4. A different namespace "ns_sticky_2" runs a task. It should be rejected due to lease mismatch.
+    RunnableTaskRequest req2 = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName())
+        .withParam("param").withNamespace("ns_sticky_2").build();
+    try {
+      executor.runTask(req2);
+      Assert.fail("Expected namespace mismatch error");
+    } catch (Exception e) {
+      // Expected rejection with 429 / RetryableException / ServiceException
+      Assert.assertTrue("Exception should contain '429' or 'RetryableException' or 'ServiceException', got: " + e,
+                        e.toString().contains("429") || e.toString().contains("RetryableException")
+                            || e.toString().contains("ServiceException"));
+    }
+
+    // 5. Wait 6 seconds for the Developer tier's 5-second inactivity lease reclamation to trigger.
+    java.util.concurrent.TimeUnit.SECONDS.sleep(6);
+
+    // 6. Now, "ns_sticky_2" runs a task again. It should succeed because the lease was reclaimed!
+    byte[] result2 = executor.runTask(req2);
+    Assert.assertEquals("success", new String(result2, StandardCharsets.UTF_8));
   }
 
   static class ValidRunnableClass implements RunnableTask {

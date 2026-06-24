@@ -31,6 +31,7 @@ public final class HttpHeaderNames {
    * Store which type of worker decryption is required.
    */
   public static final String WORKER_DECRYPTION_HDR = "WORKER_DECRYPTION_HDR";
+  public static final String NAMESPACE_HDR = "X-CDF-Namespace";
 
   // TODO move all other custom headers used by CDAP to this class. JIRA https://cdap.atlassian.net/browse/CDAP-18799
 

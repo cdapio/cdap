@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -43,6 +44,8 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,6 +69,8 @@ import java.util.zip.GZIPOutputStream;
 public class RemoteTaskExecutor {
 
   private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(
+      RemoteTaskExecutor.class);
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
@@ -130,13 +135,15 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
+          String targetNamespace = getTargetNamespace(runnableTaskRequest);
           HttpRequest.Builder requestBuilder = remoteClient
-              .requestBuilder(HttpMethod.POST, workerUrl)
+              .requestBuilder(HttpMethod.POST, workerUrl, targetNamespace)
               .withBody(requestBody.duplicate());
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
           }
+          requestBuilder.addHeader(HttpHeaderNames.NAMESPACE_HDR, getTargetNamespace(runnableTaskRequest));
 
           // Encrypting user credentials for task worker calls
           Credential currentCredential = SecurityRequestContext.getUserCredential();
@@ -148,6 +155,9 @@ public class RemoteTaskExecutor {
           }
 
           HttpRequest httpRequest = requestBuilder.build();
+          if (workerUrl.equals(TASK_WORKER_URL)) {
+            LOG.info("sidhdirenge - RemoteTaskExecutor req headers {}", httpRequest.getHeaders());
+          }
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
           // Resetting user credentials for further execution of current request
@@ -237,6 +247,20 @@ public class RemoteTaskExecutor {
       return runnableTaskRequest.getClassName();
     }
     return runnableTaskRequest.getParam().getEmbeddedTaskRequest().getClassName();
+  }
+
+  private String getTargetNamespace(RunnableTaskRequest runnableTaskRequest) {
+    String ns;
+    if (runnableTaskRequest.getParam() != null
+        && runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null
+        && runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace() != null) {
+      ns = runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace();
+    } else {
+      ns = runnableTaskRequest.getNamespace() != null
+          ? runnableTaskRequest.getNamespace() : "default";
+    }
+    LOG.info("sidhdirenge - RemoteTaskExecutor namespace : {}", ns);
+    return ns;
   }
 
   private ByteBuffer encodeTaskRequest(RunnableTaskRequest request) throws IOException {
