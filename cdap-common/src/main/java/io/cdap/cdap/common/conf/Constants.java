@@ -1506,6 +1506,8 @@ public final class Constants {
         "app.program.runtime.monitor.metrics.aggregation.window.secs";
     public static final String METRICS_AGGREGATION_POLL_TIME_MS =
         "app.program.runtime.monitor.metrics.aggregation.polltime.ms";
+    public static final String REMOTE_STOP_DELAY_SECS =
+        "app.program.runtime.monitor.remote.stop.delay.secs";
   }
 
   /**
