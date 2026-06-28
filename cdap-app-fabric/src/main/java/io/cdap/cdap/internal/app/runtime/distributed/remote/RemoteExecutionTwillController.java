@@ -140,10 +140,15 @@ class RemoteExecutionTwillController implements TwillController {
     } catch (Exception e) {
       // If there is exception, use the remote execution controller to try killing the remote process
       try {
-        LOG.debug("Force termination of remote process for program run {}", programRunId);
-        remoteProcessController.kill(RuntimeJobStatus.RUNNING);
+        RuntimeJobStatus currentStatus = remoteProcessController.getStatus();
+        if (currentStatus == RuntimeJobStatus.RUNNING || currentStatus == RuntimeJobStatus.STARTING) {
+          LOG.debug("Force termination of remote process for program run {} as it is in state {}", programRunId, currentStatus);
+          remoteProcessController.kill(currentStatus);
+        } else {
+          LOG.debug("Skipping termination of remote process for program run {} as it is already in terminal state {}", programRunId, currentStatus);
+        }
       } catch (Exception ex) {
-        LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
+        LOG.warn("Failed to get status or terminate remote process for program run {} during force kill attempt", programRunId, ex);
       }
     }
   }
