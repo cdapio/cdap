@@ -45,11 +45,13 @@ import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.spark.TaskContext;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -118,29 +120,40 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     Closeables.closeQuietly(closeable);
   }
 
+  private Metrics getTaskMetrics() {
+    TaskContext tc = TaskContext.get();
+    if (tc != null) {
+      Map<String, String> taskTags = new HashMap<>();
+      taskTags.put(Constants.Metrics.Tag.SPARK_PARTITION, String.valueOf(tc.partitionId()));
+      taskTags.put(Constants.Metrics.Tag.SPARK_ATTEMPT, String.valueOf(tc.attemptNumber()));
+      return getMetrics().child(taskTags);
+    }
+    return getMetrics();
+  }
+
   @Override
   public void count(String metricName, int delta) {
-    getMetrics().count(metricName, delta);
+    getTaskMetrics().count(metricName, delta);
   }
 
   @Override
   public void countLong(String metricName, long delta) {
-    getMetrics().countLong(metricName, delta);
+    getTaskMetrics().countLong(metricName, delta);
   }
 
   @Override
   public void gauge(String metricName, long value) {
-    getMetrics().gauge(metricName, value);
+    getTaskMetrics().gauge(metricName, value);
   }
 
   @Override
   public Metrics child(Map<String, String> tags) {
-    return getMetrics().child(tags);
+    return getTaskMetrics().child(tags);
   }
 
   @Override
   public Map<String, String> getTags() {
-    return getMetrics().getTags();
+    return getTaskMetrics().getTags();
   }
 
   /**

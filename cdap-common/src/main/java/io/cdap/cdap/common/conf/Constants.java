@@ -1087,6 +1087,8 @@ public final class Constants {
 
       public static final String PROVISIONER = "prv";
       public static final String SPARK = "sp";
+      public static final String SPARK_PARTITION = "spark_part";
+      public static final String SPARK_ATTEMPT = "spark_att";
       public static final String STATUS = "st";
       public static final String CLUSTER_STATUS = "clst";
 

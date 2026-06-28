@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metrics.process;
 
+import java.util.Collection;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -292,6 +293,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
    */
   private void persistMetrics(Deque<MetricValues> metricValues) {
     long now = System.currentTimeMillis();
+
+    // Calculate deduplicated successful metrics and add them to the batch
+    metricValues.addAll(calculateDeduplicatedMetrics(metricValues));
+
     long lastMetricTime = metricValues.peekLast().getTimestamp();
     List<MetricValue> topicLevelDelays = new ArrayList<>();
 
@@ -523,5 +528,86 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       return true;
     }
     return false;
+  }
+
+  private Collection<MetricValues> calculateDeduplicatedMetrics(Collection<MetricValues> batch) {
+    List<MetricValues> result = new ArrayList<>();
+    Map<GroupKey, Map<Integer, MetricValues>> partitionGroups = new HashMap<>();
+
+    for (MetricValues mVal : batch) {
+      for (MetricValue metric : mVal.getMetrics()) {
+        String name = metric.getName();
+        if (name.endsWith(".records.in") || name.endsWith(".records.out") 
+            || name.endsWith(".records.error") || name.endsWith(".records.alert")) {
+          String partitionStr = mVal.getTags().get(Constants.Metrics.Tag.SPARK_PARTITION);
+          String attemptStr = mVal.getTags().get(Constants.Metrics.Tag.SPARK_ATTEMPT);
+
+          if (partitionStr == null || attemptStr == null) {
+            continue;
+          }
+
+          int partition = Integer.parseInt(partitionStr);
+          int attempt = Integer.parseInt(attemptStr);
+
+          GroupKey key = new GroupKey(name, mVal.getTags());
+          partitionGroups.computeIfAbsent(key, k -> new HashMap<>()).put(attempt, mVal);
+        }
+      }
+    }
+
+    for (Map.Entry<GroupKey, Map<Integer, MetricValues>> entry : partitionGroups.entrySet()) {
+      GroupKey key = entry.getKey();
+      Map<Integer, MetricValues> attempts = entry.getValue();
+
+      if (attempts.isEmpty()) {
+        continue;
+      }
+
+      int maxAttempt = java.util.Collections.max(attempts.keySet());
+      MetricValues maxAttemptMVal = attempts.get(maxAttempt);
+
+      for (MetricValue metric : maxAttemptMVal.getMetrics()) {
+        if (metric.getName().equals(key.metricName)) {
+          String successfulName = key.metricName + ".successful";
+          MetricValue successfulMetric = new MetricValue(successfulName, metric.getType(), metric.getValue());
+
+          Map<String, String> cleanTags = new HashMap<>(maxAttemptMVal.getTags());
+          cleanTags.remove(Constants.Metrics.Tag.SPARK_PARTITION);
+          cleanTags.remove(Constants.Metrics.Tag.SPARK_ATTEMPT);
+
+          result.add(new MetricValues(cleanTags, maxAttemptMVal.getTimestamp(), 
+              java.util.Collections.singletonList(successfulMetric)));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  private static class GroupKey {
+    private final String metricName;
+    private final String runId;
+    private final String stageName;
+
+    GroupKey(String metricName, Map<String, String> tags) {
+      this.metricName = metricName;
+      this.runId = tags.get(Constants.Metrics.Tag.RUN_ID);
+      this.stageName = tags.get(Constants.Metrics.Tag.NODE);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      GroupKey groupKey = (GroupKey) o;
+      return java.util.Objects.equals(metricName, groupKey.metricName) &&
+          java.util.Objects.equals(runId, groupKey.runId) &&
+          java.util.Objects.equals(stageName, groupKey.stageName);
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Objects.hash(metricName, runId, stageName);
+    }
   }
 }
