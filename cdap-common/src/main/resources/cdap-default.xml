@@ -3367,6 +3367,14 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.remote.stop.delay.secs</name>
+    <value>10</value>
+    <description>
+      Time to wait in seconds for a remote process to shut down before forcing a kill during program completion.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.batch.size</name>
     <value>1000</value>
     <description>
