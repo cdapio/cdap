@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdap-task-manager
+  namespace: default
+  labels:
+    cdap.service: task.manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      cdap.service: task.manager
+  template:
+    metadata:
+      labels:
+        cdap.service: task.manager
+    spec:
+      containers:
+        - name: task-manager
+          image: us-east1-docker.pkg.dev/ld27be8c949817660-tp/ar-demo/cloud-data-fusion:latest
+          command:
+            - "java"
+            - "-cp"
+            - "/opt/cdap/master/lib/*"
+            - "io.cdap.cdap.common.internal.remote.TaskManagerMain"
+          ports:
+            - containerPort: 11025
+              name: http
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1024Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2048Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdap-task-manager
+  namespace: default
+spec:
+  selector:
+    cdap.service: task.manager
+  ports:
+    - protocol: TCP
+      port: 11025
+      targetPort: 11025
+  type: ClusterIP
