@@ -72,4 +72,15 @@ public class TaskDetails {
         .map(RunnableTaskRequest::getClassName)
         .orElse(request.getClassName());
   }
+
+  @Nullable
+  public String getNamespace() {
+    if (request == null) {
+      return null;
+    }
+    return Optional.ofNullable(request.getParam())
+        .map(RunnableTaskParam::getEmbeddedTaskRequest)
+        .map(RunnableTaskRequest::getNamespace)
+        .orElse(request.getNamespace());
+  }
 }

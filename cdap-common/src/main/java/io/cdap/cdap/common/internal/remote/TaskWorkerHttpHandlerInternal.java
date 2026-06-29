@@ -85,7 +85,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   /**
    * Holds the total number of requests that have been executed by this handler
-   * that should count toward max allowed.
+   * that should count
+   * toward max allowed.
    */
   private final AtomicInteger runningRequestCount = new AtomicInteger(0);
   private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
@@ -99,6 +100,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int concurrentRequestLimit;
+  private final StickyLeaseManager stickyLeaseManager;
 
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
@@ -117,12 +119,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
-    if (enableUserCodeIsolationEnabled) {
-      // Run only one request at a time in user code isolation mode.
-      this.concurrentRequestLimit = 1;
-    } else {
-      this.concurrentRequestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
-    }
+    this.concurrentRequestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
+    int maxTasksPerLease = cConf.getInt("task.worker.lease.max.tasks", 10);
+    this.stickyLeaseManager = new StickyLeaseManager(concurrentRequestLimit, maxTasksPerLease);
+
+    ScheduledExecutorService leaseReclamationExecutor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("lease-reclamation"));
+    leaseReclamationExecutor.scheduleAtFixedRate(() -> {
+      try {
+        stickyLeaseManager.enforceInactivityReclamation();
+      } catch (Throwable t) {
+        LOG.warn("Error enforcing inactivity lease reclamation", t);
+      }
+    }, 1, 1, TimeUnit.SECONDS);
 
     // Restart the service to clean up and re-claim resources after user code
     // execution.
@@ -130,6 +139,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       taskDetails.emitMetrics(succeeded);
       final int pendingRequests = runningRequestCount.decrementAndGet();
       requestProcessedCount.incrementAndGet();
+
+      String namespace = taskDetails.getNamespace();
+      if (namespace != null) {
+        stickyLeaseManager.finishTask(new NamespaceId(namespace));
+      }
 
       String className = taskDetails.getClassName();
       if (mustRestart.get() && pendingRequests == 0) {
@@ -154,11 +168,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   /**
    * If there is no ongoing request, worker pod gets restarted after a random
-   * duration is selected from the following range. Otherwise, worker pod can
-   * only get restarted once the ongoing request finishes. range = [Duration -
-   * DURATION_FRACTION * Duration, Duration + DURATION_FRACTION * Duration]
-   * Reason: by randomizing the duration, it is guaranteed that pods do not get
-   * restarted at the same time.
+   * duration is selected
+   * from the following range. Otherwise, worker pod can only get restarted once
+   * the ongoing request
+   * finishes. range = [Duration - DURATION_FRACTION * Duration, Duration +
+   * DURATION_FRACTION *
+   * Duration] Reason: by randomizing the duration, it is guaranteed that pods do
+   * not get restarted
+   * at the same time.
    */
   private void enablePeriodicRestart(CConfiguration cConf,
       Consumer<String> stopper) {
@@ -174,7 +191,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     int finalTaskDeadlineSeconds = calculateFinalTaskDeadlineSeconds(duration);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
-    Threads.createDaemonThreadFactory("task-worker-restart"));
+        Threads.createDaemonThreadFactory("task-worker-restart"));
 
     executorService.scheduleWithFixedDelay(() -> {
       // we restart once all ongoing requests finish, i.e. runningRequestCount is 0.
@@ -211,69 +228,108 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
+    LOG.info("sidhdirenge - Received task on worker {} for namespace :{}",
+        System.getenv("HOSTNAME") != null ? System.getenv("HOSTNAME") : "unknown",
+        request.headers());
     if (mustRestart.get()) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
     }
-    if (runningRequestCount.incrementAndGet() > concurrentRequestLimit) {
-      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
-      runningRequestCount.decrementAndGet();
+
+    long startTime = System.currentTimeMillis();
+    RunnableTaskRequest runnableTaskRequest = null;
+    try {
+      runnableTaskRequest = GSON.fromJson(
+          request.content().toString(StandardCharsets.UTF_8),
+          RunnableTaskRequest.class);
+    } catch (Exception ex) {
+      LOG.error("Failed to parse task request {}",
+          request.content().toString(StandardCharsets.UTF_8), ex);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+          exceptionToJson(ex),
+          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
       return;
     }
 
-    long startTime = System.currentTimeMillis();
+    NamespaceId namespaceId;
+    if (runnableTaskRequest.getParam() != null
+        && runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
+      namespaceId = new NamespaceId(
+          runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace());
+    } else {
+      String ns = runnableTaskRequest.getNamespace();
+      namespaceId = new NamespaceId(ns != null ? ns : "default");
+    }
+
+    StickyLeaseManager.TenantTier tier = getTenantTier(namespaceId);
+    StickyLeaseManager.AcquisitionStatus leaseStatus = stickyLeaseManager.startTask(namespaceId,
+        tier);
+    if (leaseStatus != StickyLeaseManager.AcquisitionStatus.SUCCESS) {
+      LOG.warn("Rejecting request for namespace {} due to lease status: {}", namespaceId,
+          leaseStatus);
+      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      return;
+    }
+
+    runningRequestCount.incrementAndGet();
+
     try {
-      RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
-          request.content().toString(StandardCharsets.UTF_8),
-          RunnableTaskRequest.class);
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
+      // set the GcpMetadataTaskContext before running the task.
+      GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
+      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
+      runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+
+      TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
+          startTime, runnableTaskContext.isTerminateOnComplete(),
           runnableTaskRequest);
-      try {
-        NamespaceId namespaceId;
-        if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
-          // For system app tasks
-          namespaceId = new NamespaceId(
-              runnableTaskRequest.getParam().getEmbeddedTaskRequest()
-                  .getNamespace());
-        } else {
-          namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
-        }
-        // set the GcpMetadataTaskContext before running the task.
-        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId,
-            cConf);
-        runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
-        TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
-            startTime, runnableTaskContext.isTerminateOnComplete(),
-            runnableTaskRequest);
-        responder.sendContent(HttpResponseStatus.OK,
-            new RunnableTaskBodyProducer(runnableTaskContext,
-                taskCompletionConsumer, taskDetails),
-            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-                MediaType.APPLICATION_OCTET_STREAM));
-      } catch (ClassNotFoundException | ClassCastException ex) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-            exceptionToJson(ex),
-            new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-                "application/json"));
-        // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
-        taskCompletionConsumer.accept(false,
-            new TaskDetails(metricsCollectionService, startTime, false,
-                runnableTaskRequest));
-      } finally {
-        // clear the GcpMetadataTaskContext after the task is completed.
-        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
-      }
+
+      responder.sendContent(HttpResponseStatus.OK,
+          new RunnableTaskBodyProducer(runnableTaskContext,
+              taskCompletionConsumer, taskDetails),
+          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+              MediaType.APPLICATION_OCTET_STREAM));
+    } catch (ClassNotFoundException | ClassCastException ex) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+          exceptionToJson(ex),
+          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
+              "application/json"));
+      // Since the user class is not even loaded, no user code ran, hence it's ok to
+      // not terminate the runner
+      taskCompletionConsumer.accept(false,
+          new TaskDetails(metricsCollectionService, startTime, false,
+              runnableTaskRequest));
     } catch (Exception ex) {
-      LOG.error("Failed to run task {}",
-          request.content().toString(StandardCharsets.UTF_8), ex);
+      LOG.error("Failed to run task {}", runnableTaskRequest, ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
           exceptionToJson(ex),
           new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
               "application/json"));
       // Potentially ran user code, hence terminate the runner.
       taskCompletionConsumer.accept(false,
-          new TaskDetails(metricsCollectionService, startTime, true, null));
+          new TaskDetails(metricsCollectionService, startTime, true, runnableTaskRequest));
+    } finally {
+      // clear the GcpMetadataTaskContext after the task is completed.
+      try {
+        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
+      } catch (Exception e) {
+        LOG.warn("Failed to clear GCP metadata task context", e);
+      }
     }
+  }
+
+  private StickyLeaseManager.TenantTier getTenantTier(NamespaceId namespaceId) {
+    String nsName = namespaceId.getNamespace().toLowerCase();
+    if (nsName.contains("enterprise")) {
+      return StickyLeaseManager.TenantTier.ENTERPRISE;
+    } else if (nsName.contains("developer") || nsName.contains("dev")) {
+      return StickyLeaseManager.TenantTier.DEVELOPER;
+    } else {
+      return StickyLeaseManager.TenantTier.BASIC;
+    }
+  }
+
+  StickyLeaseManager getStickyLeaseManager() {
+    return stickyLeaseManager;
   }
 
   /**
@@ -309,7 +365,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   /**
    * Return json representation of an exception. Used to propagate exception
-   * across network for better surfacing errors and debuggability.
+   * across network for
+   * better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
@@ -317,22 +374,24 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * Compute the final task Dead line in Seconds where if the config {@TaskWorker.TASK_EXECUTION_DEADLINE_SECOND}
-   * is less than 0 which is not valid then use the duration instead.
+   * Compute the final task Dead line in Seconds where if the config
+   * {@TaskWorker.TASK_EXECUTION_DEADLINE_SECOND} is less than 0 which is not
+   * valid then use the
+   * duration instead.
    *
    * @param duration
    * @return
    */
   private int calculateFinalTaskDeadlineSeconds(int duration) {
     int taskDeadlineSeconds = cConf.getInt(
-      TaskWorker.TASK_EXECUTION_DEADLINE_SECOND,
-      0);
+        TaskWorker.TASK_EXECUTION_DEADLINE_SECOND,
+        0);
 
     if (taskDeadlineSeconds < 0) {
       LOG.info(
-        "Task deadline is {}, using {} value {} as the deadline instead.",
-        taskDeadlineSeconds,
-        Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
+          "Task deadline is {}, using {} value {} as the deadline instead.",
+          taskDeadlineSeconds,
+          Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
       taskDeadlineSeconds = duration;
     }
     return taskDeadlineSeconds;
@@ -340,9 +399,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   /**
    * By using BodyProducer instead of simply sending out response bytes, the
-   * handler can get notified (through finished method) when sending the
-   * response is done, so it can safely call the stopper to kill the worker
-   * pod.
+   * handler can get
+   * notified (through finished method) when sending the response is done, so it
+   * can safely call the
+   * stopper to kill the worker pod.
    */
   private static class RunnableTaskBodyProducer extends BodyProducer {
 
