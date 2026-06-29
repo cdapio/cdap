@@ -130,8 +130,9 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
+          String namespace = runnableTaskRequest.getNamespace();
           HttpRequest.Builder requestBuilder = remoteClient
-              .requestBuilder(HttpMethod.POST, workerUrl)
+              .requestBuilder(HttpMethod.POST, workerUrl, namespace)
               .withBody(requestBody.duplicate());
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
