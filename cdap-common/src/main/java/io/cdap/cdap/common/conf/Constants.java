@@ -960,6 +960,14 @@ public final class Constants {
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
 
     public static final String TWILL_INSTANCE_ID = "metrics.twill.instance.id";
+    
+    public static final String RAW_SUFFIX = ".raw";
+    // Suffixes for pipeline stage metrics. Defined here instead of etl-core Constants
+    // because cdap-spark-core needs to match them but cannot depend on etl-core (circular dependency).
+    public static final String RECORDS_IN_SUFFIX = ".records.in";
+    public static final String RECORDS_OUT_SUFFIX = ".records.out";
+    public static final String RECORDS_ERROR_SUFFIX = ".records.error";
+    public static final String RECORDS_ALERT_SUFFIX = ".records.alert";
 
     public static final String METRICS_WRITER_EXTENSIONS_DIR = "metrics.writer.extensions.dir";
     public static final String METRICS_WRITER_PREFIX = "metrics.writer.";
@@ -1065,6 +1073,8 @@ public final class Constants {
 
       public static final String PROVISIONER = "prv";
       public static final String SPARK = "sp";
+      public static final String SPARK_PARTITION = "spark_part";
+      public static final String SPARK_ATTEMPT = "spark_att";
       public static final String STATUS = "st";
       public static final String CLUSTER_STATUS = "clst";
 
