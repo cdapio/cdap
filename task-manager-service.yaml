@@ -5,6 +5,7 @@ metadata:
   namespace: default
   labels:
     cdap.service: task.manager
+    cdap.instance: sidhdirenge-jun8
 spec:
   replicas: 1
   selector:
@@ -14,15 +15,19 @@ spec:
     metadata:
       labels:
         cdap.service: task.manager
+        cdap.instance: sidhdirenge-jun8
     spec:
+      serviceAccountName: cdap-sidhdirenge-jun8-system-sa
       containers:
         - name: task-manager
           image: us-east1-docker.pkg.dev/ld27be8c949817660-tp/ar-demo/cloud-data-fusion:latest
-          command:
-            - "java"
-            - "-cp"
-            - "/opt/cdap/master/lib/*"
-            - "io.cdap.cdap.common.internal.remote.TaskManagerMain"
+          imagePullPolicy: Always
+          args:
+            - "io.cdap.cdap.master.environment.k8s.TaskManagerMain"
+            - "--env=k8s"
+          env:
+            - name: SERVICE_NAME
+              value: task-manager
           ports:
             - containerPort: 11025
               name: http
@@ -33,6 +38,48 @@ spec:
             limits:
               cpu: "1000m"
               memory: "2048Mi"
+          volumeMounts:
+            - mountPath: /etc/podinfo
+              name: podinfo
+              readOnly: true
+            - mountPath: /etc/cdap/conf
+              name: cdap-conf
+              readOnly: true
+            - mountPath: /etc/hadoop/conf
+              name: hadoop-conf
+              readOnly: true
+            - mountPath: /etc/cdap/security
+              name: cdap-security
+              readOnly: true
+      volumes:
+        - downwardAPI:
+            defaultMode: 420
+            items:
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.labels
+                path: pod.labels.properties
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+                path: pod.name
+              - fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+                path: pod.uid
+          name: podinfo
+        - configMap:
+            defaultMode: 420
+            name: cdap-sidhdirenge-jun8-cconf
+          name: cdap-conf
+        - configMap:
+            defaultMode: 420
+            name: cdap-sidhdirenge-jun8-hconf
+          name: hadoop-conf
+        - name: cdap-security
+          secret:
+            defaultMode: 420
+            secretName: cdap-security
 ---
 apiVersion: v1
 kind: Service
