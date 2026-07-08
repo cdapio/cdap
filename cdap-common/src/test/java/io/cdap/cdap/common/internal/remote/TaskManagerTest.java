@@ -16,14 +16,13 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.twill.discovery.Discoverable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Unit tests for {@link TaskManager} warm sticky lease orchestration.
@@ -59,9 +58,9 @@ public class TaskManagerTest {
     Assert.assertNotEquals(pod1.getSocketAddress(), pod2.getSocketAddress());
 
     // Clean up active tasks
-    taskManager.finishTask("ns1", pod1);
-    taskManager.finishTask("ns1", pod1Repeat);
-    taskManager.finishTask("ns2", pod2);
+    taskManager.finishTask("ns1", pod1, false);
+    taskManager.finishTask("ns1", pod1Repeat, false);
+    taskManager.finishTask("ns2", pod2, false);
   }
 
   @Test
@@ -71,20 +70,46 @@ public class TaskManagerTest {
     // 1. Claim a pod for ns3
     Discoverable initialPod = taskManager.resolvePod("ns3", pods);
     Assert.assertNotNull(initialPod);
-    taskManager.finishTask("ns3", initialPod);
+    taskManager.finishTask("ns3", initialPod, false);
 
-    // 2. Send 9 more tasks to reach the limit of 10 total tasks
-    for (int i = 0; i < 9; i++) {
+    // 2. Send tasks to reach the logical reset limit
+    for (int i = 0; i < TaskManager.MAX_TOTAL_TASKS_BEFORE_RESET - 1; i++) {
       Discoverable p = taskManager.resolvePod("ns3", pods);
       Assert.assertEquals(initialPod.getSocketAddress(), p.getSocketAddress());
-      taskManager.finishTask("ns3", p);
+      taskManager.finishTask("ns3", p, false);
     }
 
-    // 3. The 11th request for a DIFFERENT namespace (ns4) should now be able to claim this pod
-    // because it was logically reset (released) on the 10th task!
+    // 3. The next request for a DIFFERENT namespace (ns4) should now be able to claim this pod
+    // because it was logically reset (released) on the limit threshold!
     Discoverable resetPod = taskManager.resolvePod("ns4", pods);
     Assert.assertNotNull(resetPod);
     Assert.assertEquals(initialPod.getSocketAddress(), resetPod.getSocketAddress());
-    taskManager.finishTask("ns4", resetPod);
+    taskManager.finishTask("ns4", resetPod, false);
+  }
+
+  @Test
+  public void testRejectionRevertsTotalProcessedCount() {
+    TaskManager taskManager = TaskManager.getInstance();
+
+    // 1. Claim a pod for ns5
+    Discoverable initialPod = taskManager.resolvePod("ns5", pods);
+    Assert.assertNotNull(initialPod);
+    
+    // 2. Reject it -> totalProcessed should revert back to 0
+    taskManager.finishTask("ns5", initialPod, true);
+
+    // 3. Send 10 tasks to reach the logical reset limit
+    for (int i = 0; i < TaskManager.MAX_TOTAL_TASKS_BEFORE_RESET; i++) {
+      Discoverable p = taskManager.resolvePod("ns5", pods);
+      Assert.assertEquals(initialPod.getSocketAddress(), p.getSocketAddress());
+      taskManager.finishTask("ns5", p, false);
+    }
+
+    // 4. The next request for ns6 should claim this pod because it reset successfully after exactly 10 tasks,
+    // meaning the rejected task did not count towards the 10 task limit.
+    Discoverable resetPod = taskManager.resolvePod("ns6", pods);
+    Assert.assertNotNull(resetPod);
+    Assert.assertEquals(initialPod.getSocketAddress(), resetPod.getSocketAddress());
+    taskManager.finishTask("ns6", resetPod, false);
   }
 }

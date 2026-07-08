@@ -43,6 +43,8 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,6 +67,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public class RemoteTaskExecutor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
@@ -131,6 +134,15 @@ public class RemoteTaskExecutor {
       return Retries.callWithRetries((retryContext) -> {
         try {
           String namespace = runnableTaskRequest.getNamespace();
+          if ("system".equals(namespace) && runnableTaskRequest.getParam() != null
+              && runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
+            String embeddedNamespace = runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace();
+            if (embeddedNamespace != null && !embeddedNamespace.isEmpty()) {
+              namespace = embeddedNamespace;
+              LOG.info("sidhdirenge - RemoteTaskExecutor: Mapped SystemAppTask namespace to embedded: {}",
+                       namespace);
+            }
+          }
           HttpRequest.Builder requestBuilder = remoteClient
               .requestBuilder(HttpMethod.POST, workerUrl, namespace)
               .withBody(requestBody.duplicate());

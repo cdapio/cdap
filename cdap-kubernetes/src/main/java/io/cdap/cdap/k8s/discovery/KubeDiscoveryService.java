@@ -23,6 +23,7 @@ import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Endpoints;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1Pod;
@@ -224,7 +225,7 @@ public class KubeDiscoveryService implements DiscoveryService,
    * @throws IOException if exception was raised during creation of
    *                     {@link CoreV1Api}
    */
-  private CoreV1Api getCoreApi() throws IOException {
+  CoreV1Api getCoreApi() throws IOException {
     CoreV1Api api = coreApi;
     if (api != null) {
       return api;
@@ -542,7 +543,6 @@ public class KubeDiscoveryService implements DiscoveryService,
         .map(Base64.getDecoder()::decode)
         .orElse(EMPTY_PAYLOAD);
 
-    String hostname;
     if (SERVICE_TYPE_LOAD_BALANCER.equals(service.getSpec().getType())) {
       Optional<String> ipAddr = getLoadBalancerIp(service);
       if (!ipAddr.isPresent()) {
@@ -551,12 +551,51 @@ public class KubeDiscoveryService implements DiscoveryService,
             name);
         return Collections.emptySet();
       }
-      hostname = ipAddr.get();
-    } else {
-      hostname = String.format("%s.%s", meta.getName(), namespace);
+      String hostname = ipAddr.get();
+      return servicePorts.stream()
+          .map(port -> createDiscoverable(
+              name, hostname,
+              port, payload)
+          )
+          .filter(Objects::nonNull)
+          .findFirst()
+          .map(Collections::singleton)
+          .orElse(Collections.emptySet());
     }
 
-    // We don't expect there is more than one service port, hence only pick the first one
+    // Try to discover individual Pod IPs via the K8s Endpoints API for ClusterIP services
+    Set<Discoverable> discoverables = new HashSet<>();
+    try {
+      CoreV1Api api = getCoreApi();
+      V1Endpoints endpoints = api.readNamespacedEndpoints(meta.getName(), namespace, null);
+      if (endpoints != null && endpoints.getSubsets() != null) {
+        for (io.kubernetes.client.openapi.models.V1EndpointSubset subset : endpoints.getSubsets()) {
+          List<io.kubernetes.client.openapi.models.V1EndpointAddress> addresses = subset.getAddresses();
+          List<io.kubernetes.client.openapi.models.CoreV1EndpointPort> ports = subset.getPorts();
+          if (addresses != null && ports != null) {
+            for (io.kubernetes.client.openapi.models.V1EndpointAddress address : addresses) {
+              for (io.kubernetes.client.openapi.models.CoreV1EndpointPort port : ports) {
+                if (servicePorts.stream().anyMatch(sp -> sp.getPort().equals(port.getPort()))) {
+                  Discoverable d = createDiscoverable(name, address.getIp(),
+                      new V1ServicePort().port(port.getPort()), payload);
+                  if (d != null) {
+                    discoverables.add(d);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Failed to retrieve endpoints for service {}, falling back to service hostname", name, e);
+    }
+
+    if (!discoverables.isEmpty()) {
+      return discoverables;
+    }
+
+    String hostname = String.format("%s.%s", meta.getName(), namespace);
     return servicePorts.stream()
         .map(port -> createDiscoverable(
             name, hostname,

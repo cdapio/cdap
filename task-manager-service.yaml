@@ -51,6 +51,8 @@ spec:
             - mountPath: /etc/cdap/security
               name: cdap-security
               readOnly: true
+            - mountPath: /cdap_configmap
+              name: cdap-cm-vol-cdap-sidhdirenge-jun8-configmap
       volumes:
         - downwardAPI:
             defaultMode: 420
@@ -80,6 +82,10 @@ spec:
           secret:
             defaultMode: 420
             secretName: cdap-security
+        - configMap:
+            defaultMode: 420
+            name: cdap-sidhdirenge-jun8-configmap
+          name: cdap-cm-vol-cdap-sidhdirenge-jun8-configmap
 ---
 apiVersion: v1
 kind: Service

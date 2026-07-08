@@ -181,9 +181,13 @@ public class RemoteClient {
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl,
         headers, request.getBody(), request.getBodyLength());
 
+    boolean rejected = false;
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       int responseCode = response.getResponseCode();
+      if (responseCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+        rejected = true;
+      }
       // 503 is always retryable. Other 5xx errors are retryable if the request is idempotent (handled in
       // RemoteClient#executeIdempotent(HttpRequest)
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
@@ -211,12 +215,16 @@ public class RemoteClient {
       }
       return response;
     } catch (ConnectException e) {
+      rejected = true;
       throw new ServiceUnavailableException(discoverableServiceName, e);
+    } catch (IOException | RuntimeException e) {
+      rejected = true;
+      throw e;
     } finally {
       Discoverable resolvedPod = CURRENT_RESOLVED_POD.get();
       String routingKey = CURRENT_ROUTING_KEY.get();
       if (resolvedPod != null && routingKey != null) {
-        notifyTaskManagerFinished(routingKey, resolvedPod);
+        notifyTaskManagerFinished(routingKey, resolvedPod, rejected);
       }
       CURRENT_RESOLVED_POD.remove();
       CURRENT_ROUTING_KEY.remove();
@@ -234,27 +242,33 @@ public class RemoteClient {
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl, headers,
         request.getBody(), request.getBodyLength(), request.getConsumer());
+    boolean rejected = false;
     try {
       HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
       if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+          rejected = true;
+        }
         throw new IOException(
             String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
                 httpResponse.getResponseCode()));
       }
       httpResponse.consumeContent();
+    } catch (IOException | RuntimeException e) {
+      rejected = true;
+      throw e;
     } finally {
       Discoverable resolvedPod = CURRENT_RESOLVED_POD.get();
       String routingKey = CURRENT_ROUTING_KEY.get();
       if (resolvedPod != null && routingKey != null) {
-        notifyTaskManagerFinished(routingKey, resolvedPod);
+        notifyTaskManagerFinished(routingKey, resolvedPod, rejected);
       }
       CURRENT_RESOLVED_POD.remove();
       CURRENT_ROUTING_KEY.remove();
     }
   }
-
-  private void notifyTaskManagerFinished(String namespace, Discoverable pod) {
+  private void notifyTaskManagerFinished(String namespace, Discoverable pod, boolean rejected) {
     try {
       URL url = new URL(TASK_MANAGER_URL + "/v3/taskmanager/finish");
       TaskManagerHttpHandler.FinishRequest finishRequest = new TaskManagerHttpHandler.FinishRequest();
@@ -269,6 +283,10 @@ public class RemoteClient {
       podField.setAccessible(true);
       podField.set(finishRequest, podInfo);
 
+      java.lang.reflect.Field rejectedField = finishRequest.getClass().getDeclaredField("rejected");
+      rejectedField.setAccessible(true);
+      rejectedField.set(finishRequest, rejected);
+ 
       HttpRequest req = HttpRequest.post(url)
           .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
           .withBody(GSON.toJson(finishRequest))
@@ -409,8 +427,19 @@ public class RemoteClient {
       if (resp.getResponseCode() == HttpURLConnection.HTTP_OK) {
         TaskManagerHttpHandler.PodInfo selectedPodInfo = GSON.fromJson(
             resp.getResponseBodyAsString(), TaskManagerHttpHandler.PodInfo.class);
+        
+        byte[] payload = list.isEmpty() ? new byte[0] : list.get(0).getPayload();
+        for (Discoverable d : list) {
+          if (d.getSocketAddress().getPort() == selectedPodInfo.getPort()
+              && (d.getSocketAddress().getHostName().equals(selectedPodInfo.getHost())
+                  || (d.getSocketAddress().getAddress() != null
+                      && d.getSocketAddress().getAddress().getHostAddress().equals(selectedPodInfo.getHost())))) {
+            payload = d.getPayload();
+            break;
+          }
+        }
         discoverable = new Discoverable("task.worker",
-            new java.net.InetSocketAddress(selectedPodInfo.getHost(), selectedPodInfo.getPort()));
+            new java.net.InetSocketAddress(selectedPodInfo.getHost(), selectedPodInfo.getPort()), payload);
       }
     } catch (Exception e) {
       LOG.warn("sidhdirenge - Failed to resolve pod via Task Manager HTTP Service. Falling back to local hashing.", e);

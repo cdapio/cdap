@@ -97,7 +97,7 @@ public class TaskManagerHttpHandler extends AbstractHttpHandler {
       Discoverable pod = new Discoverable("task.worker",
           new InetSocketAddress(finishRequest.getPod().getHost(), finishRequest.getPod().getPort()));
 
-      taskManager.finishTask(finishRequest.getNamespace(), pod);
+      taskManager.finishTask(finishRequest.getNamespace(), pod, finishRequest.isRejected());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Failed to finish task in Task Manager Service", e);
@@ -122,6 +122,7 @@ public class TaskManagerHttpHandler extends AbstractHttpHandler {
   public static class FinishRequest {
     private String namespace;
     private PodInfo pod;
+    private boolean rejected;
 
     public String getNamespace() {
       return namespace;
@@ -129,6 +130,10 @@ public class TaskManagerHttpHandler extends AbstractHttpHandler {
 
     public PodInfo getPod() {
       return pod;
+    }
+
+    public boolean isRejected() {
+      return rejected;
     }
   }
 

@@ -16,15 +16,15 @@
 
 package io.cdap.cdap.common.internal.remote;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 import org.apache.twill.discovery.Discoverable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Centralized Task Manager for orchestrating Warm Sticky Leases on Task Worker pods.
@@ -37,7 +37,7 @@ public class TaskManager {
 
   // Concurrency and task limits based on the design doc
   private static final int MAX_CONCURRENT_TASKS_PER_POD = 10;
-  private static final int MAX_TOTAL_TASKS_BEFORE_RESET = 10;
+  static final int MAX_TOTAL_TASKS_BEFORE_RESET = 10;
 
   private final ReentrantLock lock = new ReentrantLock();
 
@@ -78,7 +78,8 @@ public class TaskManager {
 
         if (namespace.equals(currentLease)) {
           int activeTasks = podActiveTaskCounts.getOrDefault(podIp, 0);
-          if (activeTasks < MAX_CONCURRENT_TASKS_PER_POD) {
+          int totalProcessed = podTotalTaskProcessedCounts.getOrDefault(podIp, 0);
+          if (activeTasks < MAX_CONCURRENT_TASKS_PER_POD && totalProcessed < MAX_TOTAL_TASKS_BEFORE_RESET) {
             leasedPodIp = podIp;
             selectedPod = pod;
             break;
@@ -112,18 +113,25 @@ public class TaskManager {
       if (selectedPod == null) {
         LOG.warn("sidhdirenge - TaskManager: All pods are leased. Falling back to least-loaded pod.");
         int minLoad = Integer.MAX_VALUE;
+        List<Discoverable> bestPods = new ArrayList<>();
         for (Discoverable pod : availablePods) {
           String podIp = getPodKey(pod);
           int activeTasks = podActiveTaskCounts.getOrDefault(podIp, 0);
           if (activeTasks < minLoad) {
             minLoad = activeTasks;
-            selectedPod = pod;
-            leasedPodIp = podIp;
+            bestPods.clear();
+            bestPods.add(pod);
+          } else if (activeTasks == minLoad) {
+            bestPods.add(pod);
           }
         }
         
-        // Force-assign lease to the new namespace
-        if (selectedPod != null) {
+        if (!bestPods.isEmpty()) {
+          int randomIndex = java.util.concurrent.ThreadLocalRandom.current().nextInt(bestPods.size());
+          selectedPod = bestPods.get(randomIndex);
+          leasedPodIp = getPodKey(selectedPod);
+          
+          // Force-assign lease to the new namespace
           podLeases.put(leasedPodIp, namespace);
           podActiveTaskCounts.put(leasedPodIp, 0);
           podTotalTaskProcessedCounts.put(leasedPodIp, 0);
@@ -140,13 +148,6 @@ public class TaskManager {
 
         LOG.info("sidhdirenge - TaskManager: Routing task for '{}' to pod '{}' (Active: {}, Total: {})",
                  namespace, leasedPodIp, activeTasks, totalProcessed);
-
-        // Check if the pod has reached the logical reset threshold
-        if (totalProcessed >= MAX_TOTAL_TASKS_BEFORE_RESET) {
-          LOG.info("sidhdirenge - TaskManager: Pod '{}' reached logical reset threshold ({} tasks). Reclaiming lease.",
-                   leasedPodIp, totalProcessed);
-          releaseLease(leasedPodIp);
-        }
       }
 
       return selectedPod;
@@ -155,19 +156,32 @@ public class TaskManager {
     }
   }
 
-  /**
-   * Called when a task completes to decrement the active task count on the pod.
-   */
-  public void finishTask(String namespace, Discoverable pod) {
+  public void finishTask(String namespace, Discoverable pod, boolean rejected) {
     lock.lock();
     try {
       String podIp = getPodKey(pod);
       int activeTasks = podActiveTaskCounts.getOrDefault(podIp, 0);
       if (activeTasks > 0) {
-        podActiveTaskCounts.put(podIp, activeTasks - 1);
+        activeTasks = activeTasks - 1;
+        podActiveTaskCounts.put(podIp, activeTasks);
       }
-      LOG.info("sidhdirenge - TaskManager: Task finished for '{}' on pod '{}' (Remaining active: {})",
-               namespace, podIp, podActiveTaskCounts.getOrDefault(podIp, 0));
+      
+      if (rejected) {
+        int totalProcessed = podTotalTaskProcessedCounts.getOrDefault(podIp, 0);
+        if (totalProcessed > 0) {
+          podTotalTaskProcessedCounts.put(podIp, totalProcessed - 1);
+        }
+      } else {
+        int totalProcessed = podTotalTaskProcessedCounts.getOrDefault(podIp, 0);
+        if (totalProcessed >= MAX_TOTAL_TASKS_BEFORE_RESET && activeTasks == 0) {
+          LOG.info("sidhdirenge - TaskManager: Pod '{}' finished all active tasks "
+                       + "after reaching reset threshold. Reclaiming lease.", podIp);
+          releaseLease(podIp);
+        }
+      }
+      
+      LOG.info("sidhdirenge - TaskManager: Task finished for '{}' on pod '{}' (Remaining active: {}, Rejected: {})",
+               namespace, podIp, activeTasks, rejected);
     } finally {
       lock.unlock();
     }
