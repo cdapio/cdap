@@ -19,7 +19,11 @@ package io.cdap.cdap.metrics.query;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -47,10 +51,42 @@ public class MetricsHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
 
   private final MetricsQueryHelper metricsQueryHelper;
+  private final ContextAccessEnforcer accessEnforcer;
 
   @Inject
-  public MetricsHandler(MetricsQueryHelper metricsQueryHelper) {
+  public MetricsHandler(MetricsQueryHelper metricsQueryHelper,
+      ContextAccessEnforcer accessEnforcer) {
     this.metricsQueryHelper = metricsQueryHelper;
+    this.accessEnforcer = accessEnforcer;
+  }
+
+  /**
+   * Enforces {@link StandardPermission#GET} for the namespace targeted by the given metric tags.
+   * Metrics are namespace-scoped (the metric store aggregates on the namespace tag), so reading
+   * them requires GET on that namespace. A {@code null} or wildcard ({@code "*"}) namespace means a
+   * cross-namespace read, which requires GET on the system namespace.
+   */
+  private void enforceNamespace(String namespace) throws AccessException {
+    NamespaceId namespaceId = (namespace == null || "*".equals(namespace))
+        ? NamespaceId.SYSTEM : new NamespaceId(namespace);
+    accessEnforcer.enforce(namespaceId, StandardPermission.GET);
+  }
+
+  /**
+   * Extracts the namespace from a list of {@code name:value} tags and enforces access on it.
+   */
+  private void enforceTags(List<String> tags) throws AccessException {
+    String namespace = null;
+    if (tags != null) {
+      for (String tag : tags) {
+        String[] parts = tag.split(":", 2);
+        if (parts.length == 2 && "namespace".equals(parts[0])) {
+          namespace = parts[1];
+          break;
+        }
+      }
+    }
+    enforceNamespace(namespace);
   }
 
   @POST
@@ -62,6 +98,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
       return;
     }
+    enforceTags(tags);
     try {
       switch (target) {
         case "tag":
@@ -99,7 +136,7 @@ public class MetricsHandler extends AbstractHttpHandler {
   public void query(FullHttpRequest request, HttpResponder responder,
       @QueryParam("metric") List<String> metrics,
       @QueryParam("groupBy") List<String> groupBy,
-      @QueryParam("tag") List<String> tags) {
+      @QueryParam("tag") List<String> tags) throws Exception {
     try {
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.uri()).parameters();
       if (queryParams.isEmpty()) {
@@ -108,17 +145,24 @@ public class MetricsHandler extends AbstractHttpHandler {
               GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                   new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
                   }.getType());
+          for (MetricsQueryHelper.QueryRequestFormat batchQuery : queries.values()) {
+            enforceNamespace(batchQuery.getTags().get("namespace"));
+          }
           responder.sendJson(HttpResponseStatus.OK,
               GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
           return;
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
       }
+      enforceTags(tags);
       responder.sendJson(HttpResponseStatus.OK,
           GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (AccessException e) {
+      // Let the framework map authorization failures to 403 instead of swallowing them as 500.
+      throw e;
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
