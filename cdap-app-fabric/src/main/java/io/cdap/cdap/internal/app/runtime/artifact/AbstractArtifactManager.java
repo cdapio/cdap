@@ -113,8 +113,16 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
 
     @Override
     public void close() throws IOException {
-      Closeables.closeQuietly(directoryClassLoader);
-      Closeables.closeQuietly(folder);
+      try {
+        directoryClassLoader.close();
+      } catch (IOException e) {
+        // Ignore
+      }
+      try {
+        folder.close();
+      } catch (IOException e) {
+        // Ignore
+      }
     }
   }
 }

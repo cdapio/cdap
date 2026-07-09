@@ -352,6 +352,10 @@ cdap_set_java () {
   fi
   export JAVA_VERSION=${__java_version}
   export JAVA=${__java}
+  if [ "${__java_version}" -gt 8 ]; then
+    export JAVA_OPTS="${JAVA_OPTS} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED"
+    export OPTS="${OPTS} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED"
+  fi
   return 0
 }
 

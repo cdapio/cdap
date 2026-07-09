@@ -49,6 +49,10 @@ public class NoSparkClassLoaderTestRunner extends BlockJUnit4ClassRunner {
 
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
+      Class<?> loadedClass = findLoadedClass(name);
+      if (loadedClass != null) {
+        return loadedClass;
+      }
       if (name.startsWith(CDAP_PACKAGE_NAME)) {
         // Load all CDAP classes with this classloader.
         // We manually feed the original class into the delegated classloader to maintain the parent classloader

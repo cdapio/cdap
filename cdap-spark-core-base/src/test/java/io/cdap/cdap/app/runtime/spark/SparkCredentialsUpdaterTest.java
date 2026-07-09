@@ -70,7 +70,7 @@ public class SparkCredentialsUpdaterTest {
     UserGroupInformation.getCurrentUser().addToken(new Token<>(Bytes.toBytes("id"), Bytes.toBytes("pass"),
                                                                new Text("kind"), new Text("service")));
 
-    updater.startAndWait();
+    updater.startAsync().awaitRunning();
     try {
       List<Location> expectedFiles = new ArrayList<>();
       expectedFiles.add(credentialsDir.append("credentials-1"));
@@ -96,7 +96,7 @@ public class SparkCredentialsUpdaterTest {
         expectedFiles.add(credentialsDir.append("credentials-" + (i + 1)));
       }
     } finally {
-      updater.stopAndWait();
+      updater.stopAsync().awaitTerminated();
     }
   }
 
@@ -115,7 +115,7 @@ public class SparkCredentialsUpdaterTest {
       }
     };
 
-    updater.startAndWait();
+    updater.startAsync().awaitRunning();
     try {
       // Expect this loop to finish in 3 seconds because we don't want sleep for too long for testing cleanup
       for (int i = 1; i <= 5; i++) {
@@ -130,7 +130,7 @@ public class SparkCredentialsUpdaterTest {
       updater.run();
       Assert.assertEquals(3, credentialsDir.list().size());
     } finally {
-      updater.stopAndWait();
+      updater.stopAsync().awaitTerminated();
     }
   }
 

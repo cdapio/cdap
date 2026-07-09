@@ -54,7 +54,7 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   @Override
   protected void doStop() throws Exception {
-    driver.stopAndWait();
+    driver.stopAsync().awaitTerminated();
   }
 
   @Override
@@ -64,7 +64,7 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   private void startListen(Service service) {
     // Forward state changes from the given service to this controller.
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void running() {
 

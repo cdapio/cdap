@@ -121,7 +121,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     server = TransactionServiceTest
         .createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
             hConf, tmpFolder.newFolder(), cConf);
-    server.startAndWait();
+    server.startAsync().awaitRunning();
 
     injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
@@ -150,25 +150,25 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
         new AuthenticationContextModules().getNoOpModule());
 
     zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     txStateStorage = injector.getInstance(TransactionStateStorage.class);
-    txStateStorage.startAndWait();
+    txStateStorage.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void afterClass() {
     try {
       try {
-        server.stopAndWait();
+        server.stopAsync().awaitTerminated();
         miniDfsCluster.shutdown();
       } finally {
-        zkClient.stopAndWait();
-        txStateStorage.stopAndWait();
+        zkClient.stopAsync().awaitTerminated();
+        txStateStorage.stopAsync().awaitTerminated();
       }
     } finally {
       zkServer.stopAndWait();
-      txStateStorage.stopAndWait();
+      txStateStorage.stopAsync().awaitTerminated();
     }
   }
 

@@ -214,7 +214,7 @@ public final class SparkRuntimeContextProvider {
       // For spark running natively on k8s, we may need to initialize the TokenManager for internal identity.
       if (clusterMode == ClusterMode.ON_PREMISE && SecurityUtil.isInternalAuthEnabled(cConf)) {
         TokenManager tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startAndWait();
+        tokenManager.startAsync().awaitRunning();
       }
 
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
@@ -240,7 +240,7 @@ public final class SparkRuntimeContextProvider {
       coreServices.add(serviceAnnouncer);
 
       for (Service coreService : coreServices) {
-        coreService.startAndWait();
+        coreService.startAsync().awaitRunning();
       }
 
       AtomicBoolean closed = new AtomicBoolean();
@@ -254,7 +254,7 @@ public final class SparkRuntimeContextProvider {
         // Stop all services. Reverse the order.
         for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
           try {
-            service.stopAndWait();
+            service.stopAsync().awaitTerminated();
           } catch (Exception e) {
             LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
           }

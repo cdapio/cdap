@@ -64,7 +64,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
     stopRequested = true;
     long gracefulTimeoutMillis = getGracefulTimeoutMillis();
     if (gracefulTimeoutMillis < 0) {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     } else {
       gracefulStop(gracefulTimeoutMillis);
     }
@@ -77,7 +77,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
    * supports graceful termination with timeout.
    */
   protected void gracefulStop(long gracefulTimeoutMillis) {
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Override
@@ -86,7 +86,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   }
 
   private void listenToRuntimeState(Service service) {
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void running() {
         started();

@@ -16,7 +16,8 @@
 
 package io.cdap.cdap.internal.app.store.adapters;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
+import java.util.Objects;
 
 /**
  * Unique key for identifying a plugin. Used for look up and caching.
@@ -106,13 +107,13 @@ class PluginKey {
       return false;
     }
     PluginKey pluginKey = (PluginKey) o;
-    return Objects.equal(parentName, pluginKey.parentName)
-        && Objects.equal(parentNamespace, pluginKey.parentNamespace)
-        && Objects.equal(artifactName, pluginKey.artifactName)
-        && Objects.equal(artifactNamespace, pluginKey.artifactNamespace)
-        && Objects.equal(artifactVersion, pluginKey.artifactVersion)
-        && Objects.equal(pluginType, pluginKey.pluginType)
-        && Objects.equal(pluginName, pluginKey.pluginName);
+    return Objects.equals(parentName, pluginKey.parentName)
+        && Objects.equals(parentNamespace, pluginKey.parentNamespace)
+        && Objects.equals(artifactName, pluginKey.artifactName)
+        && Objects.equals(artifactNamespace, pluginKey.artifactNamespace)
+        && Objects.equals(artifactVersion, pluginKey.artifactVersion)
+        && Objects.equals(pluginType, pluginKey.pluginType)
+        && Objects.equals(pluginName, pluginKey.pluginName);
   }
 
   /**
@@ -120,7 +121,7 @@ class PluginKey {
    */
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("parentName", parentName)
         .add("parentNamespace", parentNamespace)
         .add("artifactName", artifactName)
@@ -136,7 +137,7 @@ class PluginKey {
    */
   @Override
   public int hashCode() {
-    return Objects.hashCode(parentName, parentNamespace, artifactName, artifactNamespace,
+    return Objects.hash(parentName, parentNamespace, artifactName, artifactNamespace,
         artifactVersion, pluginType, pluginName);
   }
 }

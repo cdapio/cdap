@@ -66,8 +66,8 @@ public class TMSLogAppender extends LogAppender {
   public void start() {
     TMSLogPublisher publisher = new TMSLogPublisher(cConf, messagingService);
     Optional.ofNullable(tmsLogPublisher.getAndSet(publisher))
-        .ifPresent(TMSLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(p -> p.stopAsync().awaitTerminated());
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -75,7 +75,7 @@ public class TMSLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(TMSLogPublisher::stopAndWait);
+    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(p -> p.stopAsync().awaitTerminated());
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -95,7 +95,8 @@ public class TMSLogAppender extends LogAppender {
   // in Standalone
   @VisibleForTesting
   static int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashString(key.toString(),
+        java.nio.charset.StandardCharsets.UTF_8).asInt()) % numPartitions;
   }
 
   /**

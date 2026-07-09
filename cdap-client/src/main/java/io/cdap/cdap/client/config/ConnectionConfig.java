@@ -15,7 +15,7 @@
  */
 package io.cdap.cdap.client.config;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -117,7 +117,7 @@ public class ConnectionConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(hostname, port, sslEnabled, apiPath);
+    return java.util.Objects.hash(hostname, port, sslEnabled, apiPath);
   }
 
   @Override
@@ -129,15 +129,15 @@ public class ConnectionConfig {
       return false;
     }
     final ConnectionConfig other = (ConnectionConfig) obj;
-    return Objects.equal(this.hostname, other.hostname)
-        && Objects.equal(this.port, other.port)
-        && Objects.equal(this.sslEnabled, other.sslEnabled)
-        && Objects.equal(this.apiPath, other.apiPath);
+    return java.util.Objects.equals(this.hostname, other.hostname)
+        && java.util.Objects.equals(this.port, other.port)
+        && java.util.Objects.equals(this.sslEnabled, other.sslEnabled)
+        && java.util.Objects.equals(this.apiPath, other.apiPath);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("hostname", hostname)
         .add("port", port)
         .add("sslEnabled", sslEnabled)

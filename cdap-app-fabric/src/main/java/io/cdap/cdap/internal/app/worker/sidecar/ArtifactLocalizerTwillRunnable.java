@@ -167,7 +167,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    artifactLocalizerService.addListener(new ServiceListenerAdapter() {
+    artifactLocalizerService.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -180,7 +180,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting artifact localizer");
-    artifactLocalizerService.start();
+    artifactLocalizerService.startAsync();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -191,13 +191,13 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void stop() {
-    artifactLocalizerService.stop();
+    artifactLocalizerService.stopAsync();
   }
 
   @Override
   public void destroy() {
     try {
-      tokenManager.stopAndWait();
+      tokenManager.stopAsync().awaitTerminated();
     } finally {
       logAppenderInitializer.close();
     }
@@ -225,7 +225,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     tokenManager = injector.getInstance(TokenManager.class);
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
 
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
   }

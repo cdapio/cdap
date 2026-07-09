@@ -124,7 +124,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
       if (clusterMode == ClusterMode.ON_PREMISE) {
         zkClientService = injector.getInstance(ZKClientService.class);
-        zkClientService.startAndWait();
+        zkClientService.startAsync().awaitRunning();
       }
 
       LoggingContextAccessor.setLoggingContext(
@@ -210,9 +210,15 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
   @Override
   public void destroy() {
-    Closeables.closeQuietly(logAppenderInitializer);
+    try {
+      if (logAppenderInitializer != null) {
+        logAppenderInitializer.close();
+      }
+    } catch (Exception e) {
+      // Ignore
+    }
     if (zkClientService != null) {
-      zkClientService.stop();
+      zkClientService.stopAsync();
     }
   }
 

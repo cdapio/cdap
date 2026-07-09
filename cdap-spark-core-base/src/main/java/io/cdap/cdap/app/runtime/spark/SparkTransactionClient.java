@@ -70,10 +70,10 @@ public final class SparkTransactionClient {
                                                               TransactionFailureException {
 
     long timeoutMillis = Math.max(0L, timeUnit.toMillis(timeout) - txPollIntervalMillis);
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     Transaction transaction = getTransaction(stageId);
 
-    while (transaction == null && stopwatch.elapsedMillis() < timeoutMillis) {
+    while (transaction == null && stopwatch.elapsed(TimeUnit.MILLISECONDS) < timeoutMillis) {
       TimeUnit.MILLISECONDS.sleep(txPollIntervalMillis);
       transaction = getTransaction(stageId);
     }

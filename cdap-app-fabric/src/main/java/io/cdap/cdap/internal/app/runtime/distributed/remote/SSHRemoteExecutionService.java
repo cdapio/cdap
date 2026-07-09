@@ -61,13 +61,25 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
     if (sshSession != null && sshSession.isAlive()) {
       return;
     }
-    Closeables.closeQuietly(sshSession);
+    try {
+      if (sshSession != null) {
+        sshSession.close();
+      }
+    } catch (Exception e) {
+      // Ignore
+    }
     sshSession = createServiceProxyTunnel();
   }
 
   @Override
   protected void doShutdown() {
-    Closeables.closeQuietly(sshSession);
+    try {
+      if (sshSession != null) {
+        sshSession.close();
+      }
+    } catch (Exception e) {
+      // Ignore
+    }
     LOG.debug("Stopped ssh service for run {}", getProgramRunId());
   }
 

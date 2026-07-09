@@ -118,7 +118,7 @@ public final class Classes {
       InputStream byteCodeStream, final Set<String> methods) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(final int access, final String name, final String desc,
           String signature, String[] exceptions) {
@@ -141,7 +141,7 @@ public final class Classes {
 
         // VisitMaxs with 0 so that COMPUTE_MAXS from ClassWriter will compute the right values.
         adapter.visitMaxs(0, 0);
-        return new MethodVisitor(Opcodes.ASM5) {
+        return new MethodVisitor(Opcodes.ASM9) {
         };
       }
     }, 0);

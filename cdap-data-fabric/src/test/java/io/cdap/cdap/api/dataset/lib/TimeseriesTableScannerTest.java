@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
-import com.google.common.base.Objects;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
@@ -263,7 +263,7 @@ public class TimeseriesTableScannerTest {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(Fact.class)
+      return com.google.common.base.MoreObjects.toStringHelper(Fact.class)
         .add("ts", ts)
         .add("dimensions", dimensions)
         .toString();

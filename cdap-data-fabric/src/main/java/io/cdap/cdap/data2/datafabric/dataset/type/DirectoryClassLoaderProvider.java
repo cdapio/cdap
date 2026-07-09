@@ -16,13 +16,14 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.type;
 
-import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.io.Closeables;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Objects;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -31,9 +32,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.DatasetModuleMeta;
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -95,7 +94,11 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
     public void onRemoval(RemovalNotification<CacheKey, ClassLoader> notification) {
       ClassLoader cl = notification.getValue();
       if (cl instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) cl);
+        try {
+          ((Closeable) cl).close();
+        } catch (IOException e) {
+          // Ignore
+        }
       }
     }
   }
@@ -122,12 +125,12 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
 
       CacheKey that = (CacheKey) o;
 
-      return Objects.equal(this.uri, that.uri);
+      return Objects.equals(this.uri, that.uri);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(uri);
+      return Objects.hash(uri);
     }
   }
 

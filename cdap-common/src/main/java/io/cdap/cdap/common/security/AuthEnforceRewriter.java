@@ -182,7 +182,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
     private boolean interfaceClass;
 
     AuthEnforceAnnotationVisitor(String className) {
-      super(Opcodes.ASM5);
+      super(Opcodes.ASM9);
       this.className = className;
       this.methodAnnotations = new HashMap<>();
       this.fieldDetails = new HashMap<>();
@@ -221,7 +221,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
       // AuthEnforce annotation details and also sets a boolean flag hasEnforce which is used later in
       // visitParameterAnnotation to visit the annotations on parameters of this method only if it had AuthEnforce
       // annotation.
-      return new MethodVisitor(Opcodes.ASM5) {
+      return new MethodVisitor(Opcodes.ASM9) {
 
         final Map<Integer, ParameterDetail> parameterDetails = new HashMap<>();
         AnnotationNode authEnforceAnnotationNode;
@@ -388,7 +388,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
     AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<String, Type> fieldDetails,
         Map<Method, AnnotationDetail> methodAnnotations) {
-      super(Opcodes.ASM5, cw);
+      super(Opcodes.ASM9, cw);
       this.className = className;
       this.classType = Type.getObjectType(className.replace(".", "/"));
       this.methodAnnotations = methodAnnotations;
@@ -409,7 +409,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
       if (annotationDetail == null) {
         return mv;
       }
-      return new AdviceAdapter(Opcodes.ASM5, mv, access, methodName, methodDesc) {
+      return new AdviceAdapter(Opcodes.ASM9, mv, access, methodName, methodDesc) {
         @Override
         protected void onMethodEnter() {
           LOG.trace(

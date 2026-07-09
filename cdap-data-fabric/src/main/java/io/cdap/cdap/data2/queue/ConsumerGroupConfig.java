@@ -16,7 +16,8 @@
 
 package io.cdap.cdap.data2.queue;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
+import java.util.Objects;
 
 /**
  * Contains queue consumer group information.
@@ -58,7 +59,7 @@ public class ConsumerGroupConfig {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("groupId", groupId)
         .add("groupSize", groupSize)
         .add("dequeueStrategy", dequeueStrategy)
@@ -80,11 +81,11 @@ public class ConsumerGroupConfig {
     return groupId == other.groupId
         && groupSize == other.groupSize
         && dequeueStrategy == other.dequeueStrategy
-        && Objects.equal(hashKey, other.hashKey);
+        && Objects.equals(hashKey, other.hashKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(groupId, groupSize, dequeueStrategy, hashKey);
+    return Objects.hash(groupId, groupSize, dequeueStrategy, hashKey);
   }
 }

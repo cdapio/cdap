@@ -42,7 +42,7 @@ public class RetryOnStartFailureServiceTest {
     Service service = new RetryOnStartFailureService(
       createServiceSupplier(3, startLatch, new CountDownLatch(1), false),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
   }
 
@@ -54,14 +54,14 @@ public class RetryOnStartFailureServiceTest {
       RetryStrategies.limit(10, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS)));
 
     final CountDownLatch failureLatch = new CountDownLatch(1);
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void failed(Service.State from, Throwable failure) {
         failureLatch.countDown();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    service.start();
+    service.startAsync();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
     Assert.assertFalse(startLatch.await(100, TimeUnit.MILLISECONDS));
   }
@@ -73,9 +73,9 @@ public class RetryOnStartFailureServiceTest {
     Service service = new RetryOnStartFailureService(
       createServiceSupplier(1000, new CountDownLatch(1), failureLatch, false),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -85,7 +85,7 @@ public class RetryOnStartFailureServiceTest {
     final RetryOnStartFailureService service = new RetryOnStartFailureService(
       createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     // block until the underlying service started successfully
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
     // As documented in the RetryOnStartFailureService, there is a small race after the
@@ -99,7 +99,7 @@ public class RetryOnStartFailureServiceTest {
       }
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected failure in stopping");
     } catch (Exception e) {
       Assert.assertEquals("Intentional failure to shutdown", Throwables.getRootCause(e).getMessage());

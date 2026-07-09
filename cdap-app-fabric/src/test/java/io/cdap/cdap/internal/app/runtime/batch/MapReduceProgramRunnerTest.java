@@ -324,9 +324,11 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertFalse(resultLocation.isDirectory());
 
     // read output and verify result
-    String line = CharStreams.readFirstLine(
-      CharStreams.newReaderSupplier(
-        Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
+    String line;
+    try (java.io.BufferedReader reader = new java.io.BufferedReader(
+      new java.io.InputStreamReader(resultLocation.getInputStream(), Charsets.UTF_8))) {
+      line = reader.readLine();
+    }
     Assert.assertNotNull(line);
     String[] fields = line.split(outputSeparator == null ? ":" : outputSeparator);
     Assert.assertEquals(2, fields.length);

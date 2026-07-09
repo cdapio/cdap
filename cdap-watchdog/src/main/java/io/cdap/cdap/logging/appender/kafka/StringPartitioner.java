@@ -47,6 +47,7 @@ public final class StringPartitioner implements Partitioner {
 
   @Override
   public int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % this.numPartitions;
+    return Math.abs(Hashing.md5().hashString(key.toString(),
+        java.nio.charset.StandardCharsets.UTF_8).asInt()) % this.numPartitions;
   }
 }

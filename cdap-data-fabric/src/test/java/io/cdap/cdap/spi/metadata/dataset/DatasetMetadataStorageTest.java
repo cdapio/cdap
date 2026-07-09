@@ -25,7 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -107,7 +107,7 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
 
     Injector injector = Guice.createInjector(modules);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     storage = injector.getInstance(DatasetMetadataStorage.class);
     storage.createIndex();
 
@@ -116,9 +116,9 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
 
   @AfterClass
   public static void teardown() throws IOException {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
     storage.dropIndex();
-    Closeables.closeQuietly(storage);
+    storage.close();
   }
 
   @Override

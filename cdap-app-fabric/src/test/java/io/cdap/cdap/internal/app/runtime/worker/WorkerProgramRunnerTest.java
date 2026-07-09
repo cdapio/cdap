@@ -119,12 +119,12 @@ public class WorkerProgramRunnerTest {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
-    txService.startAndWait();
+    txService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAndWait();
+    txService.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

@@ -16,10 +16,6 @@
 
 package io.cdap.cdap.cli.command.system;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.util.table.TableRendererConfig;
@@ -27,8 +23,12 @@ import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Searches available commands.
@@ -57,15 +57,10 @@ public class SearchCommandsCommand extends HelpCommand {
     }
 
     final String query = queryString;
-    Predicate<Command> filter = new Predicate<Command>() {
-      @Override
-      public boolean apply(@Nullable Command input) {
-        return input != null && input.getPattern().matches(query);
-      }
-    };
+    Predicate<Command> filter = input -> input != null && input.getPattern().matches(query);
 
     output.println();
-    Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(),
+    Map<String, List<Command>> categorizedCommands = categorizeCommands(commands.get(),
         CommandCategory.GENERAL, filter);
     if (categorizedCommands.isEmpty()) {
       output.printf("No matches found for \"%s\"", originalQuery);
@@ -76,7 +71,8 @@ public class SearchCommandsCommand extends HelpCommand {
       output.println();
 
       for (CommandCategory category : CommandCategory.values()) {
-        List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
+        List<Command> commandList = new ArrayList<>(
+            categorizedCommands.getOrDefault(category.getName(), Collections.emptyList()));
         if (commandList.isEmpty()) {
           continue;
         }

@@ -94,7 +94,9 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
       // There should be one file under the partition directory
       List<Location> locations = partition.getLocation().list();
       Assert.assertEquals(1, locations.size());
-      Assert.assertArrayEquals(content, ByteStreams.toByteArray(Locations.newInputSupplier(locations.get(0))));
+      try (java.io.InputStream is = locations.get(0).getInputStream()) {
+        Assert.assertArrayEquals(content, ByteStreams.toByteArray(is));
+      }
 
       // Verify the tracking table of chunks sizes
       KeyValueTable trackingTable = (KeyValueTable) getDataset(FileUploadApp.KV_TABLE_NAME).get();

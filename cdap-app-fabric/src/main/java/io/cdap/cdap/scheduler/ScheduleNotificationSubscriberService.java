@@ -96,23 +96,25 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
         1, Threads.createDaemonThreadFactory("scheduler-notification-subscriber-%d"));
 
     // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
-    Futures.successfulAsList(
-        subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
+    for (Service service : subscriberServices) {
+      service.startAsync();
+    }
+    for (Service service : subscriberServices) {
+      service.awaitRunning();
+    }
   }
 
   @Override
   protected void shutDown() throws Exception {
-    // This never throw
-    Futures.successfulAsList(
-        subscriberServices.stream().map(Service::stop).collect(Collectors.toList())).get();
+    for (Service service : subscriberServices) {
+      service.stopAsync();
+    }
 
     for (Service service : subscriberServices) {
-      // The service must have been stopped, and calling stop again will just return immediate with the
-      // future that carries the stop state.
       try {
-        service.stop().get();
-      } catch (ExecutionException e) {
-        LOG.warn("Exception raised when stopping service {}", service, e.getCause());
+        service.awaitTerminated();
+      } catch (IllegalStateException e) {
+        LOG.warn("Exception raised when stopping service {}", service, e);
       }
     }
 

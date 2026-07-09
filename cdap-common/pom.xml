@@ -34,6 +34,7 @@
     <!-- Workaround for bug http://jira.codehaus.org/browse/MRESOURCES-99 -->
     <project.info.buildtime>${maven.build.timestamp}</project.info.buildtime>
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss.SSSZ</maven.build.timestamp.format>
+    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED</argLine>
   </properties>
 
   <dependencies>
@@ -260,8 +261,16 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
         <executions>
           <execution>
             <id>test-jar</id>
@@ -270,6 +279,14 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M6</version>
+        <configuration>
+          <argLine>${argLine}</argLine>
+        </configuration>
       </plugin>
     </plugins>
   </build>

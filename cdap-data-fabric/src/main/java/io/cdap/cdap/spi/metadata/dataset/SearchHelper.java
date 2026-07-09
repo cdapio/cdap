@@ -22,7 +22,7 @@ import static io.cdap.cdap.api.metadata.MetadataScope.USER;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
+
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.Transactional;
@@ -198,7 +198,14 @@ public class SearchHelper {
     @Override
     public void close() {
       for (String scope : datasets.keySet()) {
-        Closeables.closeQuietly(datasets.get(scope));
+        try {
+          MetadataDataset dataset = datasets.get(scope);
+          if (dataset != null) {
+            dataset.close();
+          }
+        } catch (Exception e) {
+          // Ignore
+        }
       }
       datasets.clear();
     }

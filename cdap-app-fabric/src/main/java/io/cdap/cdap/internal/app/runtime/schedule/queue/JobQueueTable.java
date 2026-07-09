@@ -425,9 +425,9 @@ public class JobQueueTable implements JobQueue {
     // Similar to ScheduleId#hashCode, but that is not consistent across runtimes due to how Enum#hashCode works.
     // Ensure that the hash won't change across runtimes:
     int hash = Hashing.murmur3_32().newHasher()
-        .putString(scheduleId.getNamespace())
-        .putString(scheduleId.getApplication())
-        .putString(scheduleId.getSchedule())
+        .putString(scheduleId.getNamespace(), java.nio.charset.StandardCharsets.UTF_8)
+        .putString(scheduleId.getApplication(), java.nio.charset.StandardCharsets.UTF_8)
+        .putString(scheduleId.getSchedule(), java.nio.charset.StandardCharsets.UTF_8)
         .hash().asInt();
     return Math.abs(hash) % numPartitions;
   }

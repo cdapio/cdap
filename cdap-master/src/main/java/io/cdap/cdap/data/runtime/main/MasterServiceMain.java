@@ -234,7 +234,7 @@ public class MasterServiceMain extends DaemonMain {
     this.leaderElection = new LeaderElection(zkClient, electionPath, electionHandler);
 
     // leader election will normally stay running. Will only stop if there was some issue starting up.
-    this.leaderElection.addListener(new ServiceListenerAdapter() {
+    this.leaderElection.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         if (!stopped) {
@@ -250,7 +250,7 @@ public class MasterServiceMain extends DaemonMain {
           System.exit(1);
         }
       }
-    }, MoreExecutors.sameThreadExecutor());
+    }, MoreExecutors.directExecutor());
   }
 
   @Override
@@ -273,8 +273,8 @@ public class MasterServiceMain extends DaemonMain {
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
         KeeperException.NodeExistsException.class, null));
-    electionInfoService.startAndWait();
-    leaderElection.startAndWait();
+    electionInfoService.startAsync().awaitRunning();
+    leaderElection.startAsync().awaitRunning();
   }
 
   @Override
@@ -333,7 +333,13 @@ public class MasterServiceMain extends DaemonMain {
     }
     stopQuietly(electionInfoService);
     stopQuietly(zkClient);
-    Closeables.closeQuietly(logAppenderInitializer);
+    if (logAppenderInitializer instanceof AutoCloseable) {
+      try {
+        ((AutoCloseable) logAppenderInitializer).close();
+      } catch (Exception e) {
+        // Ignore
+      }
+    }
   }
 
   @Override
@@ -400,7 +406,7 @@ public class MasterServiceMain extends DaemonMain {
   private static <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
     T service = injector.getInstance(cls);
     LOG.debug("Starting service in master {}", service);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     LOG.info("Service {} started in master", service);
     return service;
   }
@@ -412,7 +418,7 @@ public class MasterServiceMain extends DaemonMain {
     try {
       if (service != null) {
         LOG.debug("Stopping service in master: {}", service);
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
         LOG.info("Service {} stopped in master", service);
       }
     } catch (Exception e) {
@@ -672,7 +678,7 @@ public class MasterServiceMain extends DaemonMain {
         }
         LOG.info("Starting service in master: {}", service);
         try {
-          service.startAndWait();
+          service.startAsync().awaitRunning();
         } catch (Throwable t) {
           // shut down the executor and stop the twill app,
           // then throw an exception to cause the leader election service to stop
@@ -714,9 +720,27 @@ public class MasterServiceMain extends DaemonMain {
         stopQuietly(service);
       }
       services.clear();
-      Closeables.closeQuietly(metadataStorage);
-      Closeables.closeQuietly(accessControllerInstantiator);
-      Closeables.closeQuietly(logAppenderInitializer);
+      if (metadataStorage instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) metadataStorage).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
+      if (accessControllerInstantiator instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) accessControllerInstantiator).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
+      if (logAppenderInitializer instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) logAppenderInitializer).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
     }
 
     /**

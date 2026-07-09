@@ -273,7 +273,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    systemWorker.addListener(new ServiceListenerAdapter() {
+    systemWorker.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -286,9 +286,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting system worker");
-    systemWorker.start();
+    systemWorker.startAsync();
     if (artifactLocalizerService != null) {
-      artifactLocalizerService.start();
+      artifactLocalizerService.startAsync();
     }
 
     try {
@@ -302,12 +302,12 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping system worker");
-    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
+    Optional.ofNullable(metricsCollectionService).ifPresent(Service::stopAsync);
     if (systemWorker != null) {
-      systemWorker.stop();
+      systemWorker.stopAsync();
     }
     if (artifactLocalizerService != null) {
-      artifactLocalizerService.stop();
+      artifactLocalizerService.stopAsync();
     }
   }
 
@@ -342,7 +342,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,

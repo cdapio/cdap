@@ -26,15 +26,13 @@ import javax.annotation.Nullable;
 
 /**
  * Defines a query to perform on {@link MetricStore} data.
- * </p>
  * Though limited currently in functionality, you can map {@link MetricDataQuery} to the following
  * statement:
  * <pre>
- * SELECT count('read.ops')                                     << metric name and aggregation function
+ * SELECT count('read.ops')                                     &lt;&lt; metric name and aggregation function
  * FROM Cube
- * GROUP BY dataset,                                            << groupByTags
- * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   << sliceByTags
- *
+ * GROUP BY dataset,                                            &lt;&lt; groupByTags
+ * WHERE namespace='ns1' AND app='myApp' AND program='myFlow'   &lt;&lt; sliceByTags
  * </pre>
  */
 public final class MetricDataQuery {

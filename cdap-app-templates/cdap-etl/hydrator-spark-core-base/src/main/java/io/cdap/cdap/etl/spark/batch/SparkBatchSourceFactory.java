@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Split;
@@ -157,7 +157,7 @@ public final class SparkBatchSourceFactory {
     if (inputFormatProviders.containsKey(inputName)) {
       InputFormatProvider inputFormatProvider = inputFormatProviders.get(inputName);
 
-      ClassLoader classLoader = Objects.firstNonNull(currentThread().getContextClassLoader(),
+      ClassLoader classLoader = MoreObjects.firstNonNull(currentThread().getContextClassLoader(),
                                                      getClass().getClassLoader());
 
       return RDDUtils.readUsingInputFormat(jsc, inputFormatProvider, classLoader, keyClass,

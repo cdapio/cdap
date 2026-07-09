@@ -42,12 +42,12 @@ public class ZKPropertyStoreTest extends PropertyStoreTestBase {
     zkServer.startAndWait();
 
     zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkClient.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
     zkServer.stopAndWait();
   }
 

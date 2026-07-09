@@ -153,7 +153,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   private Service.Listener createServiceListener(final String name,
       final SettableFuture<String> future) {
-    return new ServiceListenerAdapter() {
+    return new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         LOG.info("Service " + name + " terminated");

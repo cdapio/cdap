@@ -80,8 +80,11 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     // will only be 1 part file, due to the small amount of data
     Location outputLocation = outputFileSet.getBaseLocation().append("output").append("part-r-00000");
 
-    List<String> lines = CharStreams.readLines(
-      CharStreams.newReaderSupplier(Locations.newInputSupplier(outputLocation), Charsets.UTF_8));
+    List<String> lines;
+    try (java.io.BufferedReader reader = new java.io.BufferedReader(
+      new java.io.InputStreamReader(outputLocation.getInputStream(), Charsets.UTF_8))) {
+      lines = CharStreams.readLines(reader);
+    }
 
     Assert.assertEquals(ImmutableList.of("1 Bob 75", "2 Samuel 18", "3 Joe 60"),
                         lines);

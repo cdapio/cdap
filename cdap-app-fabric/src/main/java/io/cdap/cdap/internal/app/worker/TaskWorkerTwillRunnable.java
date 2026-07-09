@@ -147,7 +147,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    taskWorker.addListener(new ServiceListenerAdapter() {
+    taskWorker.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -160,7 +160,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting task worker");
-    taskWorker.start();
+    taskWorker.startAsync();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -173,9 +173,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping task worker");
-    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
+    Optional.ofNullable(metricsCollectionService).ifPresent(Service::stopAsync);
     if (taskWorker != null) {
-      taskWorker.stop();
+      taskWorker.stopAsync();
     }
   }
 
@@ -203,7 +203,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,

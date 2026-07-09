@@ -33,6 +33,14 @@ public class StandaloneMainTest {
 
   @Test
   public void testInjector() {
+    try {
+      System.out.println("DEBUG: Service$Listener source: " +
+        com.google.common.util.concurrent.Service.Listener.class.getProtectionDomain().getCodeSource().getLocation());
+      System.out.println("DEBUG: ClassReader source: " +
+        org.objectweb.asm.ClassReader.class.getProtectionDomain().getCodeSource().getLocation());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
     PreviewHttpServer previewHttpServer = sdk.getInjector().getInstance(PreviewHttpServer.class);
     PreviewRunnerManager previewRunnerManager = sdk.getInjector().getInstance(PreviewRunnerManager.class);
@@ -40,10 +48,11 @@ public class StandaloneMainTest {
 
     Assert.assertSame(previewRunnerManager, previewRunStopper);
     TransactionManager txManager = sdk.getInjector().getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    previewHttpServer.startAndWait();
-    ((Service) previewRunnerManager).startAndWait();
-    ((Service) previewRunnerManager).stopAndWait();
-    previewHttpServer.stopAndWait();
+    txManager.startAsync().awaitRunning();
+    previewHttpServer.startAsync().awaitRunning();
+    ((Service) previewRunnerManager).startAsync().awaitRunning();
+    ((Service) previewRunnerManager).stopAsync().awaitTerminated();
+    previewHttpServer.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
   }
 }

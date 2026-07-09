@@ -263,7 +263,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     Method setBytesWrittenMethod = new Method("setBytesWritten", Type.VOID_TYPE, new Type[]{Type.LONG_TYPE});
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
                                        String signature, String[] exceptions) {
@@ -272,7 +272,7 @@ public class SparkClassRewriter implements ClassRewriter {
           return mv;
         }
 
-        return new AdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor) {
+        return new AdviceAdapter(Opcodes.ASM9, mv, access, name, descriptor) {
 
           private final Label skipZeroLabel = newLabel();
 
@@ -357,11 +357,11 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        return new MethodVisitor(Opcodes.ASM5, mv) {
+        return new MethodVisitor(Opcodes.ASM9, mv) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             super.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -408,7 +408,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(bytecode);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
     Method closeMethod = new Method("close", Type.VOID_TYPE, new Type[0]);
-    cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
                                        String signature, String[] exceptions) {
@@ -443,7 +443,7 @@ public class SparkClassRewriter implements ClassRewriter {
     Method shutdownMethod = new Method("shutdown", Type.VOID_TYPE, new Type[0]);
     String executorClass = "scala/concurrent/ExecutionContextExecutorService";
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
@@ -454,7 +454,7 @@ public class SparkClassRewriter implements ClassRewriter {
           return mv;
         }
 
-        return new MethodVisitor(Opcodes.ASM7, mv) {
+        return new MethodVisitor(Opcodes.ASM9, mv) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
             if (Opcodes.INVOKEINTERFACE == opcode
@@ -519,7 +519,7 @@ public class SparkClassRewriter implements ClassRewriter {
                         new Type[] { Type.getType(String.class) });
     resourceMethods.put(method, null);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       private boolean hasParentLoader;
       private boolean rewriteInit;
@@ -544,7 +544,7 @@ public class SparkClassRewriter implements ClassRewriter {
         if (!rewriteInit || !"<init>".equals(name)) {
           return mv;
         }
-        return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
+        return new GeneratorAdapter(Opcodes.ASM9, mv, access, name, desc) {
 
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
@@ -673,7 +673,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       @Override
       public MethodVisitor visitMethod(int access, final String name,
@@ -686,7 +686,7 @@ public class SparkClassRewriter implements ClassRewriter {
           return mv;
         }
 
-        return new AdviceAdapter(Opcodes.ASM5, mv, access, name, desc) {
+        return new AdviceAdapter(Opcodes.ASM9, mv, access, name, desc) {
 
           boolean calledThis;
 
@@ -739,11 +739,11 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        return new MethodVisitor(Opcodes.ASM5, mv) {
+        return new MethodVisitor(Opcodes.ASM9, mv) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             // If we see a call to System.setProperty, change it to SparkRuntimeEnv.setProperty
@@ -777,7 +777,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       boolean hasCheckpointTimeField;
 
@@ -798,7 +798,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
-        return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
+        return new GeneratorAdapter(Opcodes.ASM9, mv, access, name, desc) {
 
           boolean tempStringAddedToStack;
           final Method hadoopPathConstructorMethod =
@@ -882,7 +882,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
     // Intercept the static void main(String[] args) method.
     final Method mainMethod = new Method("main", Type.VOID_TYPE, new Type[] { Type.getType(String[].class) });
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
@@ -901,7 +901,7 @@ public class SparkClassRewriter implements ClassRewriter {
         //   [local_mode] throw (t instance of SparkUserAppException) ? new RuntimeException(t) : t;
         //   [distributed_mode] throw t;
         // }
-        return new AdviceAdapter(Opcodes.ASM5, mv, access, name, desc) {
+        return new AdviceAdapter(Opcodes.ASM9, mv, access, name, desc) {
 
           final Type sparkUserAppExceptionType = Type.getObjectType("org/apache/spark/SparkUserAppException");
           final Type throwableType = Type.getType(Throwable.class);
@@ -983,7 +983,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         // Intercept all methods
@@ -1003,7 +1003,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       @Override
       public MethodVisitor visitMethod(int access, String name,
@@ -1013,7 +1013,7 @@ public class SparkClassRewriter implements ClassRewriter {
                                                            access, name, desc, distributed);
 
         final GeneratorAdapter adapter = new GeneratorAdapter(mv, access, name, desc);
-        return new MethodVisitor(Opcodes.ASM5, mv) {
+        return new MethodVisitor(Opcodes.ASM9, mv) {
 
           @Override
           public void visitFieldInsn(int opcode, String owner, String name, String desc) {
@@ -1077,7 +1077,7 @@ public class SparkClassRewriter implements ClassRewriter {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         // Call super so that the method signature is registered with the ClassWriter (parent)
@@ -1088,7 +1088,7 @@ public class SparkClassRewriter implements ClassRewriter {
           return mv;
         }
 
-        return new MethodVisitor(Opcodes.ASM5, mv) {
+        return new MethodVisitor(Opcodes.ASM9, mv) {
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             // Detect if it is making call "import scala.concurrent.ExecutionContext.Implicits.global",
@@ -1150,7 +1150,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
     // Scan for class type and methods to see if the rewriting is needed
     final AtomicBoolean rewritten = new AtomicBoolean(false);
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       private Type classType;
       private boolean isFileRegion;
@@ -1252,7 +1252,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
       final AtomicReference<Type> result = new AtomicReference<>();
       ClassReader cr = new ClassReader(is);
-      cr.accept(new ClassVisitor(Opcodes.ASM5) {
+      cr.accept(new ClassVisitor(Opcodes.ASM9) {
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
           if (name.equals("dispatcher") && Type.getArgumentTypes(desc).length == 0) {
@@ -1302,7 +1302,7 @@ public class SparkClassRewriter implements ClassRewriter {
 
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
       @Override
       public MethodVisitor visitMethod(final int access, final String name,
                                        final String desc, String signature, String[] exceptions) {
@@ -1418,7 +1418,7 @@ public class SparkClassRewriter implements ClassRewriter {
     private final boolean distributed;
 
     OutputRedirectMethodVisitor(MethodVisitor mv, int access, String name, String desc, boolean distributed) {
-      super(Opcodes.ASM5, mv);
+      super(Opcodes.ASM9, mv);
       this.adapter = new GeneratorAdapter(mv, access, name, desc);
       this.distributed = distributed;
     }

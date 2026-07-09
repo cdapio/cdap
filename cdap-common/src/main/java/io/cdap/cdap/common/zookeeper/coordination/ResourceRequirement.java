@@ -15,9 +15,10 @@
  */
 package io.cdap.cdap.common.zookeeper.coordination;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
+import java.util.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
 import java.util.Map;
@@ -60,7 +61,7 @@ public final class ResourceRequirement {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("name", name)
         .add("partitions", partitions)
         .toString();
@@ -81,7 +82,7 @@ public final class ResourceRequirement {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, partitions);
+    return Objects.hash(name, partitions);
   }
 
   /**
@@ -134,12 +135,12 @@ public final class ResourceRequirement {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(name, replicas);
+      return Objects.hash(name, replicas);
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("name", name)
           .add("replicas", replicas)
           .toString();

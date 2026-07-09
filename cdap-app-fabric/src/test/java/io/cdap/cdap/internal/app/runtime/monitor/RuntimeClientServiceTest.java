@@ -198,11 +198,11 @@ public class RuntimeClientServiceTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    runtimeServer.startAsync().awaitRunning();
 
     // Injector for the client side
     clientCConf = CConfiguration.create();
@@ -244,7 +244,7 @@ public class RuntimeClientServiceTest {
 
     clientMessagingService = clientInjector.getInstance(MessagingService.class);
     if (clientMessagingService instanceof Service) {
-      ((Service) clientMessagingService).startAndWait();
+      ((Service) clientMessagingService).startAsync().awaitRunning();
     }
     clientProgramStatePublisher = clientInjector.getInstance(
         ProgramStatePublisher.class);
@@ -253,16 +253,16 @@ public class RuntimeClientServiceTest {
   @After
   public void afterTest() {
     if (runtimeClientService != null) {
-      runtimeClientService.stopAndWait();
+      runtimeClientService.stopAsync().awaitTerminated();
     }
     runtimeClientService = null;
     if (clientMessagingService instanceof Service) {
-      ((Service) clientMessagingService).stopAndWait();
+      ((Service) clientMessagingService).stopAsync().awaitTerminated();
     }
 
-    runtimeServer.stopAndWait();
+    runtimeServer.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 
@@ -270,7 +270,7 @@ public class RuntimeClientServiceTest {
   public void testBasicRelay() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     // Send some messages to multiple topics in the client side TMS, they should get replicated to the server side TMS.
     MessagingContext messagingContext = new MultiThreadMessagingContext(
         clientMessagingService);
@@ -327,7 +327,7 @@ public class RuntimeClientServiceTest {
 
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     Map<String, String> tags = new HashMap<>();
     tags.put("key1", "value1");
     tags.put("key2", "value2");
@@ -435,7 +435,7 @@ public class RuntimeClientServiceTest {
   public void testProgramTerminate() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     MessagingContext messagingContext = new MultiThreadMessagingContext(
         clientMessagingService);
     MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
@@ -483,11 +483,23 @@ public class RuntimeClientServiceTest {
   public void testRuntimeClientStop() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
 
-    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    com.google.common.util.concurrent.SettableFuture<Service.State> stopFuture =
+        com.google.common.util.concurrent.SettableFuture.create();
+    runtimeClientService.addListener(new Service.Listener() {
+      @Override
+      public void terminated(Service.State from) {
+        stopFuture.set(Service.State.TERMINATED);
+      }
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        stopFuture.setException(failure);
+      }
+    }, com.google.common.util.concurrent.MoreExecutors.directExecutor());
+    runtimeClientService.stopAsync();
     try {
       stopFuture.get(2, TimeUnit.SECONDS);
       Assert.fail("Expected runtime client service not stopped");
@@ -507,7 +519,7 @@ public class RuntimeClientServiceTest {
   public void testExternalStop() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    runtimeClientService.startAsync().awaitRunning();
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
     MessagingContext messagingContext = new MultiThreadMessagingContext(
@@ -527,7 +539,19 @@ public class RuntimeClientServiceTest {
     messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
         "msg1" + topic, "msg2" + topic);
 
-    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    com.google.common.util.concurrent.SettableFuture<Service.State> stopFuture =
+        com.google.common.util.concurrent.SettableFuture.create();
+    runtimeClientService.addListener(new Service.Listener() {
+      @Override
+      public void terminated(Service.State from) {
+        stopFuture.set(Service.State.TERMINATED);
+      }
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        stopFuture.setException(failure);
+      }
+    }, com.google.common.util.concurrent.MoreExecutors.directExecutor());
+    runtimeClientService.stopAsync();
     try {
       stopFuture.get(2, TimeUnit.SECONDS);
       Assert.fail("Expected runtime client service not stopped");

@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
@@ -104,10 +105,18 @@ final class ArtifactClassLoaderFactory {
     final ClassLoader finalSparkClassLoader = sparkClassLoader;
     return new CloseableClassLoader(programClassLoader, () -> {
       if (finalProgramClassLoader instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) finalProgramClassLoader);
+        try {
+          ((Closeable) finalProgramClassLoader).close();
+        } catch (IOException e) {
+          // Ignore
+        }
       }
       if (finalSparkClassLoader instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) finalSparkClassLoader);
+        try {
+          ((Closeable) finalSparkClassLoader).close();
+        } catch (IOException e) {
+          // Ignore
+        }
       }
     });
   }
@@ -130,8 +139,16 @@ final class ArtifactClassLoaderFactory {
 
       CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
       return new CloseableClassLoader(classLoader, () -> {
-        Closeables.closeQuietly(classLoader);
-        Closeables.closeQuietly(classLoaderFolder);
+        try {
+          classLoader.close();
+        } catch (IOException e) {
+          // Ignore
+        }
+        try {
+          classLoaderFolder.close();
+        } catch (IOException e) {
+          // Ignore
+        }
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -167,8 +184,16 @@ final class ArtifactClassLoaderFactory {
           entityImpersonator);
       return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
           parentClassLoader, "lib"), () -> {
-        Closeables.closeQuietly(parentClassLoader);
-        Closeables.closeQuietly(classLoaderFolder);
+        try {
+          parentClassLoader.close();
+        } catch (IOException e) {
+          // Ignore
+        }
+        try {
+          classLoaderFolder.close();
+        } catch (IOException e) {
+          // Ignore
+        }
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);

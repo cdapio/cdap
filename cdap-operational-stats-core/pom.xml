@@ -73,6 +73,20 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>dist</id>
@@ -81,7 +95,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
             <executions>
               <execution>
                 <id>jar</id>
@@ -89,6 +102,7 @@
                 <configuration combine.self="override">
                   <outputDirectory>${project.build.directory}</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}</finalName>
+                  <attach>false</attach>
                 </configuration>
                 <goals>
                   <goal>jar</goal>
@@ -100,6 +114,7 @@
                 <configuration combine.self="override">
                   <outputDirectory>${project.build.directory}</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}.sdk</finalName>
+                  <attach>false</attach>
                 </configuration>
                 <goals>
                   <goal>jar</goal>

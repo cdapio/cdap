@@ -16,8 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
+import java.util.Objects;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.proto.Notification;
 import java.util.List;
@@ -97,25 +98,25 @@ public final class SimpleJob implements Job {
 
     SimpleJob that = (SimpleJob) o;
 
-    return Objects.equal(this.schedule, that.schedule)
-        && Objects.equal(this.creationTime, that.creationTime)
-        && Objects.equal(this.jobKey, that.jobKey)
-        && Objects.equal(this.notifications, that.notifications)
-        && Objects.equal(this.state, that.state)
-        && Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime)
-        && Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
+    return Objects.equals(this.schedule, that.schedule)
+        && Objects.equals(this.creationTime, that.creationTime)
+        && Objects.equals(this.jobKey, that.jobKey)
+        && Objects.equals(this.notifications, that.notifications)
+        && Objects.equals(this.state, that.state)
+        && Objects.equals(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime)
+        && Objects.equals(this.deleteTimeMillis, that.deleteTimeMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(schedule, creationTime, jobKey, notifications, state,
+    return Objects.hash(schedule, creationTime, jobKey, notifications, state,
         scheduleLastUpdatedTime,
         deleteTimeMillis);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("schedule", schedule)
         .add("creationTime", creationTime)
         .add("jobKey", jobKey)

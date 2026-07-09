@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.security.server;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.Constants;
 import java.util.HashMap;
@@ -61,9 +61,9 @@ public class LdapAuthenticationHandler extends JaasAuthenticationHandler {
 
         String ldapsVerifyCertificate = handlerProps.get("ldapsVerifyCertificate");
         String useLdaps = handlerProps.get("useLdaps");
-        if (Boolean.parseBoolean(Objects.firstNonNull(useLdaps, "false"))) {
+        if (Boolean.parseBoolean(MoreObjects.firstNonNull(useLdaps, "false"))) {
           ldapSSLVerifyCertificate = Boolean.parseBoolean(
-              Objects.firstNonNull(ldapsVerifyCertificate, "true"));
+              MoreObjects.firstNonNull(ldapsVerifyCertificate, "true"));
         }
 
         return new AppConfigurationEntry[]{

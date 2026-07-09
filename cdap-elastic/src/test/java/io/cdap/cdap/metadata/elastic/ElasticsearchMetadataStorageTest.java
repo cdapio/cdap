@@ -86,7 +86,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
       try {
         elasticStore.dropIndex();
       } finally {
-        Closeables.closeQuietly(elasticStore);
+        elasticStore.close();
       }
     }
   }

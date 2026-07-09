@@ -100,7 +100,7 @@ public final class DatasetClassRewriter implements ClassRewriter {
     private boolean interfaceClass;
 
     private DatasetClassVisitor(String className, ClassWriter cw) {
-      super(Opcodes.ASM5, cw);
+      super(Opcodes.ASM9, cw);
       this.datasetType = Type.getObjectType(className.replace('.', '/'));
       this.fields = new HashSet<>();
     }
@@ -137,7 +137,7 @@ public final class DatasetClassRewriter implements ClassRewriter {
             DATASET_RUNTIME_CONTEXT_TYPE.getDescriptor(), null, null);
       }
 
-      return new FinallyAdapter(Opcodes.ASM5, mv, access, name, desc) {
+      return new FinallyAdapter(Opcodes.ASM9, mv, access, name, desc) {
 
         private boolean hasRead;
         private boolean hasWrite;

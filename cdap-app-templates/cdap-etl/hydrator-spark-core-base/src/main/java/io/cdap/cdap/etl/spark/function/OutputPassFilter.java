@@ -44,6 +44,6 @@ public class OutputPassFilter<T> implements FlatMapFunction<RecordInfo<Object>, 
   public Iterator<T> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
     return input.getType() == RecordType.OUTPUT && Objects.equals(port, input.getFromPort())
-      ? Iterators.singletonIterator((T) input.getValue()) : Iterators.emptyIterator();
+      ? Iterators.singletonIterator((T) input.getValue()) : java.util.Collections.emptyIterator();
   }
 }

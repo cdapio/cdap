@@ -84,8 +84,17 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>3.5.2</version>
         <configuration>
           <goal>package</goal>
           <createDependencyReducedPom>false</createDependencyReducedPom>
@@ -95,6 +104,12 @@
               <mainClass>${main.class}</mainClass>
             </transformer>
           </transformers>
+          <relocations>
+            <relocation>
+              <pattern>com.google.common</pattern>
+              <shadedPattern>io.cdap.cdap.cli.shaded.com.google.common</shadedPattern>
+            </relocation>
+          </relocations>
         </configuration>
         <executions>
           <execution>
@@ -132,7 +147,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
             <executions>
               <execution>
                 <id>default-jar</id>
@@ -143,7 +157,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>3.2.1</version>
+            <version>3.5.2</version>
             <executions>
               <execution>
                 <id>shade-jar</id>
@@ -207,26 +221,7 @@
             </executions>
           </plugin>
 
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>3.1.0</version>
-            <executions>
-              <execution>
-                <id>copy-jar-to-stage-packaging</id>
-                <phase>package</phase>
-                <configuration>
-                  <target>
-                    <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
-                          tofile="${stage.opt.dir}/lib/${project.groupId}.${project.artifactId}-${project.version}.jar"/>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
+
         </plugins>
       </build>
     </profile>

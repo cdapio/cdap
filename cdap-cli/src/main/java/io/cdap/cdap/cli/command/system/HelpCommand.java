@@ -16,16 +16,8 @@
 
 package io.cdap.cdap.cli.command.system;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import io.cdap.cdap.cli.ArgumentName;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
@@ -35,9 +27,16 @@ import io.cdap.common.cli.Arguments;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 
 /**
  * Prints helper text for all commands.
@@ -61,13 +60,14 @@ public class HelpCommand implements Command {
 
     if (arguments.hasArgument(ArgumentName.COMMAND_CATEGORY.getName())) {
       // help with one category
-      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(),
+      Map<String, List<Command>> categorizedCommands = categorizeCommands(commands.get(),
           CommandCategory.GENERAL,
-          Predicates.<Command>alwaysTrue());
+          c -> true);
       String commandCategoryInput = arguments.get(ArgumentName.COMMAND_CATEGORY.getName());
       CommandCategory category = CommandCategory.valueOfNameIgnoreCase(commandCategoryInput);
 
-      List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
+      List<Command> commandList = new ArrayList<>(
+          categorizedCommands.getOrDefault(category.getName(), Collections.emptyList()));
       if (commandList.isEmpty()) {
         output.printf("No commands found in the %s category", category.getName());
         output.println();
@@ -78,11 +78,12 @@ public class HelpCommand implements Command {
     } else {
       // normal help
 
-      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(),
+      Map<String, List<Command>> categorizedCommands = categorizeCommands(commands.get(),
           CommandCategory.GENERAL,
-          Predicates.<Command>alwaysTrue());
+          c -> true);
       for (CommandCategory category : CommandCategory.values()) {
-        List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
+        List<Command> commandList = new ArrayList<>(
+            categorizedCommands.getOrDefault(category.getName(), Collections.emptyList()));
         if (commandList.isEmpty()) {
           continue;
         }
@@ -110,9 +111,9 @@ public class HelpCommand implements Command {
     }
   }
 
-  protected Multimap<String, Command> categorizeCommands(Iterable<CommandSet<Command>> commandSets,
+  protected Map<String, List<Command>> categorizeCommands(Iterable<CommandSet<Command>> commandSets,
       CommandCategory defaultCategory, Predicate<Command> filter) {
-    Multimap<String, Command> result = HashMultimap.create();
+    Map<String, List<Command>> result = new HashMap<>();
     for (CommandSet<Command> commandSet : commandSets) {
       populate(result, commandSet, getCategory(commandSet), defaultCategory, filter);
     }
@@ -122,17 +123,26 @@ public class HelpCommand implements Command {
   /**
    * Recursive helper for {@link #categorizeCommands(Iterable, CommandCategory, Predicate)}.
    */
-  private void populate(Multimap<String, Command> result, CommandSet<Command> commandSet,
+  private void populate(Map<String, List<Command>> result, CommandSet<Command> commandSet,
       Optional<String> parentCategory, CommandCategory defaultCategory,
       Predicate<Command> filter) {
 
-    for (Command childCommand : Iterables.filter(commandSet.getCommands(), filter)) {
-      Optional<String> commandCategory = getCategory(childCommand).or(parentCategory);
-      result.put(commandCategory.or(defaultCategory.getName()), childCommand);
+    for (Command childCommand : commandSet.getCommands()) {
+      if (filter.test(childCommand)) {
+        Optional<String> commandCategory = getCategory(childCommand);
+        if (!commandCategory.isPresent()) {
+          commandCategory = parentCategory;
+        }
+        String categoryName = commandCategory.orElse(defaultCategory.getName());
+        result.computeIfAbsent(categoryName, k -> new ArrayList<>()).add(childCommand);
+      }
     }
 
     for (CommandSet<Command> childCommandSet : commandSet.getCommandSets()) {
-      Optional<String> commandCategory = getCategory(childCommandSet).or(parentCategory);
+      Optional<String> commandCategory = getCategory(childCommandSet);
+      if (!commandCategory.isPresent()) {
+        commandCategory = parentCategory;
+      }
       populate(result, childCommandSet, commandCategory, defaultCategory, filter);
     }
   }
@@ -141,7 +151,7 @@ public class HelpCommand implements Command {
     if (object instanceof Categorized) {
       return Optional.of(((Categorized) object).getCategory());
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   @Override

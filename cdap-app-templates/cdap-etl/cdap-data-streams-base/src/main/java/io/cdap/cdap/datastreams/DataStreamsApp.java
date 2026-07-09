@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.datastreams;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
@@ -36,7 +36,7 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
   @Override
   public void configure() {
     DataStreamsConfig config = getConfig();
-    setDescription(Objects.firstNonNull(config.getDescription(), "Data Streams Application"));
+    setDescription(MoreObjects.firstNonNull(config.getDescription(), "Data Streams Application"));
 
     DataStreamsPipelineSpec spec;
     try {

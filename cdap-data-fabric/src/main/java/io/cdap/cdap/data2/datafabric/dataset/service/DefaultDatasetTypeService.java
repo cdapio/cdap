@@ -108,7 +108,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Override
   protected void startUp() throws Exception {
-    txClientService.startAndWait();
+    txClientService.startAsync().awaitRunning();
     deleteSystemModules();
     deployDefaultModules();
     if (!extensionModules.isEmpty()) {
@@ -118,7 +118,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Override
   protected void shutDown() throws Exception {
-    txClientService.stopAndWait();
+    txClientService.stopAsync().awaitTerminated();
   }
 
   /**
@@ -322,7 +322,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
           Locations.mkdirsIfNotExists(archiveDir);
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
-          Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+          try (java.io.OutputStream os = tmpLocation.getOutputStream()) {
+            Files.copy(uploadedFile, os);
+          }
 
           // Finally, move archive to final location
           LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);

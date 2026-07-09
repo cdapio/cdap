@@ -96,7 +96,6 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import sun.net.InetAddressCachePolicy;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -173,15 +172,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controllerFuture = new CompletableFuture<>();
     programCompletion = new CompletableFuture<>();
 
-    // Make sure InetAddressCachePolicy is not set to FOREVER.
-    // This is needed because if InetAddressCachePolicy is loaded after System#setSecurityManager() call,
-    // caching policy is set to FOREVER. With FOREVER, caching policy, this twill runnable will not be able to
-    // reach out to other services within the cluster as IP is cached forever.
-    // Look at CDAP-20781 for more information.
-    if (InetAddressCachePolicy.get() == InetAddressCachePolicy.FOREVER) {
-      LOG.warn("InetAddress cache policy is set to FOREVER. This will ips to be cached forever. "
-              + "Ensure cache policy is not set to FOREVER.");
-    }
+
 
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -296,9 +287,19 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Program run {} completed. Releasing resources.", programRunId);
 
       // Close the Program and the ProgramRunner
-      Closeables.closeQuietly(program);
+      try {
+        if (program != null) {
+          program.close();
+        }
+      } catch (Exception e) {
+        // Ignore
+      }
       if (programRunner instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) programRunner);
+        try {
+          ((Closeable) programRunner).close();
+        } catch (java.io.IOException e) {
+          // Ignore
+        }
       }
 
       stopCoreServices();
@@ -483,16 +484,22 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private void startCoreServices() {
     // Starts the core services
     for (Service service : coreServices) {
-      service.startAndWait();
+      service.startAsync().awaitRunning();
     }
   }
 
   private void stopCoreServices() {
-    Closeables.closeQuietly(logAppenderInitializer);
+    try {
+      if (logAppenderInitializer != null) {
+        logAppenderInitializer.close();
+      }
+    } catch (Exception e) {
+      // Ignore
+    }
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
       } catch (Exception e) {
         LOG.warn("Exception raised when stopping service {} during program termination.", service,
             e);

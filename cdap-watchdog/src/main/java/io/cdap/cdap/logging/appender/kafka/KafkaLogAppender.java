@@ -50,8 +50,8 @@ public final class KafkaLogAppender extends LogAppender {
   public void start() {
     KafkaLogPublisher publisher = new KafkaLogPublisher(cConf);
     Optional.ofNullable(kafkaLogPublisher.getAndSet(publisher))
-        .ifPresent(KafkaLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(p -> p.stopAsync().awaitTerminated());
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started KafkaLogAppender.");
     super.start();
   }
@@ -60,7 +60,7 @@ public final class KafkaLogAppender extends LogAppender {
   public void stop() {
     super.stop();
     Optional.ofNullable(kafkaLogPublisher.getAndSet(null))
-        .ifPresent(KafkaLogPublisher::stopAndWait);
+        .ifPresent(p -> p.stopAsync().awaitTerminated());
   }
 
   @Override

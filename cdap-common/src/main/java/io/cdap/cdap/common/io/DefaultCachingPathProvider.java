@@ -123,7 +123,8 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
   }
 
   String getCacheName(Location location) {
-    return Hashing.md5().hashString(location.toURI().getPath()).toString() + "-"
+    return Hashing.md5().hashString(location.toURI().getPath(),
+        java.nio.charset.StandardCharsets.UTF_8).toString() + "-"
         + location.getName();
   }
 

@@ -75,8 +75,8 @@ public class RemoteLogAppender extends LogAppender {
   public void start() {
     RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, remoteClientFactory);
     Optional.ofNullable(this.publisher.getAndSet(publisher))
-        .ifPresent(RemoteLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(p -> p.stopAsync().awaitTerminated());
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -84,7 +84,7 @@ public class RemoteLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(RemoteLogPublisher::stopAndWait);
+    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(p -> p.stopAsync().awaitTerminated());
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -178,7 +178,7 @@ public class RemoteLogAppender extends LogAppender {
    * do not want kafka dependencies in this class, this method is added here.
    */
   private static int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashString(key, java.nio.charset.StandardCharsets.UTF_8).asInt()) % numPartitions;
   }
 
   private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,

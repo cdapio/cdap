@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.store;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -638,7 +637,7 @@ public class DefaultStore implements Store {
       return getAppMetadataStore(context).getLatest(appRef);
     });
 
-    List<ProgramSpecification> deletedProgramSpecs = Lists.newArrayList();
+    List<ProgramSpecification> deletedProgramSpecs = new ArrayList<>();
 
     if (existing != null) {
       ApplicationSpecification existingAppSpec = existing.getSpec();

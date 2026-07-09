@@ -149,6 +149,20 @@
     </dependencies>
   </dependencyManagement>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <!--
       this profile is used to build a fat jar to use the DataprocTool utility class,
@@ -174,7 +188,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>2.3</version>
+            <version>3.5.2</version>
             <executions>
               <!-- Run shade goal on package phase -->
               <execution>
@@ -235,7 +249,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
             <executions>
               <execution>
                 <id>jar</id>
@@ -243,6 +256,7 @@
                 <configuration combine.self="override">
                   <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}</finalName>
+                  <attach>false</attach>
                 </configuration>
                 <goals>
                   <goal>jar</goal>

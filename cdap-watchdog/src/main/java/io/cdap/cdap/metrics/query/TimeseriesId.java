@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.metrics.query;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * class to identify a unique timeseries, which is a 4 tuple of context, metric, tag, and runid.
@@ -41,20 +41,20 @@ public final class TimeseriesId {
       return false;
     }
     TimeseriesId other = (TimeseriesId) o;
-    return Objects.equal(context, other.context)
-        && Objects.equal(metric, other.metric)
-        && Objects.equal(tag, other.tag)
-        && Objects.equal(runId, other.runId);
+    return java.util.Objects.equals(context, other.context)
+        && java.util.Objects.equals(metric, other.metric)
+        && java.util.Objects.equals(tag, other.tag)
+        && java.util.Objects.equals(runId, other.runId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(context, metric, tag, runId);
+    return java.util.Objects.hash(context, metric, tag, runId);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("context", context)
         .add("metric", metric)
         .add("tag", tag)

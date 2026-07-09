@@ -148,8 +148,20 @@ public class DatasetTypeManager {
           throw Throwables.propagate(e);
         } finally {
           // Close the ProgramClassLoader
-          Closeables.closeQuietly(cl);
-          Closeables.closeQuietly(classLoaderFolder);
+          try {
+            if (cl != null) {
+              cl.close();
+            }
+          } catch (Exception e) {
+            // Ignore
+          }
+          try {
+            if (classLoaderFolder != null) {
+              classLoaderFolder.close();
+            }
+          } catch (Exception e) {
+            // Ignore
+          }
         }
 
         // 4. determine whether any type were removed from the module, and whether any other modules depend on them

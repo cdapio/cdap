@@ -294,7 +294,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   }
 
   @Override
-  protected Executor executor(State state) {
+  protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
     //noinspection NullableProblems
 

@@ -15,8 +15,9 @@
  */
 package io.cdap.cdap.internal.app.store;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.gson.Gson;
+import java.util.Objects;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -158,27 +159,27 @@ public class RunRecordDetail extends RunRecord {
     }
 
     RunRecordDetail that = (RunRecordDetail) o;
-    return Objects.equal(this.getProgramRunId(), that.getProgramRunId())
-        && Objects.equal(this.getStartTs(), that.getStartTs())
-        && Objects.equal(this.getRunTs(), that.getRunTs())
-        && Objects.equal(this.getStopTs(), that.getStopTs())
-        && Objects.equal(this.getSuspendTs(), that.getSuspendTs())
-        && Objects.equal(this.getResumeTs(), that.getResumeTs())
-        && Objects.equal(this.getStoppingTs(), that.getStoppingTs())
-        && Objects.equal(this.getTerminateTs(), that.getTerminateTs())
-        && Objects.equal(this.getStatus(), that.getStatus())
-        && Objects.equal(this.getProperties(), that.getProperties())
-        && Objects.equal(this.getPeerName(), that.getPeerName())
-        && Objects.equal(this.getTwillRunId(), that.getTwillRunId())
+    return Objects.equals(this.getProgramRunId(), that.getProgramRunId())
+        && Objects.equals(this.getStartTs(), that.getStartTs())
+        && Objects.equals(this.getRunTs(), that.getRunTs())
+        && Objects.equals(this.getStopTs(), that.getStopTs())
+        && Objects.equals(this.getSuspendTs(), that.getSuspendTs())
+        && Objects.equals(this.getResumeTs(), that.getResumeTs())
+        && Objects.equals(this.getStoppingTs(), that.getStoppingTs())
+        && Objects.equals(this.getTerminateTs(), that.getTerminateTs())
+        && Objects.equals(this.getStatus(), that.getStatus())
+        && Objects.equals(this.getProperties(), that.getProperties())
+        && Objects.equals(this.getPeerName(), that.getPeerName())
+        && Objects.equals(this.getTwillRunId(), that.getTwillRunId())
         && Arrays.equals(this.getSourceId(), that.getSourceId())
-        && Objects.equal(this.getArtifactId(), that.getArtifactId())
-        && Objects.equal(this.getPrincipal(), that.getPrincipal())
-        && Objects.equal(this.getFlowControlStatus(), that.getFlowControlStatus());
+        && Objects.equals(this.getArtifactId(), that.getArtifactId())
+        && Objects.equals(this.getPrincipal(), that.getPrincipal())
+        && Objects.equals(this.getFlowControlStatus(), that.getFlowControlStatus());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(),
+    return Objects.hash(getProgramRunId(), getStartTs(), getRunTs(), getStopTs(),
         getSuspendTs(), getResumeTs(), getStoppingTs(), getTerminateTs(), getStatus(),
         getProperties(), getPeerName(), getTwillRunId(), Arrays.hashCode(getSourceId()),
         getArtifactId(), getPrincipal(), getFlowControlStatus());
@@ -186,7 +187,7 @@ public class RunRecordDetail extends RunRecord {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("programRunId", getProgramRunId())
         .add("startTs", getStartTs())
         .add("runTs", getRunTs())

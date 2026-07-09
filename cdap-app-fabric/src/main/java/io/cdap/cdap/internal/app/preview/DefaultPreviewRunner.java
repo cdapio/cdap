@@ -117,6 +117,14 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final Path previewIdDirPath;
   private final PreferencesFetcher preferencesFetcher;
   private final CConfiguration cConf;
+  private boolean messagingServiceStartedByMe = false;
+  private boolean dsOpExecServiceStartedByMe = false;
+  private boolean datasetServiceStartedByMe = false;
+  private boolean applicationLifecycleServiceStartedByMe = false;
+  private boolean programRuntimeServiceStartedByMe = false;
+  private boolean metricsCollectionServiceStartedByMe = false;
+  private boolean programNotificationSubscriberServiceStartedByMe = false;
+  private boolean programStopSubscriberServiceStartedByMe = false;
 
   @Inject
   DefaultPreviewRunner(MessagingService messagingService,
@@ -329,10 +337,20 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     LOG.debug("Starting preview runner service");
     StoreDefinition.createAllTables(structuredTableAdmin);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Service msgService = (Service) messagingService;
+      if (msgService.state() == Service.State.NEW) {
+        msgService.startAsync().awaitRunning();
+        messagingServiceStartedByMe = true;
+      }
     }
-    dsOpExecService.startAndWait();
-    datasetService.startAndWait();
+    if (dsOpExecService.state() == Service.State.NEW) {
+      dsOpExecService.startAsync().awaitRunning();
+      dsOpExecServiceStartedByMe = true;
+    }
+    if (datasetService.state() == Service.State.NEW) {
+      datasetService.startAsync().awaitRunning();
+      datasetServiceStartedByMe = true;
+    }
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -342,13 +360,44 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
-    Futures.allAsList(
-        applicationLifecycleService.start(),
-        programRuntimeService.start(),
-        metricsCollectionService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start()
-    ).get();
+    
+    if (applicationLifecycleService.state() == Service.State.NEW) {
+      applicationLifecycleService.startAsync();
+      applicationLifecycleServiceStartedByMe = true;
+    }
+    if (programRuntimeService.state() == Service.State.NEW) {
+      programRuntimeService.startAsync();
+      programRuntimeServiceStartedByMe = true;
+    }
+    if (metricsCollectionService.state() == Service.State.NEW) {
+      metricsCollectionService.startAsync();
+      metricsCollectionServiceStartedByMe = true;
+    }
+    if (programNotificationSubscriberService.state() == Service.State.NEW) {
+      programNotificationSubscriberService.startAsync();
+      programNotificationSubscriberServiceStartedByMe = true;
+    }
+    if (programStopSubscriberService.state() == Service.State.NEW) {
+      programStopSubscriberService.startAsync();
+      programStopSubscriberServiceStartedByMe = true;
+    }
+
+    if (applicationLifecycleServiceStartedByMe || applicationLifecycleService.state() == Service.State.STARTING) {
+      applicationLifecycleService.awaitRunning();
+    }
+    if (programRuntimeServiceStartedByMe || programRuntimeService.state() == Service.State.STARTING) {
+      programRuntimeService.awaitRunning();
+    }
+    if (metricsCollectionServiceStartedByMe || metricsCollectionService.state() == Service.State.STARTING) {
+      metricsCollectionService.awaitRunning();
+    }
+    if (programNotificationSubscriberServiceStartedByMe
+        || programNotificationSubscriberService.state() == Service.State.STARTING) {
+      programNotificationSubscriberService.awaitRunning();
+    }
+    if (programStopSubscriberServiceStartedByMe || programStopSubscriberService.state() == Service.State.STARTING) {
+      programStopSubscriberService.awaitRunning();
+    }
 
     Files.createDirectories(previewIdDirPath);
 
@@ -375,16 +424,30 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Stopping preview runner service");
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
+    if (programRuntimeServiceStartedByMe) {
+      programRuntimeService.stopAsync().awaitTerminated();
+    }
+    if (applicationLifecycleServiceStartedByMe) {
+      applicationLifecycleService.stopAsync().awaitTerminated();
+    }
     logAppenderInitializer.close();
-    metricsCollectionService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpExecService.stopAndWait();
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+    if (metricsCollectionServiceStartedByMe) {
+      metricsCollectionService.stopAsync().awaitTerminated();
+    }
+    if (programNotificationSubscriberServiceStartedByMe) {
+      programNotificationSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (programStopSubscriberServiceStartedByMe) {
+      programStopSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (datasetServiceStartedByMe) {
+      datasetService.stopAsync().awaitTerminated();
+    }
+    if (dsOpExecServiceStartedByMe) {
+      dsOpExecService.stopAsync().awaitTerminated();
+    }
+    if (messagingServiceStartedByMe && messagingService instanceof Service) {
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
     levelDBTableService.close();
   }

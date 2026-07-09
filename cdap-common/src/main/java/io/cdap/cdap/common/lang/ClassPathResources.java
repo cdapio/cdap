@@ -160,9 +160,18 @@ public final class ClassPathResources {
       return new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          System.out.println(">>> ClassPathResources ACCEPT: " + className);
 
           // Ignore platform classes
           if (platformClassloader.getResource(className.replace('.', '/') + ".class") != null) {
+            return false;
+          }
+
+          // Ignore classes that are known to trigger ASM7 failures under Java 17
+          // due to PermittedSubclasses attributes in enums or relocated libraries.
+          if (className.startsWith("io.cdap.cdap.internal.guava.")
+              || className.startsWith("io.cdap.cdap.api.dataset.lib.Partitioning")
+              || className.startsWith("io.cdap.cdap.proto.security.StandardPermission")) {
             return false;
           }
 
@@ -236,7 +245,16 @@ public final class ClassPathResources {
       final ClassLoader classLoader,
       Iterable<String> classes,
       final T result) throws IOException {
-    Dependencies.findClassDependencies(classLoader, createClassAcceptor(classLoader, result),
+    ClassLoader wrappingClassLoader = new ClassLoader(classLoader) {
+      @Override
+      public java.io.InputStream getResourceAsStream(String name) {
+        if (name.endsWith(".class")) {
+          System.out.println(">>> ClassLoader getResourceAsStream: " + name);
+        }
+        return super.getResourceAsStream(name);
+      }
+    };
+    Dependencies.findClassDependencies(wrappingClassLoader, createClassAcceptor(classLoader, result),
         classes);
     return result;
   }

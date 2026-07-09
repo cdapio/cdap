@@ -65,7 +65,7 @@ public final class JobHistoryServerTokenUtils {
       GetDelegationTokenRequest request = new GetDelegationTokenRequestPBImpl();
       request.setRenewer(YarnUtils.getYarnTokenRenewer(configuration));
 
-      InetSocketAddress address = new InetSocketAddress(hostAndPort.getHostText(),
+      InetSocketAddress address = new InetSocketAddress(hostAndPort.getHost(),
           hostAndPort.getPort());
       Token<TokenIdentifier> token =
           ConverterUtils.convertFromYarn(hsProxy.getDelegationToken(request).getDelegationToken(),

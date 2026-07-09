@@ -69,12 +69,12 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
 
   /**
    * Get preferences for the given namespace.
-   * <p>
-   * This method fetches preferences for the supplied namespace when the method is unvoked, unlike
+   *
+   * <p>This method fetches preferences for the supplied namespace when the method is unvoked, unlike
    * {@link io.cdap.cdap.api.RuntimeContext#getRuntimeArguments()} which returns arguments at the
    * time the context was created.
-   * <p>
-   * This might be a network call, depending on the underlying implementation.
+   *
+   * <p>This might be a network call, depending on the underlying implementation.
    *
    * @param namespace the name of the namespace to fetch preferences for.
    * @param resolved true if resolved properties are desired.
@@ -88,12 +88,14 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
   }
 
   /**
+   * Gets the context access enforcer.
+   *
    * @return {@link ContextAccessEnforcer} that can be used to enforce access for current request
    */
   ContextAccessEnforcer getContextAccessEnforcer();
 
   /**
-   * Runs the task from {@link RunnableTaskRequest} remotely on a task worker
+   * Runs the task from {@link RunnableTaskRequest} remotely on a task worker.
    *
    * @param runnableTaskRequest Details of the task
    * @return byte[] result
@@ -102,7 +104,7 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
   byte[] runTask(RunnableTaskRequest runnableTaskRequest) throws Exception;
 
   /**
-   * Returns boolean indicating whether remote task execution is enabled
+   * Returns boolean indicating whether remote task execution is enabled.
    */
   boolean isRemoteTaskEnabled();
 }

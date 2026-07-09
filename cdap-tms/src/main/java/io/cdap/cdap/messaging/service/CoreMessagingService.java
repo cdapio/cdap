@@ -17,7 +17,7 @@
 package io.cdap.cdap.messaging.service;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -195,7 +195,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       }
       return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
       throw Throwables.propagate(e);
     }
@@ -207,7 +207,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       payloadTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
       throw Throwables.propagate(e);
     }
@@ -267,7 +267,13 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   protected void shutDown() throws Exception {
     messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
-    Closeables.closeQuietly(tableFactory);
+    if (tableFactory instanceof AutoCloseable) {
+      try {
+        ((AutoCloseable) tableFactory).close();
+      } catch (Exception e) {
+        // Ignore
+      }
+    }
     LOG.info("Core Messaging Service stopped");
   }
 
@@ -441,7 +447,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     try {
       return topicCache.get(topicId);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
       throw Throwables.propagate(e.getCause());
     }

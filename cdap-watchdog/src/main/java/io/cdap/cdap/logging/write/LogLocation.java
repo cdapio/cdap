@@ -407,12 +407,12 @@ public class LogLocation {
           this.is = impersonator.doAs(namespaceId, new Callable<SeekableInputStream>() {
             @Override
             public SeekableInputStream call() throws Exception {
-              return Locations.newInputSupplier(location).getInput();
+              return Locations.newInputSupplier(location).get();
             }
           });
         } else {
           // impersonation is not required for V1 version.
-          this.is = Locations.newInputSupplier(location).getInput();
+          this.is = Locations.newInputSupplier(location).get();
         }
       } catch (IOException e) {
         throw e;

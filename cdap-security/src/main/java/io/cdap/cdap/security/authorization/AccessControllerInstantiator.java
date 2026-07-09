@@ -311,7 +311,13 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
     } catch (Throwable t) {
       LOG.warn("Failed to destroy accessController.", t);
     } finally {
-      Closeables.closeQuietly(accessControllerClassLoader);
+      if (accessControllerClassLoader instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) accessControllerClassLoader).close();
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
     }
   }
 }

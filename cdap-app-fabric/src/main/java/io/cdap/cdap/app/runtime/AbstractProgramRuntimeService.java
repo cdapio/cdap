@@ -43,6 +43,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -472,7 +473,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   private void cleanupRuntimeInfo(@Nullable RuntimeInfo info) {
     if (info instanceof Closeable) {
-      Closeables.closeQuietly((Closeable) info);
+      try {
+        ((Closeable) info).close();
+      } catch (IOException e) {
+        // Ignore
+      }
     }
   }
 

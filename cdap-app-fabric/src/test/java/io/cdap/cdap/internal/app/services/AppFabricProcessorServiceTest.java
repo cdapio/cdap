@@ -29,10 +29,12 @@ public class AppFabricProcessorServiceTest {
     try {
       Injector injector = AppFabricTestHelper.getInjector();
       AppFabricProcessorService service = injector.getInstance(AppFabricProcessorService.class);
-      Service.State state = service.startAndWait();
+      service.startAsync().awaitRunning();
+      Service.State state = service.state();
       Assert.assertSame(state, Service.State.RUNNING);
 
-      state = service.stopAndWait();
+      service.stopAsync().awaitTerminated();
+      state = service.state();
       Assert.assertSame(state, Service.State.TERMINATED);
     } finally {
       AppFabricTestHelper.shutdown();

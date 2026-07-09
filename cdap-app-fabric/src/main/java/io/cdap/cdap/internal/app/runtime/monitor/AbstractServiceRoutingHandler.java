@@ -305,13 +305,13 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
 
     @Override
     public void finished() {
-      Closeables.closeQuietly(responseInfo);
+      responseInfo.close();
     }
 
     @Override
     public void handleError(@Nullable Throwable cause) {
       LOG.warn("Exception raised when handling request to {}", url, cause);
-      Closeables.closeQuietly(responseInfo);
+      responseInfo.close();
     }
   }
 }

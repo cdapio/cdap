@@ -16,9 +16,10 @@
 
 package io.cdap.cdap.data2.util;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.util.Objects;
 
 /**
  * Identifier for an HBase and LevelDB tables that contains a namespace and a table name
@@ -59,18 +60,18 @@ public class TableId {
     }
 
     TableId that = (TableId) o;
-    return Objects.equal(namespace, that.getNamespace()) && Objects.equal(tableName,
+    return Objects.equals(namespace, that.getNamespace()) && Objects.equals(tableName,
                                                                           that.getTableName());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(namespace, tableName);
+    return Objects.hash(namespace, tableName);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("namespace", namespace)
       .add("tableName", tableName)
       .toString();

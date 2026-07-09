@@ -83,9 +83,9 @@ public class MetadataAdminAuthorizationTest {
     permissionManager = injector.getInstance(PermissionManager.class);
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    appFabricProcessor.startAsync().awaitRunning();
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
@@ -173,8 +173,8 @@ public class MetadataAdminAuthorizationTest {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessor.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

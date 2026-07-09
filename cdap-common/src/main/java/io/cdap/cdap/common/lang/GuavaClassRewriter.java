@@ -133,7 +133,7 @@ public class GuavaClassRewriter implements ClassRewriter {
 
     ClassReader cr = new ClassReader(input);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    cr.accept(new PreconditionsRewriter(Opcodes.ASM7, cw, methods), ClassReader.EXPAND_FRAMES);
+    cr.accept(new PreconditionsRewriter(Opcodes.ASM9, cw, methods), ClassReader.EXPAND_FRAMES);
     return cw.toByteArray();
   }
 
@@ -149,7 +149,7 @@ public class GuavaClassRewriter implements ClassRewriter {
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     Method method = new Method("directExecutor", Type.getType(Executor.class), new Type[0]);
-    cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
+    cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
 
       private boolean hasMethod;
 

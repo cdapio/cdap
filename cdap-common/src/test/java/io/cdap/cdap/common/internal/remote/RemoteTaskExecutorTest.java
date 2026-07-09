@@ -90,7 +90,7 @@ public class RemoteTaskExecutorTest {
   public void beforeTest() {
     metricCollectors = new HashMap<>();
     mockMetricsCollector = createMockMetricsCollectionService();
-    mockMetricsCollector.startAndWait();
+    mockMetricsCollector.startAsync().awaitRunning();
     registered = discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
   }
 
@@ -112,37 +112,54 @@ public class RemoteTaskExecutorTest {
     return new MetricsCollectionService() {
 
       @Override
-      public ListenableFuture<State> start() {
-        return null;
+      public com.google.common.util.concurrent.Service startAsync() {
+        return this;
       }
 
       @Override
-      public State startAndWait() {
+      public com.google.common.util.concurrent.Service stopAsync() {
+        return this;
+      }
+
+      @Override
+      public void awaitRunning() {
+        // no-op
+      }
+
+      @Override
+      public void awaitRunning(long timeout, java.util.concurrent.TimeUnit unit)
+          throws java.util.concurrent.TimeoutException {
+        // no-op
+      }
+
+      @Override
+      public void awaitTerminated() {
+        // no-op
+      }
+
+      @Override
+      public void awaitTerminated(long timeout, java.util.concurrent.TimeUnit unit)
+          throws java.util.concurrent.TimeoutException {
+        // no-op
+      }
+
+      @Override
+      public Throwable failureCause() {
         return null;
       }
 
       @Override
       public boolean isRunning() {
-        return false;
+        return true;
       }
 
       @Override
       public State state() {
-        return null;
+        return State.RUNNING;
       }
 
       @Override
-      public ListenableFuture<State> stop() {
-        return null;
-      }
-
-      @Override
-      public State stopAndWait() {
-        return null;
-      }
-
-      @Override
-      public void addListener(final Listener listener, final Executor executor) {}
+      public void addListener(Listener listener, Executor executor) {}
 
       @Override
       public MetricsContext getContext(Map<String, String> context) {
@@ -205,7 +222,7 @@ public class RemoteTaskExecutorTest {
       // Exception thrown in the task executor should be in the exception message in the caller
       Assert.assertEquals("Invalid", e.getMessage());
     }
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
@@ -224,7 +241,7 @@ public class RemoteTaskExecutorTest {
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").withNamespace("testNamespace").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
@@ -249,7 +266,7 @@ public class RemoteTaskExecutorTest {
     } catch (Exception e) {
       // expected
     }
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
