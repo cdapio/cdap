@@ -167,7 +167,13 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
       Path targetPath = Files.createDirectories(targetDir);
       ZipEntry entry;
       while ((entry = is.getNextEntry()) != null && !stopped) {
-        Path outputPath = targetPath.resolve(entry.getName());
+        Path outputPath = targetPath.resolve(entry.getName()).normalize();
+        if (!outputPath.startsWith(targetPath)) {
+          throw new IOException(
+              "Illegal path detected for Zip Entry: " + entry.getName()
+                  + ". This will try to write outside the target directory, which is not "
+                  + "allowed.");
+        }
         if (entry.isDirectory()) {
           Files.createDirectories(outputPath);
         } else {
