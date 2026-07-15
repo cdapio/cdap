@@ -164,7 +164,7 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
     LOG.debug("Localize and expand {} to {}", uri.toString(), targetDir);
 
     try (ZipInputStream is = new ZipInputStream(inputStream)) {
-      Path targetPath = Files.createDirectories(targetDir);
+      Path targetPath = Files.createDirectories(targetDir).toAbsolutePath().normalize();
       ZipEntry entry;
       while ((entry = is.getNextEntry()) != null && !stopped) {
         Path outputPath = targetPath.resolve(entry.getName()).normalize();
