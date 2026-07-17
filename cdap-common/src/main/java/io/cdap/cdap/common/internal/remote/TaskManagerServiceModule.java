@@ -29,10 +29,7 @@ public class TaskManagerServiceModule extends AbstractModule {
     // Bind the core TaskManager as a singleton
     bind(TaskManager.class).toProvider(TaskManager::getInstance).in(Scopes.SINGLETON);
     
-    // Bind the HTTP handler
-    bind(TaskManagerHttpHandler.class).in(Scopes.SINGLETON);
-    
-    // Bind the service itself
+    // Bind the Netty Proxy service itself
     bind(TaskManagerService.class).in(Scopes.SINGLETON);
   }
 }

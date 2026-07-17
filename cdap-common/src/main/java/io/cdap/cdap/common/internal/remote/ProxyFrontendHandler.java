@@ -1,0 +1,152 @@
+/*
+ * Copyright © 2026 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.common.internal.remote;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.ReferenceCountUtil;
+
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+
+public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
+
+    private final Map<Integer, String> workerPartitions;
+    private Channel outboundChannel;
+    private boolean connecting = false;
+    private final Queue<Object> pendingMessages = new LinkedList<>();
+
+    public ProxyFrontendHandler(Map<Integer, String> workerPartitions) {
+        this.workerPartitions = workerPartitions;
+    }
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof HttpRequest) {
+            HttpRequest req = (HttpRequest) msg;
+
+            String partitionHeader = req.headers().get("X-Partition-ID");
+            int partitionId = (partitionHeader != null) ? Integer.parseInt(partitionHeader) : 1;
+            String workerAddress = workerPartitions.getOrDefault(partitionId, "127.0.0.1:8081");
+            String[] hostPort = workerAddress.split(":");
+
+            // Apply backpressure on client until connection established
+            ctx.channel().config().setAutoRead(false);
+            connecting = true;
+
+            Bootstrap b = new Bootstrap();
+            b.group(ctx.channel().eventLoop())
+             .channel(NioSocketChannel.class)
+             .option(ChannelOption.SO_KEEPALIVE, true)
+             .handler(new ChannelInitializer<SocketChannel>() {
+                 @Override
+                 protected void initChannel(SocketChannel ch) {
+                     ChannelPipeline p = ch.pipeline();
+                     p.addLast(new HttpClientCodec());
+                     p.addLast(new ProxyBackendHandler(ctx.channel()));
+                 }
+             });
+
+            ChannelFuture f = b.connect(hostPort[0], Integer.parseInt(hostPort[1]));
+            outboundChannel = f.channel();
+
+            f.addListener((ChannelFutureListener) future -> {
+                connecting = false;
+                if (future.isSuccess()) {
+                    // Drain pending messages queue
+                    Object pendingMsg = pendingMessages.poll();
+                    while (pendingMsg != null) {
+                        outboundChannel.write(pendingMsg);
+                        pendingMsg = pendingMessages.poll();
+                    }
+                    outboundChannel.flush();
+                    // Resume reading from client once connected
+                    ctx.channel().config().setAutoRead(true);
+                } else {
+                    // Release all pending messages
+                    Object pendingMsg = pendingMessages.poll();
+                    while (pendingMsg != null) {
+                        ReferenceCountUtil.release(pendingMsg);
+                        pendingMsg = pendingMessages.poll();
+                    }
+                    ctx.channel().close();
+                }
+            });
+
+            pendingMessages.add(ReferenceCountUtil.retain(msg));
+
+        } else if (msg instanceof HttpContent) {
+            if (connecting) {
+                // Queue chunks while connection is establishing
+                pendingMessages.add(ReferenceCountUtil.retain(msg));
+            } else if (outboundChannel != null && outboundChannel.isActive()) {
+                outboundChannel.writeAndFlush(ReferenceCountUtil.retain(msg));
+            }
+        }
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        if (outboundChannel != null && outboundChannel.isActive() && !connecting) {
+            outboundChannel.flush();
+        }
+        ctx.fireChannelReadComplete();
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) {
+        // App Fabric client channel is saturated; pause reading from backend Worker
+        if (outboundChannel != null && outboundChannel.isActive()) {
+            boolean isWritable = ctx.channel().isWritable();
+            outboundChannel.config().setAutoRead(isWritable);
+        }
+        ctx.fireChannelWritabilityChanged();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        if (outboundChannel != null) {
+            closeOnFlush(outboundChannel);
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        closeOnFlush(ctx.channel());
+    }
+
+    static void closeOnFlush(Channel ch) {
+        if (ch.isActive()) {
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+}
