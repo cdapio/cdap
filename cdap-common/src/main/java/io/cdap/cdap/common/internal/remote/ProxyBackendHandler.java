@@ -20,17 +20,50 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.http.HttpResponse;
+
+import java.util.Map;
 
 public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     private final Channel inboundChannel;
+    private final Map<String, PodState> podRegistry;
+    private final String targetWorkerAddress;
 
-    public ProxyBackendHandler(Channel inboundChannel) {
+    public ProxyBackendHandler(Channel inboundChannel, Map<String, PodState> podRegistry, String targetWorkerAddress) {
         this.inboundChannel = inboundChannel;
+        this.podRegistry = podRegistry;
+        this.targetWorkerAddress = targetWorkerAddress;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        if (msg instanceof HttpResponse) {
+            HttpResponse resp = (HttpResponse) msg;
+            PodState state = podRegistry.get(targetWorkerAddress);
+            if (state != null) {
+                // Thread-safe update from Worker Ground Truth headers
+                synchronized (state) {
+                    String activeTasksStr = resp.headers().get("X-Active-Tasks");
+                    String leasedNamespace = resp.headers().get("X-Leased-Namespace");
+                    
+                    if (activeTasksStr != null) {
+                        try {
+                            state.setInflightRequests(Integer.parseInt(activeTasksStr));
+                        } catch (NumberFormatException e) {
+                            state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+                        }
+                    } else {
+                        state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+                    }
+                    
+                    if (leasedNamespace != null) {
+                        state.setLeasedNamespace(leasedNamespace);
+                    }
+                }
+            }
+        }
+        
         // Forward worker responses directly back to the client
         inboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
@@ -45,8 +78,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
         // Backend Worker channel is saturated; pause reading from App Fabric client
         if (inboundChannel != null && inboundChannel.isActive()) {
-            boolean isWritable = ctx.channel().isWritable();
-            inboundChannel.config().setAutoRead(isWritable);
+            inboundChannel.config().setAutoRead(ctx.channel().isWritable());
         }
         ctx.fireChannelWritabilityChanged();
     }

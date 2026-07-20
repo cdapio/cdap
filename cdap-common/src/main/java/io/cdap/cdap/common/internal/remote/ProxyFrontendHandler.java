@@ -28,9 +28,13 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
 
 import java.util.LinkedList;
@@ -39,13 +43,13 @@ import java.util.Queue;
 
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
-    private final Map<Integer, String> workerPartitions;
+    private final Map<String, PodState> podRegistry;
     private Channel outboundChannel;
     private boolean connecting = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
 
-    public ProxyFrontendHandler(Map<Integer, String> workerPartitions) {
-        this.workerPartitions = workerPartitions;
+    public ProxyFrontendHandler(Map<String, PodState> podRegistry) {
+        this.podRegistry = podRegistry;
     }
 
     @Override
@@ -53,10 +57,49 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest) {
             HttpRequest req = (HttpRequest) msg;
 
-            String partitionHeader = req.headers().get("X-Partition-ID");
-            int partitionId = (partitionHeader != null) ? Integer.parseInt(partitionHeader) : 1;
-            String workerAddress = workerPartitions.getOrDefault(partitionId, "127.0.0.1:8081");
-            String[] hostPort = workerAddress.split(":");
+            String targetNamespace = req.headers().get("X-CDF-Namespace");
+            if (targetNamespace == null) targetNamespace = "default";
+
+            String targetWorkerAddress = null;
+
+            // 1. Warm Match: Thread-safe scan specifically locking evaluation
+            for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
+                PodState state = entry.getValue();
+                synchronized (state) {
+                    if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
+                        targetWorkerAddress = entry.getKey();
+                        state.setInflightRequests(state.getInflightRequests() + 1);
+                        break;
+                    }
+                }
+            }
+
+            // 2. Idle Choice: Thread-safe claim of an idle pod
+            if (targetWorkerAddress == null) {
+                for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
+                    PodState state = entry.getValue();
+                    synchronized (state) {
+                        if (state.getInflightRequests() == 0) {
+                            targetWorkerAddress = entry.getKey();
+                            state.setLeasedNamespace(targetNamespace);
+                            state.setInflightRequests(1);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 3. Busy Rejection: All pods saturated
+            if (targetWorkerAddress == null) {
+                FullHttpResponse response = new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1, HttpResponseStatus.TOO_MANY_REQUESTS);
+                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                ReferenceCountUtil.release(msg);
+                return;
+            }
+
+            final String chosenWorker = targetWorkerAddress;
+            String[] hostPort = targetWorkerAddress.split(":");
 
             // Apply backpressure on client until connection established
             ctx.channel().config().setAutoRead(false);
@@ -71,7 +114,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
                      p.addLast(new HttpClientCodec());
-                     p.addLast(new ProxyBackendHandler(ctx.channel()));
+                     p.addLast(new ProxyBackendHandler(ctx.channel(), podRegistry, chosenWorker));
                  }
              });
 
@@ -81,21 +124,25 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             f.addListener((ChannelFutureListener) future -> {
                 connecting = false;
                 if (future.isSuccess()) {
-                    // Drain pending messages queue
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
                         outboundChannel.write(pendingMsg);
                         pendingMsg = pendingMessages.poll();
                     }
                     outboundChannel.flush();
-                    // Resume reading from client once connected
                     ctx.channel().config().setAutoRead(true);
                 } else {
-                    // Release all pending messages
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
                         ReferenceCountUtil.release(pendingMsg);
                         pendingMsg = pendingMessages.poll();
+                    }
+                    // Thread-safe decrement on fallback
+                    PodState fallbackState = podRegistry.get(chosenWorker);
+                    if (fallbackState != null) {
+                        synchronized (fallbackState) {
+                            fallbackState.setInflightRequests(Math.max(0, fallbackState.getInflightRequests() - 1));
+                        }
                     }
                     ctx.channel().close();
                 }
@@ -105,10 +152,11 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
         } else if (msg instanceof HttpContent) {
             if (connecting) {
-                // Queue chunks while connection is establishing
                 pendingMessages.add(ReferenceCountUtil.retain(msg));
             } else if (outboundChannel != null && outboundChannel.isActive()) {
                 outboundChannel.writeAndFlush(ReferenceCountUtil.retain(msg));
+            } else {
+                ReferenceCountUtil.release(msg);
             }
         }
     }
@@ -123,10 +171,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        // App Fabric client channel is saturated; pause reading from backend Worker
         if (outboundChannel != null && outboundChannel.isActive()) {
-            boolean isWritable = ctx.channel().isWritable();
-            outboundChannel.config().setAutoRead(isWritable);
+            outboundChannel.config().setAutoRead(ctx.channel().isWritable());
         }
         ctx.fireChannelWritabilityChanged();
     }

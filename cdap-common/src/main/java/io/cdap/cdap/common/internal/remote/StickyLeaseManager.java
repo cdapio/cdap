@@ -20,6 +20,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,15 +45,21 @@ public class StickyLeaseManager {
   private final AtomicInteger activeTaskCount = new AtomicInteger(0);
   private final AtomicInteger totalTasksProcessedInLease = new AtomicInteger(0);
   private volatile long lastActivityTimeMillis;
+  private final Consumer<NamespaceId> onLeaseAcquired;
+  private final Runnable onLeaseReleased;
 
   public StickyLeaseManager() {
-    this(10, 10);
+    this(10, 10, null, null);
   }
 
-  public StickyLeaseManager(int maxConcurrentTasks, int maxTasksPerLease) {
+  public StickyLeaseManager(int maxConcurrentTasks, int maxTasksPerLease,
+                            Consumer<NamespaceId> onLeaseAcquired,
+                            Runnable onLeaseReleased) {
     this.maxConcurrentTasks = maxConcurrentTasks;
     this.maxTasksPerLease = maxTasksPerLease;
     this.lastActivityTimeMillis = System.currentTimeMillis();
+    this.onLeaseAcquired = onLeaseAcquired;
+    this.onLeaseReleased = onLeaseReleased;
   }
 
   /**
@@ -73,6 +80,9 @@ public class StickyLeaseManager {
         LOG.info(
             "Lease claimed by namespace '{}' (Tier: {}) in {}ms (Boot penalty entirely avoided)",
             namespace.getNamespace(), tier, elapsed);
+        if (onLeaseAcquired != null) {
+          onLeaseAcquired.accept(namespace);
+        }
         return AcquisitionStatus.SUCCESS;
       }
     }
@@ -155,6 +165,9 @@ public class StickyLeaseManager {
       totalTasksProcessedInLease.set(0);
       LOG.info("Release Lease (Logical Reset): Cleared namespace context for '{}'. Reason: {}",
           oldNamespace.getNamespace(), reason);
+      if (onLeaseReleased != null) {
+        onLeaseReleased.run();
+      }
     }
   }
 

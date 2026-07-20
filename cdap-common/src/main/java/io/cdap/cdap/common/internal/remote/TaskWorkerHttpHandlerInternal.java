@@ -121,7 +121,24 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
     this.concurrentRequestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
     int maxTasksPerLease = cConf.getInt("task.worker.lease.max.tasks", 10);
-    this.stickyLeaseManager = new StickyLeaseManager(concurrentRequestLimit, maxTasksPerLease);
+    this.stickyLeaseManager = new StickyLeaseManager(concurrentRequestLimit, maxTasksPerLease,
+        (namespaceId) -> {
+            try {
+                GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
+            } catch (Exception e) {
+                LOG.warn("Failed to set GCP metadata task context for namespace {}", namespaceId, e);
+            }
+        },
+        () -> {
+            try {
+                // Wipe Sidecar IAM Tokens (Identity / Security boundary)
+                GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
+                // TODO: Wipe the JVM artifactCache to enforce disk reclaim boundary here
+            } catch (Exception e) {
+                LOG.warn("Failed to clear GCP metadata task context", e);
+            }
+        }
+    );
 
     ScheduledExecutorService leaseReclamationExecutor = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("lease-reclamation"));
@@ -274,8 +291,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     runningRequestCount.incrementAndGet();
 
     try {
-      // set the GcpMetadataTaskContext before running the task.
-      GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
       runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
 
@@ -307,13 +322,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       // Potentially ran user code, hence terminate the runner.
       taskCompletionConsumer.accept(false,
           new TaskDetails(metricsCollectionService, startTime, true, runnableTaskRequest));
-    } finally {
-      // clear the GcpMetadataTaskContext after the task is completed.
-      try {
-        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
-      } catch (Exception e) {
-        LOG.warn("Failed to clear GCP metadata task context", e);
-      }
     }
   }
 

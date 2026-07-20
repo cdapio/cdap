@@ -47,7 +47,7 @@ public class TaskManagerService extends AbstractIdleService {
   private EventLoopGroup workerGroup;
   private ChannelFuture channelFuture;
 
-  private final Map<Integer, String> workerPartitions = new ConcurrentHashMap<>();
+  private final Map<String, PodState> podRegistry = new ConcurrentHashMap<>();
 
   @Inject
   TaskManagerService(CConfiguration cConf) {
@@ -55,8 +55,8 @@ public class TaskManagerService extends AbstractIdleService {
     this.address = cConf.get("task.manager.address", "0.0.0.0");
 
     // Mocking worker partitions for POC
-    workerPartitions.put(1, "127.0.0.1:8081");
-    workerPartitions.put(2, "127.0.0.1:8082");
+    podRegistry.put("127.0.0.1:8081", new PodState(null, 0));
+    podRegistry.put("127.0.0.1:8082", new PodState(null, 0));
 
     LOG.info("sidhdirenge - Initializing TaskManagerService (Netty Proxy POC) on {}:{}", address, port);
   }
@@ -77,7 +77,7 @@ public class TaskManagerService extends AbstractIdleService {
              ChannelPipeline p = ch.pipeline();
              p.addLast(new HttpServerCodec());
              // NOTICE: NO HttpObjectAggregator here!
-             p.addLast(new ProxyFrontendHandler(workerPartitions));
+             p.addLast(new ProxyFrontendHandler(podRegistry));
          }
      });
 
