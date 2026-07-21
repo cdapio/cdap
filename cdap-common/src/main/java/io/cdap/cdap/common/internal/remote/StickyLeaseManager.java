@@ -78,7 +78,7 @@ public class StickyLeaseManager {
         lastActivityTimeMillis = System.currentTimeMillis();
         long elapsed = System.currentTimeMillis() - claimStartTime;
         LOG.info(
-            "Lease claimed by namespace '{}' (Tier: {}) in {}ms (Boot penalty entirely avoided)",
+            "shruzard Lease claimed by namespace '{}' (Tier: {}) in {}ms (Boot penalty entirely avoided)",
             namespace.getNamespace(), tier, elapsed);
         if (onLeaseAcquired != null) {
           onLeaseAcquired.accept(namespace);

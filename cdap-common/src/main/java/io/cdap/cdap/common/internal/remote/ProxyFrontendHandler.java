@@ -100,16 +100,20 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 }
             }
 
-            // 2. Idle Choice: Thread-safe claim of an idle pod
+            // 2. Idle Choice: Thread-safe claim of an unleased pod, OR an expired pod (35s predicted timeout avoiding clock drift)
             if (targetWorkerAddress == null) {
                 for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
                     PodState state = entry.getValue();
                     synchronized (state) {
-                        if (state.getInflightRequests() == 0) {
+                        boolean isUnleased = (state.getLeasedNamespace() == null || state.getLeasedNamespace().isEmpty());
+                        boolean isExpiredIdle = (state.getInflightRequests() == 0 && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
+                        
+                        if (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle)) {
                             targetWorkerAddress = entry.getKey();
                             state.setLeasedNamespace(targetNamespace);
                             state.setInflightRequests(1);
-                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod at {} for namespace '{}'.", targetWorkerAddress, targetNamespace);
+                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod (Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
+                                isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
                             break;
                         }
                     }

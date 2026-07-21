@@ -22,10 +22,12 @@ package io.cdap.cdap.common.internal.remote;
 public class PodState {
     private String leasedNamespace;
     private int inflightRequests;
+    private long lastActivityTime;
 
     public PodState(String leasedNamespace, int inflightRequests) {
         this.leasedNamespace = leasedNamespace;
         this.inflightRequests = inflightRequests;
+        this.lastActivityTime = 0; // Instantly trigger predictions on boot
     }
 
     public String getLeasedNamespace() {
@@ -42,5 +44,13 @@ public class PodState {
 
     public void setInflightRequests(int inflightRequests) {
         this.inflightRequests = inflightRequests;
+    }
+
+    public long getLastActivityTime() {
+        return lastActivityTime;
+    }
+
+    public void setLastActivityTime(long lastActivityTime) {
+        this.lastActivityTime = lastActivityTime;
     }
 }

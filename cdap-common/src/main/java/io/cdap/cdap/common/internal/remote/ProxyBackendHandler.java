@@ -67,6 +67,8 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                         state.setLeasedNamespace(leasedNamespace);
                     }
                     
+                    state.setLastActivityTime(System.currentTimeMillis());
+                    
                     if (activeTasksStr != null || leasedNamespace != null) {
                         LOG.info("shruzard - ProxyBackendHandler: Self-Healed PodState for {}. Occupancy: {}, Namespace: {}", 
                             targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
