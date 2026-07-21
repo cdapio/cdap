@@ -45,8 +45,13 @@ import java.util.HashSet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import io.cdap.cdap.common.conf.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyFrontendHandler.class);
+
 
     private final Map<String, PodState> podRegistry;
     private final DiscoveryServiceClient discoveryServiceClient;
@@ -89,6 +94,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
                         targetWorkerAddress = entry.getKey();
                         state.setInflightRequests(state.getInflightRequests() + 1);
+                        LOG.info("shruzard - ProxyFrontendHandler: Found warm match for '{}' at {}. Occupancy: {}", targetNamespace, targetWorkerAddress, state.getInflightRequests());
                         break;
                     }
                 }
@@ -103,6 +109,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                             targetWorkerAddress = entry.getKey();
                             state.setLeasedNamespace(targetNamespace);
                             state.setInflightRequests(1);
+                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod at {} for namespace '{}'.", targetWorkerAddress, targetNamespace);
                             break;
                         }
                     }
@@ -111,6 +118,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
             // 3. Busy Rejection: All pods saturated
             if (targetWorkerAddress == null) {
+                LOG.warn("shruzard - ProxyFrontendHandler: All pods saturated or leased incorrectly. Rejecting request for namespace '{}'", targetNamespace);
                 FullHttpResponse response = new DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1, HttpResponseStatus.TOO_MANY_REQUESTS);
                 ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

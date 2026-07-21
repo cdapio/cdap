@@ -23,8 +23,13 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpResponse;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyBackendHandler.class);
+
 
     private final Channel inboundChannel;
     private final Map<String, PodState> podRegistry;
@@ -57,8 +62,14 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                         state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
                     }
                     
+                    
                     if (leasedNamespace != null) {
                         state.setLeasedNamespace(leasedNamespace);
+                    }
+                    
+                    if (activeTasksStr != null || leasedNamespace != null) {
+                        LOG.info("shruzard - ProxyBackendHandler: Self-Healed PodState for {}. Occupancy: {}, Namespace: {}", 
+                            targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
                     }
                 }
             }

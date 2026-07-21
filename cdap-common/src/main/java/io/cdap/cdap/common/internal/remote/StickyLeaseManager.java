@@ -94,7 +94,7 @@ public class StickyLeaseManager {
     }
 
     // Mismatching namespace -> Enforce rejection (triggering 429 TOO_MANY_REQUESTS / spillover)
-    LOG.info("Enforcement: Rejecting request for namespace '{}', current lease is held by '{}'",
+    LOG.info("shruzard - StickyLeaseManager: Enforcement: Rejecting request for namespace '{}', current lease is held by '{}'",
         namespace.getNamespace(), currentLease.get());
     return AcquisitionStatus.REJECTED_MISMATCH;
   }
@@ -109,7 +109,7 @@ public class StickyLeaseManager {
     }
 
     if (activeTaskCount.get() >= maxConcurrentTasks) {
-      LOG.info("Concurrency limit reached ({} tasks active) for namespace '{}'",
+      LOG.info("shruzard - StickyLeaseManager: Concurrency limit reached ({} tasks active) for namespace '{}'",
           activeTaskCount.get(), namespace.getNamespace());
       return AcquisitionStatus.REJECTED_MAX_CONCURRENCY;
     }
@@ -163,7 +163,7 @@ public class StickyLeaseManager {
     if (oldNamespace != null) {
       activeTaskCount.set(0);
       totalTasksProcessedInLease.set(0);
-      LOG.info("Release Lease (Logical Reset): Cleared namespace context for '{}'. Reason: {}",
+      LOG.info("shruzard - StickyLeaseManager: Release Lease (Logical Reset): Cleared namespace context for '{}'. Reason: {}",
           oldNamespace.getNamespace(), reason);
       if (onLeaseReleased != null) {
         onLeaseReleased.run();
