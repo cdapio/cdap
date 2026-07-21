@@ -67,8 +67,7 @@ public class RemoteClient {
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
   private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
-  private static final ThreadLocal<Discoverable> CURRENT_RESOLVED_POD = new ThreadLocal<>();
-  private static final ThreadLocal<String> CURRENT_ROUTING_KEY = new ThreadLocal<>();
+
   private static final String TASK_MANAGER_URL = "http://cdap-task-manager.default.svc.cluster.local:11025";
   private static final Gson GSON = new Gson();
 
@@ -181,13 +180,9 @@ public class RemoteClient {
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl,
         headers, request.getBody(), request.getBodyLength());
 
-    boolean rejected = false;
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       int responseCode = response.getResponseCode();
-      if (responseCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-        rejected = true;
-      }
       // 503 is always retryable. Other 5xx errors are retryable if the request is idempotent (handled in
       // RemoteClient#executeIdempotent(HttpRequest)
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
@@ -215,19 +210,7 @@ public class RemoteClient {
       }
       return response;
     } catch (ConnectException e) {
-      rejected = true;
       throw new ServiceUnavailableException(discoverableServiceName, e);
-    } catch (IOException | RuntimeException e) {
-      rejected = true;
-      throw e;
-    } finally {
-      Discoverable resolvedPod = CURRENT_RESOLVED_POD.get();
-      String routingKey = CURRENT_ROUTING_KEY.get();
-      if (resolvedPod != null && routingKey != null) {
-        notifyTaskManagerFinished(routingKey, resolvedPod, rejected);
-      }
-      CURRENT_RESOLVED_POD.remove();
-      CURRENT_ROUTING_KEY.remove();
     }
   }
 
@@ -242,59 +225,15 @@ public class RemoteClient {
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl, headers,
         request.getBody(), request.getBodyLength(), request.getConsumer());
-    boolean rejected = false;
     try {
       HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
       if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-          rejected = true;
-        }
         throw new IOException(
             String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
                 httpResponse.getResponseCode()));
       }
       httpResponse.consumeContent();
-    } catch (IOException | RuntimeException e) {
-      rejected = true;
-      throw e;
-    } finally {
-      Discoverable resolvedPod = CURRENT_RESOLVED_POD.get();
-      String routingKey = CURRENT_ROUTING_KEY.get();
-      if (resolvedPod != null && routingKey != null) {
-        notifyTaskManagerFinished(routingKey, resolvedPod, rejected);
-      }
-      CURRENT_RESOLVED_POD.remove();
-      CURRENT_ROUTING_KEY.remove();
-    }
-  }
-  private void notifyTaskManagerFinished(String namespace, Discoverable pod, boolean rejected) {
-    try {
-      URL url = new URL(TASK_MANAGER_URL + "/v3/taskmanager/finish");
-      TaskManagerHttpHandler.FinishRequest finishRequest = new TaskManagerHttpHandler.FinishRequest();
-      
-      java.lang.reflect.Field nsField = finishRequest.getClass().getDeclaredField("namespace");
-      nsField.setAccessible(true);
-      nsField.set(finishRequest, namespace);
-      
-      TaskManagerHttpHandler.PodInfo podInfo = new TaskManagerHttpHandler.PodInfo(
-          pod.getSocketAddress().getHostString(), pod.getSocketAddress().getPort());
-      java.lang.reflect.Field podField = finishRequest.getClass().getDeclaredField("pod");
-      podField.setAccessible(true);
-      podField.set(finishRequest, podInfo);
-
-      java.lang.reflect.Field rejectedField = finishRequest.getClass().getDeclaredField("rejected");
-      rejectedField.setAccessible(true);
-      rejectedField.set(finishRequest, rejected);
- 
-      HttpRequest req = HttpRequest.post(url)
-          .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .withBody(GSON.toJson(finishRequest))
-          .build();
-      
-      HttpRequests.execute(req, httpRequestConfig);
-    } catch (Exception e) {
-      LOG.warn("sidhdirenge - Failed to notify Task Manager of task completion", e);
     }
   }
 
@@ -368,104 +307,12 @@ public class RemoteClient {
       }
     }
 
-    LOG.info("sidhdirenge - RemoteClient resolving stickily via TaskManager for service {} with routingKey: {}",
-        discoverableServiceName, routingKey);
-
-    // 1. Fetch all currently discovered endpoints
-    Iterable<Discoverable> discoverables = () -> discoveryClient.discover(discoverableServiceName)
-        .iterator();
-    List<Discoverable> list = new ArrayList<>();
-    for (Discoverable d : discoverables) {
-      // Perform DNS lookup to resolve the service hostname into individual pod IPs (for headless services)
-      try {
-        java.net.InetAddress[] addresses = java.net.InetAddress.getAllByName(
-            d.getSocketAddress().getHostName());
-        for (java.net.InetAddress addr : addresses) {
-          list.add(new Discoverable(d.getName(),
-              new java.net.InetSocketAddress(addr.getHostAddress(), d.getSocketAddress().getPort()),
-              d.getPayload()));
-        }
-      } catch (java.net.UnknownHostException e) {
-        // Fallback to original discoverable if DNS lookup fails
-        list.add(d);
-      }
-    }
-
-    if (list.isEmpty()) {
-      throw new ServiceUnavailableException(discoverableServiceName);
-    }
-
-    // 2. Sort endpoints by IP address and port to ensure consistent ordering across all client instances
-    list.sort(Comparator.comparing((Discoverable d) -> d.getSocketAddress().getHostName())
-        .thenComparingInt(d -> d.getSocketAddress().getPort()));
-
-    // 3. Delegate to the standalone TaskManager Service over HTTP
-    Discoverable discoverable = null;
+    LOG.info("shruzard - RemoteClient routing directly to Netty TaskManager L7 proxy for routingKey: {}", routingKey);
     try {
-      URL url = new URL(TASK_MANAGER_URL + "/v3/taskmanager/resolve");
-      TaskManagerHttpHandler.ResolveRequest resolveRequest = new TaskManagerHttpHandler.ResolveRequest();
-      
-      java.lang.reflect.Field nsField = resolveRequest.getClass().getDeclaredField("namespace");
-      nsField.setAccessible(true);
-      nsField.set(resolveRequest, routingKey);
-      
-      List<TaskManagerHttpHandler.PodInfo> podInfos = new ArrayList<>();
-      for (Discoverable pod : list) {
-        podInfos.add(new TaskManagerHttpHandler.PodInfo(
-            pod.getSocketAddress().getHostString(), pod.getSocketAddress().getPort()));
-      }
-      java.lang.reflect.Field podsField = resolveRequest.getClass().getDeclaredField("pods");
-      podsField.setAccessible(true);
-      podsField.set(resolveRequest, podInfos);
-
-      HttpRequest req = HttpRequest.post(url)
-          .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .withBody(GSON.toJson(resolveRequest))
-          .build();
-
-      HttpResponse resp = HttpRequests.execute(req, httpRequestConfig);
-      if (resp.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        TaskManagerHttpHandler.PodInfo selectedPodInfo = GSON.fromJson(
-            resp.getResponseBodyAsString(), TaskManagerHttpHandler.PodInfo.class);
-        
-        byte[] payload = list.isEmpty() ? new byte[0] : list.get(0).getPayload();
-        for (Discoverable d : list) {
-          if (d.getSocketAddress().getPort() == selectedPodInfo.getPort()
-              && (d.getSocketAddress().getHostName().equals(selectedPodInfo.getHost())
-                  || (d.getSocketAddress().getAddress() != null
-                      && d.getSocketAddress().getAddress().getHostAddress().equals(selectedPodInfo.getHost())))) {
-            payload = d.getPayload();
-            break;
-          }
-        }
-        discoverable = new Discoverable("task.worker",
-            new java.net.InetSocketAddress(selectedPodInfo.getHost(), selectedPodInfo.getPort()), payload);
-      }
-    } catch (Exception e) {
-      LOG.warn("sidhdirenge - Failed to resolve pod via Task Manager HTTP Service. Falling back to local hashing.", e);
-    }
-
-    // Fallback: If Task Manager is down or returns error, use standard consistent hashing
-    if (discoverable == null) {
-      int baseIndex = (routingKey.hashCode() & Integer.MAX_VALUE) % list.size();
-      discoverable = list.get(baseIndex);
-      LOG.warn("sidhdirenge - TaskManager resolution failed. Falling back to default index {}", baseIndex);
-    }
-
-    // Store resolved pod context in ThreadLocal for task execution callbacks
-    CURRENT_RESOLVED_POD.set(discoverable);
-    CURRENT_ROUTING_KEY.set(routingKey);
-
-    LOG.info("sidhdirenge - Centralized TaskManager selected warm pod IP {} for routingKey: {}",
-        discoverable.getSocketAddress(), routingKey);
-
-    URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
-    try {
-      return rewriteUrl(uri.toURL());
+      String cleanPath = (basePath + resource).replaceAll("//+", "/");
+      return new URL(TASK_MANAGER_URL + "/" + cleanPath);
     } catch (MalformedURLException e) {
-      throw new IllegalStateException(
-          String.format("Discovered service %s, but it announced malformed URL %s",
-              discoverableServiceName, uri), e);
+      throw new ServiceUnavailableException(discoverableServiceName, e);
     }
   }
 

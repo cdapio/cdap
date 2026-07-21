@@ -20,6 +20,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,15 +45,21 @@ public class StickyLeaseManager {
   private final AtomicInteger activeTaskCount = new AtomicInteger(0);
   private final AtomicInteger totalTasksProcessedInLease = new AtomicInteger(0);
   private volatile long lastActivityTimeMillis;
+  private final Consumer<NamespaceId> onLeaseAcquired;
+  private final Runnable onLeaseReleased;
 
   public StickyLeaseManager() {
-    this(10, 10);
+    this(10, 10, null, null);
   }
 
-  public StickyLeaseManager(int maxConcurrentTasks, int maxTasksPerLease) {
+  public StickyLeaseManager(int maxConcurrentTasks, int maxTasksPerLease,
+                            Consumer<NamespaceId> onLeaseAcquired,
+                            Runnable onLeaseReleased) {
     this.maxConcurrentTasks = maxConcurrentTasks;
     this.maxTasksPerLease = maxTasksPerLease;
     this.lastActivityTimeMillis = System.currentTimeMillis();
+    this.onLeaseAcquired = onLeaseAcquired;
+    this.onLeaseReleased = onLeaseReleased;
   }
 
   /**
@@ -71,8 +78,11 @@ public class StickyLeaseManager {
         lastActivityTimeMillis = System.currentTimeMillis();
         long elapsed = System.currentTimeMillis() - claimStartTime;
         LOG.info(
-            "Lease claimed by namespace '{}' (Tier: {}) in {}ms (Boot penalty entirely avoided)",
+            "shruzard Lease claimed by namespace '{}' (Tier: {}) in {}ms (Boot penalty entirely avoided)",
             namespace.getNamespace(), tier, elapsed);
+        if (onLeaseAcquired != null) {
+          onLeaseAcquired.accept(namespace);
+        }
         return AcquisitionStatus.SUCCESS;
       }
     }
@@ -84,7 +94,7 @@ public class StickyLeaseManager {
     }
 
     // Mismatching namespace -> Enforce rejection (triggering 429 TOO_MANY_REQUESTS / spillover)
-    LOG.info("Enforcement: Rejecting request for namespace '{}', current lease is held by '{}'",
+    LOG.info("shruzard - StickyLeaseManager: Enforcement: Rejecting request for namespace '{}', current lease is held by '{}'",
         namespace.getNamespace(), currentLease.get());
     return AcquisitionStatus.REJECTED_MISMATCH;
   }
@@ -99,7 +109,7 @@ public class StickyLeaseManager {
     }
 
     if (activeTaskCount.get() >= maxConcurrentTasks) {
-      LOG.info("Concurrency limit reached ({} tasks active) for namespace '{}'",
+      LOG.info("shruzard - StickyLeaseManager: Concurrency limit reached ({} tasks active) for namespace '{}'",
           activeTaskCount.get(), namespace.getNamespace());
       return AcquisitionStatus.REJECTED_MAX_CONCURRENCY;
     }
@@ -153,8 +163,11 @@ public class StickyLeaseManager {
     if (oldNamespace != null) {
       activeTaskCount.set(0);
       totalTasksProcessedInLease.set(0);
-      LOG.info("Release Lease (Logical Reset): Cleared namespace context for '{}'. Reason: {}",
+      LOG.info("shruzard - StickyLeaseManager: Release Lease (Logical Reset): Cleared namespace context for '{}'. Reason: {}",
           oldNamespace.getNamespace(), reason);
+      if (onLeaseReleased != null) {
+        onLeaseReleased.run();
+      }
     }
   }
 

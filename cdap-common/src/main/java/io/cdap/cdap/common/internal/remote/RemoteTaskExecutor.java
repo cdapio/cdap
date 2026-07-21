@@ -139,12 +139,19 @@ public class RemoteTaskExecutor {
             String embeddedNamespace = runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace();
             if (embeddedNamespace != null && !embeddedNamespace.isEmpty()) {
               namespace = embeddedNamespace;
-              LOG.info("sidhdirenge - RemoteTaskExecutor: Mapped SystemAppTask namespace to embedded: {}",
+              LOG.info("shruzard - RemoteTaskExecutor: Mapped SystemAppTask namespace to embedded: {}",
                        namespace);
             }
           }
+          String routingKey = namespace;
+          if (System.currentTimeMillis() - startTime > 60000) {
+              LOG.warn("shruzard - TaskManager Proxy unreachable for 60s! Bypassing proxy and falling back to direct Worker routing!");
+              routingKey = null; // Setting to null triggers CDAP's native RandomEndpoint discovery in RemoteClient
+          }
+
           HttpRequest.Builder requestBuilder = remoteClient
-              .requestBuilder(HttpMethod.POST, workerUrl, namespace)
+              .requestBuilder(HttpMethod.POST, workerUrl, routingKey)
+              .addHeader("X-CDF-Namespace", namespace)
               .withBody(requestBody.duplicate());
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
