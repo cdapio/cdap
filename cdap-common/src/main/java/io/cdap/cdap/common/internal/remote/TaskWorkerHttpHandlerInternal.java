@@ -81,6 +81,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       BasicThrowable.class, new BasicThrowableCodec()).create();
 
   private final RunnableTaskLauncher runnableTaskLauncher;
+  private final ScheduledExecutorService leaseReclamationExecutor;
   private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
 
   /**
@@ -140,15 +141,13 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         }
     );
 
-    ScheduledExecutorService leaseReclamationExecutor = Executors.newSingleThreadScheduledExecutor(
+    this.leaseReclamationExecutor = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("lease-reclamation"));
-    leaseReclamationExecutor.scheduleAtFixedRate(() -> {
-      try {
-        stickyLeaseManager.enforceInactivityReclamation();
-      } catch (Throwable t) {
-        LOG.warn("Error enforcing inactivity lease reclamation", t);
-      }
-    }, 1, 1, TimeUnit.SECONDS);
+    this.leaseReclamationExecutor.scheduleAtFixedRate(
+        this.stickyLeaseManager::enforceInactivityReclamation,
+        1, 1, TimeUnit.MINUTES);
+
+
 
     // Restart the service to clean up and re-claim resources after user code
     // execution.
