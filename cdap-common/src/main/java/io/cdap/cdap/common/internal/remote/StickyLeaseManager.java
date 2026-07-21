@@ -93,9 +93,30 @@ public class StickyLeaseManager {
       return AcquisitionStatus.SUCCESS;
     }
 
-    // Mismatching namespace -> Enforce rejection (triggering 429 TOO_MANY_REQUESTS / spillover)
-    LOG.info("shruzard - StickyLeaseManager: Enforcement: Rejecting request for namespace '{}', current lease is held by '{}'",
-        namespace.getNamespace(), currentLease.get());
+    // Mismatching namespace -> Check if it has been idle long enough to steal (Lazy Eviction)
+    long idleDurationMillis = System.currentTimeMillis() - lastActivityTimeMillis;
+    long threshold = currentTier.get().getInactivityTimeoutMillis();
+    
+    if (activeTaskCount.get() == 0 && idleDurationMillis >= threshold) {
+        LOG.info("shruzard - StickyLeaseManager: Lazy Eviction: Stealing pod from '{}' to '{}' after {}ms of inactivity", 
+            currentLease.get().getNamespace(), namespace.getNamespace(), idleDurationMillis);
+        releaseLease("Stolen by " + namespace.getNamespace() + " after being idle for > timeout");
+        
+        // Re-claim immediately
+        currentLease.set(namespace);
+        currentTier.set(tier);
+        activeTaskCount.set(0);
+        totalTasksProcessedInLease.set(0);
+        lastActivityTimeMillis = System.currentTimeMillis();
+        if (onLeaseAcquired != null) {
+            onLeaseAcquired.accept(namespace);
+        }
+        return AcquisitionStatus.SUCCESS;
+    }
+
+    // Mismatching namespace & not stealable -> Enforce rejection (triggering 429 TOO_MANY_REQUESTS / spillover)
+    LOG.info("shruzard - StickyLeaseManager: Enforcement: Rejecting request for namespace '{}', current lease is held by '{}' (Idle for {}ms)",
+        namespace.getNamespace(), currentLease.get(), idleDurationMillis);
     return AcquisitionStatus.REJECTED_MISMATCH;
   }
 
@@ -137,22 +158,18 @@ public class StickyLeaseManager {
   }
 
   /**
-   * Checks if the idle timeout for the current tiered tenancy has been exceeded. If exceeded,
-   * triggers a logical reset.
+   * Hard 10-minute security wipe boundary. Even with Lazy Eviction, we wipe GCP tokens 
+   * after 10 minutes of complete inactivity to prevent infinite persistence of expired tokens.
    */
-  public synchronized boolean enforceInactivityReclamation() {
+  public synchronized void enforceInactivityReclamation() {
     NamespaceId leased = currentLease.get();
     if (leased != null && activeTaskCount.get() == 0) {
       long idleDurationMillis = System.currentTimeMillis() - lastActivityTimeMillis;
-      long threshold = currentTier.get().getInactivityTimeoutMillis();
-
-      if (idleDurationMillis >= threshold) {
-        releaseLease(String.format("Tiered inactivity timeout exceeded for %s (%dms >= %dms)",
-            currentTier.get(), idleDurationMillis, threshold));
-        return true;
+      
+      if (idleDurationMillis >= 600000L) { // 10 minutes
+        releaseLease(String.format("Security boundary hard-timeout (10 minutes) exceeded for %s", leased.getNamespace()));
       }
     }
-    return false;
   }
 
   /**
