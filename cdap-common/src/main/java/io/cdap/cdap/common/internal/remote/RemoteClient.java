@@ -342,7 +342,7 @@ public class RemoteClient {
       }
     }
 
-    LOG.info("sidhdirenge - RemoteClient routing directly to Netty TaskManager L7 proxy for routingKey: {}", routingKey);
+    LOG.info("shruzard - RemoteClient routing directly to Netty TaskManager L7 proxy for routingKey: {}", routingKey);
     try {
       String cleanPath = (basePath + resource).replaceAll("//+", "/");
       return new URL(TASK_MANAGER_URL + "/" + cleanPath);

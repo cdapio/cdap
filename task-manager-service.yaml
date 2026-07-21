@@ -5,7 +5,7 @@ metadata:
   namespace: default
   labels:
     cdap.service: task.manager
-    cdap.instance: sidhdirenge-jun8
+    cdap.instance: shruzard-jun8
 spec:
   replicas: 1
   selector:
@@ -15,9 +15,9 @@ spec:
     metadata:
       labels:
         cdap.service: task.manager
-        cdap.instance: sidhdirenge-jun8
+        cdap.instance: shruzard-jun8
     spec:
-      serviceAccountName: cdap-sidhdirenge-jun8-system-sa
+      serviceAccountName: cdap-shruzard-jun8-system-sa
       containers:
         - name: task-manager
           image: us-east1-docker.pkg.dev/ld27be8c949817660-tp/ar-demo/cloud-data-fusion:latest
@@ -52,7 +52,7 @@ spec:
               name: cdap-security
               readOnly: true
             - mountPath: /cdap_configmap
-              name: cdap-cm-vol-cdap-sidhdirenge-jun8-configmap
+              name: cdap-cm-vol-cdap-shruzard-jun8-configmap
       volumes:
         - downwardAPI:
             defaultMode: 420
@@ -72,11 +72,11 @@ spec:
           name: podinfo
         - configMap:
             defaultMode: 420
-            name: cdap-sidhdirenge-jun8-cconf
+            name: cdap-shruzard-jun8-cconf
           name: cdap-conf
         - configMap:
             defaultMode: 420
-            name: cdap-sidhdirenge-jun8-hconf
+            name: cdap-shruzard-jun8-hconf
           name: hadoop-conf
         - name: cdap-security
           secret:
@@ -84,8 +84,8 @@ spec:
             secretName: cdap-security
         - configMap:
             defaultMode: 420
-            name: cdap-sidhdirenge-jun8-configmap
-          name: cdap-cm-vol-cdap-sidhdirenge-jun8-configmap
+            name: cdap-shruzard-jun8-configmap
+          name: cdap-cm-vol-cdap-shruzard-jun8-configmap
 ---
 apiVersion: v1
 kind: Service

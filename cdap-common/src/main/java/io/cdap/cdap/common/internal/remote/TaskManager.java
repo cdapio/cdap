@@ -99,7 +99,7 @@ public class TaskManager {
             podActiveTaskCounts.put(podIp, 0);
             podTotalTaskProcessedCounts.put(podIp, 0);
             
-            LOG.info("sidhdirenge - TaskManager: Established new lease for namespace '{}' on pod '{}'",
+            LOG.info("shruzard - TaskManager: Established new lease for namespace '{}' on pod '{}'",
                      namespace, podIp);
             
             leasedPodIp = podIp;
@@ -111,7 +111,7 @@ public class TaskManager {
 
       // 3. Fallback: If all pods are leased to other namespaces, find the pod with the least load
       if (selectedPod == null) {
-        LOG.warn("sidhdirenge - TaskManager: All pods are leased. Falling back to least-loaded pod.");
+        LOG.warn("shruzard - TaskManager: All pods are leased. Falling back to least-loaded pod.");
         int minLoad = Integer.MAX_VALUE;
         List<Discoverable> bestPods = new ArrayList<>();
         for (Discoverable pod : availablePods) {
@@ -146,7 +146,7 @@ public class TaskManager {
         podActiveTaskCounts.put(leasedPodIp, activeTasks);
         podTotalTaskProcessedCounts.put(leasedPodIp, totalProcessed);
 
-        LOG.info("sidhdirenge - TaskManager: Routing task for '{}' to pod '{}' (Active: {}, Total: {})",
+        LOG.info("shruzard - TaskManager: Routing task for '{}' to pod '{}' (Active: {}, Total: {})",
                  namespace, leasedPodIp, activeTasks, totalProcessed);
       }
 
@@ -174,13 +174,13 @@ public class TaskManager {
       } else {
         int totalProcessed = podTotalTaskProcessedCounts.getOrDefault(podIp, 0);
         if (totalProcessed >= MAX_TOTAL_TASKS_BEFORE_RESET && activeTasks == 0) {
-          LOG.info("sidhdirenge - TaskManager: Pod '{}' finished all active tasks "
+          LOG.info("shruzard - TaskManager: Pod '{}' finished all active tasks "
                        + "after reaching reset threshold. Reclaiming lease.", podIp);
           releaseLease(podIp);
         }
       }
       
-      LOG.info("sidhdirenge - TaskManager: Task finished for '{}' on pod '{}' (Remaining active: {}, Rejected: {})",
+      LOG.info("shruzard - TaskManager: Task finished for '{}' on pod '{}' (Remaining active: {}, Rejected: {})",
                namespace, podIp, activeTasks, rejected);
     } finally {
       lock.unlock();

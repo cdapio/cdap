@@ -62,12 +62,12 @@ public class TaskManagerService extends AbstractIdleService {
     this.address = cConf.get("task.manager.address", "0.0.0.0");
     this.discoveryServiceClient = discoveryServiceClient;
 
-    LOG.info("sidhdirenge - Initializing TaskManagerService (Netty Proxy POC) on {}:{}", address, port);
+    LOG.info("shruzard - Initializing TaskManagerService (Netty Proxy POC) on {}:{}", address, port);
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("sidhdirenge - Starting TaskManagerService Proxy HTTP server...");
+    LOG.info("shruzard - Starting TaskManagerService Proxy HTTP server...");
 
     bossGroup = new NioEventLoopGroup(1,
         new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("taskmanager-boss-thread-%d").build());
@@ -88,12 +88,12 @@ public class TaskManagerService extends AbstractIdleService {
      });
 
     channelFuture = b.bind(address, port).sync();
-    LOG.info("sidhdirenge - TaskManagerService Proxy HTTP server started successfully at {}:{}", address, port);
+    LOG.info("shruzard - TaskManagerService Proxy HTTP server started successfully at {}:{}", address, port);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("sidhdirenge - Stopping TaskManagerService Proxy HTTP server...");
+    LOG.info("shruzard - Stopping TaskManagerService Proxy HTTP server...");
     if (channelFuture != null) {
       channelFuture.channel().close().sync();
     }
@@ -103,6 +103,6 @@ public class TaskManagerService extends AbstractIdleService {
     if (workerGroup != null) {
       workerGroup.shutdownGracefully();
     }
-    LOG.info("sidhdirenge - TaskManagerService Proxy HTTP server stopped.");
+    LOG.info("shruzard - TaskManagerService Proxy HTTP server stopped.");
   }
 }

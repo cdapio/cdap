@@ -245,7 +245,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
-    LOG.info("sidhdirenge - Received task on worker {} for namespace :{}",
+    LOG.info("shruzard - Received task on worker {} for namespace :{}",
         System.getenv("HOSTNAME") != null ? System.getenv("HOSTNAME") : "unknown",
         request.headers());
     if (mustRestart.get()) {
