@@ -31,6 +31,11 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import io.cdap.cdap.common.conf.Constants;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -49,14 +54,13 @@ public class TaskManagerService extends AbstractIdleService {
 
   private final Map<String, PodState> podRegistry = new ConcurrentHashMap<>();
 
+  private final DiscoveryServiceClient discoveryServiceClient;
+
   @Inject
-  TaskManagerService(CConfiguration cConf) {
+  TaskManagerService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
     this.port = cConf.getInt("task.manager.port", 11025);
     this.address = cConf.get("task.manager.address", "0.0.0.0");
-
-    // Mocking worker partitions for POC
-    podRegistry.put("127.0.0.1:8081", new PodState(null, 0));
-    podRegistry.put("127.0.0.1:8082", new PodState(null, 0));
+    this.discoveryServiceClient = discoveryServiceClient;
 
     LOG.info("sidhdirenge - Initializing TaskManagerService (Netty Proxy POC) on {}:{}", address, port);
   }
@@ -65,8 +69,10 @@ public class TaskManagerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("sidhdirenge - Starting TaskManagerService Proxy HTTP server...");
 
-    bossGroup = new NioEventLoopGroup(1);
-    workerGroup = new NioEventLoopGroup();
+    bossGroup = new NioEventLoopGroup(1,
+        new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("taskmanager-boss-thread-%d").build());
+    workerGroup = new NioEventLoopGroup(0,
+        new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("taskmanager-worker-thread-%d").build());
 
     ServerBootstrap b = new ServerBootstrap();
     b.group(bossGroup, workerGroup)
@@ -77,7 +83,7 @@ public class TaskManagerService extends AbstractIdleService {
              ChannelPipeline p = ch.pipeline();
              p.addLast(new HttpServerCodec());
              // NOTICE: NO HttpObjectAggregator here!
-             p.addLast(new ProxyFrontendHandler(podRegistry));
+             p.addLast(new ProxyFrontendHandler(podRegistry, discoveryServiceClient));
          }
      });
 

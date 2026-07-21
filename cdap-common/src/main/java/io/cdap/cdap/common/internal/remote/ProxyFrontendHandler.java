@@ -40,22 +40,42 @@ import io.netty.util.ReferenceCountUtil;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.HashSet;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import io.cdap.cdap.common.conf.Constants;
 
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private final Map<String, PodState> podRegistry;
+    private final DiscoveryServiceClient discoveryServiceClient;
     private Channel outboundChannel;
     private boolean connecting = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
 
-    public ProxyFrontendHandler(Map<String, PodState> podRegistry) {
+    public ProxyFrontendHandler(Map<String, PodState> podRegistry, DiscoveryServiceClient discoveryServiceClient) {
         this.podRegistry = podRegistry;
+        this.discoveryServiceClient = discoveryServiceClient;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpRequest) {
             HttpRequest req = (HttpRequest) msg;
+
+            // 0. Synchronous K8s Discovery (Zero-Stale State)
+            // Completely non-blocking on the EventLoop: Twill's DiscoveryServiceClient evaluates a local memory cache backed by a push-based ZooKeeper watch.
+            Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
+            Set<String> activePods = new HashSet<>();
+            for (Discoverable d : discoverables) {
+                activePods.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
+            }
+
+            for (String podIp : activePods) {
+                podRegistry.putIfAbsent(podIp, new PodState(null, 0));
+            }
+            podRegistry.keySet().removeIf(existingPod -> !activePods.contains(existingPod));
 
             String targetNamespace = req.headers().get("X-CDF-Namespace");
             if (targetNamespace == null) targetNamespace = "default";
