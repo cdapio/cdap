@@ -284,7 +284,15 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     if (leaseStatus != StickyLeaseManager.AcquisitionStatus.SUCCESS) {
       LOG.warn("Rejecting request for namespace {} due to lease status: {}", namespaceId,
           leaseStatus);
-      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      
+      String currentLease = stickyLeaseManager.getCurrentLease() != null ? 
+          stickyLeaseManager.getCurrentLease().getNamespace() : "";
+          
+      responder.sendString(HttpResponseStatus.TOO_MANY_REQUESTS, 
+          "Rejected due to lease status: " + leaseStatus.name(), 
+          new DefaultHttpHeaders()
+              .add("X-Active-Tasks", String.valueOf(stickyLeaseManager.getActiveTaskCount()))
+              .add("X-Leased-Namespace", currentLease));
       return;
     }
 
@@ -298,11 +306,16 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           startTime, runnableTaskContext.isTerminateOnComplete(),
           runnableTaskRequest);
 
+      String currentLease = stickyLeaseManager.getCurrentLease() != null ? 
+          stickyLeaseManager.getCurrentLease().getNamespace() : "";
+
       responder.sendContent(HttpResponseStatus.OK,
           new RunnableTaskBodyProducer(runnableTaskContext,
               taskCompletionConsumer, taskDetails),
-          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-              MediaType.APPLICATION_OCTET_STREAM));
+          new DefaultHttpHeaders()
+              .add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
+              .add("X-Active-Tasks", String.valueOf(stickyLeaseManager.getActiveTaskCount()))
+              .add("X-Leased-Namespace", currentLease));
     } catch (ClassNotFoundException | ClassCastException ex) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
           exceptionToJson(ex),
