@@ -67,8 +67,7 @@ public class RemoteClient {
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
   private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
-  private static final ThreadLocal<Discoverable> CURRENT_RESOLVED_POD = new ThreadLocal<>();
-  private static final ThreadLocal<String> CURRENT_ROUTING_KEY = new ThreadLocal<>();
+
   private static final String TASK_MANAGER_URL = "http://cdap-task-manager.default.svc.cluster.local:11025";
   private static final Gson GSON = new Gson();
 
@@ -181,13 +180,9 @@ public class RemoteClient {
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl,
         headers, request.getBody(), request.getBodyLength());
 
-    boolean rejected = false;
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       int responseCode = response.getResponseCode();
-      if (responseCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-        rejected = true;
-      }
       // 503 is always retryable. Other 5xx errors are retryable if the request is idempotent (handled in
       // RemoteClient#executeIdempotent(HttpRequest)
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
@@ -215,19 +210,7 @@ public class RemoteClient {
       }
       return response;
     } catch (ConnectException e) {
-      rejected = true;
       throw new ServiceUnavailableException(discoverableServiceName, e);
-    } catch (IOException | RuntimeException e) {
-      rejected = true;
-      throw e;
-    } finally {
-      Discoverable resolvedPod = CURRENT_RESOLVED_POD.get();
-      String routingKey = CURRENT_ROUTING_KEY.get();
-      if (resolvedPod != null && routingKey != null) {
-        notifyTaskManagerFinished(routingKey, resolvedPod, rejected);
-      }
-      CURRENT_RESOLVED_POD.remove();
-      CURRENT_ROUTING_KEY.remove();
     }
   }
 
@@ -242,34 +225,16 @@ public class RemoteClient {
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl, headers,
         request.getBody(), request.getBodyLength(), request.getConsumer());
-    boolean rejected = false;
     try {
       HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
       if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-          rejected = true;
-        }
         throw new IOException(
             String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
                 httpResponse.getResponseCode()));
       }
       httpResponse.consumeContent();
-    } catch (IOException | RuntimeException e) {
-      rejected = true;
-      throw e;
-    } finally {
-      Discoverable resolvedPod = CURRENT_RESOLVED_POD.get();
-      String routingKey = CURRENT_ROUTING_KEY.get();
-      if (resolvedPod != null && routingKey != null) {
-        notifyTaskManagerFinished(routingKey, resolvedPod, rejected);
-      }
-      CURRENT_RESOLVED_POD.remove();
-      CURRENT_ROUTING_KEY.remove();
     }
-  }
-  private void notifyTaskManagerFinished(String namespace, Discoverable pod, boolean rejected) {
-    // POC: No longer needed! The Netty Proxy syncs state implicitly via HTTP response interception.
   }
 
   /**
