@@ -70,7 +70,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             HttpRequest req = (HttpRequest) msg;
 
             // 0. Synchronous K8s Discovery (Zero-Stale State)
-            // Completely non-blocking on the EventLoop: Twill's DiscoveryServiceClient evaluates a local memory cache backed by a push-based ZooKeeper watch.
+            // Completely non-blocking on the EventLoop: Twill's DiscoveryServiceClient
+            // evaluates a local memory cache backed by a push-based ZooKeeper watch.
             Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
             Set<String> activePods = new HashSet<>();
             for (Discoverable d : discoverables) {
@@ -94,25 +95,31 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
                         targetWorkerAddress = entry.getKey();
                         state.setInflightRequests(state.getInflightRequests() + 1);
-                        LOG.info("shruzard - ProxyFrontendHandler: Found warm match for '{}' at {}. Occupancy: {}", targetNamespace, targetWorkerAddress, state.getInflightRequests());
+                        LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
+                                 + "for '{}' at {}. Occupancy: {}", 
+                                 targetNamespace, targetWorkerAddress, state.getInflightRequests());
                         break;
                     }
                 }
             }
 
-            // 2. Idle Choice: Thread-safe claim of an unleased pod, OR an expired pod (35s predicted timeout avoiding clock drift)
+            // 2. Idle Choice: Thread-safe claim of an unleased pod, 
+            // OR an expired pod (35s predicted timeout avoiding clock drift)
             if (targetWorkerAddress == null) {
                 for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
                     PodState state = entry.getValue();
                     synchronized (state) {
-                        boolean isUnleased = (state.getLeasedNamespace() == null || state.getLeasedNamespace().isEmpty());
-                        boolean isExpiredIdle = (state.getInflightRequests() == 0 && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
+                        boolean isUnleased = (state.getLeasedNamespace() == null 
+                            || state.getLeasedNamespace().isEmpty());
+                        boolean isExpiredIdle = (state.getInflightRequests() == 0 
+                            && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
                         
                         if (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle)) {
                             targetWorkerAddress = entry.getKey();
                             state.setLeasedNamespace(targetNamespace);
                             state.setInflightRequests(1);
-                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod (Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
+                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
+                                     + "(Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
                                 isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
                             break;
                         }
@@ -122,7 +129,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
             // 3. Busy Rejection: All pods saturated
             if (targetWorkerAddress == null) {
-                LOG.warn("shruzard - ProxyFrontendHandler: All pods saturated or leased incorrectly. Rejecting request for namespace '{}'", targetNamespace);
+                LOG.warn("shruzard - ProxyFrontendHandler: All pods saturated or leased "
+                         + "incorrectly. Rejecting request for namespace '{}'", targetNamespace);
                 FullHttpResponse response = new DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1, HttpResponseStatus.TOO_MANY_REQUESTS);
                 ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

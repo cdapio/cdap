@@ -70,9 +70,11 @@ public class TaskManagerService extends AbstractIdleService {
     LOG.info("shruzard - Starting TaskManagerService Proxy HTTP server...");
 
     bossGroup = new NioEventLoopGroup(1,
-        new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("taskmanager-boss-thread-%d").build());
+        new com.google.common.util.concurrent.ThreadFactoryBuilder()
+            .setNameFormat("taskmanager-boss-thread-%d").build());
     workerGroup = new NioEventLoopGroup(0,
-        new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("taskmanager-worker-thread-%d").build());
+        new com.google.common.util.concurrent.ThreadFactoryBuilder()
+            .setNameFormat("taskmanager-worker-thread-%d").build());
 
     ServerBootstrap b = new ServerBootstrap();
     b.group(bossGroup, workerGroup)

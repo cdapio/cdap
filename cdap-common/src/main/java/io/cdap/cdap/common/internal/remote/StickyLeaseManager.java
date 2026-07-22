@@ -98,7 +98,8 @@ public class StickyLeaseManager {
     long threshold = currentTier.get().getInactivityTimeoutMillis();
     
     if (activeTaskCount.get() == 0 && idleDurationMillis >= threshold) {
-        LOG.info("shruzard - StickyLeaseManager: Lazy Eviction: Stealing pod from '{}' to '{}' after {}ms of inactivity", 
+        LOG.info("shruzard - StickyLeaseManager: Lazy Eviction: Stealing pod "
+            + "from '{}' to '{}' after {}ms of inactivity", 
             currentLease.get().getNamespace(), namespace.getNamespace(), idleDurationMillis);
         releaseLease("Stolen by " + namespace.getNamespace() + " after being idle for > timeout");
         
@@ -115,7 +116,8 @@ public class StickyLeaseManager {
     }
 
     // Mismatching namespace & not stealable -> Enforce rejection (triggering 429 TOO_MANY_REQUESTS / spillover)
-    LOG.info("shruzard - StickyLeaseManager: Enforcement: Rejecting request for namespace '{}', current lease is held by '{}' (Idle for {}ms)",
+    LOG.info("shruzard - StickyLeaseManager: Enforcement: Rejecting request "
+        + "for namespace '{}', current lease is held by '{}' (Idle for {}ms)",
         namespace.getNamespace(), currentLease.get(), idleDurationMillis);
     return AcquisitionStatus.REJECTED_MISMATCH;
   }
@@ -167,7 +169,8 @@ public class StickyLeaseManager {
       long idleDurationMillis = System.currentTimeMillis() - lastActivityTimeMillis;
       
       if (idleDurationMillis >= 600000L) { // 10 minutes
-        releaseLease(String.format("Security boundary hard-timeout (10 minutes) exceeded for %s", leased.getNamespace()));
+        releaseLease(String.format("Security boundary hard-timeout (10 minutes) "
+            + "exceeded for %s", leased.getNamespace()));
       }
     }
   }
@@ -180,7 +183,8 @@ public class StickyLeaseManager {
     if (oldNamespace != null) {
       activeTaskCount.set(0);
       totalTasksProcessedInLease.set(0);
-      LOG.info("shruzard - StickyLeaseManager: Release Lease (Logical Reset): Cleared namespace context for '{}'. Reason: {}",
+      LOG.info("shruzard - StickyLeaseManager: Release Lease (Logical Reset): "
+          + "Cleared namespace context for '{}'. Reason: {}",
           oldNamespace.getNamespace(), reason);
       if (onLeaseReleased != null) {
         onLeaseReleased.run();
