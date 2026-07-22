@@ -142,6 +142,7 @@ public final class Constants {
     public static final String INTERNAL_ROUTER = "internal.router";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String TASK_MANAGER = "task.manager";
     public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
