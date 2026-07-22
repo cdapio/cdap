@@ -225,16 +225,15 @@ public class RemoteClient {
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl, headers,
         request.getBody(), request.getBodyLength(), request.getConsumer());
-    try {
-      HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
+    
+    HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
-      if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new IOException(
-            String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
-                httpResponse.getResponseCode()));
-      }
-      httpResponse.consumeContent();
+    if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new IOException(
+          String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
+              httpResponse.getResponseCode()));
     }
+    httpResponse.consumeContent();
   }
 
   /**
