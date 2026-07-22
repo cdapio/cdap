@@ -19,7 +19,7 @@ metadata:
   namespace: default
   labels:
     cdap.service: task.manager
-    cdap.instance: shruzard-jun8
+    cdap.instance: shru-enterprise-01
 spec:
   replicas: 1
   selector:
@@ -29,12 +29,12 @@ spec:
     metadata:
       labels:
         cdap.service: task.manager
-        cdap.instance: shruzard-jun8
+        cdap.instance: shru-enterprise-01
     spec:
-      serviceAccountName: cdap-shruzard-jun8-system-sa
+      serviceAccountName: cdap-shru-enterprise-01-system-sa
       containers:
         - name: task-manager
-          image: us-east1-docker.pkg.dev/ld27be8c949817660-tp/ar-demo/cloud-data-fusion:latest
+          image: us-east1-docker.pkg.dev/j145774183a931adb-tp/cdf-dev-shru/cloud-data-fusion:latest
           imagePullPolicy: Always
           args:
             - "io.cdap.cdap.master.environment.k8s.TaskManagerMain"
@@ -42,9 +42,13 @@ spec:
           env:
             - name: SERVICE_NAME
               value: task-manager
+            - name: OPTS
+              value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
           ports:
             - containerPort: 11025
               name: http
+            - containerPort: 5005
+              name: debug
           resources:
             requests:
               cpu: "500m"
@@ -66,7 +70,7 @@ spec:
               name: cdap-security
               readOnly: true
             - mountPath: /cdap_configmap
-              name: cdap-cm-vol-cdap-shruzard-jun8-configmap
+              name: cdap-cm-vol-cdap-shru-enterprise-01-configmap
       volumes:
         - downwardAPI:
             defaultMode: 420
@@ -86,11 +90,11 @@ spec:
           name: podinfo
         - configMap:
             defaultMode: 420
-            name: cdap-shruzard-jun8-cconf
+            name: cdap-shru-enterprise-01-cconf
           name: cdap-conf
         - configMap:
             defaultMode: 420
-            name: cdap-shruzard-jun8-hconf
+            name: cdap-shru-enterprise-01-hconf
           name: hadoop-conf
         - name: cdap-security
           secret:
@@ -98,8 +102,8 @@ spec:
             secretName: cdap-security
         - configMap:
             defaultMode: 420
-            name: cdap-shruzard-jun8-configmap
-          name: cdap-cm-vol-cdap-shruzard-jun8-configmap
+            name: cdap-shru-enterprise-01-configmap
+          name: cdap-cm-vol-cdap-shru-enterprise-01-configmap
 ---
 apiVersion: v1
 kind: Service
@@ -113,4 +117,9 @@ spec:
     - protocol: TCP
       port: 11025
       targetPort: 11025
+      name: http
+    - protocol: TCP
+      port: 5005
+      targetPort: 5005
+      name: debug
   type: ClusterIP
