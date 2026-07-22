@@ -145,7 +145,8 @@ public class RemoteTaskExecutor {
           }
           String routingKey = namespace;
           if (System.currentTimeMillis() - startTime > 60000) {
-              LOG.warn("shruzard - TaskManager Proxy unreachable for 60s! Bypassing proxy and falling back to direct Worker routing!");
+              LOG.warn("shruzard - TaskManager Proxy unreachable for 60s! "
+                       + "Bypassing proxy and falling back to direct Worker routing!");
               routingKey = null; // Setting to null triggers CDAP's native RandomEndpoint discovery in RemoteClient
           }
 
