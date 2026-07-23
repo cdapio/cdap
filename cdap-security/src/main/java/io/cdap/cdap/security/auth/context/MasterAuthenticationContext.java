@@ -51,7 +51,8 @@ public class MasterAuthenticationContext implements AuthenticationContext {
       try {
         userId = UserGroupInformation.getCurrentUser().getShortUserName();
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        Throwables.propagateIfPossible(e);
+        throw new RuntimeException(e);
       }
     }
     return new Principal(userId, Principal.PrincipalType.USER, userCredential);

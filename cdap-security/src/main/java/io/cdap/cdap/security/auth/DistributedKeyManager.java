@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.auth;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -96,7 +95,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
     try {
       keyCache.init();
     } catch (InterruptedException ie) {
-      throw Throwables.propagate(ie);
+      throw new RuntimeException(ie);
     }
     this.leaderElection = new LeaderElection(zookeeper, "/leader", new ElectionHandler() {
       @Override
@@ -114,7 +113,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
         LOG.debug("Transitioned to follower");
       }
     });
-    this.leaderElection.start();
+    io.cdap.cdap.common.service.Services.startAndWait(this.leaderElection);
     startExpirationThread();
   }
 
@@ -123,7 +122,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
     if (timer != null) {
       timer.cancel();
     }
-    leaderElection.stopAndWait();
+    io.cdap.cdap.common.service.Services.stopAndWait(leaderElection);
   }
 
   @Override

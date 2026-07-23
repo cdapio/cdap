@@ -158,7 +158,8 @@ public class AuthenticationContextModules {
     try {
       return UserGroupInformation.getCurrentUser().getShortUserName();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      Throwables.propagateIfPossible(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -106,9 +106,9 @@ public final class KeyIdentifier {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-        .add("keyId", keyId)
-        .add("expiration", expiration)
-        .toString();
+    return "KeyIdentifier{"
+        + "keyId=" + keyId
+        + ", expiration=" + expiration
+        + "}";
   }
 }
