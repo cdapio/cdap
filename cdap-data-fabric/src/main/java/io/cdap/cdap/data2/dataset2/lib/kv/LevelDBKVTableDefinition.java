@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2.lib.kv;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.annotation.ReadOnly;
 import io.cdap.cdap.api.annotation.WriteOnly;
@@ -140,7 +139,7 @@ public class LevelDBKVTableDefinition extends
       try {
         return service.getTable(tableName);
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

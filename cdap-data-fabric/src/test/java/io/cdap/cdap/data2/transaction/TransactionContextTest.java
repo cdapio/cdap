@@ -58,13 +58,13 @@ public class TransactionContextTest {
   @BeforeClass
   public static void setup() {
     txManager = new TransactionManager(new Configuration());
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     txClient = new DummyTxClient(txManager);
   }
 
   @AfterClass
   public static void finish() {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   private TransactionContext newTransactionContext(TransactionAware... txAwares) {

@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import io.cdap.cdap.common.service.Services;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
