@@ -18,7 +18,6 @@ package io.cdap.cdap.common.ssh;
 
 
 import com.google.common.base.Splitter;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -131,7 +130,7 @@ public class SSHSessionTest {
     // Starts an echo server for testing the port forwarding
     EchoServer echoServer = new EchoServer();
 
-    echoServer.startAndWait();
+    echoServer.startAsync().awaitRunning();
     try {
       // Creates the DataConsumer for receiving data and validating the lifecycle
       StringBuilder received = new StringBuilder();
@@ -185,7 +184,7 @@ public class SSHSessionTest {
       }
 
     } finally {
-      echoServer.stopAndWait();
+      echoServer.stopAsync().awaitTerminated();
     }
   }
 
@@ -193,7 +192,7 @@ public class SSHSessionTest {
   public void testForwardingOnSessionClose() throws Exception {
     EchoServer echoServer = new EchoServer();
 
-    echoServer.startAndWait();
+    echoServer.startAsync().awaitRunning();
     try {
       SSHConfig sshConfig = getSSHConfig();
       AtomicBoolean finished = new AtomicBoolean(false);
@@ -236,7 +235,7 @@ public class SSHSessionTest {
       }
 
     } finally {
-      echoServer.stopAndWait();
+      echoServer.stopAsync().awaitTerminated();
     }
   }
 
@@ -244,7 +243,7 @@ public class SSHSessionTest {
   public void testRemotePortForwarding() throws Exception {
     EchoServer echoServer = new EchoServer();
 
-    echoServer.startAndWait();
+    echoServer.startAsync().awaitRunning();
     try {
       SSHConfig sshConfig = getSSHConfig();
 
@@ -264,7 +263,7 @@ public class SSHSessionTest {
         }
       }
     } finally {
-      echoServer.stopAndWait();
+      echoServer.stopAsync().awaitTerminated();
     }
   }
 
@@ -320,7 +319,11 @@ public class SSHSessionTest {
             } catch (IOException e) {
               LOG.error("Exception raised from the EchoServer handling thread", e);
             } finally {
-              Closeables.closeQuietly(socket);
+              try {
+                socket.close();
+              } catch (Exception ignored) {
+                // Ignored during cleanup
+              }
             }
           });
 
@@ -337,7 +340,11 @@ public class SSHSessionTest {
     @Override
     protected void triggerShutdown() {
       stopped = true;
-      Closeables.closeQuietly(serverSocket);
+      try {
+        serverSocket.close();
+      } catch (Exception ignored) {
+        // Ignored during cleanup
+      }
     }
   }
 }
