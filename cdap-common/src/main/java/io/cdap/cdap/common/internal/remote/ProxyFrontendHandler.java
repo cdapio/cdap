@@ -44,6 +44,9 @@ import java.util.Set;
 import java.util.HashSet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +81,9 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             // (Iterates the pre-warmed discoverables cache)
             Set<String> activePods = new HashSet<>();
             for (Discoverable d : discoverables) {
-                activePods.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
+                String host = d.getSocketAddress().getHostString();
+                int port = d.getSocketAddress().getPort();
+                activePods.add(host + ":" + port);
             }
 
             for (String podIp : activePods) {
@@ -97,7 +102,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 boolean isHostnameFallback = workerAddr.matches(".*[a-zA-Z].*"); // True if hostname instead of IP
 
                 synchronized (state) {
-                    if (isHostnameFallback || (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10)) {
+                    if (isHostnameFallback 
+                        || (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10)) {
                         targetWorkerAddress = workerAddr;
                         state.setInflightRequests(state.getInflightRequests() + 1);
                         if (!isHostnameFallback) {
@@ -122,9 +128,11 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                         boolean isUnleased = (state.getLeasedNamespace() == null 
                             || state.getLeasedNamespace().isEmpty());
                         boolean isExpiredIdle = (state.getInflightRequests() == 0 
-                            && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
+                            && (System.nanoTime() - state.getLastActivityTime() 
+                                > java.util.concurrent.TimeUnit.SECONDS.toNanos(35)));
                         
-                        if (isHostnameFallback || (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle))) {
+                        if (isHostnameFallback 
+                            || (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle))) {
                             targetWorkerAddress = workerAddr;
                             state.setLeasedNamespace(targetNamespace); // Doesn't matter much for hostname
                             state.setInflightRequests(state.getInflightRequests() + 1);
@@ -165,6 +173,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  @Override
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
+                     try {
+                         SslContext sslCtx = SslContextBuilder.forClient()
+                             .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+                         p.addLast(sslCtx.newHandler(ch.alloc(), hostPort[0], Integer.parseInt(hostPort[1])));
+                     } catch (Exception e) {
+                         LOG.error("shruzard - Failed to initialize SSL for outbound proxy", e);
+                     }
                      p.addLast(new HttpClientCodec());
                      p.addLast(new ProxyBackendHandler(ctx.channel(), podRegistry, chosenWorker));
                  }

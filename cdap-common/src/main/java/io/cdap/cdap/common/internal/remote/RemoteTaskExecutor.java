@@ -178,7 +178,7 @@ public class RemoteTaskExecutor {
 
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
-                String.format("Received response code %s for %s", httpResponse.getResponseCode(),
+                String.format("Task Worker cluster is fully saturated. Unable to secure a compute lease after 60 seconds (HTTP 429 for %s). Please try again.",
                     runnableTaskRequest.getClassName()));
           }
           if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {

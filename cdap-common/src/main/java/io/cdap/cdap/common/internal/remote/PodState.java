@@ -27,7 +27,9 @@ public class PodState {
     public PodState(String leasedNamespace, int inflightRequests) {
         this.leasedNamespace = leasedNamespace;
         this.inflightRequests = inflightRequests;
-        this.lastActivityTime = 0; // Instantly trigger predictions on boot
+        // Subtract 40 seconds worth of nanos to instantly trigger predictions on boot
+        this.lastActivityTime = System.nanoTime() 
+            - java.util.concurrent.TimeUnit.SECONDS.toNanos(40);
     }
 
     public String getLeasedNamespace() {

@@ -51,29 +51,35 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                 synchronized (state) {
                     String activeTasksStr = resp.headers().get("X-Active-Tasks");
                     String leasedNamespace = resp.headers().get("X-Leased-Namespace");
-                    
-                    if (activeTasksStr != null) {
-                        try {
+                    // Treat Task Worker as strict source of truth for load ONLY if it rejects us
+                    if (resp.status().code() == 429 || resp.status().code() == 409) {
+                        if (activeTasksStr != null) {
                             state.setInflightRequests(Integer.parseInt(activeTasksStr));
-                        } catch (NumberFormatException e) {
-                            state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
                         }
-                    } else {
-                        state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
                     }
-                    
                     
                     if (leasedNamespace != null) {
                         state.setLeasedNamespace(leasedNamespace);
                     }
                     
-                    state.setLastActivityTime(System.currentTimeMillis());
+                    state.setLastActivityTime(System.nanoTime());
                     
                     if (activeTasksStr != null || leasedNamespace != null) {
-                        LOG.info("shruzard - ProxyBackendHandler: Self-Healed "
-                                 + "PodState for {}. Occupancy: {}, Namespace: {}", 
-                            targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
+                        LOG.info("shruzard - ProxyBackendHandler: Header Sync "
+                                 + "PodState for {}. Local Occupancy: {}, Remote Tasks: {}, Namespace: {}", 
+                            targetWorkerAddress, state.getInflightRequests(), activeTasksStr, 
+                            state.getLeasedNamespace());
                     }
+                }
+            }
+        }
+        
+        if (msg instanceof io.netty.handler.codec.http.LastHttpContent) {
+            PodState state = podRegistry.get(targetWorkerAddress);
+            if (state != null) {
+                synchronized (state) {
+                    state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+                    state.setLastActivityTime(System.nanoTime());
                 }
             }
         }
