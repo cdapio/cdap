@@ -57,6 +57,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     private final DiscoveryServiceClient discoveryServiceClient;
     private Channel outboundChannel;
     private boolean connecting = false;
+    private boolean rejecting = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
 
     public ProxyFrontendHandler(Map<String, PodState> podRegistry, DiscoveryServiceClient discoveryServiceClient) {
@@ -131,9 +132,12 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             if (targetWorkerAddress == null) {
                 LOG.warn("shruzard - ProxyFrontendHandler: All pods saturated or leased "
                          + "incorrectly. Rejecting request for namespace '{}'", targetNamespace);
+                rejecting = true;
                 FullHttpResponse response = new DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1, HttpResponseStatus.TOO_MANY_REQUESTS);
-                ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                response.headers().set("Content-Length", "0");
+                response.headers().set("Connection", "close");
+                ctx.writeAndFlush(response);
                 ReferenceCountUtil.release(msg);
                 return;
             }
@@ -191,6 +195,14 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             pendingMessages.add(ReferenceCountUtil.retain(msg));
 
         } else if (msg instanceof HttpContent) {
+            if (rejecting) {
+                boolean isLast = msg instanceof io.netty.handler.codec.http.LastHttpContent;
+                ReferenceCountUtil.release(msg);
+                if (isLast) {
+                    ctx.channel().close();
+                }
+                return;
+            }
             if (connecting) {
                 pendingMessages.add(ReferenceCountUtil.retain(msg));
             } else if (outboundChannel != null && outboundChannel.isActive()) {
