@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.operation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -99,7 +98,13 @@ public class OperationNotificationSingleTopicSubscriberServiceTest extends Opera
 
   @AfterClass
   public static void afterClass() {
-    Closeables.closeQuietly(pg);
+    try {
+
+      pg.close();
+
+    } catch (Exception ignored) {
+
+    }
   }
 
   @Test

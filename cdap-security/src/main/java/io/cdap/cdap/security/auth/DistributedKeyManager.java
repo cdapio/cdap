@@ -113,7 +113,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
         LOG.debug("Transitioned to follower");
       }
     });
-    io.cdap.cdap.common.service.Services.startAndWait(this.leaderElection);
+    this.leaderElection.startAsync();
     startExpirationThread();
   }
 
@@ -122,7 +122,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
     if (timer != null) {
       timer.cancel();
     }
-    io.cdap.cdap.common.service.Services.stopAndWait(leaderElection);
+    leaderElection.stopAsync().awaitTerminated();
   }
 
   @Override

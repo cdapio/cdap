@@ -17,8 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -104,10 +102,18 @@ final class ArtifactClassLoaderFactory {
     final ClassLoader finalSparkClassLoader = sparkClassLoader;
     return new CloseableClassLoader(programClassLoader, () -> {
       if (finalProgramClassLoader instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) finalProgramClassLoader);
+        try {
+          ((Closeable) finalProgramClassLoader).close();
+        } catch (Exception ignored) {
+          // Ignored because we are closing the classloader and cleaning up resources.
+        }
       }
       if (finalSparkClassLoader instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) finalSparkClassLoader);
+        try {
+          ((Closeable) finalSparkClassLoader).close();
+        } catch (Exception ignored) {
+          // Ignored because we are closing the classloader and cleaning up resources.
+        }
       }
     });
   }
@@ -130,11 +136,19 @@ final class ArtifactClassLoaderFactory {
 
       CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
       return new CloseableClassLoader(classLoader, () -> {
-        Closeables.closeQuietly(classLoader);
-        Closeables.closeQuietly(classLoaderFolder);
+        try {
+          classLoader.close();
+        } catch (Exception ignored) {
+          // Ignored because we are performing resource cleanup on close.
+        }
+        try {
+          classLoaderFolder.close();
+        } catch (Exception ignored) {
+          // Ignored because we are performing resource cleanup on close.
+        }
       });
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -167,11 +181,19 @@ final class ArtifactClassLoaderFactory {
           entityImpersonator);
       return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
           parentClassLoader, "lib"), () -> {
-        Closeables.closeQuietly(parentClassLoader);
-        Closeables.closeQuietly(classLoaderFolder);
+        try {
+          parentClassLoader.close();
+        } catch (Exception ignored) {
+          // Ignored because we are performing resource cleanup on close.
+        }
+        try {
+          classLoaderFolder.close();
+        } catch (Exception ignored) {
+          // Ignored because we are performing resource cleanup on close.
+        }
       });
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

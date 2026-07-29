@@ -145,11 +145,11 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
 
   @Override
   protected void startUp() throws Exception {
-    io.cdap.cdap.common.service.Services.startAndWait(secureStoreService);
+    secureStoreService.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    io.cdap.cdap.common.service.Services.stopAndWait(secureStoreService);
+    secureStoreService.stopAsync().awaitTerminated();
   }
 }

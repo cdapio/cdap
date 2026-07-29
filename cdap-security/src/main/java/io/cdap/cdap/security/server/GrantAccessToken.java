@@ -74,7 +74,7 @@ public class GrantAccessToken {
   public void init() {
     // TokenManager may have already been started in AbstractServiceMain if internal auth is enabled.
     if (!tokenManager.isRunning()) {
-      Services.startAndWait(tokenManager);
+      tokenManager.startAsync().awaitRunning();
     }
   }
 
@@ -82,7 +82,7 @@ public class GrantAccessToken {
    * Stop the TokenManager.
    */
   public void destroy() {
-    Services.stopAndWait(tokenManager);
+    tokenManager.stopAsync();
   }
 
   /**

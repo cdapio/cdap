@@ -293,6 +293,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
     return props;
   }
 
+  @Override
   protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
     //noinspection NullableProblems

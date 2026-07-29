@@ -43,13 +43,13 @@ public class TokenManager extends AbstractIdleService {
   @Override
   public void startUp() {
     LOG.info("Starting TokenManager service");
-    io.cdap.cdap.common.service.Services.startAndWait(this.keyManager);
+    this.keyManager.startAsync().awaitRunning();
   }
 
   @Override
   public void shutDown() {
     LOG.info("Shutting down TokenManager service.");
-    io.cdap.cdap.common.service.Services.stopAndWait(this.keyManager);
+    this.keyManager.stopAsync().awaitTerminated();
   }
 
   /**

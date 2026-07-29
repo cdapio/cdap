@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
@@ -113,8 +112,20 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
 
     @Override
     public void close() throws IOException {
-      Closeables.closeQuietly(directoryClassLoader);
-      Closeables.closeQuietly(folder);
+      try {
+
+        directoryClassLoader.close();
+
+      } catch (Exception ignored) {
+
+      }
+      try {
+
+        folder.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 }

@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.zookeeper.ZKExtOperations;
@@ -92,7 +93,6 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       }
     } catch (ExecutionException ee) {
       // recheck if already created
-      Throwables.propagateIfUnchecked(ee.getCause());
       throw new RuntimeException(ee.getCause());
     }
     this.resources = reloadAll();
@@ -129,7 +129,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               listeners.notifyError(nodeName, t);
             }
           },
-              DIRECT_EXECUTOR);
+              MoreExecutors.directExecutor());
           LOG.debug("Added future for {}", child);
         }
       }
@@ -196,13 +196,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
               completion.setException(t);
             }
           },
-              DIRECT_EXECUTOR);
+          MoreExecutors.directExecutor());
 
         // Block until it is done
       completion.get();
 
     } catch (Exception ioe) {
-        throw new RuntimeException(ioe);
+      throw new RuntimeException(ioe);
     }
   }
 
@@ -232,7 +232,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
         listeners.notifyError(name, t);
       }
     },
-        DIRECT_EXECUTOR);
+        MoreExecutors.directExecutor());
   }
 
   /**
@@ -353,7 +353,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
         resourceCallback.onFailure(t);
       }
     },
-        DIRECT_EXECUTOR);
+        MoreExecutors.directExecutor());
   }
 
   private class ZKWatcher implements Watcher {
@@ -409,7 +409,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
+
                 throw (Error) t;
+
               }
             }
           }
@@ -427,7 +429,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
+
                 throw (Error) t;
+
               }
             }
           }
@@ -445,7 +449,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
+
                 throw (Error) t;
+
               }
             }
           }
@@ -463,7 +469,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
+
                 throw (Error) t;
+
               }
             }
           }

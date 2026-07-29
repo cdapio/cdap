@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.proto.NamespaceMeta;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.PrivilegedExceptionAction;
@@ -69,7 +68,6 @@ public final class ImpersonationUtils {
       // this should never happen
       LOG.warn("Unexpected exception while executing callable as {}.",
           ugi.getUserName(), wrappedException);
-      Throwables.propagateIfUnchecked(wrappedException);
       throw new RuntimeException(wrappedException);
     }
   }

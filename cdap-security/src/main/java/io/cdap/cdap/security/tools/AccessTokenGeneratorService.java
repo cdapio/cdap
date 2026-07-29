@@ -109,7 +109,7 @@ public class AccessTokenGeneratorService extends DaemonMain {
     } catch (Exception e) {
       LOG.warn("Exception when stopping AccessTokenGeneratorService", e);
     }
-    io.cdap.cdap.common.service.Services.stopAndWait(handler.tokenManager);
+    handler.tokenManager.stopAsync().awaitTerminated();
   }
 
   @Override

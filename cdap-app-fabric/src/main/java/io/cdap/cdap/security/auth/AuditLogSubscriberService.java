@@ -69,13 +69,13 @@ public class AuditLogSubscriberService extends AbstractIdleService {
       .forEach(i -> children.add(createChildService(topicPrefix + i)));
     delegate = new CompositeService(children);
 
-    delegate.startAndWait();
+    delegate.startAsync().awaitRunning();
     LOG.debug("Started Audit Log subscriber service for {} partitions.", numPartitions);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    delegate.stopAsync().awaitTerminated();
   }
 
   private AuditLogSingleTopicSubscriberService createChildService(String topicName) {

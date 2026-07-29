@@ -77,12 +77,12 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
+    provisioningService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void shutdown() {
-    provisioningService.stopAndWait();
+    provisioningService.stopAsync().awaitTerminated();
   }
 
   @Test

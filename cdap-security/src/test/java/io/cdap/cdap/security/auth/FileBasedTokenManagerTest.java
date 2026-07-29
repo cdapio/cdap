@@ -61,6 +61,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
                                              new FileBasedCoreSecurityModule(),
                                              new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
+    tokenManager.startAsync().awaitRunning();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<>(tokenManager, tokenCodec);
   }
@@ -79,14 +80,14 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
       new ConfigModule(cConf),
       new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
-    Services.startAndWait(tokenManager);
+    tokenManager.startAsync().awaitRunning();
 
     TokenManager tokenManager2 = Guice.createInjector(
       new IOModule(),
       new ConfigModule(cConf),
       new FileBasedCoreSecurityModule(),
       new InMemoryDiscoveryModule()).getInstance(TokenManager.class);
-    Services.startAndWait(tokenManager2);
+    tokenManager2.startAsync().awaitRunning();
 
     Assert.assertNotSame("ERROR: Both token managers refer to the same object.", tokenManager, tokenManager2);
 
@@ -129,7 +130,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
     keyFile.setLastModified(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(10));
 
     try {
-      Services.startAndWait(keyManager);
+      keyManager.startAsync().awaitRunning();
       // Upon the key manager starts, the current key should be the same as the one from the key file.
       Assert.assertEquals(keyIdentifier, keyManager.currentKey);
 
@@ -142,7 +143,7 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
       Tasks.waitFor(keyIdentifier, () -> keyManager.currentKey, 20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     } finally {
-      Services.stopAndWait(keyManager);
+      keyManager.stopAsync().awaitTerminated();
     }
   }
 

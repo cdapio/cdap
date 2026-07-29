@@ -42,7 +42,7 @@ public abstract class TestTokenManager {
   public void testTokenValidation() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
-    io.cdap.cdap.common.service.Services.startAndWait(tokenManager);
+    tokenManager.startAsync().awaitRunning();
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -91,14 +91,14 @@ public abstract class TestTokenManager {
       // expected
     }
 
-    io.cdap.cdap.common.service.Services.stopAndWait(tokenManager);
+    tokenManager.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testTokenSerialization() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
-    io.cdap.cdap.common.service.Services.startAndWait(tokenManager);
+    tokenManager.startAsync().awaitRunning();
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -116,6 +116,6 @@ public abstract class TestTokenManager {
     // should be valid since we just signed it
     tokenManager.validateSecret(token2);
 
-    io.cdap.cdap.common.service.Services.stopAndWait(tokenManager);
+    tokenManager.stopAsync().awaitTerminated();
   }
 }

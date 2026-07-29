@@ -21,7 +21,6 @@ import ch.qos.logback.classic.util.ContextInitializer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -104,7 +103,6 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
-import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -335,7 +333,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     } catch (Exception e) {
       deleteDirectory(tempDir);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

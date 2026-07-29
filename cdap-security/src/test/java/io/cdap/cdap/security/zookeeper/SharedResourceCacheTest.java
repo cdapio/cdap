@@ -85,7 +85,7 @@ public class SharedResourceCacheTest {
 
     // create 2 cache instances
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
-    Services.startAndWait(zkClient1);
+    zkClient1.startAsync().awaitRunning();
     SharedResourceCache<String> cache1 =
         new SharedResourceCache<>(zkClient1, new StringCodec(), parentNode, acls);
     cache1.init();
@@ -96,7 +96,7 @@ public class SharedResourceCacheTest {
     cache1.put(key1, value1);
 
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
-    Services.startAndWait(zkClient2);
+    zkClient2.startAsync().awaitRunning();
     SharedResourceCache<String> cache2 =
         new SharedResourceCache<>(zkClient2, new StringCodec(), parentNode, acls);
     cache2.init();
@@ -195,7 +195,7 @@ public class SharedResourceCacheTest {
     String value = cache.get(key);
     boolean isPresent = expectedValue.equals(value);
 
-    Stopwatch watch = Stopwatch.createStarted();
+    Stopwatch watch = Stopwatch.createUnstarted().start();
     while (!isPresent && watch.elapsed(TimeUnit.MILLISECONDS) < timeToWaitMillis) {
       TimeUnit.MILLISECONDS.sleep(200);
       value = cache.get(key);
