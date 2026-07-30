@@ -19,7 +19,7 @@ metadata:
   namespace: default
   labels:
     cdap.service: task.manager
-    cdap.instance: shru-enterprise-01
+    cdap.instance: shru-enterprise-rbac
 spec:
   replicas: 1
   selector:
@@ -29,9 +29,9 @@ spec:
     metadata:
       labels:
         cdap.service: task.manager
-        cdap.instance: shru-enterprise-01
+        cdap.instance: shru-enterprise-rbac
     spec:
-      serviceAccountName: cdap-shru-enterprise-01-system-sa
+      serviceAccountName: cdap-shru-enterprise-rbac-system-sa
       containers:
         - name: task-manager
           image: us-east1-docker.pkg.dev/j145774183a931adb-tp/cdf-dev-shru/cloud-data-fusion:latest
@@ -43,7 +43,7 @@ spec:
             - name: SERVICE_NAME
               value: task-manager
             - name: OPTS
-              value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+              value: "-Xmx1024m -XX:MaxDirectMemorySize=768m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
           ports:
             - containerPort: 11025
               name: http
@@ -70,7 +70,7 @@ spec:
               name: cdap-security
               readOnly: true
             - mountPath: /cdap_configmap
-              name: cdap-cm-vol-cdap-shru-enterprise-01-configmap
+              name: cdap-cm-vol-cdap-shru-enterprise-rbac-configmap
       volumes:
         - downwardAPI:
             defaultMode: 420
@@ -90,11 +90,11 @@ spec:
           name: podinfo
         - configMap:
             defaultMode: 420
-            name: cdap-shru-enterprise-01-cconf
+            name: cdap-shru-enterprise-rbac-cconf
           name: cdap-conf
         - configMap:
             defaultMode: 420
-            name: cdap-shru-enterprise-01-hconf
+            name: cdap-shru-enterprise-rbac-hconf
           name: hadoop-conf
         - name: cdap-security
           secret:
@@ -102,8 +102,8 @@ spec:
             secretName: cdap-security
         - configMap:
             defaultMode: 420
-            name: cdap-shru-enterprise-01-configmap
-          name: cdap-cm-vol-cdap-shru-enterprise-01-configmap
+            name: cdap-shru-enterprise-rbac-configmap
+          name: cdap-cm-vol-cdap-shru-enterprise-rbac-configmap
 ---
 apiVersion: v1
 kind: Service

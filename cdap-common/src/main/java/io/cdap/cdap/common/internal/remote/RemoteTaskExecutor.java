@@ -206,6 +206,11 @@ public class RemoteTaskExecutor {
     } catch (Exception e) {
       //emit metrics with failed result
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
+      if (e instanceof RetryableException && e.getMessage() != null
+          && e.getMessage().contains("Task Worker cluster is fully saturated")) {
+        throw new ServiceException(
+            e.getMessage(), e, HttpResponseStatus.TOO_MANY_REQUESTS);
+      }
       throw e;
     }
   }

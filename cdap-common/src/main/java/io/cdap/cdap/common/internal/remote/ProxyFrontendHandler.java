@@ -100,18 +100,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
                 String workerAddr = entry.getKey();
                 PodState state = entry.getValue();
-                boolean isHostnameFallback = workerAddr.matches(".*[a-zA-Z].*"); // True if hostname instead of IP
-
                 synchronized (state) {
-                    if (isHostnameFallback 
-                        || (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10)) {
+                    if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
                         targetWorkerAddress = workerAddr;
                         state.setInflightRequests(state.getInflightRequests() + 1);
-                        if (!isHostnameFallback) {
-                            LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
-                                     + "for '{}' at {}. Occupancy: {}", 
-                                     targetNamespace, targetWorkerAddress, state.getInflightRequests());
-                        }
+                        LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
+                                 + "for '{}' at {}. Occupancy: {}", 
+                                 targetNamespace, targetWorkerAddress, state.getInflightRequests());
                         break;
                     }
                 }
@@ -123,7 +118,6 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
                     String workerAddr = entry.getKey();
                     PodState state = entry.getValue();
-                    boolean isHostnameFallback = workerAddr.matches(".*[a-zA-Z].*");
 
                     synchronized (state) {
                         boolean isUnleased = (state.getLeasedNamespace() == null 
@@ -132,16 +126,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                             && (System.nanoTime() - state.getLastActivityTime() 
                                 > java.util.concurrent.TimeUnit.SECONDS.toNanos(35)));
                         
-                        if (isHostnameFallback 
-                            || (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle))) {
+                        if (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle)) {
                             targetWorkerAddress = workerAddr;
-                            state.setLeasedNamespace(targetNamespace); // Doesn't matter much for hostname
+                            state.setLeasedNamespace(targetNamespace);
                             state.setInflightRequests(state.getInflightRequests() + 1);
-                            if (!isHostnameFallback) {
-                                LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
-                                         + "(Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
-                                    isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
-                            }
+                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
+                                     + "(Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
+                                isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
                             break;
                         }
                     }

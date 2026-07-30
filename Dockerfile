@@ -24,5 +24,6 @@ RUN rm -rf /opt/cdap/master/ext/runtimeproviders \
 COPY opt/cdap/master/lib /opt/cdap/master/lib
 COPY opt/cdap/master/ext /opt/cdap/master/ext
 COPY opt/cdap/master/artifacts/spark3_2.12/* /opt/cdap/master/artifacts/spark3_2.12/
+COPY opt/cdap/master/artifacts/wrangler-service-*.jar /opt/cdap/master/artifacts/
 
 RUN chmod -R 755 /opt/cdap
