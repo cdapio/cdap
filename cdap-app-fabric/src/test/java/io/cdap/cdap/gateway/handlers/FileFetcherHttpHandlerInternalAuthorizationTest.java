@@ -99,6 +99,7 @@ public class FileFetcherHttpHandlerInternalAuthorizationTest {
   public void testDownloadAuthorizedReachesLocationLookup() throws Exception {
     when(request.uri()).thenReturn("/v3Internal/location/does-not-exist");
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+    boolean notFoundThrown = false;
     try {
       fileFetcherHandler.download(request, responder);
     } catch (UnauthorizedException e) {
@@ -108,8 +109,11 @@ public class FileFetcherHttpHandlerInternalAuthorizationTest {
       // and proceeds to the real location lookup, which correctly reports the
       // requested (nonexistent) path as not found. This is not an authorization
       // failure.
+      notFoundThrown = true;
     }
     Assert.assertNull("a caller with instance-level access must not be rejected by "
         + "the authorization check", exceptionThrown);
+    Assert.assertTrue("expected the authorized call to reach the location lookup and "
+        + "fail with NotFoundException for the nonexistent path", notFoundThrown);
   }
 }
