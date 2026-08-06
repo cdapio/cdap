@@ -84,6 +84,7 @@ public class RemoteTaskExecutor {
   private final AeadCipher userEncryptionAeadCipher;
   private final String workerUrl;
   private final boolean isWorkerEncryptionRequired;
+  private final long fallbackTimeoutMs;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -102,6 +103,8 @@ public class RemoteTaskExecutor {
         Constants.Gateway.INTERNAL_API_VERSION_3);
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
+    long maxTimeSecs = cConf.getLong(serviceName + "." + Constants.Retry.MAX_TIME_SECS, 60L);
+    this.fallbackTimeoutMs = maxTimeSecs * 1000;
     if (workerType == Type.TASK_WORKER) {
       this.workerUrl = TASK_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
@@ -129,6 +132,7 @@ public class RemoteTaskExecutor {
     //initialize start time for collecting latency metric
     long startTime = System.currentTimeMillis();
     ByteBuffer requestBody = encodeTaskRequest(runnableTaskRequest);
+    java.util.concurrent.atomic.AtomicBoolean proxyReachable = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     try {
       return Retries.callWithRetries((retryContext) -> {
@@ -144,9 +148,9 @@ public class RemoteTaskExecutor {
             }
           }
           String routingKey = namespace;
-          if (System.currentTimeMillis() - startTime > 60000) {
-              LOG.warn("shruzard - TaskManager Proxy unreachable for 60s! "
-                       + "Bypassing proxy and falling back to direct Worker routing!");
+          if (System.currentTimeMillis() - startTime > fallbackTimeoutMs && !proxyReachable.get()) {
+              LOG.warn("shruzard - TaskManager Proxy unreachable for {}s! "
+                       + "Bypassing proxy and falling back to direct Worker routing!", fallbackTimeoutMs / 1000);
               routingKey = null; // Setting to null triggers CDAP's native RandomEndpoint discovery in RemoteClient
           }
 
@@ -170,6 +174,7 @@ public class RemoteTaskExecutor {
 
           HttpRequest httpRequest = requestBuilder.build();
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
+          proxyReachable.set(true);
 
           // Resetting user credentials for further execution of current request
           if (isWorkerEncryptionRequired) {
