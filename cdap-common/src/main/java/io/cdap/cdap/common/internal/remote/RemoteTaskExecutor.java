@@ -105,7 +105,9 @@ public class RemoteTaskExecutor {
         Constants.Gateway.INTERNAL_API_VERSION_3);
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
-    long maxTimeSecs = cConf.getLong(serviceName + "." + Constants.Retry.MAX_TIME_SECS, 60L);
+    String configPrefix = workerType == Type.TASK_WORKER
+        ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
+    long maxTimeSecs = cConf.getLong(configPrefix + "." + Constants.Retry.MAX_TIME_SECS, 60L);
     this.fallbackTimeoutMs = maxTimeSecs * 1000;
     if (workerType == Type.TASK_WORKER) {
       this.workerUrl = TASK_WORKER_URL;
