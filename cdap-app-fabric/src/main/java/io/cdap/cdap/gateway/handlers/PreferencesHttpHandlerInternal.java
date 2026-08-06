@@ -27,8 +27,12 @@ import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -48,14 +52,20 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   private final PreferencesService preferencesService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   PreferencesHttpHandlerInternal(PreferencesService preferencesService,
       ApplicationLifecycleService applicationLifecycleService,
-      NamespaceQueryAdmin namespaceQueryAdmin) {
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
     this.preferencesService = preferencesService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -67,6 +77,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/preferences")
   @GET
   public void getInstancePreferences(HttpRequest request, HttpResponder responder) {
+    accessEnforcer.enforce(new InstanceId(""), authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     PreferencesDetail detail = preferencesService.getPreferences();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, PreferencesDetail.class));
   }
@@ -90,6 +102,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
       @PathParam("namespace-id") String namespace,
       @QueryParam("resolved") boolean resolved) {
     NamespaceId namespaceId = new NamespaceId(namespace);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     // No need to check if namespace exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
@@ -121,6 +135,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
       @PathParam("application-id") String appId,
       @QueryParam("resolved") boolean resolved) {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
+    accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     // No need to check if application exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
@@ -156,6 +172,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
       @PathParam("program-id") String programId,
       @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.GET);
     // No need to check if program exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
