@@ -95,8 +95,10 @@ public class RemoteTaskExecutor {
       RemoteClientFactory remoteClientFactory, Type workerType,
       HttpRequestConfig httpRequestConfig, AeadCipher aeadCipher) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
+    String taskServiceName = cConf.getBoolean(Constants.Security.Authorization.ENABLED)
+        ? Constants.Service.TASK_MANAGER : Constants.Service.TASK_WORKER;
     String serviceName = workerType == Type.TASK_WORKER
-        ? Constants.Service.TASK_MANAGER : Constants.Service.SYSTEM_WORKER;
+        ? taskServiceName : Constants.Service.SYSTEM_WORKER;
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);

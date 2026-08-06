@@ -25,6 +25,7 @@ import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.ServiceException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -78,10 +79,18 @@ public class RemoteClient {
   private final String basePath;
   private final RemoteAuthenticator remoteAuthenticator;
   private final DiscoveryServiceClient discoveryClient;
+  private final boolean rbacEnabled;
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
       String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
       RemoteAuthenticator remoteAuthenticator) {
+    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig,
+        basePath, remoteAuthenticator, false);
+  }
+
+  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
+      String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
+      RemoteAuthenticator remoteAuthenticator, boolean rbacEnabled) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -91,6 +100,7 @@ public class RemoteClient {
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.remoteAuthenticator = remoteAuthenticator;
+    this.rbacEnabled = rbacEnabled;
   }
 
   /**
@@ -291,10 +301,14 @@ public class RemoteClient {
    * null, it falls back to the default random discovery strategy.
    */
   public URL resolve(String resource, @Nullable String routingKey) {
-    if (routingKey == null) {
+    if (!rbacEnabled || routingKey == null || (!Constants.Service.TASK_MANAGER.equals(discoverableServiceName)
+        && !Constants.Service.TASK_WORKER.equals(discoverableServiceName))) {
       Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
       if (discoverable == null) {
         throw new ServiceUnavailableException(discoverableServiceName);
+      }
+      if(!rbacEnabled) {
+        LOG.info("shruzard - RemoteClient RBAC disabled not using Task Manager", routingKey);
       }
       URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
       try {

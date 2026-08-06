@@ -103,7 +103,17 @@ public class ArtifactLocalizerClient {
     Multimap<String, String> headers = httpRequest.getHeaders();
     internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
 
-    HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    long startTime = System.currentTimeMillis();
+    HttpResponse httpResponse;
+    try {
+      httpResponse = HttpRequests.execute(httpRequest);
+    } catch (IOException e) {
+      LOG.error("shruzard ArtifactLocalizerClient request for {} failed after {} ms with error: {}",
+          artifactId, System.currentTimeMillis() - startTime, e.getMessage());
+      throw e;
+    }
+    LOG.info("shruzard ArtifactLocalizerClient request for {} completed in {} ms (response code: {})",
+        artifactId, System.currentTimeMillis() - startTime, httpResponse.getResponseCode());
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
       if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

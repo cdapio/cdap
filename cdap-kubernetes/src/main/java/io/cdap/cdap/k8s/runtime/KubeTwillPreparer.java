@@ -1340,7 +1340,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       // Add all environments for the runnable
       environs.putAll(environments.get(name));
       // Add JVM options to environment.
-      environs.put(JAVA_OPTS_KEY, jvmOpts);
+      String dependentJvmOpts = globalJvmOptions.toString() + JAVA_OPTS_DELIM
+          + (runnableJvmOptions.containsKey(name) ? runnableJvmOptions.get(name).toString() : "");
+      environs.put(JAVA_OPTS_KEY, dependentJvmOpts);
       // remove GCE_METADATA_HOST_ENV_VAR from the dependent runnable container.
       Map<String, String> envs = environs.entrySet().stream()
           .filter(entry -> !entry.getKey().equals(GCE_METADATA_HOST_ENV_VAR))

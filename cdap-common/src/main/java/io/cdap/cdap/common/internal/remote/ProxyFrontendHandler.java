@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import io.netty.handler.ssl.SslContext;
@@ -91,6 +92,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 podRegistry.putIfAbsent(podIp, new PodState(null, 0));
             }
             podRegistry.keySet().removeIf(existingPod -> !activePods.contains(existingPod));
+
+            LOG.info("shruzard - ProxyFrontendHandler leases: [{}]",
+                podRegistry.entrySet().stream()
+                    .map(e -> e.getKey() + "="
+                        + (e.getValue().getLeasedNamespace() == null
+                        ? "null" : e.getValue().getLeasedNamespace()+"_"+e.getValue().getInflightRequests()))
+                    .collect(Collectors.joining(", ")));
 
             String targetNamespace = req.headers().get("X-CDF-Namespace");
             if (targetNamespace == null) targetNamespace = "default";

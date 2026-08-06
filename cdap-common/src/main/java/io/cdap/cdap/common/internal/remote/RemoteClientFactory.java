@@ -44,6 +44,7 @@ public class RemoteClientFactory {
   private final RemoteAuthenticator remoteAuthenticator;
   private final String pathPrefix;
   private final boolean internalRouterEnabled;
+  private final boolean rbacEnabled;
 
   @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
@@ -57,7 +58,8 @@ public class RemoteClientFactory {
       InternalAuthenticator internalAuthenticator,
       RemoteAuthenticator remoteAuthenticator, CConfiguration cConf) {
     this(discoveryClient, internalAuthenticator, remoteAuthenticator, "",
-        cConf.getBoolean(InternalRouter.CLIENT_ENABLED));
+        cConf.getBoolean(InternalRouter.CLIENT_ENABLED),
+        cConf.getBoolean(Constants.Security.Authorization.ENABLED));
     if (cConf.getBoolean(InternalRouter.CLIENT_ENABLED) && !cConf.getBoolean(
         InternalRouter.SERVER_ENABLED)) {
       throw new IllegalStateException(
@@ -99,11 +101,20 @@ public class RemoteClientFactory {
       InternalAuthenticator internalAuthenticator,
       RemoteAuthenticator remoteAuthenticator, String pathPrefix,
       boolean internalRouterEnabled) {
+    this(discoveryClient, internalAuthenticator, remoteAuthenticator, pathPrefix,
+        internalRouterEnabled, false);
+  }
+
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
+      InternalAuthenticator internalAuthenticator,
+      RemoteAuthenticator remoteAuthenticator, String pathPrefix,
+      boolean internalRouterEnabled, boolean rbacEnabled) {
     this.discoveryClient = discoveryClient;
     this.internalAuthenticator = internalAuthenticator;
     this.remoteAuthenticator = remoteAuthenticator;
     this.pathPrefix = pathPrefix;
     this.internalRouterEnabled = internalRouterEnabled;
+    this.rbacEnabled = rbacEnabled;
   }
 
   /**
@@ -142,7 +153,7 @@ public class RemoteClientFactory {
     }
     return new RemoteClient(internalAuthenticator, discoveryClient,
         discoverableServiceName,
-        httpRequestConfig, basePath, remoteAuthenticator);
+        httpRequestConfig, basePath, remoteAuthenticator, rbacEnabled);
   }
 
   private RemoteClient getClientForInternalRouter(String destinationServiceName,
@@ -156,6 +167,6 @@ public class RemoteClientFactory {
         basePath);
     return new RemoteClient(internalAuthenticator, discoveryClient,
         Service.INTERNAL_ROUTER, httpRequestConfig, internalRouterPath,
-        remoteAuthenticator);
+        remoteAuthenticator, rbacEnabled);
   }
 }

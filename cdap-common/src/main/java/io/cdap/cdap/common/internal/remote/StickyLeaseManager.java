@@ -89,6 +89,11 @@ public class StickyLeaseManager {
 
     // Check if matching existing lease
     if (namespace.equals(currentLease.get())) {
+      if (activeTaskCount.get() >= maxConcurrentTasks) {
+        LOG.info("shruzard - StickyLeaseManager: Concurrency limit reached ({} tasks active) for namespace '{}'",
+                activeTaskCount.get(), namespace.getNamespace());
+        return AcquisitionStatus.REJECTED_MAX_CONCURRENCY;
+      }
       lastActivityTimeMillis = System.currentTimeMillis();
       return AcquisitionStatus.SUCCESS;
     }
@@ -131,11 +136,6 @@ public class StickyLeaseManager {
       return status;
     }
 
-    if (activeTaskCount.get() >= maxConcurrentTasks) {
-      LOG.info("shruzard - StickyLeaseManager: Concurrency limit reached ({} tasks active) for namespace '{}'",
-          activeTaskCount.get(), namespace.getNamespace());
-      return AcquisitionStatus.REJECTED_MAX_CONCURRENCY;
-    }
 
     activeTaskCount.incrementAndGet();
     lastActivityTimeMillis = System.currentTimeMillis();
@@ -149,13 +149,7 @@ public class StickyLeaseManager {
     if (namespace.equals(currentLease.get())) {
       activeTaskCount.decrementAndGet();
       lastActivityTimeMillis = System.currentTimeMillis();
-      int completed = totalTasksProcessedInLease.incrementAndGet();
-
-      // Reclamation: After processing 10 total tasks, release lease (Logical Reset)
-      if (completed >= maxTasksPerLease && activeTaskCount.get() == 0) {
-        releaseLease(
-            "Processed " + completed + " total tasks (Max " + maxTasksPerLease + " reached)");
-      }
+      totalTasksProcessedInLease.incrementAndGet();
     }
   }
 
