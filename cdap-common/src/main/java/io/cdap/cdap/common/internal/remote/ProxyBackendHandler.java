@@ -34,11 +34,25 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     private final Channel inboundChannel;
     private final Map<String, PodState> podRegistry;
     private final String targetWorkerAddress;
+    private boolean decremented = false;
 
     public ProxyBackendHandler(Channel inboundChannel, Map<String, PodState> podRegistry, String targetWorkerAddress) {
         this.inboundChannel = inboundChannel;
         this.podRegistry = podRegistry;
         this.targetWorkerAddress = targetWorkerAddress;
+    }
+
+    private synchronized void decrementInflight() {
+        if (!decremented) {
+            PodState state = podRegistry.get(targetWorkerAddress);
+            if (state != null) {
+                synchronized (state) {
+                    state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+                    state.setLastActivityTime(System.nanoTime());
+                }
+            }
+            decremented = true;
+        }
     }
 
     @Override
@@ -75,13 +89,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         }
         
         if (msg instanceof io.netty.handler.codec.http.LastHttpContent) {
-            PodState state = podRegistry.get(targetWorkerAddress);
-            if (state != null) {
-                synchronized (state) {
-                    state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
-                    state.setLastActivityTime(System.nanoTime());
-                }
-            }
+            decrementInflight();
         }
         
         // Forward worker responses directly back to the client
@@ -105,11 +113,13 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        decrementInflight();
         ProxyFrontendHandler.closeOnFlush(inboundChannel);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        decrementInflight();
         cause.printStackTrace();
         ProxyFrontendHandler.closeOnFlush(ctx.channel());
     }
