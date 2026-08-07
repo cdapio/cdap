@@ -76,7 +76,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
    */
   @Path("/preferences")
   @GET
-  public void getInstancePreferences(HttpRequest request, HttpResponder responder) {
+  public void getInstancePreferences(HttpRequest request, HttpResponder responder) throws Exception {
     accessEnforcer.enforce(new InstanceId(""), authenticationContext.getPrincipal(),
         StandardPermission.GET);
     PreferencesDetail detail = preferencesService.getPreferences();
@@ -100,7 +100,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @GET
   public void getNamespacePreferences(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace,
-      @QueryParam("resolved") boolean resolved) {
+      @QueryParam("resolved") boolean resolved) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         StandardPermission.GET);
@@ -133,7 +133,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   public void getApplicationPreferences(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace,
       @PathParam("application-id") String appId,
-      @QueryParam("resolved") boolean resolved) {
+      @QueryParam("resolved") boolean resolved) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
         StandardPermission.GET);

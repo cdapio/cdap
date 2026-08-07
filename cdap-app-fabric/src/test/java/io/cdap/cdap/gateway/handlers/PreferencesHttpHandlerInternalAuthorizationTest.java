@@ -24,8 +24,11 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.PreferencesDetail;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -58,6 +61,9 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
   private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
                                                                         Principal.PrincipalType.USER);
   private static final NamespaceId OTHER_NAMESPACE = new NamespaceId("other-tenant-namespace");
+  private static final ApplicationId OTHER_APP = new ApplicationId("other-tenant-namespace", "some-app");
+  private static final ProgramId OTHER_PROGRAM = new ProgramId("other-tenant-namespace", "some-app",
+                                                                ProgramType.WORKFLOW, "some-program");
 
   private static PreferencesHttpHandlerInternal preferencesHandler;
 
@@ -74,12 +80,20 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
                                    Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
     inMemoryAccessController.grant(Authorizable.fromEntityId(OTHER_NAMESPACE), MASTER_PRINCIPAL,
                                    Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
+    inMemoryAccessController.grant(Authorizable.fromEntityId(OTHER_APP), MASTER_PRINCIPAL,
+                                   Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
+    inMemoryAccessController.grant(Authorizable.fromEntityId(OTHER_PROGRAM), MASTER_PRINCIPAL,
+                                   Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
 
     PreferencesService mockPreferencesService = mock(PreferencesService.class);
     when(mockPreferencesService.getPreferences())
         .thenReturn(new PreferencesDetail(Collections.emptyMap(), 0, false));
     when(mockPreferencesService.getPreferences(any(NamespaceId.class)))
+        .thenReturn(new PreferencesDetail(Collections.emptyMap(), 0, false));
+    when(mockPreferencesService.getPreferences(any(ApplicationId.class)))
+        .thenReturn(new PreferencesDetail(Collections.emptyMap(), 0, false));
+    when(mockPreferencesService.getPreferences(any(ProgramId.class)))
         .thenReturn(new PreferencesDetail(Collections.emptyMap(), 0, false));
     ApplicationLifecycleService mockAppLifecycleService = mock(ApplicationLifecycleService.class);
     NamespaceQueryAdmin mockNamespaceQueryAdmin = mock(NamespaceQueryAdmin.class);
@@ -96,7 +110,7 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
   }
 
   @Test
-  public void testGetInstancePreferencesUnauthorized() {
+  public void testGetInstancePreferencesUnauthorized() throws Exception {
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
     try {
       preferencesHandler.getInstancePreferences(request, responder);
@@ -108,7 +122,7 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
   }
 
   @Test
-  public void testGetInstancePreferencesAuthorized() {
+  public void testGetInstancePreferencesAuthorized() throws Exception {
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
     try {
       preferencesHandler.getInstancePreferences(request, responder);
@@ -119,7 +133,7 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
   }
 
   @Test
-  public void testGetNamespacePreferencesUnauthorized() {
+  public void testGetNamespacePreferencesUnauthorized() throws Exception {
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
     try {
       preferencesHandler.getNamespacePreferences(request, responder, OTHER_NAMESPACE.getNamespace(), false);
@@ -131,7 +145,7 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
   }
 
   @Test
-  public void testGetNamespacePreferencesAuthorized() {
+  public void testGetNamespacePreferencesAuthorized() throws Exception {
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
     try {
       preferencesHandler.getNamespacePreferences(request, responder, OTHER_NAMESPACE.getNamespace(), false);
@@ -142,7 +156,7 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
   }
 
   @Test
-  public void testGetApplicationPreferencesUnauthorized() {
+  public void testGetApplicationPreferencesUnauthorized() throws Exception {
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
     try {
       preferencesHandler.getApplicationPreferences(request, responder, OTHER_NAMESPACE.getNamespace(),
@@ -152,5 +166,42 @@ public class PreferencesHttpHandlerInternalAuthorizationTest {
     }
     Assert.assertNotNull("an unprivileged caller must not be able to read another "
         + "namespace's application preferences via the internal endpoint", exceptionThrown);
+  }
+
+  @Test
+  public void testGetApplicationPreferencesAuthorized() throws Exception {
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+    try {
+      preferencesHandler.getApplicationPreferences(request, responder, OTHER_NAMESPACE.getNamespace(),
+          "some-app", false);
+    } catch (UnauthorizedException e) {
+      exceptionThrown = e;
+    }
+    Assert.assertNull("a caller with access to the application must not be rejected", exceptionThrown);
+  }
+
+  @Test
+  public void testGetProgramPreferencesUnauthorized() throws Exception {
+    AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
+    try {
+      preferencesHandler.getProgramPreferences(request, responder, OTHER_NAMESPACE.getNamespace(),
+          "some-app", "workflows", "some-program", false);
+    } catch (UnauthorizedException e) {
+      exceptionThrown = e;
+    }
+    Assert.assertNotNull("an unprivileged caller must not be able to read another "
+        + "namespace's program preferences via the internal endpoint", exceptionThrown);
+  }
+
+  @Test
+  public void testGetProgramPreferencesAuthorized() throws Exception {
+    AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
+    try {
+      preferencesHandler.getProgramPreferences(request, responder, OTHER_NAMESPACE.getNamespace(),
+          "some-app", "workflows", "some-program", false);
+    } catch (UnauthorizedException e) {
+      exceptionThrown = e;
+    }
+    Assert.assertNull("a caller with access to the program must not be rejected", exceptionThrown);
   }
 }
