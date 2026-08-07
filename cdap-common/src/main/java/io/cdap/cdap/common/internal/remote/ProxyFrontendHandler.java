@@ -44,6 +44,9 @@ import java.util.Set;
 import java.util.HashSet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,6 +160,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  @Override
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
+                     try {
+                         SslContext sslCtx = SslContextBuilder.forClient()
+                             .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+                         p.addLast(sslCtx.newHandler(ch.alloc(), hostPort[0], Integer.parseInt(hostPort[1])));
+                     } catch (Exception e) {
+                         LOG.error("shruzard - Failed to initialize SSL for outbound proxy", e);
+                     }
                      p.addLast(new HttpClientCodec());
                      p.addLast(new ProxyBackendHandler(ctx.channel(), podRegistry, chosenWorker));
                  }
