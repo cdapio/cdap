@@ -214,7 +214,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     outboundChannel.flush();
                     ctx.channel().config().setAutoRead(true);
                 } else {
-                    LOG.warn("shruzard - ProxyFrontendHandler: Failed to connect to backend worker {}. Evicting from registry.", chosenWorker);
+                    LOG.warn("shruzard - ProxyFrontendHandler: Failed to connect to backend worker {}. "
+                             + "Evicting from registry.", chosenWorker);
                     podRegistry.remove(chosenWorker);
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
