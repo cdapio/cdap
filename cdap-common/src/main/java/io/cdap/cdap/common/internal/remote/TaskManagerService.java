@@ -69,6 +69,17 @@ public class TaskManagerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("shruzard - Starting TaskManagerService Proxy HTTP server...");
 
+    try {
+      java.lang.reflect.Method method = discoveryServiceClient.getClass().getMethod("enableEndpointsWatcher");
+      method.invoke(discoveryServiceClient);
+      LOG.info("shruzard - Successfully enabled Kubernetes Endpoints watcher on discovery service {}",
+               discoveryServiceClient.getClass().getSimpleName());
+    } catch (NoSuchMethodException ignored) {
+      // Normal for discovery services that do not support endpoints watching (e.g. In-memory, ZK)
+    } catch (Exception e) {
+      LOG.warn("shruzard - Failed to invoke enableEndpointsWatcher on discovery service", e);
+    }
+
     bossGroup = new NioEventLoopGroup(1,
         new com.google.common.util.concurrent.ThreadFactoryBuilder()
             .setNameFormat("taskmanager-boss-thread-%d").build());

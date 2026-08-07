@@ -42,12 +42,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +55,6 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private final Map<String, PodState> podRegistry;
     private final DiscoveryServiceClient discoveryServiceClient;
-    private final Iterable<Discoverable> discoverables;
     private Channel outboundChannel;
     private boolean connecting = false;
     private boolean rejecting = false;
@@ -68,8 +63,6 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     public ProxyFrontendHandler(Map<String, PodState> podRegistry, DiscoveryServiceClient discoveryServiceClient) {
         this.podRegistry = podRegistry;
         this.discoveryServiceClient = discoveryServiceClient;
-        // Pre-warm the Discovery client so its WatcherThread spawns immediately on Proxy startup
-        this.discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
     }
 
     @Override
@@ -80,12 +73,10 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             // 0. Synchronous K8s Discovery (Zero-Stale State)
             // Completely non-blocking on the EventLoop: Twill's DiscoveryServiceClient
             // evaluates a local memory cache backed by a push-based ZooKeeper watch.
-            // (Iterates the pre-warmed discoverables cache)
+            Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
             Set<String> activePods = new HashSet<>();
             for (Discoverable d : discoverables) {
-                String host = d.getSocketAddress().getHostString();
-                int port = d.getSocketAddress().getPort();
-                activePods.add(host + ":" + port);
+                activePods.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
             }
 
             for (String podIp : activePods) {
@@ -93,24 +84,17 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             }
             podRegistry.keySet().removeIf(existingPod -> !activePods.contains(existingPod));
 
-            LOG.info("shruzard - ProxyFrontendHandler leases: [{}]",
-                podRegistry.entrySet().stream()
-                    .map(e -> e.getKey() + "="
-                        + (e.getValue().getLeasedNamespace() == null
-                        ? "null" : e.getValue().getLeasedNamespace()+"_"+e.getValue().getInflightRequests()))
-                    .collect(Collectors.joining(", ")));
-
             String targetNamespace = req.headers().get("X-CDF-Namespace");
             if (targetNamespace == null) targetNamespace = "default";
 
             String targetWorkerAddress = null;
+
             // 1. Warm Match: Thread-safe scan specifically locking evaluation
             for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
-                String workerAddr = entry.getKey();
                 PodState state = entry.getValue();
                 synchronized (state) {
                     if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
-                        targetWorkerAddress = workerAddr;
+                        targetWorkerAddress = entry.getKey();
                         state.setInflightRequests(state.getInflightRequests() + 1);
                         LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
                                  + "for '{}' at {}. Occupancy: {}", 
@@ -124,20 +108,17 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             // OR an expired pod (35s predicted timeout avoiding clock drift)
             if (targetWorkerAddress == null) {
                 for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
-                    String workerAddr = entry.getKey();
                     PodState state = entry.getValue();
-
                     synchronized (state) {
                         boolean isUnleased = (state.getLeasedNamespace() == null 
                             || state.getLeasedNamespace().isEmpty());
                         boolean isExpiredIdle = (state.getInflightRequests() == 0 
-                            && (System.nanoTime() - state.getLastActivityTime() 
-                                > java.util.concurrent.TimeUnit.SECONDS.toNanos(35)));
+                            && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
                         
                         if (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle)) {
-                            targetWorkerAddress = workerAddr;
+                            targetWorkerAddress = entry.getKey();
                             state.setLeasedNamespace(targetNamespace);
-                            state.setInflightRequests(state.getInflightRequests() + 1);
+                            state.setInflightRequests(1);
                             LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
                                      + "(Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
                                 isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
@@ -147,7 +128,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 }
             }
 
-            // 3. Busy Rejection: All pods saturatedd
+            // 3. Busy Rejection: All pods saturated
             if (targetWorkerAddress == null) {
                 LOG.warn("shruzard - ProxyFrontendHandler: All pods saturated or leased "
                          + "incorrectly. Rejecting request for namespace '{}'", targetNamespace);
@@ -176,13 +157,6 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  @Override
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
-                     try {
-                         SslContext sslCtx = SslContextBuilder.forClient()
-                             .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-                         p.addLast(sslCtx.newHandler(ch.alloc(), hostPort[0], Integer.parseInt(hostPort[1])));
-                     } catch (Exception e) {
-                         LOG.error("shruzard - Failed to initialize SSL for outbound proxy", e);
-                     }
                      p.addLast(new HttpClientCodec());
                      p.addLast(new ProxyBackendHandler(ctx.channel(), podRegistry, chosenWorker));
                  }
@@ -202,6 +176,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     outboundChannel.flush();
                     ctx.channel().config().setAutoRead(true);
                 } else {
+                    LOG.warn("shruzard - ProxyFrontendHandler: Failed to connect to backend worker {}. Evicting from registry.", chosenWorker);
+                    podRegistry.remove(chosenWorker);
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
                         ReferenceCountUtil.release(pendingMsg);

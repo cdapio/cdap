@@ -87,6 +87,8 @@ public class KubeDiscoveryService implements DiscoveryService,
   private final ApiClientFactory apiClientFactory;
   private volatile CoreV1Api coreApi;
   private volatile WatcherThread watcherThread;
+  private volatile boolean endpointsWatcherEnabled = false;
+  private volatile EndpointsWatcherThread endpointsWatcherThread;
   private boolean closed;
   private final List<String> loadBalancerServiceList;
   private final Map<String, String> podLabels;
@@ -172,13 +174,33 @@ public class KubeDiscoveryService implements DiscoveryService,
     };
   }
 
+  /**
+   * Programmatically enables real-time Kubernetes {@link V1Endpoints} watching.
+   * Can be called by components (e.g. TaskManagerService / ProxyFrontendHandler)
+   * that require live pod addition and removal events.
+   */
+  public void enableEndpointsWatcher() {
+    this.endpointsWatcherEnabled = true;
+    synchronized (this) {
+      if (this.endpointsWatcherThread == null && !serviceDiscovereds.isEmpty()) {
+        EndpointsWatcherThread thread = new EndpointsWatcherThread();
+        thread.setDaemon(true);
+        for (String serviceName : serviceDiscovereds.keySet()) {
+          thread.addService(serviceName);
+        }
+        thread.start();
+        this.endpointsWatcherThread = thread;
+      }
+    }
+  }
+
   @Override
   public ServiceDiscovered discover(String name) {
     // Get/Create the ServiceDiscovered to return.
     ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(
         name, DefaultServiceDiscovered::new);
 
-    // Start the watcher thread if it is not yet started
+    // Start the service watcher thread if it is not yet started
     WatcherThread watcherThread = this.watcherThread;
 
     if (watcherThread == null) {
@@ -195,27 +217,55 @@ public class KubeDiscoveryService implements DiscoveryService,
           watcherThread.addService(name);
           watcherThread.start();
           this.watcherThread = watcherThread;
-          return serviceDiscovered;
         }
+      }
+    } else {
+      watcherThread.addService(name);
+    }
+
+    if (endpointsWatcherEnabled) {
+      EndpointsWatcherThread endpointsWatcherThread = this.endpointsWatcherThread;
+      if (endpointsWatcherThread == null) {
+        synchronized (this) {
+          if (closed) {
+            throw new IllegalStateException(
+                "Discovery service is already closed");
+          }
+          endpointsWatcherThread = this.endpointsWatcherThread;
+          if (endpointsWatcherThread == null) {
+            endpointsWatcherThread = new EndpointsWatcherThread();
+            endpointsWatcherThread.setDaemon(true);
+            endpointsWatcherThread.addService(name);
+            endpointsWatcherThread.start();
+            this.endpointsWatcherThread = endpointsWatcherThread;
+          }
+        }
+      } else {
+        endpointsWatcherThread.addService(name);
       }
     }
 
-    // If the thread is already running, simply add the service name to watch for changes.
-    watcherThread.addService(name);
     return serviceDiscovered;
   }
 
   @Override
   public void close() {
     WatcherThread watcherThread;
+    EndpointsWatcherThread endpointsWatcherThread;
     synchronized (this) {
       closed = true;
       watcherThread = this.watcherThread;
+      endpointsWatcherThread = this.endpointsWatcherThread;
       this.watcherThread = null;
+      this.endpointsWatcherThread = null;
     }
     if (watcherThread != null) {
       closeQuietly(watcherThread);
       watcherThread.interrupt();
+    }
+    if (endpointsWatcherThread != null) {
+      closeQuietly(endpointsWatcherThread);
+      endpointsWatcherThread.interrupt();
     }
   }
 
@@ -691,6 +741,110 @@ public class KubeDiscoveryService implements DiscoveryService,
         return Optional.empty();
       }
       // Remove the name prefix to get the original CDAP service name
+      serviceName = serviceName.substring(namePrefix.length());
+      return Optional.ofNullable(serviceDiscovereds.get(serviceName));
+    }
+  }
+
+  /**
+   * Creates a {@link Set} of {@link Discoverable} directly from live {@link V1Endpoints}.
+   *
+   * @param name      name of the service
+   * @param endpoints the live Kubernetes Endpoints object
+   * @return a {@link Set} of {@link Discoverable} for all ready pod IPs
+   */
+  @VisibleForTesting
+  Set<Discoverable> toDiscoverables(String name, V1Endpoints endpoints) {
+    if (endpoints == null || endpoints.getSubsets() == null) {
+      return Collections.emptySet();
+    }
+
+    V1ObjectMeta meta = endpoints.getMetadata();
+    byte[] payload = Optional.ofNullable(meta != null ? meta.getAnnotations() : null)
+        .map(m -> m.get(PAYLOAD_NAME))
+        .map(Base64.getDecoder()::decode)
+        .orElse(EMPTY_PAYLOAD);
+
+    Set<Discoverable> discoverables = new HashSet<>();
+    for (io.kubernetes.client.openapi.models.V1EndpointSubset subset : endpoints.getSubsets()) {
+      List<io.kubernetes.client.openapi.models.V1EndpointAddress> addresses = subset.getAddresses();
+      List<io.kubernetes.client.openapi.models.CoreV1EndpointPort> ports = subset.getPorts();
+
+      if (addresses == null || ports == null) {
+        continue;
+      }
+
+      for (io.kubernetes.client.openapi.models.V1EndpointAddress address : addresses) {
+        for (io.kubernetes.client.openapi.models.CoreV1EndpointPort port : ports) {
+          Discoverable d = createDiscoverable(name, address.getIp(),
+              new V1ServicePort().port(port.getPort()), payload);
+          if (d != null) {
+            discoverables.add(d);
+          }
+        }
+      }
+    }
+    return discoverables;
+  }
+
+  /**
+   * A {@link Thread} that continuously watches for real-time changes in Kubernetes {@link V1Endpoints}.
+   */
+  private final class EndpointsWatcherThread extends AbstractWatcherThread<V1Endpoints> {
+
+    private final Set<String> services;
+
+    EndpointsWatcherThread() {
+      super("kube-discovery-endpoints", namespace, "", "v1", "endpoints",
+          apiClientFactory);
+      this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    }
+
+    void addService(String name) {
+      if (services.add(namePrefix + name)) {
+        closeWatch();
+      }
+    }
+
+    @Override
+    protected void updateListOptions(ListOptions options) {
+      options.setLabelSelector(
+          String.format("%s in (%s)", SERVICE_LABEL,
+              String.join(",", services)));
+    }
+
+    @Override
+    public void resourceAdded(V1Endpoints endpoints) {
+      getServiceDiscovered(endpoints)
+          .ifPresent(s -> {
+            Set<Discoverable> discoverables = toDiscoverables(s.getName(), endpoints);
+            if (!discoverables.isEmpty()) {
+              s.setDiscoverables(discoverables);
+            }
+          });
+    }
+
+    @Override
+    public void resourceModified(V1Endpoints endpoints) {
+      resourceAdded(endpoints);
+    }
+
+    @Override
+    public void resourceDeleted(V1Endpoints endpoints) {
+      getServiceDiscovered(endpoints).ifPresent(
+          s -> s.setDiscoverables(Collections.emptySet()));
+    }
+
+    private Optional<DefaultServiceDiscovered> getServiceDiscovered(
+        V1Endpoints endpoints) {
+      if (endpoints.getMetadata() == null || endpoints.getMetadata().getLabels() == null) {
+        return Optional.empty();
+      }
+      String serviceName = endpoints
+          .getMetadata().getLabels().get(SERVICE_LABEL);
+      if (serviceName == null) {
+        return Optional.empty();
+      }
       serviceName = serviceName.substring(namePrefix.length());
       return Optional.ofNullable(serviceDiscovereds.get(serviceName));
     }
