@@ -67,7 +67,20 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     public ProxyFrontendHandler(Map<String, PodState> podRegistry, DiscoveryServiceClient discoveryServiceClient) {
         this.podRegistry = podRegistry;
         this.discoveryServiceClient = discoveryServiceClient;
-        // Pre-warm the Discovery client so its WatcherThread spawns immediately on Proxy startup
+
+        // Enable live Kubernetes Endpoints streaming if supported by the discovery client
+        try {
+            java.lang.reflect.Method method = discoveryServiceClient.getClass().getMethod("enableEndpointsWatcher");
+            method.invoke(discoveryServiceClient);
+            LOG.info("shruzard - Enabled Kubernetes Endpoints watcher on discovery service {}",
+                     discoveryServiceClient.getClass().getSimpleName());
+        } catch (NoSuchMethodException ignored) {
+            // Normal for discovery services without K8s Endpoints support (e.g. In-memory / ZK)
+        } catch (Exception e) {
+            LOG.warn("shruzard - Failed to invoke enableEndpointsWatcher on discovery service", e);
+        }
+
+        // Pre-warm the Discovery client so its WatcherThreads spawn immediately on Proxy startup
         this.discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
     }
 
