@@ -496,7 +496,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
           "provisioner.clusterStatus.response.count");
 
       if (hasReachedTerminalState(previousStatus, status)) {
-        emitLroMetric(context, client, conf, previousStatus, clusterName);
+        emitLroMetric(context, client, conf, previousStatus, status, clusterName);
       }
       return status;
     } catch (Exception e) {
@@ -521,21 +521,14 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    * @param clusterName the name of the cluster
    */
   private void emitLroMetric(ProvisionerContext context, DataprocClient client, DataprocConf conf,
-                             ClusterStatus previousStatus, String clusterName) {
+                             ClusterStatus previousStatus, ClusterStatus currentStatus, String clusterName) {
     String method = getMethod(previousStatus);
     if (method == null) {
       return;
     }
 
     try {
-      Optional<Operation> operation = client.getLatestOperation(clusterName, method);
-
-      if (!operation.isPresent() || !operation.get().getDone()) {
-        return;
-      }
-
-      Operation op = operation.get();
-      String metricName = "provisioner.operation.response.count";
+      String metricName = "provisioner.cluster.operation.response.count";
       String imageVersion = getImageVersion(context, conf);
 
       DataprocMetric.Builder builder = DataprocMetric.builder(metricName)
@@ -543,12 +536,25 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
         .setImageVersion(imageVersion)
         .setMethod(method);
 
+      if ("DELETE".equals(method) && currentStatus == ClusterStatus.NOT_EXISTS) {
+        builder.setStatusCode(StatusCode.Code.OK);
+        DataprocUtils.emitMetric(context, builder.build());
+        return;
+      }
+
+      Optional<Operation> operation = client.getLatestOperation(clusterName, method);
+
+      if (!operation.isPresent() || !operation.get().getDone()) {
+        return;
+      }
+
+      Operation op = operation.get();
+
       if (op.hasError()) {
         Status.Code grpcCode = Status.fromCodeValue(op.getError().getCode()).getCode();
         StatusCode gaxStatusCode = GrpcStatusCode.of(grpcCode);
         builder.setStatusCode(gaxStatusCode.getCode());
       }
-
       DataprocUtils.emitMetric(context, builder.build());
     } catch (RetryableProvisionException | RuntimeException ex) {
       LOG.warn("Failed to retrieve LRO operation metadata for metric emission on cluster {}", clusterName, ex);
