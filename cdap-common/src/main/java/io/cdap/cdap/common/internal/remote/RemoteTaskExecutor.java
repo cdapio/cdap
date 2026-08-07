@@ -105,7 +105,7 @@ public class RemoteTaskExecutor {
         Constants.Gateway.INTERNAL_API_VERSION_3);
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
-    this.fallbackTimeoutMs = 90000; // Hardcoded to 90s for testing
+    this.fallbackTimeoutMs = 60000;
     if (workerType == Type.TASK_WORKER) {
       this.workerUrl = TASK_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,

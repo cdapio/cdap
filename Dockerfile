@@ -19,4 +19,10 @@ RUN rm -rf /opt/cdap/master/lib/io.cdap.cdap.cdap-common-6.12.0-SNAPSHOT.jar
 
 COPY cdap-common/target/cdap-common-6.12.0-SNAPSHOT.jar /opt/cdap/master/lib/io.cdap.cdap.cdap-common-6.12.0-SNAPSHOT.jar
 
+RUN rm -rf /opt/cdap/master/ext/environments/k8s/io.cdap.cdap.cdap-kubernetes-6.12.0-SNAPSHOT.jar
+
+
+COPY cdap-kubernetes/target/cdap-kubernetes-6.12.0-SNAPSHOT.jar /opt/cdap/master/ext/environments/k8s/io.cdap.cdap.cdap-kubernetes-6.12.0-SNAPSHOT.jar
+
+
 RUN chmod -R 755 /opt/cdap

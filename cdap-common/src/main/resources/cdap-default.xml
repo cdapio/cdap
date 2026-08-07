@@ -4364,7 +4364,7 @@
   <!-- Set to 60s to match the default http request timeout -->
   <property>
     <name>task.worker.retry.policy.max.time.secs</name>
-    <value>90</value>
+    <value>60</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
     </description>
