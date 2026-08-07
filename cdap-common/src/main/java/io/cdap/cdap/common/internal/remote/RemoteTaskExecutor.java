@@ -52,6 +52,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -73,9 +74,13 @@ public class RemoteTaskExecutor {
   private static final String SYSTEM_WORKER_URL = "/system/run";
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
       (throwable instanceof RetryableException) || (throwable instanceof ServiceException)
-          || (throwable instanceof SocketTimeoutException);
+          || (throwable instanceof SocketTimeoutException) || (throwable instanceof SocketException)
+          || (throwable instanceof NoRouteToHostException);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
-      (throwable instanceof RetryableException);
+      (throwable instanceof RetryableException)
+          || (throwable instanceof SocketException)
+          || (throwable instanceof SocketTimeoutException)
+          || (throwable instanceof NoRouteToHostException);
   private final boolean compression;
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
