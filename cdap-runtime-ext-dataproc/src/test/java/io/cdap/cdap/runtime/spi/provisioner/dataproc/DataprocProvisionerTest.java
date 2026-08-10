@@ -528,7 +528,7 @@ public class DataprocProvisionerTest {
     ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
     Assert.assertEquals(ClusterStatus.RUNNING, currentStatus);
 
-    Integer count = localContext.getMetricCounts().get("provisioner.operation.response.count");
+    Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
     Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
     Assert.assertEquals(1, count.intValue());
   }
@@ -550,17 +550,10 @@ public class DataprocProvisionerTest {
     Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
       .thenReturn(ClusterStatus.NOT_EXISTS);
 
-    Operation operation = Operation.newBuilder()
-      .setName("op-delete")
-      .setDone(true)
-      .build();
-    Mockito.when(dataprocClient.getLatestOperation(Mockito.anyString(), Mockito.anyString()))
-      .thenReturn(Optional.of(operation));
-
     ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
     Assert.assertEquals(ClusterStatus.NOT_EXISTS, currentStatus);
 
-    Integer count = localContext.getMetricCounts().get("provisioner.operation.response.count");
+    Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
     Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
     Assert.assertEquals(1, count.intValue());
   }
@@ -597,7 +590,7 @@ public class DataprocProvisionerTest {
     ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
     Assert.assertEquals(ClusterStatus.FAILED, currentStatus);
 
-    Integer count = localContext.getMetricCounts().get("provisioner.operation.response.count");
+    Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
     Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
     Assert.assertEquals(1, count.intValue());
   }
