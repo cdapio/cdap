@@ -490,6 +490,14 @@ public final class Constants {
      */
     public static final String PROGRAM_SUBMISSION_MASTER_ENV_ENABLED = "program.submission.master.environment.enabled";
   }
+  /**
+   * Kubernetes constants.
+   * These same as defined in KubeTwillPreparer
+   */
+  public static final class Kube {
+    public static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
+    public static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
+  }
 
   /**
    * Task worker.

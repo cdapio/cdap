@@ -215,6 +215,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
   private boolean shouldLocalizeConfigurationAsConfigmap;
+  private String systemCpuMultiplier;
+  private String systemMemoryMultiplier;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -435,6 +437,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
     if (config.containsKey(MasterOptionConstants.RUNTIME_NAMESPACE)) {
       cdapRuntimeNamespace = config.get(MasterOptionConstants.RUNTIME_NAMESPACE);
+    }
+    if (config.containsKey(CPU_MULTIPLIER)) {
+      systemCpuMultiplier = config.get(CPU_MULTIPLIER);
+    }
+    if (config.containsKey(MEMORY_MULTIPLIER)) {
+      systemMemoryMultiplier = config.get(MEMORY_MULTIPLIER);
     }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
@@ -1454,8 +1462,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   @VisibleForTesting
   V1ResourceRequirements createResourceRequirements(ResourceSpecification resourceSpec) {
     Map<String, String> cConf = masterEnvContext.getConfigurations();
-    float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
-    float memoryMultiplier = Float.parseFloat(
+    float cpuMultiplier = Float.parseFloat(systemCpuMultiplier != null ? systemCpuMultiplier :
+        cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
+    float memoryMultiplier = Float.parseFloat(systemMemoryMultiplier != null ? systemMemoryMultiplier :
         cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
 
     V1ResourceRequirementsBuilder requirementsBuilder = new V1ResourceRequirementsBuilder();
