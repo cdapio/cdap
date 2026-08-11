@@ -213,6 +213,19 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           }
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
+          Map<String, String> artifactLocalizerConfig = new HashMap<>();
+          if (cConf.get(Constants.ArtifactLocalizer.CONTAINER_CPU_MULTIPLIER) != null) {
+            artifactLocalizerConfig.put(Constants.Kube.CPU_MULTIPLIER,
+                cConf.get(Constants.ArtifactLocalizer.CONTAINER_CPU_MULTIPLIER));
+          }
+          if (cConf.get(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MULTIPLIER) != null) {
+            artifactLocalizerConfig.put(Constants.Kube.MEMORY_MULTIPLIER,
+                cConf.get(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MULTIPLIER));
+          }
+          if (!artifactLocalizerConfig.isEmpty()) {
+            twillPreparer.withConfiguration("ArtifactLocalizerTwillRunnable", artifactLocalizerConfig);
+          }
+
           if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
             String localhost = InetAddress.getLoopbackAddress().getHostName();
             twillPreparer = twillPreparer.withEnv(TaskWorkerTwillRunnable.class.getSimpleName(),

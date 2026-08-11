@@ -618,6 +618,8 @@ public final class Constants {
     public static final String CONTAINER_MEMORY_MB = "artifact.localizer.container.memory.mb";
     public static final String CONTAINER_CORES = "artifact.localizer.container.num.cores";
     public static final String CONTAINER_JVM_OPTS = "artifact.localizer.container.jvm.opts";
+    public static final String CONTAINER_CPU_MULTIPLIER = "artifact.localizer.container.cpu.multiplier";
+    public static final String CONTAINER_MEMORY_MULTIPLIER = "artifact.localizer.container.memory.multiplier";
 
     /**
      * Artifact localizer http handler configuration.

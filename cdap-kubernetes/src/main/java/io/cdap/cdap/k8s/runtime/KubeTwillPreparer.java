@@ -1209,7 +1209,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
     final V1ResourceRequirements initContainerResourceRequirements =
-        createResourceRequirements(mainRuntimeSpec.getResourceSpecification());
+        createResourceRequirements(mainRuntimeSpec.getName(), mainRuntimeSpec.getResourceSpecification());
 
     // Setup the container environment. Inherit everything from the current pod except workload identity env vars.
     Map<String, String> initContainerEnvirons = podInfo.getContainerEnvironments().stream()
@@ -1338,7 +1338,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     containers.add(createContainer(mainRuntimeSpec.getName(), podInfo.getContainerImage(),
         podInfo.getImagePullPolicy(),
         workDir,
-        createResourceRequirements(mainRuntimeSpec.getResourceSpecification()),
+        createResourceRequirements(mainRuntimeSpec.getName(), mainRuntimeSpec.getResourceSpecification()),
         mounts, environs, KubeTwillLauncher.class,
         Stream.concat(Stream.of(mainRuntimeSpec.getName()), args.stream())
             .toArray(String[]::new)));
@@ -1364,7 +1364,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(
           createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
-              createResourceRequirements(spec.getResourceSpecification()),
+              createResourceRequirements(name, spec.getResourceSpecification()),
               mounts, envs, KubeTwillLauncher.class,
               Stream.concat(Stream.of(name), args.stream()).toArray(String[]::new)));
     }
@@ -1460,12 +1460,23 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * the namespace has a resource quota, the objects must also specify resource limits.
    */
   @VisibleForTesting
-  V1ResourceRequirements createResourceRequirements(ResourceSpecification resourceSpec) {
+  V1ResourceRequirements createResourceRequirements(String runnableName, ResourceSpecification resourceSpec) {
     Map<String, String> cConf = masterEnvContext.getConfigurations();
-    float cpuMultiplier = Float.parseFloat(systemCpuMultiplier != null ? systemCpuMultiplier :
-        cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
-    float memoryMultiplier = Float.parseFloat(systemMemoryMultiplier != null ? systemMemoryMultiplier :
-        cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
+    
+    String runnableCpu = null;
+    String runnableMem = null;
+    if (runnableName != null && runnableConfigs.containsKey(runnableName)) {
+      Map<String, String> configMap = runnableConfigs.get(runnableName);
+      runnableCpu = configMap.get(CPU_MULTIPLIER);
+      runnableMem = configMap.get(MEMORY_MULTIPLIER);
+    }
+    
+    float cpuMultiplier = Float.parseFloat(runnableCpu != null ? runnableCpu : 
+        (systemCpuMultiplier != null ? systemCpuMultiplier :
+        cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER)));
+    float memoryMultiplier = Float.parseFloat(runnableMem != null ? runnableMem :
+        (systemMemoryMultiplier != null ? systemMemoryMultiplier :
+        cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER)));
 
     V1ResourceRequirementsBuilder requirementsBuilder = new V1ResourceRequirementsBuilder();
 
