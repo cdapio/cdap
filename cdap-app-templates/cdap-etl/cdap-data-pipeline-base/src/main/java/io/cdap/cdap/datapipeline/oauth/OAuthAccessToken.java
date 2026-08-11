@@ -21,13 +21,40 @@ import com.google.common.base.Preconditions;
  */
 public class OAuthAccessToken {
   private final String accessToken;
+  private final long expiresAt;
+  private final String identityUrl;
 
   public OAuthAccessToken(String accessToken) {
+    this(accessToken, 0L, null);
+  }
+
+  public OAuthAccessToken(String accessToken, long expiresAt) {
+    this(accessToken, expiresAt, null);
+  }
+
+  public OAuthAccessToken(String accessToken, long expiresAt, String identityUrl) {
     this.accessToken = accessToken;
+    this.expiresAt = expiresAt;
+    this.identityUrl = identityUrl;
   }
 
   public String getAccessToken() {
     return accessToken;
+  }
+
+  public long getExpiresAt() {
+    return expiresAt;
+  }
+
+  public String getIdentityUrl() {
+    return identityUrl;
+  }
+
+  public boolean isExpired(long safetyBufferMs) {
+    if (expiresAt <= 0) {
+      return false;
+    }
+    return (expiresAt - System.currentTimeMillis()) <= safetyBufferMs;
   }
 
   public static Builder newBuilder() {
@@ -39,6 +66,8 @@ public class OAuthAccessToken {
    */
   public static class Builder {
     private String accessToken;
+    private long expiresAt;
+    private String identityUrl;
 
     public Builder() {}
 
@@ -47,9 +76,19 @@ public class OAuthAccessToken {
       return this;
     }
 
+    public Builder withExpiresAt(long expiresAt) {
+      this.expiresAt = expiresAt;
+      return this;
+    }
+
+    public Builder withIdentityUrl(String identityUrl) {
+      this.identityUrl = identityUrl;
+      return this;
+    }
+
     public OAuthAccessToken build() {
       Preconditions.checkNotNull(accessToken, "OAuth access token missing");
-      return new OAuthAccessToken(accessToken);
+      return new OAuthAccessToken(accessToken, expiresAt, identityUrl);
     }
   }
 }

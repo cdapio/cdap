@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.security.store;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -50,4 +51,39 @@ public interface SecureStoreManager {
    * @throws Exception If the specified namespace or name does not exist
    */
   void delete(String namespace, String name) throws Exception;
+
+  /**
+   * Checks if the underlying secure store implementation supports distributed lease locking.
+   *
+   * @return true if lease locking is supported, false otherwise.
+   */
+  default boolean isLeaseSupported() {
+    return false;
+  }
+
+  /**
+   * Attempts to acquire a lease lock on a secret resource.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the secure key
+   * @param timeoutMs Lock timeout in milliseconds before lease is considered expired
+   * @return {@link SecureStoreLease} indicating acquisition success and lock details
+   * @throws Exception If lock acquisition fails due to underlying storage errors
+   */
+  default SecureStoreLease acquireLease(String namespace, String name, long timeoutMs,
+                                          String lockHolder) throws Exception {
+    return SecureStoreLease.failed();
+  }
+
+  /**
+   * Releases an acquired lease lock on a secret resource.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the secure key
+   * @param lease {@link SecureStoreLease} to release
+   * @throws Exception If lock release fails due to underlying storage errors
+   */
+  default void releaseLease(String namespace, String name, SecureStoreLease lease) throws Exception {
+    // default no-op
+  }
 }

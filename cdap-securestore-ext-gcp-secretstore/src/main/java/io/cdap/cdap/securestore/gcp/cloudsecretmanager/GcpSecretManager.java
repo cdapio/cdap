@@ -19,6 +19,7 @@ package io.cdap.cdap.securestore.gcp.cloudsecretmanager;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.securestore.spi.SecretLease;
 import io.cdap.cdap.securestore.spi.SecretManager;
 import io.cdap.cdap.securestore.spi.SecretManagerContext;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
@@ -27,6 +28,10 @@ import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +50,13 @@ public class GcpSecretManager implements SecretManager {
   private static final String PROVIDER_NAME = "gcp-secretmanager";
 
   private CloudSecretManagerClient client;
+
+  private static final String ANNOTATION_STATE = "state";
+  private static final String ANNOTATION_LOCK_TIMESTAMP = "lock_timestamp";
+  private static final String ANNOTATION_LOCK_HOLDER = "lock_holder";
+
+  private static final String STATE_IDLE = "idle";
+  private static final String STATE_REFRESHING = "refreshing";
 
   @Override
   public String getName() {
@@ -142,5 +154,86 @@ public class GcpSecretManager implements SecretManager {
   @Override
   public void destroy(SecretManagerContext context) {
     client.destroy();
+  }
+
+  @Override
+  public boolean isLeaseSupported() {
+    return true;
+  }
+
+  @Override
+  public SecretLease acquireLease(String namespace, String key, long timeoutMs, String lockHolder) throws IOException {
+    long now = System.currentTimeMillis();
+
+    try {
+      WrappedSecret refreshSecret = client.getSecret(namespace, key);
+      String currentEtag = refreshSecret.getEtag() == null ? "" : refreshSecret.getEtag();
+
+      String state = refreshSecret.getAnnotation(ANNOTATION_STATE, STATE_IDLE);
+      String lockTimestampStr = refreshSecret.getAnnotation(ANNOTATION_LOCK_TIMESTAMP, "0");
+      long lockTimestamp = 0L;
+      try {
+        lockTimestamp = Long.parseLong(lockTimestampStr);
+      } catch (NumberFormatException e) {
+        lockTimestamp = 0L;
+      }
+
+      boolean isExpired = (now - lockTimestamp) > timeoutMs;
+      boolean isLockedByAnother = STATE_REFRESHING.equalsIgnoreCase(state) && !isExpired;
+
+      if (isLockedByAnother) {
+        return SecretLease.failed();
+      }
+
+      Map<String, String> annotationsToUpdate = new HashMap<>(refreshSecret.getAnnotations());
+      annotationsToUpdate.put(ANNOTATION_STATE, STATE_REFRESHING);
+      annotationsToUpdate.put(ANNOTATION_LOCK_TIMESTAMP, String.valueOf(now));
+      annotationsToUpdate.put(ANNOTATION_LOCK_HOLDER, lockHolder);
+
+      boolean acquired = client.updateSecretWithEtag(namespace, key, annotationsToUpdate, currentEtag);
+
+      if (acquired) {
+        return SecretLease.acquired(String.valueOf(now), lockHolder);
+      } else {
+        return SecretLease.failed();
+      }
+
+    } catch (ApiException e) {
+      if (e.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
+        throw new IOException("Refresh Token Secret '" + key + "' not found in namespace '" + namespace + "'", e);
+      }
+      throw new IOException("Failed to acquire lease lock on Refresh Token Secret " + key, e);
+    } catch (InvalidSecretException e) {
+      throw new IOException("Failed to parse Refresh Token Secret metadata for " + key, e);
+    } catch (Exception e) {
+      throw new IOException("Unexpected error acquiring lease on Refresh Token Secret " + key, e);
+    }
+  }
+
+  @Override
+  public void releaseLease(String namespace, String key, SecretLease lease) throws IOException {
+    if (lease == null || !lease.isAcquired()) {
+      return;
+    }
+    try {
+      WrappedSecret refreshSecret = client.getSecret(namespace, key);
+      String currentEtag = refreshSecret.getEtag() == null ? "" : refreshSecret.getEtag();
+
+      Map<String, String> currentAnnotations = refreshSecret.getAnnotations();
+      if (!lease.getLockHolder().equals(currentAnnotations.get(ANNOTATION_LOCK_HOLDER))) {
+        throw new IOException(String.format(
+          "Cannot release lease for %s: lock is currently held by a different owner (%s).",
+          key, currentAnnotations.get(ANNOTATION_LOCK_HOLDER)));
+      }
+
+      Map<String, String> annotationsToUpdate = new HashMap<>(currentAnnotations);
+      annotationsToUpdate.put(ANNOTATION_STATE, STATE_IDLE);
+      annotationsToUpdate.put(ANNOTATION_LOCK_TIMESTAMP, "0");
+      annotationsToUpdate.put(ANNOTATION_LOCK_HOLDER, "");
+
+      client.updateSecretWithEtag(namespace, key, annotationsToUpdate, currentEtag);
+    } catch (Exception e) {
+      // Ignore release failures
+    }
   }
 }

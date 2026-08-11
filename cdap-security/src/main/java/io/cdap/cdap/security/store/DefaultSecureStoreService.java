@@ -32,6 +32,7 @@ import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -151,5 +152,27 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   @Override
   protected void shutDown() throws Exception {
     secureStoreService.stopAndWait();
+  }
+
+  @Override
+  public boolean isLeaseSupported() {
+    return secureStoreService.isLeaseSupported();
+  }
+
+  @Override
+  public SecureStoreLease acquireLease(String namespace, String name, long timeoutMs,
+                                       String lockHolder) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new NamespaceId(namespace).secureKey(name);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.UPDATE);
+    return secureStoreService.acquireLease(namespace, name, timeoutMs, lockHolder);
+  }
+
+  @Override
+  public void releaseLease(String namespace, String name, SecureStoreLease lease) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new NamespaceId(namespace).secureKey(name);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.UPDATE);
+    secureStoreService.releaseLease(namespace, name, lease);
   }
 }

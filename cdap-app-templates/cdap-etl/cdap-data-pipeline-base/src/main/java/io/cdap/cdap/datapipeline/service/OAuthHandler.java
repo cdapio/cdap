@@ -20,10 +20,12 @@ package io.cdap.cdap.datapipeline.service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.datapipeline.oauth.CredentialIsValidResponse;
 import io.cdap.cdap.datapipeline.oauth.GetAccessTokenResponse;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
@@ -46,7 +48,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -70,12 +75,41 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     .registerTypeAdapterFactory(new ErrorHandlingGsonTypeAdapterFactory())
     .create();
 
+  private static final String WORKER_ID_PREFIX = generateWorkerIdPrefix();
+
+  // The following settings can be overridden via CDAP System Preferences
+  // Margin of safety before an access token officially expires to preemptively refresh it
+  private static final String PREF_ACCESS_TOKEN_SAFETY_BUFFER_MS = "oauth.rtr.access.token.safety.buffer.ms";
+  // Maximum time to block and wait for another instance to complete a token refresh
+  private static final String PREF_WAIT_FOR_TOKEN_TIMEOUT_MS = "oauth.rtr.wait.timeout.ms";
+  // Interval at which to poll the token store while waiting for a concurrent refresh
+  private static final String PREF_WAIT_FOR_TOKEN_POLL_INTERVAL_MS = "oauth.rtr.wait.poll.interval.ms";
+  // The duration to hold the distributed refresh lock before it auto-expires
+  private static final String PREF_LEASE_EXPIRATION_TIMEOUT_MS = "oauth.rtr.lease.expiration.timeout.ms";
+
+  private long accessTokenSafetyBufferMs;
+  private long waitForTokenTimeoutMs;
+  private long waitForTokenPollIntervalMs;
+  private long leaseExpirationTimeoutMs;
+
   private OAuthStore oauthStore;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
     this.oauthStore = new OAuthStore(context, context, context.getAdmin());
+    
+    Map<String, String> prefs = null;
+    try {
+      prefs = context.getPreferencesForNamespace(NamespaceId.SYSTEM.getNamespace(), true);
+    } catch (Exception e) {
+      LOG.warn("Failed to load preferences for OAuth RTR configuration. Using default values.", e);
+    }
+
+    accessTokenSafetyBufferMs = getPrefOrDefault(prefs, PREF_ACCESS_TOKEN_SAFETY_BUFFER_MS, 600_000L);
+    waitForTokenTimeoutMs = getPrefOrDefault(prefs, PREF_WAIT_FOR_TOKEN_TIMEOUT_MS, 100_000L);
+    waitForTokenPollIntervalMs = getPrefOrDefault(prefs, PREF_WAIT_FOR_TOKEN_POLL_INTERVAL_MS, 500L);
+    leaseExpirationTimeoutMs = getPrefOrDefault(prefs, PREF_LEASE_EXPIRATION_TIMEOUT_MS, 90_000L);
   }
 
   @GET
@@ -141,7 +175,17 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                               .withClientCredentials(clientCredentials)
                                               .withCredentialEncodingStrategy(strategy)
                                               .withUserAgent(userAgent)
+                                              .withAuthType(putOAuthProviderRequest.getAuthType())
+                                              .withRefreshType(putOAuthProviderRequest.getRefreshType())
                                               .build();
+
+        if (provider.getRefreshType() == OAuthProvider.RefreshType.RTR) {
+          if (!oauthStore.isLeaseSupported()) {
+            throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
+                "Refresh Token Rotation (RTR) is only supported when GCP Secret Manager is configured.");
+          }
+        }
+
         oauthStore.writeProvider(provider, reuseClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
       } catch (JsonSyntaxException e) {
@@ -252,10 +296,15 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
               .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
               .build();
           oauthStore.writeRefreshToken(provider, credentialId, refreshToken);
+
+          // For RTR, also store the initial Access Token in OAuthStore
+          if (OAuthProvider.RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+            writeAccessTokenFromResponse(provider, credentialId, refreshTokenResponse);
+          }
         } catch (NullPointerException e) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
         } catch (OAuthStoreException e) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Failed to write refresh token", e);
+          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Failed to write credentials", e);
         }
       } else {
         // Refresh token call gave us an access token without a refresh token.
@@ -294,19 +343,179 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("credential") String credentialId) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
-      Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
-      // If found, send the long-lived access token
-      if (oAuthAccessToken.isPresent()) {
-        responder.sendString(GSON.toJson(
-          new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), "")));
-        return;
+      if (OAuthProvider.RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+        getOAuthCredentialWithRefreshTokenRotation(responder, oauthProvider, provider, credentialId);
+      } else {
+        getOAuthCredentialStandard(responder, oauthProvider, provider, credentialId);
+      }
+    } catch (OAuthServiceException e) {
+      e.respond(responder);
+    }
+  }
+
+  private void getOAuthCredentialStandard(HttpServiceResponder responder,
+                                           OAuthProvider oauthProvider,
+                                           String provider,
+                                           String credentialId) throws OAuthServiceException {
+    // 1. Check if long-lived access token is stored (for permanent token providers)
+    Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
+    if (oAuthAccessToken.isPresent()) {
+      responder.sendString(GSON.toJson(
+        new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), "")));
+      return;
+    }
+
+    // 2. Fetch refresh token from store
+    OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
+
+    // 3. Request short-lived access token from 3rd-party API
+    HttpResponse response;
+    try {
+      response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
+    } catch (IOException e) {
+      throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to fetch refresh token", e);
+    }
+
+    if (response.getResponseCode() != 200) {
+      throw new OAuthServiceException(
+          response.getResponseCode(),
+          "Request for refresh token did not return 200. Response code: "
+              + response.getResponseCode()
+              + " , response message: "
+              + response.getResponseMessage()
+              + " , response body: "
+              + response.getResponseBodyAsString());
+    }
+
+    RefreshTokenResponse refreshTokenResponse;
+    try {
+      refreshTokenResponse = GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
+    } catch (JsonSyntaxException e) {
+      throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
+    }
+
+    if (refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty()) {
+      throw new OAuthServiceException(
+          HttpURLConnection.HTTP_BAD_REQUEST,
+          "Access token response body does not have access token: " + response.getResponseBodyAsString());
+    }
+
+    // Standard flow: Return access token to caller without writing back to store
+    responder.sendString(GSON.toJson(
+        new GetAccessTokenResponse(refreshTokenResponse.getAccessToken(), refreshTokenResponse.getInstanceURL())));
+  }
+
+  private boolean isAccessTokenValid(OAuthAccessToken token) {
+    // Rule 1: If expiresAt is present (> 0), use it with 10-minute safety buffer
+    if (token.getExpiresAt() > 0) {
+      return !token.isExpired(accessTokenSafetyBufferMs);
+    }
+
+    // Rule 2: Else if id / identityUrl is present, validate against identity URL
+    if (token.getIdentityUrl() != null && !token.getIdentityUrl().isEmpty()) {
+      return isAccessTokenValidViaIdentityUrl(token.getAccessToken(), token.getIdentityUrl());
+    }
+
+    // Rule 3: Otherwise -> refresh
+    return false;
+  }
+
+  private boolean isAccessTokenValidViaIdentityUrl(String accessToken, String identityUrl) {
+    try {
+      HttpRequest request = HttpRequest.get(new URL(identityUrl))
+          .addHeader("Authorization", "Bearer " + accessToken)
+          .build();
+      HttpResponse response = HttpRequests.execute(request);
+      return response.getResponseCode() == 200;
+    } catch (Exception e) {
+      LOG.warn("Failed to validate access token via identity URL {}: {}", identityUrl, e.getMessage());
+      return false;
+    }
+  }
+
+  private GetAccessTokenResponse fetchOAuthCredentialWithRefreshTokenRotation(OAuthProvider oauthProvider,
+                                                                              String provider,
+                                                                              String credentialId) throws OAuthServiceException {
+    // 1. Check if a valid cached access token is already available
+    Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
+    if (oAuthAccessToken.isPresent() && isAccessTokenValid(oAuthAccessToken.get())) {
+      LOG.debug("Returning valid cached access token for provider {} credential {}", provider, credentialId);
+      return new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), "");
+    }
+
+    // 2. Generate a unique lock holder ID for this request thread and try to acquire lease lock
+    String lockHolderId = WORKER_ID_PREFIX + "-" + UUID.randomUUID();
+    SecureStoreLease lease = acquireLeaseLockWithRetries(provider, credentialId, leaseExpirationTimeoutMs, lockHolderId);
+
+    // 3. If lock is held by another process -> wait for published token
+    if (!lease.isAcquired()) {
+      LOG.info("Lease lock held by another process for provider {} credential {}. Waiting for new access token...",
+               provider, credentialId);
+      Optional<GetAccessTokenResponse> waitedResponse = waitForNewAccessToken(
+          provider, credentialId, waitForTokenTimeoutMs, waitForTokenPollIntervalMs);
+      if (waitedResponse.isPresent()) {
+        return waitedResponse.get();
       }
 
-      // If no long-lived access token was found, request a short-lived access token from the 3rd-party API using the
-      // stored refresh token
-      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
+      // Timeout occurred while waiting for winner -> Attempt to acquire lease lock again!
+      lease = acquireLeaseLockWithRetries(provider, credentialId, leaseExpirationTimeoutMs, lockHolderId);
+      if (!lease.isAcquired()) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_CLIENT_TIMEOUT,
+                                        "Timed out waiting for OAuth access token refresh for " + credentialId);
+      }
+    }
 
+    // 4. Winner (either initial or fallback after timeout) executes token refresh and persistence
+    return refreshAndStoreTokens(oauthProvider, lease, provider, credentialId);
+  }
+
+  private void getOAuthCredentialWithRefreshTokenRotation(HttpServiceResponder responder,
+                                                          OAuthProvider oauthProvider,
+                                                          String provider,
+                                                          String credentialId) throws OAuthServiceException {
+    GetAccessTokenResponse response = fetchOAuthCredentialWithRefreshTokenRotation(oauthProvider, provider, credentialId);
+    responder.sendString(GSON.toJson(response));
+  }
+
+  private SecureStoreLease acquireLeaseLock(String provider, String credentialId, long timeoutMs, String lockHolder)
+          throws OAuthServiceException {
+    try {
+      return oauthStore.acquireLease(provider, credentialId, timeoutMs, lockHolder);
+    } catch (Exception e) {
+      throw new OAuthServiceException(HttpURLConnection.HTTP_NOT_FOUND,
+                                      "Refresh token credential not found or unauthorized for " + credentialId, e);
+    }
+  }
+
+  private void writeAccessTokenFromResponse(String provider, String credentialId,
+                                            RefreshTokenResponse refreshTokenResponse)
+      throws OAuthStoreException {
+    if (refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty()) {
+      return;
+    }
+
+    long expiresInSeconds = refreshTokenResponse.getExpiresIn();
+    long expiresAt = expiresInSeconds > 0
+        ? System.currentTimeMillis() + (expiresInSeconds * 1000L)
+        : 0L;
+    String identityUrl = refreshTokenResponse.getId();
+
+    OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
+        .withAccessToken(refreshTokenResponse.getAccessToken())
+        .withExpiresAt(expiresAt)
+        .withIdentityUrl(identityUrl)
+        .build();
+
+    oauthStore.writeAccessToken(provider, credentialId, accessToken);
+  }
+
+  private GetAccessTokenResponse refreshAndStoreTokens(OAuthProvider oauthProvider,
+                                                       SecureStoreLease lease,
+                                                       String provider,
+                                                       String credentialId) throws OAuthServiceException {
+    try {
+      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
       HttpResponse response;
       try {
         response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
@@ -317,12 +526,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       if (response.getResponseCode() != 200) {
         throw new OAuthServiceException(
             response.getResponseCode(),
-            "Request for refresh token did not return 200. Response code: "
-                + response.getResponseCode()
-                + " , response message: "
-                + response.getResponseMessage()
-                + " , response body: "
-                + response.getResponseBodyAsString());
+            "Request for refresh token did not return 200: " + response.getResponseBodyAsString());
       }
 
       RefreshTokenResponse refreshTokenResponse;
@@ -332,39 +536,68 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
       }
 
-      boolean hasRefreshToken = refreshTokenResponse.getRefreshToken() != null
-          && !refreshTokenResponse.getRefreshToken().isEmpty();
-      boolean hasAccessToken = refreshTokenResponse.getAccessToken() != null
-          && !refreshTokenResponse.getAccessToken().isEmpty();
-
-      if (!hasAccessToken) {
-        throw new OAuthServiceException(
-            HttpURLConnection.HTTP_BAD_REQUEST,
-            String.format(
-                "Access token response body does not have access token. The actual response received : %s",
-                response.getResponseBodyAsString()));
+      if (refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty()) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Access token missing in response");
       }
 
-      // API has given us a new refresh token
-      if (hasRefreshToken && !refreshToken.getRefreshToken().equals(refreshTokenResponse.getRefreshToken())) {
-        OAuthRefreshToken newRefreshToken = OAuthRefreshToken.newBuilder()
-                .withRefreshToken(refreshTokenResponse.getRefreshToken())
-                .withRedirectURI(refreshToken.getRedirectURI())
-                .build();
-
+      // Mandatory Writes for RTR:
+      // Write Refresh Token v2 FIRST
+      if (refreshTokenResponse.getRefreshToken() != null && !refreshTokenResponse.getRefreshToken().isEmpty()) {
+        OAuthRefreshToken rotatedRefreshToken = OAuthRefreshToken.newBuilder()
+            .withRefreshToken(refreshTokenResponse.getRefreshToken())
+            .withRedirectURI(refreshToken.getRedirectURI())
+            .build();
         try {
-          oauthStore.writeRefreshToken(provider, credentialId, newRefreshToken);
+          oauthStore.writeRefreshToken(provider, credentialId, rotatedRefreshToken);
         } catch (OAuthStoreException e) {
-          throw new OAuthServiceException(
-              HttpURLConnection.HTTP_INTERNAL_ERROR, "An error occurred while writing the new refresh token");
+          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
+                                          "Failed to write rotated refresh token", e);
         }
       }
 
-      responder.sendString(GSON.toJson(
-          new GetAccessTokenResponse(refreshTokenResponse.getAccessToken(), refreshTokenResponse.getInstanceURL())));
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
+      // Write Access Token v2 SECOND
+      try {
+        writeAccessTokenFromResponse(provider, credentialId, refreshTokenResponse);
+      } catch (OAuthStoreException e) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to write access token", e);
+      }
+
+      return new GetAccessTokenResponse(refreshTokenResponse.getAccessToken(), refreshTokenResponse.getInstanceURL());
+    } finally {
+      if (lease != null && lease.isAcquired()) {
+        try {
+          oauthStore.releaseLease(provider, credentialId, lease);
+        } catch (Exception e) {
+          LOG.warn("Failed to release lease lock for provider {} credential {}: {}",
+                   provider, credentialId, e.getMessage());
+        }
+      }
     }
+  }
+
+  private Optional<GetAccessTokenResponse> waitForNewAccessToken(
+      String provider, String credentialId, long maxWaitMs, long pollIntervalMs) {
+    long startTime = System.currentTimeMillis();
+
+    while (System.currentTimeMillis() - startTime < maxWaitMs) {
+      try {
+        Thread.sleep(pollIntervalMs);
+
+        // Poll OAuthStore to check if lock winner published a valid access token
+        Optional<OAuthAccessToken> accessToken = getAccessToken(provider, credentialId);
+        if (accessToken.isPresent() && isAccessTokenValid(accessToken.get())) {
+          return Optional.of(new GetAccessTokenResponse(accessToken.get().getAccessToken(), ""));
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return Optional.empty();
+      } catch (Exception e) {
+        LOG.debug("Waiting for new access token for provider {} credential {}: {}",
+                  provider, credentialId, e.getMessage());
+      }
+    }
+
+    return Optional.empty();
   }
 
   @GET
@@ -374,6 +607,21 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                          @PathParam("credential") String credentialId) {
     try {
       OAuthProvider oauthProvider = getProvider(provider);
+
+      if (OAuthProvider.RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+        try {
+          fetchOAuthCredentialWithRefreshTokenRotation(oauthProvider, provider, credentialId);
+          responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
+        } catch (OAuthServiceException e) {
+          if (e.getStatus() == HttpURLConnection.HTTP_UNAUTHORIZED || e.getStatus() == HttpURLConnection.HTTP_BAD_REQUEST) {
+            responder.sendString(GSON.toJson(new CredentialIsValidResponse(false)));
+          } else {
+            throw e;
+          }
+        }
+        return;
+      }
+
       Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
       if (oAuthAccessToken.isPresent()) {
@@ -589,5 +837,50 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         responder.sendError(status, getMessage());
       }
     }
+  }
+
+  private long getPrefOrDefault(java.util.Map<String, String> prefs, String key, long defaultValue) {
+    if (prefs != null && prefs.containsKey(key)) {
+      try {
+        return Long.parseLong(prefs.get(key));
+      } catch (NumberFormatException e) {
+        LOG.warn("Invalid number format for preference {}. Using default value: {}", key, defaultValue);
+      }
+    }
+    return defaultValue;
+  }
+
+  private SecureStoreLease acquireLeaseLockWithRetries(String provider, String credentialId, long timeoutMs, String lockHolder) 
+      throws OAuthServiceException {
+    SecureStoreLease lease = null;
+    int maxRetries = 3;
+    
+    for (int i = 0; i < maxRetries; i++) {
+      lease = acquireLeaseLock(provider, credentialId, timeoutMs, lockHolder);
+      if (lease != null) {
+        return lease;
+      }
+      try {
+        java.util.concurrent.TimeUnit.MILLISECONDS.sleep(500); // Backoff before retry
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Interrupted while acquiring lock.");
+      }
+    }
+    
+    throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, 
+        "Failed to communicate with the secure store to acquire a lock for " + credentialId);
+  }
+
+  private static String generateWorkerIdPrefix() {
+    String instanceName = System.getenv("HOSTNAME");
+    if (instanceName == null || instanceName.isEmpty()) {
+      try {
+        instanceName = java.net.InetAddress.getLocalHost().getHostName();
+      } catch (java.net.UnknownHostException e) {
+        instanceName = "cdf";
+      }
+    }
+    return instanceName;
   }
 }

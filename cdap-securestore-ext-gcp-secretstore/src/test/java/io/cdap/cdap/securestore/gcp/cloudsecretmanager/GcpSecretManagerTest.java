@@ -36,7 +36,9 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -172,6 +174,36 @@ public class GcpSecretManagerTest {
     doThrow(exception).when(client).deleteSecret(ArgumentMatchers.any(), ArgumentMatchers.any());
 
     assertThrows(IOException.class, () -> secretManager.delete(NAMESPACE, "example"));
+  }
+
+  @Test
+  public void testAcquireGcpLeaseSuccess() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+    when(client.updateSecretWithEtag(
+        eq(NAMESPACE), eq("salesforce"), ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(true);
+
+    io.cdap.cdap.securestore.spi.SecretLease lease =
+        secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lock-holder");
+    assertTrue(lease.isAcquired());
+
+    secretManager.releaseLease(NAMESPACE, "salesforce", lease);
+  }
+
+  @Test
+  public void testAcquireGcpLeaseEtagMismatchFailure() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+    when(client.updateSecretWithEtag(
+        eq(NAMESPACE), eq("salesforce"), ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(false);
+
+    io.cdap.cdap.securestore.spi.SecretLease lease =
+        secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lock-holder");
+    assertFalse(lease.isAcquired());
   }
 
   private static Secret createSecret(String name) {

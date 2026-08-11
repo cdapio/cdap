@@ -32,6 +32,8 @@ public class OAuthProvider {
   // Optional string to send as a USER_AGENT header
   @Nullable
   private final String userAgent;
+  private final AuthType authType;
+  private final RefreshType refreshType;
 
   public OAuthProvider(String name,
                        String loginURL,
@@ -39,12 +41,25 @@ public class OAuthProvider {
                        @Nullable OAuthClientCredentials clientCreds,
                        @Nullable CredentialEncodingStrategy strategy,
                        @Nullable String userAgent) {
+    this(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent, AuthType.STANDARD, RefreshType.STANDARD);
+  }
+
+  public OAuthProvider(String name,
+                       String loginURL,
+                       String tokenRefreshURL,
+                       @Nullable OAuthClientCredentials clientCreds,
+                       @Nullable CredentialEncodingStrategy strategy,
+                       @Nullable String userAgent,
+                       @Nullable AuthType authType,
+                       @Nullable RefreshType refreshType) {
     this.name = name;
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientCreds = clientCreds;
     this.strategy = strategy;
     this.userAgent = userAgent;
+    this.authType = authType == null ? AuthType.STANDARD : authType;
+    this.refreshType = refreshType == null ? RefreshType.STANDARD : refreshType;
   }
 
   public String getName() {
@@ -74,11 +89,29 @@ public class OAuthProvider {
     return userAgent;
   }
 
+  public AuthType getAuthType() {
+    return authType;
+  }
+
+  public RefreshType getRefreshType() {
+    return refreshType;
+  }
+
   public enum CredentialEncodingStrategy {
     // (default) Sends client ID & secret as part of the POST request body
     FORM_BODY,
     // Sends client ID & secret as part of a HTTP Basic Auth header
     BASIC_AUTH,
+  }
+
+  public enum AuthType {
+    STANDARD,
+    PKCE
+  }
+
+  public enum RefreshType {
+    STANDARD,
+    RTR
   }
 
   public static Builder newBuilder() {
@@ -95,6 +128,8 @@ public class OAuthProvider {
     private OAuthClientCredentials clientCreds;
     private CredentialEncodingStrategy strategy;
     private String userAgent;
+    private AuthType authType;
+    private RefreshType refreshType;
 
     public Builder() {}
 
@@ -128,6 +163,16 @@ public class OAuthProvider {
       return this;
     }
 
+    public Builder withAuthType(@Nullable AuthType authType) {
+      this.authType = authType;
+      return this;
+    }
+
+    public Builder withRefreshType(@Nullable RefreshType refreshType) {
+      this.refreshType = refreshType;
+      return this;
+    }
+
     public OAuthProvider build() {
       Preconditions.checkNotNull(name, "OAuth provider name missing");
       Preconditions.checkNotNull(loginURL, "Login URL missing");
@@ -136,7 +181,14 @@ public class OAuthProvider {
       if (strategy == null) {
         this.strategy = CredentialEncodingStrategy.FORM_BODY;
       }
-      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent);
+      if (authType == null) {
+        this.authType = AuthType.STANDARD;
+      }
+      if (refreshType == null) {
+        this.refreshType = RefreshType.STANDARD;
+      }
+      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent,
+                               authType, refreshType);
     }
   }
 }

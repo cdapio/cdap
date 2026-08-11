@@ -24,6 +24,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
@@ -46,9 +47,11 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Exposes REST APIs for {@link SecureStore} and {@link SecureStoreManager}.
@@ -125,6 +128,45 @@ public class SecureStoreHandler extends AbstractHttpHandler {
       @PathParam("key-name") String name) throws Exception {
     SecureStoreMetadata metadata = secureStore.getMetadata(namespace, name);
     httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata));
+  }
+
+  @Path("/lease/supported")
+  @GET
+  public void isLeaseSupported(HttpRequest httpRequest, HttpResponder httpResponder,
+      @PathParam("namespace-id") String namespace) throws Exception {
+    httpResponder.sendString(HttpResponseStatus.OK, String.valueOf(secureStoreManager.isLeaseSupported()));
+  }
+
+  @Path("/{key-name}/lease")
+  @POST
+  public void acquireLease(HttpRequest httpRequest, HttpResponder httpResponder,
+      @PathParam("namespace-id") String namespace,
+      @PathParam("key-name") String name,
+      @QueryParam("timeoutMs") long timeoutMs,
+      @QueryParam("lockHolder") String lockHolder) throws Exception {
+    SecureStoreLease lease = secureStoreManager.acquireLease(namespace, name, timeoutMs, lockHolder);
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(lease));
+  }
+
+  @Path("/{key-name}/lease")
+  @DELETE
+  public void releaseLease(FullHttpRequest httpRequest, HttpResponder httpResponder,
+      @PathParam("namespace-id") String namespace,
+      @PathParam("key-name") String name) throws Exception {
+    SecureStoreLease lease = parseLeaseBody(httpRequest);
+    secureStoreManager.releaseLease(namespace, name, lease);
+    httpResponder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private SecureStoreLease parseLeaseBody(FullHttpRequest request) throws IOException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
+      return null;
+    }
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content),
+        StandardCharsets.UTF_8)) {
+      return GSON.fromJson(reader, SecureStoreLease.class);
+    }
   }
 
   @Path("/")

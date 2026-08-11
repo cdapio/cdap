@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.SecureKeyNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -33,6 +34,7 @@ import io.cdap.cdap.securestore.spi.SecretManager;
 import io.cdap.cdap.securestore.spi.SecretManagerContext;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.SecretStore;
+import io.cdap.cdap.securestore.spi.SecretLease;
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import io.cdap.cdap.security.store.SecureStoreService;
@@ -195,6 +197,44 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
       }
     } catch (Throwable e) {
       LOG.warn("Error occurred while stopping {}.", getClass().getSimpleName(), e);
+    }
+  }
+
+  @Override
+  public boolean isLeaseSupported() {
+    return this.secretManager != null && this.secretManager.isLeaseSupported();
+  }
+
+  @Override
+  public SecureStoreLease acquireLease(String namespace, String name, long timeoutMs,
+                                       String lockHolder) throws IOException {
+    try {
+      SecretLease spiLease = this.secretManager.acquireLease(namespace, name, timeoutMs, lockHolder);
+      if (spiLease != null && spiLease.isAcquired()) {
+        LOG.info("Successfully acquired lease for namespace '{}' name '{}' (holder: {}, timestamp: {})",
+                 namespace, name, spiLease.getLockHolder(), spiLease.getLockTimestamp());
+        return SecureStoreLease.acquired(spiLease.getLockTimestamp(), spiLease.getLockHolder());
+      }
+      LOG.info("Lease acquisition returned unacquired/held lease for namespace '{}' name '{}'",
+               namespace, name);
+    } catch (IOException | RuntimeException e) {
+      LOG.error("Exception occurred while acquiring lease for namespace '{}' name '{}': {}",
+                namespace, name, e.getMessage(), e);
+      throw e;
+    } catch (Exception e) {
+      LOG.error("Unexpected exception occurred while acquiring lease for namespace '{}' name '{}': {}",
+                namespace, name, e.getMessage(), e);
+      throw new IOException(e);
+    }
+    return SecureStoreLease.failed();
+  }
+
+  @Override
+  public void releaseLease(String namespace, String name, SecureStoreLease lease) throws IOException {
+    if (lease != null && lease.isAcquired()) {
+      SecretLease spiLease =
+          SecretLease.acquired(lease.getLockTimestamp(), lease.getLockHolder());
+      this.secretManager.releaseLease(namespace, name, spiLease);
     }
   }
 }

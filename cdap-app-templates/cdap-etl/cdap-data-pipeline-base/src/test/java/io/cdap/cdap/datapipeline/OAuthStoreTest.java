@@ -12,6 +12,8 @@
  *
  */
 
+package io.cdap.cdap.datapipeline;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
@@ -20,6 +22,7 @@ import org.junit.Test;
 
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
@@ -34,6 +37,7 @@ import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -95,6 +99,39 @@ public class OAuthStoreTest {
     assertTrue(provider.isPresent());
     assertEquals(provider.get().getCredentialEncodingStrategy(),
         OAuthProvider.CredentialEncodingStrategy.FORM_BODY);
+    assertEquals(provider.get().getAuthType(), OAuthProvider.AuthType.STANDARD);
+    assertEquals(provider.get().getRefreshType(), OAuthProvider.RefreshType.STANDARD);
+  }
+
+  @Test
+  public void testGetProviderWithRefreshTokenRotationOAuthType() throws Exception {
+    String clientCredsJson = "{\"clientId\":\"test-client\",\"clientSecret\":\"test-secret\"}";
+    when(mockSecureStore.getData(any(), any())).thenReturn(
+        clientCredsJson.getBytes(StandardCharsets.UTF_8));
+
+    doAnswer(invocation -> {
+      TxRunnable runnable = invocation.getArgument(0);
+      StructuredTableContext mockContext = mock(StructuredTableContext.class);
+      when(mockContext.getTable(any())).thenReturn(mockTable);
+      runnable.run(mockContext);
+      return null;
+    }).when(mockTransactionRunner).run(any(TxRunnable.class));
+
+    when(mockRow.getString("oauthprovider")).thenReturn(PROVIDER_NAME);
+    when(mockRow.getString("loginurl")).thenReturn(LOGIN_URL);
+    when(mockRow.getString("tokenrefreshurl")).thenReturn(TOKEN_REFRESH_URL);
+    when(mockRow.getString("credentialencodingstrategy")).thenReturn("FORM_BODY");
+    when(mockRow.getString("useragent")).thenReturn(USER_AGENT);
+    when(mockRow.getString("refreshtype")).thenReturn("RTR");
+    when(mockRow.getString("authtype")).thenReturn("PKCE");
+
+    when(mockTable.read(any())).thenReturn(Optional.of(mockRow));
+
+    Optional<OAuthProvider> provider = oauthStore.getProvider(PROVIDER_NAME);
+
+    assertTrue(provider.isPresent());
+    assertEquals(provider.get().getAuthType(), OAuthProvider.AuthType.PKCE);
+    assertEquals(provider.get().getRefreshType(), OAuthProvider.RefreshType.RTR);
   }
 
   @Test
@@ -193,5 +230,29 @@ public class OAuthStoreTest {
     }
     verify(mockSecureStoreManager, times(1)).delete(any(), any());
     verify(mockTable, times(0)).delete(any());
+  }
+
+  @Test
+  public void testAcquireAndReleaseDatabaseLease() throws Exception {
+    doAnswer(invocation -> {
+      TxRunnable runnable = invocation.getArgument(0);
+      StructuredTableContext mockContext = mock(StructuredTableContext.class);
+      when(mockContext.getTable(any())).thenReturn(mockTable);
+      runnable.run(mockContext);
+      return null;
+    }).when(mockTransactionRunner).run(any(TxRunnable.class));
+
+    when(mockTable.read(any())).thenReturn(Optional.empty());
+    doNothing().when(mockTable).upsert(any());
+
+    when(mockSecureStoreManager.acquireLease(anyString(), anyString(), anyLong()))
+        .thenReturn(io.cdap.cdap.api.security.store.lease.SecureStoreLease.acquired("12345", "worker-1"));
+
+    io.cdap.cdap.api.security.store.lease.SecureStoreLease lease =
+        oauthStore.acquireLease(PROVIDER_NAME, "cred-1", 30000L);
+    assertTrue(lease.isAcquired());
+
+    oauthStore.releaseLease(PROVIDER_NAME, "cred-1", lease);
+    verify(mockSecureStoreManager, times(1)).releaseLease(anyString(), anyString(), eq(lease));
   }
 }

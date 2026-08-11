@@ -19,6 +19,7 @@ package io.cdap.cdap.securestore.gcp.cloudsecretmanager;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import com.google.cloud.secretmanager.v1.AddSecretVersionRequest;
@@ -169,6 +170,43 @@ public class CloudSecretManagerClient {
     secretManager.updateSecret(
       wrappedSecret.getGcpSecret(getSecretResourceName(wrappedSecret)),
       FieldMask.newBuilder().addPaths("annotations").build());
+  }
+
+  /**
+   * Conditionally updates annotations on the specified secret using an ETag for optimistic concurrency control.
+   *
+   * @param namespace CDAP secret namespace
+   * @param name CDAP secret name
+   * @param annotationsToUpdate Map of annotations to update
+   * @param etag The expected ETag of the secret
+   * @return {@code true} if update succeeded, {@code false} if ETag mismatch occurred (FAILED_PRECONDITION)
+   * @throws ApiException if another Google API failure occurs.
+   */
+  public boolean updateSecretWithEtag(String namespace,
+                                     String name,
+                                     Map<String, String> annotationsToUpdate,
+                                     String etag) {
+    String resourceName = getSecretResourceName(namespace, name);
+    Secret.Builder secretBuilder = Secret.newBuilder()
+        .setName(resourceName)
+        .setEtag(etag);
+
+    for (Map.Entry<String, String> entry : annotationsToUpdate.entrySet()) {
+      secretBuilder.putAnnotations(entry.getKey(), entry.getValue());
+    }
+
+    try {
+      secretManager.updateSecret(
+          secretBuilder.build(),
+          FieldMask.newBuilder().addPaths("annotations").build());
+      return true;
+    } catch (ApiException e) {
+      if (e.getStatusCode().getCode() == StatusCode.Code.FAILED_PRECONDITION) {
+        LOG.debug("Optimistic lock failure (ETag mismatch) for secret {} in namespace {}", name, namespace);
+        return false;
+      }
+      throw e;
+    }
   }
 
   /**

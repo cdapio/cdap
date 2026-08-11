@@ -22,6 +22,7 @@ import io.cdap.cdap.api.messaging.MessagingAdmin;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.Retries;
@@ -81,6 +82,35 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   @Override
   public void delete(String namespace, String name) throws Exception {
     Retries.runWithRetries(() -> secureStoreManager.delete(namespace, name), retryStrategy);
+  }
+
+  @Override
+  public boolean isLeaseSupported() {
+    return secureStoreManager.isLeaseSupported();
+  }
+
+  @Override
+  public SecureStoreLease acquireLease(String namespace, String name, long timeoutMs,
+                                       String lockHolder) throws IOException {
+    try {
+      return Retries.callWithRetries(
+          () -> secureStoreManager.acquireLease(namespace, name, timeoutMs, lockHolder), retryStrategy);
+    } catch (IOException | RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public void releaseLease(String namespace, String name, SecureStoreLease lease) throws IOException {
+    try {
+      Retries.runWithRetries(() -> secureStoreManager.releaseLease(namespace, name, lease), retryStrategy);
+    } catch (IOException | RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   @Override

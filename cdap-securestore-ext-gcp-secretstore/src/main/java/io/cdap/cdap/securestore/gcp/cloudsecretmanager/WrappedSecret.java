@@ -24,8 +24,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.util.Timestamps;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
+import javax.annotation.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,10 +45,22 @@ public final class WrappedSecret {
 
   private final String namespace;
   private final SecretMetadata secretMetadata;
+  @Nullable
+  private final String etag;
+  private final Map<String, String> annotations;
 
   private WrappedSecret(String namespace, SecretMetadata secretMetadata) {
+    this(namespace, secretMetadata, null, Collections.emptyMap());
+  }
+
+  private WrappedSecret(String namespace,
+                        SecretMetadata secretMetadata,
+                        @Nullable String etag,
+                        Map<String, String> annotations) {
     this.namespace = namespace;
     this.secretMetadata = secretMetadata;
+    this.etag = etag;
+    this.annotations = annotations == null ? Collections.emptyMap() : annotations;
   }
 
   /** Constructs a new WrappedSecret from a CDAP Secret. */
@@ -60,7 +75,7 @@ public final class WrappedSecret {
   public static WrappedSecret fromGcpSecret(Secret secret) throws InvalidSecretException {
     String namespace = getNamespace(secret);
     SecretMetadata metadata = toSecretMetadata(secret);
-    return new WrappedSecret(namespace, metadata);
+    return new WrappedSecret(namespace, metadata, secret.getEtag(), secret.getAnnotationsMap());
   }
 
   public String getNamespace() {
@@ -71,13 +86,34 @@ public final class WrappedSecret {
     return secretMetadata;
   }
 
+  @Nullable
+  public String getEtag() {
+    return etag;
+  }
+
+  public Map<String, String> getAnnotations() {
+    return annotations;
+  }
+
+  public String getAnnotation(String key, String defaultValue) {
+    return annotations.getOrDefault(key, defaultValue);
+  }
+
   /**
    * Returns a new GCP {@link Secret} representing the underlying SecretMetadata.
    *
    * @param resourceName Value to set for the "name" field needed for update operations.
    */
   public Secret getGcpSecret(String resourceName) {
-    return Secret.newBuilder()
+    return getGcpSecret(resourceName, null);
+  }
+
+  /**
+   * Returns a new GCP {@link Secret} representing the underlying SecretMetadata including etag
+   * and additional annotations.
+   */
+  public Secret getGcpSecret(String resourceName, @Nullable Map<String, String> additionalAnnotations) {
+    Secret.Builder builder = Secret.newBuilder()
       // Set replication policy to automatic (as opposed to user-managed) and do not specify a
       // CMEK (use google-managed key).
       .setReplication(Replication.newBuilder().setAutomatic(Automatic.getDefaultInstance()))
@@ -85,16 +121,32 @@ public final class WrappedSecret {
       .putAnnotations("cdap_namespace", namespace)
       .putAnnotations("cdap_secret_name", secretMetadata.getName())
       .putAnnotations("cdap_description", Optional.ofNullable(secretMetadata.getDescription()).orElse(""))
-      .putAnnotations("cdap_props", serializeProps(secretMetadata.getProperties()))
-      .build();
+      .putAnnotations("cdap_props", serializeProps(secretMetadata.getProperties()));
+
+    if (etag != null && !etag.isEmpty()) {
+      builder.setEtag(etag);
+    }
+    if (additionalAnnotations != null) {
+      for (Map.Entry<String, String> entry : additionalAnnotations.entrySet()) {
+        builder.putAnnotations(entry.getKey(), entry.getValue());
+      }
+    }
+    return builder.build();
   }
 
   private static SecretMetadata toSecretMetadata(Secret secret) throws InvalidSecretException {
+    Map<String, String> props = new HashMap<>(deserializeProps(secret.getAnnotationsOrDefault("cdap_props", "{}")));
+    if (!secret.getEtag().isEmpty()) {
+      props.put("etag", secret.getEtag());
+    }
+    for (Map.Entry<String, String> entry : secret.getAnnotationsMap().entrySet()) {
+      props.putIfAbsent(entry.getKey(), entry.getValue());
+    }
     return new SecretMetadata(
       secret.getAnnotationsOrDefault("cdap_secret_name", ""),
       secret.getAnnotationsOrDefault("cdap_description", ""),
       Timestamps.toMillis(secret.getCreateTime()),
-      deserializeProps(secret.getAnnotationsOrDefault("cdap_props", "{}")));
+      props);
   }
 
   private static String getNamespace(Secret secret) {

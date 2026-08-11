@@ -27,6 +27,8 @@ public class PutOAuthProviderRequest {
   private final String clientSecret;
   private final OAuthProvider.CredentialEncodingStrategy strategy;
   private final String userAgent;
+  private final OAuthProvider.AuthType authType;
+  private final OAuthProvider.RefreshType refreshType;
 
   public PutOAuthProviderRequest(
           String loginURL,
@@ -35,12 +37,27 @@ public class PutOAuthProviderRequest {
           String clientSecret,
           OAuthProvider.CredentialEncodingStrategy strategy,
           String userAgent) {
+    this(loginURL, tokenRefreshURL, clientId, clientSecret, strategy, userAgent, OAuthProvider.AuthType.STANDARD,
+         OAuthProvider.RefreshType.STANDARD);
+  }
+
+  public PutOAuthProviderRequest(
+          String loginURL,
+          String tokenRefreshURL,
+          String clientId,
+          String clientSecret,
+          OAuthProvider.CredentialEncodingStrategy strategy,
+          String userAgent,
+          OAuthProvider.AuthType authType,
+          OAuthProvider.RefreshType refreshType) {
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.strategy = strategy;
     this.userAgent = userAgent;
+    this.authType = authType == null ? OAuthProvider.AuthType.STANDARD : authType;
+    this.refreshType = refreshType == null ? OAuthProvider.RefreshType.STANDARD : refreshType;
   }
 
   public String getLoginURL() {
@@ -65,5 +82,13 @@ public class PutOAuthProviderRequest {
 
   public String getUserAgent() {
     return userAgent;
+  }
+
+  public OAuthProvider.AuthType getAuthType() {
+    return authType == null ? OAuthProvider.AuthType.STANDARD : authType;
+  }
+
+  public OAuthProvider.RefreshType getRefreshType() {
+    return refreshType == null ? OAuthProvider.RefreshType.STANDARD : refreshType;
   }
 }

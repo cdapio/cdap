@@ -126,4 +126,38 @@ public interface SecretManager {
    * @param context secret manager context
    */
   void destroy(SecretManagerContext context);
+
+  /**
+   * Returns whether this secret manager supports distributed locking/leasing.
+   * By default, this returns false.
+   *
+   * @return true if leases are supported, false otherwise
+   */
+  default boolean isLeaseSupported() {
+    return false;
+  }
+
+  /**
+   * Attempts to acquire a distributed lease on a secret.
+   *
+   * @param namespace the namespace that this secret belongs to
+   * @param key the name of the secret
+   * @param timeoutMs the lease expiration timeout in milliseconds
+   * @return a SecretLease object detailing whether it was acquired and its lock metadata
+   * @throws IOException if unable to acquire lease due to I/O error
+   */
+  default SecretLease acquireLease(String namespace, String key, long timeoutMs, String lockHolder) throws IOException {
+    return SecretLease.failed();
+  }
+
+  /**
+   * Releases an acquired lease on a secret.
+   *
+   * @param namespace the namespace that this secret belongs to
+   * @param key the name of the secret
+   * @param lease the previously acquired lease
+   * @throws IOException if unable to release lease due to I/O error
+   */
+  default void releaseLease(String namespace, String key, SecretLease lease) throws IOException {
+  }
 }

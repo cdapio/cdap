@@ -25,6 +25,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
+import io.cdap.cdap.api.security.store.lease.SecureStoreLease;
 import io.cdap.cdap.common.SecureKeyAlreadyExistsException;
 import io.cdap.cdap.common.SecureKeyNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -119,6 +120,52 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
     handleResponse(response, namespace, name,
         String.format("Error occurred while deleting key %s:%s",
             namespace, name));
+  }
+
+  @Override
+  public boolean isLeaseSupported() {
+    String path = "system/securekeys/lease/supported";
+    try {
+      HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, path).build();
+      HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
+      return Boolean.parseBoolean(response.getResponseBodyAsString());
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  @Override
+  public SecureStoreLease acquireLease(final String namespace, final String name,
+                                      final long timeoutMs, final String lockHolder) throws IOException {
+    try {
+      String path = createPath(namespace, name) + "/lease?timeoutMs=" + timeoutMs + "&lockHolder=" + lockHolder;
+      HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, path).build();
+      HttpResponse response = remoteClient.execute(request, Idempotency.NONE);
+      handleResponse(response, namespace, name,
+          String.format("Error occurred while acquiring lease for key %s:%s", namespace, name));
+      return GSON.fromJson(response.getResponseBodyAsString(), SecureStoreLease.class);
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public void releaseLease(final String namespace, final String name,
+                           final SecureStoreLease lease) throws IOException {
+    try {
+      HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE,
+          createPath(namespace, name) + "/lease")
+          .withBody(GSON.toJson(lease)).build();
+      HttpResponse response = remoteClient.execute(request, Idempotency.NONE);
+      handleResponse(response, namespace, name,
+          String.format("Error occurred while releasing lease for key %s:%s", namespace, name));
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   /**

@@ -36,6 +36,8 @@ public class RefreshTokenResponse {
   private final String tokenType;
   @SerializedName("issued_at")
   private final String issuedAt;
+  @SerializedName("expires_in")
+  private final long expiresIn;
 
   public RefreshTokenResponse(
       String accessToken,
@@ -45,7 +47,8 @@ public class RefreshTokenResponse {
       String instanceURL,
       String id,
       String tokenType,
-      String issuedAt) {
+      String issuedAt,
+      long expiresIn) {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
     this.signature = signature;
@@ -54,6 +57,7 @@ public class RefreshTokenResponse {
     this.id = id;
     this.tokenType = tokenType;
     this.issuedAt = issuedAt;
+    this.expiresIn = expiresIn;
   }
 
   public String getAccessToken() {
@@ -88,4 +92,7 @@ public class RefreshTokenResponse {
     return issuedAt;
   }
 
+  public long getExpiresIn() {
+    return expiresIn;
+  }
 }
