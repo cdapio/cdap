@@ -214,4 +214,9 @@ public class BasicSystemHttpServiceContext extends BasicHttpServiceContext imple
   public ContextAccessEnforcer getContextAccessEnforcer() {
     return contextAccessEnforcer;
   }
+
+  @Override
+  public Map<String ,String> getConfiguration(String prefix) {
+    return cConf.getPropsWithPrefix(prefix);
+  }
 }
