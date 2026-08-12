@@ -76,14 +76,14 @@ public class CloudSecretManagerClient {
    *
    * @throws ApiException if Google API call fails.
    */
-  public void createSecret(WrappedSecret wrappedSecret) {
+  public void createSecret(WrappedSecret wrappedSecret, long ttlInSeconds) {
     CreateSecretRequest request =
       CreateSecretRequest.newBuilder()
         .setParent(projectResourceName)
         .setSecretId(
           getSecretId(
             wrappedSecret.getNamespace(), wrappedSecret.getCdapSecretMetadata().getName()))
-        .setSecret(wrappedSecret.getGcpSecret(getSecretResourceName(wrappedSecret)))
+        .setSecret(wrappedSecret.getGcpSecret(getSecretResourceName(wrappedSecret), ttlInSeconds))
         .build();
 
     secretManager.createSecret(request);
@@ -164,11 +164,15 @@ public class CloudSecretManagerClient {
    *
    * @throws ApiException if Google API call fails.
    */
-  public void updateSecret(WrappedSecret wrappedSecret) {
+  public void updateSecret(WrappedSecret wrappedSecret, long ttlInSeconds) {
     // Update all fields.
+    FieldMask.Builder fieldMask = FieldMask.newBuilder().addPaths("annotations");
+    if (ttlInSeconds > 0) {
+      fieldMask.addPaths("ttl");
+    }
     secretManager.updateSecret(
-      wrappedSecret.getGcpSecret(getSecretResourceName(wrappedSecret)),
-      FieldMask.newBuilder().addPaths("annotations").build());
+      wrappedSecret.getGcpSecret(getSecretResourceName(wrappedSecret), ttlInSeconds),
+      fieldMask.build());
   }
 
   /**

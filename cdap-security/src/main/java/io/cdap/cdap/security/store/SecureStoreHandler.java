@@ -81,7 +81,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
       secureKeyCreateRequest = parseBody(httpRequest);
     } catch (IOException e) {
       SecureKeyCreateRequest dummy = new SecureKeyCreateRequest("<description>", "<data>",
-          ImmutableMap.of("key", "value"));
+          ImmutableMap.of("key", "value"), 3600L);
       throw new BadRequestException(
           "Unable to parse the request. The request body should be of the following format."
               + " \n" + GSON.toJson(dummy));
@@ -95,7 +95,8 @@ public class SecureStoreHandler extends AbstractHttpHandler {
     }
 
     secureStoreManager.put(namespace, name, secureKeyCreateRequest.getData(),
-        secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
+        secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties(),
+        secureKeyCreateRequest.getTtlInSeconds());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
