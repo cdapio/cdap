@@ -119,11 +119,23 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   public final synchronized void put(String namespace, String name, String value,
       @Nullable String description,
       Map<String, String> properties) throws Exception {
+    enforceUpdateAccess(namespace, name);
+    secureStoreService.put(namespace, name, value, description, properties);
+  }
+
+  @Override
+  public final synchronized void put(String namespace, String name, String value,
+      @Nullable String description,
+      Map<String, String> properties, long ttlInSeconds) throws Exception {
+    enforceUpdateAccess(namespace, name);
+    secureStoreService.put(namespace, name, value, description, properties, ttlInSeconds);
+  }
+
+  private void enforceUpdateAccess(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(namespace);
     SecureKeyId secureKeyId = namespaceId.secureKey(name);
     accessEnforcer.enforce(secureKeyId, principal, StandardPermission.UPDATE);
-    secureStoreService.put(namespace, name, value, description, properties);
   }
 
   /**

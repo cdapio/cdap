@@ -22,6 +22,7 @@ import com.google.cloud.secretmanager.v1.Secret;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.protobuf.Duration;
 import com.google.protobuf.util.Timestamps;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 
@@ -76,8 +77,8 @@ public final class WrappedSecret {
    *
    * @param resourceName Value to set for the "name" field needed for update operations.
    */
-  public Secret getGcpSecret(String resourceName) {
-    return Secret.newBuilder()
+  public Secret getGcpSecret(String resourceName, long ttlInSeconds) {
+    Secret.Builder builder = Secret.newBuilder()
       // Set replication policy to automatic (as opposed to user-managed) and do not specify a
       // CMEK (use google-managed key).
       .setReplication(Replication.newBuilder().setAutomatic(Automatic.getDefaultInstance()))
@@ -85,8 +86,12 @@ public final class WrappedSecret {
       .putAnnotations("cdap_namespace", namespace)
       .putAnnotations("cdap_secret_name", secretMetadata.getName())
       .putAnnotations("cdap_description", Optional.ofNullable(secretMetadata.getDescription()).orElse(""))
-      .putAnnotations("cdap_props", serializeProps(secretMetadata.getProperties()))
-      .build();
+      .putAnnotations("cdap_props", serializeProps(secretMetadata.getProperties()));
+      
+    if (ttlInSeconds > 0) {
+      builder.setTtl(Duration.newBuilder().setSeconds(ttlInSeconds).build());
+    }
+    return builder.build();
   }
 
   private static SecretMetadata toSecretMetadata(Secret secret) throws InvalidSecretException {
