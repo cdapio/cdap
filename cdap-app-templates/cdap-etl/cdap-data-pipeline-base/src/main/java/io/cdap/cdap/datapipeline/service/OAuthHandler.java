@@ -36,6 +36,10 @@ import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -71,11 +75,25 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     .create();
 
   private OAuthStore oauthStore;
+  private ContextAccessEnforcer contextAccessEnforcer;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
     this.oauthStore = new OAuthStore(context, context, context.getAdmin());
+    this.contextAccessEnforcer = context.getContextAccessEnforcer();
+  }
+
+  /**
+   * OAuth providers and credentials are a cluster-wide resource managed by the
+   * data pipeline system app. Gate every endpoint on the caller having the
+   * matching permission on the system-app parent in the system namespace, so
+   * only users authorized to administer system apps can list, read, create,
+   * update or delete OAuth providers and credentials.
+   */
+  private void enforceSystemAppPermission(StandardPermission permission) {
+    contextAccessEnforcer.enforceOnParent(
+        EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM, permission);
   }
 
   @GET
@@ -85,6 +103,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                          @QueryParam("redirect_uri") String redirectURI,
                          @QueryParam("redirect_url") String redirectURL) {
     try {
+      enforceSystemAppPermission(StandardPermission.GET);
       OAuthProvider oauthProvider = getProvider(provider);
 
       String formatURL = "%s";
@@ -116,6 +135,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                @QueryParam("reuse_client_credentials") @DefaultValue("false")
                                Boolean reuseClientCredentials) {
     try {
+      enforceSystemAppPermission(StandardPermission.UPDATE);
       try {
         PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
             StandardCharsets.UTF_8.decode(request.getContent()).toString(),
@@ -165,6 +185,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                @QueryParam("preserve_client_credentials") @DefaultValue("false")
                                boolean preserveClientCredentials) {
     try {
+      enforceSystemAppPermission(StandardPermission.DELETE);
       try {
         oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -184,6 +205,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
     try {
+      enforceSystemAppPermission(StandardPermission.UPDATE);
       PutOAuthCredentialRequest putOAuthCredentialRequest;
       try {
         putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
@@ -293,6 +315,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
     try {
+      enforceSystemAppPermission(StandardPermission.GET);
       OAuthProvider oauthProvider = getProvider(provider);
       Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
@@ -373,6 +396,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                          @PathParam("provider") String provider,
                                          @PathParam("credential") String credentialId) {
     try {
+      enforceSystemAppPermission(StandardPermission.GET);
       OAuthProvider oauthProvider = getProvider(provider);
       Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
