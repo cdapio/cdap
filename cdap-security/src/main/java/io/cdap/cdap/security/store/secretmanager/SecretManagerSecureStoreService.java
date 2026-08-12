@@ -141,10 +141,25 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
       Map<String, String> properties) throws Exception {
+    putInternal(namespace, name, data, description, properties, null);
+  }
+
+  @Override
+  public void put(String namespace, String name, String data, @Nullable String description,
+      Map<String, String> properties, long ttlInSeconds) throws Exception {
+    putInternal(namespace, name, data, description, properties, ttlInSeconds);
+  }
+
+  private void putInternal(String namespace, String name, String data, @Nullable String description,
+      Map<String, String> properties, @Nullable Long ttlInSeconds) throws Exception {
     validate(namespace);
-    secretManager.store(namespace, new Secret(data.getBytes(StandardCharsets.UTF_8),
-        new SecretMetadata(name, description, System.currentTimeMillis(),
-            ImmutableMap.copyOf(properties))));
+    Secret secret = new Secret(data.getBytes(StandardCharsets.UTF_8),
+        new SecretMetadata(name, description, System.currentTimeMillis(), ImmutableMap.copyOf(properties)));
+    if (ttlInSeconds != null) {
+      secretManager.store(namespace, secret, ttlInSeconds);
+    } else {
+      secretManager.store(namespace, secret);
+    }
   }
 
   @Override

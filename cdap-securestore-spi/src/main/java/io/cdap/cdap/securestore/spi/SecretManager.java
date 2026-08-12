@@ -56,6 +56,14 @@ public interface SecretManager {
   void store(String namespace, Secret secret) throws IOException;
 
   /**
+   * Securely stores secret for a given namespace with a Time-To-Live.
+   * By default delegates to store() ignoring the TTL.
+   */
+  default void store(String namespace, Secret secret, long ttlInSeconds) throws IOException {
+    store(namespace, secret);
+  }
+
+  /**
    * Returns securely stored secret along with its metadata as a {@link Secret}.
    *
    * @param namespace the namespace that this secret belongs to

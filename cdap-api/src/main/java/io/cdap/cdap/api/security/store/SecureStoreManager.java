@@ -42,6 +42,23 @@ public interface SecureStoreManager {
       Map<String, String> properties) throws Exception;
 
   /**
+   * Stores an element in the secure store with a Time-to-Live (TTL).
+   * The default implementation delegates to the standard put, ignoring the TTL.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name This is the identifier that will be used to retrieve this element
+   * @param data The sensitive data that has to be securely stored
+   * @param description User provided description of the entry
+   * @param properties associated with this element
+   * @param ttlInSeconds Time-To-Live for the secret in seconds.
+   * @throws Exception If the attempt to store the element failed
+   */
+  default void put(String namespace, String name, String data, @Nullable String description,
+      Map<String, String> properties, long ttlInSeconds) throws Exception {
+    put(namespace, name, data, description, properties);
+  }
+
+  /**
    * Deletes the element with the given name.
    *
    * @param namespace The namespace that this key belongs to
