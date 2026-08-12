@@ -102,8 +102,18 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
       Map<String, String> properties) throws Exception {
-    SecureKeyCreateRequest createRequest = new SecureKeyCreateRequest(description, data,
-        properties);
+    SecureKeyCreateRequest createRequest = new SecureKeyCreateRequest(description, data, properties);
+    putInternal(namespace, name, createRequest);
+  }
+
+  @Override
+  public void put(String namespace, String name, String data, @Nullable String description,
+      Map<String, String> properties, long ttlInSeconds) throws Exception {
+    SecureKeyCreateRequest createRequest = new SecureKeyCreateRequest(description, data, properties, ttlInSeconds);
+    putInternal(namespace, name, createRequest);
+  }
+
+  private void putInternal(String namespace, String name, SecureKeyCreateRequest createRequest) throws Exception {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createPath(namespace, name))
         .withBody(GSON.toJson(createRequest)).build();
     HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);

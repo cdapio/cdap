@@ -67,9 +67,37 @@ public class GcpSecretManagerTest {
 
     secretManager.store(NAMESPACE, createSecret("example"));
 
-    verify(client, times(1)).createSecret(ArgumentMatchers.any());
+    verify(client, times(1)).createSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
     verify(client, times(1)).addSecretVersion(ArgumentMatchers.any(), ArgumentMatchers.any());
-    verify(client, times(0)).updateSecret(ArgumentMatchers.any());
+    verify(client, times(0)).updateSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
+  }
+
+
+  @Test
+  public void store_createWithTtl() throws Exception {
+    ApiException exception = createApiException(Code.NOT_FOUND);
+    when(client.getSecret(ArgumentMatchers.any(), ArgumentMatchers.any())).thenThrow(exception);
+
+    secretManager.store(NAMESPACE, createSecret("example-ttl"), 3600L);
+
+    verify(client, times(1)).createSecret(ArgumentMatchers.any(), eq(3600L));
+    verify(client, times(1)).addSecretVersion(ArgumentMatchers.any(), ArgumentMatchers.any());
+    verify(client, times(0)).updateSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
+  }
+
+  @Test
+  public void store_updateWithTtl() throws Exception {
+    byte[] payload = "Foo".getBytes();
+    SecretMetadata metadata = createMetadata("example-ttl-update");
+    when(client.getSecret(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      .thenReturn(WrappedSecret.fromMetadata(NAMESPACE, metadata));
+    when(client.getSecretData(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(payload);
+
+    secretManager.store(NAMESPACE, new Secret(payload, metadata), 1800L);
+
+    verify(client, times(0)).createSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
+    verify(client, times(1)).updateSecret(ArgumentMatchers.any(), eq(1800L));
+    verify(client, times(0)).addSecretVersion(ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   @Test
@@ -84,8 +112,8 @@ public class GcpSecretManagerTest {
     secretManager.store(NAMESPACE, new Secret(payload, metadata));
 
     // Update, not create called. No secret version added.
-    verify(client, times(0)).createSecret(ArgumentMatchers.any());
-    verify(client, times(1)).updateSecret(ArgumentMatchers.any());
+    verify(client, times(0)).createSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
+    verify(client, times(1)).updateSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
     verify(client, times(0)).addSecretVersion(ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
@@ -102,7 +130,7 @@ public class GcpSecretManagerTest {
     secretManager.store(NAMESPACE, new Secret(newPayload, metadata));
 
     // Update called, secret version added.
-    verify(client, times(1)).updateSecret(ArgumentMatchers.any());
+    verify(client, times(1)).updateSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
     verify(client, times(1)).addSecretVersion(ArgumentMatchers.any(), eq(newPayload));
   }
 
