@@ -122,6 +122,20 @@ public class RemoteSecureStoreTest {
     Assert.assertEquals(0, remoteSecureStore.list(NAMESPACE1).size());
   }
 
+  @Test
+  public void testRemoteSecureStoreWithTTL() throws Exception {
+    SecureStoreMetadata secureStoreMetadata = new SecureStoreMetadata("key_ttl", "description", 1,
+                                                                      ImmutableMap.of("prop1", "value1"));
+    SecureStoreData secureStoreData = new SecureStoreData(secureStoreMetadata,
+                                                          "value".getBytes(StandardCharsets.UTF_8));
+
+    remoteSecureStore.put(NAMESPACE1, "key_ttl", "value", "description", ImmutableMap.of("prop1", "value1"), 600L);
+    SecureStoreData actual = remoteSecureStore.get(NAMESPACE1, "key_ttl");
+    Assert.assertEquals(secureStoreMetadata.getName(), actual.getMetadata().getName());
+    Assert.assertArrayEquals(secureStoreData.get(), actual.get());
+    Assert.assertEquals(secureStoreMetadata.getDescription(), actual.getMetadata().getDescription());
+  }
+
   @Test(expected = SecureKeyNotFoundException.class)
   public void testKeyNotFound() throws Exception {
     remoteSecureStore.get(NAMESPACE1, "nonexistingkey");
