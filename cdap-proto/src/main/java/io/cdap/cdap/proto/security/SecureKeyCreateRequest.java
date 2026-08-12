@@ -28,12 +28,22 @@ public class SecureKeyCreateRequest {
   private final String description;
   private final String data;
   private final Map<String, String> properties;
+  private final long ttlInSeconds;
 
   public SecureKeyCreateRequest(@Nullable String description, String data,
       Map<String, String> properties) {
+    this(description, data, properties, 0L);
+  }
+
+  public SecureKeyCreateRequest(@Nullable String description, String data,
+      Map<String, String> properties, long ttlInSeconds) {
+    if (ttlInSeconds < 0) {
+      throw new IllegalArgumentException("TTL cannot be negative");
+    }
     this.description = description;
     this.data = data;
     this.properties = properties;
+    this.ttlInSeconds = ttlInSeconds;
   }
 
   @Nullable
@@ -47,6 +57,10 @@ public class SecureKeyCreateRequest {
 
   public Map<String, String> getProperties() {
     return properties == null ? Collections.emptyMap() : properties;
+  }
+
+  public long getTtlInSeconds() {
+    return ttlInSeconds;
   }
 
   @Override
