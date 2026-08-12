@@ -33,18 +33,23 @@ public class OAuthProvider {
   @Nullable
   private final String userAgent;
 
+  @Nullable
+  private final AuthType authType;
+
   public OAuthProvider(String name,
                        String loginURL,
                        String tokenRefreshURL,
                        @Nullable OAuthClientCredentials clientCreds,
                        @Nullable CredentialEncodingStrategy strategy,
-                       @Nullable String userAgent) {
+                       @Nullable String userAgent,
+                       @Nullable AuthType authType) {
     this.name = name;
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientCreds = clientCreds;
     this.strategy = strategy;
     this.userAgent = userAgent;
+    this.authType = authType != null ? authType : AuthType.STANDARD;
   }
 
   public String getName() {
@@ -74,6 +79,10 @@ public class OAuthProvider {
     return userAgent;
   }
 
+  public AuthType getAuthType() {
+    return authType;
+  }
+
   public enum CredentialEncodingStrategy {
     // (default) Sends client ID & secret as part of the POST request body
     FORM_BODY,
@@ -95,6 +104,7 @@ public class OAuthProvider {
     private OAuthClientCredentials clientCreds;
     private CredentialEncodingStrategy strategy;
     private String userAgent;
+    private AuthType authType;
 
     public Builder() {}
 
@@ -128,6 +138,11 @@ public class OAuthProvider {
       return this;
     }
 
+    public Builder withAuthType(@Nullable AuthType authType) {
+      this.authType = authType;
+      return this;
+    }
+
     public OAuthProvider build() {
       Preconditions.checkNotNull(name, "OAuth provider name missing");
       Preconditions.checkNotNull(loginURL, "Login URL missing");
@@ -136,7 +151,7 @@ public class OAuthProvider {
       if (strategy == null) {
         this.strategy = CredentialEncodingStrategy.FORM_BODY;
       }
-      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent);
+      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent, authType);
     }
   }
 }
