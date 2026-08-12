@@ -12,7 +12,10 @@
  *
  */
 
+package io.cdap.cdap.datapipeline;
+
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -65,7 +68,8 @@ public class OAuthStoreTest {
     mockTable = mock(StructuredTable.class);
     mockRow = mock(StructuredRow.class);
 
-    oauthStore = new OAuthStore(mockTransactionRunner, mockSecureStore, mockSecureStoreManager);
+    oauthStore = new OAuthStore(mockTransactionRunner, mockSecureStore,
+        mockSecureStoreManager, Collections.singletonMap("pkce.code.verifier.ttl.sec", "900"));
   }
 
   @Test

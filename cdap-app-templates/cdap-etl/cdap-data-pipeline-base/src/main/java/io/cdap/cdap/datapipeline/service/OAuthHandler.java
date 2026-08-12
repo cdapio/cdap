@@ -23,12 +23,14 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.datapipeline.oauth.CredentialIsValidResponse;
 import io.cdap.cdap.datapipeline.oauth.GetAccessTokenResponse;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthClientCredentials;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
+import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider.CredentialEncodingStrategy;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
@@ -36,6 +38,7 @@ import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -45,8 +48,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -69,13 +76,22 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     .setPrettyPrinting()
     .registerTypeAdapterFactory(new ErrorHandlingGsonTypeAdapterFactory())
     .create();
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+
+  // The following OAuth settings can be configured via the system configuration(Cconf)
+  // All properties related to OAuth should be prefixed with this value.
+  private static final String OAUTH_CONF_PREFIX = "security.auth.oauth.";
+  // Time To Live in seconds for PCKE based code verifier in Secure Store.
+  public static final String PREF_PKCE_CODE_VERIFIER_TTL = "pkce.code.verifier.ttl.sec";
 
   private OAuthStore oauthStore;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
-    this.oauthStore = new OAuthStore(context, context, context.getAdmin());
+    Map<String, String> oauthConf = context.getConfiguration(OAUTH_CONF_PREFIX);
+    this.oauthStore = new OAuthStore(context, context, context.getAdmin(), oauthConf);
   }
 
   @GET
@@ -103,6 +119,22 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       String response = String.format(
           formatURL, loginUrl, oauthProvider.getClientCredentials().getClientId(), redirectURI);
+
+      if (oauthProvider.getAuthType() == AuthType.PKCE) {
+        String state = UUID.randomUUID().toString();
+        String codeVerifier = generateCodeVerifier();
+        String codeChallenge = generateCodeChallenge(codeVerifier);
+
+        try {
+          oauthStore.writePKCECodeVerifier(provider, state, codeVerifier);
+        } catch (Exception e) {
+          throw new OAuthServiceException(
+              HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to store PKCE code verifier", e);
+        }
+
+        response += String.format("&state=%s&code_challenge=%s&code_challenge_method=S256", state, codeChallenge);
+      }
+
       responder.sendString(response);
     } catch (OAuthServiceException e) {
       e.respond(responder);
@@ -141,6 +173,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                               .withClientCredentials(clientCredentials)
                                               .withCredentialEncodingStrategy(strategy)
                                               .withUserAgent(userAgent)
+                                              .withAuthType(putOAuthProviderRequest.getAuthType())
                                               .build();
         oauthStore.writeProvider(provider, reuseClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -190,7 +223,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                 PutOAuthCredentialRequest.class);
         if (putOAuthCredentialRequest.getOneTimeCode() == null
             || putOAuthCredentialRequest.getOneTimeCode().isEmpty()) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
+          throw new OAuthServiceException(
+              HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
         }
         if (putOAuthCredentialRequest.getRedirectURI() == null
             || putOAuthCredentialRequest.getRedirectURI().isEmpty()) {
@@ -202,14 +236,33 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       OAuthProvider oauthProvider = getProvider(provider);
 
+      String state = putOAuthCredentialRequest.getState();
+      String codeVerifier = null;
+      if (oauthProvider.getAuthType() == AuthType.PKCE) {
+        if (state == null || state.isEmpty() || !state.matches("^[a-zA-Z0-9-]+$")) {
+          throw new OAuthServiceException(
+              HttpURLConnection.HTTP_BAD_REQUEST, "State is required and must be valid for "
+              + "PKCE authentication");
+        }
+        try {
+          codeVerifier = oauthStore.getPKCECodeVerifier(provider, state);
+          oauthStore.deletePKCECodeVerifier(provider, state);
+        } catch (OAuthStoreException e) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
+              "Failed to process PKCE code verifier", e);
+        }
+      }
+
       HttpResponse response;
       try {
         response = HttpRequests.execute(createGetRefreshTokenRequest(
             oauthProvider,
             putOAuthCredentialRequest.getOneTimeCode(),
-            putOAuthCredentialRequest.getRedirectURI()));
+            putOAuthCredentialRequest.getRedirectURI(),
+            codeVerifier));
       } catch (IOException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
+        throw new OAuthServiceException(
+              HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
       }
 
       if (response.getResponseCode() != 200) {
@@ -387,7 +440,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       try {
         response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
       } catch (IOException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
+        throw new OAuthServiceException(
+              HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
       }
 
       responder.sendString(GSON.toJson(new CredentialIsValidResponse(checkCredIsValid(response))));
@@ -427,20 +481,28 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                   String code,
                                   String redirectURI,
                                   String refreshToken,
-                                  OAuthClientCredentials clientCreds) {
+                                  OAuthClientCredentials clientCreds,
+                                  String codeVerifier) {
+    String body;
     switch (strategy) {
       case BASIC_AUTH:
-        return grantType.equals("authorization_code")
+        body = grantType.equals("authorization_code")
                 ? String.format("code=%s&redirect_uri=%s&grant_type=%s", code, redirectURI, grantType)
                 : String.format("grant_type=%s&refresh_token=%s", grantType, refreshToken);
+        break;
       case FORM_BODY: // fall-through
       default:
-        return grantType.equals("authorization_code")
+        body = grantType.equals("authorization_code")
                 ? String.format("code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=%s",
                 code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret(), grantType)
                 : String.format("grant_type=%s&client_id=%s&client_secret=%s&refresh_token=%s",
                 grantType, clientCreds.getClientId(), clientCreds.getClientSecret(), refreshToken);
+        break;
     }
+    if (codeVerifier != null && !codeVerifier.isEmpty()) {
+      body += "&code_verifier=" + codeVerifier;
+    }
+    return body;
   }
 
   /** Build HTTP request for getting tokens */
@@ -468,18 +530,36 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     return requestBuilder;
   }
 
+  private String generateCodeVerifier() {
+    byte[] codeVerifierBytes = new byte[32];
+    SECURE_RANDOM.nextBytes(codeVerifierBytes);
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(codeVerifierBytes);
+  }
+
+  private String generateCodeChallenge(String codeVerifier) throws OAuthServiceException {
+    try {
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
+      md.update(codeVerifier.getBytes(StandardCharsets.US_ASCII));
+      return Base64.getUrlEncoder().withoutPadding().encodeToString(md.digest());
+    } catch (Exception e) {
+      throw new OAuthServiceException(
+              HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to generate SHA-256 code challenge", e);
+    }
+  }
+
   /**
    * Build the HttpRequest to request a refresh token from the OAuth provider
    * @param provider
    * @param code the authorization code given after the user accepts OAuth from the provider
    * @param redirectURI
    */
-  private HttpRequest createGetRefreshTokenRequest(OAuthProvider provider, String code, String redirectURI)
+  private HttpRequest createGetRefreshTokenRequest(OAuthProvider provider, String code, String redirectURI,
+                                                   String codeVerifier)
       throws OAuthServiceException {
     OAuthClientCredentials clientCreds = provider.getClientCredentials();
     CredentialEncodingStrategy strategy = provider.getCredentialEncodingStrategy();
     String tokenRefreshURL = provider.getTokenRefreshURL();
-    String body = buildRequestBody(strategy, "authorization_code", code, redirectURI, null, clientCreds);
+    String body = buildRequestBody(strategy, "authorization_code", code, redirectURI, null, clientCreds, codeVerifier);
     String userAgent = provider.getUserAgent();
 
     try {
@@ -499,7 +579,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     OAuthClientCredentials clientCreds = provider.getClientCredentials();
     CredentialEncodingStrategy strategy = provider.getCredentialEncodingStrategy();
     String tokenRefreshURL = provider.getTokenRefreshURL();
-    String body = buildRequestBody(strategy, "refresh_token", null, null, refreshToken, clientCreds);
+    String body = buildRequestBody(strategy, "refresh_token", null, null, refreshToken, clientCreds, null);
     String userAgent = provider.getUserAgent();
 
     try {

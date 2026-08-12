@@ -19,8 +19,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
+import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
-import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -50,7 +50,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -72,7 +72,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             null,
             null,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
@@ -89,7 +89,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             null,
             null,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider10?reuse_client_credentials=true", request);
     Assert.assertEquals(500, createResponse.getResponseCode());
   }
@@ -107,7 +107,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider20", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -121,7 +121,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             null,
             null,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     createResponse = makePutCall("provider/testprovider20?reuse_client_credentials=true", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
   }
@@ -138,7 +138,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             null,
             null,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider30?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
@@ -156,7 +156,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH,
-            null);
+            null, null);
     HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider31", request);
     Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
 
@@ -180,7 +180,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH,
-            "cdap-test");
+            "cdap-test", null);
     HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider32", request);
     Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
 
@@ -189,6 +189,36 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
     String authURL = getAuthUrlResponse.getResponseBodyAsString();
     Assert.assertEquals("http://www.example.com/login32?client_id=clientid&redirect_uri=null", authURL);
+  }
+
+  @Test
+  public void testCreateProviderWithPkceAuthType() throws IOException {
+    String loginURL = "http://www.example.com/login_pkce";
+    String tokenRefreshURL = "http://www.example.com/token_pkce";
+    String clientId = "clientid";
+    String clientSecret = "clientsecret";
+    PutOAuthProviderRequest request = new PutOAuthProviderRequest(
+            loginURL,
+            tokenRefreshURL,
+            clientId,
+            clientSecret,
+            OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+            null, AuthType.PKCE);
+    HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider_pkce", request);
+    Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
+
+    // Grab OAuth login URL to verify write succeeded
+    HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider_pkce/authurl");
+    Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
+    String authURL = getAuthUrlResponse.getResponseBodyAsString();
+    
+    // Verify base URL
+    Assert.assertTrue(authURL.startsWith("http://www.example.com/login_pkce?client_id=clientid&redirect_uri=null"));
+    
+    // Verify PKCE specific query params
+    Assert.assertTrue(authURL.contains("&state="));
+    Assert.assertTrue(authURL.contains("&code_challenge="));
+    Assert.assertTrue(authURL.contains("&code_challenge_method=S256"));
   }
 
   @Test
@@ -203,7 +233,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             null,
             null,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider40?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
 
@@ -225,7 +255,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider50", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -245,7 +275,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             null,
             null,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     createResponse = makePutCall("provider/testprovider50?reuse_client_credentials=true", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
@@ -269,7 +299,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
@@ -287,7 +317,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
             clientId,
             clientSecret,
             OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
-            null);
+            null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
   }
