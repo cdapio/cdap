@@ -29,6 +29,8 @@ import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.FieldValidator;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.PreferUnionForDisjunctionOption;
+import io.cdap.cdap.spi.data.table.options.QueryOption;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -368,8 +370,16 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     return scan(keyRange, limit, filterIndexes, tableSchema.getPrimaryKeys(), sortOrder);
   }
 
+  @Override
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes, SortOrder sortOrder, QueryOption... options)
+      throws InvalidFieldException, IOException {
+    return scan(keyRange, limit, filterIndexes, tableSchema.getPrimaryKeys(), sortOrder, options);
+  }
+
   private CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
-      Collection<Field<?>> filterIndexes, Collection<String> fieldsToSort, SortOrder sortOrder)
+      Collection<Field<?>> filterIndexes, Collection<String> fieldsToSort, SortOrder sortOrder,
+      QueryOption... options)
       throws InvalidFieldException, IOException {
     fieldValidator.validateScanRange(keyRange);
     filterIndexes.forEach(fieldValidator::validateField);
@@ -382,16 +392,33 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan range {} with filterIndexes {} limit {} sortOrder {}",
         tableSchema.getTableId(), keyRange, filterIndexes, limit, sortOrder);
 
-    String scanQuery = getScanIndexesQuery(keyRange, limit, filterIndexes, fieldsToSort, sortOrder);
-    // Since in getScanIndexesQuery we directly set the NULL checks, we need to skip the null fields
-    filterIndexes = filterIndexes.stream().filter(f -> f.getValue() != null)
+    boolean preferUnion =
+        QueryOption.getOption(PreferUnionForDisjunctionOption.class, options).isPresent()
+            && filterIndexes.size() > 1;
+    String scanQuery = preferUnion
+        ? getUnionQuery(keyRange, limit, filterIndexes, fieldsToSort, sortOrder)
+        : getScanIndexesQuery(keyRange, limit, filterIndexes, fieldsToSort, sortOrder);
+    Collection<Field<?>> nonNullFilterIndexes = filterIndexes.stream()
+        .filter(f -> f.getValue() != null)
         .collect(Collectors.toList());
 
     try {
       PreparedStatement statement = connection.prepareStatement(scanQuery);
       statement.setFetchSize(fetchSize);
-      int nextIndex = setStatementFieldByRange(keyRange, statement, 1);
-      setFields(statement, filterIndexes, nextIndex);
+      if (preferUnion) {
+        // Parameter setting for UNION / UNION ALL
+        int nextIndex = 1;
+        for (Field<?> field : filterIndexes) {
+          nextIndex = setStatementFieldByRange(keyRange, statement, nextIndex);
+          if (field.getValue() != null) {
+            setField(statement, field, nextIndex);
+            nextIndex++;
+          }
+        }
+      } else {
+        int nextIndex = setStatementFieldByRange(keyRange, statement, 1);
+        setFields(statement, nonNullFilterIndexes, nextIndex);
+      }
       LOG.trace("SQL statement: {}", statement);
 
       ResultSet resultSet = statement.executeQuery();
@@ -1006,6 +1033,35 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     queryString.append(getOrderByClause(fieldsToSort, sortOrder));
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
+  }
+
+  private String getUnionQuery(Range range, int limit, Collection<Field<?>> filterIndexes,
+      Collection<String> fieldsToSort, SortOrder sortOrder) {
+    String tableName = tableSchema.getTableId().getName();
+    boolean allSameField = filterIndexes.stream().map(Field::getName).distinct().count() <= 1;
+
+    String unionOperator = allSameField ? " UNION ALL " : " UNION ";
+    String subQueries = filterIndexes.stream()
+        .map(field -> buildWrappedSubQuery(tableName, range, limit, field, fieldsToSort, sortOrder))
+        .collect(Collectors.joining(unionOperator));
+
+    return subQueries + " " + getOrderByClause(fieldsToSort, sortOrder) + " LIMIT " + limit + ";";
+  }
+
+  private String buildWrappedSubQuery(String tableName, Range range, int limit, Field<?> field,
+      Collection<String> fieldsToSort, SortOrder sortOrder) {
+    StringBuilder subQuery = new StringBuilder("(");
+    subQuery.append("SELECT * FROM ").append(tableName).append(" WHERE ");
+    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+      appendRange(subQuery, range);
+      subQuery.append(" AND ");
+    }
+
+    String condition =
+        field.getValue() == null ? field.getName() + " IS NULL" : field.getName() + " = ?";
+    subQuery.append(condition).append(getOrderByClause(fieldsToSort, sortOrder)).append(" LIMIT ")
+        .append(limit).append(")");
+    return subQuery.toString();
   }
 
   private void appendRange(StringBuilder query, Range range) {

@@ -134,7 +134,7 @@ public class FileUploadApp extends AbstractApplication {
         @Override
         public void onError(HttpServiceResponder responder, Throwable failureCause) {
           try {
-            Closeables.closeQuietly(channel);
+            Closeables.close(channel, true);
             partitionDir.delete(true);
           } catch (IOException e) {
             // Nothing much can be done.

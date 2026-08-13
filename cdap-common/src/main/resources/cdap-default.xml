@@ -471,6 +471,16 @@
   </property>
 
   <property>
+    <name>app.scan.batch.size</name>
+    <value>25</value>
+    <description>
+      Batch size for scanning applications in the database. This defines the maximum number of
+      records processed per database transaction chunk when listing applications. This is
+      independent of the pagination page size requested by client APIs.
+    </description>
+  </property>
+
+  <property>
     <name>app.artifact.compute.hash.time.bucket.days</name>
     <value>15</value>
     <description>
@@ -1293,6 +1303,22 @@
     <value>500</value>
     <description>
       The initial delay between retries due to spanner transaction failures in milliseconds.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.properties.gcp-spanner.tx.runner.optimistic.lock.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable optimistic locking for Spanner transactions.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.properties.gcp-spanner.partitioned.dml.timeout.hours</name>
+    <value>${app.run.records.ttl.frequency.hours}</value>
+    <description>
+      The timeout duration in hours specifically for Spanner Partitioned DML update and delete operations.
     </description>
   </property>
 
@@ -3337,6 +3363,14 @@
     <value>2000</value>
     <description>
       Polling time in milliseconds to poll updates from a runtime
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.remote.stop.delay.secs</name>
+    <value>10</value>
+    <description>
+      Time to wait in seconds for a remote process to shut down before forcing a kill during program completion.
     </description>
   </property>
 
@@ -6729,6 +6763,14 @@
     <value>10000</value>
     <description>
       The default polling interval in milliseconds for poll calls from cdap-ui.
+    </description>
+  </property>
+
+  <property>
+    <name>ui.wrangler.connections.browse.entities.limit</name>
+    <value>2000</value>
+    <description>
+      Number of entities displayed for a connection in the connections browser.
     </description>
   </property>
 

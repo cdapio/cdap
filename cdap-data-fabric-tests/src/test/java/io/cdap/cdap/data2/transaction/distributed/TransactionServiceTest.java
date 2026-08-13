@@ -32,6 +32,7 @@ import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -91,7 +92,7 @@ public class TransactionServiceTest {
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
   }
 
   @After
@@ -100,7 +101,7 @@ public class TransactionServiceTest {
       miniDfsCluster.shutdown();
     } finally {
       if (zkServer != null) {
-        zkServer.stopAsync().awaitTerminated();
+        Services.stopAndWait(zkServer);
       }
     }
   }
@@ -146,7 +147,7 @@ public class TransactionServiceTest {
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
 
     try {
       final Table table = createTable("myTable");
@@ -161,7 +162,7 @@ public class TransactionServiceTest {
       TransactionService first = createTxService(zkServer.getConnectionStr(),
           Networks.getRandomPort(),
           hConf, tmpFolder.newFolder());
-      first.startAsync().awaitRunning();
+      Services.startAndWait(first);
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, null, "val1");
 
@@ -171,7 +172,7 @@ public class TransactionServiceTest {
           hConf, tmpFolder.newFolder());
       // NOTE: we don't have to wait for start as client should pick it up anyways, but we do wait to ensure
       //       the case with two active is handled well
-      second.startAsync().awaitRunning();
+      Services.startAndWait(second);
       // wait for affect a bit
       TimeUnit.SECONDS.sleep(1);
 
@@ -179,7 +180,7 @@ public class TransactionServiceTest {
       verifyGetAndPut(table, txExecutor, "val1", "val2");
 
       // shutting down the first one is fine: we have another one to pick up the leader role
-      first.stopAsync().awaitTerminated();
+      Services.stopAndWait(first);
 
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, "val2", "val3");
@@ -189,21 +190,21 @@ public class TransactionServiceTest {
           Networks.getRandomPort(),
           hConf, tmpFolder.newFolder());
       // NOTE: we don't have to wait for start as client should pick it up anyways
-      third.startAsync();
+      Services.startAndWait(third);
       // stopping second one
-      second.stopAsync().awaitTerminated();
+      Services.stopAndWait(second);
 
       Assert.assertNotNull(txClient.startShort());
       verifyGetAndPut(table, txExecutor, "val3", "val4");
 
       // releasing resources
-      third.stopAsync().awaitTerminated();
+      Services.stopAndWait(third);
 
     } finally {
       try {
         dropTable("myTable");
       } finally {
-        zkClient.stopAsync().awaitTerminated();
+        Services.stopAndWait(zkClient);
       }
     }
   }
@@ -268,8 +269,9 @@ public class TransactionServiceTest {
             new AuthorizationTestModule(),
             new AuthorizationEnforcementModule().getInMemoryModules(),
             new AuthenticationContextModules().getNoOpModule());
-    injector.getInstance(ZKClientService.class).startAsync().awaitRunning();
+    Services.startAndWait(injector.getInstance(ZKClientService.class));
 
     return injector.getInstance(TransactionService.class);
   }
 }
+

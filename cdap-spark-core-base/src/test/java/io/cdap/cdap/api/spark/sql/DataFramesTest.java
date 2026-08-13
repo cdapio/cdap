@@ -207,7 +207,7 @@ public class DataFramesTest {
       "String",
       new byte[] {1, 2, 3},
       null,
-      JavaConversions.asScalaBuffer(Arrays.asList("1", "2", "3")).toSeq(),
+      JavaConversions.asScalaBuffer(Arrays.asList("1", "2", "3")),
       JavaConversions.mapAsScalaMap(Collections.singletonMap("k", "v")),
       RowFactory.create(JavaConversions.asScalaBuffer(Arrays.asList("a", "b", "c", null)))
     );

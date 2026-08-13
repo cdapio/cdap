@@ -43,13 +43,17 @@ public class TokenManager extends AbstractIdleService {
   @Override
   public void startUp() {
     LOG.info("Starting TokenManager service");
-    this.keyManager.startAsync().awaitRunning();
+    if (this.keyManager.state() == State.NEW) {
+      this.keyManager.startAsync().awaitRunning();
+    }
   }
 
   @Override
   public void shutDown() {
     LOG.info("Shutting down TokenManager service.");
-    this.keyManager.stopAsync().awaitTerminated();
+    if (this.keyManager.isRunning()) {
+      this.keyManager.stopAsync().awaitTerminated();
+    }
   }
 
   /**

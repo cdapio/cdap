@@ -17,7 +17,9 @@
 package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.Service;
+import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
@@ -89,23 +91,33 @@ public class Services {
    * to be compatible with both Guava 13 and Guava 15+ / 20+.
    */
   public static void startAndWait(Service service) {
+    if (service == null) {
+      return;
+    }
     try {
       try {
-        // Guava 15+
-        service.getClass().getMethod("startAsync").invoke(service);
-        service.getClass().getMethod("awaitRunning").invoke(service);
+        Method startAndWait = service.getClass().getMethod("startAndWait");
+        startAndWait.invoke(service);
+        return;
       } catch (NoSuchMethodException e) {
-        // Guava 13
+        // Fall back to startAsync
+      }
+      service.getClass().getMethod("startAsync").invoke(service);
+      service.getClass().getMethod("awaitRunning").invoke(service);
+    } catch (Throwable t) {
+      try {
+        // Guava 13 fallback (e.g. for InMemoryZKServer)
         Object future = service.getClass().getMethod("start").invoke(service);
-        if (future instanceof ListenableFuture) {
-          ((ListenableFuture<?>) future).get();
+        if (future instanceof Future) {
+          ((Future<?>) future).get();
         }
+      } catch (Throwable t2) {
+        Throwable cause = t.getCause() != null ? t.getCause() : t;
+        if (cause instanceof RuntimeException) {
+          throw (RuntimeException) cause;
+        }
+        throw new RuntimeException(cause);
       }
-    } catch (Exception e) {
-      if (e.getCause() instanceof RuntimeException) {
-        throw (RuntimeException) e.getCause();
-      }
-      throw new RuntimeException(e.getCause() != null ? e.getCause() : e);
     }
   }
 
@@ -114,23 +126,33 @@ public class Services {
    * to be compatible with both Guava 13 and Guava 15+ / 20+.
    */
   public static void stopAndWait(Service service) {
+    if (service == null) {
+      return;
+    }
     try {
       try {
-        // Guava 15+
-        service.getClass().getMethod("stopAsync").invoke(service);
-        service.getClass().getMethod("awaitTerminated").invoke(service);
+        Method stopAndWait = service.getClass().getMethod("stopAndWait");
+        stopAndWait.invoke(service);
+        return;
       } catch (NoSuchMethodException e) {
-        // Guava 13
+        // Fall back to stopAsync
+      }
+      service.getClass().getMethod("stopAsync").invoke(service);
+      service.getClass().getMethod("awaitTerminated").invoke(service);
+    } catch (Throwable t) {
+      try {
+        // Guava 13 fallback (e.g. for InMemoryZKServer)
         Object future = service.getClass().getMethod("stop").invoke(service);
-        if (future instanceof ListenableFuture) {
-          ((ListenableFuture<?>) future).get();
+        if (future instanceof Future) {
+          ((Future<?>) future).get();
         }
+      } catch (Throwable t2) {
+        Throwable cause = t.getCause() != null ? t.getCause() : t;
+        if (cause instanceof RuntimeException) {
+          throw (RuntimeException) cause;
+        }
+        throw new RuntimeException(cause);
       }
-    } catch (Exception e) {
-      if (e.getCause() instanceof RuntimeException) {
-        throw (RuntimeException) e.getCause();
-      }
-      throw new RuntimeException(e.getCause() != null ? e.getCause() : e);
     }
   }
 }

@@ -134,6 +134,10 @@
       <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.twill</groupId>
       <artifactId>twill-discovery-api</artifactId>
     </dependency>

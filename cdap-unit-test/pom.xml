@@ -33,26 +33,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-test</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-app-fabric</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-app-fabric</artifactId>
-      <version>${project.version}</version>
-      <type>test-jar</type>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
@@ -63,6 +43,26 @@
           <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-test</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-app-fabric</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-app-fabric</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

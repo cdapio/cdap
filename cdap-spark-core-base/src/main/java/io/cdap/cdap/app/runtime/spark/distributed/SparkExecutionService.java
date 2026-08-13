@@ -24,6 +24,7 @@ import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
 import io.cdap.cdap.app.runtime.spark.SparkPackageUtils;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
@@ -160,7 +161,7 @@ public final class SparkExecutionService extends AbstractIdleService {
    */
   public void shutdownNow() {
     stopLatch.countDown();
-    stopAndWait();
+    Services.stopAndWait(this);
   }
 
   /**

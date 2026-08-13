@@ -74,6 +74,7 @@ import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
@@ -149,8 +150,10 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Path;
@@ -349,31 +352,31 @@ public class TestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
 
     txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
+    Services.startAndWait(txService);
 
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataAdmin = injector.getInstance(MetadataAdmin.class);
     metadataStorage.createIndex();
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    Services.startAndWait(metadataService);
 
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    Services.startAndWait(dsOpService);
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    Services.startAndWait(metricsCollectionService);
     programScheduler = injector.getInstance(Scheduler.class);
     if (programScheduler instanceof Service) {
-      ((Service) programScheduler).startAndWait();
+      Services.startAndWait((Service) programScheduler);
     }
 
     testManager = injector.getInstance(UnitTestManager.class);
@@ -411,12 +414,12 @@ public class TestBase {
     messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
-    previewHttpServer.startAndWait();
+    Services.startAndWait(previewHttpServer);
     fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
     lineageAdmin = injector.getInstance(LineageAdmin.class);
-    metadataSubscriberService.startAndWait();
+    Services.startAndWait(metadataSubscriberService);
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
-    artifactLocalizerService.startAndWait();
+    Services.startAndWait(artifactLocalizerService);
     // NOTE: As the artifact localizer client does not use service discovery for port discovery,
     // We need to set the port after starting the localizer service.
     cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
@@ -426,16 +429,16 @@ public class TestBase {
         .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
 
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
-    previewRunnerManager.startAndWait();
+    Services.startAndWait(previewRunnerManager);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessorService.startAndWait();
+    Services.startAndWait(appFabricProcessorService);
     preferencesService = injector.getInstance(PreferencesService.class);
 
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
+      Services.startAndWait((Service) scheduler);
     }
     if (scheduler instanceof CoreSchedulerService) {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
@@ -604,7 +607,10 @@ public class TestBase {
       throw new IOException("Failed to get resource for " + infileName);
     }
     File outFile = new File(outDir, infileName);
-    ByteStreams.copy(Resources.newInputStreamSupplier(url), Files.newOutputStreamSupplier(outFile));
+    try (InputStream in = url.openStream();
+         FileOutputStream out = new FileOutputStream(outFile)) {
+      ByteStreams.copy(in, out);
+    }
   }
 
   /**
@@ -617,11 +623,11 @@ public class TestBase {
     }
 
     if (previewRunnerManager instanceof Service) {
-      previewRunnerManager.stopAndWait();
+      Services.stopAndWait((Service) previewRunnerManager);
     }
 
-    artifactLocalizerService.stopAndWait();
-    previewHttpServer.stopAndWait();
+    Services.stopAndWait(artifactLocalizerService);
+    Services.stopAndWait(previewHttpServer);
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
@@ -636,23 +642,27 @@ public class TestBase {
     namespaceAdmin.delete(NamespaceId.DEFAULT);
 
     if (programScheduler instanceof Service) {
-      ((Service) programScheduler).stopAndWait();
+      Services.stopAndWait((Service) programScheduler);
     }
-    metricsCollectionService.stopAndWait();
+    Services.stopAndWait(metricsCollectionService);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
+      Services.stopAndWait((Service) scheduler);
     }
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    metadataService.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    Closeables.closeQuietly(metadataStorage);
-    txService.stopAndWait();
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(dsOpService);
+    Services.stopAndWait(metadataService);
+    Services.stopAndWait(metadataSubscriberService);
+    try {
+      Closeables.close(metadataStorage, true);
+    } catch (IOException e) {
+      // Ignored since swallowIOException is true
+    }
+    Services.stopAndWait(txService);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
-    appFabricServer.stopAndWait();
-    appFabricProcessorService.stopAndWait();
+    Services.stopAndWait(appFabricServer);
+    Services.stopAndWait(appFabricProcessorService);
   }
 
   protected MetricsManager getMetricsManager() {

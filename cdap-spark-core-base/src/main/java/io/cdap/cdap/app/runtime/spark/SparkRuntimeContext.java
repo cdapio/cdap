@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
@@ -50,6 +50,7 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -115,7 +116,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   @Override
   public void close() {
     super.close();
-    Closeables.closeQuietly(closeable);
+    try {
+      Closeables.close(closeable, true);
+    } catch (IOException e) {
+      // Ignored since swallowIOException is true
+    }
   }
 
   @Override
@@ -264,7 +269,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(SparkRuntimeContext.class)
+    return MoreObjects.toStringHelper(SparkRuntimeContext.class)
       .add("id", getProgram().getId())
       .add("runId", getRunId())
       .toString();
