@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.worker;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.AppWithMisbehavedDataset;
 import io.cdap.cdap.AppWithWorker;
@@ -118,12 +119,16 @@ public class WorkerProgramRunnerTest {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
-    txService.startAsync().awaitRunning();
+    if (txService.state() == Service.State.NEW) {
+      txService.startAsync().awaitRunning();
+    }
   }
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAsync().awaitTerminated();
+    if (txService != null && txService.state() == Service.State.RUNNING) {
+      txService.stopAsync().awaitTerminated();
+    }
     AppFabricTestHelper.shutdown();
   }
 

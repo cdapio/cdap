@@ -87,7 +87,9 @@ public class AuditPublishTest {
     Injector injector = AppFabricTestHelper.getInjector(cConf, new AuditModule());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAsync().awaitRunning();
+      if (((Service) messagingService).state() == Service.State.NEW) {
+        ((Service) messagingService).startAsync().awaitRunning();
+      }
     }
     auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
   }
@@ -95,7 +97,9 @@ public class AuditPublishTest {
   @AfterClass
   public static void stop() {
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAsync().awaitTerminated();
+      if (((Service) messagingService).state() == Service.State.RUNNING) {
+        ((Service) messagingService).stopAsync().awaitTerminated();
+      }
     }
     AppFabricTestHelper.shutdown();
   }
@@ -131,7 +135,7 @@ public class AuditPublishTest {
     expectedMetadataChangeEntities.addAll(expectedCreateEntities);
 
     // TODO (CDAP-14733): Scheduler doesn't publish CREATE audit events. Once it does, we must expect them here, too.
-    for (String schedule: spec.getProgramSchedules().keySet()) {
+    for (String schedule : spec.getProgramSchedules().keySet()) {
       expectedMetadataChangeEntities.add(appId.schedule(schedule));
     }
 

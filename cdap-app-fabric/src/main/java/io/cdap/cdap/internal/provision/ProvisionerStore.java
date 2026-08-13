@@ -106,6 +106,25 @@ public final class ProvisionerStore {
   }
 
   /**
+   * Persists the task info unless the existing task info is already in the CANCELLED state.
+   *
+   * @param taskInfo {@link ProvisioningTaskInfo} to be persisted.
+   * @return the task info that was stored, or the existing task info if it was already CANCELLED.
+   * @throws IOException if there is an issue writing to the underlying structured table.
+   */
+  public ProvisioningTaskInfo putTaskInfoIfNotCancelled(final ProvisioningTaskInfo taskInfo) throws IOException {
+    return TransactionRunners.run(txRunner, context -> {
+      ProvisioningTaskInfo currentState = fetchTaskInfo(context, taskInfo.getTaskKey());
+      if (currentState != null
+          && currentState.getProvisioningOp().getStatus() == ProvisioningOp.Status.CANCELLED) {
+        return currentState;
+      }
+      persistTaskInfo(context, taskInfo);
+      return taskInfo;
+    }, IOException.class);
+  }
+
+  /**
    * Delete provisioning task info for the corresponding program run id.
    *
    * @param runId to delete.

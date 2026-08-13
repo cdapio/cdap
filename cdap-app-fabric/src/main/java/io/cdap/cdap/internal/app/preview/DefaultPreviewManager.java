@@ -191,7 +191,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
     StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class));
-    metricsCollectionService.startAsync();
+    if (metricsCollectionService.state() == State.NEW) {
+      metricsCollectionService.startAsync();
+    }
     logAppender = previewInjector.getInstance(LogAppender.class);
     logAppender.start();
     LoggingContextAccessor.setLoggingContext(
@@ -202,7 +204,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     logSubscriberService.startAsync().awaitRunning();
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     dataSubscriberService.startAsync().awaitRunning();
-    previewDataCleanupService.startAsync().awaitRunning();
+    if (previewDataCleanupService.state() == State.NEW) {
+      previewDataCleanupService.startAsync().awaitRunning();
+    }
   }
 
   @Override

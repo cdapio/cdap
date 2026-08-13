@@ -148,8 +148,10 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     synchronized (this) {
       taskContextProvider = Optional.ofNullable(taskContextProvider)
           .orElseGet(taskContextProviderSupplier::get);
+      if (taskContextProvider.state() == Service.State.NEW) {
+        taskContextProvider.startAsync().awaitRunning();
+      }
     }
-    taskContextProvider.startAsync().awaitRunning();
     return taskContextProvider;
   }
 

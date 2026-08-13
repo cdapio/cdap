@@ -113,8 +113,8 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
-    Store store = getInjector().getInstance(Store.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
+    final Store store = getInjector().getInstance(Store.class);
+    final LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
@@ -278,8 +278,8 @@ public class LineageAdminTest extends AppFabricTestBase {
       new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
-    Store store = getInjector().getInstance(Store.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
+    final Store store = getInjector().getInstance(Store.class);
+    final LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -316,8 +316,8 @@ public class LineageAdminTest extends AppFabricTestBase {
       new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
-    Store store = getInjector().getInstance(Store.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
+    final Store store = getInjector().getInstance(Store.class);
+    final LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -384,8 +384,8 @@ public class LineageAdminTest extends AppFabricTestBase {
       new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
-    Store store = getInjector().getInstance(Store.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
+    final Store store = getInjector().getInstance(Store.class);
+    final LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -466,7 +466,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
+    final LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     ApplicationId testApp = NamespaceId.DEFAULT.app("testApp");
     ProgramId workflowId = testApp.workflow("wf1");
@@ -509,7 +509,7 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     ProgramRunId workflow = workflowId.run(RunIds.generate(System.currentTimeMillis()).getId());
 
-    ProgramRunId run5 = program5.run(RunIds.generate(System.currentTimeMillis()).getId());
+    final ProgramRunId run5 = program5.run(RunIds.generate(System.currentTimeMillis()).getId());
 
     addRuns(store, workflow);
     // only mr and spark can be inner programs
@@ -640,7 +640,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
+    final LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     ApplicationId testApp = NamespaceId.DEFAULT.app("testLocalDatasets");
     ProgramId workflowId = testApp.workflow("wf1");
@@ -667,12 +667,12 @@ public class LineageAdminTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap()
       );
 
-    Store store = getInjector().getInstance(Store.class);
+    final Store store = getInjector().getInstance(Store.class);
     ApplicationMeta meta = new ApplicationMeta(appSpec.getName(), appSpec,
                                                new ChangeDetail(null, null, null,
                                                                 System.currentTimeMillis()));
     store.addLatestApplication(testApp, meta);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
+    final LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D1 -|
     //                      |-> MR1 -> LOCAL1 -> MR2 -> LOCAL2 -> SPARK -> D3
@@ -685,8 +685,8 @@ public class LineageAdminTest extends AppFabricTestBase {
     ProgramRunId workflow = workflowId.run(RunIds.generate(System.currentTimeMillis()).getId());
 
     // local datasets always end with workflow run id
-    DatasetId localDataset1 = NamespaceId.DEFAULT.dataset("localDataset1" + workflow.getRun());
-    DatasetId localDataset2 = NamespaceId.DEFAULT.dataset("localDataset2" + workflow.getRun());
+    final DatasetId localDataset1 = NamespaceId.DEFAULT.dataset("localDataset1" + workflow.getRun());
+    final DatasetId localDataset2 = NamespaceId.DEFAULT.dataset("localDataset2" + workflow.getRun());
 
     addRuns(store, workflow);
     // only mr and spark can be inner programs
@@ -785,17 +785,17 @@ public class LineageAdminTest extends AppFabricTestBase {
    * @param runs list of runs to be added
    */
   private void addWorkflowRuns(Store store, String workflowName, String workflowRunId, ProgramRunId... runs) {
-    Map<String, String> workflowIDMap = new HashMap<>();
+    Map<String, String> workflowIdMap = new HashMap<>();
     Map<String, String> emptyMap = ImmutableMap.of();
-    workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowName);
-    workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
-    workflowIDMap.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    workflowIdMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowName);
+    workflowIdMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
+    workflowIdMap.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
     for (ProgramRunId run : runs) {
-      workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, run.getProgram());
+      workflowIdMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, run.getProgram());
       ArtifactId artifactId = run.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
-      store.setProvisioning(run, emptyMap, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
+      store.setProvisioning(run, emptyMap, workflowIdMap, AppFabricTestHelper.createSourceId(++sourceId), artifactId);
       store.setProvisioned(run, 0, AppFabricTestHelper.createSourceId(++sourceId));
-      store.setStart(run, null, workflowIDMap, AppFabricTestHelper.createSourceId(++sourceId));
+      store.setStart(run, null, workflowIdMap, AppFabricTestHelper.createSourceId(++sourceId));
       store.setRunning(run, RunIds.getTime(run.getRun(), TimeUnit.SECONDS) + 1, null,
                        AppFabricTestHelper.createSourceId(++sourceId));
     }

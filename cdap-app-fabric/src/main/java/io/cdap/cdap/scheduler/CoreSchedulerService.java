@@ -60,6 +60,7 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -146,7 +147,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   // This should only be called at startup.
   private void cleanupJobs() {
     try {
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, cConf);
         try (CloseableIterator<Job> jobIter = jobQueue.fullScan()) {
           LOG.info("Cleaning up jobs in state {}.", Job.State.PENDING_LAUNCH);

@@ -99,6 +99,7 @@ public abstract class JobQueueTableTest {
                                                       Job.State.PENDING_TRIGGER, 0L);
 
   protected abstract TransactionRunner getTransactionRunner();
+
   protected abstract CConfiguration getCConf();
 
   private final TransactionRunner transactionRunner = getTransactionRunner();
@@ -300,7 +301,7 @@ public abstract class JobQueueTableTest {
       Assert.assertEquals(0, getAllJobs(jobQueue, false).size());
     });
 
-     // Add concurrent notifications to SCHED3
+    // Add concurrent notifications to SCHED3
     int numThreads = 5;
     addConcurrentNotifications(numThreads, SCHED3, (Callable<Void>) () -> null);
 

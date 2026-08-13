@@ -528,11 +528,10 @@ public abstract class AppFabricTestBase {
     }
     // Note: we purposefully do not check for empty string and let it pass as the header because we want to test the
     // behavior where plugin classes header is set to empty string. This is what is passed by the UI. For more
-    // details see: https://issues.cask.co/browse/CDAP-14578
     if (pluginClassesJson != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJson);
     }
-    builder.withBody(artifactContents::getInput);
+    builder.withBody((io.cdap.common.ContentProvider<? extends InputStream>) artifactContents::getInput);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 
@@ -623,8 +622,8 @@ public abstract class AppFabricTestBase {
     return response;
   }
 
-  private HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
-                                     AppRequest<?> appRequest) throws Exception {
+  protected HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
+      AppRequest<?> appRequest) throws Exception {
     requestBuilder.addHeader(Constants.Gateway.API_KEY, "api-key-example");
     requestBuilder.addHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON);
     requestBuilder.withBody(GSON.toJson(appRequest));
@@ -1714,8 +1713,7 @@ public abstract class AppFabricTestBase {
    * Returns the first value of the given header from the given response. If there is no such header, {@code null} is
    * returned.
    */
-  @Nullable
-  private static String getFirstHeaderValue(HttpResponse response, String name) {
+  protected static String getFirstHeaderValue(HttpResponse response, String name) {
     return response.getHeaders().get(name).stream().findFirst().orElse(null);
   }
 

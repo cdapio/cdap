@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.SleepingWorkflowApp;
@@ -77,12 +78,16 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAsync().awaitRunning();
+    if (provisioningService.state() == Service.State.NEW) {
+      provisioningService.startAsync().awaitRunning();
+    }
   }
 
   @AfterClass
   public static void shutdown() {
-    provisioningService.stopAsync().awaitTerminated();
+    if (provisioningService != null && provisioningService.state() == Service.State.RUNNING) {
+      provisioningService.stopAsync().awaitTerminated();
+    }
   }
 
   @Test
@@ -241,7 +246,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     ProgramId programIdV1 = new NamespaceId(TEST_NAMESPACE1).app(SleepingWorkflowApp.NAME, appDetail.getAppVersion())
       .workflow(SleepWorkflow.NAME);
     // starting program v1
-    startProgram(programIdV1, HttpResponseStatus.OK.code());
+    startProgram(programIdV1, Collections.singletonMap("sleep.ms", "60000"), HttpResponseStatus.OK.code());
     waitState(programIdV1, "STARTING");
 
     // deploy the app again for a new version
@@ -257,7 +262,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     startProgram(programIdV1, HttpResponseStatus.BAD_REQUEST.code());
 
     // start/stop the latest version program should be ok
-    startProgram(programIdV2);
+    startProgram(programIdV2, Collections.singletonMap("sleep.ms", "60000"), HttpResponseStatus.OK.code());
     waitState(programIdV2, "STARTING");
     stopProgram(programIdV2);
     waitState(programIdV2, "STOPPED");

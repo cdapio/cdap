@@ -39,6 +39,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -205,22 +206,14 @@ public abstract class ProvisioningTask implements RepeatedTask {
     try {
       // Stop retrying if we are interrupted. Otherwise, retry on every exception, up to the retry limit
       return Retries.callWithInterruptibleRetries(
-          () -> TransactionRunners.run(transactionRunner, context -> {
-            ProvisioningTaskInfo currentState = provisionerStore.getTaskInfo(taskKey);
-            // if the state is cancelled, don't write anything and transition to the end subtask.
-            if (currentState != null && currentState.getProvisioningOp().getStatus()
-                == ProvisioningOp.Status.CANCELLED) {
-              return currentState;
-            }
-            provisionerStore.putTaskInfo(taskInfo);
-            return taskInfo;
-          }), retryStrategy, t -> true);
-    } catch (RuntimeException e) {
+          () -> provisionerStore.putTaskInfoIfNotCancelled(taskInfo),
+          retryStrategy, t -> true);
+    } catch (RuntimeException | IOException e) {
       LOG.error("{} task failed in to save state for {} subtask. The task will be failed.",
           taskInfo.getProvisioningOp().getType(), taskInfo.getProvisioningOp().getStatus(), e);
       // this is thrown if we ran out of retries
       handleStateSaveFailure(taskInfo, e);
-      throw e;
+      throw (e instanceof RuntimeException) ? (RuntimeException) e : new RuntimeException(e);
     }
   }
 

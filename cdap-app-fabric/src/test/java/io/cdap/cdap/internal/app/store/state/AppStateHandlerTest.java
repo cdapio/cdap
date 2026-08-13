@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.internal.app.store.state;
 
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -88,7 +89,9 @@ public class AppStateHandlerTest extends AppFabricTestBase {
 
     applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAsync().awaitRunning();
+    if (txManager.state() == Service.State.NEW) {
+      txManager.startAsync().awaitRunning();
+    }
 
     // Endpoint for all state APIs
     endpoint = "namespaces/" + NAMESPACE_1 + "/apps/" + APP_NAME + "/states/" + STATE_KEY;
@@ -103,7 +106,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
       namespaceAdmin.delete(new NamespaceId(NAMESPACE_1));
     }
 
-    if (txManager != null) {
+    if (txManager != null && txManager.state() == Service.State.RUNNING) {
       txManager.stopAsync().awaitTerminated();
     }
   }

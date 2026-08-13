@@ -130,15 +130,6 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static <T extends Service> T getService(Class<T> clazz) {
-    for (Service service : services) {
-      if (clazz.isAssignableFrom(service.getClass())) {
-        return (T) service;
-      }
-    }
-    return null;
-  }
-
   public static Injector getInjector(CConfiguration cConf, Module overrides) {
     return getInjector(cConf, null, overrides);
   }
@@ -149,6 +140,15 @@ public class AppFabricTestHelper {
       protected void configure() {
       }
     });
+  }
+
+  public static <T extends Service> T getService(Class<T> clazz) {
+    for (Service service : services) {
+      if (clazz.isAssignableFrom(service.getClass())) {
+        return (T) service;
+      }
+    }
+    return null;
   }
 
   public static synchronized Injector getInjector(CConfiguration conf, @Nullable SConfiguration sConf,
@@ -213,11 +213,9 @@ public class AppFabricTestHelper {
    */
   public static void shutdown() {
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
+      // Ignored
     }
 
     if (services != null) {

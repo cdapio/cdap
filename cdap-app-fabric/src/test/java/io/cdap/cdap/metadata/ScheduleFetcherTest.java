@@ -42,8 +42,8 @@ import org.junit.runners.Parameterized;
 public class ScheduleFetcherTest extends AppFabricTestBase {
   public enum ScheduleFetcherType {
     LOCAL,
-    REMOTE,
-  };
+    REMOTE
+  }
 
   private final ScheduleFetcherType fetcherType;
 
@@ -68,6 +68,8 @@ public class ScheduleFetcherTest extends AppFabricTestBase {
       case REMOTE:
         fetcher = AppFabricTestBase.getInjector().getInstance(RemoteScheduleFetcher.class);
         break;
+      default:
+        throw new IllegalArgumentException("Unknown type " + type);
     }
     return fetcher;
   }

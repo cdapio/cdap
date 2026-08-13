@@ -40,6 +40,7 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
    */
   public static class SomeWorkflow extends AbstractWorkflow {
     public static final String NAME = "SampleWorkflow";
+
     @Override
     public void configure() {
       setName(NAME);
@@ -65,6 +66,7 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
    */
   public static class AnotherWorkflow extends AbstractWorkflow {
     public static final String NAME = "AnotherWorkflow";
+
     @Override
     public void configure() {
       setName(NAME);
