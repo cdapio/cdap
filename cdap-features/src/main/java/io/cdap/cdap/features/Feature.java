@@ -20,9 +20,12 @@ import io.cdap.cdap.api.PlatformInfo;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 
 /**
- * Defines Features Flags to be used in CDAP. Features take the version that they were introduced as
- * a first parameter. Optionally they can take a second parameter to define their default behavior
- * if they are not present in configuration. By default, features default to enabled after they are
+ * Defines Features Flags to be used in CDAP. Features take the version that
+ * they were introduced as
+ * a first parameter. Optionally they can take a second parameter to define
+ * their default behavior
+ * if they are not present in configuration. By default, features default to
+ * enabled after they are
  * introduced, and disabled before they were introduced
  */
 public enum Feature {
@@ -45,8 +48,8 @@ public enum Feature {
   NAMESPACED_SERVICE_ACCOUNTS("6.10.0"),
   WRANGLER_KRYO_SERIALIZATION("6.10.1"),
   SOURCE_CONTROL_MANAGEMENT_GITLAB_BITBUCKET("6.10.1"),
-  DATAPLANE_AUDIT_LOGGING("6.10.1");
-
+  DATAPLANE_AUDIT_LOGGING("6.10.1"),
+  WRANGLER_JEXL_ALLOWLIST("6.12.0", false);
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
   private final String featureFlagString;
@@ -62,9 +65,12 @@ public enum Feature {
   }
 
   /**
-   * Returns if the feature flag should be enabled. First it checks featureFlagProvider to see if
-   * the feature flag has been defined. If not defined then it uses when the feature flag was first
-   * introduced, if the platform version is before or equal to when it was introduced it returns
+   * Returns if the feature flag should be enabled. First it checks
+   * featureFlagProvider to see if
+   * the feature flag has been defined. If not defined then it uses when the
+   * feature flag was first
+   * introduced, if the platform version is before or equal to when it was
+   * introduced it returns
    * false, otherwise it returns defaultAfterIntroduction.
    *
    * @param featureFlagsProvider provides which feature flags have been set.
