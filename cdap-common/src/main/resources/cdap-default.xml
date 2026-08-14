@@ -6774,4 +6774,12 @@
     </description>
   </property>
 
+  <property>
+    <name>feature.wrangler.jexl.allowlist.enabled</name>
+    <value>false</value>
+    <description>
+      If true, admins can define allowlist for JEXL expressions in Wrangler directives.
+      Only the whitelisted classes, methods and properties will be allowed in the JEXL scripts.
+    </description>
+  </property>
 </configuration>
