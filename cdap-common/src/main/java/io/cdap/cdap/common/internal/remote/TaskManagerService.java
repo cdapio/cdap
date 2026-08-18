@@ -40,7 +40,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Guice-managed service that runs the Centralized Task Manager HTTP Server (Netty Proxy POC).
+ * TaskManagerService runs the Centralized Netty Proxy server inside the Task Manager pod.
+ *
+ * <p>Architectural Role:
+ * <ul>
+ *   <li>Binds an internal TCP port (default {@code 11025}) to receive Studio validation
+ *       and pipeline deployment requests from AppFabric.</li>
+ *   <li>Sets up a raw Netty 4 {@link io.netty.bootstrap.ServerBootstrap} with dedicated Boss
+ *       (acceptor) and Worker (I/O) event loop groups.</li>
+ *   <li>Configures the {@link io.netty.channel.ChannelPipeline} with {@link io.netty.handler.codec.http.HttpServerCodec}
+ *       and {@link ProxyFrontendHandler}.</li>
+ *   <li>NOTE: This service intentionally does NOT install {@code HttpObjectAggregator}.
+ *       Omitting the aggregator enables zero-copy, streaming {@link io.netty.buffer.ByteBuf} forwarding
+ *       directly between AppFabric and the target Task Worker pod without JVM heap copies.</li>
+ * </ul>
  */
 public class TaskManagerService extends AbstractIdleService {
 
@@ -52,6 +65,7 @@ public class TaskManagerService extends AbstractIdleService {
   private EventLoopGroup workerGroup;
   private ChannelFuture channelFuture;
 
+  // In-memory routing registry mapping pod IP:Port -> PodState (leased namespace and occupancy count)
   private final Map<String, PodState> podRegistry = new ConcurrentHashMap<>();
 
   private final DiscoveryServiceClient discoveryServiceClient;

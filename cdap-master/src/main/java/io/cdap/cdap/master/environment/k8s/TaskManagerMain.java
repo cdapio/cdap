@@ -36,7 +36,15 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Main entry point for the standalone Task Manager Service on Kubernetes.
+ * Main entry point for the standalone Task Manager Service (Netty Proxy) in Kubernetes.
+ *
+ * <p>Lifecycle & Architecture:
+ * <ul>
+ *   <li>Bootstrapped as an independent Master container pod ({@code cdap-taskmanager}) in GKE.</li>
+ *   <li>Configures Guice dependency injection with {@link TaskManagerServiceModule} to start the
+ *       underlying {@link TaskManagerService} (Netty Proxy HTTP server).</li>
+ *   <li>Wires standard CDAP logging context under {@code task-manager} for Cloud Logging.</li>
+ * </ul>
  */
 public class TaskManagerMain extends AbstractServiceMain<EnvironmentOptions> {
 

@@ -143,6 +143,9 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
+          // STEP 1: Determine the Effective Tenant Namespace
+          // For SystemAppTask execution (e.g. system services running user pipeline tasks),
+          // unwrap the embedded namespace so the task worker executes under the user's tenant context.
           String namespace = runnableTaskRequest.getNamespace();
           if ("system".equals(namespace) && runnableTaskRequest.getParam() != null
               && runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
@@ -154,12 +157,19 @@ public class RemoteTaskExecutor {
             }
           }
           String routingKey = namespace;
+
+          // STEP 2: Circuit Breaker / Fallback Guard
+          // If the TaskManager Proxy is completely unreachable (e.g., during proxy rolling restart or outage)
+          // for more than 60 seconds, fallback to direct Twill random worker discovery to ensure pipeline
+          // operations never become permanently stuck.
           if (System.currentTimeMillis() - startTime > fallbackTimeoutMs && !proxyReachable.get()) {
               LOG.warn("shruzard - TaskManager Proxy unreachable for {}s! "
                        + "Bypassing proxy and falling back to direct Worker routing!", fallbackTimeoutMs / 1000);
-              routingKey = null; // Setting to null triggers CDAP's native RandomEndpoint discovery in RemoteClient
+              routingKey = null; // null routingKey triggers CDAP's native RandomEndpoint discovery in RemoteClient
           }
 
+          // STEP 3: Construct Outbound HTTP Request with Namespace Header
+          // Inject X-CDF-Namespace so the Netty Proxy can route this request to a warm pod leased to this namespace.
           HttpRequest.Builder requestBuilder = remoteClient
               .requestBuilder(HttpMethod.POST, workerUrl, routingKey)
               .addHeader("X-CDF-Namespace", namespace)
@@ -187,6 +197,9 @@ public class RemoteTaskExecutor {
             SecurityRequestContext.setUserCredential(currentCredential);
           }
 
+          // STEP 4: Handle Responses & Retryable Exceptions
+          // If proxy/worker returned 429 Too Many Requests (cluster saturated), throw RetryableException
+          // so CDAP's Retries framework retries with exponential backoff until a lease slot opens.
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
                 String.format("Task Worker cluster is fully saturated. "

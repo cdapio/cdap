@@ -20,15 +20,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 
 /**
- * Guice Module for Task Manager Service.
+ * Guice Module that binds {@link TaskManagerService} in Singleton scope for dependency injection.
  */
 public class TaskManagerServiceModule extends AbstractModule {
 
   @Override
   protected void configure() {
-
-    
-    // Bind the Netty Proxy service itself
+    // Bind the Netty Proxy service as a singleton
     bind(TaskManagerService.class).in(Scopes.SINGLETON);
   }
 }

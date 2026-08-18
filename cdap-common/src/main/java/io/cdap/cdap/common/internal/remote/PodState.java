@@ -17,7 +17,17 @@
 package io.cdap.cdap.common.internal.remote;
 
 /**
- * Tracks the routing state and load for a given worker pod IP.
+ * PodState represents the in-memory routing and lease status of an individual Task Worker pod.
+ *
+ * <p>It tracks:
+ * <ul>
+ *   <li>{@code leasedNamespace}: The namespace currently pinned to this physical worker pod.
+ *       Only requests belonging to this namespace may execute on this pod.</li>
+ *   <li>{@code inflightRequests}: The number of active concurrent tasks running on this pod
+ *       (governed up to 10 concurrent requests).</li>
+ *   <li>{@code lastActivityTime}: Timestamp of the most recent request completion, used to calculate
+ *       idle TTL eviction (35s) so idle pods can be reclaimed by other namespaces.</li>
+ * </ul>
  */
 public class PodState {
     private String leasedNamespace;
@@ -27,9 +37,9 @@ public class PodState {
     public PodState(String leasedNamespace, int inflightRequests) {
         this.leasedNamespace = leasedNamespace;
         this.inflightRequests = inflightRequests;
-        // Subtract 40 seconds worth of nanos to instantly trigger predictions on boot
-        this.lastActivityTime = System.nanoTime() 
-            - java.util.concurrent.TimeUnit.SECONDS.toNanos(40);
+        // Initialize lastActivityTime with a 40s offset so a newly discovered pod is immediately eligible
+        // to be claimed by any namespace upon startup.
+        this.lastActivityTime = System.currentTimeMillis() - 40000L;
     }
 
     public String getLeasedNamespace() {

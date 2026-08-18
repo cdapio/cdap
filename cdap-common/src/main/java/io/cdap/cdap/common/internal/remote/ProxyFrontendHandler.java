@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import io.netty.handler.ssl.SslContext;
@@ -52,13 +51,29 @@ import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * ProxyFrontendHandler intercepts inbound HTTP requests from AppFabric, discovers available
+ * Task Worker pods, selects a warm or idle worker pod based on the target namespace,
+ * and streams the request payload across an outbound Netty TCP socket to the chosen worker.
+ *
+ * <p>Key Responsibilities:
+ * <ul>
+ *   <li>Namespace-Aware Routing: Matches requests to pods already warm for the target namespace
+ *       or claims an idle pod (up to 10 concurrent requests per pod).</li>
+ *   <li>Outbound Socket Connection: Lazily opens an asynchronous Netty TCP socket to the chosen
+ *       Task Worker pod and sets up the outbound SSL/HTTP pipeline.</li>
+ *   <li>Bidirectional Backpressure: Pauses inbound reads while connecting or when outbound socket
+ *       buffers are full, preventing out-of-memory errors under high traffic spikes.</li>
+ *   <li>Zero-Copy Streaming: Forwards raw {@link io.netty.buffer.ByteBuf} chunks without JVM heap
+ *       copies, managing explicit reference counting ({@code retain()}/{@code release()}).</li>
+ * </ul>
+ */
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFrontendHandler.class);
 
     private final Map<String, PodState> podRegistry;
     private final DiscoveryServiceClient discoveryServiceClient;
-    private final Iterable<Discoverable> discoverables;
     private Channel outboundChannel;
     private boolean connecting = false;
     private boolean rejecting = false;
@@ -67,21 +82,6 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     public ProxyFrontendHandler(Map<String, PodState> podRegistry, DiscoveryServiceClient discoveryServiceClient) {
         this.podRegistry = podRegistry;
         this.discoveryServiceClient = discoveryServiceClient;
-
-        // Enable live Kubernetes Endpoints streaming if supported by the discovery client
-        try {
-            java.lang.reflect.Method method = discoveryServiceClient.getClass().getMethod("enableEndpointsWatcher");
-            method.invoke(discoveryServiceClient);
-            LOG.info("shruzard - Enabled Kubernetes Endpoints watcher on discovery service {}",
-                     discoveryServiceClient.getClass().getSimpleName());
-        } catch (NoSuchMethodException ignored) {
-            // Normal for discovery services without K8s Endpoints support (e.g. In-memory / ZK)
-        } catch (Exception e) {
-            LOG.warn("shruzard - Failed to invoke enableEndpointsWatcher on discovery service", e);
-        }
-
-        // Pre-warm the Discovery client so its WatcherThreads spawn immediately on Proxy startup
-        this.discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
     }
 
     @Override
@@ -89,40 +89,36 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest) {
             HttpRequest req = (HttpRequest) msg;
 
-            // 0. Synchronous K8s Discovery (Zero-Stale State)
-            // Completely non-blocking on the EventLoop: Twill's DiscoveryServiceClient
-            // evaluates a local memory cache backed by a push-based ZooKeeper watch.
-            // (Iterates the pre-warmed discoverables cache)
+            // STEP 0: Discover Live Task Worker Pods (Zero-Stale State)
+            // Twill's DiscoveryServiceClient evaluates an in-memory discoverables cache backed by
+            // Kubernetes Endpoints watch events, giving sub-millisecond pod discovery without DNS lag.
+            Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
             Set<String> activePods = new HashSet<>();
             for (Discoverable d : discoverables) {
-                String host = d.getSocketAddress().getHostString();
-                int port = d.getSocketAddress().getPort();
-                activePods.add(host + ":" + port);
+                activePods.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
             }
 
+            // Sync the active discovery set with our local routing registry:
+            // Register newly discovered pods and prune terminated pods.
             for (String podIp : activePods) {
                 podRegistry.putIfAbsent(podIp, new PodState(null, 0));
             }
             podRegistry.keySet().removeIf(existingPod -> !activePods.contains(existingPod));
 
-            LOG.info("shruzard - ProxyFrontendHandler leases: [{}]",
-                podRegistry.entrySet().stream()
-                    .map(e -> e.getKey() + "="
-                        + (e.getValue().getLeasedNamespace() == null
-                        ? "null" : e.getValue().getLeasedNamespace() + "_" + e.getValue().getInflightRequests()))
-                    .collect(Collectors.joining(", ")));
-
+            // Extract target namespace from the request header (defaults to "default" if omitted)
             String targetNamespace = req.headers().get("X-CDF-Namespace");
             if (targetNamespace == null) targetNamespace = "default";
 
             String targetWorkerAddress = null;
-            // 1. Warm Match: Thread-safe scan specifically locking evaluation
+
+            // STEP 1: Warm Match Selection
+            // Look for a pod already leased to this exact namespace that has capacity (< 10 inflight tasks).
+            // Reusing warm pods avoids expensive Workload Identity / ArtifactLocalizer re-authentication.
             for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
-                String workerAddr = entry.getKey();
                 PodState state = entry.getValue();
                 synchronized (state) {
                     if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
-                        targetWorkerAddress = workerAddr;
+                        targetWorkerAddress = entry.getKey();
                         state.setInflightRequests(state.getInflightRequests() + 1);
                         LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
                                  + "for '{}' at {}. Occupancy: {}", 
@@ -132,24 +128,21 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 }
             }
 
-            // 2. Idle Choice: Thread-safe claim of an unleased pod, 
-            // OR an expired pod (35s predicted timeout avoiding clock drift)
+            // STEP 2: Idle Pod Claiming
+            // If no warm pod has capacity, claim an unleased pod or an idle pod whose lease expired (35s TTL).
             if (targetWorkerAddress == null) {
                 for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
-                    String workerAddr = entry.getKey();
                     PodState state = entry.getValue();
-
                     synchronized (state) {
                         boolean isUnleased = (state.getLeasedNamespace() == null 
                             || state.getLeasedNamespace().isEmpty());
                         boolean isExpiredIdle = (state.getInflightRequests() == 0 
-                            && (System.nanoTime() - state.getLastActivityTime() 
-                                > java.util.concurrent.TimeUnit.SECONDS.toNanos(35)));
+                            && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
                         
                         if (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle)) {
-                            targetWorkerAddress = workerAddr;
+                            targetWorkerAddress = entry.getKey();
                             state.setLeasedNamespace(targetNamespace);
-                            state.setInflightRequests(state.getInflightRequests() + 1);
+                            state.setInflightRequests(1);
                             LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
                                      + "(Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
                                 isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
@@ -159,7 +152,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 }
             }
 
-            // 3. Busy Rejection: All pods saturated
+            // STEP 3: Saturation Rejection (HTTP 429)
+            // If all worker pods are 100% occupied (10/10 tasks each), fail fast with HTTP 429 Too Many Requests.
             if (targetWorkerAddress == null) {
                 LOG.warn("shruzard - ProxyFrontendHandler: All pods saturated or leased "
                          + "incorrectly. Rejecting request for namespace '{}'", targetNamespace);
@@ -176,10 +170,15 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             final String chosenWorker = targetWorkerAddress;
             String[] hostPort = targetWorkerAddress.split(":");
 
-            // Apply backpressure on client until connection established
+            // STEP 4: Establish Outbound TCP Socket to Chosen Task Worker Pod
+            // 1. Temporarily pause reading from the client (AppFabric) socket so data does not pile up in RAM
+            //    while the TCP handshake to the worker is completing.
             ctx.channel().config().setAutoRead(false);
             connecting = true;
 
+            // 2. Initialize the outbound Netty client Bootstrap.
+            //    Sharing ctx.channel().eventLoop() ensures that both inbound and outbound channels run on the same
+            //    event loop thread, guaranteeing thread safety without thread context-switching overhead.
             Bootstrap b = new Bootstrap();
             b.group(ctx.channel().eventLoop())
              .channel(NioSocketChannel.class)
@@ -189,31 +188,39 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
                      try {
+                         // Attach SSL handler for internal TLS encrypted communication with the worker pod
                          SslContext sslCtx = SslContextBuilder.forClient()
                              .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
                          p.addLast(sslCtx.newHandler(ch.alloc(), hostPort[0], Integer.parseInt(hostPort[1])));
                      } catch (Exception e) {
                          LOG.error("shruzard - Failed to initialize SSL for outbound proxy", e);
                      }
+                     // HTTP codec for encoding requests to worker and decoding responses from worker
                      p.addLast(new HttpClientCodec());
+                     // Attach backend handler to stream worker responses back to AppFabric
                      p.addLast(new ProxyBackendHandler(ctx.channel(), podRegistry, chosenWorker));
                  }
              });
 
+            // 3. Initiate non-blocking asynchronous TCP connect to the Task Worker IP and Port
             ChannelFuture f = b.connect(hostPort[0], Integer.parseInt(hostPort[1]));
             outboundChannel = f.channel();
 
+            // 4. Register listener to handle connection success or failure
             f.addListener((ChannelFutureListener) future -> {
                 connecting = false;
                 if (future.isSuccess()) {
+                    // Flush any request headers/chunks that arrived while TCP connection was being negotiated
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
                         outboundChannel.write(pendingMsg);
                         pendingMsg = pendingMessages.poll();
                     }
                     outboundChannel.flush();
+                    // Resume reading remaining body chunks from the client
                     ctx.channel().config().setAutoRead(true);
                 } else {
+                    // If connection failed (worker crashed/terminated), evict from registry and release buffers
                     LOG.warn("shruzard - ProxyFrontendHandler: Failed to connect to backend worker {}. "
                              + "Evicting from registry.", chosenWorker);
                     podRegistry.remove(chosenWorker);
@@ -222,7 +229,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                         ReferenceCountUtil.release(pendingMsg);
                         pendingMsg = pendingMessages.poll();
                     }
-                    // Thread-safe decrement on fallback
+                    // Decrement inflight count on failed connection
                     PodState fallbackState = podRegistry.get(chosenWorker);
                     if (fallbackState != null) {
                         synchronized (fallbackState) {
@@ -233,10 +240,13 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 }
             });
 
+            // Retain the HttpRequest header message in pending queue until outbound socket connection completes
             pendingMessages.add(ReferenceCountUtil.retain(msg));
 
         } else if (msg instanceof HttpContent) {
+            // STEP 5: Stream Inbound HTTP Request Body Chunks
             if (rejecting) {
+                // If previously rejected with 429, drain and release remaining body chunks to prevent TCP reset
                 boolean isLast = msg instanceof io.netty.handler.codec.http.LastHttpContent;
                 ReferenceCountUtil.release(msg);
                 if (isLast) {
@@ -245,8 +255,10 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
             if (connecting) {
+                // Socket still connecting: queue body chunk with retained reference count
                 pendingMessages.add(ReferenceCountUtil.retain(msg));
             } else if (outboundChannel != null && outboundChannel.isActive()) {
+                // Outbound socket active: stream raw ByteBuf directly to worker without copying to Java Heap!
                 outboundChannel.writeAndFlush(ReferenceCountUtil.retain(msg));
             } else {
                 ReferenceCountUtil.release(msg);
@@ -256,6 +268,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
+        // Flush any buffered outbound data to the worker socket
         if (outboundChannel != null && outboundChannel.isActive() && !connecting) {
             outboundChannel.flush();
         }
@@ -264,6 +277,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
+        // Forward backpressure: If the client socket write buffer is full,
+        // stop reading from the backend worker socket to avoid buffer bloat.
         if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.config().setAutoRead(ctx.channel().isWritable());
         }
@@ -272,6 +287,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        // When client closes connection, cleanly close the outbound worker socket
         if (outboundChannel != null) {
             closeOnFlush(outboundChannel);
         }
@@ -283,6 +299,9 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         closeOnFlush(ctx.channel());
     }
 
+    /**
+     * Closes the channel gracefully after flushing any remaining in-flight buffers.
+     */
     static void closeOnFlush(Channel ch) {
         if (ch.isActive()) {
             ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
