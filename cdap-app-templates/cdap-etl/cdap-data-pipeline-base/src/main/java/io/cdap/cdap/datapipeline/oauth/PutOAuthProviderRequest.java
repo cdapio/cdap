@@ -27,6 +27,7 @@ public class PutOAuthProviderRequest {
   private final String clientSecret;
   private final OAuthProvider.CredentialEncodingStrategy strategy;
   private final String userAgent;
+  private final AuthType authType;
 
   public PutOAuthProviderRequest(
           String loginURL,
@@ -34,13 +35,15 @@ public class PutOAuthProviderRequest {
           String clientId,
           String clientSecret,
           OAuthProvider.CredentialEncodingStrategy strategy,
-          String userAgent) {
+          String userAgent,
+          AuthType authType) {
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.strategy = strategy;
     this.userAgent = userAgent;
+    this.authType = authType;
   }
 
   public String getLoginURL() {
@@ -65,5 +68,9 @@ public class PutOAuthProviderRequest {
 
   public String getUserAgent() {
     return userAgent;
+  }
+
+  public AuthType getAuthType() {
+    return authType;
   }
 }
