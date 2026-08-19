@@ -79,6 +79,7 @@ public class KubeDiscoveryService implements DiscoveryService,
   private static final String SERVICE_TYPE_LOAD_BALANCER = "LoadBalancer";
   private static final String SERVICE_TYPE_CLUSTER_IP = "ClusterIP";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
+  private static final String TASK_WORKER_SERVICE_NAME = "task.worker";
 
   private final String podName;
   private final String namespace;
@@ -223,7 +224,7 @@ public class KubeDiscoveryService implements DiscoveryService,
       watcherThread.addService(name);
     }
 
-    if (endpointsWatcherEnabled) {
+    if (endpointsWatcherEnabled || TASK_WORKER_SERVICE_NAME.equals(name)) {
       EndpointsWatcherThread endpointsWatcherThread = this.endpointsWatcherThread;
       if (endpointsWatcherThread == null) {
         synchronized (this) {
@@ -611,38 +612,6 @@ public class KubeDiscoveryService implements DiscoveryService,
           .findFirst()
           .map(Collections::singleton)
           .orElse(Collections.emptySet());
-    }
-
-    // Try to discover individual Pod IPs via the K8s Endpoints API for ClusterIP services
-    Set<Discoverable> discoverables = new HashSet<>();
-    try {
-      CoreV1Api api = getCoreApi();
-      V1Endpoints endpoints = api.readNamespacedEndpoints(meta.getName(), namespace, null);
-      if (endpoints != null && endpoints.getSubsets() != null) {
-        for (io.kubernetes.client.openapi.models.V1EndpointSubset subset : endpoints.getSubsets()) {
-          List<io.kubernetes.client.openapi.models.V1EndpointAddress> addresses = subset.getAddresses();
-          List<io.kubernetes.client.openapi.models.CoreV1EndpointPort> ports = subset.getPorts();
-          if (addresses != null && ports != null) {
-            for (io.kubernetes.client.openapi.models.V1EndpointAddress address : addresses) {
-              for (io.kubernetes.client.openapi.models.CoreV1EndpointPort port : ports) {
-                if (servicePorts.stream().anyMatch(sp -> sp.getPort().equals(port.getPort()))) {
-                  Discoverable d = createDiscoverable(name, address.getIp(),
-                      new V1ServicePort().port(port.getPort()), payload);
-                  if (d != null) {
-                    discoverables.add(d);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOG.warn("Failed to retrieve endpoints for service {}, falling back to service hostname", name, e);
-    }
-
-    if (!discoverables.isEmpty()) {
-      return discoverables;
     }
 
     String hostname = String.format("%s.%s", meta.getName(), namespace);
