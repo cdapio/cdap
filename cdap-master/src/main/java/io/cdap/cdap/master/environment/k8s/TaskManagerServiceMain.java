@@ -46,10 +46,10 @@ import javax.annotation.Nullable;
  *   <li>Wires standard CDAP logging context under {@code task-manager} for Cloud Logging.</li>
  * </ul>
  */
-public class TaskManagerMain extends AbstractServiceMain<EnvironmentOptions> {
+public class TaskManagerServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   public static void main(String[] args) throws Exception {
-    main(TaskManagerMain.class, args);
+    main(TaskManagerServiceMain.class, args);
   }
 
   @Override
