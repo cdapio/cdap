@@ -37,9 +37,7 @@ public class PodState {
     public PodState(String leasedNamespace, int inflightRequests) {
         this.leasedNamespace = leasedNamespace;
         this.inflightRequests = inflightRequests;
-        // Initialize lastActivityTime with a 40s offset so a newly discovered pod is immediately eligible
-        // to be claimed by any namespace upon startup.
-        this.lastActivityTime = System.currentTimeMillis() - 40000L;
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
     public String getLeasedNamespace() {
