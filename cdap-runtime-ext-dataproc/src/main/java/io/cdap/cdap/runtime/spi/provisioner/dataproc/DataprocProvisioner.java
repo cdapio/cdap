@@ -39,9 +39,11 @@ import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -73,6 +75,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   //A lock to use for cluster reuse
   private static final String REUSE_LOCK = "reuse";
 
+  private static final Pattern MACHINE_TYPE_PATTERN =
+    Pattern.compile("^[a-z\\d]+(-[a-z\\d]+)*$");
+
   private final DataprocClientFactory clientFactory;
 
   @SuppressWarnings("WeakerAccess")
@@ -89,9 +94,27 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   @Override
   public void validateProperties(Map<String, String> properties) {
     DataprocConf conf = DataprocConf.create(properties);
+    Set<String> allFlexTypes = new HashSet<>();
+    allFlexTypes.addAll(conf.getMasterFlexVmMachineTypes());
+    allFlexTypes.addAll(conf.getWorkerFlexVmMachineTypes());
+
+    for (String machineType : allFlexTypes) {
+      if (!MACHINE_TYPE_PATTERN.matcher(machineType).matches()) {
+        String errorMessage = String.format(
+          "Invalid flexible VM machine type '%s'. "
+            + "Machine types should follow standard GCP format.",
+          machineType);
+        throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorMessage)
+          .withErrorMessage(errorMessage)
+          .withErrorType(ErrorType.USER)
+          .build();
+      }
+    }
+
     boolean privateInstance = Boolean.parseBoolean(
         getSystemContext().getProperties().get(PRIVATE_INSTANCE));
-
     if (privateInstance && conf.isPreferExternalIp()) {
       // When prefer external IP is set to true it means only Dataproc external ip can be used for
       // communication, so if the instance is private, it is incapable of using external ip for
