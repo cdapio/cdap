@@ -45,6 +45,7 @@ import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,6 +86,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   private static final Set<ClusterStatus> TERMINAL_STATES =
     EnumSet.of(ClusterStatus.RUNNING, ClusterStatus.FAILED, ClusterStatus.NOT_EXISTS);
 
+  private static final Pattern MACHINE_TYPE_PATTERN =
+    Pattern.compile("^[a-z\\d]+(-[a-z\\d]+)*$");
+
   private final DataprocClientFactory clientFactory;
 
   @SuppressWarnings("WeakerAccess")
@@ -103,6 +107,24 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     DataprocConf conf = DataprocConf.create(properties);
     boolean privateInstance = Boolean.parseBoolean(
         getSystemContext().getProperties().get(PRIVATE_INSTANCE));
+    Set<String> allFlexTypes = new HashSet<>();
+    allFlexTypes.addAll(conf.getMasterFlexVmMachineTypes());
+    allFlexTypes.addAll(conf.getWorkerFlexVmMachineTypes());
+
+    for (String machineType : allFlexTypes) {
+      if (!MACHINE_TYPE_PATTERN.matcher(machineType).matches()) {
+        String errorMessage = String.format(
+          "Invalid flexible VM machine type '%s'. "
+            + "Machine types should follow standard GCP format.",
+          machineType);
+        throw new DataprocRuntimeException.Builder()
+          .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+          .withErrorReason(errorMessage)
+          .withErrorMessage(errorMessage)
+          .withErrorType(ErrorType.USER)
+          .build();
+      }
+  }
 
     if (privateInstance && conf.isPreferExternalIp()) {
       // When prefer external IP is set to true it means only Dataproc external ip can be used for
