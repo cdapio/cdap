@@ -79,7 +79,6 @@ public class KubeDiscoveryService implements DiscoveryService,
   private static final String SERVICE_TYPE_LOAD_BALANCER = "LoadBalancer";
   private static final String SERVICE_TYPE_CLUSTER_IP = "ClusterIP";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
-  private static final String TASK_WORKER_SERVICE_NAME = "task.worker";
 
   private final String podName;
   private final String namespace;
@@ -224,7 +223,7 @@ public class KubeDiscoveryService implements DiscoveryService,
       watcherThread.addService(name);
     }
 
-    if (endpointsWatcherEnabled || TASK_WORKER_SERVICE_NAME.equals(name)) {
+    if (endpointsWatcherEnabled) {
       EndpointsWatcherThread endpointsWatcherThread = this.endpointsWatcherThread;
       if (endpointsWatcherThread == null) {
         synchronized (this) {
