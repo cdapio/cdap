@@ -21,6 +21,8 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.LastHttpContent;
 
 import java.util.Map;
 import org.slf4j.Logger;
@@ -29,14 +31,16 @@ import org.slf4j.LoggerFactory;
 /**
  * ProxyBackendHandler is installed on the outbound Netty channel connected to a Task Worker pod.
  * It intercepts responses coming back from the Task Worker, synchronizes the proxy's in-memory
- * routing registry with the worker's ground-truth state, and relays the HTTP response bytes
+ * routing registry with the worker's ground-truth state upon rejections, and relays the HTTP response bytes
  * directly back to the inbound client (AppFabric).
  *
  * <p>Key Responsibilities:
  * <ul>
- *   <li>Ground-Truth State Sync & Self-Healing: Reads {@code X-Active-Tasks} and
- *       {@code X-Leased-Namespace} response headers from the worker to correct any occupancy drift
- *       and heal routing tables without distributed consensus.</li>
+ *   <li>Selective Self-Healing on Rejection: Upon {@code 409 Conflict} or {@code 429 Too Many Requests},
+ *       reads {@code X-Active-Tasks} and {@code X-Leased-Namespace} response headers from the worker to correct
+ *       any occupancy drift and heal routing tables immediately without distributed consensus.</li>
+ *   <li>Occupancy Release: Decrements the local {@code inflightRequests} counter when {@link LastHttpContent}
+ *       is received for a completed response stream.</li>
  *   <li>Streaming Relay: Writes and flushes HTTP response headers and body chunks directly to the
  *       inbound client channel (AppFabric) with zero heap copies.</li>
  *   <li>Reverse Backpressure: If AppFabric is slow to consume responses, pauses reading from the
@@ -63,43 +67,59 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpResponse) {
             HttpResponse resp = (HttpResponse) msg;
+            int statusCode = resp.status().code();
             PodState state = podRegistry.get(targetWorkerAddress);
+
             if (state != null) {
-                // STEP 1: Self-Healing & Occupancy Synchronization
-                // Task Worker pods return headers reporting their actual active task count and leased namespace.
-                // We update our local PodState with this ground truth to stay perfectly in sync.
-                synchronized (state) {
-                    String activeTasksStr = resp.headers().get("X-Active-Tasks");
-                    String leasedNamespace = resp.headers().get("X-Leased-Namespace");
-                    
-                    if (activeTasksStr != null) {
-                        try {
-                            state.setInflightRequests(Integer.parseInt(activeTasksStr));
-                        } catch (NumberFormatException e) {
+                // STEP 1: Selective Self-Healing & Occupancy Synchronization
+                // ONLY synchronize ground truth from headers when the worker explicitly rejects the request
+                // with 409 Conflict (namespace mismatch / split brain) or 429 Too Many Requests (worker saturated).
+                if (statusCode == HttpResponseStatus.CONFLICT.code()
+                        || statusCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+                    synchronized (state) {
+                        String activeTasksStr = resp.headers().get("X-Active-Tasks");
+                        String leasedNamespace = resp.headers().get("X-Leased-Namespace");
+
+                        if (activeTasksStr != null) {
+                            try {
+                                state.setInflightRequests(Integer.parseInt(activeTasksStr));
+                            } catch (NumberFormatException e) {
+                                state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+                            }
+                        } else {
                             state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
                         }
-                    } else {
-                        // If no ground truth header present, decrement inflight count by 1 on response
-                        state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+
+                        if (leasedNamespace != null) {
+                            state.setLeasedNamespace(leasedNamespace);
+                        }
+
+                        state.setLastActivityTime(System.currentTimeMillis());
+
+                        LOG.info("shruzard - ProxyBackendHandler: Self-Healed PodState after status {} for {}. "
+                                 + "Occupancy: {}, Namespace: {}",
+                            statusCode, targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
                     }
-                    
-                    if (leasedNamespace != null) {
-                        state.setLeasedNamespace(leasedNamespace);
-                    }
-                    
-                    // Update timestamp for idle TTL lease expiration tracking (35s TTL)
-                    state.setLastActivityTime(System.currentTimeMillis());
-                    
-                    if (activeTasksStr != null || leasedNamespace != null) {
-                        LOG.info("shruzard - ProxyBackendHandler: Self-Healed "
-                                 + "PodState for {}. Occupancy: {}, Namespace: {}", 
-                            targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
+                } else {
+                    // For normal responses (e.g. 200 OK), preserve local occupancy count and update activity timestamp
+                    synchronized (state) {
+                        state.setLastActivityTime(System.currentTimeMillis());
                     }
                 }
             }
+        } else if (msg instanceof LastHttpContent) {
+            // STEP 2: Release Occupancy on Stream Completion
+            // When the entire HTTP response payload finishes streaming, decrement the in-flight concurrency count.
+            PodState state = podRegistry.get(targetWorkerAddress);
+            if (state != null) {
+                synchronized (state) {
+                    state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
+                    state.setLastActivityTime(System.currentTimeMillis());
+                }
+            }
         }
-        
-        // STEP 2: Relay Worker Response to Client (AppFabric)
+
+        // STEP 3: Relay Worker Response to Client (AppFabric)
         // Forward the HTTP response header or body chunk directly to the inbound client socket.
         // Once write completes successfully, request the next chunk from the worker channel.
         inboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
