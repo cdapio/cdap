@@ -37,7 +37,7 @@ spec:
           image: us-east1-docker.pkg.dev/j145774183a931adb-tp/cdf-dev-shru/cloud-data-fusion:latest
           imagePullPolicy: Always
           args:
-            - "io.cdap.cdap.master.environment.k8s.TaskManagerMain"
+            - "io.cdap.cdap.master.environment.k8s.TaskManagerServiceMain"
             - "--env=k8s"
           env:
             - name: SERVICE_NAME

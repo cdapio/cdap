@@ -33,6 +33,11 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.common.Cancellable;
+import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import java.net.InetSocketAddress;
 import io.cdap.cdap.common.conf.Constants;
 import java.util.Set;
 import java.util.HashSet;
@@ -69,12 +74,15 @@ public class TaskManagerService extends AbstractIdleService {
   private final Map<String, PodState> podRegistry = new ConcurrentHashMap<>();
 
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final DiscoveryService discoveryService;
+  private Cancellable cancellable;
 
   @Inject
-  TaskManagerService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
+  TaskManagerService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, DiscoveryService discoveryService) {
     this.port = cConf.getInt("task.manager.port", 11025);
     this.address = cConf.get("task.manager.address", "0.0.0.0");
     this.discoveryServiceClient = discoveryServiceClient;
+    this.discoveryService = discoveryService;
 
     LOG.info("shruzard - Initializing TaskManagerService (Netty Proxy POC) on {}:{}", address, port);
   }
@@ -104,12 +112,22 @@ public class TaskManagerService extends AbstractIdleService {
      });
 
     channelFuture = b.bind(address, port).sync();
+    
+    // Announce via DiscoveryService so Kubernetes Discovery can provision K8s Service/Endpoints dynamically
+    InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+    this.cancellable = discoveryService.register(
+        ResolvingDiscoverable.of(URIScheme.HTTP.createDiscoverable(Constants.Service.TASK_MANAGER, socketAddress))
+    );
+    
     LOG.info("shruzard - TaskManagerService Proxy HTTP server started successfully at {}:{}", address, port);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("shruzard - Stopping TaskManagerService Proxy HTTP server...");
+    if (this.cancellable != null) {
+      this.cancellable.cancel();
+    }
     if (channelFuture != null) {
       channelFuture.channel().close().sync();
     }
