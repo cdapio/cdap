@@ -2051,7 +2051,7 @@ public final class Constants {
   public static final int DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET = 10;
 
   /**
-   * Used for upgrade and backwards compatability.
+   * Used for upgrade and backwards compatibility.
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
 
