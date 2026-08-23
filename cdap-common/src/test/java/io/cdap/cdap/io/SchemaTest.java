@@ -68,7 +68,7 @@ public class SchemaTest {
   /**
    * Test child.
    *
-   * @param <T> Paramter.
+   * @param <T> Parameter.
    */
   public class Child<T> extends Parent<Map<String, T>> {
     private int height;
