@@ -91,6 +91,20 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
     Retries.runWithRetries(() -> secureStoreManager.delete(namespace, name), retryStrategy);
   }
 
+
+  @Override
+  public boolean acquireLease(String namespace, String name, long timeoutMs,
+                                       String leaseHolder) throws Exception {
+    return Retries.callWithRetries(
+        () -> secureStoreManager.acquireLease(namespace, name, timeoutMs, leaseHolder), retryStrategy);
+  }
+
+  @Override
+  public boolean releaseLease(String namespace, String name, String leaseHolder) throws Exception {
+    return Retries.callWithRetries(() -> secureStoreManager.releaseLease(namespace, name, leaseHolder),
+        retryStrategy);
+  }
+
   @Override
   public void createTopic(final String topic) throws TopicAlreadyExistsException, IOException {
     if (messagingAdmin == null) {

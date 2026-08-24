@@ -19,6 +19,7 @@ package io.cdap.cdap.securestore.gcp.cloudsecretmanager;
 import com.google.cloud.secretmanager.v1.Replication;
 import com.google.cloud.secretmanager.v1.Replication.Automatic;
 import com.google.cloud.secretmanager.v1.Secret;
+import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -27,8 +28,10 @@ import com.google.protobuf.util.Timestamps;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Wrapper around a {@link io.cdap.cdap.securestore.spi.secret.SecretMetadata} which allows it to
@@ -43,15 +46,33 @@ public final class WrappedSecret {
 
   private final String namespace;
   private final SecretMetadata secretMetadata;
+  @Nullable
+  private final String etag;
+  private final Map<String, String> annotations;
 
   private WrappedSecret(String namespace, SecretMetadata secretMetadata) {
+    this(namespace, secretMetadata, null, Collections.emptyMap());
+  }
+
+  private WrappedSecret(String namespace,
+                        SecretMetadata secretMetadata,
+                        @Nullable String etag,
+                        Map<String, String> annotations) {
     this.namespace = namespace;
     this.secretMetadata = secretMetadata;
+    this.etag = etag;
+    this.annotations = annotations == null ? Collections.emptyMap() : Collections.unmodifiableMap(annotations);
   }
 
   /** Constructs a new WrappedSecret from a CDAP Secret. */
   public static WrappedSecret fromMetadata(String namespace, SecretMetadata metadata) {
     return new WrappedSecret(namespace, metadata);
+  }
+
+  /** Constructs a new WrappedSecret from a CDAP Secret and existing annotations. */
+  public static WrappedSecret fromMetadata(String namespace, SecretMetadata metadata,
+                                           Map<String, String> existingAnnotations) {
+    return new WrappedSecret(namespace, metadata, null, existingAnnotations);
   }
 
   /**
@@ -61,7 +82,7 @@ public final class WrappedSecret {
   public static WrappedSecret fromGcpSecret(Secret secret) throws InvalidSecretException {
     String namespace = getNamespace(secret);
     SecretMetadata metadata = toSecretMetadata(secret);
-    return new WrappedSecret(namespace, metadata);
+    return new WrappedSecret(namespace, metadata, secret.getEtag(), secret.getAnnotationsMap());
   }
 
   public String getNamespace() {
@@ -70,6 +91,19 @@ public final class WrappedSecret {
 
   public SecretMetadata getCdapSecretMetadata() {
     return secretMetadata;
+  }
+
+  @Nullable
+  public String getEtag() {
+    return etag;
+  }
+
+  public Map<String, String> getAnnotations() {
+    return annotations;
+  }
+
+  public String getAnnotation(String key, String defaultValue) {
+    return annotations.getOrDefault(key, defaultValue);
   }
 
   /**
@@ -82,14 +116,22 @@ public final class WrappedSecret {
       // Set replication policy to automatic (as opposed to user-managed) and do not specify a
       // CMEK (use google-managed key).
       .setReplication(Replication.newBuilder().setAutomatic(Automatic.getDefaultInstance()))
-      .setName(resourceName)
-      .putAnnotations("cdap_namespace", namespace)
+      .setName(resourceName);
+      
+    // Add existing annotations to preserve them during updates
+    builder.putAllAnnotations(annotations);
+    
+    builder.putAnnotations("cdap_namespace", namespace)
       .putAnnotations("cdap_secret_name", secretMetadata.getName())
       .putAnnotations("cdap_description", Optional.ofNullable(secretMetadata.getDescription()).orElse(""))
       .putAnnotations("cdap_props", serializeProps(secretMetadata.getProperties()));
       
     if (ttlInSeconds > 0) {
       builder.setTtl(Duration.newBuilder().setSeconds(ttlInSeconds).build());
+    }
+
+    if (!Strings.isNullOrEmpty(etag)) {
+      builder.setEtag(etag);
     }
     return builder.build();
   }
