@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.store.FileSecureStoreService;
 import io.cdap.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.security.store.SecureStoreInternalHandler;
 import io.cdap.http.NettyHttpService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -75,7 +76,8 @@ public class RemoteSecureStoreTest {
     // Starts a mock server to handle remote secure store requests
     httpService = new HttpsEnabler().configureKeyStore(conf, sConf).enable(
       NettyHttpService.builder("remoteSecureStoreTest")
-      .setHttpHandlers(new SecureStoreHandler(fileSecureStoreService, fileSecureStoreService))
+      .setHttpHandlers(new SecureStoreHandler(fileSecureStoreService, fileSecureStoreService),
+          new SecureStoreInternalHandler(fileSecureStoreService, fileSecureStoreService))
       .setExceptionHandler(new HttpExceptionHandler()))
       .build();
 

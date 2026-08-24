@@ -17,10 +17,12 @@
 package io.cdap.cdap.security.store.secretmanager;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Enums;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.SecureKeyNotFoundException;
@@ -39,8 +41,12 @@ import io.cdap.cdap.security.store.SecureStoreService;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -211,5 +217,28 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
     } catch (Throwable e) {
       LOG.warn("Error occurred while stopping {}.", getClass().getSimpleName(), e);
     }
+  }
+
+  @Override
+  public SecureStoreInfo getStoreInfo() throws IOException {
+    if (secretManager == null) {
+      throw new RuntimeException("Secret manager is either not initialized or not loaded. ");
+    }
+    Set<SecureStoreInfo.Capability> capabilitiesInfo = this.secretManager.getStoreInfo().getCapabilities().stream()
+        .map(c -> Enums.getIfPresent(SecureStoreInfo.Capability.class, c.name()).orNull())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toCollection(() -> EnumSet.noneOf(SecureStoreInfo.Capability.class)));
+    return new SecureStoreInfo(capabilitiesInfo);
+  }
+
+  @Override
+  public boolean acquireLease(String namespace, String name, long timeoutMs,
+                                       String leaseHolder) throws IOException {
+    return this.secretManager.acquireLease(namespace, name, timeoutMs, leaseHolder);
+  }
+
+  @Override
+  public boolean releaseLease(String namespace, String name, String leaseHolder) throws IOException {
+    return this.secretManager.releaseLease(namespace, name, leaseHolder);
   }
 }

@@ -18,6 +18,7 @@ package io.cdap.cdap.api.security.store;
 
 import io.cdap.cdap.api.annotation.Beta;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -72,5 +73,15 @@ public interface SecureStore {
    */
   default byte[] getData(String namespace, String name) throws Exception {
     return get(namespace, name).get();
+  }
+
+  /**
+   * Retrieves configuration details and capabilities of the secure store implementation
+   * to inform operational decisions.
+   *
+   * @return the {@link SecureStoreInfo} containing metadata and capabilities
+   */
+  default SecureStoreInfo getStoreInfo() throws IOException {
+    return new SecureStoreInfo(Collections.emptySet());
   }
 }
