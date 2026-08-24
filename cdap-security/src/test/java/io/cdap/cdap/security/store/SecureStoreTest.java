@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.store;
 
+
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -23,6 +24,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -51,8 +53,9 @@ import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
@@ -62,6 +65,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 public class SecureStoreTest {
 
@@ -109,11 +113,23 @@ public class SecureStoreTest {
 
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
 
+
+    SecureStoreService secureStoreService = injector.getInstance(SecureStoreService.class);
+    SecureStoreService mockService = Mockito.spy(secureStoreService);
+    Mockito.doReturn(new SecureStoreInfo(EnumSet.of(SecureStoreInfo.Capability.SECRET_LEASING))).when(mockService)
+        .getStoreInfo();
+    Mockito.doReturn(true).when(mockService).acquireLease(Mockito.anyString(), Mockito.anyString(), Mockito.anyLong(),
+        Mockito.anyString());
+    Mockito.doReturn(true).when(mockService).releaseLease(Mockito.anyString(), Mockito.anyString(),
+        Mockito.anyString());
+
     httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore",
                                                    new NoOpMetricsCollectionService(), true, auditLogContexts -> {},
                                                     injector.getInstance(AeadCipher.class))
-      .setHttpHandlers(Collections.singleton(injector.getInstance(SecureStoreHandler.class)))
+      .setHttpHandlers(Arrays.asList(new SecureStoreHandler(mockService, mockService),
+          new SecureStoreInternalHandler(mockService, mockService)))
       .build();
+
     httpServer.start();
   }
 
@@ -121,6 +137,34 @@ public class SecureStoreTest {
   public static void afterClass() throws Exception {
     httpServer.stop();
   }
+
+
+
+  @Test
+  public void testLeaseAndStoreInfo() throws Exception {
+    // getStoreInfo
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(getUrl(
+      Constants.Gateway.INTERNAL_API_VERSION_3 + "/namespaces/default/securekeys/storeInfo")).build());
+    Assert.assertEquals(200, response.getResponseCode());
+    SecureStoreInfo info = GSON.fromJson(response.getResponseBodyAsString(), SecureStoreInfo.class);
+    Assert.assertNotNull(info);
+    Assert.assertTrue(info.getCapabilities().contains(SecureStoreInfo.Capability.SECRET_LEASING));
+
+    // acquireLease
+    response = HttpRequests.execute(HttpRequest.post(getUrl(
+      Constants.Gateway.INTERNAL_API_VERSION_3
+      + "/namespaces/default/securekeys/key1/acquireLease?timeoutMs=1000&leaseHolder=test")).build());
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals("true", response.getResponseBodyAsString());
+
+    // releaseLease
+    response = HttpRequests.execute(HttpRequest.post(getUrl(
+      Constants.Gateway.INTERNAL_API_VERSION_3
+      + "/namespaces/default/securekeys/key1/releaseLease?leaseHolder=test")).build());
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals("true", response.getResponseBodyAsString());
+  }
+
 
   private URL getUrl(String path) throws MalformedURLException {
     if (!path.startsWith("/")) {
