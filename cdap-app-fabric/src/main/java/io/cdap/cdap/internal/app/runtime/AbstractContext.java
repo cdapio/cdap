@@ -60,6 +60,7 @@ import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.app.metrics.ProgramUserMetrics;
@@ -533,6 +534,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public byte[] getData(String namespace, String name) throws Exception {
     return Retries.callWithRetries(() -> secureStore.getData(namespace, name), retryStrategy);
+  }
+
+
+  @Override
+  public SecureStoreInfo getStoreInfo() throws IOException {
+    return Retries.callWithRetries(secureStore::getStoreInfo, retryStrategy);
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -163,5 +164,27 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   @Override
   protected void shutDown() throws Exception {
     secureStoreService.stopAndWait();
+  }
+
+  @Override
+  public SecureStoreInfo getStoreInfo() throws IOException {
+    return secureStoreService.getStoreInfo();
+  }
+
+  @Override
+  public boolean acquireLease(String namespace, String name, long timeoutMs,
+                                       String leaseHolder) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new NamespaceId(namespace).secureKey(name);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.UPDATE);
+    return secureStoreService.acquireLease(namespace, name, timeoutMs, leaseHolder);
+  }
+
+  @Override
+  public boolean releaseLease(String namespace, String name, String leaseHolder) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new NamespaceId(namespace).secureKey(name);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.UPDATE);
+    return secureStoreService.releaseLease(namespace, name, leaseHolder);
   }
 }

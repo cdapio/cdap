@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.SecureKeyAlreadyExistsException;
@@ -31,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.SecureKeyCreateRequest;
 import io.cdap.common.http.HttpMethod;
@@ -53,7 +55,9 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   private static final Type LIST_TYPE = new TypeToken<List<SecureStoreMetadata>>() {
   }.getType();
   private static final Gson GSON = new Gson();
+  private volatile SecureStoreInfo storeInfo;
   private final RemoteClient remoteClient;
+  private final RemoteClient internalRemoteClient;
 
   @VisibleForTesting
   @Inject
@@ -61,6 +65,9 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
     this.remoteClient = remoteClientFactory.createRemoteClient(
         Constants.Service.SECURE_STORE_SERVICE, new DefaultHttpRequestConfig(false),
         "/v3/namespaces/");
+    this.internalRemoteClient = remoteClientFactory.createRemoteClient(
+        Constants.Service.SECURE_STORE_SERVICE, new DefaultHttpRequestConfig(false),
+        Constants.Gateway.INTERNAL_API_VERSION_3 + "/namespaces/");
   }
 
   @Override
@@ -129,6 +136,50 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
     handleResponse(response, namespace, name,
         String.format("Error occurred while deleting key %s:%s",
             namespace, name));
+  }
+
+  @Override
+  public SecureStoreInfo getStoreInfo() throws IOException {
+    if (storeInfo != null) {
+      return storeInfo;
+    }
+
+    synchronized (this) {
+      if (storeInfo == null) {
+        String path = String.format("%s/securekeys/storeInfo", NamespaceId.SYSTEM.getNamespace());
+        HttpRequest request = internalRemoteClient.requestBuilder(HttpMethod.GET, path).build();
+        HttpResponse response = internalRemoteClient.execute(request, Idempotency.IDEMPOTENT);
+        storeInfo = GSON.fromJson(response.getResponseBodyAsString(), SecureStoreInfo.class);
+      }
+    }
+    return storeInfo;
+  }
+
+  @Override
+  public boolean acquireLease(final String namespace, final String name,
+                                      final long timeoutMs, final String leaseHolder) throws Exception {
+    String path = new StringBuilder(createPath(namespace, name))
+      .append("/acquireLease?timeoutMs=").append(timeoutMs)
+      .append("&leaseHolder=").append(leaseHolder)
+      .toString();
+    HttpRequest request = internalRemoteClient.requestBuilder(HttpMethod.POST, path).build();
+    HttpResponse response = internalRemoteClient.execute(request, Idempotency.NONE);
+    handleResponse(response, namespace, name,
+        String.format("Error occurred while acquiring lease for key %s:%s", namespace, name));
+    return GSON.fromJson(response.getResponseBodyAsString(), Boolean.class);
+  }
+
+  @Override
+  public boolean releaseLease(final String namespace, final String name,
+                           final String leaseHolder) throws Exception {
+    String path = new StringBuilder(createPath(namespace, name))
+      .append("/releaseLease?leaseHolder=").append(leaseHolder)
+      .toString();
+    HttpRequest request = internalRemoteClient.requestBuilder(HttpMethod.POST, path).build();
+    HttpResponse response = internalRemoteClient.execute(request, Idempotency.NONE);
+    handleResponse(response, namespace, name,
+        String.format("Error occurred while releasing lease for key %s:%s", namespace, name));
+    return GSON.fromJson(response.getResponseBodyAsString(), Boolean.class);
   }
 
   /**
