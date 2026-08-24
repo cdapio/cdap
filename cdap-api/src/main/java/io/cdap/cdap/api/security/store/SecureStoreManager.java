@@ -67,4 +67,32 @@ public interface SecureStoreManager {
    * @throws Exception If the specified namespace or name does not exist
    */
   void delete(String namespace, String name) throws Exception;
+
+
+  /**
+   * Attempts to acquire a lease on a secret resource.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the secure key
+   * @param timeoutMs lease timeout in milliseconds before lease is considered expired
+   * @param leaseHolder The lease holder identity
+   * @return true if lease acquired, false otherwise
+   * @throws Exception If lease acquisition fails due to underlying storage errors
+   */
+  default boolean acquireLease(String namespace, String name, long timeoutMs,
+                                          String leaseHolder) throws Exception {
+    throw new UnsupportedOperationException("Leases are not supported by this SecureStore implementation.");
+  }
+
+  /**
+   * Releases an acquired lease on a secret resource.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the secure key
+   * @param leaseHolder The lease holder identity
+   * @throws Exception If lease release fails due to underlying storage errors
+   */
+  default boolean releaseLease(String namespace, String name, String leaseHolder) throws Exception {
+    throw new UnsupportedOperationException("Leases are not supported by this SecureStore implementation.");
+  }
 }

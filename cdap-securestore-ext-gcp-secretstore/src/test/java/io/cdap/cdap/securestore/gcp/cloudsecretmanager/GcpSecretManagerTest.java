@@ -27,20 +27,25 @@ import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 
 public class GcpSecretManagerTest {
@@ -115,6 +120,38 @@ public class GcpSecretManagerTest {
     verify(client, times(0)).createSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
     verify(client, times(1)).updateSecret(ArgumentMatchers.any(), ArgumentMatchers.anyLong());
     verify(client, times(0)).addSecretVersion(ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  @Test
+  public void store_updatePreservesAnnotations() throws Exception {
+    byte[] payload = "Foo".getBytes();
+    SecretMetadata metadata = createMetadata("example-annotations");
+    
+    // Create existing secret with annotations (e.g. lease annotations)
+    WrappedSecret existingWrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(existingWrappedSecret, ImmutableMap.of("lease_state", "refreshing", "lease_holder", "my-lease"));
+    
+    when(client.getSecret(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      .thenReturn(existingWrappedSecret);
+    when(client.getSecretData(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(payload);
+
+    // Update with new metadata
+    SecretMetadata newMetadata = new SecretMetadata("example-annotations", "new description", 
+        System.currentTimeMillis(), ImmutableMap.of("newProp", "newVal"));
+    secretManager.store(NAMESPACE, new Secret(payload, newMetadata));
+
+    // verify updateSecret was called with a WrappedSecret containing the preserved annotations + the new properties
+    ArgumentCaptor<WrappedSecret> captor = ArgumentCaptor.forClass(WrappedSecret.class);
+    verify(client, times(1)).updateSecret(captor.capture(), ArgumentMatchers.anyLong());
+    
+    WrappedSecret capturedSecret = captor.getValue();
+    assertTrue(capturedSecret.getAnnotations().containsKey("lease_state"));
+    assertEquals("refreshing", capturedSecret.getAnnotations().get("lease_state"));
+    assertEquals("my-lease", capturedSecret.getAnnotations().get("lease_holder"));
+    // verify new metadata is also present in properties annotations
+    assertEquals("newVal", capturedSecret.getCdapSecretMetadata().getProperties().get("newProp"));
   }
 
   @Test
@@ -202,12 +239,162 @@ public class GcpSecretManagerTest {
     assertThrows(IOException.class, () -> secretManager.delete(NAMESPACE, "example"));
   }
 
+  @Test
+  public void testAcquireGcpLeaseSuccess() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    assertTrue(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
+    
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of("lease_holder", "test-lease-holder"));
+
+    secretManager.releaseLease(NAMESPACE, "salesforce", "test-lease-holder");
+  }
+
+  @Test
+  public void testAcquireGcpLeaseEtagMismatchFailure() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    doThrow(createApiException(Code.FAILED_PRECONDITION))
+        .when(client).updateSecretAnnotations(
+        eq(NAMESPACE), eq("salesforce"), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    assertFalse(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
+  }
+
   private static Secret createSecret(String name) {
     return new Secret(name.getBytes(), createMetadata(name));
   }
 
   private static SecretMetadata createMetadata(String name) {
     return new SecretMetadata(name, "Fake description", 0, ImmutableMap.of());
+  }
+
+  @Test
+  public void testAcquireLeaseSameHolder() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "refreshing", 
+          "lease_acquired_time_ms", String.valueOf(System.currentTimeMillis()), 
+          "lease_holder", "test-lease-holder"
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+    assertTrue(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
+  }
+
+  @Test
+  public void testAcquireLeaseAlreadyHeld() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "refreshing", 
+          "lease_acquired_time_ms", String.valueOf(System.currentTimeMillis()), 
+          "lease_holder", "other-holder"
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+    assertFalse(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
+  }
+
+  @Test
+  public void testAcquireLeaseExpired() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "refreshing", 
+          "lease_acquired_time_ms", String.valueOf(System.currentTimeMillis() - 60000L), 
+          "lease_holder", "other-holder"
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    assertTrue(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
+  }
+
+  @Test
+  public void testReleaseLeaseSuccess() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "refreshing", 
+          "lease_acquired_time_ms", String.valueOf(System.currentTimeMillis()), 
+          "lease_holder", "test-lease-holder"
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    assertTrue(secretManager.releaseLease(NAMESPACE, "salesforce", "test-lease-holder"));
+    
+    verify(client).updateSecretAnnotations(eq(NAMESPACE), eq("salesforce"),
+        ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  @Test
+  public void testReleaseLeaseAlreadyIdle() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "idle", 
+          "lease_acquired_time_ms", "0", 
+          "lease_holder", ""
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    assertFalse(secretManager.releaseLease(NAMESPACE, "salesforce", "test-lease-holder"));
+  }
+
+  @Test
+  public void testReleaseLeaseEtagMismatchFailure() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "refreshing", 
+          "lease_acquired_time_ms", String.valueOf(System.currentTimeMillis()), 
+          "lease_holder", "test-lease-holder"
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    doThrow(createApiException(Code.FAILED_PRECONDITION))
+        .when(client).updateSecretAnnotations(eq(NAMESPACE), eq("salesforce"),
+        ArgumentMatchers.anyMap(),
+        ArgumentMatchers.anyString());
+
+    assertThrows(IOException.class, () -> 
+      secretManager.releaseLease(NAMESPACE, "salesforce", "test-lease-holder")
+    );
+  }
+
+  @Test
+  public void testReleaseLeaseHolderMismatch() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    Field field = WrappedSecret.class.getDeclaredField("annotations");
+    field.setAccessible(true);
+    field.set(wrappedSecret, ImmutableMap.of(
+          "lease_state", "refreshing", 
+          "lease_acquired_time_ms", String.valueOf(System.currentTimeMillis()), 
+          "lease_holder", "someone-else"
+    ));
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    assertFalse(secretManager.releaseLease(NAMESPACE, "salesforce", "test-lease-holder"));
+    
+    verify(client, times(0)).updateSecretAnnotations(any(), any(), any(), any());
   }
 
   private static ApiException createApiException(Code code) {
