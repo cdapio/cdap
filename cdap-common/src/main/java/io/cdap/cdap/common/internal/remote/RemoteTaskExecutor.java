@@ -83,6 +83,7 @@ public class RemoteTaskExecutor {
           || (throwable instanceof NoRouteToHostException);
   private final boolean compression;
   private final RemoteClient remoteClient;
+  private final RemoteClient fallbackClient;
   private final RetryStrategy retryStrategy;
   private final Predicate<Throwable> retryablePredicate;
   private final MetricsCollectionService metricsCollectionService;
@@ -105,9 +106,19 @@ public class RemoteTaskExecutor {
         ? Constants.Service.TASK_MANAGER : Constants.Service.TASK_WORKER;
     String serviceName = workerType == Type.TASK_WORKER
         ? taskServiceName : Constants.Service.SYSTEM_WORKER;
+      LOG.info("shruzard - RemoteTaskExecutor: Using serviceName - {}",
+              serviceName);
+
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
+    
+    // Explicitly scope the fallback client directly to TASK_WORKER bypass K8s Service Proxy IPs completely 
+    // when the 60s Circuit Breaker activates `routingKey = null`.
+    this.fallbackClient = remoteClientFactory.createRemoteClient(
+        workerType == Type.TASK_WORKER ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER,
+        httpRequestConfig, Constants.Gateway.INTERNAL_API_VERSION_3);
+        
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
     this.fallbackTimeoutMs = 60000;
@@ -170,7 +181,12 @@ public class RemoteTaskExecutor {
 
           // STEP 3: Construct Outbound HTTP Request with Namespace Header
           // Inject X-CDF-Namespace so the Netty Proxy can route this request to a warm pod leased to this namespace.
-          HttpRequest.Builder requestBuilder = remoteClient
+          LOG.info("shruzard - RemoteTaskExecutor: Sending request to RemoteClient with routingKey: {}",
+                  routingKey);
+          
+          RemoteClient activeClient = routingKey == null ? fallbackClient : remoteClient;
+          
+          HttpRequest.Builder requestBuilder = activeClient
               .requestBuilder(HttpMethod.POST, workerUrl, routingKey)
               .addHeader("X-CDF-Namespace", namespace)
               .withBody(requestBody.duplicate());
@@ -189,7 +205,7 @@ public class RemoteTaskExecutor {
           }
 
           HttpRequest httpRequest = requestBuilder.build();
-          HttpResponse httpResponse = remoteClient.execute(httpRequest);
+          HttpResponse httpResponse = activeClient.execute(httpRequest);
           proxyReachable.set(true);
 
           // Resetting user credentials for further execution of current request
@@ -202,9 +218,9 @@ public class RemoteTaskExecutor {
           // so CDAP's Retries framework retries with exponential backoff until a lease slot opens.
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
-                String.format("Task Worker cluster is fully saturated. "
-                        + "Unable to secure a compute lease after "
-                        + "60 seconds (HTTP 429 for %s). Please try again.",
+                String.format("Task Worker cluster is fully saturated (HTTP 429). "
+                        + "The Proxy could not immediately secure a compute lease for %s. "
+                        + "Triggering exponential backoff...",
                     runnableTaskRequest.getClassName()));
           }
           if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -220,6 +236,17 @@ public class RemoteTaskExecutor {
           throw new RetryableException(
               String.format("Received exception %s for %s", e.getMessage(),
                   runnableTaskRequest.getClassName()));
+        } catch (ServiceException e) {
+          // 503 natively throws ServiceUnavailableException (which extends RetryableException).
+          // But 502 and 504 throw plain ServiceException which would bypass our circuit breaker and crash!
+          // We manually trap 502/504 infrastructure errors during POST and force them to retry,
+          // ensuring they loop for 60 seconds and correctly trigger the TaskWorker fallback bypass.
+          if (e.getStatusCode() == HttpResponseStatus.BAD_GATEWAY.code() || 
+              e.getStatusCode() == HttpResponseStatus.GATEWAY_TIMEOUT.code()) {
+              throw new RetryableException("Proxy infrastructure unreachable (HTTP " + e.getStatusCode() 
+                                           + "). Forcing retry to trigger Circuit Breaker.", e);
+          }
+          throw e; // Non-infrastructure ServiceExceptions (like 403 or 401) must fail immediately
         }
       }, retryStrategy, retryablePredicate);
     } catch (ServiceException se) {
@@ -233,7 +260,10 @@ public class RemoteTaskExecutor {
       if (e instanceof RetryableException && e.getMessage() != null
           && e.getMessage().contains("Task Worker cluster is fully saturated")) {
         throw new ServiceException(
-            e.getMessage(), e, HttpResponseStatus.TOO_MANY_REQUESTS);
+            String.format("Task Worker cluster is fully saturated. "
+                + "Unable to secure a compute lease in 60 seconds (HTTP 429). "
+                + "Please try again later."),
+            e, HttpResponseStatus.TOO_MANY_REQUESTS);
       }
       throw e;
     }

@@ -87,6 +87,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpRequest) {
+            LOG.info("shruzard - ProxyFrontendHandler Received request!");
             HttpRequest req = (HttpRequest) msg;
 
             // STEP 0: Discover Live Task Worker Pods (Zero-Stale State)
@@ -105,49 +106,52 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             }
             podRegistry.keySet().removeIf(existingPod -> !activePods.contains(existingPod));
 
+            LOG.info("shruzard - ProxyFrontendHandler leases: [{}]",
+                podRegistry.entrySet().stream()
+                    .map(e -> e.getKey() + "="
+                        + (e.getValue().getLeasedNamespace() == null
+                        ? "null" : e.getValue().getLeasedNamespace() + "_" + e.getValue().getInflightRequests()))
+                    .collect(java.util.stream.Collectors.joining(", ")));
+
             // Extract target namespace from the request header (defaults to "default" if omitted)
             String targetNamespace = req.headers().get("X-CDF-Namespace");
             if (targetNamespace == null) targetNamespace = "default";
 
             String targetWorkerAddress = null;
 
+            // We deliberately evaluate sequentially (no randomization/shuffling) to maximize pod density. 
+            // This ensures a namespace fills a single pod to its maximum capacity (10 tasks) before 
+            // spilling over and leasing an entirely new empty pod, preserving cluster availability 
+            // for other namespaces.
+
             // STEP 1: Warm Match Selection
-            // Look for a pod already leased to this exact namespace that has capacity (< 10 inflight tasks).
-            // Reusing warm pods avoids expensive Workload Identity / ArtifactLocalizer re-authentication.
+            // Perform lock-free Compare-And-Swap evaluation using the AtomicReference loop
             for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
                 PodState state = entry.getValue();
-                synchronized (state) {
-                    if (targetNamespace.equals(state.getLeasedNamespace()) && state.getInflightRequests() < 10) {
-                        targetWorkerAddress = entry.getKey();
-                        state.setInflightRequests(state.getInflightRequests() + 1);
-                        LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
-                                 + "for '{}' at {}. Occupancy: {}", 
-                                 targetNamespace, targetWorkerAddress, state.getInflightRequests());
-                        break;
-                    }
+                
+                if (state.tryAcquireWarmLease(targetNamespace, 10)) {
+                    targetWorkerAddress = entry.getKey();
+                    LOG.info("shruzard - ProxyFrontendHandler: Found warm match "
+                             + "for '{}' at {}. Occupancy: {}", 
+                             targetNamespace, targetWorkerAddress, state.getInflightRequests());
+                    break;
                 }
             }
 
             // STEP 2: Idle Pod Claiming
-            // If no warm pod has capacity, claim an unleased pod or an idle pod whose lease expired (35s TTL).
             if (targetWorkerAddress == null) {
+                // Determine our starvation/eviction threshold (35 seconds in NanoTime)
+                long idleTimeoutNanos = java.util.concurrent.TimeUnit.SECONDS.toNanos(35);
+                
                 for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
                     PodState state = entry.getValue();
-                    synchronized (state) {
-                        boolean isUnleased = (state.getLeasedNamespace() == null 
-                            || state.getLeasedNamespace().isEmpty());
-                        boolean isExpiredIdle = (state.getInflightRequests() == 0 
-                            && (System.currentTimeMillis() - state.getLastActivityTime() > 35000));
-                        
-                        if (state.getInflightRequests() == 0 && (isUnleased || isExpiredIdle)) {
-                            targetWorkerAddress = entry.getKey();
-                            state.setLeasedNamespace(targetNamespace);
-                            state.setInflightRequests(1);
-                            LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
-                                     + "(Unleased: {}, ExpiredIdle: {}) at {} for namespace '{}'.", 
-                                isUnleased, isExpiredIdle, targetWorkerAddress, targetNamespace);
-                            break;
-                        }
+                    
+                    if (state.tryClaimIdleLease(targetNamespace, idleTimeoutNanos)) {
+                        targetWorkerAddress = entry.getKey();
+                        LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
+                                 + "for new namespace '{}' at {}. Previous occupant evicted.", 
+                                 targetNamespace, targetWorkerAddress);
+                        break;
                     }
                 }
             }
@@ -170,6 +174,9 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             final String chosenWorker = targetWorkerAddress;
             String[] hostPort = targetWorkerAddress.split(":");
 
+            LOG.info("shruzard - ProxyFrontendHandler: Setting up TCP connection to task worker IP - {} namespace {}",
+                    targetWorkerAddress, targetNamespace);
+
             // STEP 4: Establish Outbound TCP Socket to Chosen Task Worker Pod
             // 1. Temporarily pause reading from the client (AppFabric) socket so data does not pile up in RAM
             //    while the TCP handshake to the worker is completing.
@@ -179,6 +186,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             // 2. Initialize the outbound Netty client Bootstrap.
             //    Sharing ctx.channel().eventLoop() ensures that both inbound and outbound channels run on the same
             //    event loop thread, guaranteeing thread safety without thread context-switching overhead.
+
             Bootstrap b = new Bootstrap();
             b.group(ctx.channel().eventLoop())
              .channel(NioSocketChannel.class)
@@ -211,6 +219,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 connecting = false;
                 if (future.isSuccess()) {
                     // Flush any request headers/chunks that arrived while TCP connection was being negotiated
+                    LOG.info("shruzard - ProxyFrontendHandler: Connected with task worker successfully! ");
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
                         outboundChannel.write(pendingMsg);
@@ -232,9 +241,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     // Decrement inflight count on failed connection
                     PodState fallbackState = podRegistry.get(chosenWorker);
                     if (fallbackState != null) {
-                        synchronized (fallbackState) {
-                            fallbackState.setInflightRequests(Math.max(0, fallbackState.getInflightRequests() - 1));
-                        }
+                        fallbackState.decrementInflightRequests();
                     }
                     ctx.channel().close();
                 }

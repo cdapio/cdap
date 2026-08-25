@@ -69,7 +69,6 @@ public class RemoteClient {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
 
-  private static final String TASK_MANAGER_URL = "http://cdap-task-manager.default.svc.cluster.local:11025";
   private static final Gson GSON = new Gson();
 
   private final InternalAuthenticator internalAuthenticator;
@@ -95,12 +94,20 @@ public class RemoteClient {
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     this.discoveryClient = discoveryClient;
+    if (Constants.Service.TASK_MANAGER.equals(discoverableServiceName)
+        || Constants.Service.TASK_WORKER.equals(discoverableServiceName)) {
+      LOG.info("shruzard - RemoteClient L97 discoverableServiceName- {}",
+              discoverableServiceName);
+    }
+
     this.endpointStrategy = new RandomEndpointStrategy(
         () -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.remoteAuthenticator = remoteAuthenticator;
+
     this.rbacEnabled = rbacEnabled;
+
   }
 
   /**
@@ -301,31 +308,28 @@ public class RemoteClient {
    * null, it falls back to the default random discovery strategy.
    */
   public URL resolve(String resource, @Nullable String routingKey) {
-    if (!rbacEnabled || routingKey == null || (!Constants.Service.TASK_MANAGER.equals(discoverableServiceName)
-        && !Constants.Service.TASK_WORKER.equals(discoverableServiceName))) {
-      Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
-      if (discoverable == null) {
-        throw new ServiceUnavailableException(discoverableServiceName);
-      }
-      if(!rbacEnabled) {
-        LOG.info("shruzard - RemoteClient RBAC disabled not using Task Manager", routingKey);
-      }
-      URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
-      try {
-        return rewriteUrl(uri.toURL());
-      } catch (MalformedURLException e) {
-        throw new IllegalStateException(
-            String.format("Discovered service %s, but it announced malformed URL %s",
-                discoverableServiceName, uri), e);
-      }
+    Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
+    if (discoverable == null) {
+      throw new ServiceUnavailableException(discoverableServiceName);
+    }
+    if(discoverableServiceName.equals(Constants.Service.TASK_MANAGER) && rbacEnabled) {
+      LOG.info("shruzard AA RemoteClient RBAC enabled dynamically discovered {} via Twill/K8s for routingKey: {}",
+              discoverableServiceName, routingKey);
     }
 
-    LOG.info("shruzard - RemoteClient routing directly to Netty TaskManager L7 proxy for routingKey: {}", routingKey);
+    URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
     try {
-      String cleanPath = (basePath + resource).replaceAll("//+", "/");
-      return new URL(TASK_MANAGER_URL + "/" + cleanPath);
+      if (Constants.Service.TASK_MANAGER.equals(discoverableServiceName)
+          || Constants.Service.TASK_WORKER.equals(discoverableServiceName)) {
+        LOG.info("shruzard - RemoteClient L313 calling task worker with url: {}",
+                rewriteUrl(uri.toURL()));
+      }
+
+      return rewriteUrl(uri.toURL());
     } catch (MalformedURLException e) {
-      throw new ServiceUnavailableException(discoverableServiceName, e);
+      throw new IllegalStateException(
+          String.format("Discovered service %s, but it announced malformed URL %s",
+              discoverableServiceName, uri), e);
     }
   }
 

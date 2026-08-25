@@ -57,6 +57,8 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     private final Map<String, PodState> podRegistry;
     private final String targetWorkerAddress;
 
+    private boolean decremented = false;
+
     public ProxyBackendHandler(Channel inboundChannel, Map<String, PodState> podRegistry, String targetWorkerAddress) {
         this.inboundChannel = inboundChannel;
         this.podRegistry = podRegistry;
@@ -73,50 +75,27 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
             if (state != null) {
                 // STEP 1: Selective Self-Healing & Occupancy Synchronization
                 // ONLY synchronize ground truth from headers when the worker explicitly rejects the request
-                // with 409 Conflict (namespace mismatch / split brain) or 429 Too Many Requests (worker saturated).
                 if (statusCode == HttpResponseStatus.CONFLICT.code()
                         || statusCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-                    synchronized (state) {
-                        String activeTasksStr = resp.headers().get("X-Active-Tasks");
-                        String leasedNamespace = resp.headers().get("X-Leased-Namespace");
-
-                        if (activeTasksStr != null) {
-                            try {
-                                state.setInflightRequests(Integer.parseInt(activeTasksStr));
-                            } catch (NumberFormatException e) {
-                                state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
-                            }
-                        } else {
-                            state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
-                        }
-
-                        if (leasedNamespace != null) {
-                            state.setLeasedNamespace(leasedNamespace);
-                        }
-
-                        state.setLastActivityTime(System.currentTimeMillis());
-
-                        LOG.info("shruzard - ProxyBackendHandler: Self-Healed PodState after status {} for {}. "
-                                 + "Occupancy: {}, Namespace: {}",
-                            statusCode, targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
-                    }
+                    
+                    String activeTasksStr = resp.headers().get("X-Active-Tasks");
+                    String leasedNamespace = resp.headers().get("X-Leased-Namespace");
+                    
+                    state.updateFromHeader(activeTasksStr, leasedNamespace);
+                    decremented = true;
+                    
+                    LOG.info("shruzard - ProxyBackendHandler: Self-Healed PodState after status {} for {}. "
+                             + "Occupancy: {}, Namespace: {}",
+                        statusCode, targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
                 } else {
                     // For normal responses (e.g. 200 OK), preserve local occupancy count and update activity timestamp
-                    synchronized (state) {
-                        state.setLastActivityTime(System.currentTimeMillis());
-                    }
+                    state.recordActivity();
                 }
             }
         } else if (msg instanceof LastHttpContent) {
             // STEP 2: Release Occupancy on Stream Completion
             // When the entire HTTP response payload finishes streaming, decrement the in-flight concurrency count.
-            PodState state = podRegistry.get(targetWorkerAddress);
-            if (state != null) {
-                synchronized (state) {
-                    state.setInflightRequests(Math.max(0, state.getInflightRequests() - 1));
-                    state.setLastActivityTime(System.currentTimeMillis());
-                }
-            }
+            releaseOccupancy();
         }
 
         // STEP 3: Relay Worker Response to Client (AppFabric)
@@ -142,8 +121,19 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         ctx.fireChannelWritabilityChanged();
     }
 
+    private void releaseOccupancy() {
+        if (!decremented) {
+            PodState state = podRegistry.get(targetWorkerAddress);
+            if (state != null) {
+                state.decrementInflightRequests();
+            }
+            decremented = true;
+        }
+    }
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        releaseOccupancy();
         // If backend worker disconnects or crashes, flush and close the client socket
         ProxyFrontendHandler.closeOnFlush(inboundChannel);
     }
@@ -151,6 +141,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
+        releaseOccupancy();
         ProxyFrontendHandler.closeOnFlush(ctx.channel());
     }
 }

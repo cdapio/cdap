@@ -16,51 +16,117 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * PodState represents the in-memory routing and lease status of an individual Task Worker pod.
- *
- * <p>It tracks:
- * <ul>
- *   <li>{@code leasedNamespace}: The namespace currently pinned to this physical worker pod.
- *       Only requests belonging to this namespace may execute on this pod.</li>
- *   <li>{@code inflightRequests}: The number of active concurrent tasks running on this pod
- *       (governed up to 10 concurrent requests).</li>
- *   <li>{@code lastActivityTime}: Timestamp of the most recent request completion, used to calculate
- *       idle TTL eviction (35s) so idle pods can be reclaimed by other namespaces.</li>
- * </ul>
+ * Entirely lock-free, backing state via an immutable internal representation and AtomicReference CAS loops.
  */
 public class PodState {
-    private String leasedNamespace;
-    private int inflightRequests;
-    private long lastActivityTime;
+    private static class State {
+        final String leasedNamespace;
+        final int inflightRequests;
+        final long lastActivityTime;
+
+        State(String leasedNamespace, int inflightRequests, long lastActivityTime) {
+            this.leasedNamespace = leasedNamespace;
+            this.inflightRequests = inflightRequests;
+            this.lastActivityTime = lastActivityTime;
+        }
+    }
+
+    private final AtomicReference<State> stateRef;
 
     public PodState(String leasedNamespace, int inflightRequests) {
-        this.leasedNamespace = leasedNamespace;
-        this.inflightRequests = inflightRequests;
-        this.lastActivityTime = System.currentTimeMillis();
+        this.stateRef = new AtomicReference<>(new State(
+            leasedNamespace,
+            inflightRequests,
+            System.nanoTime() - TimeUnit.SECONDS.toNanos(40)
+        ));
     }
 
     public String getLeasedNamespace() {
-        return leasedNamespace;
-    }
-
-    public void setLeasedNamespace(String leasedNamespace) {
-        this.leasedNamespace = leasedNamespace;
+        return stateRef.get().leasedNamespace;
     }
 
     public int getInflightRequests() {
-        return inflightRequests;
-    }
-
-    public void setInflightRequests(int inflightRequests) {
-        this.inflightRequests = inflightRequests;
+        return stateRef.get().inflightRequests;
     }
 
     public long getLastActivityTime() {
-        return lastActivityTime;
+        return stateRef.get().lastActivityTime;
     }
 
-    public void setLastActivityTime(long lastActivityTime) {
-        this.lastActivityTime = lastActivityTime;
+    public boolean tryAcquireWarmLease(String namespace, int maxConcurrency) {
+        while (true) {
+            State current = stateRef.get();
+            if (!namespace.equals(current.leasedNamespace) || current.inflightRequests >= maxConcurrency) {
+                return false;
+            }
+            State next = new State(current.leasedNamespace, current.inflightRequests + 1, System.nanoTime());
+            if (stateRef.compareAndSet(current, next)) {
+                return true;
+            }
+        }
+    }
+
+    public boolean tryClaimIdleLease(String namespace, long idleTimeoutNanos) {
+        while (true) {
+            State current = stateRef.get();
+            boolean isUnleased = current.leasedNamespace == null || current.leasedNamespace.isEmpty();
+            boolean isExpiredIdle = current.inflightRequests == 0 
+                && (System.nanoTime() - current.lastActivityTime > idleTimeoutNanos);
+            
+            if (current.inflightRequests != 0 || (!isUnleased && !isExpiredIdle)) {
+                return false;
+            }
+            State next = new State(namespace, 1, System.nanoTime());
+            if (stateRef.compareAndSet(current, next)) {
+                return true;
+            }
+        }
+    }
+
+    public void decrementInflightRequests() {
+        while (true) {
+            State current = stateRef.get();
+            State next = new State(current.leasedNamespace, 
+                Math.max(0, current.inflightRequests - 1), System.nanoTime());
+            if (stateRef.compareAndSet(current, next)) {
+                return;
+            }
+        }
+    }
+
+    public void updateFromHeader(String activeTasksStr, String leasedNamespace) {
+        while (true) {
+            State current = stateRef.get();
+            int nextInflight = current.inflightRequests;
+            if (activeTasksStr != null) {
+                try {
+                    nextInflight = Integer.parseInt(activeTasksStr);
+                } catch (NumberFormatException e) {
+                    nextInflight = Math.max(0, current.inflightRequests - 1);
+                }
+            } else {
+                nextInflight = Math.max(0, current.inflightRequests - 1);
+            }
+            String nextNamespace = leasedNamespace != null ? leasedNamespace : current.leasedNamespace;
+            State next = new State(nextNamespace, nextInflight, System.nanoTime());
+            if (stateRef.compareAndSet(current, next)) {
+                return;
+            }
+        }
+    }
+    
+    public void recordActivity() {
+        while (true) {
+            State current = stateRef.get();
+            State next = new State(current.leasedNamespace, current.inflightRequests, System.nanoTime());
+            if (stateRef.compareAndSet(current, next)) {
+                return;
+            }
+        }
     }
 }

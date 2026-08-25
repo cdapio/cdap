@@ -16,9 +16,23 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.discovery.URIScheme;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -28,21 +42,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.common.Cancellable;
-import io.cdap.cdap.common.discovery.URIScheme;
-import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import java.net.InetSocketAddress;
-import io.cdap.cdap.common.conf.Constants;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * TaskManagerService runs the Centralized Netty Proxy server inside the Task Manager pod.
@@ -78,9 +77,10 @@ public class TaskManagerService extends AbstractIdleService {
   private Cancellable cancellable;
 
   @Inject
-  TaskManagerService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient, DiscoveryService discoveryService) {
-    this.port = cConf.getInt("task.manager.port", 11025);
-    this.address = cConf.get("task.manager.address", "0.0.0.0");
+  TaskManagerService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                     DiscoveryService discoveryService) {
+    this.port = cConf.getInt("task.manager.bind.port", 11025);
+    this.address = cConf.get("task.manager.bind.address", "0.0.0.0");
     this.discoveryServiceClient = discoveryServiceClient;
     this.discoveryService = discoveryService;
 
@@ -90,6 +90,23 @@ public class TaskManagerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("shruzard - Starting TaskManagerService Proxy HTTP server...");
+
+    // Enable live Kubernetes Endpoints streaming if supported by the discovery client,
+    // guaranteeing we get direct Pod IPs (V1Endpoints) instead of load-balanced ClusterIPs (V1Service).
+    try {
+      java.lang.reflect.Method method = discoveryServiceClient.getClass().getMethod("enableEndpointsWatcher");
+      method.invoke(discoveryServiceClient);
+      LOG.info("shruzard - Successfully enabled Kubernetes Endpoints watcher on discovery service {}",
+               discoveryServiceClient.getClass().getSimpleName());
+    } catch (NoSuchMethodException ignored) {
+      // Normal for discovery services that do not support endpoints watching (e.g. In-memory, ZK)
+    } catch (Exception e) {
+      LOG.warn("shruzard - Failed to invoke enableEndpointsWatcher on discovery service", e);
+    }
+
+    // Pre-warm the Twill discovery cache asynchronously to ensure K8s Watchers 
+    // are fully hydrated before the first HTTP request hits the proxy.
+    discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
 
     bossGroup = new NioEventLoopGroup(1,
         new com.google.common.util.concurrent.ThreadFactoryBuilder()
