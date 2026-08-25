@@ -91,6 +91,7 @@ public class RemoteTaskExecutor {
   private final String workerUrl;
   private final boolean isWorkerEncryptionRequired;
   private final long fallbackTimeoutMs;
+  private final String serviceName;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -104,7 +105,7 @@ public class RemoteTaskExecutor {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
     String taskServiceName = cConf.getBoolean(Constants.Security.Authorization.ENABLED)
         ? Constants.Service.TASK_MANAGER : Constants.Service.TASK_WORKER;
-    String serviceName = workerType == Type.TASK_WORKER
+     this.serviceName = workerType == Type.TASK_WORKER
         ? taskServiceName : Constants.Service.SYSTEM_WORKER;
       LOG.info("shruzard - RemoteTaskExecutor: Using serviceName - {}",
               serviceName);
@@ -112,7 +113,8 @@ public class RemoteTaskExecutor {
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
-    
+    LOG.info("shruzard - RemoteTaskExecutor: Creating fallbackClient "
+             + "to bypass proxy during failure");
     // Explicitly scope the fallback client directly to TASK_WORKER bypass K8s Service Proxy IPs completely 
     // when the 60s Circuit Breaker activates `routingKey = null`.
     this.fallbackClient = remoteClientFactory.createRemoteClient(
@@ -205,13 +207,23 @@ public class RemoteTaskExecutor {
           }
 
           HttpRequest httpRequest = requestBuilder.build();
+
+          long requestStartTime = System.currentTimeMillis();
           HttpResponse httpResponse = activeClient.execute(httpRequest);
+          long requestEndTime = System.currentTimeMillis();
+          long executionDurationMs = requestEndTime - requestStartTime;
+
           proxyReachable.set(true);
 
           // Resetting user credentials for further execution of current request
           if (isWorkerEncryptionRequired) {
             SecurityRequestContext.setUserCredential(currentCredential);
           }
+          LOG.info("shruzard - RemoteTaskExecutor: Received response from "
+                   + "{} with status code {} in {} ms",
+                   this.serviceName,
+                   httpResponse.getResponseCode(),
+                   executionDurationMs);
 
           // STEP 4: Handle Responses & Retryable Exceptions
           // If proxy/worker returned 429 Too Many Requests (cluster saturated), throw RetryableException
@@ -231,6 +243,7 @@ public class RemoteTaskExecutor {
           byte[] result = httpResponse.getUncompressedResponseBody();
           //emit metrics with successful result
           emitMetrics(startTime, true, runnableTaskRequest, retryContext.getRetryAttempt());
+
           return result;
         } catch (NoRouteToHostException e) {
           throw new RetryableException(
@@ -241,8 +254,8 @@ public class RemoteTaskExecutor {
           // But 502 and 504 throw plain ServiceException which would bypass our circuit breaker and crash!
           // We manually trap 502/504 infrastructure errors during POST and force them to retry,
           // ensuring they loop for 60 seconds and correctly trigger the TaskWorker fallback bypass.
-          if (e.getStatusCode() == HttpResponseStatus.BAD_GATEWAY.code() || 
-              e.getStatusCode() == HttpResponseStatus.GATEWAY_TIMEOUT.code()) {
+          if (e.getStatusCode() == HttpResponseStatus.BAD_GATEWAY.code()
+              || e.getStatusCode() == HttpResponseStatus.GATEWAY_TIMEOUT.code()) {
               throw new RetryableException("Proxy infrastructure unreachable (HTTP " + e.getStatusCode() 
                                            + "). Forcing retry to trigger Circuit Breaker.", e);
           }

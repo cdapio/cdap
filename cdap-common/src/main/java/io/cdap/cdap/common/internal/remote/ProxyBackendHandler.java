@@ -70,6 +70,8 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpResponse) {
             HttpResponse resp = (HttpResponse) msg;
             int statusCode = resp.status().code();
+            LOG.info("shruzard - ProxyBackendHandler: Received status code : {} from task worker", statusCode);
+
             PodState state = podRegistry.get(targetWorkerAddress);
 
             if (state != null) {
@@ -77,7 +79,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                 // ONLY synchronize ground truth from headers when the worker explicitly rejects the request
                 if (statusCode == HttpResponseStatus.CONFLICT.code()
                         || statusCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-                    
+
                     String activeTasksStr = resp.headers().get("X-Active-Tasks");
                     String leasedNamespace = resp.headers().get("X-Leased-Namespace");
                     
@@ -89,12 +91,18 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                         statusCode, targetWorkerAddress, state.getInflightRequests(), state.getLeasedNamespace());
                 } else {
                     // For normal responses (e.g. 200 OK), preserve local occupancy count and update activity timestamp
+                    LOG.info("shruzard - ProxyBackendHandler: Received! status code : {} "
+                             + "from task worker. Updating activityTimestamp", statusCode);
+
                     state.recordActivity();
                 }
             }
         } else if (msg instanceof LastHttpContent) {
             // STEP 2: Release Occupancy on Stream Completion
             // When the entire HTTP response payload finishes streaming, decrement the in-flight concurrency count.
+            LOG.info("shruzard - ProxyBackendHandler: Received last message from TaskWorker. "
+                     + "Releasing occupancy in map.. ");
+
             releaseOccupancy();
         }
 
@@ -105,6 +113,8 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
             if (future.isSuccess()) {
                 ctx.channel().read();
             } else {
+                LOG.info("shruzard - ProxyBackendHandler: Unable to write back to App fabric... Closing channel ");
+
                 future.channel().close();
             }
         });

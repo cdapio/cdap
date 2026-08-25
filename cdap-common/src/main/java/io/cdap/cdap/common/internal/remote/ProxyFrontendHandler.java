@@ -149,7 +149,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     if (state.tryClaimIdleLease(targetNamespace, idleTimeoutNanos)) {
                         targetWorkerAddress = entry.getKey();
                         LOG.info("shruzard - ProxyFrontendHandler: Claimed idle pod "
-                                 + "for new namespace '{}' at {}. Previous occupant evicted.", 
+                                 + "for new namespace '{}' at {}",
                                  targetNamespace, targetWorkerAddress);
                         break;
                     }
