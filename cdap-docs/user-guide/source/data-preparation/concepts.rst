@@ -59,7 +59,7 @@ Record
 
 A record in this documentation will be shown as a JSON object with an
 object key representing the column names and a value shown by the plain
-representation of the the data, without any mention of types.
+representation of the data, without any mention of types.
 
 For example:
 
