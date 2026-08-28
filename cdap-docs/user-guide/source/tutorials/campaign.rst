@@ -108,7 +108,7 @@ The directive is in the form ``table-lookup <column> <table>``. ``column`` in th
 
 You will see a new column, ``state_abbreviation``, appear. 
 
-Directives entered into the command prompt at the bottom of the screen are applied in the same way as directives applied through each columns' drop-down menu. In fact, when you select a filter, for example, from a drop down menu, Data Preparation automatically generates and applies the equivalent directive. You can see this by selecting ``Directives`` in the right-hand sidebar. Clicking "x" next to a directive removes the corresponding transformation.
+Directives entered into the command prompt at the bottom of the screen are applied in the same way as directives applied through each column's drop-down menu. In fact, when you select a filter, for example, from a drop down menu, Data Preparation automatically generates and applies the equivalent directive. You can see this by selecting ``Directives`` in the right-hand sidebar. Clicking "x" next to a directive removes the corresponding transformation.
 
 Since you no longer need the full state name, you can delete this column. Select the caret to the left of ``state``, and choose the ``Delete Column`` option. Further, you can rename ``state_abbreviation``. Double-click the column name, and the text will become editable. Replace it with "State."
 
@@ -138,7 +138,7 @@ This task is not as simple as it may seem at first. For states, you could simply
 
 This means you cannot simply filter that requires the column to be equal to the word "Avenue." 
 
-To work around this, we will use the ``Contains`` features. Select the caret in the address column, and choose ``Filter`` and ``Keep Value if Contains``. Enter ``Avenue``. Also, choose ``ignore case``. Apply the filter. Simple!
+To work around this, we will use the ``Contains`` feature. Select the caret in the address column, and choose ``Filter`` and ``Keep Value if Contains``. Enter ``Avenue``. Also, choose ``ignore case``. Apply the filter. Simple!
 
 .. figure:: /_images/tutorials/address/address_street_type.jpeg
   :figwidth: 100%
