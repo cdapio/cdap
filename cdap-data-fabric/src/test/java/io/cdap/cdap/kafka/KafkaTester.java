@@ -33,6 +33,7 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -128,19 +129,19 @@ public class KafkaTester extends ExternalResource {
   protected void before() throws Throwable {
     tmpFolder.create();
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
     LOG.info("In memory ZK started on {}", zkServer.getConnectionStr());
 
     kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig());
-    kafkaServer.startAsync().awaitRunning();
+    Services.startAndWait(kafkaServer);
     initializeCconf();
     injector = createInjector();
     zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
     kafkaClient = injector.getInstance(KafkaClientService.class);
-    kafkaClient.startAsync().awaitRunning();
+    Services.startAndWait(kafkaClient);
     brokerService = injector.getInstance(BrokerService.class);
-    brokerService.startAsync().awaitRunning();
+    Services.startAndWait(brokerService);
 
     String brokerList = updateKafkaBrokerList(injector.getInstance(CConfiguration.class),
         brokerService);
@@ -151,11 +152,21 @@ public class KafkaTester extends ExternalResource {
 
   @Override
   protected void after() {
-    brokerService.stopAsync().awaitTerminated();
-    kafkaClient.stopAsync().awaitTerminated();
-    zkClient.stopAsync().awaitTerminated();
-    kafkaServer.stopAsync().awaitTerminated();
-    zkServer.stopAsync().awaitTerminated();
+    if (brokerService != null) {
+      Services.stopAndWait(brokerService);
+    }
+    if (kafkaClient != null) {
+      Services.stopAndWait(kafkaClient);
+    }
+    if (zkClient != null) {
+      Services.stopAndWait(zkClient);
+    }
+    if (kafkaServer != null) {
+      Services.stopAndWait(kafkaServer);
+    }
+    if (zkServer != null) {
+      Services.stopAndWait(zkServer);
+    }
   }
 
   private void initializeCconf() throws IOException {

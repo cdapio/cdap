@@ -88,8 +88,11 @@ public abstract class ProfileServiceTest {
       .build();
 
   protected abstract Injector getInjector();
+
   protected abstract ProfileService getProfileService();
+
   protected abstract StructuredTableAdmin getTableAdmin();
+
   protected abstract DefaultStore getDefaultStore();
 
   protected static CConfiguration cConf;

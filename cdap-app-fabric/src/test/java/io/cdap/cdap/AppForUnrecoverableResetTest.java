@@ -30,7 +30,7 @@ public class AppForUnrecoverableResetTest extends AbstractApplication {
     setName("AppForUnrecoverableResetTest");
     setDescription("Application to test the deletion of the Schedules after unrecoverable reset");
     addWorkflow(new DummyWorkflow());
-    addMapReduce(new DummyMR());
+    addMapReduce(new DummyMr());
     schedule(buildSchedule("Every5HourSchedule", ProgramType.WORKFLOW, "DummyWorkflow")
                .setDescription("Every 5 hour schedule")
                .triggerByTime("0 */5 * * *"));
@@ -51,6 +51,10 @@ public class AppForUnrecoverableResetTest extends AbstractApplication {
   /**
    * Dummy MapReduce which does nothing
    */
-  static class DummyMR extends AbstractMapReduce {
+  static class DummyMr extends AbstractMapReduce {
+    @Override
+    protected void configure() {
+      setName("DummyMR");
+    }
   }
 }

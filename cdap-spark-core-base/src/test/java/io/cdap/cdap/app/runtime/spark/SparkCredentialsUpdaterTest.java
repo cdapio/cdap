@@ -20,6 +20,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -70,7 +71,7 @@ public class SparkCredentialsUpdaterTest {
     UserGroupInformation.getCurrentUser().addToken(new Token<>(Bytes.toBytes("id"), Bytes.toBytes("pass"),
                                                                new Text("kind"), new Text("service")));
 
-    updater.startAndWait();
+    Services.startAndWait(updater);
     try {
       List<Location> expectedFiles = new ArrayList<>();
       expectedFiles.add(credentialsDir.append("credentials-1"));
@@ -96,7 +97,7 @@ public class SparkCredentialsUpdaterTest {
         expectedFiles.add(credentialsDir.append("credentials-" + (i + 1)));
       }
     } finally {
-      updater.stopAndWait();
+      Services.stopAndWait(updater);
     }
   }
 
@@ -115,7 +116,7 @@ public class SparkCredentialsUpdaterTest {
       }
     };
 
-    updater.startAndWait();
+    Services.startAndWait(updater);
     try {
       // Expect this loop to finish in 3 seconds because we don't want sleep for too long for testing cleanup
       for (int i = 1; i <= 5; i++) {
@@ -130,7 +131,7 @@ public class SparkCredentialsUpdaterTest {
       updater.run();
       Assert.assertEquals(3, credentialsDir.list().size());
     } finally {
-      updater.stopAndWait();
+      Services.stopAndWait(updater);
     }
   }
 

@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -77,7 +78,7 @@ public class OperationNotificationSubscriberService extends AbstractIdleService 
         RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX);
 
     Retries.runWithRetries(() ->
-        TransactionRunners.run(transactionRunner, context -> {
+        TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
           processStartingOperations(context);
           processRunningOperations(context);
           processStoppingOperations(context);

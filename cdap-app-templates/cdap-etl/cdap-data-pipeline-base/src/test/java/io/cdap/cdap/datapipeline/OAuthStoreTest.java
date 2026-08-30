@@ -138,8 +138,25 @@ public class OAuthStoreTest {
 
     doNothing().when(mockTable).delete(any());
 
-    oauthStore.deleteProvider(PROVIDER_NAME);
+    oauthStore.deleteProvider(PROVIDER_NAME, false);
     verify(mockSecureStoreManager, times(1)).delete(any(), any());
+  }
+
+  @Test
+  public void testDeleteProviderPreserveCredentials() throws Exception {
+    doAnswer(invocation -> {
+      TxRunnable runnable = invocation.getArgument(0);
+      StructuredTableContext mockContext = mock(StructuredTableContext.class);
+      when(mockContext.getTable(any())).thenReturn(mockTable);
+      runnable.run(mockContext);
+      return null;
+    }).when(mockTransactionRunner).run(any(TxRunnable.class));
+
+    doNothing().when(mockTable).delete(any());
+
+    oauthStore.deleteProvider(PROVIDER_NAME, true);
+    verify(mockSecureStoreManager, times(0)).delete(any(), any());
+    verify(mockTable, times(1)).delete(any());
   }
 
   @Test
@@ -161,7 +178,7 @@ public class OAuthStoreTest {
 
     // CASE 1 :  When Secure keys not found, the provider should be deleted.
     doThrow(new NotFoundException("Keys not found.")).when(mockSecureStoreManager).delete(any(), any());
-    oauthStore.deleteProvider(PROVIDER_NAME);
+    oauthStore.deleteProvider(PROVIDER_NAME, false);
     verify(mockSecureStoreManager, times(1)).delete(any(), any());
     verify(mockTable, times(1)).delete(any());
 
@@ -170,7 +187,7 @@ public class OAuthStoreTest {
     org.mockito.Mockito.clearInvocations(mockTable);
     doThrow(new Exception("Unable to delete secure key")).when(mockSecureStoreManager).delete(any(), any());
     try {
-      oauthStore.deleteProvider(PROVIDER_NAME);
+      oauthStore.deleteProvider(PROVIDER_NAME, false);
     } catch (Exception e) {
       assertEquals(e.getClass(), OAuthStoreException.class);
     }

@@ -111,6 +111,13 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
       }
     }
     startCleanup.set(true);
+    try {
+      // The recovery is done, block until the service is being shut down.
+      stopLatch.await();
+    } catch (InterruptedException e) {
+      // This is expected on shutdown.
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override

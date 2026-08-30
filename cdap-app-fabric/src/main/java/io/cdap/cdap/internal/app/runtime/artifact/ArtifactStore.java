@@ -59,6 +59,7 @@ import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.File;
 import java.io.IOException;
@@ -693,7 +694,7 @@ public class ArtifactStore {
       Function<Map<String, String>, Map<String, String>> updateFunction)
       throws ArtifactNotFoundException, IOException {
 
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       StructuredTable artifactDataTable = getTable(context,
           StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       ArtifactCell artifactCell = new ArtifactCell(artifactId);
@@ -741,7 +742,7 @@ public class ArtifactStore {
 
     // if we're not a snapshot version, check that the artifact doesn't exist already.
     if (!artifactId.getVersion().isSnapshot()) {
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         StructuredTable table = getTable(context,
             StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
         ArtifactCell artifactCell = new ArtifactCell(artifactId);
@@ -765,7 +766,7 @@ public class ArtifactStore {
 
     // now try and write the metadata for the artifact
     try {
-      transactionRunner.run(context -> {
+      transactionRunner.run((TxRunnable) context -> {
         // we have to check that the metadata doesn't exist again since somebody else may have written
         // the artifact while we were copying the artifact to the filesystem.
         StructuredTable artifactDataTable = getTable(context,
@@ -831,7 +832,7 @@ public class ArtifactStore {
   public void delete(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
 
     // delete everything in a transaction
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       // first look up details to get plugins and apps in the artifact
       StructuredTable artifactDataTable = getTable(context,
           StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
@@ -857,7 +858,7 @@ public class ArtifactStore {
     final Id.Namespace namespaceId = Id.Namespace.fromEntityId(namespace);
     namespacePathLocator.get(namespace).append(ARTIFACTS_PATH).delete(true);
 
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       // delete all rows about artifacts in the namespace
       StructuredTable artifactDataTable = getTable(context,
           StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);

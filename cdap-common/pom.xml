@@ -134,6 +134,10 @@
       <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.twill</groupId>
       <artifactId>twill-discovery-api</artifactId>
     </dependency>
@@ -264,6 +268,7 @@
         <executions>
           <execution>
             <id>test-jar</id>
+            <phase>process-test-classes</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>

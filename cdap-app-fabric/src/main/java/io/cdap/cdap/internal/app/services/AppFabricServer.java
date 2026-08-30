@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -142,14 +143,28 @@ public class AppFabricServer extends AbstractIdleService {
             Constants.Service.APP_FABRIC_HTTP));
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      namespaceCredentialProviderService.startAsync();
+      if (namespaceCredentialProviderService.state() == State.NEW) {
+        namespaceCredentialProviderService.startAsync();
+      }
     }
-    provisioningService.startAsync();
-    applicationLifecycleService.startAsync();
-    bootstrapService.startAsync();
-    credentialProviderService.startAsync();
-    sourceControlOperationRunner.startAsync();
-    repositoryCleanupService.startAsync();
+    if (provisioningService.state() == State.NEW) {
+      provisioningService.startAsync();
+    }
+    if (applicationLifecycleService.state() == State.NEW) {
+      applicationLifecycleService.startAsync();
+    }
+    if (bootstrapService.state() == State.NEW) {
+      bootstrapService.startAsync();
+    }
+    if (credentialProviderService.state() == State.NEW) {
+      credentialProviderService.startAsync();
+    }
+    if (sourceControlOperationRunner.state() == State.NEW) {
+      sourceControlOperationRunner.startAsync();
+    }
+    if (repositoryCleanupService.state() == State.NEW) {
+      repositoryCleanupService.startAsync();
+    }
 
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
       namespaceCredentialProviderService.awaitRunning();
@@ -215,13 +230,27 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     cancelHttpService.cancel();
-    applicationLifecycleService.stopAsync().awaitTerminated();
-    bootstrapService.stopAsync().awaitTerminated();
-    provisioningService.stopAsync().awaitTerminated();
-    sourceControlOperationRunner.stopAsync().awaitTerminated();
-    repositoryCleanupService.stopAsync().awaitTerminated();
-    credentialProviderService.stopAsync().awaitTerminated();
-    namespaceCredentialProviderService.stopAsync().awaitTerminated();
+    if (applicationLifecycleService.isRunning()) {
+      applicationLifecycleService.stopAsync().awaitTerminated();
+    }
+    if (bootstrapService.isRunning()) {
+      bootstrapService.stopAsync().awaitTerminated();
+    }
+    if (provisioningService.isRunning()) {
+      provisioningService.stopAsync().awaitTerminated();
+    }
+    if (sourceControlOperationRunner.isRunning()) {
+      sourceControlOperationRunner.stopAsync().awaitTerminated();
+    }
+    if (repositoryCleanupService.isRunning()) {
+      repositoryCleanupService.stopAsync().awaitTerminated();
+    }
+    if (credentialProviderService.isRunning()) {
+      credentialProviderService.stopAsync().awaitTerminated();
+    }
+    if (namespaceCredentialProviderService.isRunning()) {
+      namespaceCredentialProviderService.stopAsync().awaitTerminated();
+    }
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

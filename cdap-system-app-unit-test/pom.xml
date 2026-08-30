@@ -34,6 +34,12 @@
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
     </dependency>

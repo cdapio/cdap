@@ -69,7 +69,11 @@ public class SparkRunnerClassLoaderTest {
           } catch (Exception e) {
             exception.set(e);
           } finally {
-            Closeables.closeQuietly(secondCL);
+            try {
+              Closeables.close(secondCL, true);
+            } catch (IOException e) {
+              // Ignored since swallowIOException is true
+            }
           }
         }
       };
@@ -140,7 +144,11 @@ public class SparkRunnerClassLoaderTest {
 
     // After closing the ClassLoader,
     // reading from stream acquired through getResourceAsStream() should fail with an exception.
-    Closeables.closeQuietly(cl);
+    try {
+      Closeables.close(cl, true);
+    } catch (IOException e) {
+      // Ignored since swallowIOException is true
+    }
     is.read();
   }
 }

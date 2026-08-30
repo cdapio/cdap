@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 
 /**
  * Implementation of {@link WorkflowStateWriter} that writes to {@link AppMetadataStore} directly.
@@ -39,7 +40,7 @@ public class BasicWorkflowStateWriter implements WorkflowStateWriter {
 
   @Override
   public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       AppMetadataStore.create(context).setWorkflowToken(workflowRunId, token);
     });
   }
@@ -47,7 +48,7 @@ public class BasicWorkflowStateWriter implements WorkflowStateWriter {
   @Override
   public void addWorkflowNodeState(ProgramRunId workflowRunId,
       WorkflowNodeStateDetail nodeStateDetail) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       AppMetadataStore.create(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
     });
   }

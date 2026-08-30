@@ -109,7 +109,7 @@ public final class SparkResourceFilter implements FilterClassLoader.Filter {
       }
       return true;
     }
-    return defaultFilter.acceptResource(packageName);
+    return defaultFilter.acceptPackage(packageName);
   }
 
   /**

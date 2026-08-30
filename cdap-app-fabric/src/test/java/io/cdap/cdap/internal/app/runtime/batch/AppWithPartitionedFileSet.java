@@ -74,7 +74,7 @@ public class AppWithPartitionedFileSet extends AbstractApplication<AppWithPartit
                          .addStringField("type")
                          .addLongField("time")
                          .build())
-        // properties for file set
+      // properties for file set
       .setBasePath("partitioned")
       .setInputFormat(inputFormatClass)
       .setOutputFormat(TextOutputFormat.class)

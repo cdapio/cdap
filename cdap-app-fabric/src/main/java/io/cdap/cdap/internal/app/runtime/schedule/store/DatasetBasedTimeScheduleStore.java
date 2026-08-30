@@ -32,6 +32,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -164,7 +165,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private void executeDelete(final TriggerKey triggerKey) {
     try {
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         delete(getTimeScheduleStructuredTable(context), TRIGGER_KEY, triggerKey.getName());
       });
     } catch (Throwable th) {
@@ -174,7 +175,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private void executeDelete(final JobKey jobKey) {
     try {
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         delete(getTimeScheduleStructuredTable(context), JOB_KEY, jobKey.getName());
       });
     } catch (Throwable t) {
@@ -186,7 +187,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       final Trigger.TriggerState newTriggerState) {
     try {
       Preconditions.checkNotNull(triggerKey);
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         StructuredTable table = getTimeScheduleStructuredTable(context);
         TriggerStatusV2 storedTriggerStatus = readTrigger(table, triggerKey);
         if (storedTriggerStatus != null) {
@@ -210,7 +211,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         triggerState = super.getTriggerState(newTrigger.getKey());
       }
       final Trigger.TriggerState finalTriggerState = triggerState;
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         StructuredTable table = getTimeScheduleStructuredTable(context);
         if (newJob != null) {
           persistJob(table, newJob);
@@ -285,7 +286,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     final List<JobDetail> jobs = Lists.newArrayList();
     final List<TriggerStatusV2> triggers = Lists.newArrayList();
 
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       StructuredTable table = getTimeScheduleStructuredTable(context);
       try (CloseableIterator<StructuredRow> iterator =
           table.scan(Range.singleton(getScanPrefix(JOB_KEY)), Integer.MAX_VALUE)) {

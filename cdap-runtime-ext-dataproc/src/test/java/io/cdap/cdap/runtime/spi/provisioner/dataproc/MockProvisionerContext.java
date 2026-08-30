@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -37,6 +38,7 @@ import org.apache.twill.filesystem.LocationFactory;
 public class MockProvisionerContext implements ProvisionerContext {
 
   private final Map<String, String> properties;
+  private final Map<String, Integer> metricCounts = new ConcurrentHashMap<>();
   private ProgramRunInfo programRunInfo;
   private SparkCompat sparkCompat;
   private VersionInfo appCDAPVersionInfo;
@@ -141,11 +143,17 @@ public class MockProvisionerContext implements ProvisionerContext {
     this.profileName = profileName;
   }
 
+  public Map<String, Integer> getMetricCounts() {
+    return metricCounts;
+  }
+
   @Override
   public ProvisionerMetrics getMetrics(Map<String, String> context) {
     return new ProvisionerMetrics() {
       @Override
-      public void count(String metricName, int delta) {}
+      public void count(String metricName, int delta) {
+        metricCounts.merge(metricName, delta, Integer::sum);
+      }
 
       @Override
       public void gauge(String metricName, long value) {}

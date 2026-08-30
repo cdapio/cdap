@@ -112,7 +112,6 @@ public class ErrorLogsClassifierTest {
     Mockito.when(spy.getRuleList()).thenReturn(getRulesList());
     Mockito.doCallRealMethod().when(spy).classify(Mockito.any(), Mockito.any(), Mockito.any(),
         Mockito.any(), Mockito.any(), Mockito.any());
-    mockMetricsCollectionService.startAsync().awaitRunning();
     CloseableIterator<LogEvent> closeableIterator = getCloseableIterator(events.iterator());
     spy.classify(closeableIterator, responder, "namespace", "program", "app", "run2");
     mockMetricsCollectionService.stopAsync().awaitTerminated();

@@ -459,13 +459,13 @@ public class UnitTestManager extends AbstractTestManager {
   /**
    * {@link #deploymentJarCache} key for artifacts produced by {@link #addAppArtifact}
    */
-  private static class AppArtifactKey implements ArtifactKey {
+  static class AppArtifactKey implements ArtifactKey {
 
     private final Class<?> appClass;
     private final Manifest manifest;
     private final List<File> bundleEmbeddedJars;
 
-    private AppArtifactKey(Class<?> appClass, Manifest manifest, File... bundleEmbeddedJars) {
+    AppArtifactKey(Class<?> appClass, Manifest manifest, File... bundleEmbeddedJars) {
       this.appClass = appClass;
       this.manifest = manifest;
       this.bundleEmbeddedJars = Arrays.asList(bundleEmbeddedJars);
@@ -494,12 +494,12 @@ public class UnitTestManager extends AbstractTestManager {
   /**
    * {@link #deploymentJarCache} key for artifacts produced by {@link #createPluginJar}
    */
-  private static class PluginArtifactKey implements ArtifactKey {
+  static class PluginArtifactKey implements ArtifactKey {
 
     private final Class<?> pluginClass;
     private final List<Class<?>> pluginClasses;
 
-    private PluginArtifactKey(Class<?> pluginClass, Class<?>... pluginClasses) {
+    PluginArtifactKey(Class<?> pluginClass, Class<?>... pluginClasses) {
       this.pluginClass = pluginClass;
       this.pluginClasses = Arrays.asList(pluginClasses);
     }

@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.internal;
 
 import com.google.gson.Gson;
@@ -56,8 +57,8 @@ public final class MockResponder extends AbstractHttpResponder {
   }
 
   public <T> T decodeResponseContent(Type type, Gson gson) {
-    JsonReader jsonReader = new JsonReader(new InputStreamReader
-                                             (new ByteBufInputStream(content), StandardCharsets.UTF_8));
+    JsonReader jsonReader = new JsonReader(new InputStreamReader(
+      new ByteBufInputStream(content), StandardCharsets.UTF_8));
     return gson.fromJson(jsonReader, type);
   }
 
@@ -92,12 +93,12 @@ public final class MockResponder extends AbstractHttpResponder {
   }
 
   @Override
-  public void sendFile(File file, HttpHeaders headers) {
+  public void sendContent(HttpResponseStatus httpResponseStatus, BodyProducer bodyProducer, HttpHeaders headers) {
     this.status = HttpResponseStatus.OK;
   }
 
   @Override
-  public void sendContent(HttpResponseStatus httpResponseStatus, BodyProducer bodyProducer, HttpHeaders headers) {
+  public void sendFile(File file, HttpHeaders headers) {
     this.status = HttpResponseStatus.OK;
   }
 }

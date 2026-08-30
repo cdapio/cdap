@@ -34,10 +34,10 @@ public class AuditPublishersTest {
   @Test
   public void testPublishingAccessLogs() {
     String datasetName = "dummyDataset";
-    String datasetName2 = "dummyDataset2";
+    final String datasetName2 = "dummyDataset2";
     String appName = "dummyApp";
     String workerName = "dummyWorker";
-    String workerName2 = "dummyWorker2";
+    final String workerName2 = "dummyWorker2";
     InMemoryAuditPublisher auditPublisher = new InMemoryAuditPublisher();
     ProgramId workerId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), appName, ProgramType.WORKER, workerName);
     DatasetId datasetId = NamespaceId.DEFAULT.dataset(datasetName);

@@ -66,6 +66,7 @@ class RemoteExecutionTwillController implements TwillController {
   private final RemoteProcessController remoteProcessController;
   private final RemoteExecutionService executionService;
   private final long pollCompletedMillis;
+  private final long stopDelayMillis;
   private final boolean terminateWithController;
   private volatile boolean terminateOnServiceStop;
 
@@ -77,6 +78,7 @@ class RemoteExecutionTwillController implements TwillController {
     this.programRunId = programRunId;
     this.runId = RunIds.fromString(programRunId.getRun());
     this.pollCompletedMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
+    this.stopDelayMillis = cConf.getLong(Constants.RuntimeMonitor.REMOTE_STOP_DELAY_SECS, 10) * 1000;
 
     // On start up task succeeded, complete the started stage to unblock the onRunning()
     // On start up task failure, mark this controller as terminated with exception
@@ -121,15 +123,18 @@ class RemoteExecutionTwillController implements TwillController {
     try {
       RuntimeJobStatus status;
       RetryStrategy retryStrategy = RetryStrategies.timeLimit(
-          5, TimeUnit.SECONDS, RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS));
+          stopDelayMillis, TimeUnit.MILLISECONDS, RetryStrategies.exponentialDelay(500, 2000,
+              TimeUnit.MILLISECONDS));
 
-      // Make sure the remote execution is completed
-      // Give 5 seconds for the remote process to shutdown. After 5 seconds, issues a kill.
+      // Wait for the remote process (e.g. Dataproc job) to complete.
+      // We give 5 sec for the remote process (e.g. DP's master process) to shutdown and another
+      // 5 sec to account for DP's backend propagation delays (CDAP-21219). If we kill/cancel too
+      // early while the job is finishing, it can transition the Dataproc job to an ERROR state .
       long startTime = System.currentTimeMillis();
       while ((status = Retries.callWithRetries(
           remoteProcessController::getStatus, retryStrategy, Exception.class::isInstance))
           == RuntimeJobStatus.RUNNING) {
-        if (System.currentTimeMillis() - startTime >= 5000) {
+        if (System.currentTimeMillis() - startTime >= stopDelayMillis) {
           throw new IllegalStateException(
               "Remote process for " + programRunId + " is still running");
         }

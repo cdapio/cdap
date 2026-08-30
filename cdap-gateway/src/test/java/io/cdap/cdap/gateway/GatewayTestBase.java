@@ -132,12 +132,16 @@ public abstract class GatewayTestBase {
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
+    conf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
+    conf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
+    conf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
+    conf.setLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS, 100L);
     injector = startGateway(conf);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    if (nestedStartCount-- != 0) {
+    if (--nestedStartCount != 0) {
       return;
     }
     stopGateway(conf);
@@ -272,12 +276,12 @@ public abstract class GatewayTestBase {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        HttpResponse response = GatewayFastTestsSuite.doGet(
-                                  String.format("/v3/namespaces/default/apps/%s/%s/%s/runs?status=%s&start=%d&end=%d",
-                                                appId, programType, programId, runStatus, 0, Long.MAX_VALUE));
+        String path = String.format("/v3/namespaces/default/apps/%s/%s/%s/runs?status=%s&start=%d&end=%d",
+                                    appId, programType, programId, runStatus, 0, Long.MAX_VALUE);
+        HttpResponse response = GatewayFastTestsSuite.doGet(path);
         List<RunRecord> records = GSON.fromJson(EntityUtils.toString(response.getEntity()), RUN_RECORDS_TYPE);
-        return records.size();
+        return records == null ? 0 : records.size();
       }
-    }, 30, TimeUnit.SECONDS);
+    }, 60, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
   }
 }

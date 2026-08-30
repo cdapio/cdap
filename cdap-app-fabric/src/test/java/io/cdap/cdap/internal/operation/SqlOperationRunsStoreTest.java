@@ -71,11 +71,9 @@ public class SqlOperationRunsStoreTest extends OperationRunStoreTest {
   @AfterClass
   public static void afterClass() {
     try {
-
       pg.close();
-
     } catch (Exception ignored) {
-
+      // Ignored
     }
   }
 }

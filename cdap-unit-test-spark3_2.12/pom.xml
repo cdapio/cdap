@@ -41,6 +41,11 @@
   <dependencies>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -52,6 +57,16 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api-spark3_2.12</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-api-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -112,7 +127,7 @@
           </execution>
           <execution>
             <id>copy-base-test</id>
-            <phase>generate-test-sources</phase>
+            <phase>generate-sources</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>

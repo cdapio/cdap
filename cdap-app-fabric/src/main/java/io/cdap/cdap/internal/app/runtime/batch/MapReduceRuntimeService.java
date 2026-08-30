@@ -1013,7 +1013,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
     try (InputStream in = new FileInputStream(file);
-         OutputStream out = Locations.newOutputSupplier(targetLocation).getOutput()) {
+         OutputStream out = targetLocation.getOutputStream()) {
       ByteStreams.copy(in, out);
     }
     return targetLocation;
@@ -1027,8 +1027,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    try (InputStream in = Locations.newInputSupplier(programJarLocation).getInput();
-         OutputStream out = Locations.newOutputSupplier(programJarCopy).getOutput()) {
+    try (InputStream in = programJarLocation.getInputStream();
+         OutputStream out = programJarCopy.getOutputStream()) {
       ByteStreams.copy(in, out);
     }
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);

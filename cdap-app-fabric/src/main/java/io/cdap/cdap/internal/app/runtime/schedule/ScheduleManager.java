@@ -31,6 +31,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import java.io.IOException;
 import java.util.List;
 
@@ -88,7 +89,7 @@ public abstract class ScheduleManager {
    * @param appId the {@code ApplicationId} whose schedules need to be deleted.
    */
   public void deleteSchedules(ApplicationId appId) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
       List<ProgramSchedule> programSchedules = store.listSchedules(appId);
       for (ProgramSchedule programSchedule : programSchedules) {
@@ -103,7 +104,7 @@ public abstract class ScheduleManager {
    * @param programId the {@code ProgramId} whose schedules need to be deleted.
    */
   public void deleteSchedules(ProgramId programId) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
       List<ProgramSchedule> programSchedules = store.listSchedules(programId);
       for (ProgramSchedule programSchedule : programSchedules) {
@@ -121,7 +122,7 @@ public abstract class ScheduleManager {
    * @param programId the program id for which to delete the schedules.
    */
   public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
       List<ProgramSchedule> deletedSchedules = store.modifySchedulesTriggeredByDeletedProgram(programId);
       deletedSchedules.forEach(adminEventPublisher::publishScheduleDeletion);
