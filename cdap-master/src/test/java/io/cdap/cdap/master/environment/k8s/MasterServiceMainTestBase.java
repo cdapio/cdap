@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.internal.bootstrap.executor.DefaultNamespaceCreator;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
@@ -68,7 +69,7 @@ public class MasterServiceMainTestBase {
   public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setAutoCleanDataDir(false)
         .setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
 
     // Set the HDFS directory as well as we are using DFSLocationModule in the master services
     cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
@@ -142,7 +143,9 @@ public class MasterServiceMainTestBase {
     // Reverse stop services
     Lists.reverse(new ArrayList<>(SERVICE_MANAGERS.keySet()))
         .forEach(MasterServiceMainTestBase::stopService);
-    zkServer.stopAsync().awaitTerminated();
+    if (zkServer != null) {
+      Services.stopAndWait(zkServer);
+    }
   }
 
   /**

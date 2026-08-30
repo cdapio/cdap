@@ -66,6 +66,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
@@ -237,11 +238,21 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     for (Service service : Lists.reverse(services)) {
       LOG.info("Stopping service {} for {}", service, getClass().getName());
       try {
-        service.stopAsync().awaitTerminated();
+        service.stopAsync();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure each service has a chance to stop
         LOG.warn("Exception raised when stopping service {} for {}", service, getClass().getName(),
             e);
+      }
+    }
+
+    for (Service service : Lists.reverse(services)) {
+      try {
+        service.awaitTerminated(10, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        // Catch and log exception on stopping to make sure each service has a chance to stop
+        LOG.warn("Exception raised when awaiting termination of service {} for {}", service,
+            getClass().getName(), e);
       }
     }
 

@@ -18,6 +18,7 @@ package io.cdap.cdap.common.zookeeper.election;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,12 +56,14 @@ public class LeaderElectionInfoServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    if (zkServer != null) {
+      Services.stopAndWait(zkServer);
+    }
   }
 
   @Test
@@ -71,12 +74,12 @@ public class LeaderElectionInfoServiceTest {
     List<ZKClientService> zkClients = new ArrayList<>();
 
     ZKClientService infoZKClient = DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    infoZKClient.startAsync().awaitRunning();
+    Services.startAndWait(infoZKClient);
     zkClients.add(infoZKClient);
 
     // Start the LeaderElectionInfoService
     LeaderElectionInfoService infoService = new LeaderElectionInfoService(infoZKClient, prefix);
-    infoService.startAsync().awaitRunning();
+    Services.startAndWait(infoService);
 
     // This will timeout as there is no leader election node created yet
     try {
@@ -90,7 +93,7 @@ public class LeaderElectionInfoServiceTest {
     List<LeaderElection> leaderElections = new ArrayList<>();
     for (int i = 0; i < size; i++) {
       ZKClientService zkClient = DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-      zkClient.startAsync().awaitRunning();
+      Services.startAndWait(zkClient);
       zkClients.add(zkClient);
 
       final int participantId = i;
@@ -105,7 +108,7 @@ public class LeaderElectionInfoServiceTest {
           LOG.info("Follow: {}", participantId);
         }
       });
-      leaderElection.startAsync();
+      Services.startAndWait(leaderElection);
       leaderElections.add(leaderElection);
     }
 
@@ -136,7 +139,7 @@ public class LeaderElectionInfoServiceTest {
 
     int expectedSize = size;
     for (LeaderElection leaderElection : leaderElections) {
-      leaderElection.stopAsync().awaitTerminated();
+      Services.stopAndWait(leaderElection);
       Tasks.waitFor(--expectedSize, new Callable<Integer>() {
         @Override
         public Integer call() throws Exception {
@@ -150,10 +153,10 @@ public class LeaderElectionInfoServiceTest {
     Assert.assertTrue(snapshot.isEmpty());
     Assert.assertEquals(participants, snapshot);
 
-    infoService.stopAsync().awaitTerminated();
+    Services.stopAndWait(infoService);
 
     for (ZKClientService zkClient : zkClients) {
-      zkClient.stopAsync().awaitTerminated();
+      Services.stopAndWait(zkClient);
     }
   }
 }

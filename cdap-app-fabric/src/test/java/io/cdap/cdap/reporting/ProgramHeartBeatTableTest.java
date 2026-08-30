@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +43,7 @@ public abstract class ProgramHeartBeatTableTest {
 
   @Before
   public void before() {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       new ProgramHeartbeatTable(context).deleteAll();
     });
   }
@@ -57,7 +58,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaBuilder.setRunTime(startTime1);
     metaBuilder.setStatus(ProgramRunStatus.RUNNING);
     RunRecordDetail meta = metaBuilder.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       new ProgramHeartbeatTable(context).writeRunRecordMeta(meta, startTime1);
     });
 
@@ -74,7 +75,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaBuilder2.setRunTime(startTime2);
     metaBuilder2.setStatus(ProgramRunStatus.RUNNING);
     RunRecordDetail meta2 = metaBuilder2.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       new ProgramHeartbeatTable(context).writeRunRecordMeta(meta2, startTime2);
     });
 
@@ -83,7 +84,7 @@ public abstract class ProgramHeartBeatTableTest {
 
     // program run1 runtime -> x     : x + 10
     // program run2 runtime -> x + 5 : x + 10
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       // end row key is exclusive, scanning from x : x + 5 should only return run1
       Collection<RunRecordDetail> result =
@@ -125,7 +126,7 @@ public abstract class ProgramHeartBeatTableTest {
    */
   private void setUpProgramHeartBeats(RunRecordDetail runRecordMeta,
                                       long startTime, long endTime, long interval) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       for (long time = startTime + interval; time < endTime; time += interval) {
         programHeartbeatTable.writeRunRecordMeta(runRecordMeta, time);
@@ -146,7 +147,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder.setStatus(ProgramRunStatus.RUNNING);
     metaRunningBuilder.setRunTime(startTime1);
     RunRecordDetail metaRunning = metaRunningBuilder.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning, startTime1);
     });
@@ -162,13 +163,13 @@ public abstract class ProgramHeartBeatTableTest {
     metaKilledBuilder.setStatus(ProgramRunStatus.KILLED);
     metaKilledBuilder.setStopTime(programEndTime);
     RunRecordDetail metaKilled = metaKilledBuilder.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaKilled, programEndTime);
     });
 
     // perform scan checks
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       // end row key is exclusive, scanning from x : x + 5 should only return run1
       Collection<RunRecordDetail> runRecordMetaList =
@@ -197,7 +198,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder0.setStatus(ProgramRunStatus.RUNNING);
     metaRunningBuilder0.setRunTime(startTime0);
     RunRecordDetail metaRunning0 = metaRunningBuilder0.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning0, startTime0);
     });
@@ -210,7 +211,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder1.setStatus(ProgramRunStatus.RUNNING);
     metaRunningBuilder1.setRunTime(startTime1);
     RunRecordDetail metaRunning1 = metaRunningBuilder1.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning1, startTime1);
     });
@@ -223,7 +224,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder2.setStatus(ProgramRunStatus.FAILED);
     metaRunningBuilder2.setRunTime(startTime1);
     RunRecordDetail metaRunning2 = metaRunningBuilder2.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning2, startTime2);
     });
@@ -236,7 +237,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder3.setStatus(ProgramRunStatus.STARTING);
     metaRunningBuilder3.setRunTime(startTime1);
     RunRecordDetail metaRunning3 = metaRunningBuilder3.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning3, startTime3);
     });
@@ -249,7 +250,7 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder4.setStatus(ProgramRunStatus.COMPLETED);
     metaRunningBuilder4.setRunTime(startTime1);
     RunRecordDetail metaRunning4 = metaRunningBuilder4.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning4, startTime4);
     });
@@ -262,13 +263,13 @@ public abstract class ProgramHeartBeatTableTest {
     metaRunningBuilder5.setStatus(ProgramRunStatus.RUNNING);
     metaRunningBuilder5.setRunTime(startTime1);
     RunRecordDetail metaRunning5 = metaRunningBuilder5.build();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning5, startTime5);
     });
 
     // perform findRunning checks
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       // Find all running tasks as of the start time.
       Collection<RunRecordDetail> runRecordMetaList =

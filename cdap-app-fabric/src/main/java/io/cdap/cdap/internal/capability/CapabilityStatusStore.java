@@ -26,6 +26,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -155,7 +156,7 @@ public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter
   @Override
   public void addOrUpdateCapability(String capability, CapabilityStatus status,
       CapabilityConfig config) throws IOException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       StructuredTable capabilityTable = context.getTable(
           StoreDefinition.CapabilitiesStore.CAPABILITIES);
       Collection<Field<?>> fields = new ArrayList<>();
@@ -175,7 +176,7 @@ public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter
    */
   @Override
   public void deleteCapability(String capability) throws IOException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       StructuredTable capabilityTable = context.getTable(
           StoreDefinition.CapabilitiesStore.CAPABILITIES);
       capabilityTable
@@ -189,7 +190,7 @@ public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter
    */
   public void addOrUpdateCapabilityOperation(String capability, CapabilityAction actionType,
       CapabilityConfig config) throws IOException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       StructuredTable capabilityTable = context.getTable(
           StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
       Collection<Field<?>> fields = new ArrayList<>();
@@ -206,7 +207,7 @@ public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter
    * Deletes capability operations
    */
   public void deleteCapabilityOperation(String capability) throws IOException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       StructuredTable capabilityTable = context.getTable(
           StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
       capabilityTable

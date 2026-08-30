@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -59,7 +60,7 @@ public class ZkDiscoveryModuleTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
 
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -68,7 +69,9 @@ public class ZkDiscoveryModuleTest {
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    if (zkServer != null) {
+      Services.stopAndWait(zkServer);
+    }
   }
 
   @Test
@@ -80,7 +83,7 @@ public class ZkDiscoveryModuleTest {
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
     try {
       DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
       DiscoveryServiceClient discoveryServiceClient = injector
@@ -106,7 +109,7 @@ public class ZkDiscoveryModuleTest {
       }
 
     } finally {
-      zkClient.stopAsync().awaitTerminated();
+      Services.stopAndWait(zkClient);
     }
   }
 
@@ -119,7 +122,7 @@ public class ZkDiscoveryModuleTest {
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
     try {
       // Register a service using the twill ZKClient. This is to simulate how a user Service program register
       ProgramId programId = NamespaceId.DEFAULT.app("app").service("service");
@@ -149,7 +152,7 @@ public class ZkDiscoveryModuleTest {
         }
       }
     } finally {
-      zkClient.stopAsync().awaitTerminated();
+      Services.stopAndWait(zkClient);
     }
   }
 }

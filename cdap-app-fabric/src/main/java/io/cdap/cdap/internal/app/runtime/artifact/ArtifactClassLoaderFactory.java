@@ -85,8 +85,7 @@ final class ArtifactClassLoaderFactory {
             .createProgramClassLoader(cConf, ProgramType.SPARK);
       } catch (Exception e) {
         // If Spark is not supported, exception is expected. We'll use the default filter.
-        LOG.warn("Spark is not supported. Not using ProgramClassLoader from Spark");
-        LOG.trace("Failed to create spark program runner with error:", e);
+        LOG.warn("Spark is not supported. Not using ProgramClassLoader from Spark", e);
       }
     }
 
