@@ -38,7 +38,10 @@ import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -86,12 +89,14 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   public static final String PREF_PKCE_CODE_VERIFIER_TTL = "pkce.code.verifier.ttl.sec";
 
   private OAuthStore oauthStore;
+  private ContextAccessEnforcer contextAccessEnforcer;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
     Map<String, String> oauthConf = context.getConfiguration(OAUTH_CONF_PREFIX);
     this.oauthStore = new OAuthStore(context, context, context.getAdmin(), oauthConf);
+    this.contextAccessEnforcer = context.getContextAccessEnforcer();
   }
 
   @GET
@@ -101,6 +106,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                          @QueryParam("redirect_uri") String redirectURI,
                          @QueryParam("redirect_url") String redirectURL) {
     try {
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM,
+                                            StandardPermission.LIST);
       OAuthProvider oauthProvider = getProvider(provider);
 
       String formatURL = "%s";
@@ -148,6 +155,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                @QueryParam("reuse_client_credentials") @DefaultValue("false")
                                Boolean reuseClientCredentials) {
     try {
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM,
+                                            StandardPermission.CREATE);
       try {
         PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
             StandardCharsets.UTF_8.decode(request.getContent()).toString(),
@@ -198,6 +207,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                @QueryParam("preserve_client_credentials") @DefaultValue("false")
                                boolean preserveClientCredentials) {
     try {
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM,
+                                            StandardPermission.DELETE);
       try {
         oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
         responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -217,6 +228,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
     try {
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM,
+                                            StandardPermission.CREATE);
       PutOAuthCredentialRequest putOAuthCredentialRequest;
       try {
         putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
@@ -346,6 +359,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
     try {
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM,
+                                            StandardPermission.LIST);
       OAuthProvider oauthProvider = getProvider(provider);
       Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
@@ -426,6 +441,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                          @PathParam("provider") String provider,
                                          @PathParam("credential") String credentialId) {
     try {
+      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, NamespaceId.SYSTEM,
+                                            StandardPermission.LIST);
       OAuthProvider oauthProvider = getProvider(provider);
       Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
