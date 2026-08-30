@@ -368,7 +368,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
         <configuration>
           <excludes>
             <exclude>*.xml</exclude>
@@ -377,6 +376,7 @@
         <executions>
           <execution>
             <id>test-jar</id>
+            <phase>process-test-classes</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>

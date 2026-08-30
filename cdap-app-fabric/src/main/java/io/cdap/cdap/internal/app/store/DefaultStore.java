@@ -70,6 +70,7 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -497,7 +498,7 @@ public class DefaultStore implements Store {
     AtomicInteger count = new AtomicInteger();
     do {
       count.set(0);
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         AppMetadataStore.create(context)
             .scanActiveRuns(cursorRef.get(), txBatchSize, (cursor, runRecordDetail) -> {
               count.incrementAndGet();
@@ -592,7 +593,7 @@ public class DefaultStore implements Store {
   @Override
   public void markApplicationsLatest(Collection<ApplicationId> appIds)
       throws IOException, ApplicationNotFoundException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       AppMetadataStore mds = getAppMetadataStore(context);
       for (ApplicationId appId : appIds) {
         mds.markAsLatest(appId);
@@ -617,7 +618,7 @@ public class DefaultStore implements Store {
   @Override
   public void updateApplicationSourceControlMeta(Map<ApplicationId, SourceControlMeta> updateRequests)
       throws IOException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       AppMetadataStore mds = getAppMetadataStore(context);
       for (Map.Entry<ApplicationId, SourceControlMeta> updateRequest : updateRequests.entrySet()) {
         try {
@@ -670,7 +671,7 @@ public class DefaultStore implements Store {
   public void setWorkerInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s",
         instances);
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       ApplicationSpecification appSpec = getApplicationSpec(metaStore, id.getParent());
       WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
@@ -694,7 +695,7 @@ public class DefaultStore implements Store {
   public void setServiceInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s",
         instances);
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       ApplicationSpecification appSpec = getApplicationSpec(metaStore, id.getParent());
       ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
@@ -739,7 +740,7 @@ public class DefaultStore implements Store {
     LOG.trace("Removing application: namespace: {}, application: {}", appRef.getNamespace(),
         appRef.getApplication());
 
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       getAppStateTable(context).deleteAll(appRef.getNamespaceId(), appRef.getApplication());
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(appRef);
@@ -752,7 +753,7 @@ public class DefaultStore implements Store {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(),
               id.getApplication(), id.getVersion());
 
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
@@ -764,7 +765,7 @@ public class DefaultStore implements Store {
   public void removeAll(NamespaceId id) {
     LOG.trace("Removing all applications of namespace with id: {}", id.getNamespace());
 
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       getAppStateTable(context).deleteAll(id);
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplications(id.getNamespace());
@@ -819,7 +820,7 @@ public class DefaultStore implements Store {
       AtomicInteger count = new AtomicInteger();
 
       try {
-        TransactionRunners.run(transactionRunner, context -> {
+        TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
           getAppMetadataStore(context).scanApplications(requestRef.get(), entry -> {
             lastKey.set(entry.getKey());
             currentLimit.decrementAndGet();
@@ -869,7 +870,7 @@ public class DefaultStore implements Store {
     AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
     while (needMoreScans.get()) {
       needMoreScans.set(false);
-      TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
         getAppMetadataStore(context).scanApplications(forwardRequest.get(), entry -> {
           if (ids.size() >= currentLimit.get()) {
             ids.removeFirst();
@@ -889,7 +890,7 @@ public class DefaultStore implements Store {
             .build());
       }
       while (!ids.isEmpty()) {
-        TransactionRunners.run(transactionRunner, context -> {
+        TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
           for (int i = 0; !ids.isEmpty() && i < txBatchSize; i++) {
             ApplicationId id = ids.removeLast();
             consumer.accept(id, getApplicationMeta(getAppMetadataStore(context), id));
@@ -910,7 +911,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setAppSourceControlMeta(ApplicationId appId, SourceControlMeta sourceControlMeta) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       getAppMetadataStore(context).setAppSourceControlMeta(appId, sourceControlMeta);
     });
   }
@@ -974,7 +975,7 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       getAppMetadataStore(context).deleteAllAppMetadataTables();
       getWorkflowTable(context).deleteAll();
     });
@@ -1168,7 +1169,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void saveState(AppStateKeyValue request) throws ApplicationNotFoundException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       verifyApplicationExists(context, request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).save(request);
     }, ApplicationNotFoundException.class);
@@ -1176,7 +1177,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void deleteState(AppStateKey request) throws ApplicationNotFoundException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       verifyApplicationExists(context, request.getNamespaceId(), request.getAppName());
       getAppStateTable(context).delete(request);
     }, ApplicationNotFoundException.class);
@@ -1185,7 +1186,7 @@ public class DefaultStore implements Store {
   @Override
   public void deleteAllStates(NamespaceId namespaceId, String appName)
       throws ApplicationNotFoundException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       verifyApplicationExists(context, namespaceId, appName);
       getAppStateTable(context).deleteAll(namespaceId, appName);
     }, ApplicationNotFoundException.class);

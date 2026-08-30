@@ -90,7 +90,7 @@ public class Services {
    * Starts a service and waits for it to be running, using reflection
    * to be compatible with both Guava 13 and Guava 15+ / 20+.
    */
-  public static void startAndWait(Service service) {
+  public static void startAndWait(Object service) {
     if (service == null) {
       return;
     }
@@ -125,7 +125,7 @@ public class Services {
    * Stops a service and waits for it to be terminated, using reflection
    * to be compatible with both Guava 13 and Guava 15+ / 20+.
    */
-  public static void stopAndWait(Service service) {
+  public static void stopAndWait(Object service) {
     if (service == null) {
       return;
     }

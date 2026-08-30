@@ -41,6 +41,7 @@ import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -174,7 +175,7 @@ public class ProfileService {
    *     profile when disallowed.
    */
   public void saveProfile(ProfileId profileId, Profile profile) throws MethodNotAllowedException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       if (!cConf.getBoolean(Constants.Profile.UPDATE_ALLOWED)) {
         throw new MethodNotAllowedException("Compute profile creation and update are not allowed");
       }
@@ -200,7 +201,7 @@ public class ProfileService {
    * @param profile the information of the profile
    */
   public void createIfNotExists(ProfileId profileId, Profile profile) {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore.get(context).createIfNotExists(profileId, profile);
     });
   }
@@ -222,7 +223,7 @@ public class ProfileService {
       throw new MethodNotAllowedException(String.format("Profile Native %s cannot be deleted.",
           profileId.getScopedName()));
     }
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       Profile profile = profileStore.getProfile(profileId);
       AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
@@ -244,7 +245,7 @@ public class ProfileService {
       throw new MethodNotAllowedException("Deleting all system profiles is not allowed.");
     }
     List<ProfileId> deleted = new ArrayList<>();
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
       List<Profile> profiles = profileStore.getProfiles(namespaceId, false);
@@ -265,7 +266,7 @@ public class ProfileService {
    */
   @VisibleForTesting
   public void clear() {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore.get(context).deleteAllProfiles();
     });
   }
@@ -280,7 +281,7 @@ public class ProfileService {
    */
   public void enableProfile(ProfileId profileId)
       throws NotFoundException, ProfileConflictException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore.get(context).enableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
@@ -301,7 +302,7 @@ public class ProfileService {
           String.format("Cannot change status for Profile Native %s, "
               + "it should always be ENABLED", profileId.getScopedName()));
     }
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore.get(context).disableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
@@ -329,7 +330,7 @@ public class ProfileService {
    */
   public void addProfileAssignment(ProfileId profileId,
       EntityId entityId) throws NotFoundException, ProfileConflictException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore.get(context).addProfileAssignment(profileId, entityId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
@@ -343,7 +344,7 @@ public class ProfileService {
    */
   public void removeProfileAssignment(ProfileId profileId, EntityId entityId)
       throws NotFoundException {
-    TransactionRunners.run(transactionRunner, context -> {
+    TransactionRunners.run(transactionRunner, (TxRunnable) context -> {
       ProfileStore.get(context).removeProfileAssignment(profileId, entityId);
     }, NotFoundException.class);
   }

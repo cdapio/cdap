@@ -16,6 +16,7 @@
 package io.cdap.cdap.common.conf;
 
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.zookeeper.store.ZKPropertyStore;
 import java.io.IOException;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -39,16 +40,20 @@ public class ZKPropertyStoreTest extends PropertyStoreTestBase {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
 
     zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
   }
 
   @AfterClass
   public static void finish() {
-    zkClient.stopAsync().awaitTerminated();
-    zkServer.stopAsync().awaitTerminated();
+    if (zkClient != null) {
+      Services.stopAndWait(zkClient);
+    }
+    if (zkServer != null) {
+      Services.stopAndWait(zkServer);
+    }
   }
 
   @Override

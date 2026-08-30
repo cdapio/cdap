@@ -24,6 +24,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
+import io.cdap.cdap.common.service.Services;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -71,18 +72,18 @@ public class ResourceCoordinatorTest {
         new ZkClientModule(),
         new ZkDiscoveryModule());
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     try {
       ResourceCoordinator coordinator = new ResourceCoordinator(zkClient,
           injector.getInstance(DiscoveryServiceClient.class),
           new BalancedAssignmentStrategy());
-      coordinator.startAsync().awaitRunning();
+      Services.startAndWait(coordinator);
 
       try {
         ResourceCoordinatorClient client = new ResourceCoordinatorClient(zkClient);
-        client.startAsync().awaitRunning();
+        Services.startAndWait(client);
 
         try {
           // Create a requirement
@@ -171,26 +172,28 @@ public class ResourceCoordinatorTest {
           cancelDiscoverable2.cancel();
 
         } finally {
-          client.stopAsync().awaitTerminated();
+          Services.stopAndWait(client);
         }
       } finally {
-        coordinator.stopAsync().awaitTerminated();
+        Services.stopAndWait(coordinator);
       }
 
     } finally {
-      zkClient.stopAsync().awaitTerminated();
+      Services.stopAndWait(zkClient);
     }
   }
 
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAsync().awaitTerminated();
+    if (zkServer != null) {
+      Services.stopAndWait(zkServer);
+    }
   }
 
   private Cancellable subscribe(ResourceCoordinatorClient client,
