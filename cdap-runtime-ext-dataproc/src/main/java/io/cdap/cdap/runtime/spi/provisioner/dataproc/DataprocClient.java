@@ -835,7 +835,8 @@ abstract class DataprocClient implements AutoCloseable {
       OperationsClient.ListOperationsPagedResponse response =
         client.getOperationsClient().listOperations(operationName, filter);
 
-      return Optional.ofNullable(Iterables.getFirst(response.getPage().getValues(), null));
+      Iterable<Operation> values = response.getPage().getValues();
+      return values == null ? Optional.empty() : Optional.ofNullable(Iterables.getFirst(values, null));
 
     } catch (ApiException e) {
       throw DataprocUtils.handleApiException(null, e,
