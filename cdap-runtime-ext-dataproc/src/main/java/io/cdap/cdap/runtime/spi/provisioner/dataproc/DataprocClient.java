@@ -47,6 +47,7 @@ import com.google.cloud.dataproc.v1.UpdateClusterRequest;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Duration;
@@ -820,6 +821,27 @@ abstract class DataprocClient implements AutoCloseable {
       return errorMsg;
     }
     return "";
+  }
+
+  /**
+   * Get the latest operation by cluster name and operation type.
+   */
+  public Optional<Operation> getLatestOperation(String clusterName, String operationType)
+    throws RetryableProvisionException {
+    String operationName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(), conf.getRegion());
+    String filter = String.format("clusterName=\"%s\" AND operationType=\"%s\"", clusterName, operationType);
+
+    try {
+      OperationsClient.ListOperationsPagedResponse response =
+        client.getOperationsClient().listOperations(operationName, filter);
+
+      Iterable<Operation> values = response.getPage().getValues();
+      return values == null ? Optional.empty() : Optional.ofNullable(Iterables.getFirst(values, null));
+
+    } catch (ApiException e) {
+      throw DataprocUtils.handleApiException(null, e,
+        "Failed to retrieve latest operation metadata for cluster " + clusterName, errorCategory);
+    }
   }
 
   /**
