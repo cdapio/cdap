@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.longrunning.Operation;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
@@ -32,8 +33,10 @@ import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -685,5 +688,226 @@ public class DataprocProvisionerTest {
     Assert.assertNotNull(genericCount);
     Assert.assertEquals(1, apiCount.intValue());
     Assert.assertEquals(1, genericCount.intValue());
+  }
+  
+  @Test
+  public void testFlexVmConfigurationParsing() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put("workerCPUs", "2");
+    props.put("workerMemoryMB", "8192");
+    props.put("masterCPUs", "2");
+    props.put("masterMemoryMB", "8192");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n1, n2d");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    List<String> expectedWorkerTypes = Arrays.asList("n2-custom-2-8192", "e2-custom-2-8192");
+    Assert.assertEquals(expectedWorkerTypes, conf.getWorkerFlexVmMachineTypes());
+
+    List<String> expectedMasterTypes = Arrays.asList("custom-2-8192", "n2d-custom-2-8192");
+    Assert.assertEquals(expectedMasterTypes, conf.getMasterFlexVmMachineTypes());
+  }
+
+  @Test
+  public void testFlexVmDefaultEmpty() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertTrue(conf.getWorkerFlexVmMachineTypes().isEmpty());
+    Assert.assertTrue(conf.getMasterFlexVmMachineTypes().isEmpty());
+  }
+
+  @Test
+  public void testFlexVmValidationSuccess() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
+    provisioner.validateProperties(props);
+  }
+
+  @Test(expected = DataprocRuntimeException.class)
+  public void testFlexVmValidationFailureOnInvalidFormat() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "invalid@machine#name");
+
+    provisioner.validateProperties(props);
+  }
+
+  @Test
+  public void testFlexVmConfigurationParsingWithSpacesAndEmptyEntries() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put("workerCPUs", "4");
+    props.put("workerMemoryMB", "16384");
+    props.put("masterCPUs", "8");
+    props.put("masterMemoryMB", "32768");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, " , n2 , , e2 , , c2 , ");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "  n1 , , n2d  ");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    List<String> expectedWorkerTypes = Arrays.asList(
+      "n2-custom-4-16384", "e2-custom-4-16384", "c2-custom-4-16384");
+    Assert.assertEquals(expectedWorkerTypes, conf.getWorkerFlexVmMachineTypes());
+
+    List<String> expectedMasterTypes = Arrays.asList(
+      "custom-8-32768", "n2d-custom-8-32768");
+    Assert.assertEquals(expectedMasterTypes, conf.getMasterFlexVmMachineTypes());
+  }
+
+  @Test
+  public void testFlexVmValidationMasterFailureOnInvalidFormat() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "invalid#master@type");
+
+    try {
+      provisioner.validateProperties(props);
+      Assert.fail("Expected validation to fail for invalid master flexible VM type");
+    } catch (DataprocRuntimeException e) {
+      Assert.assertEquals(ErrorType.USER, e.getErrorType());
+      Assert.assertEquals(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION,
+                          e.getErrorCategory());
+      Assert.assertTrue(e.getMessage().contains("Invalid flexible VM machine type"));
+    }
+  }
+
+  @Test
+  public void testFlexVmValidationWorkerFailureDetails() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "invalid_type");
+
+    try {
+      provisioner.validateProperties(props);
+      Assert.fail("Expected validation to fail for invalid worker flexible VM type");
+    } catch (DataprocRuntimeException e) {
+      Assert.assertEquals(ErrorType.USER, e.getErrorType());
+      Assert.assertEquals(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION,
+                          e.getErrorCategory());
+      Assert.assertTrue(e.getMessage().contains("Invalid flexible VM machine type"));
+    }
+  }
+
+  @Test
+  public void testFlexVmValidationBothMasterAndWorkerSuccess() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n1, n2, n2d, e2");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n1, n2, n2d, e2");
+
+    provisioner.validateProperties(props);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testMasterFlexVmUnmodifiableList() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n1, n2");
+
+    DataprocConf conf = DataprocConf.create(props);
+    conf.getMasterFlexVmMachineTypes().add("e2-custom-2-8192");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testWorkerFlexVmUnmodifiableList() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n1, n2");
+
+    DataprocConf conf = DataprocConf.create(props);
+    conf.getWorkerFlexVmMachineTypes().add("e2-custom-2-8192");
+  }
+
+  @Test
+  public void testNetworkTagsParsing() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put("networkTags", "tag1,  tag2 , , tag3 ");
+
+    DataprocConf conf = DataprocConf.create(props);
+    Assert.assertEquals(Arrays.asList("tag1", "tag2", "tag3"), conf.getNetworkTags());
+  }
+
+  @Test
+  public void testNetworkTagsDefaultEmpty() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+
+    DataprocConf conf = DataprocConf.create(props);
+    Assert.assertTrue(conf.getNetworkTags().isEmpty());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNetworkTagsExceedsMaxLimit() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    StringBuilder tags = new StringBuilder();
+    for (int i = 0; i < 65; i++) {
+      tags.append("tag").append(i).append(",");
+    }
+    props.put("networkTags", tags.toString());
+
+    DataprocConf.create(props);
+  }
+
+  @Test
+  public void testScopesDefaultContainsCloudPlatformScope() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+
+    DataprocConf conf = DataprocConf.create(props);
+    Assert.assertEquals(Collections.singletonList(DataprocConf.CLOUD_PLATFORM_SCOPE), conf.getScopes());
+  }
+
+  @Test
+  public void testScopesParsingOrderAndDeduplication() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put(DataprocConf.SCOPES, "https://www.googleapis.com/auth/bigquery, https://www.googleapis.com/auth/drive, "
+      + "https://www.googleapis.com/auth/bigquery, " + DataprocConf.CLOUD_PLATFORM_SCOPE);
+
+    DataprocConf conf = DataprocConf.create(props);
+    List<String> expectedScopes = Arrays.asList(
+      "https://www.googleapis.com/auth/bigquery",
+      "https://www.googleapis.com/auth/drive",
+      DataprocConf.CLOUD_PLATFORM_SCOPE
+    );
+    Assert.assertEquals(expectedScopes, conf.getScopes());
   }
 }
