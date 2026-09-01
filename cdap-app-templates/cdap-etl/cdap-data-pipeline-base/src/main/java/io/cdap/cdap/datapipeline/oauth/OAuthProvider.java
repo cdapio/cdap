@@ -36,13 +36,17 @@ public class OAuthProvider {
   @Nullable
   private final AuthType authType;
 
-  public OAuthProvider(String name,
-                       String loginURL,
-                       String tokenRefreshURL,
-                       @Nullable OAuthClientCredentials clientCreds,
-                       @Nullable CredentialEncodingStrategy strategy,
-                       @Nullable String userAgent,
-                       @Nullable AuthType authType) {
+  @Nullable
+  private final RefreshType refreshType;
+
+  private OAuthProvider(String name,
+                        String loginURL,
+                        String tokenRefreshURL,
+                        @Nullable OAuthClientCredentials clientCreds,
+                        @Nullable CredentialEncodingStrategy strategy,
+                        @Nullable String userAgent,
+                        @Nullable AuthType authType,
+                        @Nullable RefreshType refreshType) {
     this.name = name;
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
@@ -50,6 +54,7 @@ public class OAuthProvider {
     this.strategy = strategy;
     this.userAgent = userAgent;
     this.authType = authType != null ? authType : AuthType.STANDARD;
+    this.refreshType = refreshType != null ? refreshType : RefreshType.STANDARD;
   }
 
   public String getName() {
@@ -83,6 +88,10 @@ public class OAuthProvider {
     return authType;
   }
 
+  public RefreshType getRefreshType() {
+    return refreshType;
+  }
+
   public enum CredentialEncodingStrategy {
     // (default) Sends client ID & secret as part of the POST request body
     FORM_BODY,
@@ -105,6 +114,7 @@ public class OAuthProvider {
     private CredentialEncodingStrategy strategy;
     private String userAgent;
     private AuthType authType;
+    private RefreshType refreshType;
 
     public Builder() {}
 
@@ -143,6 +153,11 @@ public class OAuthProvider {
       return this;
     }
 
+    public Builder withRefreshType(@Nullable RefreshType refreshType) {
+      this.refreshType = refreshType;
+      return this;
+    }
+
     public OAuthProvider build() {
       Preconditions.checkNotNull(name, "OAuth provider name missing");
       Preconditions.checkNotNull(loginURL, "Login URL missing");
@@ -151,7 +166,14 @@ public class OAuthProvider {
       if (strategy == null) {
         this.strategy = CredentialEncodingStrategy.FORM_BODY;
       }
-      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent, authType);
+      if (authType == null) {
+        this.authType = AuthType.STANDARD;
+      }
+      if (refreshType == null) {
+        this.refreshType = RefreshType.STANDARD;
+      }
+      return new OAuthProvider(name, loginURL, tokenRefreshURL, clientCreds, strategy, userAgent,
+          authType, refreshType);
     }
   }
 }

@@ -17,13 +17,15 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.datapipeline.oauth.CredentialIsValidResponse;
 import io.cdap.cdap.datapipeline.oauth.GetAccessTokenResponse;
@@ -31,6 +33,7 @@ import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthClientCredentials;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.AuthType;
+import io.cdap.cdap.datapipeline.oauth.RefreshType;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider.CredentialEncodingStrategy;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
@@ -38,7 +41,6 @@ import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -54,6 +56,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -84,6 +87,18 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private static final String OAUTH_CONF_PREFIX = "security.auth.oauth.";
   // Time To Live in seconds for PCKE based code verifier in Secure Store.
   public static final String PREF_PKCE_CODE_VERIFIER_TTL = "pkce.code.verifier.ttl.sec";
+  // Margin of safety before an access token officially expires to preemptively refresh it
+  private static final String RTR_ACCESS_TOKEN_REFRESH_BUFFER_MS = "rtr.access.token.refresh.buffer.ms";
+  // Maximum time to block and wait for another instance to complete a token refresh
+  private static final String RTR_REFRESH_WAIT_TIMEOUT_MS = "rtr.refresh.wait.timeout.ms";
+  // Interval at which to poll the token store while waiting for a concurrent refresh
+  private static final String RTR_REFRESH_POLL_INTERVAL_MS = "rtr.refresh.poll.interval.ms";
+  // The duration to hold the distributed refresh lease before it auto-expires
+  private static final String RTR_LEASE_TTL_MS = "rtr.lease.ttl.ms";
+  private long accessTokenRefreshBufferMs;
+  private long leaseTakeoverTimeoutMs;
+  private long accessTokenPollIntervalMs;
+  private long leaseExpirationTimeoutMs;
 
   private OAuthStore oauthStore;
 
@@ -92,6 +107,11 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     super.initialize(context);
     Map<String, String> oauthConf = context.getConfiguration(OAUTH_CONF_PREFIX);
     this.oauthStore = new OAuthStore(context, context, context.getAdmin(), oauthConf);
+
+    accessTokenRefreshBufferMs = Long.parseLong(oauthConf.get(RTR_ACCESS_TOKEN_REFRESH_BUFFER_MS));
+    leaseTakeoverTimeoutMs = Long.parseLong(oauthConf.get(RTR_REFRESH_WAIT_TIMEOUT_MS));
+    accessTokenPollIntervalMs = Long.parseLong(oauthConf.get(RTR_REFRESH_POLL_INTERVAL_MS));
+    leaseExpirationTimeoutMs = Long.parseLong(oauthConf.get(RTR_LEASE_TTL_MS));
   }
 
   @GET
@@ -100,7 +120,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                          @PathParam("provider") String provider,
                          @QueryParam("redirect_uri") String redirectURI,
                          @QueryParam("redirect_url") String redirectURL) {
-    try {
+    respond(responder, () -> {
       OAuthProvider oauthProvider = getProvider(provider);
 
       String formatURL = "%s";
@@ -113,32 +133,22 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       formatURL += "client_id=%s&redirect_uri=%s";
 
       // Maintaining backward compatibility for the apps using "redirect_url" parameter.
-      if (redirectURI == null || redirectURI.isEmpty()) {
-        redirectURI = redirectURL;
-      }
+      String effectiveRedirectURI = Strings.isNullOrEmpty(redirectURI) ? redirectURL : redirectURI;
 
       String response = String.format(
-          formatURL, loginUrl, oauthProvider.getClientCredentials().getClientId(), redirectURI);
+          formatURL, loginUrl, oauthProvider.getClientCredentials().getClientId(), effectiveRedirectURI);
 
       if (oauthProvider.getAuthType() == AuthType.PKCE) {
         String state = UUID.randomUUID().toString();
         String codeVerifier = generateCodeVerifier();
         String codeChallenge = generateCodeChallenge(codeVerifier);
 
-        try {
-          oauthStore.writePKCECodeVerifier(provider, state, codeVerifier);
-        } catch (Exception e) {
-          throw new OAuthServiceException(
-              HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to store PKCE code verifier", e);
-        }
-
+        oauthStore.writePKCECodeVerifier(provider, state, codeVerifier);
         response += String.format("&state=%s&code_challenge=%s&code_challenge_method=S256", state, codeChallenge);
       }
 
       responder.sendString(response);
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
-    }
+    });
   }
 
   @PUT
@@ -147,68 +157,58 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                @PathParam("provider") String oauthProvider,
                                @QueryParam("reuse_client_credentials") @DefaultValue("false")
                                Boolean reuseClientCredentials) {
-    try {
-      try {
-        PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
-            StandardCharsets.UTF_8.decode(request.getContent()).toString(),
-            PutOAuthProviderRequest.class);
-        CredentialEncodingStrategy strategy = putOAuthProviderRequest.getCredentialEncodingStrategy();
-        String userAgent = putOAuthProviderRequest.getUserAgent();
-        // Validate URLs
-        URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
-        URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
+    respond(responder, () -> {
+      PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
+          StandardCharsets.UTF_8.decode(request.getContent()).toString(),
+          PutOAuthProviderRequest.class);
+      CredentialEncodingStrategy strategy = putOAuthProviderRequest.getCredentialEncodingStrategy();
+      String userAgent = putOAuthProviderRequest.getUserAgent();
+      
+      // Validate URLs
+      URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
+      URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
 
-        LOG.info("Received putOAuthProvider request with write_client_credentials = {}", reuseClientCredentials);
-        OAuthClientCredentials clientCredentials = null;
-        if (!reuseClientCredentials) {
-          clientCredentials = OAuthClientCredentials.newBuilder()
-                                                    .withClientId(putOAuthProviderRequest.getClientId())
-                                                    .withClientSecret(putOAuthProviderRequest.getClientSecret())
-                                                    .build();
-        }
-        OAuthProvider provider = OAuthProvider.newBuilder()
-                                              .withName(oauthProvider)
-                                              .withLoginURL(loginURL.toString())
-                                              .withTokenRefreshURL(tokenRefreshURL.toString())
-                                              .withClientCredentials(clientCredentials)
-                                              .withCredentialEncodingStrategy(strategy)
-                                              .withUserAgent(userAgent)
-                                              .withAuthType(putOAuthProviderRequest.getAuthType())
-                                              .build();
-        oauthStore.writeProvider(provider, reuseClientCredentials);
-        responder.sendStatus(HttpURLConnection.HTTP_OK);
-      } catch (JsonSyntaxException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid JSON: " + e.getMessage(), e);
-      } catch (NullPointerException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid provider: " + e.getMessage(), e);
-      } catch (MalformedURLException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid URL: " + e.getMessage(), e);
-      } catch (OAuthStoreException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to write to OAuth store", e);
+      LOG.info("Received putOAuthProvider request with write_client_credentials = {}", reuseClientCredentials);
+      OAuthClientCredentials clientCredentials = null;
+      if (!reuseClientCredentials) {
+        clientCredentials = OAuthClientCredentials.newBuilder()
+            .withClientId(putOAuthProviderRequest.getClientId())
+            .withClientSecret(putOAuthProviderRequest.getClientSecret())
+            .build();
       }
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
-    }
+      OAuthProvider provider = OAuthProvider.newBuilder()
+          .withName(oauthProvider)
+          .withLoginURL(loginURL.toString())
+          .withTokenRefreshURL(tokenRefreshURL.toString())
+          .withClientCredentials(clientCredentials)
+          .withCredentialEncodingStrategy(strategy)
+          .withUserAgent(userAgent)
+          .withAuthType(putOAuthProviderRequest.getAuthType())
+          .withRefreshType(putOAuthProviderRequest.getRefreshType())
+          .build();
+
+      if (provider.getRefreshType() == RefreshType.RTR) {
+        if (!oauthStore.getStoreInfo().getCapabilities().contains(SecureStoreInfo.Capability.SECRET_LEASING)) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
+              "The Secure Store backend does not support Refresh Token Rotation (RTR).");
+        }
+      }
+
+      oauthStore.writeProvider(provider, reuseClientCredentials);
+      responder.sendStatus(HttpURLConnection.HTTP_OK);
+    });
   }
 
   @DELETE
   @Path(API_VERSION + "/oauth/provider/{provider}")
   public void deleteOAuthProvider(HttpServiceRequest request, HttpServiceResponder responder,
-                               @PathParam("provider") String oauthProvider,
-                               @QueryParam("preserve_client_credentials") @DefaultValue("false")
-                               boolean preserveClientCredentials) {
-    try {
-      try {
-        oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
-        responder.sendStatus(HttpURLConnection.HTTP_OK);
-      } catch (NullPointerException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid provider: " + e.getMessage(), e);
-      } catch (OAuthStoreException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to delete OAuth provider.", e);
-      }
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
-    }
+                                  @PathParam("provider") String oauthProvider,
+                                  @QueryParam("preserve_client_credentials") @DefaultValue("false")
+                                  boolean preserveClientCredentials) {
+    respond(responder, () -> {
+      oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
+      responder.sendStatus(HttpURLConnection.HTTP_OK);
+    });
   }
 
   @PUT
@@ -216,41 +216,29 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   public void putOAuthCredential(HttpServiceRequest request, HttpServiceResponder responder,
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
-    try {
-      PutOAuthCredentialRequest putOAuthCredentialRequest;
-      try {
-        putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
-                PutOAuthCredentialRequest.class);
-        if (putOAuthCredentialRequest.getOneTimeCode() == null
-            || putOAuthCredentialRequest.getOneTimeCode().isEmpty()) {
-          throw new OAuthServiceException(
-              HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
-        }
-        if (putOAuthCredentialRequest.getRedirectURI() == null
-            || putOAuthCredentialRequest.getRedirectURI().isEmpty()) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing redirect URI");
-        }
-      } catch (JsonSyntaxException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid JSON: " + e.getMessage(), e);
+    respond(responder, () -> {
+      PutOAuthCredentialRequest putOAuthCredentialRequest = GSON.fromJson(
+          StandardCharsets.UTF_8.decode(request.getContent()).toString(),
+          PutOAuthCredentialRequest.class);
+
+      if (Strings.isNullOrEmpty(putOAuthCredentialRequest.getOneTimeCode())) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
+      }
+      if (Strings.isNullOrEmpty(putOAuthCredentialRequest.getRedirectURI())) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing redirect URI");
       }
 
       OAuthProvider oauthProvider = getProvider(provider);
-
       String state = putOAuthCredentialRequest.getState();
       String codeVerifier = null;
+      
       if (oauthProvider.getAuthType() == AuthType.PKCE) {
-        if (state == null || state.isEmpty() || !state.matches("^[a-zA-Z0-9-]+$")) {
-          throw new OAuthServiceException(
-              HttpURLConnection.HTTP_BAD_REQUEST, "State is required and must be valid for "
-              + "PKCE authentication");
+        if (Strings.isNullOrEmpty(state) || !state.matches("^[a-zA-Z0-9-]+$")) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, 
+              "State is required and must be valid for PKCE authentication");
         }
-        try {
-          codeVerifier = oauthStore.getPKCECodeVerifier(provider, state);
-          oauthStore.deletePKCECodeVerifier(provider, state);
-        } catch (OAuthStoreException e) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
-              "Failed to process PKCE code verifier", e);
-        }
+        codeVerifier = oauthStore.getPKCECodeVerifier(provider, state);
+        oauthStore.deletePKCECodeVerifier(provider, state);
       }
 
       HttpResponse response;
@@ -261,163 +249,252 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
             putOAuthCredentialRequest.getRedirectURI(),
             codeVerifier));
       } catch (IOException e) {
-        throw new OAuthServiceException(
-              HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
+        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
       }
 
       if (response.getResponseCode() != 200) {
-        throw new OAuthServiceException(
-          response.getResponseCode(),
-            "Request for refresh token did not return 200. Response code: "
-                + response.getResponseCode()
-                + " , response message: "
-                + response.getResponseMessage()
-                + " , response body: "
-                + response.getResponseBodyAsString());
+        throw new OAuthServiceException(response.getResponseCode(),
+            "Request for refresh token did not return 200. Response code: " + response.getResponseCode()
+            + " , response message: " + response.getResponseMessage()
+            + " , response body: " + response.getResponseBodyAsString());
       }
 
-      RefreshTokenResponse refreshTokenResponse;
-      try {
-        refreshTokenResponse = GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
-      } catch (JsonSyntaxException e) {
-        throw new OAuthServiceException(
-            HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON: " + e.getMessage(), e);
-      }
+      RefreshTokenResponse refreshTokenResponse = GSON.fromJson(response.getResponseBodyAsString(),
+          RefreshTokenResponse.class);
 
-      boolean hasRefreshToken = refreshTokenResponse.getRefreshToken() != null
-          && !refreshTokenResponse.getRefreshToken().isEmpty();
-      boolean hasAccessToken = refreshTokenResponse.getAccessToken() != null
-          && !refreshTokenResponse.getAccessToken().isEmpty();
+      boolean hasRefreshToken = !Strings.isNullOrEmpty(refreshTokenResponse.getRefreshToken());
+      boolean hasAccessToken = !Strings.isNullOrEmpty(refreshTokenResponse.getAccessToken());
 
       if (!hasAccessToken && !hasRefreshToken) {
-        throw new OAuthServiceException(
-            HttpURLConnection.HTTP_BAD_REQUEST,
-            String.format(
-                "Refresh token response is missing the required access token or refresh token. " +
-                    "The actual response received: %s",
-                response.getResponseBodyAsString()));
+        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
+            String.format("Refresh token response is missing the required access token or refresh token. " +
+                "The actual response received: %s", response.getResponseBodyAsString()));
       }
 
       if (hasRefreshToken) {
-        try {
-          OAuthRefreshToken refreshToken = OAuthRefreshToken.newBuilder()
-              .withRefreshToken(refreshTokenResponse.getRefreshToken())
-              .withRedirectURI(putOAuthCredentialRequest.getRedirectURI())
-              .build();
-          oauthStore.writeRefreshToken(provider, credentialId, refreshToken);
-        } catch (NullPointerException e) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
-        } catch (OAuthStoreException e) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Failed to write refresh token", e);
-        }
-      } else {
-        // Refresh token call gave us an access token without a refresh token.
-        // Store the access token instead.
-
-        try {
-          OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
-              .withAccessToken(refreshTokenResponse.getAccessToken())
-              .build();
-          oauthStore.writeAccessToken(provider, credentialId, accessToken);
-        } catch (NullPointerException e) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, e.getMessage(), e);
-        } catch (OAuthStoreException e) {
-          throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Failed to write access token", e);
-        }
+        writeRefreshToken(provider, credentialId, refreshTokenResponse.getRefreshToken(),
+            putOAuthCredentialRequest.getRedirectURI());
+      }
+      // For standard flow, if there no refresh token, store access token (generally long lived)
+      // For RTR, also store the initial Access Token in OAuthStore
+      if (RefreshType.RTR.equals(oauthProvider.getRefreshType()) || !hasRefreshToken) {
+        writeAccessToken(provider, credentialId, refreshTokenResponse);
       }
 
       responder.sendStatus(HttpURLConnection.HTTP_OK);
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
-    }
+    });
   }
 
-  /**
-   * If a refresh token is stored, use it to request a short-lived access token from the 3rd-party OAuth API.
-   * If a long-lived access token is stored, return it.
-   * @param request
-   * @param responder
-   * @param provider ID of OAuth provider
-   * @param credentialId ID of stored credential
-   */
   @GET
   @Path(API_VERSION + "/oauth/provider/{provider}/credential/{credential}")
   public void getOAuthCredential(HttpServiceRequest request, HttpServiceResponder responder,
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
-    try {
+    respond(responder, () -> {
       OAuthProvider oauthProvider = getProvider(provider);
-      Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
-      // If found, send the long-lived access token
-      if (oAuthAccessToken.isPresent()) {
-        responder.sendString(GSON.toJson(
-          new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), "")));
+      // 1. Check if a valid cached access token is already available
+      Optional<GetAccessTokenResponse> cachedToken = getCachedAccessTokenIfValid(
+          oauthProvider, provider, credentialId);
+      if (cachedToken.isPresent()) {
+        responder.sendString(GSON.toJson(cachedToken.get()));
         return;
       }
 
-      // If no long-lived access token was found, request a short-lived access token from the 3rd-party API using the
-      // stored refresh token
-      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
-
-      HttpResponse response;
-      try {
-        response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
-      } catch (IOException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to fetch refresh token", e);
+      // 2. Refresh token
+      GetAccessTokenResponse response;
+      if (RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+        // via RTR leasing
+        response = fetchOAuthCredentialWithRefreshTokenRotation(oauthProvider, provider, credentialId);
+      } else {
+        // via Standard refresh
+        RefreshTokenResponse tokenResponse = executeTokenRefresh(oauthProvider, provider, credentialId);
+        response = new GetAccessTokenResponse(tokenResponse.getAccessToken(), tokenResponse.getInstanceURL());
       }
+      responder.sendString(GSON.toJson(response));
+    });
+  }
 
-      if (response.getResponseCode() != 200) {
-        throw new OAuthServiceException(
-            response.getResponseCode(),
-            "Request for refresh token did not return 200. Response code: "
-                + response.getResponseCode()
-                + " , response message: "
-                + response.getResponseMessage()
-                + " , response body: "
-                + response.getResponseBodyAsString());
-      }
+  private RefreshTokenResponse executeTokenRefresh(OAuthProvider oauthProvider, String provider, String credentialId)
+      throws Exception {
+    OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
 
-      RefreshTokenResponse refreshTokenResponse;
-      try {
-        refreshTokenResponse = GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
-      } catch (JsonSyntaxException e) {
-        throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error parsing JSON response", e);
-      }
+    HttpResponse response;
+    try {
+      response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
+    } catch (IOException e) {
+      throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
+          "Failed to fetch access token from provider", e);
+    }
 
-      boolean hasRefreshToken = refreshTokenResponse.getRefreshToken() != null
-          && !refreshTokenResponse.getRefreshToken().isEmpty();
-      boolean hasAccessToken = refreshTokenResponse.getAccessToken() != null
-          && !refreshTokenResponse.getAccessToken().isEmpty();
+    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new OAuthServiceException(response.getResponseCode(),
+          "Request for access token did not return 200. Response code: " + response.getResponseCode()
+              + " , response message: " + response.getResponseMessage()
+              + " , response body: " + response.getResponseBodyAsString());
+    }
 
-      if (!hasAccessToken) {
-        throw new OAuthServiceException(
-            HttpURLConnection.HTTP_BAD_REQUEST,
-            String.format(
-                "Access token response body does not have access token. The actual response received : %s",
-                response.getResponseBodyAsString()));
-      }
+    RefreshTokenResponse tokenResponse = GSON.fromJson(
+        response.getResponseBodyAsString(), RefreshTokenResponse.class);
 
-      // API has given us a new refresh token
-      if (hasRefreshToken && !refreshToken.getRefreshToken().equals(refreshTokenResponse.getRefreshToken())) {
-        OAuthRefreshToken newRefreshToken = OAuthRefreshToken.newBuilder()
-                .withRefreshToken(refreshTokenResponse.getRefreshToken())
-                .withRedirectURI(refreshToken.getRedirectURI())
-                .build();
+    if (Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
+      throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
+          "Access token response body does not have access token: " + response.getResponseBodyAsString());
+    }
+    // If provider returned a rotated refresh token, persist the updated refresh token
+    String newRefreshToken = tokenResponse.getRefreshToken();
+    if (!Strings.isNullOrEmpty(newRefreshToken) && !newRefreshToken.equals(refreshToken.getRefreshToken())) {
+      writeRefreshToken(provider, credentialId, newRefreshToken, refreshToken.getRedirectURI());
+    }
 
-        try {
-          oauthStore.writeRefreshToken(provider, credentialId, newRefreshToken);
-        } catch (OAuthStoreException e) {
-          throw new OAuthServiceException(
-              HttpURLConnection.HTTP_INTERNAL_ERROR, "An error occurred while writing the new refresh token");
+    return tokenResponse;
+  }
+
+  /**
+   * Refreshes OAuth credentials using Refresh Token Rotation (RTR) under a distributed lease.
+   * Ensures only one worker refreshes the single-use refresh token at a time while concurrent
+   * requests wait and poll for the newly published access token.
+   *
+   * @param oauthProvider the OAuth provider configuration
+   * @param provider the provider identifier
+   * @param credentialId the credential identifier
+   * @return the refreshed access token response
+   * @throws Exception if lease acquisition, token refresh, or waiting fails
+   */
+  private GetAccessTokenResponse fetchOAuthCredentialWithRefreshTokenRotation(OAuthProvider oauthProvider,
+                                                                              String provider,
+                                                                              String credentialId)
+      throws Exception {
+    // 1. Generate a unique lease holder ID for this request thread and try to acquire lease
+    String leaseHolderId = Thread.currentThread().getId() + "-" + UUID.randomUUID();
+    boolean leaseAcquired = oauthStore.acquireLease(provider, credentialId, leaseExpirationTimeoutMs, leaseHolderId);
+
+    try {
+      // 3. If Lease is held by another process -> wait for published token
+      if (!leaseAcquired) {
+        LOG.info("Lease is held by another process for provider {} credential {}. Waiting for new access token...",
+                 provider, credentialId);
+        Optional<GetAccessTokenResponse> waitedResponse = waitForNewAccessToken(oauthProvider, provider, credentialId);
+        if (waitedResponse.isPresent()) {
+          return waitedResponse.get();
+        }
+
+        // Timeout occurred while waiting for winner -> Attempt to acquire lease again!
+        leaseAcquired = oauthStore.acquireLease(provider, credentialId, leaseExpirationTimeoutMs, leaseHolderId);
+        if (!leaseAcquired) {
+          throw new OAuthServiceException(HttpURLConnection.HTTP_CLIENT_TIMEOUT,
+                                          "Timed out waiting for OAuth access token refresh for " + credentialId);
         }
       }
 
-      responder.sendString(GSON.toJson(
-          new GetAccessTokenResponse(refreshTokenResponse.getAccessToken(), refreshTokenResponse.getInstanceURL())));
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
+      // 4. Winner (either initial or fallback after timeout) executes token refresh and persistence
+      RefreshTokenResponse tokenResponse = executeTokenRefresh(oauthProvider, provider, credentialId);
+      writeAccessToken(provider, credentialId, tokenResponse);
+
+      return new GetAccessTokenResponse(tokenResponse.getAccessToken(), tokenResponse.getInstanceURL());
+    } finally {
+      if (leaseAcquired) {
+        try {
+          oauthStore.releaseLease(provider, credentialId, leaseHolderId);
+        } catch (Exception e) {
+          LOG.warn("Failed to release lease for provider {} credential {}: {}",
+                   provider, credentialId, e.getMessage());
+        }
+      }
     }
+  }
+
+  private Optional<GetAccessTokenResponse> waitForNewAccessToken(OAuthProvider oauthProvider,
+                                                                 String provider,
+                                                                 String credentialId)
+      throws OAuthServiceException {
+    long deadline = System.currentTimeMillis() + leaseTakeoverTimeoutMs;
+
+    while (System.currentTimeMillis() < deadline) {
+      Optional<GetAccessTokenResponse> accessToken = getCachedAccessTokenIfValid(
+          oauthProvider, provider, credentialId);
+      if (accessToken.isPresent()) {
+        return accessToken;
+      }
+      Uninterruptibles.sleepUninterruptibly(accessTokenPollIntervalMs, TimeUnit.MILLISECONDS);
+    }
+
+    return Optional.empty();
+  }
+
+  private void writeRefreshToken(String provider, String credentialId,
+                                 String refreshToken, String redirectURI) throws OAuthStoreException {
+    OAuthRefreshToken token = OAuthRefreshToken.newBuilder()
+        .withRefreshToken(refreshToken)
+        .withRedirectURI(redirectURI)
+        .build();
+    oauthStore.writeRefreshToken(provider, credentialId, token);
+  }
+
+  private void writeAccessToken(String provider, String credentialId,
+                                RefreshTokenResponse tokenResponse) throws OAuthStoreException {
+    if (Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
+      return;
+    }
+
+    long expiresInSeconds = tokenResponse.getExpiresIn();
+    long expiresAt = 0L;
+    if (expiresInSeconds > 0) {
+      expiresAt = System.currentTimeMillis() + (expiresInSeconds * 1000L);
+    }
+
+    OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
+        .withAccessToken(tokenResponse.getAccessToken())
+        .withExpiresAt(expiresAt)
+        .withIdentityUrl(tokenResponse.getId())
+        .build();
+
+    oauthStore.writeAccessToken(provider, credentialId, accessToken);
+  }
+
+  private Optional<GetAccessTokenResponse> getCachedAccessTokenIfValid(OAuthProvider oauthProvider,
+      String provider,
+      String credentialId)
+      throws OAuthServiceException {
+    Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
+    if (!oAuthAccessToken.isPresent()) {
+      return Optional.empty();
+    }
+
+    if (RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+      if (isAccessTokenValid(oAuthAccessToken.get())) {
+        LOG.debug("Returning valid cached access token for provider {} credential {}", provider, credentialId);
+        return Optional.of(new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), ""));
+      }
+      return Optional.empty();
+    }
+
+    // Standard flow: permanent token stored without refresh token
+    return Optional.of(new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), ""));
+  }
+
+  private boolean isAccessTokenValid(OAuthAccessToken token) {
+    // Rule 1: If expiresAt is present (> 0), use it with configured safety buffer
+    if (token.getExpiresAt() > 0) {
+      return !token.isExpired(accessTokenRefreshBufferMs);
+    }
+
+    // Rule 2: Else if identityUrl is present, validate against identity URL
+    if (!Strings.isNullOrEmpty(token.getIdentityUrl())) {
+      try {
+        HttpRequest request = HttpRequest.get(new URL(token.getIdentityUrl()))
+            .addHeader("Authorization", "Bearer " + token.getAccessToken())
+            .build();
+        HttpResponse response = HttpRequests.execute(request);
+        return response.getResponseCode() == HttpURLConnection.HTTP_OK;
+      } catch (Exception e) {
+        LOG.warn("Failed to validate access token via identity URL {}: {}",
+            token.getIdentityUrl(), e.getMessage());
+        return false;
+      }
+    }
+
+    return false;
   }
 
   @GET
@@ -425,44 +502,36 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   public void getOAuthCredentialValidity(HttpServiceRequest request, HttpServiceResponder responder,
                                          @PathParam("provider") String provider,
                                          @PathParam("credential") String credentialId) {
-    try {
+    respond(responder, () -> {
       OAuthProvider oauthProvider = getProvider(provider);
-      Optional<OAuthAccessToken> oAuthAccessToken = getAccessToken(provider, credentialId);
 
-      if (oAuthAccessToken.isPresent()) {
+      // 1. Check if a valid cached access token is already available
+      Optional<GetAccessTokenResponse> cachedToken = getCachedAccessTokenIfValid(
+          oauthProvider, provider, credentialId);
+      if (cachedToken.isPresent()) {
         responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
         return;
       }
 
-      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
-
-      HttpResponse response;
-      try {
-        response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
-      } catch (IOException e) {
-        throw new OAuthServiceException(
-              HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
+      // 2. For RTR providers, attempt token rotation refresh to verify validity
+      if (RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+        fetchOAuthCredentialWithRefreshTokenRotation(oauthProvider, provider, credentialId);
+        responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
+        return;
       }
 
-      responder.sendString(GSON.toJson(new CredentialIsValidResponse(checkCredIsValid(response))));
-    } catch (OAuthServiceException e) {
-      e.respond(responder);
-    }
-  }
-
-  private boolean checkCredIsValid(HttpResponse response) throws OAuthServiceException {
-    if (response.getResponseCode() != 200) {
-      return false;
-    }
-
-    RefreshTokenResponse refreshTokenResponse;
-    try {
-      refreshTokenResponse = GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
-    } catch (JsonSyntaxException e) {
-      throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to parse JSON", e);
-    }
-
-    return !(refreshTokenResponse.getAccessToken() == null || refreshTokenResponse.getAccessToken().isEmpty());
+      // 3. For Standard providers, verify refresh token validity with third-party endpoint
+      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
+      HttpResponse response = HttpRequests.execute(
+          createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
+      if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        throw new OAuthServiceException(response.getResponseCode(),
+            "Request for access token did not return 200. Response code: " + response.getResponseCode()
+                + " , response message: " + response.getResponseMessage()
+                + " , response body: " + response.getResponseBodyAsString());
+      }
+      responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
+    });
   }
 
   /**
@@ -486,20 +555,24 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     String body;
     switch (strategy) {
       case BASIC_AUTH:
-        body = grantType.equals("authorization_code")
-                ? String.format("code=%s&redirect_uri=%s&grant_type=%s", code, redirectURI, grantType)
-                : String.format("grant_type=%s&refresh_token=%s", grantType, refreshToken);
+        if (grantType.equals("authorization_code")) {
+          body = String.format("code=%s&redirect_uri=%s&grant_type=%s", code, redirectURI, grantType);
+        } else {
+          body = String.format("grant_type=%s&refresh_token=%s", grantType, refreshToken);
+        }
         break;
       case FORM_BODY: // fall-through
       default:
-        body = grantType.equals("authorization_code")
-                ? String.format("code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=%s",
-                code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret(), grantType)
-                : String.format("grant_type=%s&client_id=%s&client_secret=%s&refresh_token=%s",
-                grantType, clientCreds.getClientId(), clientCreds.getClientSecret(), refreshToken);
+        if (grantType.equals("authorization_code")) {
+          body = String.format("code=%s&redirect_uri=%s&client_id=%s&client_secret=%s&grant_type=%s",
+              code, redirectURI, clientCreds.getClientId(), clientCreds.getClientSecret(), grantType);
+        } else {
+          body = String.format("grant_type=%s&client_id=%s&client_secret=%s&refresh_token=%s",
+              grantType, clientCreds.getClientId(), clientCreds.getClientSecret(), refreshToken);
+        }
         break;
     }
-    if (codeVerifier != null && !codeVerifier.isEmpty()) {
+    if (!Strings.isNullOrEmpty(codeVerifier)) {
       body += "&code_verifier=" + codeVerifier;
     }
     return body;
@@ -644,7 +717,37 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     }
   }
 
+
+  @FunctionalInterface
+  private interface EndpointRunnable {
+    void run() throws Exception;
+  }
+
+  private void respond(HttpServiceResponder responder, EndpointRunnable runnable) {
+    try {
+      runnable.run();
+    } catch (OAuthServiceException e) {
+      e.respond(responder);
+    } catch (JsonSyntaxException e) {
+      sendError(responder, HttpURLConnection.HTTP_BAD_REQUEST, "Invalid JSON: " + e.getMessage(), e);
+    } catch (MalformedURLException e) {
+      sendError(responder, HttpURLConnection.HTTP_BAD_REQUEST, "Invalid URL: " + e.getMessage(), e);
+    } catch (NullPointerException | IllegalArgumentException e) {
+      sendError(responder, HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: " + e.getMessage(), e);
+    } catch (OAuthStoreException e) {
+      sendError(responder, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage(), e);
+    } catch (Exception e) {
+      LOG.error("An internal error has occurred", e);
+      sendError(responder, HttpURLConnection.HTTP_INTERNAL_ERROR, "Internal error", e);
+    }
+  }
+
+  private void sendError(HttpServiceResponder responder, int statusCode, String message, Throwable cause) {
+    new OAuthServiceException(statusCode, message, cause).respond(responder);
+  }
+
   private static class OAuthServiceException extends Exception {
+
     private final int status;
 
     OAuthServiceException(int status, String message, Throwable cause) {
