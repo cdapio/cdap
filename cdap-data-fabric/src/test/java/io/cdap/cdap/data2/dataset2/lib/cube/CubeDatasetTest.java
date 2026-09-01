@@ -102,7 +102,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
 
     Configuration txConf = new Configuration();
     TransactionManager txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     try {
       TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
 
@@ -141,7 +141,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
       txClient.commitOrThrow(tx);
       ((TransactionAware) cube2).postTxCommit();
     } finally {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 

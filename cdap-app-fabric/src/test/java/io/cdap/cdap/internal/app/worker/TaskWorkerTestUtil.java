@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.CompletableFuture;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
  * Common TaskWorker test utility functions
@@ -38,7 +37,7 @@ public final class TaskWorkerTestUtil {
    */
   static CompletableFuture<Service.State> getServiceCompletionFuture(TaskWorkerService taskWorker) {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    taskWorker.addListener(new ServiceListenerAdapter() {
+    taskWorker.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);

@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -297,7 +296,7 @@ public class AppFabricClient {
       programScheduleHttpHandler.getProgramSchedules(request, responder, namespace, app, workflow, null, null, null);
     } catch (Exception e) {
       // cannot happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     List<ScheduleDetail> schedules = responder.decodeResponseContent(SCHEDULE_DETAILS_TYPE, GSON);

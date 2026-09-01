@@ -56,10 +56,10 @@ public class PreviewRunnerServiceTest {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
     PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
-    runnerService.startAndWait();
+    runnerService.startAsync().awaitRunning();
 
     Tasks.waitFor(true, () -> fetcher.fetchCount.get() > 0, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    runnerService.stopAndWait();
+    runnerService.stopAsync().awaitTerminated();
     Tasks.waitFor(Service.State.TERMINATED, runnerService::state, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
@@ -68,14 +68,14 @@ public class PreviewRunnerServiceTest {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
     PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
-    runnerService.startAndWait();
+    runnerService.startAsync().awaitRunning();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
     fetcher.addRequest(new PreviewRequest(programId, null, null));
 
     Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    runnerService.stopAndWait();
+    runnerService.stopAsync().awaitTerminated();
     Tasks.waitFor(PreviewStatus.Status.KILLED, () -> mockRunner.requests.get(programId).status.getStatus(),
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(Service.State.TERMINATED, runnerService::state, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -89,7 +89,7 @@ public class PreviewRunnerServiceTest {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
     PreviewRunnerService runnerService = new PreviewRunnerService(cConf, fetcher, mockRunner);
-    runnerService.startAndWait();
+    runnerService.startAsync().awaitRunning();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
     fetcher.addRequest(new PreviewRequest(programId, null, null));

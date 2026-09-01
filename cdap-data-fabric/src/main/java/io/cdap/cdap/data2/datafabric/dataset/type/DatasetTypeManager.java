@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -145,11 +144,19 @@ public class DatasetTypeManager {
           LOG.error(
               "Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
               className, datasetModuleId, jarLocation);
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         } finally {
           // Close the ProgramClassLoader
-          Closeables.closeQuietly(cl);
-          Closeables.closeQuietly(classLoaderFolder);
+          try {
+            cl.close();
+          } catch (Exception ignored) {
+            // Ignored because we are performing resource cleanup in a finally block.
+          }
+          try {
+            classLoaderFolder.close();
+          } catch (Exception ignored) {
+            // Ignored because we are performing resource cleanup in a finally block.
+          }
         }
 
         // 4. determine whether any type were removed from the module, and whether any other modules depend on them
@@ -215,10 +222,10 @@ public class DatasetTypeManager {
           throw new DatasetModuleConflictException(cause.getMessage(), cause);
         }
       }
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } catch (Exception e) {
       LOG.error("Operation failed", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -342,8 +349,10 @@ public class DatasetTypeManager {
           }
         } catch (Exception e) {
           // the only checked exception the try-catch throws is IOException
-          Throwables.propagateIfInstanceOf(e, IOException.class);
-          throw Throwables.propagate(e);
+          if (e instanceof IOException) {
+            throw (IOException) e;
+          }
+          throw new RuntimeException(e);
         }
 
         return true;
@@ -354,10 +363,10 @@ public class DatasetTypeManager {
           throw (DatasetModuleConflictException) cause;
         }
       }
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } catch (Exception e) {
       LOG.error("Operation failed", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -392,7 +401,7 @@ public class DatasetTypeManager {
           });
         } catch (Exception e) {
           // the callable throws no checked exceptions
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
 
         // check if there are any instances that use types of these modules?
@@ -420,10 +429,10 @@ public class DatasetTypeManager {
         }
       }
       LOG.error("Failed to delete all modules from namespace {}", namespaceId);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } catch (Exception e) {
       LOG.error("Operation failed", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -522,7 +531,7 @@ public class DatasetTypeManager {
             // are registered because modules only register their types and but not the module id. So here we
             // just assume that this may happen if the module was already loaded.
           } catch (Exception e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         }
       }

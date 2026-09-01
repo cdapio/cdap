@@ -99,7 +99,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     Injector injector = ArtifactLocalizerTwillRunnable.createInjector(cConf, new Configuration());
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
-    artifactLocalizerService.startAndWait();
+    artifactLocalizerService.startAsync().awaitRunning();
     // Start the preview service main, which will use its own local datadir and fetch artifacts from app-fabric via
     // the artifact localizer service.
     startService(PreviewServiceMain.class);
@@ -108,7 +108,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
   @AfterClass
   public static void afterPreviewService() throws Exception {
     stopService(PreviewServiceMain.class);
-    artifactLocalizerService.stopAndWait();
+    artifactLocalizerService.stopAsync().awaitTerminated();
   }
 
   @Test

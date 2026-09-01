@@ -87,7 +87,7 @@ public class AuditPublishTest {
     Injector injector = AppFabricTestHelper.getInjector(cConf, new AuditModule());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
   }
@@ -95,7 +95,7 @@ public class AuditPublishTest {
   @AfterClass
   public static void stop() {
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
     AppFabricTestHelper.shutdown();
   }

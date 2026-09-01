@@ -94,7 +94,7 @@ public class CredentialProviderTestBase {
           }
         });
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     contextAccessEnforcer = injector.getInstance(ContextAccessEnforcer.class);
     CredentialProviderStore.create(injector
         .getInstance(StructuredTableAdmin.class));
@@ -131,7 +131,7 @@ public class CredentialProviderTestBase {
   @AfterClass
   public static void teardown() throws Exception {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 
