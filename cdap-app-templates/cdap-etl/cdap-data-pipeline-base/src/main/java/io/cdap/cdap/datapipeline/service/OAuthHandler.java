@@ -132,7 +132,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
               HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to store PKCE code verifier", e);
         }
 
-        response += String.format("&state=%s&code_challenge=%s&code_challenge_method=S256", state, codeChallenge);
+        response += String.format("&state=%s&code_challenge=%s&code_challenge_method=S256&response_type=code",
+            state, codeChallenge);
       }
 
       responder.sendString(response);
