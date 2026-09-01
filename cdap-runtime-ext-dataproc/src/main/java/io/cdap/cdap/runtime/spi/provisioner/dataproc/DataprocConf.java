@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import java.io.ByteArrayInputStream;
@@ -27,11 +28,13 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -72,6 +75,7 @@ final class DataprocConf {
   static final String TEMP_BUCKET = "tempBucket";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
+  static final String NETWORK_TAGS = "networkTags";
   static final int MAX_NETWORK_TAGS = 64;
 
   static final String SECURE_BOOT_ENABLED = "secureBootEnabled";
@@ -111,6 +115,12 @@ final class DataprocConf {
   private static final String COMPUTE_CREDENTIALS_MAX_RETRIES_KEY = "compute.credentials.max.retries";
   private static final int COMPUTE_CREDENTIALS_MAX_RETRIES_DEFAULT = 50;
 
+  public static final String MASTER_FLEX_VM_MACHINE_TYPES = "masterFlexVmMachineTypes";
+  public static final String WORKER_FLEX_VM_MACHINE_TYPES = "workerFlexVmMachineTypes";
+
+  private static final Splitter COMMA_SPLITTER =
+    Splitter.on(',').trimResults().omitEmptyStrings();
+
   private final String accountKey;
   private final String region;
   private final String zone;
@@ -128,7 +138,7 @@ final class DataprocConf {
   private final int masterDiskGb;
   private final String masterDiskType;
   private final String masterMachineType;
-
+  private final List<String> masterFlexVmMachineTypes;
   private final int workerNumNodes;
   private final int secondaryWorkerNumNodes;
   private final int workerCpus;
@@ -136,6 +146,7 @@ final class DataprocConf {
   private final int workerDiskGb;
   private final String workerDiskType;
   private final String workerMachineType;
+  private final List<String> workerFlexVmMachineTypes;
 
   private final long pollCreateDelay;
   private final long pollCreateJitter;
@@ -194,8 +205,10 @@ final class DataprocConf {
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
       int masterNumNodes, int masterCpus, int masterMemoryMb,
       int masterDiskGb, String masterDiskType, @Nullable String masterMachineType,
+      List<String> masterFlexVmMachineTypes,
       int workerNumNodes, int secondaryWorkerNumNodes, int workerCpus, int workerMemoryMb,
       int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
+      List<String> workerFlexVmMachineTypes,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
       @Nullable String tempBucket, @Nullable String serviceAccount, boolean preferExternalIp,
@@ -236,6 +249,7 @@ final class DataprocConf {
     this.masterDiskGb = masterDiskGb;
     this.masterDiskType = masterDiskType;
     this.masterMachineType = masterMachineType;
+    this.masterFlexVmMachineTypes = masterFlexVmMachineTypes;
     this.workerNumNodes = workerNumNodes;
     this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
     this.workerCpus = workerCpus;
@@ -243,6 +257,7 @@ final class DataprocConf {
     this.workerDiskGb = workerDiskGb;
     this.workerDiskType = workerDiskType;
     this.workerMachineType = workerMachineType;
+    this.workerFlexVmMachineTypes = workerFlexVmMachineTypes;
     this.pollCreateDelay = pollCreateDelay;
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
@@ -316,6 +331,14 @@ final class DataprocConf {
 
   String getMasterDiskType() {
     return masterDiskType;
+  }
+
+  public List<String> getMasterFlexVmMachineTypes() {
+    return formatMachineType(masterFlexVmMachineTypes, masterCpus, masterMemoryMb);
+  }
+
+  public List<String> getWorkerFlexVmMachineTypes() {
+    return formatMachineType(workerFlexVmMachineTypes, workerCpus, workerMemoryMb);
   }
 
   int getTotalMasterCpus() {
@@ -673,12 +696,14 @@ final class DataprocConf {
     if (masterDiskType == null) {
       masterDiskType = "pd-standard";
     }
+    final List<String> masterFlexVmMachineTypes = getStringList(properties, MASTER_FLEX_VM_MACHINE_TYPES);
     final int workerDiskGb = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
     final String workerMachineType = getString(properties, "workerMachineType");
     if (workerDiskType == null) {
       workerDiskType = "pd-standard";
     }
+    final List<String> workerFlexVmMachineTypes = getStringList(properties, WORKER_FLEX_VM_MACHINE_TYPES);
 
     final long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
     final long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
@@ -718,13 +743,7 @@ final class DataprocConf {
     final Map<String, String> clusterLabels = Collections.unmodifiableMap(
         DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_LABELS), ";", "\\|"));
 
-    final String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags"))
-        .orElse("");
-    final List<String> networkTags = Collections.unmodifiableList(
-        Arrays.stream(networkTagsProperty.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .collect(Collectors.toList()));
+    final List<String> networkTags = getStringList(properties, NETWORK_TAGS);
 
     if (networkTags.size() > MAX_NETWORK_TAGS) {
       throw new IllegalArgumentException(
@@ -789,21 +808,16 @@ final class DataprocConf {
         properties.getOrDefault(DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
             DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT);
 
-    final String scopesProperty = String.format("%s,%s",
-        Optional.ofNullable(getString(properties, SCOPES)).orElse(""), CLOUD_PLATFORM_SCOPE);
-    List<String> scopes = Collections.unmodifiableList(
-        Arrays.stream(scopesProperty.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .distinct()
-            .collect(Collectors.toList()));
+    Set<String> scopesSet = new LinkedHashSet<>(getStringList(properties, SCOPES));
+    scopesSet.add(CLOUD_PLATFORM_SCOPE);
+    final List<String> scopes = Collections.unmodifiableList(new ArrayList<>(scopesSet));
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectId, network,
         subnet,
         masterNumNodes, masterCpus, masterMemoryMb, masterDiskGb,
-        masterDiskType, masterMachineType,
+        masterDiskType, masterMachineType, masterFlexVmMachineTypes,
         workerNumNodes, secondaryWorkerNumNodes, workerCpus, workerMemoryMb, workerDiskGb,
-        workerDiskType, workerMachineType,
+        workerDiskType, workerMachineType, workerFlexVmMachineTypes,
         pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
         gcpCmekKeyName, gcpCmekBucket, tempBucket, serviceAccount, preferExternalIp,
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
@@ -863,5 +877,24 @@ final class DataprocConf {
           String.format("Invalid config '%s' = '%s'. Must be a valid, positive long.", key,
               valStr));
     }
+  }
+
+  private List<String> formatMachineType(List<String> flexTypes, int cpus, int memoryMb) {
+    List<String> result = flexTypes.stream()
+      .map(type -> getMachineType(type, cpus, memoryMb))
+      .collect(Collectors.toList());
+
+    return Collections.unmodifiableList(result);
+  }
+
+  /**
+   * Parses a comma-separated string property into a trimmed list of strings,
+   * or returns an empty list if null/empty.
+   */
+  private static List<String> getStringList(Map<String, String> properties, String key) {
+    String val = getString(properties, key);
+    return Strings.isNullOrEmpty(val)
+      ? Collections.emptyList()
+      : COMMA_SPLITTER.splitToList(val);
   }
 }
