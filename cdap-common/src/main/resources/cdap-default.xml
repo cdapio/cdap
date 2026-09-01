@@ -5201,6 +5201,42 @@
     </description>
   </property>
 
+  <property>
+    <name>security.auth.oauth.rtr.access.token.refresh.buffer.ms</name>
+    <value>600000</value>
+    <description>
+      Time buffer in milliseconds before an OAuth 2.0 access token's official expiration time to
+      trigger a proactive refresh. This margin of safety ensures active pipeline runs and API calls
+      do not fail due to mid-flight token expiration.
+    </description>
+  </property>
+  <property>
+    <name>security.auth.oauth.rtr.refresh.wait.timeout.ms</name>
+    <value>100000</value>
+    <description>
+      Maximum duration in milliseconds a worker thread will block and wait for a new access token
+      when a concurrent refresh is already in progress by another worker. If this timeout is exceeded,
+      the thread attempts to acquire the lease and execute the refresh itself as a fallback.
+    </description>
+  </property>
+  <property>
+    <name>security.auth.oauth.rtr.refresh.poll.interval.ms</name>
+    <value>500</value>
+    <description>
+      Time interval in milliseconds between successive polling attempts while waiting for a concurrent
+      token refresh to complete and publish a new access token into the Secure Store.
+    </description>
+  </property>
+  <property>
+    <name>security.auth.oauth.rtr.lease.ttl.ms</name>
+    <value>90000</value>
+    <description>
+      Time-To-Live (TTL) in milliseconds for the distributed token refresh lease in the Secure Store.
+      If the active lease holder fails or crashes without releasing the lease,
+      the lease automatically expires after this duration to prevent deadlocks and allow other workers to recover.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>

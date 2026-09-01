@@ -19,6 +19,7 @@ import static io.cdap.cdap.datapipeline.service.OAuthHandler.PREF_PKCE_CODE_VERI
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.InvalidFieldException;
@@ -50,6 +51,7 @@ public class OAuthStore {
   private static final String CREDENTIAL_ENCODING_STRATEGY_COL = "credentialencodingstrategy";
   private static final String USER_AGENT_COL = "useragent";
   private static final String AUTH_TYPE_COL = "authtype";
+  private static final String REFRESH_TYPE_COL = "refreshtype";
   private static final String CLIENT_CREDS_KEY_PREFIX = "oauthclientcreds";
   private static final String ACCESS_TOKEN_KEY_PREFIX = "oauthaccesstoken";
   private static final String REFRESH_TOKEN_KEY_PREFIX = "oauthrefreshtoken";
@@ -68,9 +70,12 @@ public class OAuthStore {
                   Fields.stringType(TOKEN_REFRESH_URL_COL),
                   Fields.stringType(CREDENTIAL_ENCODING_STRATEGY_COL),
                   Fields.stringType(USER_AGENT_COL),
-                  Fields.stringType(AUTH_TYPE_COL))
+                  Fields.stringType(AUTH_TYPE_COL),
+                  Fields.stringType(REFRESH_TYPE_COL))
       .withPrimaryKeys(OAUTH_PROVIDER_COL)
       .build();
+
+  private volatile SecureStoreInfo secureStoreInfo;
 
   public OAuthStore(
       TransactionRunner transactionRunner,
@@ -81,6 +86,42 @@ public class OAuthStore {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.codeVerifierTTL = Long.parseLong(oauthConf.get(PREF_PKCE_CODE_VERIFIER_TTL));
+  }
+
+  public SecureStoreInfo getStoreInfo() throws OAuthStoreException {
+    if (secureStoreInfo == null) {
+      synchronized (this) {
+        if (secureStoreInfo == null) {
+          try {
+            secureStoreInfo = secureStore.getStoreInfo();
+          } catch (IOException e) {
+            throw new OAuthStoreException("Failed to get store info from secure store", e);
+          }
+        }
+      }
+    }
+    return secureStoreInfo;
+  }
+
+  public boolean acquireLease(String provider, String credentialId, long timeoutMs,
+      String leaseHolder) throws OAuthStoreException {
+    String namespace = NamespaceId.SYSTEM.getNamespace();
+    String key = getRefreshTokenKey(provider, credentialId);
+    try {
+      return secureStoreManager.acquireLease(namespace, key, timeoutMs, leaseHolder);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Failed to acquire lease for credential " + credentialId, e);
+    }
+  }
+
+  public boolean releaseLease(String provider, String credentialId, String leaseHolder) throws OAuthStoreException {
+    String namespace = NamespaceId.SYSTEM.getNamespace();
+    String key = getRefreshTokenKey(provider, credentialId);
+    try {
+      return secureStoreManager.releaseLease(namespace, key, leaseHolder);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Failed to release lease for credential " + credentialId, e);
+    }
   }
 
   /**
@@ -325,6 +366,7 @@ public class OAuthStore {
     String credentialEncodingStrategy = row.getString(CREDENTIAL_ENCODING_STRATEGY_COL);
     String userAgent = row.getString(USER_AGENT_COL);
     String authTypeStr = row.getString(AUTH_TYPE_COL);
+    String refreshTypeStr = row.getString(REFRESH_TYPE_COL);
 
     return OAuthProvider.newBuilder()
         .withName(name)
@@ -336,11 +378,14 @@ public class OAuthStore {
                 .map(OAuthProvider.CredentialEncodingStrategy::valueOf).orElse(null))
         .withUserAgent(userAgent)
         .withAuthType(authTypeStr != null ? AuthType.valueOf(authTypeStr) : AuthType.STANDARD)
+        .withRefreshType(
+            Optional.ofNullable(refreshTypeStr)
+                .map(RefreshType::valueOf).orElse(RefreshType.STANDARD))
         .build();
   }
 
   private static List<Field<?>> getRow(OAuthProvider oauthProvider) {
-    List<Field<?>> fields = new ArrayList<>(3);
+    List<Field<?>> fields = new ArrayList<>(7);
     fields.add(Fields.stringField(OAUTH_PROVIDER_COL, oauthProvider.getName()));
     fields.add(Fields.stringField(LOGIN_URL_COL, oauthProvider.getLoginURL()));
     fields.add(Fields.stringField(TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL()));
@@ -349,6 +394,7 @@ public class OAuthStore {
             oauthProvider.getCredentialEncodingStrategy().toString()));
     fields.add(Fields.stringField(USER_AGENT_COL, oauthProvider.getUserAgent()));
     fields.add(Fields.stringField(AUTH_TYPE_COL, oauthProvider.getAuthType().toString()));
+    fields.add(Fields.stringField(REFRESH_TYPE_COL, oauthProvider.getRefreshType().toString()));
     return fields;
   }
 
