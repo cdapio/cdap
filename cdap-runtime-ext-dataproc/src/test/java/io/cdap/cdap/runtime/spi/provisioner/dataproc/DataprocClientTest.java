@@ -21,6 +21,9 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.api.client.googleapis.json.GoogleJsonError;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -57,6 +60,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
@@ -65,6 +69,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -319,7 +324,7 @@ public class DataprocClientTest {
   public void testGetClusterStatusCapturesErrorMessage() throws GeneralSecurityException, IOException,
     RetryableProvisionException {
     Cluster cluster = Cluster.newBuilder().setStatus(ClusterStatus.newBuilder()
-        .setState(ClusterStatus.State.ERROR)).build();
+                                                       .setState(ClusterStatus.State.ERROR)).build();
     // PowerMockito.when(clusterControllerClientMock.getCluster(Mockito.any())).thenReturn(cluster);
     DataprocClient client = sshDataprocClientFactory.create(dataprocConf);
 
@@ -348,5 +353,162 @@ public class DataprocClientTest {
       Collections.emptyList(), null);
     String errorMsgRet = client.getClusterFailureMsg(cdapCluster.getName());
     Assert.assertTrue(errorMsgRet.contains(errorMsg));
+  }
+
+  @Test
+  public void testCreateClusterWithFlexVmConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("masterCPUs", "2");
+    properties.put("masterMemoryMB", "8192");
+    properties.put("workerCPUs", "4");
+    properties.put("workerMemoryMB", "16384");
+    properties.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n1, n2d");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata = ClusterOperationMetadata.newBuilder().setClusterName("flex-cluster").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    ClusterOperationMetadata result = mockDataprocClientFactory.create(conf)
+      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    Assert.assertEquals(metadata, result);
+    Cluster createdCluster = clusterCaptor.getValue();
+    Assert.assertEquals("flex-cluster", createdCluster.getClusterName());
+
+    // Verify master flex VM policy
+    Assert.assertTrue(createdCluster.getConfig().getMasterConfig().hasInstanceFlexibilityPolicy());
+    List<String> masterFlexTypes = createdCluster.getConfig().getMasterConfig().getInstanceFlexibilityPolicy()
+      .getInstanceSelectionList(0).getMachineTypesList();
+    Assert.assertEquals(Arrays.asList("custom-2-8192", "n2d-custom-2-8192"), masterFlexTypes);
+
+    // Verify primary worker flex VM policy
+    Assert.assertTrue(createdCluster.getConfig().getWorkerConfig().hasInstanceFlexibilityPolicy());
+    List<String> workerFlexTypes = createdCluster.getConfig().getWorkerConfig().getInstanceFlexibilityPolicy()
+      .getInstanceSelectionList(0).getMachineTypesList();
+    Assert.assertEquals(Arrays.asList("n2-custom-4-16384", "e2-custom-4-16384"), workerFlexTypes);
+
+    // Verify secondary worker flex VM policy
+    Assert.assertTrue(createdCluster.getConfig().getSecondaryWorkerConfig().hasInstanceFlexibilityPolicy());
+    List<String> secWorkerFlexTypes = createdCluster.getConfig().getSecondaryWorkerConfig()
+      .getInstanceFlexibilityPolicy().getInstanceSelectionList(0).getMachineTypesList();
+    Assert.assertEquals(Arrays.asList("n2-custom-4-16384", "e2-custom-4-16384"), secWorkerFlexTypes);
+  }
+
+  @Test
+  public void testCreateClusterWithoutFlexVmConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata =
+      ClusterOperationMetadata.newBuilder().setClusterName("noflex-cluster").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    ClusterOperationMetadata result = mockDataprocClientFactory.create(conf)
+      .createCluster("noflex-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    Assert.assertEquals(metadata, result);
+    Cluster createdCluster = clusterCaptor.getValue();
+    Assert.assertEquals("noflex-cluster", createdCluster.getClusterName());
+
+    Assert.assertFalse(createdCluster.getConfig().getMasterConfig().hasInstanceFlexibilityPolicy());
+    Assert.assertFalse(createdCluster.getConfig().getWorkerConfig().hasInstanceFlexibilityPolicy());
+    Assert.assertFalse(createdCluster.getConfig().getSecondaryWorkerConfig().hasInstanceFlexibilityPolicy());
+  }
+
+  @Test
+  public void testCreateClusterWithWorkerOnlyFlexVmConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("workerCPUs", "2");
+    properties.put("workerMemoryMB", "8192");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata =
+      ClusterOperationMetadata.newBuilder().setClusterName("worker-flex").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    mockDataprocClientFactory.create(conf)
+      .createCluster("worker-flex", "2.0", Collections.emptyMap(), false, null);
+
+    Cluster createdCluster = clusterCaptor.getValue();
+    Assert.assertFalse(createdCluster.getConfig().getMasterConfig().hasInstanceFlexibilityPolicy());
+    Assert.assertTrue(createdCluster.getConfig().getWorkerConfig().hasInstanceFlexibilityPolicy());
+    Assert.assertEquals(Collections.singletonList("n2-custom-2-8192"),
+                        createdCluster.getConfig().getWorkerConfig().getInstanceFlexibilityPolicy()
+                          .getInstanceSelectionList(0).getMachineTypesList());
+    Assert.assertTrue(createdCluster.getConfig().getSecondaryWorkerConfig().hasInstanceFlexibilityPolicy());
+  }
+
+  @Test
+  public void testCreateClusterWithMasterOnlyFlexVmConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("masterCPUs", "4");
+    properties.put("masterMemoryMB", "16384");
+    properties.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "e2, n2d");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata =
+      ClusterOperationMetadata.newBuilder().setClusterName("master-flex").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    mockDataprocClientFactory.create(conf)
+      .createCluster("master-flex", "2.0", Collections.emptyMap(), false, null);
+
+    Cluster createdCluster = clusterCaptor.getValue();
+    Assert.assertTrue(createdCluster.getConfig().getMasterConfig().hasInstanceFlexibilityPolicy());
+    Assert.assertEquals(Arrays.asList("e2-custom-4-16384", "n2d-custom-4-16384"),
+                        createdCluster.getConfig().getMasterConfig().getInstanceFlexibilityPolicy()
+                          .getInstanceSelectionList(0).getMachineTypesList());
+    Assert.assertFalse(createdCluster.getConfig().getWorkerConfig().hasInstanceFlexibilityPolicy());
+    Assert.assertFalse(createdCluster.getConfig().getSecondaryWorkerConfig().hasInstanceFlexibilityPolicy());
   }
 }

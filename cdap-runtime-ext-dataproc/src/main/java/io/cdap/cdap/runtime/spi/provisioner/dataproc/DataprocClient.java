@@ -38,6 +38,8 @@ import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.EndpointConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
+import com.google.cloud.dataproc.v1.InstanceFlexibilityPolicy;
+import com.google.cloud.dataproc.v1.InstanceFlexibilityPolicy.InstanceSelection;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.LifecycleConfig;
 import com.google.cloud.dataproc.v1.ListClustersRequest;
@@ -226,6 +228,27 @@ abstract class DataprocClient implements AutoCloseable {
           .setPreemptibility(InstanceGroupConfig.Preemptibility.NON_PREEMPTIBLE)
           .setDiskConfig(workerDiskConfig);
 
+      if (!conf.getWorkerFlexVmMachineTypes().isEmpty()) {
+        InstanceFlexibilityPolicy workerFlexPolicy =
+          createInstanceFlexibilityPolicy(conf.getWorkerFlexVmMachineTypes());
+        primaryWorkerConfig.setInstanceFlexibilityPolicy(workerFlexPolicy);
+        secondaryWorkerConfig.setInstanceFlexibilityPolicy(workerFlexPolicy);
+      }
+
+      InstanceGroupConfig.Builder masterConfig = InstanceGroupConfig.newBuilder()
+        .setNumInstances(conf.getMasterNumNodes())
+        .setMachineTypeUri(conf.getMasterMachineType())
+        .setDiskConfig(DiskConfig.newBuilder()
+                         .setBootDiskType(conf.getMasterDiskType())
+                         .setBootDiskSizeGb(conf.getMasterDiskGb())
+                         .setNumLocalSsds(0)
+                         .build());
+      if (!conf.getMasterFlexVmMachineTypes().isEmpty()) {
+        InstanceFlexibilityPolicy masterFlexPolicy =
+          createInstanceFlexibilityPolicy(conf.getMasterFlexVmMachineTypes());
+        masterConfig.setInstanceFlexibilityPolicy(masterFlexPolicy);
+      }
+
       //Set default concurrency settings for fixed cluster
       if (Strings.isNullOrEmpty(conf.getAutoScalingPolicy())) {
         //Set spark.default.parallelism according to cluster size.
@@ -258,22 +281,14 @@ abstract class DataprocClient implements AutoCloseable {
       }
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
-          .setEndpointConfig(EndpointConfig.newBuilder()
-              .setEnableHttpPortAccess(conf.isComponentGatewayEnabled())
-              .build())
-          .setMasterConfig(InstanceGroupConfig.newBuilder()
-              .setNumInstances(conf.getMasterNumNodes())
-              .setMachineTypeUri(conf.getMasterMachineType())
-              .setDiskConfig(DiskConfig.newBuilder()
-                  .setBootDiskType(conf.getMasterDiskType())
-                  .setBootDiskSizeGb(conf.getMasterDiskGb())
-                  .setNumLocalSsds(0)
-                  .build())
-              .build())
-          .setWorkerConfig(primaryWorkerConfig.build())
-          .setSecondaryWorkerConfig(secondaryWorkerConfig.build())
-          .setGceClusterConfig(clusterConfig.build())
-          .setSoftwareConfig(softwareConfigBuilder);
+        .setEndpointConfig(EndpointConfig.newBuilder()
+                             .setEnableHttpPortAccess(conf.isComponentGatewayEnabled())
+                             .build())
+        .setMasterConfig(masterConfig.build())
+        .setWorkerConfig(primaryWorkerConfig.build())
+        .setSecondaryWorkerConfig(secondaryWorkerConfig.build())
+        .setGceClusterConfig(clusterConfig.build())
+        .setSoftwareConfig(softwareConfigBuilder);
 
       //Cluster TTL if one should be set
       if (conf.getIdleTtlMinutes() > 0) {
@@ -338,6 +353,13 @@ abstract class DataprocClient implements AutoCloseable {
       }
       throw new DataprocRuntimeException(operationId, cause);
     }
+  }
+
+  private InstanceFlexibilityPolicy createInstanceFlexibilityPolicy(List<String> machineTypes) {
+    return InstanceFlexibilityPolicy.newBuilder()
+      .addInstanceSelectionList(
+        InstanceSelection.newBuilder().addAllMachineTypes(machineTypes).build())
+      .build();
   }
 
   protected void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
