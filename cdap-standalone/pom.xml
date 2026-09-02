@@ -32,7 +32,7 @@
   <packaging>jar</packaging>
 
   <properties>
-    <sdk.hadoop.version>3.3.6</sdk.hadoop.version>
+    <sdk.hadoop.version>3.4.0</sdk.hadoop.version>
   </properties>
 
   <dependencies>
