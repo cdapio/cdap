@@ -88,12 +88,18 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
 
   @Override
   public void finished(HttpResponder responder) {
-    Closeables.closeQuietly(outputStream);
+    if (outputStream != null) {
+      try {
+        outputStream.close();
+      } catch (IOException e) {
+        LOG.warn("Failed to close output stream", e);
+      }
+    }
 
     try (InputStream is = new CombineInputStream(buffer, outputStream == null ? null : spillPath)) {
       processInput(is, responder);
     } catch (Exception e) {
-      Throwables.propagateIfPossible(e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(String.format("Failed to process input from buffer%s",
           outputStream == null ? "" : " and spill path " + spillPath), e);
     } finally {
@@ -103,7 +109,13 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
 
   @Override
   public void handleError(Throwable cause) {
-    Closeables.closeQuietly(outputStream);
+    if (outputStream != null) {
+      try {
+        outputStream.close();
+      } catch (IOException e) {
+        LOG.warn("Failed to close output stream", e);
+      }
+    }
     cleanup();
   }
 

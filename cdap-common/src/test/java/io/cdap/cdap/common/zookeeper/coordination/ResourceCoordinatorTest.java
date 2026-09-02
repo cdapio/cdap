@@ -71,18 +71,18 @@ public class ResourceCoordinatorTest {
         new ZkClientModule(),
         new ZkDiscoveryModule());
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     try {
       ResourceCoordinator coordinator = new ResourceCoordinator(zkClient,
           injector.getInstance(DiscoveryServiceClient.class),
           new BalancedAssignmentStrategy());
-      coordinator.startAndWait();
+      coordinator.startAsync().awaitRunning();
 
       try {
         ResourceCoordinatorClient client = new ResourceCoordinatorClient(zkClient);
-        client.startAndWait();
+        client.startAsync().awaitRunning();
 
         try {
           // Create a requirement
@@ -171,14 +171,14 @@ public class ResourceCoordinatorTest {
           cancelDiscoverable2.cancel();
 
         } finally {
-          client.stopAndWait();
+          client.stopAsync().awaitTerminated();
         }
       } finally {
-        coordinator.stopAndWait();
+        coordinator.stopAsync().awaitTerminated();
       }
 
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 

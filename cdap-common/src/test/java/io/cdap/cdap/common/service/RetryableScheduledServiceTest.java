@@ -45,9 +45,9 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -59,12 +59,12 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     // Wait for the service to fail
     Tasks.waitFor(Service.State.FAILED, service::state, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     } catch (Exception e) {
       // The root cause should be the one throw from the runTask. It should suppressed the retry exhausted exception.
       Throwable rootCause = Throwables.getRootCause(e);
@@ -89,12 +89,12 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     // Wait for the service to fail
     Tasks.waitFor(Service.State.FAILED, service::state, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     } catch (Exception e) {
       // The root cause should be the one throw from the runTask.
       Throwable rootCause = Throwables.getRootCause(e);
@@ -118,8 +118,8 @@ public class RetryableScheduledServiceTest {
         return 1L;
       }
     };
-    service.start();
+    service.startAsync();
     Assert.assertTrue(latch.await(3, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 }

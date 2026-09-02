@@ -190,7 +190,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "MapReduceRunner-" + specification.getName();
   }
 
@@ -412,6 +412,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // If we don't sleep, the final stats may not get sent before shutdown.
     TimeUnit.SECONDS.sleep(2L);
 
+
     // If the job is not successful, throw exception so that this service will terminate with a failure state
     // Shutdown will still get executed, but the service will notify failure after that.
     // However, if it's the job is requested to stop (via triggerShutdown, meaning it's a user action), don't throw
@@ -454,7 +455,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           }
         });
         t.setDaemon(true);
-        t.setName(getServiceName());
+        t.setName(serviceName());
         t.start();
       }
     };
@@ -1012,7 +1013,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
-    Files.copy(file, Locations.newOutputSupplier(targetLocation));
+    Files.asByteSource(file).copyTo(Locations.newByteSink(targetLocation));
     return targetLocation;
   }
 
@@ -1024,8 +1025,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    ByteStreams.copy(Locations.newInputSupplier(programJarLocation),
-        Locations.newOutputSupplier(programJarCopy));
+    Locations.newByteSource(programJarLocation).copyTo(Locations.newByteSink(programJarCopy));
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }
