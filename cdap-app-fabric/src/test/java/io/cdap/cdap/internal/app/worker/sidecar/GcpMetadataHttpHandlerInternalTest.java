@@ -27,6 +27,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.utils.SidecarAuthToken;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -62,6 +63,10 @@ public class GcpMetadataHttpHandlerInternalTest {
   public static void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
+    // Install the process-local sidecar token the handler will use to gate
+    // the context-management endpoints.
+    SidecarAuthToken.installIfAbsent();
 
     NamespaceAdmin namespaceAdmin = new InMemoryNamespaceAdmin();
     namespaceAdmin.create(NamespaceMeta.SYSTEM);
@@ -114,19 +119,32 @@ public class GcpMetadataHttpHandlerInternalTest {
         new GcpMetadataTaskContext(namespaceId.getNamespace(),
             "alice", "0.0.0.0", null);
 
-    // set context
+    String token = SidecarAuthToken.get();
+
+    // set context without the sidecar auth token is rejected
     URL url = new URL(String.format("%s/set-context", endpoint));
     HttpRequest httpRequest = HttpRequest.put(url).withBody(GSON.toJson(gcpMetadataTaskContext,
         GcpMetadataTaskContext.class)).build();
     HttpResponse httpResponse = HttpRequests.execute(httpRequest);
+    Assert.assertEquals(403, httpResponse.getResponseCode());
+
+    // set context with the sidecar auth token succeeds
+    httpRequest = HttpRequest.put(url).withBody(GSON.toJson(gcpMetadataTaskContext,
+        GcpMetadataTaskContext.class)).addHeader(SidecarAuthToken.HEADER, token).build();
+    httpResponse = HttpRequests.execute(httpRequest);
     Assert.assertEquals(200, httpResponse.getResponseCode());
     String expectedResponse = String.format("Context was set successfully with namespace '%s'.",
         namespaceId.getNamespace());
     Assert.assertEquals(expectedResponse, httpResponse.getResponseBodyAsString());
 
-    //clear context
+    // clear context without the sidecar auth token is rejected
     url = new URL(String.format("%s/clear-context", endpoint));
     httpRequest = HttpRequest.delete(url).build();
+    httpResponse = HttpRequests.execute(httpRequest);
+    Assert.assertEquals(403, httpResponse.getResponseCode());
+
+    // clear context with the sidecar auth token succeeds
+    httpRequest = HttpRequest.delete(url).addHeader(SidecarAuthToken.HEADER, token).build();
     httpResponse = HttpRequests.execute(httpRequest);
     Assert.assertEquals(200, httpResponse.getResponseCode());
   }
