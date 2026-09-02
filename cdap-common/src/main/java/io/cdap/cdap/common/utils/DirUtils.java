@@ -104,17 +104,16 @@ public final class DirUtils {
    * @throws IllegalStateException if the directory could not be created
    */
   public static File createTempDir(File baseDir) {
-    String baseName = System.currentTimeMillis() + "-";
-
-    for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
-      File tempDir = new File(baseDir, baseName + counter);
-      if (tempDir.mkdirs()) {
-        return tempDir;
-      }
+    if (baseDir == null || !baseDir.isDirectory()) {
+      throw new IllegalArgumentException("Base directory must exist and be a directory: " + baseDir);
     }
-    throw new IllegalStateException("Failed to create directory within "
-        + TEMP_DIR_ATTEMPTS + " attempts (tried "
-        + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
+    try {
+      String baseName = System.currentTimeMillis() + "-";
+      java.nio.file.Path temp = java.nio.file.Files.createTempDirectory(baseDir.toPath(), baseName);
+      return temp.toFile();
+    } catch (IOException ioex) {
+      throw new IllegalStateException("Failed to create temporary directory in base directory: " + baseDir, ioex);
+    }    
   }
 
   /**
