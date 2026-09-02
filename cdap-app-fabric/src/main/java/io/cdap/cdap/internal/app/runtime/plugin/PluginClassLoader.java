@@ -22,6 +22,7 @@ import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader.Filter;
 import io.cdap.cdap.common.lang.PackageFilterClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import java.io.File;
@@ -79,8 +80,12 @@ public class PluginClassLoader extends DirectoryClassLoader {
     // from the parent of the template program class loader (which is a filtered
     // CDAP classloader), followed by template export-packages, then by a plugin
     // lib jars.
+    PackageFilterClassLoader parent =
+        new PackageFilterClassLoader(programClassLoader.getParent(),
+            (packageName) -> !(packageName.contains("org.apache.hadoop.fs.s3a")
+                || packageName.contains("org.apache.hadoop.fs.s3native")));
     CombineClassLoader classLoader = new CombineClassLoader(
-        programClassLoader.getParent(), filteredTemplateClassLoader);
+        parent, filteredTemplateClassLoader);
     // Creating a CloseableClassLoader ensures that the caller can close the
     // PackageFilterClassLoader that is held by the CombineClassLoader.
     return new CloseableClassLoader(classLoader, filteredTemplateClassLoader);
@@ -92,6 +97,20 @@ public class PluginClassLoader extends DirectoryClassLoader {
     this.topLevelJar = topLevelJar;
     this.exportPackages = ManifestFields.getExportPackages(getManifest());
   }
+
+  // @Override
+  // protected synchronized Class<?> loadClass(String name, boolean resolve)
+  //     throws ClassNotFoundException {
+  //   if (exportPackages.contains(getPackage(name))) {
+  //     try {
+  //       return findClass(name);
+  //     } catch (ClassNotFoundException e) {
+  //       return super.loadClass(name, resolve);
+  //     }
+  //   } else {
+  //     return super.loadClass(name, resolve);
+  //   }
+  // }
 
   /**
    * @return the plugin's artifact id
