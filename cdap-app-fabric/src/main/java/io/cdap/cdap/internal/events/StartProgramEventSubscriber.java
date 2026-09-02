@@ -217,6 +217,13 @@ public class StartProgramEventSubscriber extends EventSubscriber {
 
   @Override
   protected void shutDown() throws Exception {
+    for (EventReader<StartProgramEvent> reader : readers) {
+      try {
+        reader.close();
+      } catch (Exception e) {
+        LOG.error("Exception closing EventReader: {}", reader.getId(), e);
+      }
+    }
     if (executor != null) {
       executor.shutdownNow();
     }
