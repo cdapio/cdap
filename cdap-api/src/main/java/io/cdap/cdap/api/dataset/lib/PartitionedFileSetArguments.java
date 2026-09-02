@@ -128,7 +128,7 @@ public class PartitionedFileSetArguments {
   public static void setInputPartitionFilter(Map<String, String> arguments,
       PartitionFilter filter) {
     // Serialize a singleton list for now. Support for multiple PartitionFilters can be added in the future.
-    // See: https://issues.cask.co/browse/CDAP-5618
+    // See: https://cdap.atlassian.net/browse/CDAP-5618
     arguments.put(INPUT_PARTITION_FILTER, GSON.toJson(Collections.singletonList(filter)));
   }
 
