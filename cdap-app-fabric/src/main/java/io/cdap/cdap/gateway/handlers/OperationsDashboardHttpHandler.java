@@ -39,8 +39,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.ops.DashboardProgramRunRecord;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.reporting.ProgramHeartbeatService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -79,14 +81,17 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   private final ProgramHeartbeatService programHeartbeatService;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
 
   @Inject
   public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService,
-      Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
+      Scheduler scheduler, TimeSchedulerService timeSchedulerService,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.programHeartbeatService = programHeartbeatService;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @GET
@@ -105,6 +110,14 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       throw new BadRequestException(
           "'namespace' cannot be empty, please provide at least one namespace.");
     }
+
+    // Enforce that the caller has GET access on each requested namespace before reading any
+    // program run data for it. Without this check, a caller could read program run records from
+    // arbitrary namespaces it is not authorized to access.
+    for (String namespace : namespaces) {
+      contextAccessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.GET);
+    }
+
     long endTimeSecs = startTimeSecs + durationTimeSecs;
 
     // Get current running timestamp.
