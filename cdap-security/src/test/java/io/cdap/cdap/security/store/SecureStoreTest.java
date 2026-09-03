@@ -122,8 +122,7 @@ public class SecureStoreTest {
         Mockito.anyString());
 
     httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "SecureStore",
-                                                   new NoOpMetricsCollectionService(), true, auditLogContexts -> {},
-                                                    injector.getInstance(AeadCipher.class))
+                                                   new NoOpMetricsCollectionService(), auditLogContexts -> {})
       .setHttpHandlers(Arrays.asList(new SecureStoreHandler(mockService, mockService),
           new SecureStoreInternalHandler(mockService, mockService)))
       .build();

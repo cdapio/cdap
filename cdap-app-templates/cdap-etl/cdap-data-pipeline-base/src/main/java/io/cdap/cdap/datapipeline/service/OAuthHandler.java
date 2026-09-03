@@ -202,11 +202,9 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   @DELETE
   @Path(API_VERSION + "/oauth/provider/{provider}")
   public void deleteOAuthProvider(HttpServiceRequest request, HttpServiceResponder responder,
-                                  @PathParam("provider") String oauthProvider,
-                                  @QueryParam("preserve_client_credentials") @DefaultValue("false")
-                                  boolean preserveClientCredentials) {
+                                  @PathParam("provider") String oauthProvider) {
     respond(responder, () -> {
-      oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
+      oauthStore.deleteProvider(oauthProvider);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
   }
