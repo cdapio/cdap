@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.store.secretmanager;
 
 import io.cdap.cdap.api.security.store.SecureStoreData;
+import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.SecureKeyNotFoundException;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
@@ -101,6 +102,26 @@ public class SecretManagerSecureStoreServiceTest {
     secureStoreService.delete(NAMESPACE1, key2);
 
     Assert.assertEquals(0, secureStoreService.list(NAMESPACE1).size());
+  }
+
+  @Test
+  public void testLeaseOperations() throws Exception {
+    String key = "leasekey";
+    secureStoreService.put(NAMESPACE1, key, "value", "desc", new HashMap<>());
+    Assert.assertTrue(secureStoreService.getStoreInfo().getCapabilities()
+        .contains(SecureStoreInfo.Capability.SECRET_LEASING));
+
+    Assert.assertTrue(secureStoreService.acquireLease(NAMESPACE1, key, 1000L, "holder1"));
+
+    Assert.assertTrue(secureStoreService.releaseLease(NAMESPACE1, key, "holder1"));
+    secureStoreService.delete(NAMESPACE1, key);
+  }
+
+  @Test
+  public void testGetStoreInfo() throws Exception {
+    SecureStoreInfo storeInfo = secureStoreService.getStoreInfo();
+    Assert.assertNotNull(storeInfo);
+    Assert.assertTrue(storeInfo.getCapabilities().contains(SecureStoreInfo.Capability.SECRET_LEASING));
   }
 
   @Test(expected = SecureKeyNotFoundException.class)

@@ -20,6 +20,7 @@ import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Secrets Manager interface to store secrets securely and retrieve them when needed. Secrets are
@@ -134,4 +135,40 @@ public interface SecretManager {
    * @param context secret manager context
    */
   void destroy(SecretManagerContext context);
+
+  /**
+   * Retrieves configuration details and capabilities of the secret manager implementation
+   * to inform operational decisions.
+   *
+   * @return the {@link SecretManagerInfo} containing metadata and capabilities
+   */
+  default SecretManagerInfo getStoreInfo() throws IOException {
+    return new SecretManagerInfo(Collections.emptySet());
+  }
+
+  /**
+   * Attempts to acquire a distributed lease on a secret.
+   *
+   * @param namespace the namespace that this secret belongs to
+   * @param key the name of the secret
+   * @param timeoutMs the lease expiration timeout in milliseconds
+   * @param leaseHolder the lease holder identity
+   * @return boolean indicating whether it was successfully acquired
+   * @throws IOException if unable to acquire lease due to I/O error
+   */
+  default boolean acquireLease(String namespace, String key, long timeoutMs, String leaseHolder) throws IOException {
+    throw new UnsupportedOperationException("Leases are not supported by this SecureStore implementation.");
+  }
+
+  /**
+   * Releases an acquired lease on a secret.
+   *
+   * @param namespace the namespace that this secret belongs to
+   * @param key the name of the secret
+   * @param leaseHolder the lease holder identity
+   * @throws IOException if unable to release lease due to I/O error
+   */
+  default boolean releaseLease(String namespace, String key, String leaseHolder) throws IOException {
+    throw new UnsupportedOperationException("Leases are not supported by this SecureStore implementation.");
+  }
 }
