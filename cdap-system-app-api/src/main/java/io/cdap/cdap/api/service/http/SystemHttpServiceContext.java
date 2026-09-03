@@ -105,4 +105,16 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
    * Returns boolean indicating whether remote task execution is enabled
    */
   boolean isRemoteTaskEnabled();
+
+  /**
+   * Returns a map of configuration properties that match the specified prefix from the
+   * system configuration (Cconf).
+   * The keys in the returned map will have the prefix removed.
+   *
+   * @param prefix the prefix to filter configuration properties by
+   * @return a map of configuration properties matching the prefix
+   */
+  default Map<String, String> getConfiguration(String prefix) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
 }
