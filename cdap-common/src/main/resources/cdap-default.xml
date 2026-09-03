@@ -6333,6 +6333,14 @@
   </property>
 
   <property>
+    <name>feature.wrangler.directive.recipe.auth.check.enabled</name>
+    <value>false</value>
+    <description>
+      Enables authorization enforcement on directive and recipe actions in Wrangler. If disabled, no checks will be performed.
+    </description>
+  </property>
+
+  <property>
     <name>feature.namespaced.service.accounts.enabled</name>
     <value>false</value>
     <description>
