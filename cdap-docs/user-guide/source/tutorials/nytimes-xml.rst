@@ -17,7 +17,7 @@ This tutorial demonstrates how to use CDAP's Data Preparation and Data Pipelines
 
 Scenario
 ---------
-Your organization, a multinational enterprise with holdings across several continents, is interested in monitoring RSS XML data feeds from many different news sites, such as the the New York Times. You want to route stories about different regions to the relevant analysts.
+Your organization, a multinational enterprise with holdings across several continents, is interested in monitoring RSS XML data feeds from many different news sites, such as the New York Times. You want to route stories about different regions to the relevant analysts.
 
 - You want stories about Brazil to be written to dataset (that is displayed via a webapp) to the Latin America analysts
 
