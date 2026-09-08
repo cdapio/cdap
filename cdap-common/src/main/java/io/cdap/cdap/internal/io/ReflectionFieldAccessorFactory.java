@@ -62,7 +62,8 @@ public final class ReflectionFieldAccessorFactory implements FieldAccessorFactor
                 try {
                   finalField.set(object, value);
                 } catch (Exception e) {
-                  throw Throwables.propagate(e);
+                  Throwables.throwIfUnchecked(e);
+                  throw new RuntimeException(e);
                 }
               }
 
@@ -72,7 +73,8 @@ public final class ReflectionFieldAccessorFactory implements FieldAccessorFactor
                 try {
                   return (T) finalField.get(object);
                 } catch (Exception e) {
-                  throw Throwables.propagate(e);
+                  Throwables.throwIfUnchecked(e);
+                  throw new RuntimeException(e);
                 }
               }
 

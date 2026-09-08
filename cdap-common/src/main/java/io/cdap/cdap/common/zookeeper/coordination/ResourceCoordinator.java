@@ -412,8 +412,7 @@ public final class ResourceCoordinator extends AbstractService {
               LOG.error("Failed to save assignment {}", Bytes.toStringBinary(data), t);
               doNotifyFailed(t);
             }
-          }, executor
-      );
+          }, executor);
     } catch (Exception e) {
       // Something very wrong
       LOG.error("Failed to save assignment: {}", assignmentName, e);

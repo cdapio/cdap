@@ -83,7 +83,7 @@ public class NoSqlStructuredTableDatasetDefinition implements DatasetDefinition 
               datasetContext, spec, arguments, classLoader));
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

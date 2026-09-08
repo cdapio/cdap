@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.common.lang;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import java.io.File;
@@ -67,7 +67,7 @@ public final class ClassLoaders {
    */
   public static Class<?> loadClass(String className, @Nullable ClassLoader classLoader,
       Object caller) throws ClassNotFoundException {
-    ClassLoader cl = Objects.firstNonNull(classLoader, caller.getClass().getClassLoader());
+    ClassLoader cl = MoreObjects.firstNonNull(classLoader, caller.getClass().getClassLoader());
     return cl.loadClass(className);
   }
 
@@ -283,7 +283,8 @@ public final class ClassLoaders {
         return URI.create(path.substring(0, path.indexOf("!/"))).toURL();
       }
     } catch (MalformedURLException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     throw new IllegalStateException("Unsupported class URL: " + classUrl);
   }

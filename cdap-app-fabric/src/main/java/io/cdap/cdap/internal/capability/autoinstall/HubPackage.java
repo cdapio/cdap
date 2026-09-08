@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.capability.autoinstall;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -180,7 +179,11 @@ public class HubPackage {
 
         @Override
         public void onFinished() {
-          Closeables.closeQuietly(channel);
+          try {
+            channel.close();
+          } catch (Exception ignored) {
+            // Ignored because we are performing resource cleanup of the file channel on finishing.
+          }
         }
       }).build();
       HttpClients.executeStreamingRequest(request);

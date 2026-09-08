@@ -59,7 +59,7 @@ public class ZkDiscoveryModuleTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
 
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -68,7 +68,7 @@ public class ZkDiscoveryModuleTest {
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -80,7 +80,7 @@ public class ZkDiscoveryModuleTest {
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     try {
       DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
       DiscoveryServiceClient discoveryServiceClient = injector
@@ -106,7 +106,7 @@ public class ZkDiscoveryModuleTest {
       }
 
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
@@ -119,7 +119,7 @@ public class ZkDiscoveryModuleTest {
     );
 
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     try {
       // Register a service using the twill ZKClient. This is to simulate how a user Service program register
       ProgramId programId = NamespaceId.DEFAULT.app("app").service("service");
@@ -149,7 +149,7 @@ public class ZkDiscoveryModuleTest {
         }
       }
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 }

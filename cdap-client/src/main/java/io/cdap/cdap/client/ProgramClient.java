@@ -407,7 +407,7 @@ public class ProgramClient {
       Throwables.propagateIfPossible(e.getCause(), UnauthenticatedException.class);
       Throwables.propagateIfPossible(e.getCause(), ProgramNotFoundException.class);
       Throwables.propagateIfPossible(e.getCause(), IOException.class);
-      throw Throwables.propagate(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
   }
 

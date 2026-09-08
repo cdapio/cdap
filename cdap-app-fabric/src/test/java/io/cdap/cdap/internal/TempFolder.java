@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.common.utils.DirUtils;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,7 @@ final class TempFolder {
         throw new RuntimeException("Could NOT create temp dir at " + folder.getAbsolutePath());
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -60,7 +59,7 @@ final class TempFolder {
       }
       return file;
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

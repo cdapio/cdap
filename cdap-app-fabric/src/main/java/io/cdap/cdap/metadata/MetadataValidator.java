@@ -42,7 +42,7 @@ public class MetadataValidator {
       .or(CharMatcher.inRange('0', '9'))
       .or(CharMatcher.is('_'))
       .or(CharMatcher.is('-'))
-      .or(CharMatcher.WHITESPACE);
+      .or(CharMatcher.whitespace());
 
   private final int maxCharacters;
 

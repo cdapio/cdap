@@ -17,7 +17,6 @@
 package io.cdap.cdap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.workflow.AbstractWorkflow;
@@ -68,7 +67,7 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
         Preconditions.checkArgument(file.createNewFile());
       } catch (IOException e) {
         LOG.error("Exception while creating file {}", file, e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
       File doneFile = new File(runtimeArguments.get(DONE_FILE_ARG));
 

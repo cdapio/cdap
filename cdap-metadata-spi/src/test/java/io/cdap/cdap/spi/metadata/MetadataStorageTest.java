@@ -25,7 +25,6 @@ import static io.cdap.cdap.spi.metadata.MetadataConstants.TTL_KEY;
 import static io.cdap.cdap.spi.metadata.MetadataKind.PROPERTY;
 import static io.cdap.cdap.spi.metadata.MetadataKind.TAG;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -508,7 +507,7 @@ public abstract class MetadataStorageTest {
       try {
         return mds.apply(mutation, MutationOptions.DEFAULT);
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }).collect(Collectors.toList());
 
@@ -1654,7 +1653,7 @@ public abstract class MetadataStorageTest {
         try {
           completionService.take();
         } catch (InterruptedException e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       });
       // validate that all "r" tags were removed and all "c" and "t" tags were added
@@ -1715,7 +1714,7 @@ public abstract class MetadataStorageTest {
       try {
         completionService.take();
       } catch (InterruptedException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     });
     // validate that all "r" tags were removed and all "c" and "t" tags were added
@@ -1725,7 +1724,7 @@ public abstract class MetadataStorageTest {
           Assert.assertEquals("For entity " + entities.get(e), expected.get(e),
                               mds.read(new Read(entities.get(e))).getTags(USER));
         } catch (Exception ex) {
-          throw Throwables.propagate(ex);
+          throw new RuntimeException(ex);
         }
       });
     // clean up
@@ -1768,7 +1767,7 @@ public abstract class MetadataStorageTest {
         Assert.assertTrue(ImmutableSet.of(Metadata.EMPTY, new Metadata(USER, tags("b")))
                             .contains(mds.read(new Read(entity))));
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     });
     // clean up
@@ -1816,7 +1815,7 @@ public abstract class MetadataStorageTest {
           try {
             completionService.take();
           } catch (InterruptedException e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         });
         IntStream.range(0, numEntities).forEach(
@@ -1827,11 +1826,11 @@ public abstract class MetadataStorageTest {
               Assert.assertTrue(ImmutableSet.of(Metadata.EMPTY, new Metadata(USER, tags("b")))
                                   .contains(mds.read(new Read(entities.get(e)))));
             } catch (Exception ex) {
-              throw Throwables.propagate(ex);
+              throw new RuntimeException(ex);
             }
           });
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     });
     mds.batch(entities.values().stream().map(Drop::new).collect(Collectors.toList()), MutationOptions.DEFAULT);

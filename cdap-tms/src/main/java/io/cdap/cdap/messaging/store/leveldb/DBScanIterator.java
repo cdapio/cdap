@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.messaging.store.leveldb;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import java.io.IOException;
@@ -64,7 +63,7 @@ final class DBScanIterator extends AbstractCloseableIterator<Map.Entry<byte[], b
     try {
       iterator.close();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } finally {
       endOfData();
       closed = true;

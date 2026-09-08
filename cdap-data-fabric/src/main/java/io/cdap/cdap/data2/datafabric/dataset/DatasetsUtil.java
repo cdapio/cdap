@@ -17,11 +17,9 @@
 package io.cdap.cdap.data2.datafabric.dataset;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
-import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
@@ -128,7 +126,7 @@ public final class DatasetsUtil {
       } catch (DatasetManagementException e) {
         LOG.error("Could NOT add dataset instance {} of type {} with props {}",
             datasetInstanceId, typeName, props, e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
   }

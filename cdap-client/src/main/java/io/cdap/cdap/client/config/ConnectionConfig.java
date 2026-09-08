@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.client.config;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -137,7 +138,7 @@ public class ConnectionConfig {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("hostname", hostname)
         .add("port", port)
         .add("sslEnabled", sslEnabled)

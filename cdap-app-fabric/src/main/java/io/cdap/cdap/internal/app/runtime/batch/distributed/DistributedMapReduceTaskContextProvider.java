@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -91,7 +90,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
       }
 
       for (Service service : coreServices) {
-        service.startAndWait();
+        service.startAsync().awaitRunning();
       }
     } catch (Exception e) {
       // Try our best to stop services. Chain stop guarantees it will stop everything, even some of them failed.
@@ -107,12 +106,18 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   @Override
   protected void shutDown() throws Exception {
     super.shutDown();
-    Closeables.closeQuietly(logAppenderInitializer);
+    try {
+
+      logAppenderInitializer.close();
+
+    } catch (Exception ignored) {
+
+    }
 
     Exception failure = null;
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
       } catch (Exception e) {
         if (failure != null) {
           failure.addSuppressed(e);

@@ -48,13 +48,13 @@ public class NoSqlStructuredTableRegistryTest extends StructuredTableRegistryTes
   public static void beforeClass() {
     Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void afterClass() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 }

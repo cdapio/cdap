@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -145,7 +144,13 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
 
       @Override
       protected void doStop() {
-        Closeables.closeQuietly(metadataStorage);
+        try {
+
+          metadataStorage.close();
+
+        } catch (Exception ignored) {
+
+        }
         notifyStopped();
       }
     });

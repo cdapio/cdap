@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.filter;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.StreamTokenizer;
@@ -58,7 +57,7 @@ public final class FilterParser {
         }
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     // Not an empty expression
@@ -116,7 +115,7 @@ public final class FilterParser {
         }
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     throw new IllegalStateException("Expected operand but got end of expression");
   }
@@ -136,7 +135,7 @@ public final class FilterParser {
         }
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     throw new IllegalStateException("Expected operator = but got end of expression");
   }
@@ -156,7 +155,7 @@ public final class FilterParser {
         }
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     // No operator present

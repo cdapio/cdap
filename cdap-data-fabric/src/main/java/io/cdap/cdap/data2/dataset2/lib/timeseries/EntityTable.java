@@ -15,7 +15,7 @@
  */
 package io.cdap.cdap.data2.dataset2.lib.timeseries;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -293,7 +293,7 @@ public final class EntityTable implements Closeable {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("type", type)
           .add("name", name)
           .toString();

@@ -19,7 +19,6 @@ package io.cdap.cdap.master.startup;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -77,7 +76,7 @@ public class MasterStartupTool {
       SecurityUtil.loginForMasterService(cConf);
     } catch (Exception e) {
       LOG.error("Failed to login as CDAP user", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     Configuration hConf = new Configuration();

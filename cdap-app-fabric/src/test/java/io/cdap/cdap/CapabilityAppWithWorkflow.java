@@ -16,7 +16,6 @@
 
 package io.cdap.cdap;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -54,7 +53,7 @@ public class CapabilityAppWithWorkflow extends AbstractApplication {
       addMapReduce(new WordCountMapReduce());
       addWorkflow(new SampleWorkflow());
     } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

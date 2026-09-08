@@ -120,14 +120,14 @@ public class AbstractMessagingSubscriberServiceTest {
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 100, 1,
       RetryStrategies.noRetry(), metricsContext, 100);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     //First one
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
     //Retry
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -158,7 +158,7 @@ public class AbstractMessagingSubscriberServiceTest {
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 100, 1,
       RetryStrategies.noRetry(), metricsContext, 3);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1), ImmutablePair.of(null, 2)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 3)),
@@ -167,7 +167,7 @@ public class AbstractMessagingSubscriberServiceTest {
                         processedMessages.poll(10, TimeUnit.SECONDS));
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 5), ImmutablePair.of(null, 6)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   /**
@@ -202,10 +202,10 @@ public class AbstractMessagingSubscriberServiceTest {
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 2, 1,
       RetryStrategies.noRetry(), metricsContext, 2);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   class TestMessagingSubscriberService extends AbstractMessagingSubscriberService<Integer> {

@@ -98,7 +98,8 @@ public final class InstantiatorFactory {
           try {
             return (T) defaultCons.newInstance();
           } catch (Exception e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
           }
         }
       };
@@ -184,7 +185,8 @@ public final class InstantiatorFactory {
           }
           return (T) instance;
         } catch (InstantiationException | IllegalAccessException e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     };

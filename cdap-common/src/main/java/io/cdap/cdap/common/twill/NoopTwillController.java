@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.twill;
 
+import com.google.common.util.concurrent.Service;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -23,6 +24,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
@@ -134,7 +137,7 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
 
   @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
-      Map<String, LogEntry.Level> logLevelsForRunnable) {
+                                                             Map<String, LogEntry.Level> logLevelsForRunnable) {
     CompletableFuture<Map<String, LogEntry.Level>> future = new CompletableFuture<>();
     future.completeExceptionally(
         new UnsupportedOperationException("Update log levels is not supported"));
@@ -158,6 +161,38 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   }
 
   @Override
+  public void awaitRunning() {
+    // no-op
+  }
+
+  @Override
+  public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+    // no-op
+  }
+
+  @Override
+  public void awaitTerminated() {
+    // no-op
+  }
+
+  @Override
+  public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+    // no-op
+  }
+
+  @Override
+  public Service startAsync() {
+    start();
+    return this;
+  }
+
+  @Override
+  public Service stopAsync() {
+    stop();
+    return this;
+  }
+
+  @Override
   protected void startUp() {
     // no-op
   }
@@ -175,6 +210,12 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   @Override
   public Future<Command> sendCommand(String runnableName, Command command) {
     return CompletableFuture.completedFuture(command);
+  }
+
+  @Nullable
+  @Override
+  public Throwable failureCause() {
+    return null;
   }
 
   @Override

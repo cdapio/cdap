@@ -63,11 +63,11 @@ public class RemoteNamespaceQueryTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     waitForService(discoveryServiceClient, Constants.Service.DATASET_MANAGER);
     waitForService(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP);
@@ -78,9 +78,9 @@ public class RemoteNamespaceQueryTest {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

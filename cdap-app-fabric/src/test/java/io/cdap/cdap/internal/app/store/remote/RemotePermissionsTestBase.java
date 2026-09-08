@@ -87,7 +87,7 @@ public abstract class RemotePermissionsTestBase {
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     discoveryService = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
     accessEnforcer = injector.getInstance(RemoteAccessEnforcer.class);
     permissionManager = injector.getInstance(PermissionManager.class);
@@ -226,7 +226,7 @@ public abstract class RemotePermissionsTestBase {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 }

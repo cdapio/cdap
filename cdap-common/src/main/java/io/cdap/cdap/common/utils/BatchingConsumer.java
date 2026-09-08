@@ -79,7 +79,8 @@ public class BatchingConsumer<T> implements Consumer<T>, AutoCloseable {
       try {
         ((AutoCloseable) child).close();
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

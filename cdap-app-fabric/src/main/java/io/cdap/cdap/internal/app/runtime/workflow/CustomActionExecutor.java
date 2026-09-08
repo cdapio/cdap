@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.workflow;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramState;
 import io.cdap.cdap.api.ProgramStatus;
@@ -94,7 +94,7 @@ class CustomActionExecutor {
       customActionContext.setState(
           new ProgramState(ProgramStatus.FAILED, Exceptions.condenseThrowableMessage(t)));
       Throwables.propagateIfPossible(t, Exception.class);
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
 
     } finally {
       TransactionControl txControl = Transactions.getTransactionControl(defaultTxControl,

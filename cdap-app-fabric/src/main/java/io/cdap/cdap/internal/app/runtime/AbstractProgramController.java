@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -246,7 +246,7 @@ public abstract class AbstractProgramController implements ProgramController {
       // Not expecting exception since the Callable only do action on Map and calling caller.init, which
       // already have exceptions handled inside the method. Also, we never shutdown the executor explicitly,
       // there shouldn't be interrupted exception as well.
-      throw Throwables.propagate(Throwables.getRootCause(e));
+      throw new RuntimeException(Throwables.getRootCause(e));
     }
   }
 

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
@@ -168,7 +167,7 @@ public abstract class TableConcurrentTest<T extends Table> extends TableTest<T> 
           continue;
         } catch (Throwable t) {
           LOG.warn("failed to increment, bailing out", t);
-          throw Throwables.propagate(t);
+          throw new RuntimeException(t);
         }
         executed[0]++;
       }
@@ -226,7 +225,7 @@ public abstract class TableConcurrentTest<T extends Table> extends TableTest<T> 
               continue;
             } catch (Throwable t) {
               LOG.warn("failed to append, bailing out", t);
-              throw Throwables.propagate(t);
+              throw new RuntimeException(t);
             }
 
             appended = true;

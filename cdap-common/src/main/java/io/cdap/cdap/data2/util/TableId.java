@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.util;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -70,7 +71,7 @@ public class TableId {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("namespace", namespace)
       .add("tableName", tableName)
       .toString();

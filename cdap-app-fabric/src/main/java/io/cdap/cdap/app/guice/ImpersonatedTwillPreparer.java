@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.guice;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.internal.app.runtime.distributed.ForwardingTwillPreparer;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
@@ -66,7 +65,7 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
             impersonator, programId);
       });
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

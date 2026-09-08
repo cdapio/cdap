@@ -18,7 +18,7 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
@@ -37,15 +37,12 @@ import io.cdap.cdap.gateway.handlers.util.ProgramHandlerUtil;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
-import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramSchedule;
-import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ScheduleDetail;
@@ -592,13 +589,13 @@ public class ProgramScheduleHttpHandler extends AbstractAppFabricHttpHandler {
     // Schedules are versionless
     lifecycleService.ensureLatestProgramExists(programId.getProgramReference());
 
-    String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
-    Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(),
+    String description = MoreObjects.firstNonNull(scheduleFromRequest.getDescription(), "");
+    Map<String, String> properties = MoreObjects.firstNonNull(scheduleFromRequest.getProperties(),
         Collections.emptyMap());
-    List<? extends Constraint> constraints = Objects.firstNonNull(
+    List<? extends Constraint> constraints = MoreObjects.firstNonNull(
         scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
     long timeoutMillis =
-        Objects.firstNonNull(scheduleFromRequest.getTimeoutMillis(),
+        MoreObjects.firstNonNull(scheduleFromRequest.getTimeoutMillis(),
             Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
     ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
         scheduleFromRequest.getTrigger(), constraints, timeoutMillis);

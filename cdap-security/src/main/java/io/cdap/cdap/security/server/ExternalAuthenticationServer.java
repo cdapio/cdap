@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.security.server;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -294,7 +294,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   }
 
   @Override
-  protected Executor executor(State state) {
+  protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
     //noinspection NullableProblems
 

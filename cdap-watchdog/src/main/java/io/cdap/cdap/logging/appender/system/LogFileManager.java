@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.appender.system;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.io.Syncable;
@@ -119,7 +118,10 @@ public final class LogFileManager implements Flushable, Syncable {
           location.getLocation());
     } catch (Throwable e) {
       // delete created file as there was exception while writing meta data
-      Closeables.closeQuietly(logFileOutputStream);
+      try {
+        logFileOutputStream.close();
+      } catch (Exception ignored) {
+      }
       Locations.deleteQuietly(location.getLocation());
       throw new IOException(e);
     }
@@ -173,7 +175,10 @@ public final class LogFileManager implements Flushable, Syncable {
     outputStreamMap.clear();
 
     for (LogFileOutputStream stream : streams) {
-      Closeables.closeQuietly(stream);
+      try {
+        stream.close();
+      } catch (Exception ignored) {
+      }
     }
   }
 

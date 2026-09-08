@@ -87,7 +87,7 @@ public class AuthenticationServerMain extends DaemonMain {
                     + "ZooKeeper quorum settings are correct in "
                     + "cdap-site.xml. Currently configured as: %s",
                 zkClientService.getConnectString()));
-        authServer.startAndWait();
+        authServer.startAsync().awaitRunning();
       } catch (Exception e) {
         Throwable rootCause = Throwables.getRootCause(e);
         if (rootCause instanceof ServiceBindException) {

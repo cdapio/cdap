@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.dataset2.lib.table;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.annotation.ReadOnly;
@@ -257,7 +256,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
         return rowReader.read(row, tableSchema);
       } catch (IOException e) {
         LOG.error("Unable to read row.", e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

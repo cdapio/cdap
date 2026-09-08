@@ -158,12 +158,12 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
 
   @Override
   protected void startUp() throws Exception {
-    secureStoreService.startAndWait();
+    secureStoreService.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    secureStoreService.stopAndWait();
+    secureStoreService.stopAsync().awaitTerminated();
   }
 
   @Override

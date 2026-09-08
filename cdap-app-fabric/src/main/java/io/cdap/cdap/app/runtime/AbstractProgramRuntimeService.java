@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -472,7 +471,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   private void cleanupRuntimeInfo(@Nullable RuntimeInfo info) {
     if (info instanceof Closeable) {
-      Closeables.closeQuietly((Closeable) info);
+      try {
+        ((Closeable) info).close();
+      } catch (Exception ignored) {
+        // Ignored because we are performing resource cleanup of RuntimeInfo.
+      }
     }
   }
 

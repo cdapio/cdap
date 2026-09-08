@@ -89,7 +89,7 @@ public class LeaderElectionMessagingServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
 
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -106,7 +106,7 @@ public class LeaderElectionMessagingServiceTest {
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -118,11 +118,11 @@ public class LeaderElectionMessagingServiceTest {
 
     // Start a messaging service, which would becomes leader
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
-    zkClient1.startAndWait();
+    zkClient1.startAsync().awaitRunning();
 
     final MessagingService firstService = injector1.getInstance(MessagingService.class);
     if (firstService instanceof Service) {
-      ((Service) firstService).startAndWait();
+      ((Service) firstService).startAsync().awaitRunning();
     }
 
     // Publish a message with the leader
@@ -130,11 +130,11 @@ public class LeaderElectionMessagingServiceTest {
 
     // Start another messaging service, this one would be follower
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
-    zkClient2.startAndWait();
+    zkClient2.startAsync().awaitRunning();
 
     final MessagingService secondService = injector2.getInstance(MessagingService.class);
     if (secondService instanceof Service) {
-      ((Service) secondService).startAndWait();
+      ((Service) secondService).startAsync().awaitRunning();
     }
 
     // Try to call the follower, should get service unavailable.
@@ -175,7 +175,7 @@ public class LeaderElectionMessagingServiceTest {
 
     // Shutdown the current leader. The session timeout one should becomes leader again.
     if (secondService instanceof Service) {
-      ((Service) secondService).stopAndWait();
+      ((Service) secondService).stopAsync().awaitTerminated();
     }
 
     // Try to fetch message from the current leader again.
@@ -201,8 +201,8 @@ public class LeaderElectionMessagingServiceTest {
 
     Assert.assertEquals(Arrays.asList("Testing1", "Testing2"), messages);
 
-    zkClient1.stopAndWait();
-    zkClient2.stopAndWait();
+    zkClient1.stopAsync().awaitTerminated();
+    zkClient2.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -217,11 +217,11 @@ public class LeaderElectionMessagingServiceTest {
     try {
       Injector injector = createInjector(0);
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-      zkClient.startAndWait();
+      zkClient.startAsync().awaitRunning();
 
       final MessagingService messagingService = injector.getInstance(MessagingService.class);
       if (messagingService instanceof Service) {
-        ((Service) messagingService).startAndWait();
+        ((Service) messagingService).startAsync().awaitRunning();
       }
 
       // Shouldn't be serving request yet.
@@ -246,9 +246,9 @@ public class LeaderElectionMessagingServiceTest {
       }, 10L, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
       if (messagingService instanceof Service) {
-        ((Service) messagingService).stopAndWait();
+        ((Service) messagingService).stopAsync().awaitTerminated();
       }
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
 
     } finally {
       cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, oldFencingDelay);

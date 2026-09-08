@@ -125,7 +125,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       = new ProgramRunStatusMonitorService(cConf, store, testService,
                                            metricsCollectionService, new NoOpProgramStateWriter(),
                                            5, 3, 2, 2);
-    programRunStatusMonitorService.startAndWait();
+    programRunStatusMonitorService.startAsync().awaitRunning();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -198,7 +198,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       = new ProgramRunStatusMonitorService(cConf, store, testService,
                                            metricsCollectionService, new NoOpProgramStateWriter(),
                                            5, 3, 2, 2);
-    programRunStatusMonitorService.startAndWait();
+    programRunStatusMonitorService.startAsync().awaitRunning();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -238,7 +238,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     ProgramRunStatusMonitorService programRunStatusMonitorService
       = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, psw,
                                            5, 3, 2, 2);
-    programRunStatusMonitorService.startAndWait();
+    programRunStatusMonitorService.startAsync().awaitRunning();
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));

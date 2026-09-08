@@ -16,8 +16,7 @@
 
 package io.cdap.cdap.data.dataset;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
+import com.google.common.base.MoreObjects;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -26,7 +25,6 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -74,7 +72,7 @@ public class SystemDatasetInstantiator implements Closeable {
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;
     this.parentClassLoader = parentClassLoader == null
-        ? Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+        ? MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
         getClass().getClassLoader()) :
         parentClassLoader;
   }
@@ -110,7 +108,9 @@ public class SystemDatasetInstantiator implements Closeable {
       }
       return dataset;
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, ServiceUnavailableException.class);
+      if (e instanceof ServiceUnavailableException) {
+        throw (ServiceUnavailableException) e;
+      }
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
   }

@@ -90,7 +90,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
         new NoOpAeadCipher()),
         remoteClientFactory, new NoOpRemoteAuthenticator());
     // start the service
-    artifactLocalizerService.startAndWait();
+    artifactLocalizerService.startAsync().awaitRunning();
 
     return artifactLocalizerService;
   }
@@ -104,7 +104,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
   @After
   public void tearDown() throws Exception {
-    this.localizerService.stopAndWait();
+    this.localizerService.stopAsync().awaitTerminated();
   }
 
   @Test

@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.serialize;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.logging.LoggingUtil;
 import java.io.ByteArrayOutputStream;
@@ -67,7 +66,7 @@ public final class LoggingEventSerializer {
       writer.write(toGenericRecord(event), encoder);
     } catch (IOException e) {
       // This shouldn't happen since we are writing to byte array output stream.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return out.toByteArray();
   }

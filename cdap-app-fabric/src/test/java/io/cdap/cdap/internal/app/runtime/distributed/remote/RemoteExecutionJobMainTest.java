@@ -48,11 +48,11 @@ public class RemoteExecutionJobMainTest {
 
       Map<String, String> properties = jobEnv.getProperties();
       ZKClientService zkClient = ZKClientService.Builder.of(properties.get(Constants.Zookeeper.QUORUM)).build();
-      zkClient.startAndWait();
+      zkClient.startAsync().awaitRunning();
       try {
         Assert.assertNotNull(zkClient.exists("/").get());
       } finally {
-        zkClient.stopAndWait();
+        zkClient.stopAsync().awaitTerminated();
       }
     } finally {
       runner.destroy();

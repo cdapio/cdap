@@ -16,15 +16,14 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -88,6 +87,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -297,10 +297,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       if (artifactsComputeHash && (artifactsComputeHashSnapshot
           || !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
         Hasher hasher = Hashing.sha256().newHasher();
-        hasher.putString(artifactDescriptor.getNamespace());
-        hasher.putString(artifactDescriptor.getArtifactId().getName());
-        hasher.putString(artifactDescriptor.getArtifactId().getScope().name());
-        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion());
+        hasher.putString(artifactDescriptor.getNamespace(), StandardCharsets.UTF_8);
+        hasher.putString(artifactDescriptor.getArtifactId().getName(), StandardCharsets.UTF_8);
+        hasher.putString(artifactDescriptor.getArtifactId().getScope().name(), StandardCharsets.UTF_8);
+        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion(), StandardCharsets.UTF_8);
         Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
         arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
@@ -446,7 +446,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       throw ioe;
     } catch (Exception e) {
       // should not happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -493,7 +493,13 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
               file.delete();
             }
           } else if (resource instanceof Closeable) {
-            Closeables.closeQuietly((Closeable) resource);
+            try {
+
+              ((Closeable) resource).close();
+
+            } catch (Exception ignored) {
+
+            }
           } else if (resource instanceof Runnable) {
             ((Runnable) resource).run();
           }
@@ -558,9 +564,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private static void hashArtifactId(Hasher hasher, ArtifactId artifactId) {
-    hasher.putString(artifactId.getParent().toString());
-    hasher.putString(artifactId.getArtifact());
-    hasher.putString(artifactId.getVersion());
+    hasher.putString(artifactId.getParent().toString(), StandardCharsets.UTF_8);
+    hasher.putString(artifactId.getArtifact(), StandardCharsets.UTF_8);
+    hasher.putString(artifactId.getVersion(), StandardCharsets.UTF_8);
   }
 
   /**
@@ -673,7 +679,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       } catch (Exception e) {
         Throwables.propagateIfPossible(e, IOException.class);
         // should not happen
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     } else {
       operation.call();

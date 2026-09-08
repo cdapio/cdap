@@ -21,9 +21,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -38,6 +35,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -69,7 +67,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -148,13 +145,10 @@ public abstract class NettyRouterTestBase {
   @Before
   public void startUp() throws Exception {
     routerService = createRouterService(HOSTNAME, discoveryService);
-    List<ListenableFuture<Service.State>> futures = new ArrayList<>();
-    futures.add(routerService.start());
+    Services.startAndWait(routerService);
     for (ServerService server : allServers) {
-      futures.add(server.start());
+      Services.startAndWait(server);
     }
-    Futures.allAsList(futures).get();
-
     // Wait for both servers of defaultService to be registered
     ServiceDiscovered discover = ((DiscoveryServiceClient) discoveryService)
         .discover(APP_FABRIC_SERVICE);
@@ -173,12 +167,10 @@ public abstract class NettyRouterTestBase {
 
   @After
   public void tearDown() throws Exception {
-    List<ListenableFuture<Service.State>> futures = new ArrayList<>();
     for (ServerService server : allServers) {
-      futures.add(server.stop());
+      Services.stopAndWait(server);
     }
-    futures.add(routerService.stop());
-    Futures.successfulAsList(futures).get();
+    Services.stopAndWait(routerService);
   }
 
   @Test
@@ -531,7 +523,7 @@ public abstract class NettyRouterTestBase {
       });
       t.start();
 
-      defaultServer1.stopAndWait();
+      Services.stopAndWait(defaultServer1);
       Assert.assertEquals(200, result.get().intValue());
       Assert.assertEquals(1, defaultServer1.getNumRequests());
       Assert.assertEquals(1, defaultServer2.getNumRequests());
@@ -561,9 +553,10 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router1.startAndWait();
+    Services.startAndWait(router1);
 
-    // Configure router with config-reloading time set to 0
+
+      // Configure router with config-reloading time set to 0
     CConfiguration cConfSpy2 = Mockito.spy(CConfiguration.create());
     cConfSpy2.setLong(Constants.Router.CCONF_RELOAD_INTERVAL_SECONDS, 0);
     cConfSpy2.setInt(Constants.Router.ROUTER_PORT, 0);
@@ -573,15 +566,17 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router2.startAndWait();
+    Services.startAndWait(router2);
 
-    // Wait sometime for cConf to reload
+
+      // Wait sometime for cConf to reload
     Thread.sleep(TimeUnit.MILLISECONDS.convert(reloadIntervalSeconds + 2, TimeUnit.SECONDS));
 
     Mockito.verify(cConfSpy1, Mockito.times(1)).reloadConfiguration();
     Mockito.verify(cConfSpy2, Mockito.never()).reloadConfiguration();
-    router1.stopAndWait();
-    router2.stopAndWait();
+    Services.stopAndWait(router1);
+    Services.stopAndWait(router2);
+
   }
 
   protected HttpURLConnection openUrl(URL url) throws Exception {

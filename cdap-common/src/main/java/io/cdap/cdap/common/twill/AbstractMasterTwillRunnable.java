@@ -37,7 +37,6 @@ import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -110,7 +109,8 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       Preconditions.checkArgument(!services.isEmpty(), "Should have at least one service");
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      Throwables.throwIfUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -137,7 +137,8 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
     } catch (InterruptedException e) {
       LOG.debug("Waiting on latch interrupted {}", name);
     } catch (ExecutionException e) {
-      throw Throwables.propagate(e.getCause());
+      Throwables.throwIfUnchecked(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -153,7 +154,22 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   private Service.Listener createServiceListener(final String name,
       final SettableFuture<String> future) {
-    return new ServiceListenerAdapter() {
+    return new Service.Listener() {
+      @Override
+      public void starting() {
+        // no-op
+      }
+
+      @Override
+      public void running() {
+        // no-op
+      }
+
+      @Override
+      public void stopping(Service.State from) {
+        // no-op
+      }
+
       @Override
       public void terminated(Service.State from) {
         LOG.info("Service " + name + " terminated");

@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.dataset2;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -152,7 +151,7 @@ public class SingleTypeModule implements DatasetModule {
         try {
           return (Dataset) ctor.newInstance(params.toArray());
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
     });

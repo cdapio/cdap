@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.common.DatasetNotFoundException;
@@ -44,7 +43,7 @@ public class DatasetExistenceVerifier implements EntityExistenceVerifier<Dataset
         throw new DatasetNotFoundException(datasetId);
       }
     } catch (DatasetManagementException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

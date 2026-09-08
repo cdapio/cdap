@@ -93,9 +93,9 @@ public class DefaultSecureStoreServiceTest {
     final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    appFabricProcessor.startAsync().awaitRunning();
     waitForService(Constants.Service.DATASET_MANAGER);
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
@@ -127,8 +127,8 @@ public class DefaultSecureStoreServiceTest {
 
   @AfterClass
   public static void cleanup() {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessor.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

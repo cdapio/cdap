@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
@@ -236,7 +235,13 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
       try {
         is = urlConn.getInputStream();
         if (this.responseCode >= 400) {
-          Closeables.closeQuietly(is);
+          try {
+
+            is.close();
+
+          } catch (Exception ignored) {
+
+          }
           is = null;
         }
       } catch (UnknownServiceException e) {
@@ -275,7 +280,13 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
 
     @Override
     public void close() {
-      Closeables.closeQuietly(input);
+      try {
+
+        input.close();
+
+      } catch (Exception ignored) {
+
+      }
       urlConn.disconnect();
     }
   }
@@ -305,13 +316,25 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
 
     @Override
     public void finished() {
-      Closeables.closeQuietly(responseInfo);
+      try {
+
+        responseInfo.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
 
     @Override
     public void handleError(@Nullable Throwable cause) {
       LOG.warn("Exception raised when handling request to {}", url, cause);
-      Closeables.closeQuietly(responseInfo);
+      try {
+
+        responseInfo.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 }

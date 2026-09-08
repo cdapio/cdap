@@ -117,7 +117,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
         FileSetProperties.getFilePermissions(spec.getProperties()));
   }
 
-  // similar to Objects.firstNonNull, but we allow both parameters to be null
+  // similar to MoreObjects.firstNonNull, but we allow both parameters to be null
   private <T> T secondIfFirstIsNull(T first, T second) {
     return first != null ? first : second;
   }

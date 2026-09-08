@@ -24,7 +24,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
@@ -32,7 +31,6 @@ import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -75,10 +73,10 @@ public final class ProgramRunners {
    */
   public static void startAsUser(String user, final Service service)
       throws IOException, InterruptedException {
-    runAsUser(user, new Callable<ListenableFuture<Service.State>>() {
+    runAsUser(user, new Callable<Service>() {
       @Override
-      public ListenableFuture<Service.State> call() throws Exception {
-        return service.start();
+      public Service call() throws Exception {
+        return service.startAsync();
       }
     });
   }

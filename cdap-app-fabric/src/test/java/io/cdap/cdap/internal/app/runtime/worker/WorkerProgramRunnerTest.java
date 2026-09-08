@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.worker;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import io.cdap.cdap.AppWithMisbehavedDataset;
@@ -96,7 +95,7 @@ public class WorkerProgramRunnerTest {
       try {
         return TEMP_FOLDER.newFolder();
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
   };
@@ -119,12 +118,12 @@ public class WorkerProgramRunnerTest {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
-    txService.startAndWait();
+    txService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAndWait();
+    txService.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 
