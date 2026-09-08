@@ -6120,7 +6120,7 @@
   </property>
 
   <property>
-    <name>feature.wrangler.config.directive.auth.check.enabled</name>
+    <name>feature.wrangler.directive.config.auth.check.enabled</name>
     <value>false</value>
     <description>
       Enables authorization enforcement on directive config actions in Wrangler.
