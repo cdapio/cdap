@@ -26,6 +26,9 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.FileFetcherHttpHandlerInternal;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.AuthorizationTestModule;
 import io.cdap.common.http.HttpContentConsumer;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -69,7 +72,10 @@ public class FileFetcherHttpHandlerInternalTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocalLocationModule());
+      new LocalLocationModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule());
 
     FileFetcherHttpHandlerInternal handler = injector.getInstance(FileFetcherHttpHandlerInternal.class);
 
