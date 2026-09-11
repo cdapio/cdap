@@ -83,6 +83,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
                          @QueryParam("sortOrder") @DefaultValue("ASC") String sortOrder,
                          @QueryParam("filter") @Nullable String filter) {
 
+    contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.LIST);
     respond(namespaceName, responder, (namespace) -> {
       if (!draftService.fieldExists(sortBy)) {
         throw new IllegalArgumentException(String.format(
@@ -103,6 +104,7 @@ public class DraftHandler extends AbstractDataPipelineHandler {
   public void getDraft(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("context") String namespaceName,
                        @PathParam("draft") String draftId) {
+    contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.GET);
     respond(namespaceName, responder, (namespace) -> {
       String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
