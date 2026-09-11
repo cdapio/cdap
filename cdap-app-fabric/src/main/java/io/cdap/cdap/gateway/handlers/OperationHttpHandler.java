@@ -38,6 +38,8 @@ import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.proto.operation.OperationType;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -65,18 +67,18 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(\"?)(\\w+)=(\\w+)(\"?)");
   private static final String FILTER_SPLITTER = "AND";
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final ContextAccessEnforcer contextAccessEnforcer;
   private static final Gson GSON = new Gson();
   public static final String OPERATIONS_LIST_PAGINATED_KEY = "operations";
 
   @Inject
   OperationHttpHandler(CConfiguration cConf, OperationLifecycleManager operationLifecycleManager,
-      OperationStatePublisher statePublisher) {
+      OperationStatePublisher statePublisher, ContextAccessEnforcer contextAccessEnforcer) {
     this.batchSize = cConf.getInt(AppFabric.STREAMING_BATCH_SIZE);
     this.operationLifecycleManager = operationLifecycleManager;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
-
-  // TODO(CDAP-20881) :  Add RBAC check
 
   /**
    * API to fetch all running operations in a namespace.
@@ -100,6 +102,7 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       throws BadRequestException, IOException, ForbiddenException {
     checkSourceControlMultiAppFeatureFlag();
     NamespaceId namespace = validateNamespaceId(namespaceId);
+    contextAccessEnforcer.enforce(namespace, StandardPermission.GET);
     JsonPaginatedListResponder.respond(
         GSON,
         responder,
@@ -144,7 +147,8 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("id") String runId)
       throws BadRequestException, OperationRunNotFoundException, IOException, ForbiddenException {
     checkSourceControlMultiAppFeatureFlag();
-    validateNamespaceId(namespaceId);
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    contextAccessEnforcer.enforce(namespace, StandardPermission.GET);
     if (runId == null || runId.isEmpty()) {
       throw new BadRequestException("runId cannot be empty");
     }
@@ -169,7 +173,8 @@ public class OperationHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("id") String runId)
       throws OperationRunNotFoundException, IOException, BadRequestException, ForbiddenException {
     checkSourceControlMultiAppFeatureFlag();
-    validateNamespaceId(namespaceId);
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    contextAccessEnforcer.enforce(namespace, StandardPermission.UPDATE);
     if (runId == null || runId.isEmpty()) {
       throw new BadRequestException("runId cannot be empty");
     }
