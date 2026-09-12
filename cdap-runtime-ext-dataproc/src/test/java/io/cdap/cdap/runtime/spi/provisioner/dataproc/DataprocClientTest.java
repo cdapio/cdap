@@ -43,7 +43,11 @@ import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
+import com.google.cloud.dataproc.v1.DiskConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
+import com.google.cloud.dataproc.v1.InstanceFlexibilityPolicy;
+import com.google.cloud.dataproc.v1.InstanceFlexibilityPolicy.InstanceSelection;
+import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Any;
@@ -377,6 +381,156 @@ public class DataprocClientTest {
     List<String> secWorkerFlexTypes = createdCluster.getConfig().getSecondaryWorkerConfig()
       .getInstanceFlexibilityPolicy().getInstanceSelectionList(0).getMachineTypesList();
     Assert.assertEquals(Arrays.asList("n2-custom-4-16384", "e2-custom-4-16384"), secWorkerFlexTypes);
+  }
+
+  @Test
+  public void testCreateClusterWithMixedGenerationFlexVmDiskTypes() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("masterCPUs", "2");
+    properties.put("masterMemoryMB", "8192");
+    properties.put("masterDiskGB", "200");
+    properties.put("workerCPUs", "4");
+    properties.put("workerMemoryMB", "16384");
+    properties.put("workerDiskGB", "500");
+    // e2 cannot use Hyperdisk and n4 cannot use Persistent Disk, so each needs its own disk type.
+    properties.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "e2, n4");
+    properties.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2, n4, n2");
+    properties.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced, pd-ssd");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata = ClusterOperationMetadata.newBuilder()
+        .setClusterName("mixed-cluster").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
+      .createCluster("mixed-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    Cluster createdCluster = clusterCaptor.getValue();
+    InstanceGroupConfig masterConfig = createdCluster.getConfig().getMasterConfig();
+    InstanceGroupConfig workerConfig = createdCluster.getConfig().getWorkerConfig();
+    InstanceGroupConfig secondaryConfig = createdCluster.getConfig().getSecondaryWorkerConfig();
+
+    // The API forbids a disk config on the instance group when the selections carry their own.
+    Assert.assertFalse(masterConfig.hasDiskConfig());
+    Assert.assertFalse(workerConfig.hasDiskConfig());
+    Assert.assertFalse(secondaryConfig.hasDiskConfig());
+
+    // Master: one selection per disk type, both at rank 0 so neither is preferred.
+    InstanceFlexibilityPolicy masterPolicy = masterConfig.getInstanceFlexibilityPolicy();
+    Assert.assertEquals(2, masterPolicy.getInstanceSelectionListCount());
+
+    InstanceSelection masterPd = masterPolicy.getInstanceSelectionList(0);
+    Assert.assertEquals(Collections.singletonList("e2-custom-2-8192"), masterPd.getMachineTypesList());
+    Assert.assertEquals(0, masterPd.getRank());
+    Assert.assertEquals("pd-ssd", diskConfigOf(masterPd).getBootDiskType());
+    Assert.assertEquals(200, diskConfigOf(masterPd).getBootDiskSizeGb());
+
+    InstanceSelection masterHd = masterPolicy.getInstanceSelectionList(1);
+    Assert.assertEquals(Collections.singletonList("n4-custom-2-8192"), masterHd.getMachineTypesList());
+    Assert.assertEquals(0, masterHd.getRank());
+    Assert.assertEquals("hyperdisk-balanced", diskConfigOf(masterHd).getBootDiskType());
+
+    // Worker: e2 and n2 share pd-ssd so they collapse into a single selection.
+    InstanceFlexibilityPolicy workerPolicy = workerConfig.getInstanceFlexibilityPolicy();
+    Assert.assertEquals(2, workerPolicy.getInstanceSelectionListCount());
+
+    InstanceSelection workerPd = workerPolicy.getInstanceSelectionList(0);
+    Assert.assertEquals(Arrays.asList("e2-custom-4-16384", "n2-custom-4-16384"),
+        workerPd.getMachineTypesList());
+    Assert.assertEquals(0, workerPd.getRank());
+    Assert.assertEquals("pd-ssd", diskConfigOf(workerPd).getBootDiskType());
+    Assert.assertEquals(500, diskConfigOf(workerPd).getBootDiskSizeGb());
+
+    InstanceSelection workerHd = workerPolicy.getInstanceSelectionList(1);
+    Assert.assertEquals(Collections.singletonList("n4-custom-4-16384"), workerHd.getMachineTypesList());
+    Assert.assertEquals("hyperdisk-balanced", diskConfigOf(workerHd).getBootDiskType());
+
+    // Secondary workers reuse the same policy as the primary workers.
+    Assert.assertEquals(workerPolicy, secondaryConfig.getInstanceFlexibilityPolicy());
+
+    // The whole request must round trip through the wire format the transport would use.
+    Assert.assertEquals(createdCluster, Cluster.parseFrom(createdCluster.toByteArray()));
+  }
+
+  @Test
+  public void testCreateClusterWithFlexVmButNoDiskTypesKeepsGroupDiskConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("workerDiskGB", "500");
+    properties.put("workerDiskType", "pd-ssd");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata = ClusterOperationMetadata.newBuilder()
+        .setClusterName("flex-cluster").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
+      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    InstanceGroupConfig workerConfig = clusterCaptor.getValue().getConfig().getWorkerConfig();
+
+    // Without per-selection disk types nothing changes: the group keeps its disk config and there
+    // is still exactly one selection with no disk config of its own.
+    Assert.assertTrue(workerConfig.hasDiskConfig());
+    Assert.assertEquals("pd-ssd", workerConfig.getDiskConfig().getBootDiskType());
+    Assert.assertEquals(500, workerConfig.getDiskConfig().getBootDiskSizeGb());
+
+    InstanceFlexibilityPolicy policy = workerConfig.getInstanceFlexibilityPolicy();
+    Assert.assertEquals(1, policy.getInstanceSelectionListCount());
+    Assert.assertTrue(policy.getInstanceSelectionList(0).getUnknownFields().asMap().isEmpty());
+  }
+
+  /**
+   * Tripwire for the workaround in {@code DataprocClient#createInstanceFlexibilityPolicy}.
+   *
+   * <p>The Dataproc v1 API accepts {@code diskConfig} inside {@code instanceSelectionList} and the
+   * canonical proto declares {@code DiskConfig disk_config = 3}, but the generated Java client has
+   * never exposed a setter for it (verified up to 4.90.0). That is why the field is written as an
+   * unknown field. When the client library catches up, this test fails and the workaround should
+   * be replaced with the real setter.
+   */
+  @Test
+  public void testGeneratedClientStillLacksDiskConfigSetter() {
+    boolean hasSetter = Arrays.stream(InstanceSelection.Builder.class.getMethods())
+        .anyMatch(m -> "setDiskConfig".equals(m.getName()));
+    Assert.assertFalse(
+        "InstanceSelection.Builder now exposes setDiskConfig. Replace the UnknownFieldSet "
+            + "workaround in DataprocClient with the generated setter.",
+        hasSetter);
+  }
+
+  /**
+   * Decodes the {@code disk_config} that {@code DataprocClient} writes as proto field 3, since the
+   * generated client has no getter for it.
+   */
+  private static DiskConfig diskConfigOf(InstanceSelection selection) throws Exception {
+    return DiskConfig.parseFrom(
+        selection.getUnknownFields().getField(3).getLengthDelimitedList().get(0));
   }
 
   @Test

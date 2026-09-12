@@ -723,6 +723,125 @@ public class DataprocProvisionerTest {
 
     Assert.assertTrue(conf.getWorkerFlexVmMachineTypes().isEmpty());
     Assert.assertTrue(conf.getMasterFlexVmMachineTypes().isEmpty());
+    Assert.assertTrue(conf.getWorkerFlexVmDiskTypes().isEmpty());
+    Assert.assertTrue(conf.getMasterFlexVmDiskTypes().isEmpty());
+  }
+
+  @Test
+  public void testFlexVmDiskTypeParsing() {
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2, n4");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n2d, n4");
+    // Mixed case and surrounding whitespace are normalized.
+    props.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, "  PD-Standard , Hyperdisk-Balanced  ");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertEquals(Arrays.asList("pd-ssd", "hyperdisk-balanced"),
+        conf.getWorkerFlexVmDiskTypes());
+    Assert.assertEquals(Arrays.asList("pd-standard", "hyperdisk-balanced"),
+        conf.getMasterFlexVmDiskTypes());
+  }
+
+  @Test
+  public void testFlexVmDiskTypeNotRestrictedToKnownList() {
+    // Disk types are format checked, not restricted, so a type we have never heard of is accepted
+    // and left for Dataproc to accept or reject. This matches workerDiskType / masterDiskType.
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "z9");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "hyperdisk-future-2");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertEquals(Collections.singletonList("hyperdisk-future-2"),
+        conf.getWorkerFlexVmDiskTypes());
+  }
+
+  @Test
+  public void testFlexVmDiskTypeCountMismatchRejected() {
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2, n4, n2");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+
+    try {
+      DataprocConf.create(props);
+      Assert.fail("Expected a disk type count mismatch to be rejected.");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains(DataprocConf.WORKER_FLEX_VM_DISK_TYPES));
+    }
+  }
+
+  @Test
+  public void testFlexVmMachineAndDiskCompatibilityIsNotEnforced() {
+    // Whether a disk type can be attached to a machine type is Dataproc's rule to enforce, and
+    // those rules move as new machine families and disk types ship. Both directions of an unusual
+    // pairing are passed through untouched: Gen4 on Persistent Disk, and an older generation on
+    // Hyperdisk.
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "e2, n4");
+    props.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, "pd-ssd, pd-ssd");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2, n4");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "hyperdisk-balanced, hyperdisk-extreme");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertEquals(Arrays.asList("pd-ssd", "pd-ssd"), conf.getMasterFlexVmDiskTypes());
+    Assert.assertEquals(Arrays.asList("hyperdisk-balanced", "hyperdisk-extreme"),
+        conf.getWorkerFlexVmDiskTypes());
+  }
+
+  @Test
+  public void testFlexVmMalformedDiskTypeRejected() {
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd_ssd!");
+
+    try {
+      DataprocConf.create(props);
+      Assert.fail("Expected a malformed disk type to be rejected.");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("pd_ssd!"));
+    }
+  }
+
+  @Test
+  public void testFlexVmDiskTypesRejectedWithoutMachineTypes() {
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd");
+
+    try {
+      DataprocConf.create(props);
+      Assert.fail("Expected disk types without machine types to be rejected.");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES));
+    }
+  }
+
+  @Test
+  public void testFlexVmUnknownSeriesIsNotRejected() {
+    // A machine series we do not know about yet only has to be well formed. Whether it exists is
+    // Dataproc's call, not ours.
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2, z9");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertEquals(Arrays.asList("pd-ssd", "hyperdisk-balanced"),
+        conf.getWorkerFlexVmDiskTypes());
+  }
+
+  private static Map<String, String> baseFlexVmProps() {
+    Map<String, String> props = new HashMap<>();
+    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put("accountKey", "key");
+    props.put("region", "region1");
+    props.put("workerCPUs", "2");
+    props.put("workerMemoryMB", "8192");
+    props.put("masterCPUs", "2");
+    props.put("masterMemoryMB", "8192");
+    return props;
   }
 
   @Test
@@ -842,6 +961,26 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(props);
     conf.getWorkerFlexVmMachineTypes().add("e2-custom-2-8192");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testMasterFlexVmDiskTypesUnmodifiableList() {
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n2, n4");
+    props.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+
+    DataprocConf conf = DataprocConf.create(props);
+    conf.getMasterFlexVmDiskTypes().add("pd-standard");
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testWorkerFlexVmDiskTypesUnmodifiableList() {
+    Map<String, String> props = baseFlexVmProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, n4");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+
+    DataprocConf conf = DataprocConf.create(props);
+    conf.getWorkerFlexVmDiskTypes().add("pd-standard");
   }
 
   @Test
