@@ -117,6 +117,20 @@ final class DataprocConf {
 
   public static final String MASTER_FLEX_VM_MACHINE_TYPES = "masterFlexVmMachineTypes";
   public static final String WORKER_FLEX_VM_MACHINE_TYPES = "workerFlexVmMachineTypes";
+  // Optional boot disk types, paired positionally with the machine types above. Needed only when a
+  // Flex VM list mixes machine generations that cannot share one boot disk type, for example
+  // "e2,n4" where n4 requires Hyperdisk. Set through runtime arguments or the REST API.
+  public static final String MASTER_FLEX_VM_DISK_TYPES = "masterFlexVmDiskTypes";
+  public static final String WORKER_FLEX_VM_DISK_TYPES = "workerFlexVmDiskTypes";
+
+  /**
+   * Format of a boot disk type, for example {@code pd-ssd} or {@code hyperdisk-balanced}. This is
+   * deliberately a format check rather than a list of known types: {@code masterDiskType} and
+   * {@code workerDiskType} accept any value and pass it straight to Dataproc, and new disk types
+   * are added over time. Dataproc remains the authority on which disk types exist and which
+   * machine types they can be attached to.
+   */
+  private static final Pattern DISK_TYPE_PATTERN = Pattern.compile("^[a-z\\d]+(-[a-z\\d]+)*$");
 
   private static final Splitter COMMA_SPLITTER =
     Splitter.on(',').trimResults().omitEmptyStrings();
@@ -139,6 +153,7 @@ final class DataprocConf {
   private final String masterDiskType;
   private final String masterMachineType;
   private final List<String> masterFlexVmMachineTypes;
+  private final List<String> masterFlexVmDiskTypes;
 
   private final int workerNumNodes;
   private final int secondaryWorkerNumNodes;
@@ -148,6 +163,7 @@ final class DataprocConf {
   private final String workerDiskType;
   private final String workerMachineType;
   private final List<String> workerFlexVmMachineTypes;
+  private final List<String> workerFlexVmDiskTypes;
 
   private final long pollCreateDelay;
   private final long pollCreateJitter;
@@ -201,10 +217,10 @@ final class DataprocConf {
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
       int masterNumNodes, int masterCpus, int masterMemoryMb,
       int masterDiskGb, String masterDiskType, @Nullable String masterMachineType,
-      List<String> masterFlexVmMachineTypes,
+      List<String> masterFlexVmMachineTypes, List<String> masterFlexVmDiskTypes,
       int workerNumNodes, int secondaryWorkerNumNodes, int workerCpus, int workerMemoryMb,
       int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
-      List<String> workerFlexVmMachineTypes,
+      List<String> workerFlexVmMachineTypes, List<String> workerFlexVmDiskTypes,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
       @Nullable String tempBucket, @Nullable String serviceAccount, boolean preferExternalIp,
@@ -245,6 +261,7 @@ final class DataprocConf {
     this.masterDiskType = masterDiskType;
     this.masterMachineType = masterMachineType;
     this.masterFlexVmMachineTypes = masterFlexVmMachineTypes;
+    this.masterFlexVmDiskTypes = masterFlexVmDiskTypes;
     this.workerNumNodes = workerNumNodes;
     this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
     this.workerCpus = workerCpus;
@@ -253,6 +270,7 @@ final class DataprocConf {
     this.workerDiskType = workerDiskType;
     this.workerMachineType = workerMachineType;
     this.workerFlexVmMachineTypes = workerFlexVmMachineTypes;
+    this.workerFlexVmDiskTypes = workerFlexVmDiskTypes;
     this.pollCreateDelay = pollCreateDelay;
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
@@ -361,6 +379,24 @@ final class DataprocConf {
 
   public List<String> getWorkerFlexVmMachineTypes() {
     return formatMachineType(workerFlexVmMachineTypes, workerCpus, workerMemoryMb);
+  }
+
+  /**
+   * Returns the boot disk types that pair positionally with {@link #getMasterFlexVmMachineTypes()}.
+   * An empty list means no per-selection disk types were configured, in which case the cluster
+   * level {@link #getMasterDiskType()} applies to every machine type.
+   */
+  public List<String> getMasterFlexVmDiskTypes() {
+    return masterFlexVmDiskTypes;
+  }
+
+  /**
+   * Returns the boot disk types that pair positionally with {@link #getWorkerFlexVmMachineTypes()}.
+   * An empty list means no per-selection disk types were configured, in which case the cluster
+   * level {@link #getWorkerDiskType()} applies to every machine type.
+   */
+  public List<String> getWorkerFlexVmDiskTypes() {
+    return workerFlexVmDiskTypes;
   }
 
   int getTotalWorkerCpus() {
@@ -692,6 +728,7 @@ final class DataprocConf {
       masterDiskType = "pd-standard";
     }
     final List<String> masterFlexVmMachineTypes = getStringList(properties, MASTER_FLEX_VM_MACHINE_TYPES);
+    final List<String> masterFlexVmDiskTypes = getDiskTypeList(properties, MASTER_FLEX_VM_DISK_TYPES);
     final int workerDiskGb = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
     final String workerMachineType = getString(properties, "workerMachineType");
@@ -699,6 +736,14 @@ final class DataprocConf {
       workerDiskType = "pd-standard";
     }
     final List<String> workerFlexVmMachineTypes = getStringList(properties, WORKER_FLEX_VM_MACHINE_TYPES);
+    final List<String> workerFlexVmDiskTypes = getDiskTypeList(properties, WORKER_FLEX_VM_DISK_TYPES);
+
+    // Validate against the configured series rather than the expanded machine type names, since
+    // the expansion drops the series prefix for n1 (it becomes "custom-<cpus>-<memory>").
+    validateFlexVmDiskTypes(masterFlexVmMachineTypes, MASTER_FLEX_VM_MACHINE_TYPES,
+        masterFlexVmDiskTypes, MASTER_FLEX_VM_DISK_TYPES);
+    validateFlexVmDiskTypes(workerFlexVmMachineTypes, WORKER_FLEX_VM_MACHINE_TYPES,
+        workerFlexVmDiskTypes, WORKER_FLEX_VM_DISK_TYPES);
 
     final long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
     final long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
@@ -807,9 +852,9 @@ final class DataprocConf {
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectId, network,
         subnet,
         masterNumNodes, masterCpus, masterMemoryMb, masterDiskGb,
-        masterDiskType, masterMachineType, masterFlexVmMachineTypes,
+        masterDiskType, masterMachineType, masterFlexVmMachineTypes, masterFlexVmDiskTypes,
         workerNumNodes, secondaryWorkerNumNodes, workerCpus, workerMemoryMb, workerDiskGb,
-        workerDiskType, workerMachineType, workerFlexVmMachineTypes,
+        workerDiskType, workerMachineType, workerFlexVmMachineTypes, workerFlexVmDiskTypes,
         pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
         gcpCmekKeyName, gcpCmekBucket, tempBucket, serviceAccount, preferExternalIp,
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
@@ -888,5 +933,71 @@ final class DataprocConf {
     return Strings.isNullOrEmpty(val)
       ? Collections.emptyList()
       : COMMA_SPLITTER.splitToList(val);
+  }
+
+  /**
+   * Reads a comma-separated list of boot disk types, lower-casing each entry.
+   *
+   * <p>Only the format is checked, not the value. Dataproc is the authority on which disk types
+   * exist, and this matches how {@code masterDiskType} and {@code workerDiskType} already behave.
+   *
+   * @param properties the raw provisioner properties
+   * @param key the property holding the comma-separated disk types
+   * @return an unmodifiable list of disk type names, empty if the property is not set
+   * @throws IllegalArgumentException if any entry is not a well-formed disk type name
+   */
+  private static List<String> getDiskTypeList(Map<String, String> properties, String key) {
+    List<String> rawValues = getStringList(properties, key);
+    if (rawValues.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<String> diskTypes = new ArrayList<>(rawValues.size());
+    for (String rawValue : rawValues) {
+      String diskType = rawValue.trim().toLowerCase();
+      if (!DISK_TYPE_PATTERN.matcher(diskType).matches()) {
+        throw new IllegalArgumentException(String.format(
+            "Invalid config '%s'. '%s' is not a valid boot disk type. Disk types should follow "
+                + "standard GCP format, for example 'pd-ssd' or 'hyperdisk-balanced'.",
+            key, rawValue));
+      }
+      diskTypes.add(diskType);
+    }
+    return Collections.unmodifiableList(diskTypes);
+  }
+
+  /**
+   * Validates that the Flex VM boot disk types line up one to one with the machine types.
+   *
+   * <p>Only the pairing is checked. Whether a given disk type can actually be attached to a given
+   * machine type is Dataproc's rule to enforce, and those rules change as new machine families and
+   * disk types are released, so encoding them here would eventually reject valid configurations.
+   *
+   * <p>Does nothing when {@code diskTypes} is empty, which is the case for every existing
+   * configuration: the cluster level disk type then applies to all machine types, exactly as
+   * before.
+   *
+   * @param machineTypes the configured Flex VM machine types or series
+   * @param machineTypesKey the machine type property name, used for error messages
+   * @param diskTypes the disk types, positionally paired with {@code machineTypes}
+   * @param diskTypesKey the disk type property name, used for error messages
+   * @throws IllegalArgumentException if the counts differ, or disk types are set without machine
+   *     types
+   */
+  private static void validateFlexVmDiskTypes(List<String> machineTypes, String machineTypesKey,
+      List<String> diskTypes, String diskTypesKey) {
+    if (diskTypes.isEmpty()) {
+      return;
+    }
+    if (machineTypes.isEmpty()) {
+      throw new IllegalArgumentException(String.format(
+          "Invalid config '%s'. Boot disk types can only be set when '%s' is also set.",
+          diskTypesKey, machineTypesKey));
+    }
+    if (machineTypes.size() != diskTypes.size()) {
+      throw new IllegalArgumentException(String.format(
+          "Invalid config '%s'. It must list exactly one boot disk type per machine type in '%s', "
+              + "in the same order. Found %d machine type(s) but %d disk type(s).",
+          diskTypesKey, machineTypesKey, machineTypes.size(), diskTypes.size()));
+    }
   }
 }

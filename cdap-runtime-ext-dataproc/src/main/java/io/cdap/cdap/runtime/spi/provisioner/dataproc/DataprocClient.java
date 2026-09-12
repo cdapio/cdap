@@ -55,6 +55,7 @@ import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Empty;
 import com.google.protobuf.FieldMask;
+import com.google.protobuf.UnknownFieldSet;
 import com.google.rpc.Status;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
@@ -76,6 +77,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -103,6 +105,9 @@ abstract class DataprocClient implements AutoCloseable {
   private static final int PARTITION_NUM_FACTOR = 32;
   private static final int MIN_INITIAL_PARTITIONS_DEFAULT = 128;
   private static final int MAX_INITIAL_PARTITIONS_DEFAULT = 8192;
+  // Field number of InstanceSelection.disk_config in the Dataproc v1 proto. The API supports this
+  // field but the generated Java client has no setter for it, so it is written as an unknown field.
+  private static final int INSTANCE_SELECTION_DISK_CONFIG_FIELD_NUMBER = 3;
   private static final Set<String> ERROR_INFO_REASONS = ImmutableSet.of(
       "rateLimitExceeded",
       "resourceQuotaExceeded");
@@ -229,6 +234,9 @@ abstract class DataprocClient implements AutoCloseable {
       clusterProperties.put("dataproc:dataproc.monitoring.stackdriver.enable",
           Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
+      // The Dataproc API rejects a request that sets a disk config on the instance group at the
+      // same time as on the instance selections, so only one of the two is populated.
+      boolean workerHasPerSelectionDisks = !conf.getWorkerFlexVmDiskTypes().isEmpty();
       DiskConfig workerDiskConfig = DiskConfig.newBuilder()
           .setBootDiskSizeGb(conf.getWorkerDiskGb())
           .setBootDiskType(conf.getWorkerDiskType())
@@ -236,32 +244,39 @@ abstract class DataprocClient implements AutoCloseable {
           .build();
       InstanceGroupConfig.Builder primaryWorkerConfig = InstanceGroupConfig.newBuilder()
           .setNumInstances(conf.getWorkerNumNodes())
-          .setMachineTypeUri(conf.getWorkerMachineType())
-          .setDiskConfig(workerDiskConfig);
+          .setMachineTypeUri(conf.getWorkerMachineType());
       InstanceGroupConfig.Builder secondaryWorkerConfig = InstanceGroupConfig.newBuilder()
           .setNumInstances(conf.getSecondaryWorkerNumNodes())
           .setMachineTypeUri(conf.getWorkerMachineType())
-          .setPreemptibility(InstanceGroupConfig.Preemptibility.NON_PREEMPTIBLE)
-          .setDiskConfig(workerDiskConfig);
+          .setPreemptibility(InstanceGroupConfig.Preemptibility.NON_PREEMPTIBLE);
+      if (!workerHasPerSelectionDisks) {
+        primaryWorkerConfig.setDiskConfig(workerDiskConfig);
+        secondaryWorkerConfig.setDiskConfig(workerDiskConfig);
+      }
 
       if (!conf.getWorkerFlexVmMachineTypes().isEmpty()) {
         InstanceFlexibilityPolicy workerFlexPolicy =
-          createInstanceFlexibilityPolicy(conf.getWorkerFlexVmMachineTypes());
+          createInstanceFlexibilityPolicy(conf.getWorkerFlexVmMachineTypes(),
+            conf.getWorkerFlexVmDiskTypes(), conf.getWorkerDiskGb());
         primaryWorkerConfig.setInstanceFlexibilityPolicy(workerFlexPolicy);
         secondaryWorkerConfig.setInstanceFlexibilityPolicy(workerFlexPolicy);
       }
 
+      boolean masterHasPerSelectionDisks = !conf.getMasterFlexVmDiskTypes().isEmpty();
       InstanceGroupConfig.Builder masterConfig = InstanceGroupConfig.newBuilder()
           .setNumInstances(conf.getMasterNumNodes())
-          .setMachineTypeUri(conf.getMasterMachineType())
-          .setDiskConfig(DiskConfig.newBuilder()
-                         .setBootDiskType(conf.getMasterDiskType())
-                         .setBootDiskSizeGb(conf.getMasterDiskGb())
-                         .setNumLocalSsds(0)
-                         .build());
+          .setMachineTypeUri(conf.getMasterMachineType());
+      if (!masterHasPerSelectionDisks) {
+        masterConfig.setDiskConfig(DiskConfig.newBuilder()
+                       .setBootDiskType(conf.getMasterDiskType())
+                       .setBootDiskSizeGb(conf.getMasterDiskGb())
+                       .setNumLocalSsds(0)
+                       .build());
+      }
       if (!conf.getMasterFlexVmMachineTypes().isEmpty()) {
         InstanceFlexibilityPolicy masterFlexPolicy =
-          createInstanceFlexibilityPolicy(conf.getMasterFlexVmMachineTypes());
+          createInstanceFlexibilityPolicy(conf.getMasterFlexVmMachineTypes(),
+            conf.getMasterFlexVmDiskTypes(), conf.getMasterDiskGb());
         masterConfig.setInstanceFlexibilityPolicy(masterFlexPolicy);
       }
 
@@ -376,11 +391,78 @@ abstract class DataprocClient implements AutoCloseable {
     }
   }
 
-  private InstanceFlexibilityPolicy createInstanceFlexibilityPolicy(List<String> machineTypes) {
-    return InstanceFlexibilityPolicy.newBuilder()
-      .addInstanceSelectionList(
-        InstanceSelection.newBuilder().addAllMachineTypes(machineTypes).build())
-      .build();
+  /**
+   * Builds the Flex VM instance flexibility policy.
+   *
+   * <p>When no per-selection boot disk types are configured, a single instance selection carries
+   * every machine type and the disk config set on the enclosing instance group applies to all of
+   * them. This is the long standing behaviour.
+   *
+   * <p>When per-selection boot disk types are configured, machine types are grouped by their disk
+   * type and each group gets its own {@link DiskConfig}. This is what makes a mixed generation
+   * list such as {@code e2,n4} possible, since generation 4 machines only support Hyperdisk while
+   * earlier generations only support Persistent Disk. Every selection is emitted at rank 0 so that
+   * Dataproc treats all machine types as equally preferred.
+   *
+   * <p>The Dataproc API exposes {@code InstanceSelection.disk_config} as field 3, but the
+   * generated Java client does not provide a setter for it at any released version. It is
+   * therefore written directly as an unknown field, which serializes identically to a natively
+   * supported field.
+   *
+   * @param machineTypes the fully qualified Flex VM machine types
+   * @param diskTypes boot disk types paired positionally with {@code machineTypes}, may be empty
+   * @param bootDiskSizeGb the boot disk size to apply to each selection
+   */
+  private InstanceFlexibilityPolicy createInstanceFlexibilityPolicy(List<String> machineTypes,
+      List<String> diskTypes, int bootDiskSizeGb) {
+    if (diskTypes.isEmpty()) {
+      return InstanceFlexibilityPolicy.newBuilder()
+        .addInstanceSelectionList(
+          InstanceSelection.newBuilder().addAllMachineTypes(machineTypes).build())
+        .build();
+    }
+
+    InstanceFlexibilityPolicy.Builder policy = InstanceFlexibilityPolicy.newBuilder();
+    for (Map.Entry<String, List<String>> group
+        : groupByDiskType(machineTypes, diskTypes).entrySet()) {
+      DiskConfig diskConfig = DiskConfig.newBuilder()
+          .setBootDiskType(group.getKey())
+          .setBootDiskSizeGb(bootDiskSizeGb)
+          .setNumLocalSsds(0)
+          .build();
+      UnknownFieldSet diskConfigField = UnknownFieldSet.newBuilder()
+          .addField(INSTANCE_SELECTION_DISK_CONFIG_FIELD_NUMBER,
+              UnknownFieldSet.Field.newBuilder()
+                  .addLengthDelimited(diskConfig.toByteString())
+                  .build())
+          .build();
+      policy.addInstanceSelectionList(InstanceSelection.newBuilder()
+          .addAllMachineTypes(group.getValue())
+          .setRank(0)
+          .setUnknownFields(diskConfigField)
+          .build());
+    }
+    return policy.build();
+  }
+
+  /**
+   * Groups machine types by the disk type they were paired with, preserving the configured order of
+   * both the groups and the machine types inside each group.
+   *
+   * <p>Machine types that share a disk type are collapsed into a single group so that the cluster
+   * is created with the fewest possible instance selections.
+   *
+   * @param machineTypes the fully qualified Flex VM machine types
+   * @param diskTypes the disk types, positionally paired with {@code machineTypes}
+   * @return a map of disk type to the machine types using it
+   */
+  private static Map<String, List<String>> groupByDiskType(List<String> machineTypes,
+      List<String> diskTypes) {
+    Map<String, List<String>> grouped = new LinkedHashMap<>();
+    for (int i = 0; i < machineTypes.size(); i++) {
+      grouped.computeIfAbsent(diskTypes.get(i), k -> new ArrayList<>()).add(machineTypes.get(i));
+    }
+    return grouped;
   }
 
   protected void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
