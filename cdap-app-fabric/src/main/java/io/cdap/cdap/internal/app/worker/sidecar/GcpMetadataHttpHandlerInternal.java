@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.utils.SidecarAuthToken;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.namespace.credential.RemoteNamespaceCredentialProvider;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -230,12 +231,27 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @PUT
   @Path("/set-context")
   public void setContext(FullHttpRequest request, HttpResponder responder)
-      throws BadRequestException {
+      throws BadRequestException, ForbiddenException {
+    requireSidecarAuthToken(request);
     this.gcpMetadataTaskContext = getGcpMetadataTaskContext(request);
     this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
     responder.sendJson(HttpResponseStatus.OK,
         String.format("Context was set successfully with namespace '%s'.",
             gcpMetadataTaskContext.getNamespace()));
+  }
+
+  /**
+   * Rejects context-management calls that are missing the process-local
+   * shared token installed by the sidecar service at startup. The token is
+   * generated once per JVM and only the framework components that install it
+   * can produce matching requests.
+   */
+  private void requireSidecarAuthToken(HttpRequest request) throws ForbiddenException {
+    String supplied = request.headers().get(SidecarAuthToken.HEADER);
+    if (!SidecarAuthToken.matches(supplied)) {
+      throw new ForbiddenException(
+          "Request is missing a valid task worker sidecar auth token.");
+    }
   }
 
   /**
@@ -246,7 +262,9 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
    */
   @DELETE
   @Path("/clear-context")
-  public void clearContext(HttpRequest request, HttpResponder responder) {
+  public void clearContext(HttpRequest request, HttpResponder responder)
+      throws ForbiddenException {
+    requireSidecarAuthToken(request);
     this.gcpMetadataTaskContext = null;
     this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
     this.credentialLoadingCache.invalidateAll();
