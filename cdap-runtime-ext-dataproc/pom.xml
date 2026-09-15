@@ -31,7 +31,7 @@
 
   <properties>
     <google.api.client.version>1.34.0</google.api.client.version>
-    <google.cloud.libraries.bom.version>26.34.0</google.cloud.libraries.bom.version>
+    <google.cloud.libraries.bom.version>26.88.1</google.cloud.libraries.bom.version>
   </properties>
 
 
@@ -76,6 +76,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>4.13.2</version>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
@@ -136,6 +137,23 @@
       <artifactId>powermock-api-mockito</artifactId>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Annotation only jar. Its @NullMarked targets ElementType.MODULE, which does not
+               exist on Java 8, so the mocking frameworks fail to reflect over the annotated
+               Google client classes. -->
+          <classpathDependencyExcludes>
+            <classpathDependencyExclude>org.jspecify:jspecify</classpathDependencyExclude>
+          </classpathDependencyExcludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencyManagement>
     <dependencies>
