@@ -174,7 +174,7 @@
           "widget-type": "multi-select",
           "label": "Master Flexible Machine Types",
           "name": "masterFlexVmMachineTypes",
-          "description": "Optional comma-separated list of fallback machine types in priority order if the primary master machine type is unavailable (e.g. n1, n2, n2d, e2).",
+          "description": "Optional comma-separated list of alternate machine types Dataproc can use if the primary master machine type is unavailable (e.g. n1, n2, n2d, e2). All listed types are given equal preference.",
           "widget-attributes": {
             "options": [
               "n1",
@@ -272,7 +272,7 @@
           "widget-type": "multi-select",
           "label": "Worker Flexible Machine Types",
           "name": "workerFlexVmMachineTypes",
-          "description": "Optional comma-separated list of fallback machine types in priority order if the primary worker machine type is unavailable (e.g. n1, n2, n2d, e2).",
+          "description": "Optional comma-separated list of alternate machine types Dataproc can use if the primary worker machine type is unavailable (e.g. n1, n2, n2d, e2). All listed types are given equal preference.",
           "widget-attributes": {
             "options": [
               "n1",
