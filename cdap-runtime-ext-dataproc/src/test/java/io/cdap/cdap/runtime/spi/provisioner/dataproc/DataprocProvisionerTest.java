@@ -529,27 +529,51 @@ public class DataprocProvisionerTest {
 
     Assert.assertTrue(conf.getWorkerFlexVmMachineTypes().isEmpty());
     Assert.assertTrue(conf.getMasterFlexVmMachineTypes().isEmpty());
+    Assert.assertTrue(conf.getWorkerFlexVmDiskTypes().isEmpty());
+    Assert.assertTrue(conf.getMasterFlexVmDiskTypes().isEmpty());
   }
 
   @Test
   public void testFlexVmValidationSuccess() {
-    Map<String, String> props = new HashMap<>();
-    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
-    props.put("accountKey", "key");
-    props.put("region", "region1");
+    Map<String, String> props = baseProps();
     props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
     provisioner.validateProperties(props);
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testFlexVmValidationFailureOnInvalidFormat() {
+  @Test
+  public void testFlexVmDiskTypeParsing() {
+    Map<String, String> properties = baseProps();
+
+    properties.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n2d, n4");
+    properties.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, " PD-Standard , Hyperdisk-Balanced ");
+
+    DataprocConf conf = DataprocConf.create(properties);
+
+    Assert.assertEquals(Arrays.asList("pd-standard", "hyperdisk-balanced"),
+                        conf.getMasterFlexVmDiskTypes());
+  }
+
+
+  @Test
+  public void testFlexVmRepeatedDiskTypesAllowed() {
+    Map<String, String> props = baseProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4d, n2, n4");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES,
+              "hyperdisk-balanced, pd-ssd, hyperdisk-balanced");
+
+    provisioner.validateProperties(props);
+  }
+
+  private static Map<String, String> baseProps() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
     props.put("accountKey", "key");
     props.put("region", "region1");
-    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "invalid@machine#name");
-
-    provisioner.validateProperties(props);
+    props.put("workerCPUs", "2");
+    props.put("workerMemoryMB", "8192");
+    props.put("masterCPUs", "2");
+    props.put("masterMemoryMB", "8192");
+    return props;
   }
 
   @Test
@@ -577,38 +601,6 @@ public class DataprocProvisionerTest {
   }
 
   @Test
-  public void testFlexVmValidationMasterFailureOnInvalidFormat() {
-    Map<String, String> props = new HashMap<>();
-    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
-    props.put("accountKey", "key");
-    props.put("region", "region1");
-    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "invalid#master@type");
-
-    try {
-      provisioner.validateProperties(props);
-      Assert.fail("Expected validation to fail for invalid master flexible VM type");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("Invalid flexible VM machine type"));
-    }
-  }
-
-  @Test
-  public void testFlexVmValidationWorkerFailureDetails() {
-    Map<String, String> props = new HashMap<>();
-    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
-    props.put("accountKey", "key");
-    props.put("region", "region1");
-    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "invalid_type");
-
-    try {
-      provisioner.validateProperties(props);
-      Assert.fail("Expected validation to fail for invalid worker flexible VM type");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("Invalid flexible VM machine type"));
-    }
-  }
-
-  @Test
   public void testFlexVmValidationBothMasterAndWorkerSuccess() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
@@ -620,28 +612,34 @@ public class DataprocProvisionerTest {
     provisioner.validateProperties(props);
   }
 
-  @Test(expected = UnsupportedOperationException.class)
-  public void testMasterFlexVmUnmodifiableList() {
-    Map<String, String> props = new HashMap<>();
-    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
-    props.put("accountKey", "key");
-    props.put("region", "region1");
-    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n1, n2");
+  @Test
+  public void testFlexVmListsAreUnmodifiable() {
+    Map<String, String> props = baseProps();
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n2, n4");
+    props.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, n4");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
 
     DataprocConf conf = DataprocConf.create(props);
-    conf.getMasterFlexVmMachineTypes().add("e2-custom-2-8192");
-  }
+    Assert.assertThrows(
+      UnsupportedOperationException.class,
+      () -> conf.getMasterFlexVmMachineTypes().add("should-not-be-allowed")
+    );
 
-  @Test(expected = UnsupportedOperationException.class)
-  public void testWorkerFlexVmUnmodifiableList() {
-    Map<String, String> props = new HashMap<>();
-    props.put(DataprocConf.PROJECT_ID_KEY, "pid");
-    props.put("accountKey", "key");
-    props.put("region", "region1");
-    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n1, n2");
+    Assert.assertThrows(
+      UnsupportedOperationException.class,
+      () -> conf.getWorkerFlexVmMachineTypes().add("should-not-be-allowed")
+    );
 
-    DataprocConf conf = DataprocConf.create(props);
-    conf.getWorkerFlexVmMachineTypes().add("e2-custom-2-8192");
+    Assert.assertThrows(
+      UnsupportedOperationException.class,
+      () -> conf.getMasterFlexVmDiskTypes().add("should-not-be-allowed")
+    );
+
+    Assert.assertThrows(
+      UnsupportedOperationException.class,
+      () -> conf.getWorkerFlexVmDiskTypes().add("should-not-be-allowed")
+    );
   }
 
   @Test

@@ -117,6 +117,8 @@ final class DataprocConf {
 
   public static final String MASTER_FLEX_VM_MACHINE_TYPES = "masterFlexVmMachineTypes";
   public static final String WORKER_FLEX_VM_MACHINE_TYPES = "workerFlexVmMachineTypes";
+  public static final String MASTER_FLEX_VM_DISK_TYPES = "masterFlexVmDiskTypes";
+  public static final String WORKER_FLEX_VM_DISK_TYPES = "workerFlexVmDiskTypes";
 
   private static final Splitter COMMA_SPLITTER =
     Splitter.on(',').trimResults().omitEmptyStrings();
@@ -139,6 +141,8 @@ final class DataprocConf {
   private final String masterDiskType;
   private final String masterMachineType;
   private final List<String> masterFlexVmMachineTypes;
+  private final List<String> masterFlexVmDiskTypes;
+
   private final int workerNumNodes;
   private final int secondaryWorkerNumNodes;
   private final int workerCpus;
@@ -147,6 +151,7 @@ final class DataprocConf {
   private final String workerDiskType;
   private final String workerMachineType;
   private final List<String> workerFlexVmMachineTypes;
+  private final List<String> workerFlexVmDiskTypes;
 
   private final long pollCreateDelay;
   private final long pollCreateJitter;
@@ -205,10 +210,10 @@ final class DataprocConf {
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
       int masterNumNodes, int masterCpus, int masterMemoryMb,
       int masterDiskGb, String masterDiskType, @Nullable String masterMachineType,
-      List<String> masterFlexVmMachineTypes,
+      List<String> masterFlexVmMachineTypes, List<String> masterFlexVmDiskTypes,
       int workerNumNodes, int secondaryWorkerNumNodes, int workerCpus, int workerMemoryMb,
       int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
-      List<String> workerFlexVmMachineTypes,
+      List<String> workerFlexVmMachineTypes, List<String> workerFlexVmDiskTypes,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
       @Nullable String tempBucket, @Nullable String serviceAccount, boolean preferExternalIp,
@@ -250,6 +255,7 @@ final class DataprocConf {
     this.masterDiskType = masterDiskType;
     this.masterMachineType = masterMachineType;
     this.masterFlexVmMachineTypes = masterFlexVmMachineTypes;
+    this.masterFlexVmDiskTypes = masterFlexVmDiskTypes;
     this.workerNumNodes = workerNumNodes;
     this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
     this.workerCpus = workerCpus;
@@ -258,6 +264,7 @@ final class DataprocConf {
     this.workerDiskType = workerDiskType;
     this.workerMachineType = workerMachineType;
     this.workerFlexVmMachineTypes = workerFlexVmMachineTypes;
+    this.workerFlexVmDiskTypes = workerFlexVmDiskTypes;
     this.pollCreateDelay = pollCreateDelay;
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
@@ -339,6 +346,14 @@ final class DataprocConf {
 
   public List<String> getWorkerFlexVmMachineTypes() {
     return formatMachineType(workerFlexVmMachineTypes, workerCpus, workerMemoryMb);
+  }
+
+  public List<String> getMasterFlexVmDiskTypes() {
+    return masterFlexVmDiskTypes;
+  }
+
+  public List<String> getWorkerFlexVmDiskTypes() {
+    return workerFlexVmDiskTypes;
   }
 
   int getTotalMasterCpus() {
@@ -697,6 +712,7 @@ final class DataprocConf {
       masterDiskType = "pd-standard";
     }
     final List<String> masterFlexVmMachineTypes = getStringList(properties, MASTER_FLEX_VM_MACHINE_TYPES);
+    final List<String> masterFlexVmDiskTypes = getDiskTypeList(properties, MASTER_FLEX_VM_DISK_TYPES);
     final int workerDiskGb = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
     final String workerMachineType = getString(properties, "workerMachineType");
@@ -704,6 +720,7 @@ final class DataprocConf {
       workerDiskType = "pd-standard";
     }
     final List<String> workerFlexVmMachineTypes = getStringList(properties, WORKER_FLEX_VM_MACHINE_TYPES);
+    final List<String> workerFlexVmDiskTypes = getDiskTypeList(properties, WORKER_FLEX_VM_DISK_TYPES);
 
     final long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
     final long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
@@ -815,9 +832,9 @@ final class DataprocConf {
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectId, network,
         subnet,
         masterNumNodes, masterCpus, masterMemoryMb, masterDiskGb,
-        masterDiskType, masterMachineType, masterFlexVmMachineTypes,
+        masterDiskType, masterMachineType, masterFlexVmMachineTypes, masterFlexVmDiskTypes,
         workerNumNodes, secondaryWorkerNumNodes, workerCpus, workerMemoryMb, workerDiskGb,
-        workerDiskType, workerMachineType, workerFlexVmMachineTypes,
+        workerDiskType, workerMachineType, workerFlexVmMachineTypes, workerFlexVmDiskTypes,
         pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
         gcpCmekKeyName, gcpCmekBucket, tempBucket, serviceAccount, preferExternalIp,
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
@@ -896,5 +913,15 @@ final class DataprocConf {
     return Strings.isNullOrEmpty(val)
       ? Collections.emptyList()
       : COMMA_SPLITTER.splitToList(val);
+  }
+
+  /**
+   * Parses a comma-separated list of boot disk types, normalized to lower case.
+   */
+  private static List<String> getDiskTypeList(Map<String, String> properties, String key) {
+    List<String> diskTypes = getStringList(properties, key).stream()
+      .map(String::toLowerCase)
+      .collect(Collectors.toList());
+    return Collections.unmodifiableList(diskTypes);
   }
 }
