@@ -44,6 +44,9 @@ import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.DeleteClusterRequest;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
+import com.google.cloud.dataproc.v1.InstanceFlexibilityPolicy;
+import com.google.cloud.dataproc.v1.InstanceFlexibilityPolicy.InstanceSelection;
+import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.Any;
@@ -220,7 +223,8 @@ public class DataprocClientTest {
 
   @Test
   public void testCreateClusterThrowsDataprocRetryableException() throws Exception {
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = Mockito.mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     Mockito.when(clusterControllerClientMock.createClusterAsync(Matchers.eq(dataprocConf.getProjectId()),
                                                                 Matchers.eq(dataprocConf.getRegion()),
                                                                 Mockito.any(Cluster.class)))
@@ -244,7 +248,8 @@ public class DataprocClientTest {
 
   @Test
   public void testCreateClusterThrowsDataprocRuntimeException() throws Exception {
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = Mockito.mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     Mockito.when(clusterControllerClientMock.createClusterAsync(Matchers.eq(dataprocConf.getProjectId()),
                                                                 Matchers.eq(dataprocConf.getRegion()),
                                                                 Mockito.any(Cluster.class)))
@@ -284,7 +289,8 @@ public class DataprocClientTest {
     properties.put("troubleshootingDocsURL", "https://abc.com/troubleshooting");
     DataprocConf conf = DataprocConf.create(properties);
 
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = Mockito.mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     Mockito.when(clusterControllerClientMock.createClusterAsync(Matchers.eq(conf.getProjectId()),
                                                                 Matchers.eq(conf.getRegion()),
                                                                 Mockito.any(Cluster.class)))
@@ -340,7 +346,8 @@ public class DataprocClientTest {
     properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
     DataprocConf conf = DataprocConf.create(properties);
 
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
     when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
                                                         eq(conf.getRegion()),
@@ -380,6 +387,128 @@ public class DataprocClientTest {
   }
 
   @Test
+  public void testCreateClusterWithMixedGenerationFlexVmDiskTypes() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("masterCPUs", "2");
+    properties.put("masterMemoryMB", "8192");
+    properties.put("masterDiskGB", "200");
+    properties.put("workerCPUs", "4");
+    properties.put("workerMemoryMB", "16384");
+    properties.put("workerDiskGB", "500");
+    // e2 cannot use Hyperdisk and n4 cannot use Persistent Disk, so each needs its own disk type.
+    properties.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "e2, n4");
+    properties.put(DataprocConf.MASTER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "e2, n4, n2");
+    properties.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "pd-ssd, hyperdisk-balanced, pd-ssd");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata = ClusterOperationMetadata.newBuilder()
+        .setClusterName("mixed-cluster").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
+      .createCluster("mixed-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    Cluster createdCluster = clusterCaptor.getValue();
+    InstanceGroupConfig masterConfig = createdCluster.getConfig().getMasterConfig();
+    InstanceGroupConfig workerConfig = createdCluster.getConfig().getWorkerConfig();
+    InstanceGroupConfig secondaryConfig = createdCluster.getConfig().getSecondaryWorkerConfig();
+
+    // The API forbids a disk config on the instance group when the selections carry their own.
+    Assert.assertFalse(masterConfig.hasDiskConfig());
+    Assert.assertFalse(workerConfig.hasDiskConfig());
+    Assert.assertFalse(secondaryConfig.hasDiskConfig());
+
+    // Master: one selection per disk type, both at rank 0 so neither is preferred.
+    InstanceFlexibilityPolicy masterPolicy = masterConfig.getInstanceFlexibilityPolicy();
+    Assert.assertEquals(2, masterPolicy.getInstanceSelectionListCount());
+
+    InstanceSelection masterPd = masterPolicy.getInstanceSelectionList(0);
+    Assert.assertEquals(Collections.singletonList("e2-custom-2-8192"), masterPd.getMachineTypesList());
+    Assert.assertEquals(0, masterPd.getRank());
+    Assert.assertEquals("pd-ssd", masterPd.getDiskConfig().getBootDiskType());
+    Assert.assertEquals(200, masterPd.getDiskConfig().getBootDiskSizeGb());
+
+    InstanceSelection masterHd = masterPolicy.getInstanceSelectionList(1);
+    Assert.assertEquals(Collections.singletonList("n4-custom-2-8192"), masterHd.getMachineTypesList());
+    Assert.assertEquals(0, masterHd.getRank());
+    Assert.assertEquals("hyperdisk-balanced", masterHd.getDiskConfig().getBootDiskType());
+
+    // Worker: e2 and n2 share pd-ssd so they collapse into a single selection.
+    InstanceFlexibilityPolicy workerPolicy = workerConfig.getInstanceFlexibilityPolicy();
+    Assert.assertEquals(2, workerPolicy.getInstanceSelectionListCount());
+
+    InstanceSelection workerPd = workerPolicy.getInstanceSelectionList(0);
+    Assert.assertEquals(Arrays.asList("e2-custom-4-16384", "n2-custom-4-16384"),
+        workerPd.getMachineTypesList());
+    Assert.assertEquals(0, workerPd.getRank());
+    Assert.assertEquals("pd-ssd", workerPd.getDiskConfig().getBootDiskType());
+    Assert.assertEquals(500, workerPd.getDiskConfig().getBootDiskSizeGb());
+
+    InstanceSelection workerHd = workerPolicy.getInstanceSelectionList(1);
+    Assert.assertEquals(Collections.singletonList("n4-custom-4-16384"), workerHd.getMachineTypesList());
+    Assert.assertEquals("hyperdisk-balanced", workerHd.getDiskConfig().getBootDiskType());
+
+    // Secondary workers reuse the same policy as the primary workers.
+    Assert.assertEquals(workerPolicy, secondaryConfig.getInstanceFlexibilityPolicy());
+
+    // Serializing and re-parsing keeps the disk configs, so they survive the trip to the server.
+    Assert.assertEquals(createdCluster, Cluster.parseFrom(createdCluster.toByteArray()));
+  }
+
+  @Test
+  public void testCreateClusterWithFlexVmButNoDiskConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("workerDiskGB", "500");
+    properties.put("workerDiskType", "pd-ssd");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2, e2");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    ClusterOperationMetadata metadata = ClusterOperationMetadata.newBuilder()
+        .setClusterName("flex-cluster").build();
+    when(apiFuture.get()).thenReturn(metadata);
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+    when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
+
+    mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
+      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    InstanceGroupConfig workerConfig = clusterCaptor.getValue().getConfig().getWorkerConfig();
+
+    Assert.assertTrue(workerConfig.hasDiskConfig());
+    Assert.assertEquals("pd-ssd", workerConfig.getDiskConfig().getBootDiskType());
+    Assert.assertEquals(500, workerConfig.getDiskConfig().getBootDiskSizeGb());
+
+    InstanceFlexibilityPolicy policy = workerConfig.getInstanceFlexibilityPolicy();
+    Assert.assertEquals(1, policy.getInstanceSelectionListCount());
+    Assert.assertFalse(policy.getInstanceSelectionList(0).hasDiskConfig());
+  }
+
+  @Test
   public void testCreateClusterWithoutFlexVmConfig() throws Exception {
     Map<String, String> properties = new HashMap<>();
     properties.put("accountKey", "{ \"type\": \"test\"}");
@@ -387,7 +516,8 @@ public class DataprocClientTest {
     properties.put("zone", "us-test1-c");
     DataprocConf conf = DataprocConf.create(properties);
 
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
     when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
                                                         eq(conf.getRegion()),
@@ -424,7 +554,8 @@ public class DataprocClientTest {
     properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n2");
     DataprocConf conf = DataprocConf.create(properties);
 
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
     when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
                                                         eq(conf.getRegion()),
@@ -460,7 +591,8 @@ public class DataprocClientTest {
     properties.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "e2, n2d");
     DataprocConf conf = DataprocConf.create(properties);
 
-    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture = mock(OperationFuture.class);
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
     when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
                                                         eq(conf.getRegion()),
@@ -487,7 +619,8 @@ public class DataprocClientTest {
 
   @Test
   public void testDeleteClusterThrowsException() throws Exception {
-    OperationFuture<Empty, ClusterOperationMetadata> operationFuture = Mockito.mock(OperationFuture.class);
+    OperationFuture<Empty, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
     String clusterName = "mycluster";
     DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
       .setClusterName(clusterName)
@@ -554,8 +687,8 @@ public class DataprocClientTest {
     PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
 
     OperationsClient.ListOperationsPagedResponse listOperationsPagedResponse =
-      PowerMockito.mock(OperationsClient.ListOperationsPagedResponse.class);
-    PowerMockito.when(operationsClient.listOperations(
+      Mockito.mock(OperationsClient.ListOperationsPagedResponse.class);
+    Mockito.when(operationsClient.listOperations(
         Mockito.eq("projects/dummy-project/regions/us-test1/operations"),
         Mockito.eq("clusterName=\"mycluster\" AND operationType=\"CREATE\"")))
       .thenReturn(listOperationsPagedResponse);
@@ -605,11 +738,13 @@ public class DataprocClientTest {
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
     PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
 
-    StatusCode statusCode = Mockito.mock(StatusCode.class);
+    StatusCode statusCode =
+        Mockito.mock(StatusCode.class, Mockito.withSettings().withoutAnnotations());
     StatusCode.Code realCode = StatusCode.Code.UNAVAILABLE;
     Mockito.when(statusCode.getCode()).thenReturn(realCode);
 
-    ApiException mockException = Mockito.mock(ApiException.class);
+    ApiException mockException =
+        Mockito.mock(ApiException.class, Mockito.withSettings().withoutAnnotations());
     Mockito.when(mockException.getStatusCode()).thenReturn(statusCode);
 
     PowerMockito.when(operationsClient.listOperations(Mockito.anyString(), Mockito.anyString()))
@@ -652,4 +787,32 @@ public class DataprocClientTest {
     Assert.assertTrue(result.isPresent());
     Assert.assertEquals("latest-op", result.get().getName());
   }
+
+  /** validateProperties is bypassed for runtime arguments, so the client must fail cleanly. */
+  @Test
+  public void testCreateClusterWithMismatchedFlexVmListSizes() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put("workerCPUs", "4");
+    properties.put("workerMemoryMB", "16384");
+
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4, n4d");
+    properties.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "hyperdisk-balanced");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    DataprocClient client = mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+
+    try {
+      client.createCluster("mismatch-cluster", "2.0", Collections.emptyMap(), false, null);
+      Assert.fail("Expected mismatched Flex VM list sizes to be rejected by the client.");
+    } catch (DataprocRuntimeException e) {
+      Assert.assertEquals(ErrorType.USER, e.getErrorType());
+      Assert.assertEquals(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION,
+                          e.getErrorCategory());
+      Assert.assertTrue(e.getMessage().contains("2 machine type(s) but 1 disk type(s)"));
+    }
+  }
+
 }
