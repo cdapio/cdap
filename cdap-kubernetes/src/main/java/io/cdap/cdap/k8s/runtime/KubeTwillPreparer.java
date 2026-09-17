@@ -51,6 +51,7 @@ import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentBuilder;
+import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EmptyDirVolumeSource;
@@ -215,6 +216,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
   private boolean shouldLocalizeConfigurationAsConfigmap;
+  private boolean recreateStrategy;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -277,6 +279,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.globalJvmOptions = new StringBuilder();
     this.workDirVolumeSource = new V1EmptyDirVolumeSource();
     this.containerProbes = new HashMap<>();
+    this.recreateStrategy = false;
+  }
+
+  @Override
+  public ExtendedTwillPreparer withRecreateStrategy() {
+    this.recreateStrategy = true;
+    return this;
   }
 
   @Override
@@ -948,11 +957,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Return a {@link V1Deployment} object for the {@link TwillRunnable} represented by the
    * given {@link RuntimeSpecification}.
    */
-  private V1Deployment buildDeployment(V1ObjectMeta metadata,
+  @VisibleForTesting
+  V1Deployment buildDeployment(V1ObjectMeta metadata,
       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification()
         .getInstances();
-    return new V1DeploymentBuilder()
+    V1Deployment deployment = new V1DeploymentBuilder()
         .withMetadata(metadata)
         .withNewSpec()
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
@@ -963,6 +973,16 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .endTemplate()
         .endSpec()
         .build();
+
+    if (recreateStrategy) {
+      // Leaving the strategy unset yields RollingUpdate, whose maxSurge is 25% rounded up, which
+      // is 1 even at a single replica. That starts the replacement pod before deleting the
+      // original, so two generations of the runnable are briefly live at once. Recreate deletes
+      // all existing pods before creating any new one, trading a short gap in availability for an
+      // at-most-one guarantee.
+      deployment.getSpec().setStrategy(new V1DeploymentStrategy().type("Recreate"));
+    }
+    return deployment;
   }
 
   /**
