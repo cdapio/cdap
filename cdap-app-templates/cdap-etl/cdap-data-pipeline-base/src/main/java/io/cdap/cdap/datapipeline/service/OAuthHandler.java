@@ -95,6 +95,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private static final String RTR_REFRESH_POLL_INTERVAL_MS = "rtr.refresh.poll.interval.ms";
   // The duration to hold the distributed refresh lease before it auto-expires
   private static final String RTR_LEASE_TTL_MS = "rtr.lease.ttl.ms";
+
   private long accessTokenRefreshBufferMs;
   private long leaseTakeoverTimeoutMs;
   private long accessTokenPollIntervalMs;
