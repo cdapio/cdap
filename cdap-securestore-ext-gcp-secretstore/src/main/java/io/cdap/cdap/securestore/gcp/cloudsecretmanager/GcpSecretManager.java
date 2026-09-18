@@ -203,7 +203,8 @@ public class GcpSecretManager implements SecretManager {
       return true;
 
     } catch (ApiException e) {
-      if (e.getStatusCode().getCode() == StatusCode.Code.FAILED_PRECONDITION) {
+      StatusCode.Code code = e.getStatusCode().getCode();
+      if (code == StatusCode.Code.ABORTED || code == StatusCode.Code.FAILED_PRECONDITION) {
         LOG.debug("Lease acquire failure (ETag mismatch) for secret {} in namespace {}", key, namespace);
         return false;
       }
