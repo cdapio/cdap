@@ -82,6 +82,9 @@ public class KubeDiscoveryService implements DiscoveryService,
   private static final String SERVICE_TYPE_LOAD_BALANCER = "LoadBalancer";
   private static final String SERVICE_TYPE_CLUSTER_IP = "ClusterIP";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
+  // Mirrors Constants.Service.TASK_WORKER from cdap-common. It has to be duplicated because
+  // cdap-kubernetes does not, and must not, depend on cdap-common.
+  private static final String TASK_WORKER_SERVICE_NAME = "task.worker";
 
   private final String podName;
   private final String namespace;
@@ -90,7 +93,10 @@ public class KubeDiscoveryService implements DiscoveryService,
   private final ApiClientFactory apiClientFactory;
   private volatile CoreV1Api coreApi;
   private volatile WatcherThread watcherThread;
-  private volatile boolean endpointsWatcherEnabled = false;
+  // Services resolved from live pod endpoints rather than from the service ClusterIP. These are
+  // registered with the endpoints watcher only, never with the service watcher, so that a
+  // ClusterIP update can never overwrite the pod addresses.
+  private final Set<String> endpointsBackedServices;
   private volatile EndpointsWatcherThread endpointsWatcherThread;
   private boolean closed;
   private final List<String> loadBalancerServiceList;
@@ -124,6 +130,7 @@ public class KubeDiscoveryService implements DiscoveryService,
     this.namePrefix = namePrefix;
     this.podName = podName;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
+    this.endpointsBackedServices = ConcurrentHashMap.newKeySet();
     this.apiClientFactory = apiClientFactory;
     this.podLabels = podLabels;
     this.ownerReferences = ownerReferences;
@@ -178,22 +185,26 @@ public class KubeDiscoveryService implements DiscoveryService,
   }
 
   /**
-   * Programmatically enables real-time Kubernetes {@link V1Endpoints} watching.
-   * Can be called by components (e.g. TaskWorkerManagerService / ProxyFrontendHandler)
-   * that require live pod addition and removal events.
+   * Programmatically enables real-time Kubernetes {@link V1Endpoints} watching for the task worker
+   * service, so that individual task worker pods become discoverable instead of the single service
+   * ClusterIP. Called by the task worker proxy, which has to address specific pods in order to
+   * lease them.
+   *
+   * <p>Only the task worker is affected. Every other service keeps resolving to its ClusterIP and
+   * keeps kube-proxy load balancing.
+   *
+   * <p>From this point on the service watcher stops publishing addresses for the task worker, so
+   * its pod addresses come from the endpoints watcher or from nowhere at all. If the service
+   * account is not permitted to watch endpoints, callers then see an explicit routing failure
+   * rather than a silent fallback to a ClusterIP that would defeat pod leasing.
    */
   public void enableEndpointsWatcher() {
-    this.endpointsWatcherEnabled = true;
-    synchronized (this) {
-      if (this.endpointsWatcherThread == null && !serviceDiscovereds.isEmpty()) {
-        EndpointsWatcherThread thread = new EndpointsWatcherThread();
-        thread.setDaemon(true);
-        for (String serviceName : serviceDiscovereds.keySet()) {
-          thread.addService(serviceName);
-        }
-        thread.start();
-        this.endpointsWatcherThread = thread;
-      }
+    endpointsBackedServices.add(TASK_WORKER_SERVICE_NAME);
+
+    // If the service was already discovered, the endpoints watcher has to pick it up now, since
+    // the discover() call that would have registered it has already happened.
+    if (serviceDiscovereds.containsKey(TASK_WORKER_SERVICE_NAME)) {
+      registerWithEndpointsWatcher(TASK_WORKER_SERVICE_NAME);
     }
   }
 
@@ -203,60 +214,101 @@ public class KubeDiscoveryService implements DiscoveryService,
     ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(
         name, DefaultServiceDiscovered::new);
 
-    // Start the service watcher thread if it is not yet started
-    WatcherThread watcherThread = this.watcherThread;
+    registerWithServiceWatcher(name);
 
-    if (watcherThread == null) {
-      synchronized (this) {
-        if (closed) {
-          throw new IllegalStateException(
-              "Discovery service is already closed");
-        }
-
-        watcherThread = this.watcherThread;
-        if (watcherThread == null) {
-          watcherThread = new WatcherThread();
-          watcherThread.setDaemon(true);
-          watcherThread.addService(name);
-          watcherThread.start();
-          this.watcherThread = watcherThread;
-        } else {
-          // Another caller created the thread between the unsynchronized read above and
-          // acquiring the lock. It was created for a different service, so this one still
-          // needs registering.
-          watcherThread.addService(name);
-        }
-      }
-    } else {
-      watcherThread.addService(name);
-    }
-
-    if (endpointsWatcherEnabled) {
-      EndpointsWatcherThread endpointsWatcherThread = this.endpointsWatcherThread;
-      if (endpointsWatcherThread == null) {
-        synchronized (this) {
-          if (closed) {
-            throw new IllegalStateException(
-                "Discovery service is already closed");
-          }
-          endpointsWatcherThread = this.endpointsWatcherThread;
-          if (endpointsWatcherThread == null) {
-            endpointsWatcherThread = new EndpointsWatcherThread();
-            endpointsWatcherThread.setDaemon(true);
-            endpointsWatcherThread.addService(name);
-            endpointsWatcherThread.start();
-            this.endpointsWatcherThread = endpointsWatcherThread;
-          } else {
-            // Lost the creation race, as above.
-            endpointsWatcherThread.addService(name);
-          }
-        }
-      } else {
-        endpointsWatcherThread.addService(name);
-      }
+    // An endpoints backed service takes its addresses from live pod endpoints. The service watcher
+    // still tracks it, but deliberately does not publish for it, so the ClusterIP can never
+    // overwrite the pod addresses.
+    if (endpointsBackedServices.contains(name)) {
+      registerWithEndpointsWatcher(name);
     }
 
     return serviceDiscovered;
+  }
+
+  /**
+   * Registers the given service with the {@link V1Service} watcher, starting the watcher thread if
+   * it is not running yet.
+   */
+  private void registerWithServiceWatcher(String name) {
+    WatcherThread thread = this.watcherThread;
+    if (thread != null) {
+      thread.addService(name);
+      return;
+    }
+
+    synchronized (this) {
+      if (closed) {
+        throw new IllegalStateException("Discovery service is already closed");
+      }
+
+      thread = this.watcherThread;
+      if (thread != null) {
+        // Another caller created the thread between the unsynchronized read above and acquiring
+        // the lock. It was created for a different service, so this one still needs registering.
+        thread.addService(name);
+        return;
+      }
+
+      thread = new WatcherThread();
+      thread.setDaemon(true);
+      // Register before starting, so that the watcher's initial list call already carries a
+      // selector matching this service.
+      thread.addService(name);
+      thread.start();
+      this.watcherThread = thread;
+    }
+  }
+
+  /**
+   * Registers the given service with the {@link V1Endpoints} watcher, starting the watcher thread
+   * if it is not running yet.
+   */
+  private void registerWithEndpointsWatcher(String name) {
+    EndpointsWatcherThread thread = this.endpointsWatcherThread;
+    if (thread != null) {
+      thread.addService(name);
+      return;
+    }
+
+    synchronized (this) {
+      if (closed) {
+        throw new IllegalStateException("Discovery service is already closed");
+      }
+
+      thread = this.endpointsWatcherThread;
+      if (thread != null) {
+        // Lost the creation race, as above.
+        thread.addService(name);
+        return;
+      }
+
+      thread = new EndpointsWatcherThread();
+      thread.setDaemon(true);
+      thread.addService(name);
+      thread.start();
+      this.endpointsWatcherThread = thread;
+    }
+  }
+
+  /**
+   * Returns the prefixed K8s service names currently watched as {@link V1Service}, or an empty set
+   * if the service watcher has not been started.
+   */
+  @VisibleForTesting
+  Set<String> getWatchedServices() {
+    WatcherThread thread = this.watcherThread;
+    return thread == null ? Collections.emptySet() : thread.getServices();
+  }
+
+  /**
+   * Returns the prefixed K8s service names currently watched as {@link V1Endpoints}, or an empty
+   * set if the endpoints watcher has not been started.
+   */
+  @VisibleForTesting
+  Set<String> getEndpointsWatchedServices() {
+    EndpointsWatcherThread thread = this.endpointsWatcherThread;
+    return thread == null ? Collections.emptySet() : thread.getServices();
   }
 
   @Override
@@ -622,7 +674,7 @@ public class KubeDiscoveryService implements DiscoveryService,
     return servicePorts.stream()
         .map(port -> createDiscoverable(
             name, hostname,
-            port, payload)
+            port.getPort(), payload)
         )
         .filter(Objects::nonNull)
         .findFirst()
@@ -644,18 +696,33 @@ public class KubeDiscoveryService implements DiscoveryService,
   /**
    * Creates a {@link Discoverable} for the given service.
    *
-   * @param name        name of the service
-   * @param host        the host of the service inside the Kubernetes cluster
-   * @param servicePort the service port exposed by the service
+   * @param name    name of the service
+   * @param host    the host of the service inside the Kubernetes cluster
+   * @param port    the port exposed by the service
+   * @param payload the discoverable payload
    * @return a {@link Discoverable}
    */
   @Nullable
   private Discoverable createDiscoverable(String name,
-      String host, V1ServicePort servicePort, byte[] payload) {
-    Integer port = servicePort.getPort();
+      String host, @Nullable Integer port, byte[] payload) {
     return port == null ? null : new Discoverable(name,
         InetSocketAddress.createUnresolved(host, port),
         payload);
+  }
+
+  /**
+   * Returns whether the {@link V1Service} watcher should publish addresses for the given CDAP
+   * service.
+   *
+   * <p>It must not do so for an endpoints backed service. Both watchers write to the same
+   * {@link DefaultServiceDiscovered} and the last write wins, so publishing the ClusterIP here
+   * would overwrite the live pod addresses resolved by the endpoints watcher.
+   *
+   * @param serviceName the CDAP service name, without the K8s name prefix
+   */
+  @VisibleForTesting
+  boolean shouldPublishFromService(String serviceName) {
+    return !endpointsBackedServices.contains(serviceName);
   }
 
   /**
@@ -679,6 +746,11 @@ public class KubeDiscoveryService implements DiscoveryService,
       }
     }
 
+    @VisibleForTesting
+    Set<String> getServices() {
+      return Collections.unmodifiableSet(services);
+    }
+
     @Override
     protected void updateListOptions(ListOptions options) {
       options.setLabelSelector(
@@ -689,6 +761,7 @@ public class KubeDiscoveryService implements DiscoveryService,
     @Override
     public void resourceAdded(V1Service service) {
       getServiceDiscovered(service)
+          .filter(s -> shouldPublishFromService(s.getName()))
           .ifPresent(s -> s.setDiscoverables(
               toDiscoverables(s.getName(), service, namespace)));
     }
@@ -702,8 +775,9 @@ public class KubeDiscoveryService implements DiscoveryService,
 
     @Override
     public void resourceDeleted(V1Service service) {
-      getServiceDiscovered(service).ifPresent(
-          s -> s.setDiscoverables(Collections.emptySet()));
+      getServiceDiscovered(service)
+          .filter(s -> shouldPublishFromService(s.getName()))
+          .ifPresent(s -> s.setDiscoverables(Collections.emptySet()));
     }
 
     private Optional<DefaultServiceDiscovered> getServiceDiscovered(
@@ -750,7 +824,7 @@ public class KubeDiscoveryService implements DiscoveryService,
       for (V1EndpointAddress address : addresses) {
         for (CoreV1EndpointPort port : ports) {
           Discoverable d = createDiscoverable(name, address.getIp(),
-              new V1ServicePort().port(port.getPort()), payload);
+              port.getPort(), payload);
           if (d != null) {
             discoverables.add(d);
           }
@@ -779,6 +853,11 @@ public class KubeDiscoveryService implements DiscoveryService,
       }
     }
 
+    @VisibleForTesting
+    Set<String> getServices() {
+      return Collections.unmodifiableSet(services);
+    }
+
     @Override
     protected void updateListOptions(ListOptions options) {
       options.setLabelSelector(
@@ -788,13 +867,13 @@ public class KubeDiscoveryService implements DiscoveryService,
 
     @Override
     public void resourceAdded(V1Endpoints endpoints) {
+      // Always publish the result, including an empty set. When every backing pod goes away,
+      // Kubernetes keeps the Endpoints object alive and simply drops its subsets rather than
+      // deleting it, so resourceDeleted never fires and an empty set is the only signal that
+      // there is nothing left to route to. Suppressing it would pin consumers to pod IPs that
+      // no longer exist.
       getServiceDiscovered(endpoints)
-          .ifPresent(s -> {
-            Set<Discoverable> discoverables = toDiscoverables(s.getName(), endpoints);
-            if (!discoverables.isEmpty()) {
-              s.setDiscoverables(discoverables);
-            }
-          });
+          .ifPresent(s -> s.setDiscoverables(toDiscoverables(s.getName(), endpoints)));
     }
 
     @Override
