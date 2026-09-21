@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -147,21 +148,47 @@ public class AppFabricProcessorService extends AbstractIdleService {
     // Only for RBAC instances
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
-      auditLogSubscriberService.startAsync();
+      if (auditLogSubscriberService.state() == State.NEW) {
+        auditLogSubscriberService.startAsync();
+      }
     }
 
-    provisioningService.startAsync();
-    applicationLifecycleService.startAsync();
-    bootstrapService.startAsync();
-    programRuntimeService.startAsync();
-    programNotificationSubscriberService.startAsync();
-    programStopSubscriberService.startAsync();
-    runRecordCorrectorService.startAsync();
-    programRunStatusMonitorService.startAsync();
-    coreSchedulerService.startAsync();
-    runRecordCounterService.startAsync();
-    runDataTimeToLiveService.startAsync();
-    operationNotificationSubscriberService.startAsync();
+    if (provisioningService.state() == State.NEW) {
+      provisioningService.startAsync();
+    }
+    if (applicationLifecycleService.state() == State.NEW) {
+      applicationLifecycleService.startAsync();
+    }
+    if (bootstrapService.state() == State.NEW) {
+      bootstrapService.startAsync();
+    }
+    if (programRuntimeService.state() == State.NEW) {
+      programRuntimeService.startAsync();
+    }
+    if (programNotificationSubscriberService.state() == State.NEW) {
+      programNotificationSubscriberService.startAsync();
+    }
+    if (programStopSubscriberService.state() == State.NEW) {
+      programStopSubscriberService.startAsync();
+    }
+    if (runRecordCorrectorService.state() == State.NEW) {
+      runRecordCorrectorService.startAsync();
+    }
+    if (programRunStatusMonitorService.state() == State.NEW) {
+      programRunStatusMonitorService.startAsync();
+    }
+    if (coreSchedulerService.state() == State.NEW) {
+      coreSchedulerService.startAsync();
+    }
+    if (runRecordCounterService.state() == State.NEW) {
+      runRecordCounterService.startAsync();
+    }
+    if (runDataTimeToLiveService.state() == State.NEW) {
+      runDataTimeToLiveService.startAsync();
+    }
+    if (operationNotificationSubscriberService.state() == State.NEW) {
+      operationNotificationSubscriberService.startAsync();
+    }
 
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
@@ -206,20 +233,48 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    coreSchedulerService.stopAsync().awaitTerminated();
-    bootstrapService.stopAsync().awaitTerminated();
-    systemAppManagementService.stopAsync().awaitTerminated();
-    programRuntimeService.stopAsync().awaitTerminated();
-    applicationLifecycleService.stopAsync().awaitTerminated();
-    programNotificationSubscriberService.stopAsync().awaitTerminated();
-    programStopSubscriberService.stopAsync().awaitTerminated();
-    runRecordCorrectorService.stopAsync().awaitTerminated();
-    programRunStatusMonitorService.stopAsync().awaitTerminated();
-    provisioningService.stopAsync().awaitTerminated();
-    runRecordCounterService.stopAsync().awaitTerminated();
-    runDataTimeToLiveService.stopAsync().awaitTerminated();
-    operationNotificationSubscriberService.stopAsync().awaitTerminated();
-    auditLogSubscriberService.stopAsync().awaitTerminated();
+    if (coreSchedulerService.isRunning()) {
+      coreSchedulerService.stopAsync().awaitTerminated();
+    }
+    if (bootstrapService.isRunning()) {
+      bootstrapService.stopAsync().awaitTerminated();
+    }
+    if (systemAppManagementService.isRunning()) {
+      systemAppManagementService.stopAsync().awaitTerminated();
+    }
+    if (programRuntimeService.isRunning()) {
+      programRuntimeService.stopAsync().awaitTerminated();
+    }
+    if (applicationLifecycleService.isRunning()) {
+      applicationLifecycleService.stopAsync().awaitTerminated();
+    }
+    if (programNotificationSubscriberService.isRunning()) {
+      programNotificationSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (programStopSubscriberService.isRunning()) {
+      programStopSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (runRecordCorrectorService.isRunning()) {
+      runRecordCorrectorService.stopAsync().awaitTerminated();
+    }
+    if (programRunStatusMonitorService.isRunning()) {
+      programRunStatusMonitorService.stopAsync().awaitTerminated();
+    }
+    if (provisioningService.isRunning()) {
+      provisioningService.stopAsync().awaitTerminated();
+    }
+    if (runRecordCounterService.isRunning()) {
+      runRecordCounterService.stopAsync().awaitTerminated();
+    }
+    if (runDataTimeToLiveService.isRunning()) {
+      runDataTimeToLiveService.stopAsync().awaitTerminated();
+    }
+    if (operationNotificationSubscriberService.isRunning()) {
+      operationNotificationSubscriberService.stopAsync().awaitTerminated();
+    }
+    if (auditLogSubscriberService.isRunning()) {
+      auditLogSubscriberService.stopAsync().awaitTerminated();
+    }
     LOG.info("AppFabric processor service stopped.");
   }
 

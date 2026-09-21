@@ -158,6 +158,7 @@ public class AllProgramsApp extends AbstractApplication {
       Text output = new Text(value.copyBytes());
       context.write(output, output);
     }
+
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       Object obj = context.newPluginInstance("mrid");

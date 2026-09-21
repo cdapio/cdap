@@ -63,6 +63,7 @@ public class ExtensionLoaderTest {
    */
   public interface Extension {
     Set<String> getSupported();
+
     String echo();
   }
 

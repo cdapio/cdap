@@ -17,11 +17,12 @@
 package io.cdap.cdap.test;
 
 import com.google.common.base.Preconditions;
-import io.cdap.cdap.internal.AppFabricTestHelper;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
@@ -89,8 +90,14 @@ public class TestConfiguration extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     if (enableAuthorization) {
-      AppFabricTestHelper.enableAuthorization((k, v) -> configs.put(PROPERTY_PREFIX + k, v),
-          temporaryFolder);
+      try {
+        Class<?> helperClass = Class.forName("io.cdap.cdap.internal.AppFabricTestHelper");
+        Method method = helperClass.getMethod("enableAuthorization", BiConsumer.class, TemporaryFolder.class);
+        method.invoke(null, (BiConsumer<String, String>) (k, v) -> configs.put(PROPERTY_PREFIX + k, v),
+            temporaryFolder);
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to enable authorization", e);
+      }
     }
     // Use the system properties map as a mean to communicate unit-test specific CDAP configurations to the
     // TestBase class, which it will use to setup the CConfiguration.

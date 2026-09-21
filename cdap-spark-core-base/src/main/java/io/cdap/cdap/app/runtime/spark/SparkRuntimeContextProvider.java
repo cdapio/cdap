@@ -49,6 +49,7 @@ import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -214,7 +215,7 @@ public final class SparkRuntimeContextProvider {
       // For spark running natively on k8s, we may need to initialize the TokenManager for internal identity.
       if (clusterMode == ClusterMode.ON_PREMISE && SecurityUtil.isInternalAuthEnabled(cConf)) {
         TokenManager tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startAndWait();
+        Services.startAndWait(tokenManager);
       }
 
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
@@ -240,7 +241,7 @@ public final class SparkRuntimeContextProvider {
       coreServices.add(serviceAnnouncer);
 
       for (Service coreService : coreServices) {
-        coreService.startAndWait();
+        Services.startAndWait(coreService);
       }
 
       AtomicBoolean closed = new AtomicBoolean();
@@ -254,7 +255,7 @@ public final class SparkRuntimeContextProvider {
         // Stop all services. Reverse the order.
         for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
           try {
-            service.stopAndWait();
+            Services.stopAndWait(service);
           } catch (Exception e) {
             LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
           }

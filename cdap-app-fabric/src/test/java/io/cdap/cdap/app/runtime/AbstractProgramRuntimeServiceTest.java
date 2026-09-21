@@ -151,7 +151,9 @@ public class AbstractProgramRuntimeServiceTest {
 
       Assert.assertEquals(2, threadNames.size());
     } finally {
-      runtimeService.stopAsync().awaitTerminated();
+      if (runtimeService.state() == Service.State.RUNNING) {
+        runtimeService.stopAsync().awaitTerminated();
+      }
     }
   }
 
@@ -178,7 +180,9 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(true, () ->  runtimeService.list(ProgramType.WORKER).isEmpty(),
                     5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
     } finally {
-      runtimeService.stopAsync().awaitTerminated();
+      if (runtimeService.state() == Service.State.RUNNING) {
+        runtimeService.stopAsync().awaitTerminated();
+      }
     }
   }
 
@@ -201,9 +205,13 @@ public class AbstractProgramRuntimeServiceTest {
 
     // The lookup will get deadlock for CDAP-3716
     Assert.assertNotNull(runtimeService.lookup(programId, runId));
-    service.stopAsync().awaitTerminated();
+    if (service.state() == Service.State.RUNNING) {
+      service.stopAsync().awaitTerminated();
+    }
 
-    runtimeService.stopAsync().awaitTerminated();
+    if (runtimeService.state() == Service.State.RUNNING) {
+      runtimeService.stopAsync().awaitTerminated();
+    }
   }
 
   @Test
@@ -231,48 +239,44 @@ public class AbstractProgramRuntimeServiceTest {
 
     runtimeService.startAsync().awaitRunning();
     try {
-      try {
-        ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
-                                                             NamespaceId.DEFAULT.artifact("test", "1.0"));
+      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
+                                                           NamespaceId.DEFAULT.artifact("test", "1.0"));
 
-        // Set of scopes to test
-        String programScope = program.getType().getScope();
-        String clusterName = "c1";
-        List<String> scopes = Arrays.asList(
-          "cluster.*.",
-          "cluster." + clusterName + ".",
-          "cluster." + clusterName + ".app.*.",
-          "app.*.",
-          "app." + program.getApplicationId() + ".",
-          "app." + program.getApplicationId() + "." + programScope + ".*.",
-          "app." + program.getApplicationId() + "." + programScope + "." + program.getName() + ".",
-          programScope + ".*.",
-          programScope + "." + program.getName() + ".",
-          ""
-        );
+      // Set of scopes to test
+      String programScope = program.getType().getScope();
+      String clusterName = "c1";
+      List<String> scopes = Arrays.asList(
+        "cluster.*.",
+        "cluster." + clusterName + ".",
+        "cluster." + clusterName + ".app.*.",
+        "app.*.",
+        "app." + program.getApplicationId() + ".",
+        "app." + program.getApplicationId() + "." + programScope + ".*.",
+        "app." + program.getApplicationId() + "." + programScope + "." + program.getName() + ".",
+        programScope + ".*.",
+        programScope + "." + program.getName() + ".",
+        ""
+      );
 
-        for (String scope : scopes) {
-          ProgramOptions programOptions = new SimpleProgramOptions(
-            program.getId(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
-            new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
+      for (String scope : scopes) {
+        ProgramOptions programOptions = new SimpleProgramOptions(
+          program.getId(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
+          new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
 
-          final ProgramController controller = runtimeService.run(descriptor, programOptions, RunIds.generate())
-            .getController();
-          Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
-                        5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+        final ProgramController controller = runtimeService.run(descriptor, programOptions, RunIds.generate())
+          .getController();
+        Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
+                      10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-          // Should get an argument
-          Arguments args = argumentsMap.get(program.getId());
-          Assert.assertNotNull(args);
-          Assert.assertEquals(scope.length(), Integer.parseInt(args.getOption("size")));
-        }
-
-      } finally {
+        // Should get an argument
+        Arguments args = argumentsMap.get(program.getId());
+        Assert.assertNotNull(args);
+        Assert.assertEquals(scope.length(), Integer.parseInt(args.getOption("size")));
+      }
+    } finally {
+      if (runtimeService.state() == Service.State.RUNNING) {
         runtimeService.stopAsync().awaitTerminated();
       }
-
-    } finally {
-      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -301,7 +305,9 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
                     5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
-      runtimeService.stopAsync().awaitTerminated();
+      if (runtimeService.state() == Service.State.RUNNING) {
+        runtimeService.stopAsync().awaitTerminated();
+      }
     }
   }
 

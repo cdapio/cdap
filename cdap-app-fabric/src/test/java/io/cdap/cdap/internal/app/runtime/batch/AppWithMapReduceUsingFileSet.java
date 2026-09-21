@@ -92,6 +92,7 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication<AppWithMap
 
   public static class FileMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
     static final String ONLY_KEY = "x";
+
     @Override
     public void map(LongWritable key, Text data, Context context)
       throws IOException, InterruptedException {

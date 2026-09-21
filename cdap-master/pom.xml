@@ -46,6 +46,11 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <!-- Added to override the embedded guava class in hive-exec -->
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -54,11 +59,6 @@
     <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

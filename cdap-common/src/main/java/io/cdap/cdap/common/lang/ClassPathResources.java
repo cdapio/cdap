@@ -212,7 +212,10 @@ public final class ClassPathResources {
           try {
             ClassPath classPath = ClassPath.from(classPathUrl.toURI(), classLoader);
             for (ClassPath.ResourceInfo resourceInfo : classPath.getResources()) {
-              result.add(resourceInfo.getResourceName());
+              String resName = resourceInfo.getResourceName();
+              if (!resName.startsWith("io/cdap/cdap/common/")) {
+                result.add(resName);
+              }
             }
           } catch (Exception e) {
             // If fail to get classes/resources from the classpath, ignore this classpath.

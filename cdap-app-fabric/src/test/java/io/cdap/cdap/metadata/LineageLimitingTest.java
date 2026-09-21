@@ -97,7 +97,7 @@ public class LineageLimitingTest extends AppFabricTestBase {
 
   @Test
   public void testLineageLimiting() throws InterruptedException, ExecutionException, TimeoutException {
-    LineageStoreReader lineageReader = getInjector().getInstance(LineageStoreReader.class);
+    final LineageStoreReader lineageReader = getInjector().getInstance(LineageStoreReader.class);
     ProgramRunId run1 = service1.run(RunIds.generate());
 
     // Write out some lineage information
@@ -106,8 +106,8 @@ public class LineageLimitingTest extends AppFabricTestBase {
     lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
 
     // Write the field level lineage
-    FieldLineageWriter fieldLineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
-    ProgramRunId spark1Run1 = spark1.run(RunIds.generate(100));
+    final FieldLineageWriter fieldLineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
+    final ProgramRunId spark1Run1 = spark1.run(RunIds.generate(100));
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns", "endpoint1"), "offset", "body");
     TransformOperation parse = new TransformOperation("parse", "parse body",
                                                       Collections.singletonList(InputField.of("read", "body")),

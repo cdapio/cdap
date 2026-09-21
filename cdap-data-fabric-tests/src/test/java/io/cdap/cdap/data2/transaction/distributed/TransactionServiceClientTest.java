@@ -29,6 +29,7 @@ import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -98,7 +99,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
 
     zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAsync().awaitRunning();
+    Services.startAndWait(zkServer);
 
     CConfiguration cConf = CConfiguration.create();
     // tests should use the current user for HDFS
@@ -121,7 +122,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     server = TransactionServiceTest
         .createTxService(zkServer.getConnectionStr(), Networks.getRandomPort(),
             hConf, tmpFolder.newFolder(), cConf);
-    server.startAsync().awaitRunning();
+    Services.startAndWait(server);
 
     injector = Guice.createInjector(
         new ConfigModule(cConf, hConf),
@@ -150,25 +151,25 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
         new AuthenticationContextModules().getNoOpModule());
 
     zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAsync().awaitRunning();
+    Services.startAndWait(zkClient);
 
     txStateStorage = injector.getInstance(TransactionStateStorage.class);
-    txStateStorage.startAsync().awaitRunning();
+    Services.startAndWait(txStateStorage);
   }
 
   @AfterClass
   public static void afterClass() {
     try {
       try {
-        server.stopAsync().awaitTerminated();
+        Services.stopAndWait(server);
         miniDfsCluster.shutdown();
       } finally {
-        zkClient.stopAsync().awaitTerminated();
-        txStateStorage.stopAsync().awaitTerminated();
+        Services.stopAndWait(zkClient);
+        Services.stopAndWait(txStateStorage);
       }
     } finally {
-      zkServer.stopAsync().awaitTerminated();
-      txStateStorage.stopAsync().awaitTerminated();
+      Services.stopAndWait(zkServer);
+      Services.stopAndWait(txStateStorage);
     }
   }
 

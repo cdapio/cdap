@@ -65,9 +65,9 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -146,7 +146,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     cConf = getInjector().getInstance(CConfiguration.class);
     scheduler = getInjector().getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).startAsync().awaitRunning();
+      if (((Service) scheduler).state() == Service.State.NEW) {
+        ((Service) scheduler).startAsync().awaitRunning();
+      }
     }
     messagingService = getInjector().getInstance(MessagingService.class);
     store = getInjector().getInstance(Store.class);
@@ -156,7 +158,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @AfterClass
   public static void tearDown() {
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAsync().awaitTerminated();
+      if (((Service) scheduler).state() == Service.State.RUNNING) {
+        ((Service) scheduler).stopAsync().awaitTerminated();
+      }
     }
   }
 

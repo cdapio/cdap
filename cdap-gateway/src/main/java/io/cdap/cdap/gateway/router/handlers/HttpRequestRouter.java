@@ -61,6 +61,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import org.apache.twill.discovery.Discoverable;
@@ -82,7 +83,6 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   private final Map<Discoverable, Queue<MessageSender>> messageSenders;
   private int inflightRequests;
   private MessageSender currentMessageSender;
-  private ChannelFutureListener failureResponseListener;
 
   public HttpRequestRouter(CConfiguration cConf, RouterServiceLookup serviceLookup) {
     this.cConf = cConf;
@@ -91,7 +91,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+  public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
     try {
       final Channel httpRequestChannel = ctx.channel();
       ChannelFutureListener writeCompletedListener = getFailureResponseListener(httpRequestChannel);
@@ -119,14 +119,11 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         // Disable read until sending of this request object is completed successfully
         // This is for handling the initial connection delay
         httpRequestChannel.config().setAutoRead(false);
-        writeCompletedListener = new ChannelFutureListener() {
-          @Override
-          public void operationComplete(ChannelFuture future) throws Exception {
-            if (future.isSuccess()) {
-              httpRequestChannel.config().setAutoRead(true);
-            } else {
-              getFailureResponseListener(httpRequestChannel).operationComplete(future);
-            }
+        writeCompletedListener = future -> {
+          if (future.isSuccess()) {
+            httpRequestChannel.config().setAutoRead(true);
+          } else {
+            getFailureResponseListener(httpRequestChannel).operationComplete(future);
           }
         };
 
@@ -193,41 +190,39 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   /**
-   * [CDAP-21071] Handles the case by stopping the internalServiceChannel of Service -> Router
-   * when the response from Service -> Router is faster than the response from Router to the Client.
+   * [CDAP-21071] Handles the case by stopping the internalServiceChannel of Service -> Router when
+   * the response from Service -> Router is faster than the response from Router to the Client.
    */
   @Override
-  public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-    if (inflightRequests > 0 && currentMessageSender != null && currentMessageSender.internalServiceChannel != null) {
-      final Channel httpRequestChannel = ctx.channel();
-      ctx.executor().execute(() -> {
-        // If httpRequestChannel is not saturated anymore, continue accepting
-        // the incoming traffic from the internalServiceChannel for service<>router.
-        if (httpRequestChannel.isWritable()) {
-          currentMessageSender.setAutoRead(true);
-        } else {
+  public void channelWritabilityChanged(ChannelHandlerContext ctx) {
+    MessageSender sender = currentMessageSender;
+    if (sender != null) {
+      Channel httpRequestChannel = ctx.channel();
+      ChannelFuture connectFuture = sender.internalServiceChannelFutureRef.get();
+      if (connectFuture != null) {
+        Channel internalServiceChannel = connectFuture.channel();
+        ctx.executor().execute(() -> {
+          // If httpRequestChannel is not saturated anymore, continue accepting
+          // the incoming traffic from the internalServiceChannel for service<>router.
           // If httpRequestChannel is saturated, do not read internalServiceChannel
-          currentMessageSender.setAutoRead(false);
-        }
-      });
+          boolean writable = httpRequestChannel.isWritable();
+          LOG.trace("Message sender's internalServiceChannel {} readable is set to {}.",
+              internalServiceChannel.id().asShortText(), writable);
+          internalServiceChannel.config().setAutoRead(writable);
+        });
+      }
     }
     ctx.fireChannelWritabilityChanged();
   }
 
-  private ChannelFutureListener getFailureResponseListener(final Channel httpRequestChannel) {
-    if (failureResponseListener == null) {
-      failureResponseListener = new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) {
-          if (!future.isSuccess()) {
-            HttpResponse response = createErrorResponse(future.cause());
-            HttpUtil.setKeepAlive(response, false);
-            httpRequestChannel.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-          }
-        }
-      };
-    }
-    return failureResponseListener;
+  private ChannelFutureListener getFailureResponseListener(Channel httpRequestChannel) {
+    return future -> {
+      if (!future.isSuccess()) {
+        HttpResponse response = createErrorResponse(future.cause());
+        HttpUtil.setKeepAlive(response, false);
+        httpRequestChannel.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+      }
+    };
   }
 
   /**
@@ -303,35 +298,35 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   /**
-   * For sending messages to internalServiceChannel while maintaining the order of messages according to
-   * the order that {@link #send(Object, ChannelFutureListener)} method is called.
+   * For sending messages to internalServiceChannel while maintaining the order of messages
+   * according to the order that {@link #send(Object, ChannelFutureListener)} method is called.
    */
   private static final class MessageSender implements Flushable, Closeable {
 
     private final Discoverable discoverable;
     private final Queue<OutboundMessage> pendingMessages;
     private final Bootstrap clientBootstrap;
+    private final AtomicReference<ChannelFuture> internalServiceChannelFutureRef;
+
     private volatile SslContext sslContext;
-    private Channel internalServiceChannel;
-    private boolean closed;
-    private boolean connecting;
 
     private MessageSender(final CConfiguration cConf, final Channel httpRequestChannel,
         final Discoverable discoverable) {
       this.discoverable = discoverable;
       this.pendingMessages = new LinkedList<>();
+      this.internalServiceChannelFutureRef = new AtomicReference<>();
 
-      // A channel listener for resetting the state of this message sender on closing of internalServiceChannel
-      final ChannelFutureListener onCloseResetListener = new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) {
-          internalServiceChannel = null;
-          connecting = false;
+      // A channel listener for resetting the state of this message sender on
+      // closing of internalServiceChannel
+      ChannelFutureListener onCloseResetListener = closedFuture -> {
+        ChannelFuture connectFuture = internalServiceChannelFutureRef.get();
+        if (connectFuture != null && connectFuture.channel().equals(closedFuture.channel())) {
+          internalServiceChannelFutureRef.compareAndSet(connectFuture, null);
         }
       };
 
       // Create a client Bootstrap for connecting to internal services
-      // It must be create using the same EventLoopGroup as the inbound channel to make
+      // It must be created using the same EventLoopGroup as the inbound channel to make
       // sure thread safety between the httpRequestChannel and internalServiceChannel callbacks.
       this.clientBootstrap = new Bootstrap()
           .group(httpRequestChannel.eventLoop())
@@ -360,67 +355,44 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
      * Sends a message to the internalServiceChannel.
      *
      * @param msg the message to be sent
-     * @param writeCompletedListener a {@link ChannelFutureListener} to be notified when the
-     *     write completed
+     * @param writeCompletedListener a {@link ChannelFutureListener} to be notified when write
+     *     completed
      */
     void send(Object msg, ChannelFutureListener writeCompletedListener) {
-      if (internalServiceChannel != null) {
-        internalServiceChannel.write(msg).addListener(writeCompletedListener);
-        return;
-      }
-
       // If not yet connected or still connecting, just add the message to the pending queue
       pendingMessages.add(new OutboundMessage(msg, writeCompletedListener));
 
-      // If connecting, we can just return. When the connection completed, it will send all messages in the queue.
-      if (connecting) {
-        return;
+      // Get or create a connection to the internal service
+      ChannelFuture connectFuture = internalServiceChannelFutureRef.get();
+      while (connectFuture == null) {
+        connectFuture = clientBootstrap.connect(discoverable.getSocketAddress());
+        if (!internalServiceChannelFutureRef.compareAndSet(null, connectFuture)) {
+          connectFuture.addListener(
+              (ChannelFutureListener) channelFuture -> channelFuture.channel().close());
+          connectFuture = internalServiceChannelFutureRef.get();
+        }
       }
 
-      // Make a new connection
-      ChannelFuture connectFuture = clientBootstrap.connect(discoverable.getSocketAddress());
-      connectFuture.addListener(new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) throws Exception {
-          // Always remember the internalServiceChannel even if the connection fail.
-          // This make sure any message received before the inbound channel is closed will not get forwarded
-          internalServiceChannel = future.channel();
-          connecting = false;
-
-          if (future.isSuccess()) {
-            // If this sender is closed (because inbound channel is closed), just close the internalServiceChannel
-            if (closed) {
-              Channels.closeOnFlush(internalServiceChannel);
-            }
-          }
-          OutboundMessage message = pendingMessages.poll();
-          while (message != null) {
-            processMessage(message, future);
-            message = pendingMessages.poll();
-          }
-          if (future.isSuccess()) {
-            flush();
-          }
-        }
-      });
-
-      connecting = true;
+      // Send all the pending messages to the internal services
+      connectFuture.addListener((ChannelFutureListener) this::processAllMessages);
     }
 
     @Override
     public void flush() {
-      if (internalServiceChannel != null && !closed) {
-        internalServiceChannel.flush();
+      ChannelFuture connectFuture = internalServiceChannelFutureRef.get();
+      if (connectFuture != null) {
+        Channel channel = connectFuture.channel();
+        if (channel.isActive()) {
+          channel.flush();
+        }
       }
     }
 
     @Override
     public void close() {
-      if (!closed) {
-        closed = true;
-        if (internalServiceChannel != null) {
-          Channels.closeOnFlush(internalServiceChannel);
-        }
+      ChannelFuture connectFuture = internalServiceChannelFutureRef.getAndSet(null);
+      if (connectFuture != null) {
+        Channels.closeOnFlush(connectFuture.channel());
       }
     }
 
@@ -456,36 +428,32 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
 
     /**
      * Process the message by sending to the given channel or have a failure call to the message
-     * callback, depending on the state of this sender.
+     * callback, depending on the state of this sender. This method should only be called from the
+     * callback thread from the given {@link ChannelFuture}.
      */
-    private void processMessage(OutboundMessage message, ChannelFuture channelFuture)
-        throws Exception {
-      Channel channel = channelFuture.channel();
-
-      if (closed) {
-        message.writeCompletedListener.operationComplete(
-            channel.newFailedFuture(new ClosedChannelException()));
-        return;
+    private void processAllMessages(ChannelFuture channelFuture) throws Exception {
+      OutboundMessage message = pendingMessages.poll();
+      while (message != null) {
+        if (channelFuture.isSuccess()) {
+          Channel channel = channelFuture.channel();
+          if (channel.isOpen()) {
+            message.write(channel);
+          } else {
+            message.writeCompletedListener.operationComplete(
+                channel.newFailedFuture(new ClosedChannelException()));
+          }
+        } else {
+          message.writeCompletedListener.operationComplete(channelFuture);
+        }
+        message = pendingMessages.poll();
       }
-      if (channelFuture.isSuccess()) {
-        message.write(channelFuture.channel());
-      } else {
-        message.writeCompletedListener.operationComplete(channelFuture);
-      }
-    }
-
-    /**
-     * Setting the reading capability (ChannelHandlerContext. read())of a channel.
-     */
-    private void setAutoRead(Boolean isAutoRead) {
-      LOG.trace("Message sender's internalServiceChannel readable is set to {}.", isAutoRead);
-      this.internalServiceChannel.config().setAutoRead(isAutoRead);
+      flush();
     }
   }
 
   /**
-   * A wrapper for a message and the {@link ChannelPromise} to use for writing to a {@link
-   * Channel}.
+   * A wrapper for a message and the {@link ChannelPromise} to use for writing to a
+   * {@link Channel}.
    */
   private static final class OutboundMessage {
 

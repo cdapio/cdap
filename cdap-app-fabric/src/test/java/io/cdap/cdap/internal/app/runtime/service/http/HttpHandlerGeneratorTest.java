@@ -275,11 +275,9 @@ public class HttpHandlerGeneratorTest {
     public void onError(HttpServiceResponder responder, Throwable failureCause) {
       validateTransaction();
       try {
-
         channel.close();
-
       } catch (Exception ignored) {
-
+        // Expected
       }
       LOG.error("Failed when handling upload", failureCause);
     }
@@ -468,9 +466,9 @@ public class HttpHandlerGeneratorTest {
       InetSocketAddress bindAddress = service.getBindAddress();
 
       // Upload the generated file
-      URL uploadURL = new URL(String.format("http://%s:%d/content/upload/test.txt",
+      URL uploadUrl = new URL(String.format("http://%s:%d/content/upload/test.txt",
                                             bindAddress.getHostName(), bindAddress.getPort()));
-      HttpURLConnection urlConn = (HttpURLConnection) uploadURL.openConnection();
+      HttpURLConnection urlConn = (HttpURLConnection) uploadUrl.openConnection();
       try {
         urlConn.setDoOutput(true);
         urlConn.setRequestMethod("PUT");
@@ -508,7 +506,7 @@ public class HttpHandlerGeneratorTest {
 
       // Upload the file to the POST endpoint. The endpoint should response with the same file content
       downloadFile = TEMP_FOLDER.newFile();
-      urlConn = (HttpURLConnection) uploadURL.openConnection();
+      urlConn = (HttpURLConnection) uploadUrl.openConnection();
       try {
         urlConn.setDoOutput(true);
         urlConn.setRequestMethod("POST");

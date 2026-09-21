@@ -63,6 +63,8 @@
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
+            <id>test-jar</id>
+            <phase>process-test-classes</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>

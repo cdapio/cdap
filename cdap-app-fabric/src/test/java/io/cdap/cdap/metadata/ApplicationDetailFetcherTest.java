@@ -75,6 +75,8 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
       case REMOTE:
         fetcher = AppFabricTestBase.getInjector().getInstance(RemoteApplicationDetailFetcher.class);
         break;
+      default:
+        throw new IllegalArgumentException("Unknown type " + type);
     }
     return fetcher;
   }
@@ -161,7 +163,6 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
   public void testGetAllApplicationsUsingScan() throws Exception {
     ApplicationDetailFetcher fetcher = getApplicationDetailFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
-    ApplicationDetail appDetail = null;
     Integer batchSize = 1;
 
     // No applications have been deployed
@@ -177,7 +178,7 @@ public class ApplicationDetailFetcherTest extends AppFabricTestBase {
     fetcher.scan(namespace, d -> appDetailList1.add(d), batchSize);
 
     Assert.assertEquals(1, appDetailList1.size());
-    appDetail = appDetailList1.get(0);
+    ApplicationDetail appDetail = appDetailList1.get(0);
     assertAllProgramAppDetail(appDetail);
 
     // Deploy another application

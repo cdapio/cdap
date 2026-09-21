@@ -36,7 +36,7 @@ public class GoodWorkflowApp extends AbstractApplication {
   public void configure() {
     setName("GoodWorkflowApp");
     setDescription("WorkflowApp with multiple forks inside it");
-    addMapReduce(new DummyMR());
+    addMapReduce(new DummyMr());
     addWorkflow(new GoodWorkflow());
     addWorkflow(new AnotherGoodWorkflow());
     addWorkflow(new WorkflowWithLocalDatasets());
@@ -91,7 +91,11 @@ public class GoodWorkflowApp extends AbstractApplication {
   /**
    *
    */
-  public class DummyMR extends AbstractMapReduce {
+  public class DummyMr extends AbstractMapReduce {
+    @Override
+    protected void configure() {
+      setName("DummyMR");
+    }
   }
 
   /**

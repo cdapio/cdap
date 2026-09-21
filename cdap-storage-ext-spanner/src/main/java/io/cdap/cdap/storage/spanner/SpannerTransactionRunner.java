@@ -17,6 +17,8 @@
 package io.cdap.cdap.storage.spanner;
 
 import com.google.cloud.spanner.ErrorCode;
+import com.google.cloud.spanner.Options;
+import com.google.cloud.spanner.Options.TransactionOption;
 import com.google.cloud.spanner.SpannerException;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -28,15 +30,27 @@ import io.cdap.cdap.spi.data.transaction.TxRunnable;
 public class SpannerTransactionRunner implements TransactionRunner {
 
   private final SpannerStructuredTableAdmin admin;
+  private final TransactionOption[] txOptions;
 
   public SpannerTransactionRunner(SpannerStructuredTableAdmin admin) {
+    this(admin, new TransactionOption[0]);
+  }
+
+  /**
+   * Constructs a new instance with the specified transaction options.
+   *
+   * @param admin the Spanner structured table admin to get the database client
+   * @param txOptions the transaction options to apply to read-write transactions
+   */
+  public SpannerTransactionRunner(SpannerStructuredTableAdmin admin, TransactionOption... txOptions) {
     this.admin = admin;
+    this.txOptions = txOptions;
   }
 
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     try {
-      admin.getDatabaseClient().readWriteTransaction().allowNestedTransaction().run(context -> {
+      admin.getDatabaseClient().readWriteTransaction(txOptions).allowNestedTransaction().run(context -> {
         runnable.run(new SpannerStructuredTableContext(context, admin));
         return null;
       });

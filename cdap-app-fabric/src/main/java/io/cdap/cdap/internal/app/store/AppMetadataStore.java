@@ -71,7 +71,9 @@ import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
+import io.cdap.cdap.spi.data.table.options.PreferUnionForDisjunctionOption;
 import io.cdap.cdap.spi.data.table.options.StaleReadOption;
+import io.cdap.cdap.spi.data.table.options.PartitionedUpdateOption;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.io.StringReader;
@@ -416,7 +418,8 @@ public class AppMetadataStore {
       Collection<Field<?>> filterIndexes =
           ImmutableList.of(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true),
               Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, null));
-      return table.scan(range, Integer.MAX_VALUE, filterIndexes, sortOrder);
+      return table.scan(range, Integer.MAX_VALUE, filterIndexes, sortOrder,
+          PreferUnionForDisjunctionOption.INSTANCE);
     }
     if (sortCreationTime) {
       // sort on Creation Time
@@ -1967,10 +1970,16 @@ public class AppMetadataStore {
    */
   public void scanProgramActiveRuns(ProgramReference programRef,
       Consumer<RunRecordDetail> consumer, int limit) throws IOException {
-    List<Field<?>> prefix = getRunRecordProgramRefPrefix(TYPE_RUN_RECORD_ACTIVE, programRef);
+    List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE,
+        programRef.getParent());
+    Predicate<StructuredRow> keyPredicate = row ->
+        programRef.getType().name().equals(
+            row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD))
+            && programRef.getProgram().equals(
+                row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
 
     try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(Range.singleton(prefix),
-        null, null, limit)) {
+        keyPredicate, null, limit)) {
       iterator.forEachRemaining(consumer);
     }
   }
@@ -2170,7 +2179,8 @@ public class AppMetadataStore {
             Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
 
     getRunRecordsTable()
-        .deleteAll(createRunRecordScanRange(keyPrefixFields, 0L, timeUpperBound.getEpochSecond()));
+        .deleteAll(createRunRecordScanRange(keyPrefixFields, 0L, timeUpperBound.getEpochSecond()),
+            new PartitionedUpdateOption());
   }
 
   /**
@@ -2383,13 +2393,19 @@ public class AppMetadataStore {
       long startTime, long endTime, int limit,
       @Nullable Predicate<RunRecordDetail> filter,
       String recordType) throws IOException {
-    List<Field<?>> prefix = getRunRecordProgramRefPrefix(recordType, programReference);
-    Range scanRange = createRunRecordScanRange(prefix, startTime, endTime);
+    List<Field<?>> prefix = getRunRecordApplicationPrefix(recordType, programReference.getParent());
+    Predicate<StructuredRow> timeFilter = getKeyFilterByTimeRange(startTime, endTime);
+    Predicate<StructuredRow> keyFilter = row ->
+        programReference.getType().name().equals(
+            row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD))
+            && programReference.getProgram().equals(
+                row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD))
+            && (timeFilter == null || timeFilter.test(row));
     // Because the version field is not provided, we need to specify that the result is ordered by
     // run_start_time to make sure the returned run records are chronological. Note that this could
     // have DB performance implication since specifying ORDER BY run_start_time will sort the scan
     // result in database before it's returned.
-    return getRuns(scanRange, true, status, limit, null, filter);
+    return getRuns(Range.singleton(prefix), true, status, limit, keyFilter, filter);
   }
 
   private Map<ProgramRunId, RunRecordDetail> getRuns(Range range, ProgramRunStatus status,

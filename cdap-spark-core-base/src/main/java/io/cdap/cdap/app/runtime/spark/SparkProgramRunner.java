@@ -246,7 +246,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (isLocal || UserGroupInformation.isSecurityEnabled()) {
-        sparkRuntimeService.start();
+        sparkRuntimeService.startAsync();
       } else {
         ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), sparkRuntimeService);
       }
@@ -277,7 +277,11 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         // for shutting down threads. During shutdown, there are new classes being loaded.
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         if (classLoader instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) classLoader);
+          try {
+            Closeables.close((Closeable) classLoader, true);
+          } catch (IOException e) {
+            // Ignored since swallowIOException is true
+          }
           LOG.trace("Closed SparkProgramRunner ClassLoader {}", classLoader);
         }
       }

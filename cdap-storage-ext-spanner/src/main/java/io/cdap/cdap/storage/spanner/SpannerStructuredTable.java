@@ -44,6 +44,7 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.table.options.QueryOption;
 import io.cdap.cdap.spi.data.table.options.StaleReadOption;
+import io.cdap.cdap.spi.data.table.options.PartitionedUpdateOption;
 import io.cdap.cdap.storage.spanner.compression.CompressionConfig;
 import io.cdap.cdap.storage.spanner.compression.CompressorFactory;
 import io.cdap.cdap.storage.spanner.compression.CompressorType;
@@ -414,9 +415,20 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public void deleteAll(Range range) throws InvalidFieldException {
+    deleteAll(range, new QueryOption[0]);
+  }
+
+  @Override
+  public void deleteAll(Range range, QueryOption... options) throws InvalidFieldException {
     fieldValidator.validateScanRange(range);
     Statement statement = buildRangeDeleteStatement(range);
-    transactionContext.executeUpdate(statement);
+    Optional<PartitionedUpdateOption> partitionedOption = QueryOption.getOption(PartitionedUpdateOption.class, options);
+    if (partitionedOption.isPresent()) {
+      LOG.trace("Executing partitioned delete statement: {}", statement);
+      dbClient.executePartitionedUpdate(statement);
+    } else {
+      transactionContext.executeUpdate(statement);
+    }
   }
 
   @Override

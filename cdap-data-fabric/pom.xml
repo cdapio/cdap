@@ -32,15 +32,15 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-common</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -205,10 +205,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
         <executions>
           <execution>
             <id>test-jar</id>
+            <phase>process-test-classes</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>

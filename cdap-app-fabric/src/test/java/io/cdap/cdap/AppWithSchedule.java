@@ -63,7 +63,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       }
 
       if (config.addWorkflow) {
-        addMapReduce(new SampleMR());
+        addMapReduce(new SampleMr());
         addSpark(new SampleSpark());
         addWorkflow(new SampleWorkflow());
         addWorker(new DummyWorker());
@@ -137,6 +137,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
    */
   public static class DummyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
+
     @Override
     public void run() {
       Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
@@ -165,9 +166,11 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
     }
   }
 
-  private class SampleMR extends AbstractMapReduce {
+  private class SampleMr extends AbstractMapReduce {
     @Override
-    public void configure() { }
+    public void configure() {
+      setName(MAPREDUCE);
+    }
   }
 
   private class SampleSpark extends AbstractSpark {

@@ -28,16 +28,48 @@
   <artifactId>cdap-metadata-ext-spanner</artifactId>
 
   <properties>
-    <guava.version>33.4.0-jre</guava.version>
-    <spanner.version>6.87.0</spanner.version>
+    <!--
+      All four versions below are a matched set: they are exactly what
+      com.google.cloud:libraries-bom:${gcp-libraries-bom.version} resolves to.
+      After bumping the BOM, re-derive them with:
+        mvn -pl cdap-metadata-ext-spanner dependency:list -DincludeScope=runtime
+      guava.version must be overridden here because the root pom manages
+      com.google.guava:guava via ${guava.version} and would otherwise pin the
+      much older version the Hadoop/Spark side of CDAP uses.
+    -->
+    <gcp-libraries-bom.version>26.88.1</gcp-libraries-bom.version>
+    <spanner.version>6.122.0</spanner.version>
+    <protobuf.version>4.33.6</protobuf.version>
+    <guava.version>32.0.0-jre</guava.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <!--
+        Declared ahead of the libraries-bom import on purpose. google-cloud-spanner
+        is compiled against the protobuf-java 4.x reflection API
+        (com.google.protobuf.MapFieldReflectionAccessor, added in protobuf-java
+        3.25/4.x). If anything on this module's classpath drags in an older
+        protobuf-java, loading a Spanner gRPC stub dies with:
+            java.lang.VerifyError: Bad return type ...
+            com/google/spanner/v1/Session.internalGetMapFieldReflection
+        Managing the version here makes it immune to transitive "nearest wins"
+        resolution, which plain transitive scoping does not protect against.
+      -->
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuf.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java-util</artifactId>
+        <version>${protobuf.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>libraries-bom</artifactId>
-        <version>26.55.0</version>
+        <version>${gcp-libraries-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -54,6 +86,16 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-spanner</artifactId>
+      <version>${spanner.version}</version>
+    </dependency>
+    <!--
+      Explicit (not just transitive) so that the matching protobuf runtime is
+      always copied into target/libexec, and therefore into the isolated
+      extension directory in the master image.
+    -->
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>

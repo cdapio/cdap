@@ -107,8 +107,8 @@ public class OpenCloseDataSetTest {
                                                  new BasicArguments(args), TEMP_FOLDER_SUPPLIER));
     }
 
-    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
-      getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector()
+      .getInstance(DiscoveryServiceClient.class);
 
     Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(
       String.format("%s.%s.%s.%s", ProgramType.SERVICE.getDiscoverableTypeName(), DefaultId.NAMESPACE.getEntityName(),

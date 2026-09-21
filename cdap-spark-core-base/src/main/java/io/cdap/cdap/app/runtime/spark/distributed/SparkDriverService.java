@@ -26,6 +26,7 @@ import io.cdap.cdap.app.runtime.spark.SparkProgramCompletion;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import org.apache.hadoop.conf.Configuration;
@@ -107,7 +108,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
 
     // Schedule the credentials update if necessary
     if (credentialsUpdater != null) {
-      credentialsUpdater.startAndWait();
+      Services.startAndWait(credentialsUpdater);
     }
 
     LOG.info("SparkDriverService started.");
@@ -167,7 +168,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
     Thread.interrupted();
     try {
       if (credentialsUpdater != null) {
-        credentialsUpdater.stopAndWait();
+        Services.stopAndWait(credentialsUpdater);
       }
     } finally {
       if (completionState.get() == CompletionState.COMPLETED) {
@@ -289,7 +290,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
                  terminateTs, terminationTimeout);
       }
       runtimeContext.setTerminationTime(TimeUnit.SECONDS.toMillis(terminateTs));
-      stop();
+      stopAsync();
     } else {
       LOG.warn("Ignoring unsupported command {}", command);
     }

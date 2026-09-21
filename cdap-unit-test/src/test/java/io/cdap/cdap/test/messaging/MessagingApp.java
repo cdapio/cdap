@@ -60,9 +60,9 @@ public class MessagingApp extends AbstractApplication {
   private static Message fetchMessage(MessageFetcher fetcher, String namespace, String topic,
                                       @Nullable String afterMessageId, long timeout, TimeUnit unit) throws Exception {
     CloseableIterator<Message> iterator = fetcher.fetch(namespace, topic, 1, afterMessageId);
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     try {
-      while (!iterator.hasNext() && stopwatch.elapsedTime(unit) < timeout) {
+      while (!iterator.hasNext() && stopwatch.elapsed(unit) < timeout) {
         TimeUnit.MILLISECONDS.sleep(100);
         iterator = fetcher.fetch(namespace, topic, 1, afterMessageId);
       }

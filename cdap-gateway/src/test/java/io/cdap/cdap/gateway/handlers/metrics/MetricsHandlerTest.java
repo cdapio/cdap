@@ -416,14 +416,17 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
   public void testMultipleMetricsSingleContext() throws Exception {
     verifyAggregateQueryResult(
         "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:splitter"
-            + "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.of(2L, 2L));
+            + "&metric=system.reads&metric=system.writes&aggregate=true",
+        ImmutableMap.of("system.reads", 2L, "system.writes", 2L));
 
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 300 * 1000) / 1000;
     verifyRangeQueryResult(
         "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:collector"
             + "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
-            + end, ImmutableList.of(1L, 1L, 1L), ImmutableList.of(1L, 1L, 1L));
+            + end,
+        ImmutableMap.of("system.aa", 1L, "system.ab", 1L, "system.zz", 1L),
+        ImmutableMap.of("system.aa", 1L, "system.ab", 1L, "system.zz", 1L));
   }
 
   @Test
@@ -434,7 +437,9 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     verifyRangeQueryResult(
         "/v3/metrics/query?tag=namespace:childctx&tag=app:Replicator&tag=worker:ReplicatorWorker&tag=ent:mytable"
             + "&metric=user.inserts&metric=user.ddls&start=" + start + "&end="
-            + end, ImmutableList.of(1L, 1L), ImmutableList.of(1L, 10L));
+            + end,
+        ImmutableMap.of("user.inserts", 1L, "user.ddls", 1L),
+        ImmutableMap.of("user.inserts", 10L, "user.ddls", 1L));
   }
 
   @Test
@@ -778,17 +783,26 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     return null;
   }
 
-  private void verifyAggregateQueryResult(String url, List<Long> expectedValue) throws Exception {
+  private void verifyAggregateQueryResult(String url, Map<String, Long> expectedValues) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    for (int i = 0; i < queryResult.getSeries().length; i++) {
-      Assert.assertEquals(expectedValue.get(i), (Long) queryResult.getSeries()[i].getData()[0].getValue());
+    Assert.assertEquals(expectedValues.size(), queryResult.getSeries().length);
+    for (MetricQueryResult.TimeSeries series : queryResult.getSeries()) {
+      Long expectedVal = expectedValues.get(series.getMetricName());
+      Assert.assertNotNull("Missing expected value for metric: " + series.getMetricName(), expectedVal);
+      Assert.assertEquals(expectedVal, (Long) series.getData()[0].getValue());
     }
   }
 
-  private void verifyRangeQueryResult(String url, List<Long> expectedPoints, List<Long> expectedSum) throws Exception {
+  private void verifyRangeQueryResult(String url, Map<String, Long> expectedPoints,
+                                      Map<String, Long> expectedSum) throws Exception {
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
-    for (int i = 0; i < queryResult.getSeries().length; i++) {
-      verifyTimeSeries(queryResult.getSeries()[i], expectedPoints.get(i), expectedSum.get(i));
+    Assert.assertEquals(expectedPoints.size(), queryResult.getSeries().length);
+    for (MetricQueryResult.TimeSeries series : queryResult.getSeries()) {
+      Long points = expectedPoints.get(series.getMetricName());
+      Long sum = expectedSum.get(series.getMetricName());
+      Assert.assertNotNull("Missing expected points for metric: " + series.getMetricName(), points);
+      Assert.assertNotNull("Missing expected sum for metric: " + series.getMetricName(), sum);
+      verifyTimeSeries(series, points, sum);
     }
   }
 
@@ -900,11 +914,15 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     MetricQueryResult.TimeSeries[] series = result.getSeries();
     Assert.assertEquals(2, series.length);
     Assert.assertEquals(3600, series[0].getData().length);
-    for (int i = 0; i < series[0].getData().length; i++) {
-      Assert.assertEquals(i, series[0].getData()[i].getTime());
-      Assert.assertEquals(2, series[0].getData()[i].getValue());
-      Assert.assertEquals(i, series[1].getData()[i].getTime());
-      Assert.assertEquals(i + 1, series[1].getData()[i].getValue());
+    MetricQueryResult.TimeSeries counterSeries =
+      series[0].getMetricName().equals("system.agg.counter") ? series[0] : series[1];
+    MetricQueryResult.TimeSeries gaugeSeries =
+      series[0].getMetricName().equals("system.agg.gauge") ? series[0] : series[1];
+    for (int i = 0; i < counterSeries.getData().length; i++) {
+      Assert.assertEquals(i, counterSeries.getData()[i].getTime());
+      Assert.assertEquals(2, counterSeries.getData()[i].getValue());
+      Assert.assertEquals(i, gaugeSeries.getData()[i].getTime());
+      Assert.assertEquals(i + 1, gaugeSeries.getData()[i].getValue());
     }
 
     // query with aggregation SUM, but a limit greater than the number of data points, it should not partition the
@@ -914,11 +932,13 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     series = result.getSeries();
     Assert.assertEquals(2, series.length);
     Assert.assertEquals(3600, series[0].getData().length);
-    for (int i = 0; i < series[0].getData().length; i++) {
-      Assert.assertEquals(i, series[0].getData()[i].getTime());
-      Assert.assertEquals(2, series[0].getData()[i].getValue());
-      Assert.assertEquals(i, series[1].getData()[i].getTime());
-      Assert.assertEquals(i + 1, series[1].getData()[i].getValue());
+    counterSeries = series[0].getMetricName().equals("system.agg.counter") ? series[0] : series[1];
+    gaugeSeries = series[0].getMetricName().equals("system.agg.gauge") ? series[0] : series[1];
+    for (int i = 0; i < counterSeries.getData().length; i++) {
+      Assert.assertEquals(i, counterSeries.getData()[i].getTime());
+      Assert.assertEquals(2, counterSeries.getData()[i].getValue());
+      Assert.assertEquals(i, gaugeSeries.getData()[i].getTime());
+      Assert.assertEquals(i + 1, gaugeSeries.getData()[i].getValue());
     }
 
     // query with aggregation sum for 10 data points for counter with 1s resolution,

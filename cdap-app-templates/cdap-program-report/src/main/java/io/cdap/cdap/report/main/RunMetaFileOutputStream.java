@@ -62,8 +62,12 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
       this.createTime = createTime;
       this.fileSize = 0;
     } catch (IOException e) {
-      Closeables.closeQuietly(outputStream);
-      Closeables.closeQuietly(dataFileWriter);
+      try {
+        Closeables.close(outputStream, true);
+        Closeables.close(dataFileWriter, true);
+      } catch (IOException ex) {
+        // Ignored since swallowIOException is true
+      }
       throw e;
     }
   }

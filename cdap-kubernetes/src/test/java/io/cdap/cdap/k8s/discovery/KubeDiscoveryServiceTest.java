@@ -97,6 +97,7 @@ public class KubeDiscoveryServiceTest {
     kubeDiscoveryService = new KubeDiscoveryService(
         "cdap-namespace",
         NAME_PREFIX,
+        "test-pod",
         POD_LABELS,
         Collections.singletonList(OWNER_REFERENCE),
         API_CLIENT_FACTORY,
@@ -104,16 +105,26 @@ public class KubeDiscoveryServiceTest {
         LOAD_BALANCER_ANNOTATIONS);
   }
 
+  private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
+      Map<String, String> podLabels) {
+    return new KubeDiscoveryService(
+        namespace,
+        prefix,
+        "test-pod",
+        podLabels,
+        Collections.emptyList(),
+        API_CLIENT_FACTORY,
+        Collections.emptyList(),
+        Collections.emptyMap());
+  }
 
   @Test
   @Ignore
   public void testDiscoveryService() throws Exception {
     String namespace = "default";
     Map<String, String> podLabels = ImmutableMap.of("cdap.container", "test");
-    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace,
-        "cdap-test-",
-        podLabels, Collections.emptyList(),
-        API_CLIENT_FACTORY)) {
+    try (KubeDiscoveryService service = createDiscoveryService(namespace, "cdap-test-",
+        podLabels)) {
       // Watch for changes
       ServiceDiscovered serviceDiscovered = service.discover("test.service");
 
@@ -210,10 +221,8 @@ public class KubeDiscoveryServiceTest {
   public void testCloseWatchRace() throws Exception {
     String namespace = "default";
     String prefix = "cdap-test-";
-    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace,
-        prefix,
-        ImmutableMap.of("cdap.container", "test"),
-        Collections.emptyList(), API_CLIENT_FACTORY)) {
+    try (KubeDiscoveryService service = createDiscoveryService(namespace, prefix,
+        ImmutableMap.of("cdap.container", "test"))) {
       // Register two services first
       service.register(new Discoverable("test1",
           new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
@@ -260,10 +269,8 @@ public class KubeDiscoveryServiceTest {
   public void testCloseWatchRaceDifferentThreads() throws Exception {
     String namespace = "default";
     String prefix = "cdap-test-";
-    try (KubeDiscoveryService service = new KubeDiscoveryService(namespace,
-        prefix,
-        ImmutableMap.of("cdap.container", "test"),
-        Collections.emptyList(), API_CLIENT_FACTORY)) {
+    try (KubeDiscoveryService service = createDiscoveryService(namespace, prefix,
+        ImmutableMap.of("cdap.container", "test"))) {
       // Register two services first
       service.register(new Discoverable("test1",
           new InetSocketAddress(InetAddress.getLoopbackAddress(), 1234)));
@@ -469,6 +476,50 @@ public class KubeDiscoveryServiceTest {
     Assert.assertTrue(kubeDiscoveryService.isServiceUpdateNeeded(
         currentService.getSpec().getPorts()
             .get(0), currentService, discoverable));
+  }
+
+  @Test
+  public void testIsServiceUpdateNeededOwnerChange() {
+    V1Service currentService = getClusterIpService();
+    V1OwnerReference differentOwner = new V1OwnerReferenceBuilder(OWNER_REFERENCE).withUid(
+        "different-uid").build();
+    currentService.getMetadata().setOwnerReferences(Collections.singletonList(differentOwner));
+
+    Discoverable discoverable = new Discoverable(CLUSTER_IP_SERVICE_NAME,
+        InetSocketAddress.createUnresolved("cdap.io", SERVICE_PORT));
+
+    Assert.assertTrue(
+        kubeDiscoveryService.isServiceUpdateNeeded(currentService.getSpec().getPorts().get(0),
+            currentService, discoverable));
+  }
+
+  @Test
+  public void testIsServiceUpdateNeededNoOwnerOnService() {
+    V1Service currentService = getClusterIpService();
+    currentService.getMetadata().setOwnerReferences(null);
+
+    Discoverable discoverable = new Discoverable(CLUSTER_IP_SERVICE_NAME,
+        InetSocketAddress.createUnresolved("cdap.io", SERVICE_PORT));
+
+    Assert.assertTrue(
+        kubeDiscoveryService.isServiceUpdateNeeded(currentService.getSpec().getPorts().get(0),
+            currentService, discoverable));
+  }
+
+  @Test
+  public void testIsServiceUpdateNeededBothNoOwners() {
+    KubeDiscoveryService noOwnerService = createDiscoveryService("cdap-namespace", NAME_PREFIX,
+        POD_LABELS);
+
+    V1Service currentService = getClusterIpService();
+    currentService.getMetadata().setOwnerReferences(null);
+
+    Discoverable discoverable = new Discoverable(CLUSTER_IP_SERVICE_NAME,
+        InetSocketAddress.createUnresolved("cdap.io", SERVICE_PORT));
+
+    Assert.assertFalse(
+        noOwnerService.isServiceUpdateNeeded(currentService.getSpec().getPorts().get(0),
+            currentService, discoverable));
   }
 
   private V1Service getLoadBalancerService() {

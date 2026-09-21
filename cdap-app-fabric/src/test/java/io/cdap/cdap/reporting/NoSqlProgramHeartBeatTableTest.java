@@ -21,11 +21,10 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import java.time.Instant;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.time.Instant;
 
 public class NoSqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
 

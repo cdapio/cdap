@@ -26,6 +26,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
@@ -138,7 +139,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected List<String> beforeSubmit() throws Exception {
-    sparkExecutionService.startAndWait();
+    Services.startAndWait(sparkExecutionService);
     InetSocketAddress socketAddress = sparkExecutionService.getBindAddress();
     // use ip instead of hostname, as some environments (like kubernetes) don't work properly with hostname
     String uri = String.format("http://%s:%d", socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
@@ -164,7 +165,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
     sparkExecutionService.setShutdownWaitSeconds(timeoutTimeUnit.toSeconds(timeout));
-    sparkExecutionService.stopAndWait();
+    Services.stopAndWait(sparkExecutionService);
   }
 
   @Override

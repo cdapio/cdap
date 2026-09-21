@@ -48,6 +48,7 @@ public class DefaultMetadataServiceClientTest extends AppFabricTestBase {
     ImmutableMap.of(new ScopedName(MetadataScope.SYSTEM, "x"), "1",
                     new ScopedName(MetadataScope.SYSTEM, "y"), "2",
                     new ScopedName(MetadataScope.USER, "z"), "4"));
+
   @Test
   public void testCreate() throws Exception {
     final MetadataEntity createEntity = MetadataEntity.builder().append("create", "test").build();

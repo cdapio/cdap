@@ -49,7 +49,7 @@ import org.junit.Test;
 /**
  * Tests for CapabilityApplier
  */
- public class CapabilityApplierTest extends AppFabricTestBase {
+public class CapabilityApplierTest extends AppFabricTestBase {
   private static ApplicationLifecycleService applicationLifecycleService;
   private static ArtifactRepository artifactRepository;
   private static CapabilityApplier capabilityApplier;

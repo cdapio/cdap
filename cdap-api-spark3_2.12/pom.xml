@@ -235,6 +235,57 @@
           </execution>
         </executions>
       </plugin>
+      <!--
+        Guard against a silent packaging failure.
+
+        This module has no src/ of its own - every source is copied in from
+        cdap-api-spark-base and recompiled for Scala 2.12. If stale .scala
+        files are left in target/classes, scala-maven-plugin's timestamp check
+        reports "Nothing to compile - all classes are up to date", exits 0, and
+        maven-jar-plugin then packages the .scala SOURCES in place of the
+        missing .class files. The module reports SUCCESS and installs a jar
+        with no SparkExecutionContext/SparkCompiler/SparkInterpreter classes,
+        which breaks every downstream Spark module with a confusing
+        "object SparkExecutionContext is not a member of package" error.
+
+        Fail here instead, where the cause is obvious.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>verify-scala-compiled</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <fail message="Scala sources leaked into ${project.build.outputDirectory} instead of being compiled. Run 'mvn clean' on this module - scala-maven-plugin skipped compilation because stale .scala files made it think the output was up to date.">
+                  <condition>
+                    <resourcecount when="greater" count="0">
+                      <fileset dir="${project.build.outputDirectory}" includes="**/*.scala"/>
+                    </resourcecount>
+                  </condition>
+                </fail>
+                <fail message="Scala classes are missing from ${project.build.outputDirectory}. Packaging would produce a jar that breaks all downstream Spark modules. Run 'mvn clean' on this module and rebuild.">
+                  <condition>
+                    <not>
+                      <and>
+                        <available file="${project.build.outputDirectory}/io/cdap/cdap/api/spark/SparkExecutionContext.class"/>
+                        <available file="${project.build.outputDirectory}/io/cdap/cdap/api/spark/dynamic/SparkCompiler.class"/>
+                        <available file="${project.build.outputDirectory}/io/cdap/cdap/api/spark/dynamic/SparkInterpreter.class"/>
+                      </and>
+                    </not>
+                  </condition>
+                </fail>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 

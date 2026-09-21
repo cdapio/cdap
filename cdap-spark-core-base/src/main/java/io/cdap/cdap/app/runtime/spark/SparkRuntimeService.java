@@ -30,7 +30,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramState;
 import io.cdap.cdap.api.ProgramStatus;
@@ -52,6 +52,7 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -205,7 +206,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "Spark - " + runtimeContext.getSparkSpecification().getName();
   }
 
@@ -285,7 +286,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           // In case of spark-on-k8s, artifactFetcherService is used by spark-drivers for fetching artifacts bundle.
           Location location = createBundle(new File("./artifacts").getAbsoluteFile().toPath());
           artifactFetcherService = new ArtifactFetcherService(cConf, location, commonNettyHttpServiceFactory);
-          artifactFetcherService.startAndWait();
+          Services.startAndWait(artifactFetcherService);
         }
 
       } else if (isLocal) {
@@ -472,7 +473,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } finally {
       try {
         if (artifactFetcherService != null) {
-          artifactFetcherService.stopAndWait();
+          Services.stopAndWait(artifactFetcherService);
         }
       } finally {
         cleanupTask.run();
@@ -502,16 +503,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    *
    * @param timeout the timeout for force termination of the spark job
    * @param timeoutUnit the unit for the timeout
-   * @return a future for the shutdown result, regardless of whether this call initiated shutdown.
-   *         Calling {@link ListenableFuture#get} will block until the service has finished shutting
-   *         down, and either returns {@link State#TERMINATED} or throws an
-   *         {@link ExecutionException}. If it has already finished stopping,
-   *         {@link ListenableFuture#get} returns immediately. Cancelling this future has no effect
-   *         on the service.
+   * @return this service
    */
-  public ListenableFuture<State> stop(long timeout, TimeUnit timeoutUnit) {
+  public Service stop(long timeout, TimeUnit timeoutUnit) {
     gracefulTimeoutMillis = timeoutUnit.toMillis(timeout);
-    return stop();
+    return stopAsync();
   }
 
   @Override
@@ -697,7 +693,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // in PythonWorkerFactory (via SparkClassRewriter) so that the pyspark library is available.
       if (isLocal) {
         SparkRuntimeEnv.setProperty("cdap.spark.pyFiles", Joiner.on(File.pathSeparator).join(pyFilePaths));
+        SparkRuntimeEnv.setProperty("spark.pyspark.python", System.getenv().getOrDefault("PYSPARK_PYTHON", "python3"));
+        SparkRuntimeEnv.setProperty("spark.pyspark.driver.python",
+                                    System.getenv().getOrDefault("PYSPARK_DRIVER_PYTHON", "python3"));
       }
+
+      configs.putIfAbsent("spark.pyspark.python", System.getenv().getOrDefault("PYSPARK_PYTHON", "python3"));
+      configs.putIfAbsent("spark.pyspark.driver.python",
+                          System.getenv().getOrDefault("PYSPARK_DRIVER_PYTHON", "python3"));
     }
 
     return configs;
@@ -856,9 +859,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       hConf.set(String.format("fs.%s.impl.disable.cache", scriptURI.getScheme()), "true");
       try (
         FileSystem fs = FileSystem.get(scriptURI, hConf);
-        InputStream is = fs.open(new Path(scriptURI))
+        InputStream is = fs.open(new Path(scriptURI));
+        FileOutputStream fos = new FileOutputStream(pythonFile)
       ) {
-        ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+        ByteStreams.copy(is, fos);
         return pythonFile.toURI();
       }
     } catch (IOException e) {
@@ -867,8 +871,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     // Last resort, turn the URI to URL and try to copy from it.
-    try (InputStream is = scriptURI.toURL().openStream()) {
-      ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+    try (InputStream is = scriptURI.toURL().openStream();
+         FileOutputStream fos = new FileOutputStream(pythonFile)) {
+      ByteStreams.copy(is, fos);
     }
     return pythonFile.toURI();
   }

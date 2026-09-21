@@ -161,14 +161,15 @@ DistributedKeyManagerTest extends TestTokenManager {
     DistributedKeyManager keyManager = getKeyManager(injector1, true);
     TokenManager tokenManager = new TokenManager(keyManager,
         injector1.getInstance(UserIdentityCodec.class));
-    tokenManager.startAsync().awaitRunning();
     return new ImmutablePair<>(tokenManager, injector1.getInstance(AccessTokenCodec.class));
   }
 
   private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader)
       throws Exception {
     ZKClientService zk = injector.getInstance(ZKClientService.class);
-    zk.startAsync().awaitRunning();
+    if (zk.state() == com.google.common.util.concurrent.Service.State.NEW) {
+      zk.startAsync().awaitRunning();
+    }
     WaitableDistributedKeyManager keyManager =
         new WaitableDistributedKeyManager(injector.getInstance(CConfiguration.class),
             injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {

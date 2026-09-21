@@ -45,6 +45,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
@@ -168,7 +169,7 @@ public class SparkContainerDriverLauncher {
     artifactFetcherService =
       new ArtifactFetcherService(cConf, createBundle(new File(WORKING_DIRECTORY).getAbsoluteFile().toPath()),
                                  injector.getInstance(CommonNettyHttpServiceFactory.class));
-    artifactFetcherService.startAndWait();
+    Services.startAndWait(artifactFetcherService);
 
     SparkContainerLauncher.launch(delegateClass, delegateArgs.toArray(new String[delegateArgs.size()]), false, "k8s");
   }

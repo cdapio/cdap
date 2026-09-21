@@ -27,9 +27,10 @@ import java.util.List;
 public class ApplicationWithPrograms extends ApplicationDeployable {
 
   private final List<ProgramDescriptor> programDescriptors;
+  private final boolean deploySkipped;
 
   public ApplicationWithPrograms(ApplicationDeployable applicationDeployable,
-      Iterable<? extends ProgramDescriptor> programDescriptors) {
+      Iterable<? extends ProgramDescriptor> programDescriptors, boolean deploySkipped) {
     super(applicationDeployable.getArtifactId(), applicationDeployable.getArtifactLocation(),
         applicationDeployable.getApplicationId(), applicationDeployable.getSpecification(),
         applicationDeployable.getExistingAppSpec(),
@@ -40,6 +41,19 @@ public class ApplicationWithPrograms extends ApplicationDeployable {
         applicationDeployable.getSourceControlMeta(), applicationDeployable.isUpgrade(),
         applicationDeployable.isSkipMarkingLatest());
     this.programDescriptors = ImmutableList.copyOf(programDescriptors);
+    this.deploySkipped = deploySkipped;
+  }
+
+  public ApplicationWithPrograms(ApplicationDeployable applicationDeployable,
+      Iterable<? extends ProgramDescriptor> programDescriptors) {
+    this(applicationDeployable, programDescriptors, false);
+  }
+
+  /**
+   * Returns true if the deployment was skipped because it was a duplicate request.
+   */
+  public boolean isDeploySkipped() {
+    return deploySkipped;
   }
 
   /**

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.Config;
@@ -40,8 +41,8 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.DefaultId;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.Notification;
@@ -119,7 +120,9 @@ public class MapReduceRunnerTestBase {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
 
     metricStore = injector.getInstance(MetricStore.class);
-    txService.startAsync().awaitRunning();
+    if (txService.state() == Service.State.NEW) {
+      txService.startAsync().awaitRunning();
+    }
 
     // Always create the default namespace
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
@@ -127,7 +130,9 @@ public class MapReduceRunnerTestBase {
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAsync().awaitTerminated();
+    if (txService != null && txService.state() == Service.State.RUNNING) {
+      txService.stopAsync().awaitTerminated();
+    }
     AppFabricTestHelper.shutdown();
   }
 

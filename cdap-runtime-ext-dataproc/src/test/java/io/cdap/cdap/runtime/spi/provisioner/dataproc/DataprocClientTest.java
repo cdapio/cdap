@@ -33,6 +33,7 @@ import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.NotFoundException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.api.services.compute.Compute;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -59,6 +60,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
@@ -377,5 +379,113 @@ public class DataprocClientTest {
       Collections.emptyList(), null);
     String errorMsgRet = client.getClusterFailureMsg(cdapCluster.getName());
     Assert.assertTrue(errorMsgRet.contains(errorMsg));
+  }
+
+  @Test
+  public void testGetLatestOperation() throws Exception {
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+                                                            new ErrorCategory(ErrorCategoryEnum.OTHERS));
+
+    OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
+    PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
+
+    OperationsClient.ListOperationsPagedResponse listOperationsPagedResponse =
+      PowerMockito.mock(OperationsClient.ListOperationsPagedResponse.class);
+    PowerMockito.when(operationsClient.listOperations(
+        Mockito.eq("projects/dummy-project/regions/us-test1/operations"),
+        Mockito.eq("clusterName=\"mycluster\" AND operationType=\"CREATE\"")))
+      .thenReturn(listOperationsPagedResponse);
+
+    OperationsClient.ListOperationsPage page = Mockito.mock(OperationsClient.ListOperationsPage.class);
+    Mockito.when(listOperationsPagedResponse.getPage()).thenReturn(page);
+
+    Operation operation = Operation.newBuilder().setName("op-name").setDone(true).build();
+    List<Operation> operations = Collections.singletonList(operation);
+    Mockito.when(page.getValues()).thenReturn(operations);
+
+    Optional<Operation> result = client.getLatestOperation("mycluster", "CREATE");
+    Assert.assertTrue(result.isPresent());
+    Assert.assertEquals("op-name", result.get().getName());
+  }
+
+  @Test
+  public void testGetLatestOperationReturnsEmpty() throws Exception {
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+                                                            new ErrorCategory(ErrorCategoryEnum.OTHERS));
+
+    OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
+    PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
+
+    OperationsClient.ListOperationsPagedResponse listOperationsPagedResponse =
+      Mockito.mock(OperationsClient.ListOperationsPagedResponse.class);
+    Mockito.when(operationsClient.listOperations(
+        Mockito.eq("projects/dummy-project/regions/us-test1/operations"),
+        Mockito.eq("clusterName=\"mycluster\" AND operationType=\"CREATE\"")))
+      .thenReturn(listOperationsPagedResponse);
+
+    OperationsClient.ListOperationsPage page = Mockito.mock(OperationsClient.ListOperationsPage.class);
+    Mockito.when(listOperationsPagedResponse.getPage()).thenReturn(page);
+
+    List<Operation> operations = Collections.emptyList();
+    Mockito.when(page.getValues()).thenReturn(operations);
+
+    Optional<Operation> result = client.getLatestOperation("mycluster", "CREATE");
+    Assert.assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void testGetLatestOperationThrowsException() throws Exception {
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+                                                            new ErrorCategory(ErrorCategoryEnum.OTHERS));
+
+    OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
+    PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
+
+    StatusCode statusCode = Mockito.mock(StatusCode.class);
+    StatusCode.Code realCode = StatusCode.Code.UNAVAILABLE;
+    Mockito.when(statusCode.getCode()).thenReturn(realCode);
+
+    ApiException mockException = Mockito.mock(ApiException.class);
+    Mockito.when(mockException.getStatusCode()).thenReturn(statusCode);
+
+    PowerMockito.when(operationsClient.listOperations(Mockito.anyString(), Mockito.anyString()))
+      .thenThrow(mockException);
+
+    try {
+      client.getLatestOperation("mycluster", "CREATE");
+      Assert.fail("Expected RetryableProvisionException to be thrown");
+    } catch (RetryableProvisionException e) {
+      Assert.assertEquals(mockException, e.getCause());
+    }
+  }
+
+  @Test
+  public void testGetLatestOperationReturnsMultiple() throws Exception {
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+                                                            new ErrorCategory(ErrorCategoryEnum.OTHERS));
+
+    OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
+    PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
+
+    OperationsClient.ListOperationsPagedResponse listOperationsPagedResponse =
+      PowerMockito.mock(OperationsClient.ListOperationsPagedResponse.class);
+    PowerMockito.when(operationsClient.listOperations(
+        Mockito.eq("projects/dummy-project/regions/us-test1/operations"),
+        Mockito.eq("clusterName=\"mycluster\" AND operationType=\"CREATE\"")))
+      .thenReturn(listOperationsPagedResponse);
+
+    OperationsClient.ListOperationsPage page = Mockito.mock(OperationsClient.ListOperationsPage.class);
+    Mockito.when(listOperationsPagedResponse.getPage()).thenReturn(page);
+
+    Operation latestOp = Operation.newBuilder().setName("latest-op").setDone(true).build();
+    Operation olderOp = Operation.newBuilder().setName("older-op").setDone(true).build();
+
+    List<Operation> operations = java.util.Arrays.asList(latestOp, olderOp);
+    Mockito.when(page.getValues()).thenReturn(operations);
+
+    Optional<Operation> result = client.getLatestOperation("mycluster", "CREATE");
+
+    Assert.assertTrue(result.isPresent());
+    Assert.assertEquals("latest-op", result.get().getName());
   }
 }

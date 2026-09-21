@@ -48,6 +48,6 @@ public final class StringPartitioner implements Partitioner {
 
   @Override
   public int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString(), StandardCharsets.UTF_8).asInt()) % this.numPartitions;
+    return Math.abs(Hashing.md5().hashUnencodedChars(key.toString()).asInt()) % this.numPartitions;
   }
 }

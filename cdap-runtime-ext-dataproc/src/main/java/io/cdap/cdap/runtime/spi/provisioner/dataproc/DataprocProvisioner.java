@@ -16,16 +16,21 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.api.gax.grpc.GrpcStatusCode;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
+import com.google.longrunning.Operation;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
+import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -38,10 +43,12 @@ import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -49,6 +56,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+
+import io.grpc.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +81,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   //A lock to use for cluster reuse
   private static final String REUSE_LOCK = "reuse";
+
+  private static final Set<ClusterStatus> TERMINAL_STATES =
+    EnumSet.of(ClusterStatus.RUNNING, ClusterStatus.FAILED, ClusterStatus.NOT_EXISTS);
 
   private final DataprocClientFactory clientFactory;
 
@@ -471,16 +483,21 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
 
-    ClusterStatus status = cluster.getStatus();
+    ClusterStatus previousStatus = cluster.getStatus();
     // if we are skipping the delete, need to avoid checking the real cluster status and pretend like it is deleted.
-    if (conf.isSkipDelete() && status == ClusterStatus.DELETING) {
+    if (conf.isSkipDelete() && previousStatus == ClusterStatus.DELETING) {
       return ClusterStatus.NOT_EXISTS;
     }
 
+    ClusterStatus status;
     try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
       status = client.getClusterStatus(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterStatus.response.count");
+
+      if (hasReachedTerminalState(previousStatus, status)) {
+        emitLroMetric(context, client, conf, previousStatus, clusterName);
+      }
       return status;
     } catch (Exception e) {
       DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
@@ -488,6 +505,68 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       throw e;
     }
   }
+
+  private boolean hasReachedTerminalState(ClusterStatus previous, ClusterStatus current) {
+    return !TERMINAL_STATES.contains(previous) && TERMINAL_STATES.contains(current);
+  }
+
+  /**
+   * Emits a metric for the outcome of a Long Running Operation (LRO) when a cluster
+   * transitions to a terminal status.
+   *
+   * @param context the provisioner context
+   * @param client the dataproc client
+   * @param conf the dataproc configuration
+   * @param previousStatus the status of the cluster before the transition
+   * @param clusterName the name of the cluster
+   */
+  private void emitLroMetric(ProvisionerContext context, DataprocClient client, DataprocConf conf,
+                             ClusterStatus previousStatus, String clusterName) {
+    String method = getMethod(previousStatus);
+    if (method == null) {
+      return;
+    }
+
+    try {
+      Optional<Operation> operation = client.getLatestOperation(clusterName, method);
+
+      if (!operation.isPresent() || !operation.get().getDone()) {
+        return;
+      }
+
+      Operation op = operation.get();
+      String metricName = "provisioner.operation.response.count";
+      String imageVersion = getImageVersion(context, conf);
+
+      DataprocMetric.Builder builder = DataprocMetric.builder(metricName)
+        .setRegion(conf.getRegion())
+        .setImageVersion(imageVersion)
+        .setMethod(method);
+
+      if (op.hasError()) {
+        Status.Code grpcCode = Status.fromCodeValue(op.getError().getCode()).getCode();
+        StatusCode gaxStatusCode = GrpcStatusCode.of(grpcCode);
+        builder.setStatusCode(gaxStatusCode.getCode());
+      }
+
+      DataprocUtils.emitMetric(context, builder.build());
+    } catch (RetryableProvisionException | RuntimeException ex) {
+      LOG.warn("Failed to retrieve LRO operation metadata for metric emission on cluster {}", clusterName, ex);
+    }
+  }
+
+  @Nullable
+  private String getMethod(ClusterStatus status) {
+    switch (status) {
+      case CREATING:
+        return "CREATE";
+      case DELETING:
+        return "DELETE";
+      default:
+        return null;
+    }
+  }
+
 
   @Override
   public String getClusterFailureMsg(ProvisionerContext context, Cluster cluster) throws Exception {

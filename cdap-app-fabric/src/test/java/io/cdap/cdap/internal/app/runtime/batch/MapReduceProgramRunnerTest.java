@@ -293,7 +293,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     // write a handful of numbers to a file; compute their sum, too.
     final long[] values = { 15L, 17L, 7L, 3L };
     final FileSet input = datasetCache.getDataset(inputDatasetName, inputArgs);
-    long sum = 0L, count = 1;
+    long sum = 0L;
+    long count = 1;
     long inputRecords = 0;
     for (Location inputLocation : input.getInputLocations()) {
       final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());

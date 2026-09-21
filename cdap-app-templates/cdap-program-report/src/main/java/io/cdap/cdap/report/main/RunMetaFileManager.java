@@ -108,7 +108,11 @@ public class RunMetaFileManager {
   public void cleanup() {
     Collection<RunMetaFileOutputStream> outputStreams = namespaceToLogFileStreamMap.values();
     for (RunMetaFileOutputStream outputStream : outputStreams) {
-      Closeables.closeQuietly(outputStream);
+      try {
+        Closeables.close(outputStream, true);
+      } catch (IOException e) {
+        // Ignored since swallowIOException is true
+      }
     }
   }
 
@@ -149,7 +153,11 @@ public class RunMetaFileManager {
         (System.currentTimeMillis() - runMetaFileOutputStream.getCreateTime())
             > maxFileOpenDurationMillis;
     if (runMetaFileOutputStream.getSize() > maxFileSizeBytes || isExpired) {
-      Closeables.closeQuietly(runMetaFileOutputStream);
+      try {
+        Closeables.close(runMetaFileOutputStream, true);
+      } catch (IOException e) {
+        // Ignored since swallowIOException is true
+      }
       createLogFileOutputStreamWithRetry(namespace, timestamp);
     }
   }

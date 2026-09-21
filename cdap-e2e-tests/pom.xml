@@ -29,7 +29,6 @@
   <packaging>jar</packaging>
 
   <properties>
-    <guava.version>25.1-jre</guava.version>
   </properties>
 
   <build>
@@ -109,7 +108,6 @@
         <dependency>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
-          <version>31.1-jre</version>
         </dependency>
         <dependency>
           <groupId>io.cdap.tests.e2e</groupId>

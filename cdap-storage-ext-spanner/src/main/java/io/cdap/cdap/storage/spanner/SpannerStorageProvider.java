@@ -28,6 +28,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.time.Duration;
 
 /**
  * A {@link StorageProvider} implementation that uses Google Cloud Spanner as the storage engine.
@@ -54,6 +55,9 @@ public class SpannerStorageProvider implements StorageProvider {
   public static final String COMPRESSION_CONFIG = "compression.config";
   static final String NAME = "gcp-spanner";
 
+  private static final String PARTITIONED_DML_TIMEOUT_HOURS = "partitioned.dml.timeout.hours";
+  private static final Duration DEFAULT_PARTITIONED_DML_TIMEOUT = Duration.ofHours(12);
+
   private Spanner spanner;
   private SpannerStructuredTableAdmin admin;
   private RetryingSpannerTransactionRunner txRunner;
@@ -78,6 +82,12 @@ public class SpannerStorageProvider implements StorageProvider {
     }
 
     SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(project);
+    Duration partitionedDmlTimeout = DEFAULT_PARTITIONED_DML_TIMEOUT;
+    String timeoutStr = conf.get(PARTITIONED_DML_TIMEOUT_HOURS);
+    if (timeoutStr != null) {
+      partitionedDmlTimeout = Duration.ofHours(Long.parseLong(timeoutStr));
+    }
+    builder.setPartitionedDmlTimeoutDuration(partitionedDmlTimeout);
 
     String credentialsPath = conf.get(CREDENTIALS_PATH);
     if (credentialsPath != null) {

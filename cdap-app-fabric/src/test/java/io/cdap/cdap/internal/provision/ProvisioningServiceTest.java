@@ -63,6 +63,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -294,7 +295,8 @@ public class ProvisioningServiceTest {
       return provisioningService.deprovision(taskFields.programRunId, context, t -> { });
     });
     task.run();
-    Assert.assertTrue(provisioningService.cancelDeprovisionTask(taskFields.programRunId).isPresent());
+    Optional<ProvisioningTaskInfo> cancelledInfo = provisioningService.cancelDeprovisionTask(taskFields.programRunId);
+    Assert.assertTrue(cancelledInfo.isPresent());
 
     // check that the state of the task is cancelled
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.DEPROVISION);

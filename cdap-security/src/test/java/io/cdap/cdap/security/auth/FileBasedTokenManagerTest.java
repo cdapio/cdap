@@ -61,7 +61,6 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
                                              new FileBasedCoreSecurityModule(),
                                              new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
-    tokenManager.startAsync().awaitRunning();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<>(tokenManager, tokenCodec);
   }

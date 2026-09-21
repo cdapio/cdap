@@ -25,6 +25,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
+import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServiceBuilder;
 import io.kubernetes.client.openapi.models.V1ServiceList;
@@ -34,10 +35,10 @@ import io.kubernetes.client.util.generic.options.ListOptions;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,6 +79,7 @@ public class KubeDiscoveryService implements DiscoveryService,
   private static final String SERVICE_TYPE_CLUSTER_IP = "ClusterIP";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
 
+  private final String podName;
   private final String namespace;
   private final String namePrefix;
   private final Map<String, DefaultServiceDiscovered> serviceDiscovereds;
@@ -97,26 +99,24 @@ public class KubeDiscoveryService implements DiscoveryService,
   private final Map<String, String> loadBalancerServiceAnnotations;
 
   /**
-   * Constructor to create an instance for service discovery on the given
-   * Kubernetes namespace.
+   * Constructor to create an instance for service discovery.
    *
-   * @param namespace  the Kubernetes namespace to perform service discovery on
-   * @param namePrefix prefix applies to all service names in k8s
+   * @param namespace                      the Kubernetes namespace to perform service discovery on
+   * @param namePrefix                     prefix applies to all service names in k8s
+   * @param podName                        name of the current pod
+   * @param podLabels                      labels of the current pod
+   * @param ownerReferences                owner references to set on created services
+   * @param apiClientFactory               factory to create Kubernetes API clients
+   * @param loadBalancerServiceList        list of services that should be exposed via LoadBalancer
+   * @param loadBalancerServiceAnnotations annotations to apply to LoadBalancer services
    */
-  public KubeDiscoveryService(String namespace, String namePrefix,
-      Map<String, String> podLabels,
-      List<V1OwnerReference> ownerReferences,
-      ApiClientFactory apiClientFactory) {
-    this(namespace, namePrefix, podLabels, ownerReferences, apiClientFactory,
-        new ArrayList<>(), new HashMap<>());
-  }
-
-  public KubeDiscoveryService(String namespace, String namePrefix,
+  public KubeDiscoveryService(String namespace, String namePrefix, String podName,
       Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
       ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
       Map<String, String> loadBalancerServiceAnnotations) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
+    this.podName = podName;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
     this.apiClientFactory = apiClientFactory;
     this.podLabels = podLabels;
@@ -134,6 +134,13 @@ public class KubeDiscoveryService implements DiscoveryService,
 
     try {
       CoreV1Api api = getCoreApi();
+      if (isPodTerminating(api)) {
+        LOG.info("Pod {} is terminating. Skipping service registration for {}.", podName,
+            discoverable.getName());
+        return () -> {
+        };
+      }
+
       while (true) {
         Optional<V1Service> currentService = getV1Service(api, serviceName,
             discoverable.getName());
@@ -352,6 +359,9 @@ public class KubeDiscoveryService implements DiscoveryService,
     if (port == null || port != discoverable.getSocketAddress().getPort()) {
       return true;
     }
+    if (hasOwnerReferencesChanged(currentService, ownerReferences)) {
+      return true;
+    }
     // If service type is Cluster IP no need to update. We don't check if the
     // service's Cluster IP has changed because the discoverable stores only the
     // service's hostname. We rely on Kube DNS to resolve the hostname. Kube DNS
@@ -369,6 +379,29 @@ public class KubeDiscoveryService implements DiscoveryService,
           .equals(loadBalancerIp);
     }
     return true;
+  }
+
+  private boolean hasOwnerReferencesChanged(V1Service currentService,
+      List<V1OwnerReference> expectedOwners) {
+    List<V1OwnerReference> currentOwners = Optional.ofNullable(currentService.getMetadata())
+        .map(V1ObjectMeta::getOwnerReferences).orElse(Collections.emptyList());
+
+    return !new HashSet<>(currentOwners).equals(new HashSet<>(expectedOwners));
+  }
+
+  private boolean isPodTerminating(CoreV1Api api) throws ApiException {
+    try {
+      V1Pod pod = api.readNamespacedPod(podName, namespace, null);
+      return Optional.ofNullable(pod.getMetadata()).map(V1ObjectMeta::getDeletionTimestamp)
+          .isPresent();
+
+    } catch (ApiException e) {
+      // If it is a 404 ApiException, the pod is already gone. Treat as terminating.
+      if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+        return true;
+      }
+      throw e;
+    }
   }
 
   // Returns the k8s service type for the discoverable.
@@ -562,7 +595,6 @@ public class KubeDiscoveryService implements DiscoveryService,
         InetSocketAddress.createUnresolved(host, port),
         payload);
   }
-
 
   /**
    * A {@link Thread} that keep watching for changes in service in Kubernetes.

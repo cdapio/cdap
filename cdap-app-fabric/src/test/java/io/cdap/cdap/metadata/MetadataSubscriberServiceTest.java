@@ -72,11 +72,11 @@ import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.service.CoreMessagingService;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.spi.StoreRequest;
-import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
-import io.cdap.cdap.messaging.service.CoreMessagingService;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import io.cdap.cdap.proto.ProgramType;
@@ -171,8 +171,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
 
     // Write the field level lineage
-    FieldLineageWriter fieldLineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
-    ProgramRunId spark1Run1 = spark1.run(RunIds.generate(100));
+    final FieldLineageWriter fieldLineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
+    final ProgramRunId spark1Run1 = spark1.run(RunIds.generate(100));
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns", "endpoint1"), "offset", "body");
     TransformOperation parse = new TransformOperation("parse", "parse body",
                                                       Collections.singletonList(InputField.of("read", "body")),
@@ -221,7 +221,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // There shouldn't be any lineage for the "spark1" program, as only usage has been emitted.
     Assert.assertTrue(lineageReader.getRelations(spark1, 0L, Long.MAX_VALUE, x -> true).isEmpty());
 
-    FieldLineageReader fieldLineageReader = getInjector().getInstance(FieldLineageReader.class);
+    final FieldLineageReader fieldLineageReader = getInjector().getInstance(FieldLineageReader.class);
 
     Set<Operation> expectedOperations = new HashSet<>();
     expectedOperations.add(read);
@@ -269,8 +269,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Tasks.waitFor("value", () ->
                     Optional.ofNullable(
                       store.getWorkflowToken(workflow1, workflowRunId.getRun()).get("key")
-                    ).map(Value::toString).orElse(null)
-      , 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+                    ).map(Value::toString).orElse(null),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Verify the workflow node state
     Tasks.waitFor(NodeStatus.RUNNING, () ->
@@ -290,7 +290,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
   @Test
   public void testMetadata() throws InterruptedException, TimeoutException, ExecutionException, IOException {
-    ProgramRunId workflowRunId = workflow1.run(RunIds.generate());
+    final ProgramRunId workflowRunId = workflow1.run(RunIds.generate());
     MetadataEntity entity = MetadataEntity.ofDataset("myns", "myds");
 
     // Try to read, should have nothing

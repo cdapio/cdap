@@ -17,6 +17,8 @@
 package io.cdap.cdap.storage.spanner;
 
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.cloud.spanner.Options;
+import com.google.cloud.spanner.Options.TransactionOption;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
@@ -36,6 +38,7 @@ public class RetryingSpannerTransactionRunner implements TransactionRunner {
   private static final Logger LOG = LoggerFactory.getLogger(RetryingSpannerTransactionRunner.class);
   static final String MAX_RETRIES = "tx.runner.max.retries";
   static final String INITIAL_DELAY_MILLIS = "tx.runner.initial.delay.ms";
+  static final String OPTIMISTIC_LOCK_ENABLED = "tx.runner.optimistic.lock.enabled";
   private final int maxRetries;
   private final int initialDelayMs;
   private final SpannerTransactionRunner transactionRunner;
@@ -43,7 +46,11 @@ public class RetryingSpannerTransactionRunner implements TransactionRunner {
   RetryingSpannerTransactionRunner(Map<String, String> conf, SpannerStructuredTableAdmin admin) {
     this.maxRetries = Integer.parseInt(conf.get(MAX_RETRIES));
     this.initialDelayMs = Integer.parseInt(conf.get(INITIAL_DELAY_MILLIS));
-    this.transactionRunner = new SpannerTransactionRunner(admin);
+    boolean optimisticLockEnabled = Boolean.parseBoolean(conf.getOrDefault(OPTIMISTIC_LOCK_ENABLED, "false"));
+    TransactionOption[] txOptions = optimisticLockEnabled
+        ? new TransactionOption[] { Options.optimisticLock() }
+        : new TransactionOption[0];
+    this.transactionRunner = new SpannerTransactionRunner(admin, txOptions);
   }
 
   @Override

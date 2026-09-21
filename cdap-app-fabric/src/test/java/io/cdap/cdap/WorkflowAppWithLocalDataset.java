@@ -27,6 +27,7 @@ import io.cdap.cdap.api.workflow.AbstractWorkflow;
 public class WorkflowAppWithLocalDataset extends AbstractApplication {
   public static final String APP_NAME = "WorkflowAppWithLocalDataset";
   public static final String WORKFLOW_NAME = "WorkflowWithLocalDataset";
+
   @Override
   public void configure() {
     addWorkflow(new WorkflowWithLocalDataset());

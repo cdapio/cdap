@@ -206,7 +206,7 @@ public final class SparkContainerLauncher {
       throw t;
     } finally {
       if (sparkRuntimeContext instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) sparkRuntimeContext);
+        Closeables.close((Closeable) sparkRuntimeContext, true);
       }
     }
   }

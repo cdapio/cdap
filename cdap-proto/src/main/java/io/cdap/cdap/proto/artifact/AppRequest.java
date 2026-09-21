@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.proto.artifact;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
@@ -27,6 +31,8 @@ import javax.annotation.Nullable;
  * @param <T> the type of application config
  */
 public class AppRequest<T> {
+
+  private static final JsonParser JSON_PARSER = new JsonParser();
 
   private final ArtifactSummary artifact;
   private final T config;
@@ -118,5 +124,33 @@ public class AppRequest<T> {
       throw new IllegalArgumentException("An artifact must be specified to create an application.");
     }
     artifact.validate();
+  }
+
+  /**
+   * Returns true if the two configurations are semantically identical JSON strings.
+   */
+  public static boolean areConfigsEqual(@Nullable String config1, @Nullable String config2) {
+    if (config1 == null || config2 == null) {
+      return false;
+    }
+
+
+    String trim1 = config1.trim();
+    String trim2 = config2.trim();
+    if (trim1.isEmpty() || trim2.isEmpty()) {
+      return false;
+    }
+
+    if (trim1.equals(trim2)){
+      return true;
+    }
+
+    try {
+      JsonElement element1 = JSON_PARSER.parse(trim1);
+      JsonElement element2 = JSON_PARSER.parse(trim2);
+      return element1.equals(element2);
+    } catch (JsonSyntaxException e) {
+      return false;
+    }
   }
 }
