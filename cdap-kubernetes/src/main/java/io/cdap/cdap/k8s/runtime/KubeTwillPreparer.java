@@ -51,6 +51,7 @@ import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentBuilder;
+import io.kubernetes.client.openapi.models.V1DeploymentFluent;
 import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
@@ -962,7 +963,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification()
         .getInstances();
-    V1Deployment deployment = new V1DeploymentBuilder()
+    V1DeploymentFluent.SpecNested<V1DeploymentBuilder> spec = new V1DeploymentBuilder()
         .withMetadata(metadata)
         .withNewSpec()
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
@@ -970,9 +971,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withNewTemplate()
         .withMetadata(metadata)
         .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
-        .endTemplate()
-        .endSpec()
-        .build();
+        .endTemplate();
 
     if (recreateStrategy) {
       // Leaving the strategy unset yields RollingUpdate, whose maxSurge is 25% rounded up, which
@@ -980,9 +979,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       // original, so two generations of the runnable are briefly live at once. Recreate deletes
       // all existing pods before creating any new one, trading a short gap in availability for an
       // at-most-one guarantee.
-      deployment.getSpec().setStrategy(new V1DeploymentStrategy().type("Recreate"));
+      spec.withStrategy(new V1DeploymentStrategy().type("Recreate"));
     }
-    return deployment;
+
+    return spec.endSpec().build();
   }
 
   /**
