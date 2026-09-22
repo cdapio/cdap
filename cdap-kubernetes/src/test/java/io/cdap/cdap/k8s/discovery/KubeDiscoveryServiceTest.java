@@ -586,9 +586,9 @@ public class KubeDiscoveryServiceTest {
 
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + TASK_WORKER),
           service.getEndpointsWatchedServices());
-      // The service watcher still tracks it, but must not publish for it. Doing so would let the
-      // ClusterIP overwrite the pod addresses, and would also hide a missing endpoints RBAC grant
-      // behind a ClusterIP that silently defeats pod leasing.
+      // An endpoints backed service is registered only with the endpoints watcher, never with the
+      // service watcher, so the service watcher is not started and cannot overwrite pod addresses.
+      Assert.assertTrue(service.getWatchedServices().isEmpty());
       Assert.assertFalse(service.shouldPublishFromService(TASK_WORKER));
     }
   }

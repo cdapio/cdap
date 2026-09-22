@@ -214,13 +214,13 @@ public class KubeDiscoveryService implements DiscoveryService,
     ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(
         name, DefaultServiceDiscovered::new);
 
-    registerWithServiceWatcher(name);
-
-    // An endpoints backed service takes its addresses from live pod endpoints. The service watcher
-    // still tracks it, but deliberately does not publish for it, so the ClusterIP can never
-    // overwrite the pod addresses.
+    // An endpoints backed service takes its addresses from live pod endpoints. It is registered
+    // with the endpoints watcher only, never with the service watcher, so that the service watcher
+    // is not even started in the proxy container and cannot overwrite pod addresses.
     if (endpointsBackedServices.contains(name)) {
       registerWithEndpointsWatcher(name);
+    } else {
+      registerWithServiceWatcher(name);
     }
 
     return serviceDiscovered;
