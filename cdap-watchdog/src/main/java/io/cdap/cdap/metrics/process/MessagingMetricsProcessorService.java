@@ -17,7 +17,6 @@
 package io.cdap.cdap.metrics.process;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -150,7 +149,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       this.metricReader = readerFactory.create(TypeToken.of(MetricValues.class), metricSchema);
     } catch (UnsupportedTypeException e) {
       // This should never happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     this.metricsWriter = metricsWriter;
     this.maxDelayMillis = cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);

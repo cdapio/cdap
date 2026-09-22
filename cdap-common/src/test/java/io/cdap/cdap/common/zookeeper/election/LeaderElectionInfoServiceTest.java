@@ -55,12 +55,12 @@ public class LeaderElectionInfoServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -71,12 +71,12 @@ public class LeaderElectionInfoServiceTest {
     List<ZKClientService> zkClients = new ArrayList<>();
 
     ZKClientService infoZKClient = DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    infoZKClient.startAndWait();
+    infoZKClient.startAsync().awaitRunning();
     zkClients.add(infoZKClient);
 
     // Start the LeaderElectionInfoService
     LeaderElectionInfoService infoService = new LeaderElectionInfoService(infoZKClient, prefix);
-    infoService.startAndWait();
+    infoService.startAsync().awaitRunning();
 
     // This will timeout as there is no leader election node created yet
     try {
@@ -90,7 +90,7 @@ public class LeaderElectionInfoServiceTest {
     List<LeaderElection> leaderElections = new ArrayList<>();
     for (int i = 0; i < size; i++) {
       ZKClientService zkClient = DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-      zkClient.startAndWait();
+      zkClient.startAsync().awaitRunning();
       zkClients.add(zkClient);
 
       final int participantId = i;
@@ -105,7 +105,7 @@ public class LeaderElectionInfoServiceTest {
           LOG.info("Follow: {}", participantId);
         }
       });
-      leaderElection.start();
+      leaderElection.startAsync();
       leaderElections.add(leaderElection);
     }
 
@@ -136,7 +136,7 @@ public class LeaderElectionInfoServiceTest {
 
     int expectedSize = size;
     for (LeaderElection leaderElection : leaderElections) {
-      leaderElection.stopAndWait();
+      leaderElection.stopAsync().awaitTerminated();
       Tasks.waitFor(--expectedSize, new Callable<Integer>() {
         @Override
         public Integer call() throws Exception {
@@ -150,10 +150,10 @@ public class LeaderElectionInfoServiceTest {
     Assert.assertTrue(snapshot.isEmpty());
     Assert.assertEquals(participants, snapshot);
 
-    infoService.stopAndWait();
+    infoService.stopAsync().awaitTerminated();
 
     for (ZKClientService zkClient : zkClients) {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 }

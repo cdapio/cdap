@@ -43,6 +43,7 @@ import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -149,18 +150,18 @@ public class LogHttpHandlerTest {
     }));
 
     transactionManager = injector.getInstance(TransactionManager.class);
-    transactionManager.startAndWait();
+    Services.startAndWait(transactionManager);
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    Services.startAndWait(dsOpService);
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
 
     logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+    Services.startAndWait(logQueryService);
 
-    mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
+      mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
     mockLogReader.generateLogs();
 
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -168,11 +169,10 @@ public class LogHttpHandlerTest {
 
   @AfterClass
   public static void tearDown() {
-    logQueryService.stopAndWait();
-
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    transactionManager.stopAndWait();
+    Services.stopAndWait(logQueryService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(dsOpService);
+    Services.stopAndWait(transactionManager);
   }
 
   @Test

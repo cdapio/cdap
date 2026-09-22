@@ -185,7 +185,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends
     List<ImmutablePair<String, T>> currentTxMessages;
     String lastMessageId = null;
     MessageTrackingIterator iterator = new MessageTrackingIterator(messages.iterator());
-    Stopwatch stopwatch = new Stopwatch();
+    Stopwatch stopwatch = Stopwatch.createUnstarted();
     while (iterator.hasNext()) {
       currentTxMessages = new ArrayList<>();
 

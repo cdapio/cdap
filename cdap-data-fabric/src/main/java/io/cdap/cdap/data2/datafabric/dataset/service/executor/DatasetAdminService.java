@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -138,7 +137,11 @@ public class DatasetAdminService {
                 typeMeta.getName());
           }
         } finally {
-          Closeables.closeQuietly(admin);
+          try {
+            admin.close();
+          } catch (Exception ignored) {
+            // Ignored because we are in a finally block performing cleanup.
+          }
         }
         return spec1;
       });
@@ -223,7 +226,11 @@ public class DatasetAdminService {
         try {
           admin.drop();
         } finally {
-          Closeables.closeQuietly(admin);
+          try {
+            admin.close();
+          } catch (Exception ignored) {
+            // Ignored because we are in a finally block performing cleanup.
+          }
         }
         return null;
       });
@@ -267,7 +274,11 @@ public class DatasetAdminService {
       try {
         return operation.perform(admin);
       } finally {
-        Closeables.closeQuietly(admin);
+        try {
+          admin.close();
+        } catch (Exception ignored) {
+          // Ignored because we are in a finally block performing cleanup.
+        }
       }
     }
   }

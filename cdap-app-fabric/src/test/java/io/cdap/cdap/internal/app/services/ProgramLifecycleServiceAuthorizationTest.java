@@ -78,9 +78,9 @@ public class ProgramLifecycleServiceAuthorizationTest {
     final Injector injector = AppFabricTestHelper.getInjector(cConf);
     permissionManager = injector.getInstance(PermissionManager.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    appFabricProcessor.startAsync().awaitRunning();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
 
     // Wait for the default namespace creation
@@ -161,8 +161,8 @@ public class ProgramLifecycleServiceAuthorizationTest {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessor.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

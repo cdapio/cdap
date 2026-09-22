@@ -117,7 +117,7 @@ final class FieldAccessorGenerator {
 
        this.field = field;
      } catch (Exception e) {
-       throw Throwables.propagate(e);
+       throw new RuntimeException(e);
      }
     */
     Label beginTry = mg.newLabel();
@@ -202,7 +202,7 @@ final class FieldAccessorGenerator {
      * try {
      *   // Call method
      * } catch (IllegalAccessException e) {
-     *   throw Throwables.propagate(e);
+     *   throw new RuntimeException(e);
      * }
      */
     Label beginTry = mg.newLabel();

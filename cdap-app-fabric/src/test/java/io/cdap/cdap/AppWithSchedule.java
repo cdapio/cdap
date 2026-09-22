@@ -17,7 +17,6 @@
 package io.cdap.cdap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.Config;
@@ -90,7 +89,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
                    .triggerByTime("0/30 * * * * ?"));
       }
     } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

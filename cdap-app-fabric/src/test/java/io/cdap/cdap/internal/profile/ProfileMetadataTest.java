@@ -48,12 +48,12 @@ public class ProfileMetadataTest extends AppFabricTestBase {
   @BeforeClass
   public static void setUp() {
     metadataSubscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    metadataSubscriberService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void tearDown() {
-    metadataSubscriberService.stopAndWait();
+    metadataSubscriberService.stopAsync().awaitTerminated();
   }
 
   @Test

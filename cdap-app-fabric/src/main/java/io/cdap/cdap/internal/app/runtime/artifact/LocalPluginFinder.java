@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -56,7 +55,7 @@ public class LocalPluginFinder implements PluginFinder {
           selector);
     } catch (IOException | ArtifactNotFoundException e) {
       // If there is error accessing artifact store or if the parent artifact is missing, just propagate
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

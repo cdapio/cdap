@@ -16,10 +16,10 @@
 
 package io.cdap.cdap.common.http;
 
-import com.google.common.io.Closeables;
 import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import java.io.IOException;
 import java.io.InputStream;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
@@ -65,6 +65,12 @@ public class LocationBodyProducer extends BodyProducer {
     if (throwable != null) {
       LOG.warn("Error in sending location {}", location, throwable);
     }
-    Closeables.closeQuietly(inputStream);
+    if (inputStream != null) {
+      try {
+        inputStream.close();
+      } catch (IOException ignored) {
+        // Ignored during cleanup
+      }
+    }
   }
 }

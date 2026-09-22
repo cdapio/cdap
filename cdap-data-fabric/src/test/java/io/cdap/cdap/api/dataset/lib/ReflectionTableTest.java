@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.api.dataset.lib;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.common.Bytes;
@@ -144,7 +145,7 @@ public class ReflectionTableTest {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("firstName", firstName)
         .add("lastName", lastName)
         .add("id", id)

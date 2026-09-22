@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.entity.EntityExistenceVerifier;
@@ -41,7 +40,7 @@ public class ArtifactExistenceVerifier implements EntityExistenceVerifier<Artifa
     try {
       artifactStore.getArtifact(Id.Artifact.fromEntityId(artifactId));
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

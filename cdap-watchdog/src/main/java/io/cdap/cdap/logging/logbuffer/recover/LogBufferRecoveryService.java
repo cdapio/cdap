@@ -127,7 +127,7 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return SERVICE_NAME;
   }
 

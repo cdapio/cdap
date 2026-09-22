@@ -66,7 +66,7 @@ public class AppStateTableTest extends AppFabricTestBase {
     Injector injector = getInjector();
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     transactionRunner = getInjector().getInstance(TransactionRunner.class);
 
@@ -79,7 +79,7 @@ public class AppStateTableTest extends AppFabricTestBase {
   @AfterClass
   public static void teardown() throws Exception {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 

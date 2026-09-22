@@ -34,6 +34,7 @@ import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -587,6 +588,8 @@ public abstract class AbstractCubeTest {
                           null);
     result = new ArrayList<>(cube.query(query));
     Assert.assertEquals(2, result.size());
+    // Sort by first timestamp to ensure deterministic ordering across Guava versions
+    result.sort(Comparator.comparingLong(ts -> ts.getTimeValues().get(0).getTimestamp()));
     // agg1 gets increment by 1 for 100 seconds, so sum will be 100/5=20, agg2 gets increment by 3 for 50 seconds, so
     // sum will be 3*50/5=30
     verifySumAggregation(result.get(0), "metric1", 5, 30, 10, 0, 0);

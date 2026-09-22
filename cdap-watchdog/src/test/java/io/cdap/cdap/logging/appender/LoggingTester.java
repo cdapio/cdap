@@ -113,7 +113,7 @@ public class LoggingTester {
   public static TransactionManager createTransactionManager(Injector injector) throws IOException {
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     return txManager;
   }
 

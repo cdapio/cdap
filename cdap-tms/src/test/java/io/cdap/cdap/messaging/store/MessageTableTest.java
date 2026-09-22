@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.messaging.store;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -282,7 +281,7 @@ public abstract class MessageTableTest {
                         try {
                           barrier.await();
                         } catch (Exception e) {
-                          throw Throwables.propagate(e);
+                          throw new RuntimeException(e);
                         }
                         return new TestMessageEntry(
                             topicId,

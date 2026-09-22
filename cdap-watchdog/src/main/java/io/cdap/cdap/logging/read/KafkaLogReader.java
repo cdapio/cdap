@@ -18,7 +18,6 @@ package io.cdap.cdap.logging.read;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -112,7 +111,7 @@ public class KafkaLogReader implements LogReader {
       fetchLogEvents(kafkaConsumer, kafkaCallback, startOffset, latestOffset, maxEvents, readRange);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } finally {
       try {
         kafkaConsumer.close();
@@ -190,7 +189,7 @@ public class KafkaLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } finally {
       try {
         kafkaConsumer.close();

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.logging.appender.kafka;
 
+import java.nio.charset.StandardCharsets;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
@@ -47,6 +48,6 @@ public final class StringPartitioner implements Partitioner {
 
   @Override
   public int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % this.numPartitions;
+    return Math.abs(Hashing.md5().hashString(key.toString(), StandardCharsets.UTF_8).asInt()) % this.numPartitions;
   }
 }

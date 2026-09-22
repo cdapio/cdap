@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -141,7 +140,7 @@ public class RemotePluginFinder implements PluginFinder {
     } catch (ArtifactNotFoundException e) {
       throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

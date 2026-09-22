@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.store.adapters;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 /**
@@ -120,7 +121,7 @@ class PluginKey {
    */
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("parentName", parentName)
         .add("parentNamespace", parentNamespace)
         .add("artifactName", artifactName)

@@ -124,20 +124,20 @@ public class DatasetBasedTimeScheduleStoreTest {
                                       }
                                     });
     txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
+    txService.startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     dsOpsService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpsService.startAndWait();
+    dsOpsService.startAsync().awaitRunning();
     dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
+    dsService.startAsync().awaitRunning();
     transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
   @AfterClass
   public static void afterClass() {
-    dsService.stopAndWait();
-    dsOpsService.stopAndWait();
-    txService.stopAndWait();
+    dsService.stopAsync().awaitTerminated();
+    dsOpsService.stopAsync().awaitTerminated();
+    txService.stopAsync().awaitTerminated();
   }
 
   private static void schedulerSetup(boolean enablePersistence) throws SchedulerException {

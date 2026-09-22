@@ -17,9 +17,10 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.DiscreteDomains;
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Ranges;
+import com.google.common.collect.Range;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -120,8 +121,8 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
     RestartStatus status = isSuccess ? RestartStatus.SUCCESS : RestartStatus.FAILURE;
     Integer serviceInstance = getServiceInstance(serviceName);
     int instanceCount = (serviceInstance == null) ? 0 : serviceInstance;
-    Set<Integer> instancesToRestart = Ranges.closedOpen(0, instanceCount)
-        .asSet(DiscreteDomains.integers());
+    Set<Integer> instancesToRestart = ContiguousSet.create(
+        Range.closedOpen(0, instanceCount), DiscreteDomain.integers());
 
     RestartServiceInstancesStatus restartStatus =
         new RestartServiceInstancesStatus(serviceName, startTimeMs, endTimeMs, status,

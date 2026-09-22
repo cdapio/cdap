@@ -114,7 +114,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception t) {
-      Throwables.propagateIfPossible(t);
+      Throwables.throwIfUnchecked(t);
 
       // since the callables we execute only throw IOException (besides unchecked exceptions),
       // this should never happen
@@ -124,7 +124,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
       // catch statement. So, no checked exceptions should be wrapped by the following statement. However, we need it
       // because ImpersonationUtils#doAs declares 'throws Exception', because it can throw other checked exceptions
       // in the general case
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 }

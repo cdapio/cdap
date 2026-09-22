@@ -17,10 +17,10 @@
 
 package io.cdap.cdap.common.utils;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An iterator that will act as if there are no more elements if a certain amount of time has
@@ -35,7 +35,7 @@ public class TimeBoundIterator<T> extends AbstractIterator<T> {
   private final Stopwatch stopwatch;
 
   public TimeBoundIterator(Iterator<T> delegate, long timeBoundMillis) {
-    this(delegate, timeBoundMillis, new Stopwatch());
+    this(delegate, timeBoundMillis, Stopwatch.createUnstarted());
   }
 
   public TimeBoundIterator(Iterator<T> delegate, long timeBoundMillis, Stopwatch stopwatch) {
@@ -49,7 +49,7 @@ public class TimeBoundIterator<T> extends AbstractIterator<T> {
 
   @Override
   protected T computeNext() {
-    if (stopwatch.elapsedMillis() < timeBoundMillis && delegate.hasNext()) {
+    if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < timeBoundMillis && delegate.hasNext()) {
       return delegate.next();
     }
     return endOfData();

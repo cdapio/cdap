@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.logging.read;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * Represents log offset containing Kafka offset and time of logging event.
@@ -45,7 +45,7 @@ public class LogOffset {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("kafkaOffset", kafkaOffset)
         .add("time", time)
         .toString();

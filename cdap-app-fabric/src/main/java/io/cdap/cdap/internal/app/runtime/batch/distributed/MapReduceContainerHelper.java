@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.internal.app.runtime.LocalizationUtils;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -143,7 +142,7 @@ public final class MapReduceContainerHelper {
       return result;
     } catch (URISyntaxException e) {
       // Shouldn't happen since the frameworkURI is already parsed.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -18,7 +18,6 @@ package io.cdap.cdap.data2.dataset2;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -506,7 +505,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
         DatasetDefinitionRegistries.register(moduleClassName, classLoader, registry);
       } catch (Exception e) {
         LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

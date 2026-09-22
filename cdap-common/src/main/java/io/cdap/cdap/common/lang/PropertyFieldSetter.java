@@ -79,10 +79,12 @@ public final class PropertyFieldSetter extends FieldVisitor {
       field.set(instance, fieldType.getMethod("valueOf", String.class).invoke(null, value));
     } catch (NoSuchMethodException e) {
       // Should never happen, as boxed type always have the valueOf(String) method.
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     } catch (InvocationTargetException e) {
       // Also should never happen, as calling method on Java bootstrap classes should always succeed.
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

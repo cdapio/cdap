@@ -39,16 +39,16 @@ public class ZKPropertyStoreTest extends PropertyStoreTestBase {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
 
     zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkClient.stopAndWait();
-    zkServer.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Override

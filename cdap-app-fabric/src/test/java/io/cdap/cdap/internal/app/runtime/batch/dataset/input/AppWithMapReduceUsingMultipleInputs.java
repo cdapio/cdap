@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.batch.dataset.input;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -145,7 +144,7 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
         // assert that the user gets the TextInputFormat, as opposed to the MultiInputFormat from the context
         Preconditions.checkArgument(context.getInputFormatClass() == TextInputFormat.class);
       } catch (ClassNotFoundException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

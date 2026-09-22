@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -162,7 +163,7 @@ public class UserIdentity {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("username", username)
         .add("tokenType", identifierType)
         .add("groups", groups)

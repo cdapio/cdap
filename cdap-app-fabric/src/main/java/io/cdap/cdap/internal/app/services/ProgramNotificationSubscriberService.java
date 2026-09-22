@@ -162,7 +162,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
           .forEach(i -> children.add(createChildService("program.status." + i, topicPrefix + i)));
     }
     delegate = new CompositeService(children);
-    delegate.startAndWait();
+    delegate.startAsync().awaitRunning();
     // Explicitly emit both launching and running counts on startup.
     emitFlowControlMetrics();
   }
@@ -218,7 +218,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    delegate.stopAsync().awaitTerminated();
   }
 
   @Inject(optional = true)

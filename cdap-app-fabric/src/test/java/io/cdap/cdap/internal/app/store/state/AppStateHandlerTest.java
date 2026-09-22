@@ -88,7 +88,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
 
     applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     // Endpoint for all state APIs
     endpoint = "namespaces/" + NAMESPACE_1 + "/apps/" + APP_NAME + "/states/" + STATE_KEY;
@@ -104,7 +104,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
     }
 
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 
