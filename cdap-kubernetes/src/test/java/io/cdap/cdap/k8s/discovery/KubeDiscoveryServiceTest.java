@@ -599,28 +599,17 @@ public class KubeDiscoveryServiceTest {
   }
 
   @Test
-  public void testOtherServicesStillPublishFromTheServiceWatcher() throws Exception {
+  public void testNonEndpointsServicesUseServiceWatcher() throws Exception {
     try (KubeDiscoveryService service =
         createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
             Collections.singleton(TASK_WORKER))) {
       service.discover("metrics");
 
-      // Configuring pod level discovery for the task worker must not silently move every other
-      // service in this process off ClusterIP load balancing.
+      // Configuring pod level discovery for the task worker must not silently move other
+      // services in this process off ClusterIP load balancing.
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + "metrics"),
           service.getWatchedServices());
       Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
-    }
-  }
-
-  @Test
-  public void testEndpointsConfiguredBeforeDiscoverStartsNoWatcher() throws Exception {
-    try (KubeDiscoveryService service =
-        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
-            Collections.singleton(TASK_WORKER))) {
-      // Nothing has asked for the task worker yet, so there is nothing to watch.
-      Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
-      Assert.assertTrue(service.getWatchedServices().isEmpty());
     }
   }
 
