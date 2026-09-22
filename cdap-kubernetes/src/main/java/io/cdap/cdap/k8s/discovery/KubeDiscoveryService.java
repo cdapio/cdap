@@ -706,21 +706,6 @@ public class KubeDiscoveryService implements DiscoveryService,
   }
 
   /**
-   * Returns whether the {@link V1Service} watcher should publish addresses for the given CDAP
-   * service.
-   *
-   * <p>It must not do so for an endpoints backed service. Both watchers write to the same
-   * {@link DefaultServiceDiscovered} and the last write wins, so publishing the ClusterIP here
-   * would overwrite the live pod addresses resolved by the endpoints watcher.
-   *
-   * @param serviceName the CDAP service name, without the K8s name prefix
-   */
-  @VisibleForTesting
-  boolean shouldPublishFromService(String serviceName) {
-    return !endpointsBackedServices.contains(serviceName);
-  }
-
-  /**
    * A {@link Thread} that keep watching for changes in service in Kubernetes.
    */
   private final class WatcherThread extends AbstractWatcherThread<V1Service> {
@@ -756,7 +741,6 @@ public class KubeDiscoveryService implements DiscoveryService,
     @Override
     public void resourceAdded(V1Service service) {
       getServiceDiscovered(service)
-          .filter(s -> shouldPublishFromService(s.getName()))
           .ifPresent(s -> s.setDiscoverables(
               toDiscoverables(s.getName(), service, namespace)));
     }
@@ -771,7 +755,6 @@ public class KubeDiscoveryService implements DiscoveryService,
     @Override
     public void resourceDeleted(V1Service service) {
       getServiceDiscovered(service)
-          .filter(s -> shouldPublishFromService(s.getName()))
           .ifPresent(s -> s.setDiscoverables(Collections.emptySet()));
     }
 

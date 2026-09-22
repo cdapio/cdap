@@ -595,7 +595,6 @@ public class KubeDiscoveryServiceTest {
       // An endpoints backed service is registered only with the endpoints watcher, never with the
       // service watcher, so the service watcher is not started and cannot overwrite pod addresses.
       Assert.assertTrue(service.getWatchedServices().isEmpty());
-      Assert.assertFalse(service.shouldPublishFromService(TASK_WORKER));
     }
   }
 
@@ -608,7 +607,6 @@ public class KubeDiscoveryServiceTest {
 
       // Configuring pod level discovery for the task worker must not silently move every other
       // service in this process off ClusterIP load balancing.
-      Assert.assertTrue(service.shouldPublishFromService("metrics"));
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + "metrics"),
           service.getWatchedServices());
       Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
