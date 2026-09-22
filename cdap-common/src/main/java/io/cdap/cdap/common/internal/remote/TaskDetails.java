@@ -72,4 +72,39 @@ public class TaskDetails {
         .map(RunnableTaskRequest::getClassName)
         .orElse(request.getClassName());
   }
+
+  /**
+   * Returns the namespace whose identity this task runs as, or null if the originating request is
+   * unknown.
+   */
+  @Nullable
+  public String getNamespace() {
+    return extractNamespace(request);
+  }
+
+  /**
+   * Extracts the namespace a task runs as.
+   *
+   * <p>Lives here as a static so that {@link TaskWorkerHttpHandlerInternal}, which needs the
+   * namespace before the task launches in order to take a lease, and {@link #getNamespace()},
+   * which is consulted after the task completes in order to release it, are guaranteed to agree.
+   * If these two ever disagreed for the same request, the pod's active task count would drift and
+   * the pod would eventually refuse all work.
+   *
+   * @param request the originating task request, may be null
+   * @return the namespace, or null if there is no request to read it from
+   */
+  @Nullable
+  static String extractNamespace(@Nullable RunnableTaskRequest request) {
+    if (request == null) {
+      return null;
+    }
+    RunnableTaskParam param = request.getParam();
+    if (param != null && param.getEmbeddedTaskRequest() != null) {
+      // System app tasks carry the real namespace on the embedded request; the outer request is
+      // just the envelope that delivered it.
+      return param.getEmbeddedTaskRequest().getNamespace();
+    }
+    return request.getNamespace();
+  }
 }

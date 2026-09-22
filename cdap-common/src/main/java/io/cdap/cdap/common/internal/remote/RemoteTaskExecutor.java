@@ -23,6 +23,7 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.retry.RetryCountProvider;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.ServiceException;
@@ -34,8 +35,10 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.http.HttpMethod;
@@ -43,6 +46,8 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,11 +55,14 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
@@ -65,14 +73,23 @@ import java.util.zip.GZIPOutputStream;
  */
 public class RemoteTaskExecutor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
       (throwable instanceof RetryableException) || (throwable instanceof ServiceException)
-          || (throwable instanceof SocketTimeoutException);
+          || (throwable instanceof SocketTimeoutException) || (throwable instanceof SocketException)
+          || (throwable instanceof NoRouteToHostException);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
-      (throwable instanceof RetryableException);
+      (throwable instanceof RetryableException)
+          || (throwable instanceof SocketException)
+          || (throwable instanceof SocketTimeoutException)
+          || (throwable instanceof NoRouteToHostException);
+  private static final String PROXY_FEATURE_FLAG_KEY =
+      "feature." + Feature.RBAC_TASK_WORKER_MANAGER.getFeatureFlagString();
+  /** Guards the deployment level diagnosis so it is logged once per JVM rather than per task. */
+  private static final AtomicBoolean PROXY_UNREACHABLE_WARNING_LOGGED = new AtomicBoolean();
   private final boolean compression;
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
@@ -81,6 +98,8 @@ public class RemoteTaskExecutor {
   private final AeadCipher userEncryptionAeadCipher;
   private final String workerUrl;
   private final boolean isWorkerEncryptionRequired;
+  private final String serviceName;
+  private final boolean rbacProxyEnabled;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -92,11 +111,30 @@ public class RemoteTaskExecutor {
       RemoteClientFactory remoteClientFactory, Type workerType,
       HttpRequestConfig httpRequestConfig, AeadCipher aeadCipher) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
-    String serviceName = workerType == Type.TASK_WORKER
-        ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
+
+    // The netty proxy only makes sense on RBAC instances: it exists to lease a task worker pod per
+    // namespace so user code from two namespaces never shares a JVM. Both the feature flag and
+    // instance-level RBAC must be on, otherwise task.worker.manager isn't even deployed in the cluster.
+    boolean proxyConfigured = TaskWorkerManager.isEnabled(cConf);
+
+    // System worker traffic runs trusted platform code and is never leased per namespace, so it
+    // goes straight to system.worker. Scoping the flag here keeps the whole proxy code path in
+    // runTask (routing key, namespace header, circuit breaker) off for that worker type.
+    this.rbacProxyEnabled = proxyConfigured && workerType == Type.TASK_WORKER;
+
+    if (workerType == Type.TASK_WORKER) {
+      this.serviceName = rbacProxyEnabled
+          ? Constants.Service.TASK_WORKER_MANAGER : Constants.Service.TASK_WORKER;
+    } else {
+      this.serviceName = Constants.Service.SYSTEM_WORKER;
+    }
+    LOG.debug("RemoteTaskExecutor routing {} traffic to service {} (rbacProxyEnabled={})",
+        workerType, serviceName, rbacProxyEnabled);
+
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
+
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
     if (workerType == Type.TASK_WORKER) {
@@ -130,9 +168,38 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
-          HttpRequest.Builder requestBuilder = remoteClient
-              .requestBuilder(HttpMethod.POST, workerUrl)
-              .withBody(requestBody.duplicate());
+          // STEP 1: Determine the Effective Tenant Namespace.
+          // For SystemAppTask execution (e.g. system services running user pipeline tasks),
+          // unwrap the embedded namespace so the task worker executes under the user's tenant
+          // context. Only relevant when the proxy is in play; otherwise there is nothing to route.
+          String namespace = null;
+          String routingKey = null;
+          if (rbacProxyEnabled) {
+            namespace = runnableTaskRequest.getNamespace();
+            if (NamespaceId.SYSTEM.getNamespace().equals(namespace)
+                && runnableTaskRequest.getParam() != null
+                && runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
+              String embeddedNamespace =
+                  runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace();
+              if (embeddedNamespace != null && !embeddedNamespace.isEmpty()) {
+                namespace = embeddedNamespace;
+              }
+            }
+            routingKey = namespace;
+          }
+
+          // STEP 2: Construct the outbound request. There is deliberately no direct-to-worker
+          // fallback: the proxy holds the per-namespace pod lease, so bypassing it would leave the
+          // routing registry describing a placement that never happened. A proxy outage therefore
+          // fails the task rather than silently degrading, and cdap-operator is responsible for
+          // bringing the proxy back.
+          HttpRequest.Builder requestBuilder =
+              remoteClient.requestBuilder(HttpMethod.POST, workerUrl, routingKey);
+          if (routingKey != null) {
+            // Tells the netty proxy which namespace's leased pod this request belongs to.
+            requestBuilder.addHeader(Constants.Gateway.HEADER_CDAP_NAMESPACE, namespace);
+          }
+          requestBuilder.withBody(requestBody.duplicate());
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
@@ -148,16 +215,34 @@ public class RemoteTaskExecutor {
           }
 
           HttpRequest httpRequest = requestBuilder.build();
-          HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
-          // Resetting user credentials for further execution of current request
-          if (isWorkerEncryptionRequired) {
-            SecurityRequestContext.setUserCredential(currentCredential);
+          long requestStartTime = System.currentTimeMillis();
+          HttpResponse httpResponse;
+          try {
+            httpResponse = remoteClient.execute(httpRequest);
+          } finally {
+            // Restore in a finally block. The request can fail with an IOException or a
+            // ServiceException, and leaving the encrypted credential on the thread local would make
+            // the next retry encrypt the ciphertext again. Each pass grows the value and the worker
+            // can no longer decrypt it. That matters most during a proxy outage, which is exactly
+            // when this loop retries hardest.
+            if (isWorkerEncryptionRequired) {
+              SecurityRequestContext.setUserCredential(currentCredential);
+            }
           }
+          long executionDurationMs = System.currentTimeMillis() - requestStartTime;
 
+          LOG.trace("Received response from {} with status code {} in {} ms", serviceName,
+              httpResponse.getResponseCode(), executionDurationMs);
+
+          // STEP 4: Handle Responses & Retryable Exceptions
+          // A 429 means no compute lease could be secured right now: either the proxy could not
+          // lease a pod for this namespace, or the worker hit its own concurrency limit. Retry with
+          // backoff rather than failing the pipeline outright.
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-            throw new RetryableException(
-                String.format("Received response code %s for %s", httpResponse.getResponseCode(),
+            throw new TaskWorkerSaturatedException(
+                String.format("Task Worker cluster is fully saturated (HTTP 429). Could not secure "
+                        + "a compute lease for %s. Triggering backoff...",
                     runnableTaskRequest.getClassName()));
           }
           if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -168,11 +253,23 @@ public class RemoteTaskExecutor {
           byte[] result = httpResponse.getUncompressedResponseBody();
           //emit metrics with successful result
           emitMetrics(startTime, true, runnableTaskRequest, retryContext.getRetryAttempt());
+
           return result;
         } catch (NoRouteToHostException e) {
           throw new RetryableException(
               String.format("Received exception %s for %s", e.getMessage(),
                   runnableTaskRequest.getClassName()));
+        } catch (ServiceException e) {
+          // 503 natively throws ServiceUnavailableException (which extends RetryableException),
+          // but 502 and 504 surface as a plain ServiceException, which the retry predicate does not
+          // match. Trap those two infrastructure errors and force a retry so a proxy that is
+          // restarting gets the full retry budget to come back.
+          if (e.getStatusCode() == HttpResponseStatus.BAD_GATEWAY.code()
+              || e.getStatusCode() == HttpResponseStatus.GATEWAY_TIMEOUT.code()) {
+            throw new RetryableException("Proxy infrastructure unreachable (HTTP "
+                + e.getStatusCode() + "). Forcing retry.", e);
+          }
+          throw e; // Non-infrastructure ServiceExceptions (like 403 or 401) must fail immediately
         }
       }, retryStrategy, retryablePredicate);
     } catch (ServiceException se) {
@@ -183,8 +280,62 @@ public class RemoteTaskExecutor {
     } catch (Exception e) {
       //emit metrics with failed result
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
+      if (e instanceof TaskWorkerSaturatedException) {
+        throw new ServiceException(
+            String.format("Task Worker cluster is fully saturated. Unable to secure a compute "
+                    + "lease after %d seconds (HTTP 429). Please try again later.",
+                TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime)),
+            e, HttpResponseStatus.TOO_MANY_REQUESTS);
+      }
+      if (rbacProxyEnabled && isProxyUnreachable(e)) {
+        throw proxyUnreachableException(e, startTime);
+      }
       throw e;
     }
+  }
+
+  /**
+   * Returns true when the failure means we never got an answer out of the proxy, as opposed to the
+   * proxy returning an application level error. Only transport and discovery failures qualify, so
+   * a real task failure is never rewritten into an infrastructure message.
+   */
+  private static boolean isProxyUnreachable(Exception e) {
+    return e instanceof ServiceUnavailableException
+        || e instanceof NoRouteToHostException
+        || e instanceof SocketTimeoutException
+        || e instanceof SocketException;
+  }
+
+  /**
+   * Builds the terminal error for a proxy that never answered. Without this the caller sees a bare
+   * "service is not available" for {@code task.worker.manager}, which reads like a task worker problem and
+   * gives no hint that the proxy is a separate deployment with its own lifecycle.
+   */
+  private ServiceException proxyUnreachableException(Exception cause, long startTime) {
+    long elapsedSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
+    warnOnceAboutUnreachableProxy();
+    return new ServiceException(
+        String.format("Could not reach the %s proxy after %d seconds, so the task was not run. "
+                + "Task worker traffic is routed through the proxy because %s is enabled. Verify "
+                + "that the %s service is deployed and healthy.",
+            Constants.Service.TASK_WORKER_MANAGER, elapsedSeconds, PROXY_FEATURE_FLAG_KEY,
+            Constants.Service.TASK_WORKER_MANAGER),
+        cause, HttpResponseStatus.SERVICE_UNAVAILABLE);
+  }
+
+  /**
+   * Logs the deployment level diagnosis a single time per JVM. Every task hitting an absent proxy
+   * fails the same way, so repeating this per task would bury the signal.
+   */
+  private static void warnOnceAboutUnreachableProxy() {
+    if (!PROXY_UNREACHABLE_WARNING_LOGGED.compareAndSet(false, true)) {
+      return;
+    }
+    LOG.warn("The {} proxy could not be reached and {} is enabled, so no task worker request can "
+            + "succeed. The proxy is created by cdap-operator, not by CDAP, so this is expected if "
+            + "the flag was turned on against an operator that does not deploy the {} service. "
+            + "This message is logged once.",
+        Constants.Service.TASK_WORKER_MANAGER, PROXY_FEATURE_FLAG_KEY, Constants.Service.TASK_WORKER_MANAGER);
   }
 
   private Exception getTaskException(ServiceException e) {
@@ -286,5 +437,17 @@ public class RemoteTaskExecutor {
   public enum Type {
     SYSTEM_WORKER,
     TASK_WORKER
+  }
+
+  /**
+   * Marks an HTTP 429 (no compute lease available) response so the outer handler can translate it
+   * into a caller-facing error without matching on the message text. Extends
+   * {@link RetryableException} so the retry predicate keeps retrying it.
+   */
+  private static final class TaskWorkerSaturatedException extends RetryableException {
+
+    TaskWorkerSaturatedException(String message) {
+      super(message);
+    }
   }
 }
