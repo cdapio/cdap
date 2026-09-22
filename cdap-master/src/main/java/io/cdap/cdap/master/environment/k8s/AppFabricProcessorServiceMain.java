@@ -35,6 +35,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
+import io.cdap.cdap.common.internal.remote.TaskWorkerManager;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
@@ -53,6 +54,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
+import io.cdap.cdap.internal.app.worker.manager.TaskWorkerManagerServiceLauncher;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -156,6 +158,19 @@ public class AppFabricProcessorServiceMain extends AbstractServiceMain<Environme
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
         RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
+    // Registered ahead of AppFabricProcessorService on purpose. Once the processor is up it will
+    // dispatch tasks through the proxy, and callers only have task.worker.retry.policy.max.time.secs
+    // worth of retries to absorb the gap before the proxy registers itself in discovery. Issuing
+    // the pod request first spends that budget on the pod starting rather than on us getting
+    // around to asking for it.
+    // Gated on the identical predicate that RemoteClientFactory, RemoteTaskExecutor and
+    // TaskWorkerHttpHandlerInternal use to decide whether to address task.worker.manager instead of
+    // task.worker. Any divergence here is a routing black hole in one direction and an orphaned
+    // pod in the other, so the condition is deliberately not restated.
+    if (TaskWorkerManager.isEnabled(cConf)) {
+      services.add(injector.getInstance(TaskWorkerManagerServiceLauncher.class));
+    }
+
     services.add(injector.getInstance(AppFabricProcessorService.class));
     services.add(new RetryOnStartFailureService(
         () -> injector.getInstance(NamespaceInitializerService.class),
