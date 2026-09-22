@@ -44,6 +44,7 @@ public class RemoteClientFactory {
   private final RemoteAuthenticator remoteAuthenticator;
   private final String pathPrefix;
   private final boolean internalRouterEnabled;
+  private final boolean rbacProxyEnabled;
 
   @VisibleForTesting
   public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
@@ -57,7 +58,8 @@ public class RemoteClientFactory {
       InternalAuthenticator internalAuthenticator,
       RemoteAuthenticator remoteAuthenticator, CConfiguration cConf) {
     this(discoveryClient, internalAuthenticator, remoteAuthenticator, "",
-        cConf.getBoolean(InternalRouter.CLIENT_ENABLED));
+        cConf.getBoolean(InternalRouter.CLIENT_ENABLED),
+        TaskWorkerManager.isEnabled(cConf));
     if (cConf.getBoolean(InternalRouter.CLIENT_ENABLED) && !cConf.getBoolean(
         InternalRouter.SERVER_ENABLED)) {
       throw new IllegalStateException(
@@ -99,11 +101,27 @@ public class RemoteClientFactory {
       InternalAuthenticator internalAuthenticator,
       RemoteAuthenticator remoteAuthenticator, String pathPrefix,
       boolean internalRouterEnabled) {
+    this(discoveryClient, internalAuthenticator, remoteAuthenticator, pathPrefix,
+        internalRouterEnabled, false);
+  }
+
+  /**
+   * Constructs a {@link RemoteClientFactory}.
+   *
+   * @param rbacProxyEnabled true when task worker traffic is routed through the Task Worker Manager netty
+   *     proxy, i.e. when both the {@code RBAC_TASK_WORKER_MANAGER} feature flag and instance-level RBAC are
+   *     enabled.
+   */
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
+      InternalAuthenticator internalAuthenticator,
+      RemoteAuthenticator remoteAuthenticator, String pathPrefix,
+      boolean internalRouterEnabled, boolean rbacProxyEnabled) {
     this.discoveryClient = discoveryClient;
     this.internalAuthenticator = internalAuthenticator;
     this.remoteAuthenticator = remoteAuthenticator;
     this.pathPrefix = pathPrefix;
     this.internalRouterEnabled = internalRouterEnabled;
+    this.rbacProxyEnabled = rbacProxyEnabled;
   }
 
   /**
@@ -142,7 +160,7 @@ public class RemoteClientFactory {
     }
     return new RemoteClient(internalAuthenticator, discoveryClient,
         discoverableServiceName,
-        httpRequestConfig, basePath, remoteAuthenticator);
+        httpRequestConfig, basePath, remoteAuthenticator, rbacProxyEnabled);
   }
 
   private RemoteClient getClientForInternalRouter(String destinationServiceName,
@@ -156,6 +174,6 @@ public class RemoteClientFactory {
         basePath);
     return new RemoteClient(internalAuthenticator, discoveryClient,
         Service.INTERNAL_ROUTER, httpRequestConfig, internalRouterPath,
-        remoteAuthenticator);
+        remoteAuthenticator, rbacProxyEnabled);
   }
 }
