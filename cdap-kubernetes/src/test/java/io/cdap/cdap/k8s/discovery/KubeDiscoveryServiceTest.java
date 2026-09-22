@@ -114,6 +114,11 @@ public class KubeDiscoveryServiceTest {
 
   private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
       Map<String, String> podLabels) {
+    return createDiscoveryService(namespace, prefix, podLabels, Collections.emptySet());
+  }
+
+  private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
+      Map<String, String> podLabels, Set<String> endpointsBackedServices) {
     return new KubeDiscoveryService(
         namespace,
         prefix,
@@ -122,7 +127,8 @@ public class KubeDiscoveryServiceTest {
         Collections.emptyList(),
         API_CLIENT_FACTORY,
         Collections.emptyList(),
-        Collections.emptyMap());
+        Collections.emptyMap(),
+        endpointsBackedServices);
   }
 
   @Test
@@ -580,8 +586,8 @@ public class KubeDiscoveryServiceTest {
   @Test
   public void testTaskWorkerAddressesComeFromTheEndpointsWatcher() throws Exception {
     try (KubeDiscoveryService service =
-        createDiscoveryService("default", NAME_PREFIX, POD_LABELS)) {
-      service.enableEndpointsWatcher();
+        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+            Collections.singleton(TASK_WORKER))) {
       service.discover(TASK_WORKER);
 
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + TASK_WORKER),
@@ -596,11 +602,11 @@ public class KubeDiscoveryServiceTest {
   @Test
   public void testOtherServicesStillPublishFromTheServiceWatcher() throws Exception {
     try (KubeDiscoveryService service =
-        createDiscoveryService("default", NAME_PREFIX, POD_LABELS)) {
-      service.enableEndpointsWatcher();
+        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+            Collections.singleton(TASK_WORKER))) {
       service.discover("metrics");
 
-      // Enabling pod level discovery for the task worker must not silently move every other
+      // Configuring pod level discovery for the task worker must not silently move every other
       // service in this process off ClusterIP load balancing.
       Assert.assertTrue(service.shouldPublishFromService("metrics"));
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + "metrics"),
@@ -610,29 +616,10 @@ public class KubeDiscoveryServiceTest {
   }
 
   @Test
-  public void testEnablingAfterDiscoverStillPicksUpTheTaskWorker() throws Exception {
+  public void testEndpointsConfiguredBeforeDiscoverStartsNoWatcher() throws Exception {
     try (KubeDiscoveryService service =
-        createDiscoveryService("default", NAME_PREFIX, POD_LABELS)) {
-      service.discover(TASK_WORKER);
-      Assert.assertTrue(service.shouldPublishFromService(TASK_WORKER));
-      Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
-
-      service.enableEndpointsWatcher();
-
-      // Enabling after the fact has to register the already discovered service, since the
-      // discover() call that would have done it has already happened.
-      Assert.assertEquals(Collections.singleton(NAME_PREFIX + TASK_WORKER),
-          service.getEndpointsWatchedServices());
-      Assert.assertFalse(service.shouldPublishFromService(TASK_WORKER));
-    }
-  }
-
-  @Test
-  public void testEnablingBeforeAnyDiscoverStartsNoWatcher() throws Exception {
-    try (KubeDiscoveryService service =
-        createDiscoveryService("default", NAME_PREFIX, POD_LABELS)) {
-      service.enableEndpointsWatcher();
-
+        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+            Collections.singleton(TASK_WORKER))) {
       // Nothing has asked for the task worker yet, so there is nothing to watch.
       Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
       Assert.assertTrue(service.getWatchedServices().isEmpty());

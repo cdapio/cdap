@@ -141,6 +141,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // A comma separated list of service names for which service of type LoadBalancer are to be created.
   private static final String LOAD_BALANCER_SERVICES = "master.environment.k8s.loadBalancerServices";
 
+  // A comma separated list of service names for which service endpoints (pod IPs) are to be watched
+  // instead of service ClusterIPs.
+  private static final String ENDPOINTS_SERVICES = "master.environment.k8s.endpoints.services";
+
   // A comma separated list of key value pairs to be added as annotations in the k8s load balancer services.
   // Keys and values are separated by "=" (without quotes). The  implementation of load balancer service type
   // is dependent on cloud providers such as GCP, AWS etc. To configure cloud provider specific behaviour
@@ -346,10 +350,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       loadBalancerServiceList = Arrays.asList(
           conf.get(LOAD_BALANCER_SERVICES).split(","));
     }
+    Set<String> endpointsServices = new HashSet<>();
+    if (!Strings.isNullOrEmpty(conf.get(ENDPOINTS_SERVICES))) {
+      endpointsServices.addAll(Arrays.asList(
+          conf.get(ENDPOINTS_SERVICES).split(",")));
+    }
     discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
         podInfo.getName(), podLabels, podInfo.getOwnerReferences(), apiClientFactory,
         loadBalancerServiceList,
-        parseLoadBalancerAnnotations(conf.get(LOAD_BALANCER_SERVICE_ANNOTATIONS)));
+        parseLoadBalancerAnnotations(conf.get(LOAD_BALANCER_SERVICE_ANNOTATIONS)),
+        endpointsServices);
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);

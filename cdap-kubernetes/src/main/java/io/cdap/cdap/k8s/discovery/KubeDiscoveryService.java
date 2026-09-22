@@ -82,9 +82,6 @@ public class KubeDiscoveryService implements DiscoveryService,
   private static final String SERVICE_TYPE_LOAD_BALANCER = "LoadBalancer";
   private static final String SERVICE_TYPE_CLUSTER_IP = "ClusterIP";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
-  // Mirrors Constants.Service.TASK_WORKER from cdap-common. It has to be duplicated because
-  // cdap-kubernetes does not, and must not, depend on cdap-common.
-  private static final String TASK_WORKER_SERVICE_NAME = "task.worker";
 
   private final String podName;
   private final String namespace;
@@ -126,11 +123,33 @@ public class KubeDiscoveryService implements DiscoveryService,
       Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
       ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
       Map<String, String> loadBalancerServiceAnnotations) {
+    this(namespace, namePrefix, podName, podLabels, ownerReferences, apiClientFactory,
+        loadBalancerServiceList, loadBalancerServiceAnnotations, Collections.emptySet());
+  }
+
+  /**
+   * Constructor to create an instance for service discovery with endpoints-backed services.
+   *
+   * @param namespace                      the Kubernetes namespace to perform service discovery on
+   * @param namePrefix                     prefix applies to all service names in k8s
+   * @param podName                        name of the current pod
+   * @param podLabels                      labels of the current pod
+   * @param ownerReferences                owner references to set on created services
+   * @param apiClientFactory               factory to create Kubernetes API clients
+   * @param loadBalancerServiceList        list of services that should be exposed via LoadBalancer
+   * @param loadBalancerServiceAnnotations annotations to apply to LoadBalancer services
+   * @param endpointsBackedServices        services to discover via V1Endpoints instead of V1Service
+   */
+  public KubeDiscoveryService(String namespace, String namePrefix, String podName,
+      Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
+      ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
+      Map<String, String> loadBalancerServiceAnnotations,
+      Set<String> endpointsBackedServices) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
     this.podName = podName;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
-    this.endpointsBackedServices = ConcurrentHashMap.newKeySet();
+    this.endpointsBackedServices = Collections.unmodifiableSet(new HashSet<>(endpointsBackedServices));
     this.apiClientFactory = apiClientFactory;
     this.podLabels = podLabels;
     this.ownerReferences = ownerReferences;
@@ -182,30 +201,6 @@ public class KubeDiscoveryService implements DiscoveryService,
     // It is the CDAP K8s operator task to remove services on CRD instance deletion by the label selector.
     return () -> {
     };
-  }
-
-  /**
-   * Programmatically enables real-time Kubernetes {@link V1Endpoints} watching for the task worker
-   * service, so that individual task worker pods become discoverable instead of the single service
-   * ClusterIP. Called by the task worker proxy, which has to address specific pods in order to
-   * lease them.
-   *
-   * <p>Only the task worker is affected. Every other service keeps resolving to its ClusterIP and
-   * keeps kube-proxy load balancing.
-   *
-   * <p>From this point on the service watcher stops publishing addresses for the task worker, so
-   * its pod addresses come from the endpoints watcher or from nowhere at all. If the service
-   * account is not permitted to watch endpoints, callers then see an explicit routing failure
-   * rather than a silent fallback to a ClusterIP that would defeat pod leasing.
-   */
-  public void enableEndpointsWatcher() {
-    endpointsBackedServices.add(TASK_WORKER_SERVICE_NAME);
-
-    // If the service was already discovered, the endpoints watcher has to pick it up now, since
-    // the discover() call that would have registered it has already happened.
-    if (serviceDiscovereds.containsKey(TASK_WORKER_SERVICE_NAME)) {
-      registerWithEndpointsWatcher(TASK_WORKER_SERVICE_NAME);
-    }
   }
 
   @Override
