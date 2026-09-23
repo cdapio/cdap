@@ -69,6 +69,8 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.proto.upgrade.ListUpgradeRequest;
+import io.cdap.cdap.proto.upgrade.ListUpgradeResponse;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -642,6 +644,30 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       }
       chunkResponder.sendChunk(Unpooled.wrappedBuffer(outputStream.toByteArray()));
     }
+  }
+
+  /**
+   * Lists upgrade details for all pipelines in the namespace.
+   *
+   * <p>
+   * The response will be of type {@link ListUpgradeResponse} which contains a list of
+   * {@link io.cdap.cdap.proto.upgrade.ApplicationUpgradeDetail} containing pipeline and plugin
+   * upgrade details.
+   * </p>
+   */
+  @POST
+  @Path("/upgrade/list")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void listApplicationUpgrades(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespace) throws Exception {
+    NamespaceId namespaceId = validateNamespace(namespace);
+    ListUpgradeRequest upgradeRequest =
+        DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+            new TypeToken<ListUpgradeRequest>() {
+            }.getType());
+    LOG.info("received list upgrade request {}", upgradeRequest);
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(applicationLifecycleService.listUpgradeResponse(namespaceId)));
   }
 
   /**
