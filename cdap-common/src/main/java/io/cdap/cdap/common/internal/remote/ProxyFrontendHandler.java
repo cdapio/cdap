@@ -86,7 +86,11 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private final PodLeaseManager podLeaseManager;
     private final DiscoveryServiceClient discoveryServiceClient;
-    private Channel outboundChannel;
+    /**
+     * The connection to the task worker pod. This handler is installed on the CLIENT pipeline, so
+     * this is the peer channel: events arrive here from the client, writes go out to the worker.
+     */
+    private Channel workerChannel;
     private boolean connecting = false;
     private boolean rejecting = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
@@ -185,7 +189,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
             // 4. Initiate non-blocking asynchronous TCP connect to the Task Worker IP and Port
             ChannelFuture f = b.connect(workerHost, workerPort);
-            outboundChannel = f.channel();
+            workerChannel = f.channel();
 
             // 5. Register listener to handle connection success or failure
             f.addListener((ChannelFutureListener) future -> {
@@ -195,10 +199,10 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     LOG.debug("Connected to task worker {}", chosenWorker);
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
-                        outboundChannel.write(pendingMsg);
+                        workerChannel.write(pendingMsg);
                         pendingMsg = pendingMessages.poll();
                     }
-                    outboundChannel.flush();
+                    workerChannel.flush();
                     // Resume reading remaining body chunks from the client
                     ctx.channel().config().setAutoRead(true);
                 } else {
@@ -225,9 +229,9 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             if (connecting) {
                 // Socket still connecting: queue body chunk with retained reference count
                 pendingMessages.add(ReferenceCountUtil.retain(msg));
-            } else if (outboundChannel != null && outboundChannel.isActive()) {
+            } else if (workerChannel != null && workerChannel.isActive()) {
                 // Outbound socket active: stream raw ByteBuf directly to worker without copying to Java Heap!
-                outboundChannel.writeAndFlush(ReferenceCountUtil.retain(msg));
+                workerChannel.writeAndFlush(ReferenceCountUtil.retain(msg));
             } else {
                 ReferenceCountUtil.release(msg);
             }
@@ -242,27 +246,28 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
         // Flush any buffered outbound data to the worker socket
-        if (outboundChannel != null && outboundChannel.isActive() && !connecting) {
-            outboundChannel.flush();
+        if (workerChannel != null && workerChannel.isActive() && !connecting) {
+            workerChannel.flush();
         }
         ctx.fireChannelReadComplete();
     }
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        // Backpressure, inbound -> outbound.
+        // Backpressure on the response direction.
         //
-        // This handler sits on the INBOUND (AppFabric) pipeline, so ctx.channel() is the inbound
-        // channel and this callback fires when the INBOUND channel's own write buffer crosses a
-        // watermark. That buffer fills with response data we are relaying back to AppFabric, so
-        // the correct reaction is to stop pulling more response data off the WORKER socket.
+        // This handler is installed on the client pipeline, so this fires when the CLIENT's own
+        // write buffer crosses a watermark. That buffer holds response bytes we are relaying back
+        // to AppFabric, and the only thing feeding it is our reads from the worker. So when the
+        // client stops keeping up, stop pulling from the worker.
         //
-        // Gating on outboundChannel.isWritable() here would be wrong twice over: it would throttle
-        // reads on the worker channel based on the worker channel's own send buffer, and it would
-        // only ever recompute when the INBOUND channel's writability changed. The mirror image of
-        // this logic lives in ProxyBackendHandler#channelWritabilityChanged.
-        if (outboundChannel != null && outboundChannel.isActive()) {
-            outboundChannel.config().setAutoRead(ctx.channel().isWritable());
+        // The request direction is the mirror of this and lives in
+        // ProxyBackendHandler#channelWritabilityChanged. Each handler reacts to its own channel's
+        // writability, because Netty raises this event only on the pipeline of the channel whose
+        // buffer actually moved.
+        Channel clientChannel = ctx.channel();
+        if (workerChannel != null && workerChannel.isActive()) {
+            workerChannel.config().setAutoRead(clientChannel.isWritable());
         }
         ctx.fireChannelWritabilityChanged();
     }
@@ -275,8 +280,8 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         releasePendingMessages();
 
         // When client closes connection, cleanly close the outbound worker socket
-        if (outboundChannel != null) {
-            closeOnFlush(outboundChannel);
+        if (workerChannel != null) {
+            closeOnFlush(workerChannel);
         }
         ctx.fireChannelInactive();
     }

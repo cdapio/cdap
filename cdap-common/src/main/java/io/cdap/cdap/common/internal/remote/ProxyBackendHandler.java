@@ -53,14 +53,18 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyBackendHandler.class);
 
-    private final Channel inboundChannel;
+    /**
+     * The connection back to AppFabric. This handler is installed on the WORKER pipeline, so this
+     * is the peer channel: events arrive here from the worker, writes go out to the client.
+     */
+    private final Channel clientChannel;
     private final PodLeaseManager podLeaseManager;
     private final String targetWorkerAddress;
 
     private boolean decremented = false;
 
-    public ProxyBackendHandler(Channel inboundChannel, PodLeaseManager podLeaseManager, String targetWorkerAddress) {
-        this.inboundChannel = inboundChannel;
+    public ProxyBackendHandler(Channel clientChannel, PodLeaseManager podLeaseManager, String targetWorkerAddress) {
+        this.clientChannel = clientChannel;
         this.podLeaseManager = podLeaseManager;
         this.targetWorkerAddress = targetWorkerAddress;
     }
@@ -121,7 +125,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         // STEP 3: Relay Worker Response to Client (AppFabric)
         // Forward the HTTP response header or body chunk directly to the inbound client socket.
         // Once write completes successfully, request the next chunk from the worker channel.
-        inboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
+        clientChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
                 ctx.channel().read();
             } else {
@@ -134,18 +138,20 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        // Backpressure, outbound -> inbound.
+        // Backpressure on the request direction.
         //
-        // This handler sits on the WORKER pipeline, so ctx.channel() is the worker channel and this
-        // callback fires when the WORKER channel's own write buffer crosses a watermark. That
-        // buffer fills with request body we are streaming to the worker, so the correct reaction is
-        // to stop pulling more body off the INBOUND (AppFabric) socket.
+        // This handler is installed on the worker pipeline, so this fires when the WORKER's own
+        // write buffer crosses a watermark. That buffer holds request body we are streaming to the
+        // worker, and the only thing feeding it is our reads from the client. So when the worker
+        // stops keeping up, stop pulling from the client.
         //
-        // Netty only raises this event on the pipeline of the channel whose buffer moved, so each
-        // side must react to its own writability and throttle the opposite side's reads.
-        // ProxyFrontendHandler#channelWritabilityChanged is the mirror image of this.
-        if (inboundChannel != null && inboundChannel.isActive()) {
-            inboundChannel.config().setAutoRead(ctx.channel().isWritable());
+        // The response direction is the mirror of this and lives in
+        // ProxyFrontendHandler#channelWritabilityChanged. Each handler reacts to its own channel's
+        // writability, because Netty raises this event only on the pipeline of the channel whose
+        // buffer actually moved.
+        Channel workerChannel = ctx.channel();
+        if (clientChannel != null && clientChannel.isActive()) {
+            clientChannel.config().setAutoRead(workerChannel.isWritable());
         }
         ctx.fireChannelWritabilityChanged();
     }
@@ -161,7 +167,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) {
         releaseOccupancy();
         // If backend worker disconnects or crashes, flush and close the client socket
-        ProxyFrontendHandler.closeOnFlush(inboundChannel);
+        ProxyFrontendHandler.closeOnFlush(clientChannel);
     }
 
     @Override
