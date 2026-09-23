@@ -16,12 +16,6 @@
 
 package io.cdap.cdap.metadata.spanner;
 
-import static io.cdap.cdap.metadata.spanner.SpannerMetadataStorage.toMetadataId;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.cloud.spanner.DatabaseAdminClient;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
@@ -32,30 +26,28 @@ import com.google.cloud.spanner.InstanceConfigId;
 import com.google.cloud.spanner.InstanceId;
 import com.google.cloud.spanner.InstanceInfo;
 import com.google.cloud.spanner.InstanceNotFoundException;
-import com.google.cloud.spanner.Mutation;
-import com.google.cloud.spanner.ReadOnlyTransaction;
-import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerException;
 import com.google.cloud.spanner.SpannerOptions;
-import com.google.cloud.spanner.Statement;
-import io.cdap.cdap.api.metadata.MetadataEntity;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MetadataStorageContext;
+import io.cdap.cdap.spi.metadata.MetadataStorageTest;
 import io.cdap.cdap.spi.metadata.ScopedName;
-import io.cdap.cdap.spi.metadata.VersionedMetadata;
+import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -93,7 +85,7 @@ import org.junit.Test;
  * {@link SpannerMetadataStorage} implementation is not yet feature-complete. Once all
  * required methods are implemented, this class will be updated to ensure full test coverage.
  */
-public class SpannerMetadataStorageTest {
+public class SpannerMetadataStorageTest extends MetadataStorageTest {
 
   private static final String PROJECT_ID = "test-project";
   private static final String INSTANCE_ID = "test-instance";
@@ -104,10 +96,6 @@ public class SpannerMetadataStorageTest {
   private static DatabaseClient dbClient;
   private static InstanceAdminClient adminClient;
   private static Spanner spanner;
-
-  // Metadata table names
-  private static final String METADATA_TABLE = "metadata";
-  private static final String METADATA_PROPS_TABLE = "metadata_props";
 
   // Indicates whether the Spanner emulator is active, guiding cleanup decisions.
   private static boolean isEmulatorRunning;
@@ -176,7 +164,7 @@ public class SpannerMetadataStorageTest {
       if (dbAdminClient != null) {
         try {
           dbAdminClient.dropDatabase(INSTANCE_ID, DATABASE_ID);
-        } catch (DatabaseNotFoundException e) {
+        } catch (DatabaseNotFoundException ignored) {
         } catch (Exception e) {
           throw new RuntimeException("Failed to drop database during @AfterClass cleanup", e);
         }
@@ -185,7 +173,7 @@ public class SpannerMetadataStorageTest {
       if (adminClient != null) {
         try {
           adminClient.deleteInstance(INSTANCE_ID);
-        } catch (InstanceNotFoundException e) {
+        } catch (InstanceNotFoundException ignored) {
         } catch (Exception e) {
           throw new RuntimeException("Failed to delete instance during @AfterClass cleanup", e);
         }
@@ -198,46 +186,6 @@ public class SpannerMetadataStorageTest {
     }
   }
 
-  @Before
-  public void beforeTest() throws IOException {
-    spannerMetadataStorage.createIndex();
-  }
-
-  /**
-   * Helper method to simulate initial metadata creation by directly inserting into Spanner.
-   * This is used because `create` and `writeToSpanner` in `SpannerMetadataStorage` are "NOT IMPLEMENTED".
-   * In a real scenario, these would be part of the `MetadataStorage` implementation.
-   */
-  private void simulateInitialMetadata(MetadataEntity entity, Metadata metadata, long version) throws IOException {
-    try {
-      dbClient.readWriteTransaction().run(transaction -> {
-        long currentTime = System.currentTimeMillis();
-        String metadataJson = SpannerMetadataStorage.GSON.toJson(metadata);
-
-        Mutation mutation = Mutation.newInsertOrUpdateBuilder(METADATA_TABLE)
-          .set(Tables.Metadata.METADATA_ID_FIELD).to(toMetadataId(entity))
-          .set(Tables.Metadata.NAMESPACE_FIELD).to(entity.getValue(MetadataEntity.NAMESPACE))
-          .set(Tables.Metadata.TYPE_FIELD).to(entity.getType())
-          .set(Tables.Metadata.NAME_FIELD).to(entity.getValue(entity.getType()))
-          .set(Tables.Metadata.CREATED_FIELD).to(currentTime)
-          .set(Tables.Metadata.USER_FIELD).to(metadata.getTags().stream()
-                                                .filter(s -> false).map(ScopedName::getName)
-                                                .collect(Collectors.joining(",")))
-          .set(Tables.Metadata.SYSTEM_FIELD).to(metadata.getTags().stream()
-                                                  .filter(s -> false)
-                                                  .map(ScopedName::getName)
-                                                  .collect(Collectors.joining(",")))
-          .set(Tables.Metadata.METADATA_COLUMN_FIELD).to(metadataJson)
-          .set(Tables.Metadata.VERSION).to(version)
-          .build();
-        transaction.buffer(mutation);
-        return null; // The callable must return something, null is fine for side effects
-      });
-    } catch (Exception e) {
-      throw new IOException("Failed to setup initial metadata", e);
-    }
-  }
-
   /**
    * Tests the `createIndex` method.
    * Purpose: Verify that the necessary tables (`metadata`, `metadata_props`) and search indexes
@@ -245,107 +193,240 @@ public class SpannerMetadataStorageTest {
    * This test will explicitly call `createIndex` and then query the `INFORMATION_SCHEMA` using `dbClient`
    * to verify table and index existence.
    */
+  @BeforeClass
+  public static void testCreateIndex() throws IOException {
+    spannerMetadataStorage.createIndex();
+  }
   @Test
-  public void testCreateIndex() {
-    try (ReadOnlyTransaction tx = dbClient.readOnlyTransaction()) {
-      Set<String> tables = new HashSet<>();
-      Statement combinedTableStatement = Statement.newBuilder(
-          "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES "
-            + "WHERE TABLE_SCHEMA = '' AND TABLE_NAME IN (@metadataTable, @metadataPropsTable)")
-        .bind("metadataTable").to(METADATA_TABLE)
-        .bind("metadataPropsTable").to(METADATA_PROPS_TABLE)
-        .build();
+  public void testFiltering() {
+    ScopedName sys = new ScopedName(MetadataScope.SYSTEM, "s");
+    ScopedName user = new ScopedName(MetadataScope.USER, "u");
+    String sval = "S";
+    String uval = "U";
+    Metadata before = new Metadata(tags(sys, user), props(sys, sval, user, uval));
 
-      try (ResultSet resultSet = tx.executeQuery(combinedTableStatement)) {
-        while (resultSet.next()) {
-          String tableName = resultSet.getString(0);
-          tables.add(tableName);
-        }
-      }
-      assertTrue("Metadata table should exist", tables.contains(METADATA_TABLE));
-      assertTrue("Metadata properties table should exist", tables.contains(METADATA_PROPS_TABLE));
+    // test selection to remove
+    Assert.assertEquals(new Metadata(tags(sys), props(user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.NONE,
+                          MetadataScope.NONE,
+                          ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
+                                          new ScopedNameOfKind(MetadataKind.PROPERTY, sys))));
 
-      Set<String> metadataTableIndexes = new HashSet<>();
-      Set<String> metadataPropsTableIndexes = new HashSet<>();
-      Statement combinedIndexStatement = Statement.newBuilder(
-          "SELECT TABLE_NAME, INDEX_NAME FROM INFORMATION_SCHEMA.INDEXES "
-            + "WHERE TABLE_SCHEMA = '' AND TABLE_NAME IN (@metadataTable, @metadataPropsTable)")
-        .bind("metadataTable").to(METADATA_TABLE)
-        .bind("metadataPropsTable").to(METADATA_PROPS_TABLE)
-        .build();
+    // test selection is not affected by scopes or kinds
+    Assert.assertEquals(new Metadata(tags(sys), props(user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.ALL,
+                          MetadataScope.ALL,
+                          ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
+                                          new ScopedNameOfKind(MetadataKind.PROPERTY, sys))));
 
-      try (ResultSet resultSet = tx.executeQuery(combinedIndexStatement)) {
-        while (resultSet.next()) {
-          String tableName = resultSet.getString("TABLE_NAME");
-          String indexName = resultSet.getString("INDEX_NAME");
+    // test selection to keep
+    Assert.assertEquals(new Metadata(tags(user), props(sys, sval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.NONE,
+                          MetadataScope.NONE,
+                          ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
+                                          new ScopedNameOfKind(MetadataKind.PROPERTY, sys))));
 
-          if (METADATA_TABLE.equals(tableName)) {
-            metadataTableIndexes.add(indexName);
-          } else if (METADATA_PROPS_TABLE.equals(tableName)) {
-            metadataPropsTableIndexes.add(indexName);
-          }
-        }
-      }
+    // test selection is not affected by scopes or kinds
+    Assert.assertEquals(new Metadata(tags(user), props(sys, sval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.ALL,
+                          MetadataScope.ALL,
+                          ImmutableSet.of(new ScopedNameOfKind(MetadataKind.TAG, user),
+                                          new ScopedNameOfKind(MetadataKind.PROPERTY, sys))));
 
-      assertTrue("UserNgramIndex should exist", metadataTableIndexes.contains("UserNgramIndex"));
-      assertTrue("SystemNgramIndex should exist", metadataTableIndexes.contains("SystemNgramIndex"));
-      assertTrue("TextNgramIndex should exist", metadataTableIndexes.contains("TextNgramIndex"));
-      assertTrue("ValueNgramIndex should exist", metadataPropsTableIndexes.contains("ValueNgramIndex"));
-    }
+    // test removing nothing
+    Assert.assertEquals(before,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.NONE,
+                          MetadataScope.NONE,
+                          null));
+    Assert.assertEquals(before,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.NONE,
+                          MetadataScope.ALL,
+                          null));
+    Assert.assertEquals(before,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.ALL,
+                          MetadataScope.NONE,
+                          null));
+
+    // test keeping all
+    Assert.assertEquals(before,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.ALL,
+                          MetadataScope.ALL,
+                          null));
+
+    // test removing all
+    Assert.assertEquals(Metadata.EMPTY,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.ALL,
+                          MetadataScope.ALL,
+                          null));
+
+    // test keeping nothing
+    Assert.assertEquals(Metadata.EMPTY,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.NONE,
+                          MetadataScope.NONE,
+                          null));
+    // test keeping nothing
+    Assert.assertEquals(Metadata.EMPTY,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.ALL,
+                          MetadataScope.NONE,
+                          null));
+    // test keeping nothing
+    Assert.assertEquals(Metadata.EMPTY,
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.NONE,
+                          MetadataScope.ALL,
+                          null));
+
+    // test removing all SYSTEM
+    Assert.assertEquals(new Metadata(tags(user), props(user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.ALL,
+                          Collections.singleton(MetadataScope.SYSTEM),
+                          null));
+    // test removing all USER
+    Assert.assertEquals(new Metadata(tags(sys), props(sys, sval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          MetadataKind.ALL,
+                          Collections.singleton(MetadataScope.USER),
+                          null));
+    // test keeping all SYSTEM
+    Assert.assertEquals(new Metadata(tags(sys), props(sys, sval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.ALL,
+                          Collections.singleton(MetadataScope.SYSTEM),
+                          null));
+    // test keeping all USER
+    Assert.assertEquals(new Metadata(tags(user), props(user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          MetadataKind.ALL,
+                          Collections.singleton(MetadataScope.USER),
+                          null));
+
+    // test removing all tags
+    Assert.assertEquals(new Metadata(tags(), props(sys, sval, user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          Collections.singleton(MetadataKind.TAG),
+                          MetadataScope.ALL,
+                          null));
+
+    // test removing all properties
+    Assert.assertEquals(new Metadata(tags(sys, user), props()),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          Collections.singleton(MetadataKind.PROPERTY),
+                          MetadataScope.ALL,
+                          null));
+
+    // test keeping all tags
+    Assert.assertEquals(new Metadata(tags(sys, user), props()),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          Collections.singleton(MetadataKind.TAG),
+                          MetadataScope.ALL,
+                          null));
+
+    // test keeping all properties
+    Assert.assertEquals(new Metadata(tags(), props(sys, sval, user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          Collections.singleton(MetadataKind.PROPERTY),
+                          MetadataScope.ALL,
+                          null));
+
+    // test removing all tags in SYSTEM scope
+    Assert.assertEquals(new Metadata(tags(user), props(sys, sval, user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          Collections.singleton(MetadataKind.TAG),
+                          Collections.singleton(MetadataScope.SYSTEM),
+                          null));
+
+    // test removing all properties in USER scope
+    Assert.assertEquals(new Metadata(tags(sys, user), props(sys, sval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          false,
+                          Collections.singleton(MetadataKind.PROPERTY),
+                          Collections.singleton(MetadataScope.USER),
+                          null));
+
+    // test keeping all tags in SYSTEM scope
+    Assert.assertEquals(new Metadata(tags(sys), props()),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          Collections.singleton(MetadataKind.TAG),
+                          Collections.singleton(MetadataScope.SYSTEM),
+                          null));
+
+    // test keeping all properties in USER scope
+    Assert.assertEquals(new Metadata(tags(), props(user, uval)),
+                        SpannerMetadataStorage.filterMetadata(
+                          before,
+                          true,
+                          Collections.singleton(MetadataKind.PROPERTY),
+                          Collections.singleton(MetadataScope.USER),
+                          null));
   }
 
-  /**
-   * Tests that reading metadata for an existing entity retrieves the correct data and version.
-   */
-  @Test
-  public void testReadVersionedMetadata_existingEntity() throws IOException {
-    MetadataEntity existingEntity = MetadataEntity.builder()
-      .append(MetadataEntity.NAMESPACE, "default")
-      .appendAsType(MetadataEntity.DATASET, "my_dataset_for_read_test")
-      .build();
-
-    Metadata expectedMetadata = new Metadata(
-      Collections.singleton(new ScopedName(MetadataScope.USER, "read_tag")),
-      Collections.singletonMap(new ScopedName(MetadataScope.USER, "read_prop"), "read_value")
-    );
-    long expectedVersion = 10L;
-
-    // Pre-populate the database with test data
-    simulateInitialMetadata(existingEntity, expectedMetadata, expectedVersion);
-
-    VersionedMetadata actualVersionedMetadata;
-    try (ReadOnlyTransaction readOnlyTx = dbClient.readOnlyTransaction()) {
-      actualVersionedMetadata = spannerMetadataStorage.readVersionedMetadata(existingEntity, readOnlyTx);
-    }
-
-    assertNotNull("Returned VersionedMetadata should not be null", actualVersionedMetadata);
-    assertNotEquals("Returned VersionedMetadata should not be NONE", VersionedMetadata.NONE,
-                    actualVersionedMetadata);
-    assertEquals("Metadata tags should match", expectedMetadata.getTags(),
-                 actualVersionedMetadata.getMetadata().getTags());
-    assertEquals("Metadata properties should match", expectedMetadata.getProperties(),
-                 actualVersionedMetadata.getMetadata().getProperties());
-    assertEquals("Version should match", expectedVersion, (long) actualVersionedMetadata.getVersion());
+  @Override
+  protected MetadataStorage getMetadataStorage() {
+    return spannerMetadataStorage;
   }
 
-  /**
-   * Tests that reading metadata for a non-existent entity correctly returns VersionedMetadata.NONE.
-   */
-  @Test
-  public void testReadVersionedMetadata_nonExistentEntity() throws IOException {
-    MetadataEntity nonExistentEntity = MetadataEntity.builder()
-      .append(MetadataEntity.NAMESPACE, "default")
-      .appendAsType("application", "non_existent_app")
-      .build();
-
-    VersionedMetadata actualVersionedMetadata;
-    try (ReadOnlyTransaction readOnlyTx = dbClient.readOnlyTransaction()) {
-      actualVersionedMetadata = spannerMetadataStorage.readVersionedMetadata(nonExistentEntity, readOnlyTx);
-    }
-
-    assertNotNull("Returned VersionedMetadata should not be null", actualVersionedMetadata);
-    assertEquals("Expected VersionedMetadata.NONE for a non-existent entity",
-                 VersionedMetadata.NONE, actualVersionedMetadata);
+  @Override
+  protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
+    Cursor c = Cursor.fromString(cursor);
+    Assert.assertEquals(expectedOffset, c.getOffset());
+    Assert.assertEquals(expectedPageSize, c.getLimit());
   }
 
   private static final class MockMetadataStorageContext implements MetadataStorageContext {

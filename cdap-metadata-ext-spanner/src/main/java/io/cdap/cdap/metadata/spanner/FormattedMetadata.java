@@ -70,7 +70,8 @@ public class FormattedMetadata {
   }
 
   private FormattedMetadata(MetadataEntity entity, Metadata metadata) throws IOException {
-    this.namespace = entity.getValue("namespace");
+    this.namespace = Optional.ofNullable(entity.getValue("namespace"))
+      .orElse("default");
     this.type = entity.getType().toLowerCase();
     this.name = Objects.requireNonNull(entity.getValue(entity.getType())).toLowerCase();
 
@@ -142,12 +143,6 @@ public class FormattedMetadata {
       String name = key.getName().toLowerCase();
       String scope = key.getScope().name();
       String value = entry.getValue().toLowerCase();
-
-      // If it's a schema key, reformat it.
-      if (MetadataConstants.SCHEMA_KEY.equals(name)) {
-        continue;
-      }
-
       extracted.add(new Property(scope, name, value));
       propertyNames.add(name);
     }
