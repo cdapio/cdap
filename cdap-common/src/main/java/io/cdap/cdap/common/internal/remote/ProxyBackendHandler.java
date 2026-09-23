@@ -134,9 +134,16 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        // Reverse Backpressure:
-        // If the client (AppFabric) channel is saturated and not writable, pause reading from the worker channel.
-        // Once the client socket buffer drains, resume reading from the worker channel.
+        // Backpressure, outbound -> inbound.
+        //
+        // This handler sits on the WORKER pipeline, so ctx.channel() is the worker channel and this
+        // callback fires when the WORKER channel's own write buffer crosses a watermark. That
+        // buffer fills with request body we are streaming to the worker, so the correct reaction is
+        // to stop pulling more body off the INBOUND (AppFabric) socket.
+        //
+        // Netty only raises this event on the pipeline of the channel whose buffer moved, so each
+        // side must react to its own writability and throttle the opposite side's reads.
+        // ProxyFrontendHandler#channelWritabilityChanged is the mirror image of this.
         if (inboundChannel != null && inboundChannel.isActive()) {
             inboundChannel.config().setAutoRead(ctx.channel().isWritable());
         }
