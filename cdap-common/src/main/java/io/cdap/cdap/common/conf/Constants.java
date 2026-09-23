@@ -142,6 +142,7 @@ public final class Constants {
     public static final String INTERNAL_ROUTER = "internal.router";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String TASK_WORKER_MANAGER = "task.worker.manager";
     public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
@@ -565,6 +566,23 @@ public final class Constants {
   }
 
   /**
+   * Task worker manager, the netty proxy that leases task worker pods per namespace. Only deployed when
+   * the {@code RBAC_TASK_WORKER_MANAGER} feature flag and instance level RBAC are both enabled.
+   */
+  public static final class TaskWorkerManager {
+
+    public static final String ADDRESS = "task.worker.manager.bind.address";
+    public static final String PORT = "task.worker.manager.bind.port";
+    public static final String BOSS_THREADS = "task.worker.manager.boss.threads";
+    public static final String WORKER_THREADS = "task.worker.manager.worker.threads";
+    public static final String CONTAINER_MEMORY_MB = "task.worker.manager.container.memory.mb";
+    public static final String CONTAINER_CORES = "task.worker.manager.container.num.cores";
+    public static final String CONTAINER_JVM_OPTS = "task.worker.manager.container.jvm.opts";
+    public static final String POOL_CHECK_INTERVAL = "task.worker.manager.pool.check.interval";
+    public static final String ENDPOINTS_SERVICES = "master.environment.k8s.endpoints.services";
+  }
+
+  /**
    * System pods.
    */
   public static final class SystemWorker {
@@ -869,6 +887,7 @@ public final class Constants {
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
     public static final String API_KEY = "X-ApiKey";
+    public static final String HEADER_CDAP_NAMESPACE = "X-CDAP-Namespace";
     public static final String APP_DEPLOYMENT_SKIPPED_HEADER = "X-CDAP-App-Deployment-Skipped";
 
     /**
