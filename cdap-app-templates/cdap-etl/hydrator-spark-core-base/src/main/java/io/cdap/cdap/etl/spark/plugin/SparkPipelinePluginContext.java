@@ -22,6 +22,7 @@ import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.api.spark.SparkMain;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.batch.SparkSource;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.plugin.Caller;
@@ -42,6 +43,8 @@ public class SparkPipelinePluginContext extends PipelinePluginContext {
   protected Object wrapUnknownPlugin(String pluginId, Object plugin, Caller caller) {
     if (plugin instanceof Windower) {
       return new WrappedWindower((Windower) plugin, caller);
+    } else if (plugin instanceof SparkSource) {
+      return new WrappedSparkSource<>((SparkSource) plugin, caller);
     } else if (plugin instanceof SparkCompute) {
       return new WrappedSparkCompute<>((SparkCompute) plugin, caller);
     } else if (plugin instanceof SparkSink) {
