@@ -60,7 +60,18 @@ public class PodLeaseManager {
         for (String podIp : activePods) {
             podRegistry.putIfAbsent(podIp, new PodState(null, 0));
         }
-        podRegistry.keySet().removeIf(existingPod -> !activePods.contains(existingPod));
+
+        // Prune pods that discovery no longer reports, but only once they have drained.
+        //
+        // Dropping a PodState while requests are still in flight loses the accounting for them:
+        // releaseLease looks the address up and silently does nothing when it is gone, so the
+        // decrement never lands. If the pod then reappears - a brief Endpoints flap, a rolling
+        // restart, a momentarily empty discovery response - it is re-registered with zero inflight
+        // while its earlier requests are still running, and the proxy over-subscribes it until
+        // those pile up into 409s and 429s. Keeping the entry until it drains costs one stale map
+        // entry; the next sync after the last response removes it.
+        podRegistry.entrySet().removeIf(entry ->
+            !activePods.contains(entry.getKey()) && entry.getValue().getInflightRequests() == 0);
         
         LOG.debug("PodLeaseManager synced leases: [{}]",
             podRegistry.entrySet().stream()
@@ -120,10 +131,30 @@ public class PodLeaseManager {
     }
 
     /**
-     * Imperatively evicts the lease on a worker pod, typically due to a 409 conflict or node crash.
+     * Gives back the slot this caller was holding on a worker pod that turned out to be unusable,
+     * and evicts the pod once nothing is left running on it.
+     *
+     * <p>This is deliberately not a blanket {@code podRegistry.remove()}. The registry entry is
+     * shared by every connection routed to that address, so removing it on one failed connect
+     * throws away the occupancy count for requests other channels are still streaming. Those
+     * channels later call {@link #releaseLease}, find nothing, and decrement nothing; the pod then
+     * comes back through {@link #syncDiscovery} with a zeroed count and gets over-subscribed,
+     * which surfaces as a burst of 409s from a worker the proxy believes is idle.
+     *
+     * <p>Releasing the slot first and only then dropping a pod that has reached zero keeps a
+     * genuinely dead pod out of rotation without corrupting anyone else's accounting.
      */
     public void invalidateLease(String workerAddress) {
-        podRegistry.remove(workerAddress);
+        PodState state = podRegistry.get(workerAddress);
+        if (state == null) {
+            return;
+        }
+        state.decrementInflightRequests();
+        if (state.getInflightRequests() == 0) {
+            // Two-argument remove so a pod re-registered by a concurrent syncDiscovery is not
+            // clobbered: it only removes the mapping if this exact PodState is still installed.
+            podRegistry.remove(workerAddress, state);
+        }
     }
     
     /** Intended primarily for testing. */

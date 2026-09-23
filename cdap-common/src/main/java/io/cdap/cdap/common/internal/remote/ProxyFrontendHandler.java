@@ -47,6 +47,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import javax.net.ssl.SSLException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
@@ -72,6 +73,16 @@ import org.slf4j.LoggerFactory;
 public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFrontendHandler.class);
+
+    /**
+     * Outbound TLS context shared by every proxied connection.
+     *
+     * <p>An {@link SslContext} is immutable and thread safe once built, and building one allocates
+     * a full JSSE (or OpenSSL) context plus its session cache. Doing that per connection puts one
+     * of the most expensive operations in Netty directly on the request hot path, so it is built
+     * exactly once here and reused for the lifetime of the process.
+     */
+    private static final SslContext CLIENT_SSL_CONTEXT = createClientSslContext();
 
     private final PodLeaseManager podLeaseManager;
     private final DiscoveryServiceClient discoveryServiceClient;
@@ -109,18 +120,29 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             if (targetWorkerAddress == null) {
                 LOG.warn("All task worker pods are saturated or leased to other namespaces. "
                          + "Rejecting request for namespace '{}'", targetNamespace);
-                rejecting = true;
-                FullHttpResponse response = new DefaultFullHttpResponse(
-                        HttpVersion.HTTP_1_1, HttpResponseStatus.TOO_MANY_REQUESTS);
-                response.headers().set("Content-Length", "0");
-                response.headers().set("Connection", "close");
-                ctx.writeAndFlush(response);
-                ReferenceCountUtil.release(msg);
+                reject(ctx, msg, HttpResponseStatus.TOO_MANY_REQUESTS);
                 return;
             }
 
             final String chosenWorker = targetWorkerAddress;
-            String[] hostPort = targetWorkerAddress.split(":");
+
+            // Split on the LAST colon, not the first. Addresses are built in
+            // PodLeaseManager#syncDiscovery as hostString + ":" + port, and for an IPv6 pod
+            // hostString is itself colon separated (for example 2001:db8::1:11015). Splitting on
+            // the first colon would hand a hex group to Integer.parseInt instead of the port.
+            int portSeparator = chosenWorker.lastIndexOf(':');
+            int workerPort = portSeparator < 0 ? -1 : parsePort(chosenWorker.substring(portSeparator + 1));
+            if (workerPort < 0) {
+                // The address came out of our own registry, so a malformed value means the
+                // discovery payload is not what we expect. Hand back the slot we just took rather
+                // than leaking it, and fail this request instead of the whole proxy.
+                LOG.error("Task worker address '{}' is not a valid host:port. Dropping it from the registry.",
+                          chosenWorker);
+                podLeaseManager.invalidateLease(chosenWorker);
+                reject(ctx, msg, HttpResponseStatus.BAD_GATEWAY);
+                return;
+            }
+            final String workerHost = chosenWorker.substring(0, portSeparator);
 
             LOG.debug("Opening connection to task worker {} for namespace {}",
                     targetWorkerAddress, targetNamespace);
@@ -143,14 +165,9 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  @Override
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
-                     try {
-                         // Attach SSL handler for internal TLS encrypted communication with the worker pod
-                         SslContext sslCtx = SslContextBuilder.forClient()
-                             .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-                         p.addLast(sslCtx.newHandler(ch.alloc(), hostPort[0], Integer.parseInt(hostPort[1])));
-                     } catch (Exception e) {
-                         LOG.error("Failed to initialize SSL for the outbound proxy connection", e);
-                     }
+                     // Attach SSL handler for internal TLS encrypted communication with the worker pod.
+                     // The context is process wide, see CLIENT_SSL_CONTEXT.
+                     p.addLast(CLIENT_SSL_CONTEXT.newHandler(ch.alloc(), workerHost, workerPort));
                      // HTTP codec for encoding requests to worker and decoding responses from worker
                      p.addLast(new HttpClientCodec());
                      // Attach backend handler to stream worker responses back to AppFabric
@@ -158,11 +175,19 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  }
              });
 
-            // 3. Initiate non-blocking asynchronous TCP connect to the Task Worker IP and Port
-            ChannelFuture f = b.connect(hostPort[0], Integer.parseInt(hostPort[1]));
+            // 3. Queue the request header BEFORE initiating the connect.
+            //    b.connect() can complete inline (an immediate resolver failure, or a connect that
+            //    finishes on this event loop before addListener returns), in which case the
+            //    listener below runs synchronously and drains the queue. If the header were
+            //    enqueued afterwards it would land in a queue nobody will ever poll again, and the
+            //    request would hang with its body streaming into a socket that never got a header.
+            pendingMessages.add(ReferenceCountUtil.retain(msg));
+
+            // 4. Initiate non-blocking asynchronous TCP connect to the Task Worker IP and Port
+            ChannelFuture f = b.connect(workerHost, workerPort);
             outboundChannel = f.channel();
 
-            // 4. Register listener to handle connection success or failure
+            // 5. Register listener to handle connection success or failure
             f.addListener((ChannelFutureListener) future -> {
                 connecting = false;
                 if (future.isSuccess()) {
@@ -181,17 +206,10 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     LOG.warn("Failed to connect to task worker {}. Evicting it from the routing "
                              + "registry.", chosenWorker);
                     podLeaseManager.invalidateLease(chosenWorker);
-                    Object pendingMsg = pendingMessages.poll();
-                    while (pendingMsg != null) {
-                        ReferenceCountUtil.release(pendingMsg);
-                        pendingMsg = pendingMessages.poll();
-                    }
+                    releasePendingMessages();
                     ctx.channel().close();
                 }
             });
-
-            // Retain the HttpRequest header message in pending queue until outbound socket connection completes
-            pendingMessages.add(ReferenceCountUtil.retain(msg));
 
         } else if (msg instanceof HttpContent) {
             // STEP 5: Stream Inbound HTTP Request Body Chunks
@@ -213,6 +231,11 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             } else {
                 ReferenceCountUtil.release(msg);
             }
+        } else {
+            // HttpServerCodec only emits HttpRequest and HttpContent, so this is unreachable today.
+            // Releasing anyway means a future pipeline change cannot turn into a silent buffer leak.
+            LOG.debug("Discarding unexpected inbound message type {}", msg.getClass().getName());
+            ReferenceCountUtil.release(msg);
         }
     }
 
@@ -227,8 +250,17 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        // Forward backpressure: If the client socket write buffer is full,
-        // stop reading from the backend worker socket to avoid buffer bloat.
+        // Backpressure, inbound -> outbound.
+        //
+        // This handler sits on the INBOUND (AppFabric) pipeline, so ctx.channel() is the inbound
+        // channel and this callback fires when the INBOUND channel's own write buffer crosses a
+        // watermark. That buffer fills with response data we are relaying back to AppFabric, so
+        // the correct reaction is to stop pulling more response data off the WORKER socket.
+        //
+        // Gating on outboundChannel.isWritable() here would be wrong twice over: it would throttle
+        // reads on the worker channel based on the worker channel's own send buffer, and it would
+        // only ever recompute when the INBOUND channel's writability changed. The mirror image of
+        // this logic lives in ProxyBackendHandler#channelWritabilityChanged.
         if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.config().setAutoRead(ctx.channel().isWritable());
         }
@@ -237,16 +269,79 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        // If the client goes away while the outbound connect is still in flight, the connect
+        // listener may never run, so anything already queued would never be written and never be
+        // released. Drain it here; the queue is empty on the normal path so this is a no-op.
+        releasePendingMessages();
+
         // When client closes connection, cleanly close the outbound worker socket
         if (outboundChannel != null) {
             closeOnFlush(outboundChannel);
         }
+        ctx.fireChannelInactive();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         LOG.error("Error on the inbound proxy connection", cause);
         closeOnFlush(ctx.channel());
+    }
+
+    /**
+     * Releases every buffer still sitting in the pending queue and empties it.
+     */
+    private void releasePendingMessages() {
+        Object pendingMsg = pendingMessages.poll();
+        while (pendingMsg != null) {
+            ReferenceCountUtil.release(pendingMsg);
+            pendingMsg = pendingMessages.poll();
+        }
+    }
+
+    /**
+     * Fails the current request with the given status without tearing the connection down
+     * immediately.
+     *
+     * <p>The response is written now, but the channel is closed only once
+     * {@link io.netty.handler.codec.http.LastHttpContent} arrives (see the {@code rejecting} branch
+     * in {@link #channelRead}). Closing right away would leave the client mid-upload of a body that
+     * can run to many megabytes, and the resulting TCP reset would frequently destroy the response
+     * before AppFabric managed to read it, turning a clean retryable status into an opaque
+     * connection error.
+     */
+    private void reject(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status) {
+        rejecting = true;
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
+        response.headers().set("Content-Length", "0");
+        response.headers().set("Connection", "close");
+        ctx.writeAndFlush(response);
+        ReferenceCountUtil.release(msg);
+    }
+
+    /**
+     * Parses a TCP port, returning -1 rather than throwing when the text is not a valid port.
+     */
+    private static int parsePort(String port) {
+        try {
+            int parsed = Integer.parseInt(port);
+            return parsed >= 0 && parsed <= 65535 ? parsed : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static SslContext createClientSslContext() {
+        try {
+            return SslContextBuilder.forClient()
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .build();
+        } catch (SSLException e) {
+            // The proxy cannot forward a single request without TLS to the workers, so there is no
+            // degraded mode worth limping along in. Failing at class initialization surfaces the
+            // real cause instead of a stream of confusing handshake errors at request time.
+            throw new IllegalStateException(
+                "Failed to build the outbound SSL context for the task worker proxy", e);
+        }
     }
 
     /**
