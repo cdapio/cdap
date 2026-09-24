@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker.manager;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -51,7 +52,11 @@ import org.slf4j.LoggerFactory;
  * <p>App Fabric owns this launch for the same reason it owns the task worker pool launch: the
  * proxy only makes sense alongside a running pool, and keeping both on the same control plane
  * avoids a rollout ordering problem between the cdap-operator and App Fabric.
+ *
+ * <p>Singleton because each instance runs its own reconciliation schedule. Two instances would race
+ * to launch the proxy, which must never have more than one replica.
  */
+@Singleton
 public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerManagerServiceLauncher.class);
@@ -86,6 +91,9 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
       if (twillController != null) {
         twillController.terminate().get(10, TimeUnit.SECONDS);
       }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOG.warn("Interrupted while terminating the task worker manager proxy", e);
     } catch (Exception e) {
       LOG.warn("Failed to terminate TaskWorkerManagerServiceLauncher run", e);
     }
@@ -118,8 +126,11 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
 
   /**
    * Reconciles the desired state (exactly one proxy application running) with the observed state.
+   *
+   * <p>Package-private so tests can drive a single iteration; production calls come only from
+   * {@link #runOneIteration()} on the scheduler thread.
    */
-  public void run() {
+  void run() {
     TwillController activeController = null;
     for (TwillController controller : twillRunner.lookup(TaskWorkerManagerTwillApplication.NAME)) {
       // If more than one controller is detected, terminate the extras.
@@ -211,8 +222,8 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
           throw e;
         }
       } catch (Exception e) {
-        LOG.warn(String.format("Failed to launch TaskWorkerManager proxy, retry in %d",
-            cConf.getInt(Constants.TaskWorkerManager.POOL_CHECK_INTERVAL)), e);
+        LOG.warn("Failed to launch the task worker manager proxy, retrying in {} seconds",
+            cConf.getInt(Constants.TaskWorkerManager.POOL_CHECK_INTERVAL), e);
       }
     }
     this.twillController = activeController;
