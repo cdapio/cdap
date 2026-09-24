@@ -185,7 +185,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             //    listener below runs synchronously and drains the queue. If the header were
             //    enqueued afterwards it would land in a queue nobody will ever poll again, and the
             //    request would hang with its body streaming into a socket that never got a header.
-            pendingMessages.add(ReferenceCountUtil.retain(msg));
+            pendingMessages.add(msg);
 
             // 4. Initiate non-blocking asynchronous TCP connect to the Task Worker IP and Port
             ChannelFuture f = b.connect(workerHost, workerPort);
@@ -226,12 +226,12 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 }
                 return;
             }
-            if (connecting) {
-                // Socket still connecting: queue body chunk with retained reference count
-                pendingMessages.add(ReferenceCountUtil.retain(msg));
+            if (connecting || !pendingMessages.isEmpty()) {
+                // Socket still connecting or queue not yet drained: preserve ordering
+                pendingMessages.add(msg);
             } else if (workerChannel != null && workerChannel.isActive()) {
                 // Outbound socket active: stream raw ByteBuf directly to worker without copying to Java Heap!
-                workerChannel.writeAndFlush(ReferenceCountUtil.retain(msg));
+                workerChannel.writeAndFlush(msg);
             } else {
                 ReferenceCountUtil.release(msg);
             }
