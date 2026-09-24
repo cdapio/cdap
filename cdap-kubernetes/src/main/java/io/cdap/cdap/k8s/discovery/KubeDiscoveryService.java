@@ -17,6 +17,7 @@
 package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
@@ -93,7 +94,7 @@ public class KubeDiscoveryService implements DiscoveryService,
   // Services resolved from live pod endpoints rather than from the service ClusterIP. These are
   // registered with the endpoints watcher only, never with the service watcher, so that a
   // ClusterIP update can never overwrite the pod addresses.
-  private final Set<String> endpointsBackedServices;
+  private final ImmutableSet<String> endpointsBackedServices;
   private volatile EndpointsWatcherThread endpointsWatcherThread;
   private boolean closed;
   private final List<String> loadBalancerServiceList;
@@ -118,38 +119,19 @@ public class KubeDiscoveryService implements DiscoveryService,
    * @param apiClientFactory               factory to create Kubernetes API clients
    * @param loadBalancerServiceList        list of services that should be exposed via LoadBalancer
    * @param loadBalancerServiceAnnotations annotations to apply to LoadBalancer services
-   */
-  public KubeDiscoveryService(String namespace, String namePrefix, String podName,
-      Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
-      ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
-      Map<String, String> loadBalancerServiceAnnotations) {
-    this(namespace, namePrefix, podName, podLabels, ownerReferences, apiClientFactory,
-        loadBalancerServiceList, loadBalancerServiceAnnotations, Collections.emptySet());
-  }
-
-  /**
-   * Constructor to create an instance for service discovery with endpoints-backed services.
-   *
-   * @param namespace                      the Kubernetes namespace to perform service discovery on
-   * @param namePrefix                     prefix applies to all service names in k8s
-   * @param podName                        name of the current pod
-   * @param podLabels                      labels of the current pod
-   * @param ownerReferences                owner references to set on created services
-   * @param apiClientFactory               factory to create Kubernetes API clients
-   * @param loadBalancerServiceList        list of services that should be exposed via LoadBalancer
-   * @param loadBalancerServiceAnnotations annotations to apply to LoadBalancer services
-   * @param endpointsBackedServices        services to discover via V1Endpoints instead of V1Service
+   * @param endpointsBackedServices        services to discover via V1Endpoints instead of V1Service;
+   *                                       immutable because watcher threads read it without locking
    */
   public KubeDiscoveryService(String namespace, String namePrefix, String podName,
       Map<String, String> podLabels, List<V1OwnerReference> ownerReferences,
       ApiClientFactory apiClientFactory, List<String> loadBalancerServiceList,
       Map<String, String> loadBalancerServiceAnnotations,
-      Set<String> endpointsBackedServices) {
+      ImmutableSet<String> endpointsBackedServices) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
     this.podName = podName;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
-    this.endpointsBackedServices = Collections.unmodifiableSet(new HashSet<>(endpointsBackedServices));
+    this.endpointsBackedServices = endpointsBackedServices;
     this.apiClientFactory = apiClientFactory;
     this.podLabels = podLabels;
     this.ownerReferences = ownerReferences;
@@ -774,6 +756,11 @@ public class KubeDiscoveryService implements DiscoveryService,
   /**
    * Creates a {@link Set} of {@link Discoverable} directly from live {@link V1Endpoints}.
    *
+   * <p>The discoverables carry an empty payload. CDAP records the payload (the URI scheme) as an
+   * annotation on the {@link V1Service}, and Kubernetes copies a Service's labels onto its
+   * Endpoints object but not its annotations. Consumers must therefore not derive the scheme from
+   * these discoverables; an empty payload here does not mean the pods serve plain HTTP.
+   *
    * @param name      name of the service
    * @param endpoints the live Kubernetes Endpoints object
    * @return a {@link Set} of {@link Discoverable} for all ready pod IPs
@@ -783,12 +770,6 @@ public class KubeDiscoveryService implements DiscoveryService,
     if (endpoints == null || endpoints.getSubsets() == null) {
       return Collections.emptySet();
     }
-
-    V1ObjectMeta meta = endpoints.getMetadata();
-    byte[] payload = Optional.ofNullable(meta != null ? meta.getAnnotations() : null)
-        .map(m -> m.get(PAYLOAD_NAME))
-        .map(Base64.getDecoder()::decode)
-        .orElse(EMPTY_PAYLOAD);
 
     Set<Discoverable> discoverables = new HashSet<>();
     for (V1EndpointSubset subset : endpoints.getSubsets()) {
@@ -802,7 +783,7 @@ public class KubeDiscoveryService implements DiscoveryService,
       for (V1EndpointAddress address : addresses) {
         for (CoreV1EndpointPort port : ports) {
           Discoverable d = createDiscoverable(name, address.getIp(),
-              port.getPort(), payload);
+              port.getPort(), EMPTY_PAYLOAD);
           if (d != null) {
             discoverables.add(d);
           }

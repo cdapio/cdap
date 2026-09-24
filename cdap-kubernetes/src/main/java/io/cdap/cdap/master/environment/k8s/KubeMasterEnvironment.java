@@ -350,11 +350,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       loadBalancerServiceList = Arrays.asList(
           conf.get(LOAD_BALANCER_SERVICES).split(","));
     }
-    Set<String> endpointsServices = new HashSet<>();
-    if (!Strings.isNullOrEmpty(conf.get(ENDPOINTS_SERVICES))) {
-      endpointsServices.addAll(Arrays.asList(
-          conf.get(ENDPOINTS_SERVICES).split(",")));
-    }
+    ImmutableSet<String> endpointsServices = parseEndpointsServices(conf.get(ENDPOINTS_SERVICES));
     discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
         podInfo.getName(), podLabels, podInfo.getOwnerReferences(), apiClientFactory,
         loadBalancerServiceList,
@@ -1189,6 +1185,16 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @VisibleForTesting
   void setReadTimeout(int readTimeoutSec) {
     this.readTimeoutSec = readTimeoutSec;
+  }
+
+  /**
+   * Parses the comma separated list of services discovered through Endpoints, tolerating
+   * whitespace around names and empty entries, since the value is user settable.
+   */
+  @VisibleForTesting
+  static ImmutableSet<String> parseEndpointsServices(@Nullable String configValue) {
+    return ImmutableSet.copyOf(Splitter.on(',').trimResults().omitEmptyStrings()
+        .split(Strings.nullToEmpty(configValue)));
   }
 
   @VisibleForTesting

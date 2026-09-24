@@ -17,6 +17,7 @@
 package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.DefaultApiClientFactory;
@@ -109,16 +110,17 @@ public class KubeDiscoveryServiceTest {
         Collections.singletonList(OWNER_REFERENCE),
         API_CLIENT_FACTORY,
         Collections.singletonList(LOAD_BALANCER_SERVICE_NAME),
-        LOAD_BALANCER_ANNOTATIONS);
+        LOAD_BALANCER_ANNOTATIONS,
+        ImmutableSet.of());
   }
 
   private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
       Map<String, String> podLabels) {
-    return createDiscoveryService(namespace, prefix, podLabels, Collections.emptySet());
+    return createDiscoveryService(namespace, prefix, podLabels, ImmutableSet.of());
   }
 
   private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
-      Map<String, String> podLabels, Set<String> endpointsBackedServices) {
+      Map<String, String> podLabels, ImmutableSet<String> endpointsBackedServices) {
     return new KubeDiscoveryService(
         namespace,
         prefix,
@@ -578,8 +580,8 @@ public class KubeDiscoveryServiceTest {
     for (Discoverable discoverable : discoverables) {
       Assert.assertEquals(TASK_WORKER, discoverable.getName());
       Assert.assertEquals(SERVICE_PORT, discoverable.getSocketAddress().getPort());
-      Assert.assertEquals(TEST_PAYLOAD,
-          new String(discoverable.getPayload(), StandardCharsets.UTF_8));
+      // The payload lives on the Service, which Kubernetes does not copy onto Endpoints.
+      Assert.assertArrayEquals(new byte[0], discoverable.getPayload());
     }
   }
 
@@ -587,7 +589,7 @@ public class KubeDiscoveryServiceTest {
   public void testTaskWorkerAddressesComeFromTheEndpointsWatcher() throws Exception {
     try (KubeDiscoveryService service =
         createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
-            Collections.singleton(TASK_WORKER))) {
+            ImmutableSet.of(TASK_WORKER))) {
       service.discover(TASK_WORKER);
 
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + TASK_WORKER),
@@ -602,7 +604,7 @@ public class KubeDiscoveryServiceTest {
   public void testNonEndpointsServicesUseServiceWatcher() throws Exception {
     try (KubeDiscoveryService service =
         createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
-            Collections.singleton(TASK_WORKER))) {
+            ImmutableSet.of(TASK_WORKER))) {
       service.discover("metrics");
 
       // Configuring pod level discovery for the task worker must not silently move other
@@ -615,11 +617,11 @@ public class KubeDiscoveryServiceTest {
 
   private V1ObjectMeta taskWorkerEndpointsMetadata() {
     // Kubernetes copies the Service labels onto the Endpoints object it manages, which is what
-    // lets the endpoints watcher reuse the same cdap.service selector.
+    // lets the endpoints watcher reuse the same cdap.service selector. It does not copy the
+    // Service annotations, so the cdap.service.payload annotation is deliberately absent here.
     return new V1ObjectMeta()
         .name(NAME_PREFIX + TASK_WORKER)
-        .labels(Collections.singletonMap("cdap.service", NAME_PREFIX + TASK_WORKER))
-        .annotations(Collections.singletonMap("cdap.service.payload", ENCODED_PAYLOAD));
+        .labels(Collections.singletonMap("cdap.service", NAME_PREFIX + TASK_WORKER));
   }
 
   private V1Service getLoadBalancerService() {
