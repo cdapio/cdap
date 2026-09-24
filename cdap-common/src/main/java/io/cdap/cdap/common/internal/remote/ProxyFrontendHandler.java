@@ -38,17 +38,13 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
 
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
-import java.util.HashSet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import javax.net.ssl.SSLException;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +66,7 @@ import org.slf4j.LoggerFactory;
  *       copies, managing explicit reference counting ({@code retain()}/{@code release()}).</li>
  * </ul>
  */
-public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
+class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFrontendHandler.class);
 
@@ -84,6 +80,16 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      */
     private static final SslContext CLIENT_SSL_CONTEXT = createClientSslContext();
 
+    /**
+     * Upper bound on opening a TCP connection to a task worker pod.
+     *
+     * <p>Pods are on the cluster network, so a healthy connect completes in milliseconds. The
+     * case this bounds is a pod whose node has disappeared: nothing answers and nothing refuses,
+     * so without a limit the request would wait out Netty's 30 second default before failing
+     * over. Failing within a few seconds lets AppFabric's retry land on a live pod instead.
+     */
+    private static final int WORKER_CONNECT_TIMEOUT_MS = 5000;
+
     private final PodLeaseManager podLeaseManager;
     private final DiscoveryServiceClient discoveryServiceClient;
     /**
@@ -95,7 +101,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     private boolean rejecting = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
 
-    public ProxyFrontendHandler(PodLeaseManager podLeaseManager, DiscoveryServiceClient discoveryServiceClient) {
+    ProxyFrontendHandler(PodLeaseManager podLeaseManager, DiscoveryServiceClient discoveryServiceClient) {
         this.podLeaseManager = podLeaseManager;
         this.discoveryServiceClient = discoveryServiceClient;
     }
@@ -105,22 +111,29 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest) {
             HttpRequest req = (HttpRequest) msg;
 
-            // STEP 0: Discover Live Task Worker Pods (Zero-Stale State)
+            // STEP 1: Resolve the Target Namespace
+            // The namespace is the lease key, so a request without one cannot be placed. Falling
+            // back to a fixed namespace would pin or steal a pod on behalf of a tenant that never
+            // asked for it, and the worker would reject the task anyway because it cannot run a
+            // task without a namespace. Fail it here, before it costs a lease.
+            String targetNamespace = req.headers().get(Constants.Gateway.HEADER_CDAP_NAMESPACE);
+            if (targetNamespace == null || targetNamespace.trim().isEmpty()) {
+                LOG.warn("Rejecting task request {} {} without the {} header.",
+                         req.method(), req.uri(), Constants.Gateway.HEADER_CDAP_NAMESPACE);
+                reject(ctx, msg, HttpResponseStatus.BAD_REQUEST);
+                return;
+            }
+
+            // STEP 2: Discover Live Task Worker Pods and Acquire a Lease
             // Twill's DiscoveryServiceClient evaluates an in-memory discoverables cache backed by
             // Kubernetes Endpoints watch events, giving sub-millisecond pod discovery without DNS lag.
             Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
-
-            // Sync the active discovery set with our local routing registry
             podLeaseManager.syncDiscovery(discoverables);
-
-            // Extract target namespace from the request header (defaults to "default" if omitted)
-            String targetNamespace = req.headers().get(Constants.Gateway.HEADER_CDAP_NAMESPACE);
-            if (targetNamespace == null) targetNamespace = "default";
-
             String targetWorkerAddress = podLeaseManager.acquireLease(targetNamespace);
 
             // STEP 3: Saturation Rejection (HTTP 429)
-            // If all worker pods are 100% occupied (10/10 tasks each), fail fast with HTTP 429 Too Many Requests.
+            // No pod can take this request: every pod is either at its concurrency limit or busy
+            // under another namespace's lease. Fail fast so AppFabric backs off and retries.
             if (targetWorkerAddress == null) {
                 LOG.warn("All task worker pods are saturated or leased to other namespaces. "
                          + "Rejecting request for namespace '{}'", targetNamespace);
@@ -165,6 +178,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             b.group(ctx.channel().eventLoop())
              .channel(NioSocketChannel.class)
              .option(ChannelOption.SO_KEEPALIVE, true)
+             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, WORKER_CONNECT_TIMEOUT_MS)
              .handler(new ChannelInitializer<SocketChannel>() {
                  @Override
                  protected void initChannel(SocketChannel ch) {
@@ -218,7 +232,7 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof HttpContent) {
             // STEP 5: Stream Inbound HTTP Request Body Chunks
             if (rejecting) {
-                // If previously rejected with 429, drain and release remaining body chunks to prevent TCP reset
+                // If this request was rejected, drain and release remaining body chunks to prevent TCP reset
                 boolean isLast = msg instanceof io.netty.handler.codec.http.LastHttpContent;
                 ReferenceCountUtil.release(msg);
                 if (isLast) {
