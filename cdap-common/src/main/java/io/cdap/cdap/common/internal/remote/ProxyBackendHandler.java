@@ -24,7 +24,6 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.LastHttpContent;
 
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,7 @@ import org.slf4j.LoggerFactory;
  *       socket drops or throws an exception.</li>
  * </ul>
  */
-public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
+class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyBackendHandler.class);
 
@@ -63,7 +62,7 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     private boolean decremented = false;
 
-    public ProxyBackendHandler(Channel clientChannel, PodLeaseManager podLeaseManager, String targetWorkerAddress) {
+    ProxyBackendHandler(Channel clientChannel, PodLeaseManager podLeaseManager, String targetWorkerAddress) {
         this.clientChannel = clientChannel;
         this.podLeaseManager = podLeaseManager;
         this.targetWorkerAddress = targetWorkerAddress;
@@ -129,8 +128,8 @@ public class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
             if (future.isSuccess()) {
                 ctx.channel().read();
             } else {
-                LOG.warn("Failed to relay the task worker response back to the caller. "
-                         + "Closing the channel.");
+                LOG.warn("Failed to relay the response from task worker {} back to the caller. "
+                         + "Closing the caller connection.", targetWorkerAddress, future.cause());
                 future.channel().close();
             }
         });

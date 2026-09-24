@@ -29,20 +29,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * PodLeaseManager handles lock-free Task Worker lease affinity based on logical namespaces.
  * It encapsulates the registry of active Task Worker pods and the logic to allocate or claim pods 
  * for incoming AppFabric requests without exceeding configured concurrency limits.
  */
-public class PodLeaseManager {
+class PodLeaseManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(PodLeaseManager.class);
 
     private final Map<String, PodState> podRegistry;
     private final int maxConcurrentTasks;
 
-    public PodLeaseManager(CConfiguration cConf) {
+    PodLeaseManager(CConfiguration cConf) {
         this.podRegistry = new ConcurrentHashMap<>();
         this.maxConcurrentTasks = cConf.getInt(Constants.TaskWorker.REQUEST_LIMIT, 10);
     }
@@ -51,34 +52,63 @@ public class PodLeaseManager {
      * Synchronizes the active discovered pods with the routing registry.
      * Registers newly discovered pods and prunes terminated pods.
      */
-    public void syncDiscovery(Iterable<Discoverable> discoverables) {
+    void syncDiscovery(Iterable<Discoverable> discoverables) {
         Set<String> activePods = new HashSet<>();
         for (Discoverable d : discoverables) {
             activePods.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
         }
 
         for (String podIp : activePods) {
-            podRegistry.putIfAbsent(podIp, new PodState(null, 0));
+            PodState existing = podRegistry.putIfAbsent(podIp, new PodState(null, 0));
+            if (existing != null) {
+                // Relist a pod that dropped out of discovery and came back while it was still
+                // draining, for example after its node recovered from a partition. Its counts were
+                // kept, so it resumes exactly where it left off.
+                existing.setListed(true);
+            }
         }
 
-        // Prune pods that discovery no longer reports, but only once they have drained.
+        // Pods that discovery no longer reports stop taking new leases immediately, but their
+        // entries are only pruned once they have drained.
         //
-        // Dropping a PodState while requests are still in flight loses the accounting for them:
-        // releaseLease looks the address up and silently does nothing when it is gone, so the
-        // decrement never lands. If the pod then reappears - a brief Endpoints flap, a rolling
-        // restart, a momentarily empty discovery response - it is re-registered with zero inflight
-        // while its earlier requests are still running, and the proxy over-subscribes it until
-        // those pile up into 409s and 429s. Keeping the entry until it drains costs one stale map
-        // entry; the next sync after the last response removes it.
-        podRegistry.entrySet().removeIf(entry ->
-            !activePods.contains(entry.getKey()) && entry.getValue().getInflightRequests() == 0);
-        
-        LOG.debug("PodLeaseManager synced leases: [{}]",
-            podRegistry.entrySet().stream()
-                .map(e -> e.getKey() + "="
-                    + (e.getValue().getLeasedNamespace() == null
-                    ? "null" : e.getValue().getLeasedNamespace() + "_" + e.getValue().getInflightRequests()))
-                .collect(java.util.stream.Collectors.joining(", ")));
+        // An address leaves discovery when the worker container restarts in place, when the pod
+        // starts terminating, or when its node is marked NotReady. The proxy cannot tell these
+        // apart, and only the first one kills the requests running on the pod: a terminating pod
+        // keeps serving through its grace period, and a partitioned node can come back Ready at
+        // the same address with its tasks still running. Dropping the entry while requests are in
+        // flight would lose their accounting, since releaseLease finds nothing to decrement, and
+        // a returning address would be re-registered at zero while still busy. Waiting costs
+        // little: the entry is unroutable while it drains, and after a container restart it is
+        // usually already at zero by the time discovery notices, because the dead process's
+        // connections reset before the Endpoints update arrives.
+        //
+        // Unlisting before reading the count is what makes the read safe: from that point no
+        // lease path will add to it. The one remaining window is a concurrent sync, working from
+        // a discovery view that still includes this address, relisting it between the read and
+        // the remove, with a request leased in between. That needs two contradictory views of the
+        // same address at the same instant, and costs one request over the pod's limit, which the
+        // worker rejects and the proxy self-heals from.
+        for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
+            if (activePods.contains(entry.getKey())) {
+                continue;
+            }
+            PodState state = entry.getValue();
+            state.setListed(false);
+            if (state.getInflightRequests() == 0) {
+                // Two-argument remove for the same reason as in invalidateLease.
+                podRegistry.remove(entry.getKey(), state);
+            }
+        }
+
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("PodLeaseManager synced leases: [{}]",
+                podRegistry.entrySet().stream()
+                    .map(e -> e.getKey() + "="
+                        + (e.getValue().getLeasedNamespace() == null
+                        ? "null" : e.getValue().getLeasedNamespace() + "_" + e.getValue().getInflightRequests())
+                        + (e.getValue().isListed() ? "" : " (unlisted)"))
+                    .collect(Collectors.joining(", ")));
+        }
     }
 
     /**
@@ -87,7 +117,7 @@ public class PodLeaseManager {
      * 
      * @return The IP:Port address of the leased worker pod, or null if the cluster is full.
      */
-    public String acquireLease(String namespace) {
+    String acquireLease(String namespace) {
         // STEP 1: Warm Match Selection
         for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
             if (entry.getValue().tryAcquireWarmLease(namespace, maxConcurrentTasks)) {
@@ -123,7 +153,7 @@ public class PodLeaseManager {
     /**
      * Releases a lease slot on the specified worker pod.
      */
-    public void releaseLease(String workerAddress) {
+    void releaseLease(String workerAddress) {
         PodState state = podRegistry.get(workerAddress);
         if (state != null) {
             state.decrementInflightRequests();
@@ -141,24 +171,28 @@ public class PodLeaseManager {
      * comes back through {@link #syncDiscovery} with a zeroed count and gets over-subscribed,
      * which surfaces as a burst of 409s from a worker the proxy believes is idle.
      *
-     * <p>Releasing the slot first and only then dropping a pod that has reached zero keeps a
-     * genuinely dead pod out of rotation without corrupting anyone else's accounting.
+     * <p>The pod is unlisted before its count is read, so no concurrent request can be leased
+     * onto it between the check and the removal. If discovery still reports the address, the next
+     * {@link #syncDiscovery} registers it again.
      */
-    public void invalidateLease(String workerAddress) {
+    void invalidateLease(String workerAddress) {
         PodState state = podRegistry.get(workerAddress);
         if (state == null) {
             return;
         }
+        state.setListed(false);
         state.decrementInflightRequests();
         if (state.getInflightRequests() == 0) {
-            // Two-argument remove so a pod re-registered by a concurrent syncDiscovery is not
-            // clobbered: it only removes the mapping if this exact PodState is still installed.
+            // Two-argument remove: between our get() and here, another path may already have
+            // removed this entry and a sync may have registered a fresh PodState for the same
+            // address. Removing by key alone would delete that fresh entry, along with any lease
+            // already taken on it.
             podRegistry.remove(workerAddress, state);
         }
     }
     
     /** Intended primarily for testing. */
-    public Map<String, PodState> getRegistry() {
+    Map<String, PodState> getRegistry() {
         return podRegistry;
     }
 }
