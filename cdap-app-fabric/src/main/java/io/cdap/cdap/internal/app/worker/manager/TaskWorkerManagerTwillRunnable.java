@@ -147,7 +147,11 @@ public class TaskWorkerManagerTwillRunnable extends AbstractTwillRunnable {
       Uninterruptibles.getUninterruptibly(future);
       LOG.debug("Task worker manager stopped");
     } catch (ExecutionException e) {
-      LOG.warn("Task worker manager stopped with exception", e);
+      // Returning normally would tell Twill this runnable completed successfully, so a crashed
+      // proxy would be indistinguishable from a clean stop. Propagate so the container fails.
+      LOG.error("Task worker manager failed", e.getCause());
+      Throwables.propagateIfPossible(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
   }
 
