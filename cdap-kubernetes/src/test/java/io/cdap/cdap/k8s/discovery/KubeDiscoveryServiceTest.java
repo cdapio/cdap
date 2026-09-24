@@ -17,11 +17,16 @@
 package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.DefaultApiClientFactory;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.CoreV1EndpointPort;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
+import io.kubernetes.client.openapi.models.V1EndpointAddress;
+import io.kubernetes.client.openapi.models.V1EndpointSubset;
+import io.kubernetes.client.openapi.models.V1Endpoints;
 import io.kubernetes.client.openapi.models.V1LoadBalancerIngressBuilder;
 import io.kubernetes.client.openapi.models.V1LoadBalancerStatus;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -38,9 +43,11 @@ import io.kubernetes.client.openapi.models.V1ServiceStatusBuilder;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,6 +78,7 @@ public class KubeDiscoveryServiceTest {
   private static final String LOAD_BALANCER_IP = "10.0.0.10";
   private static final String TEST_PAYLOAD = "test-payload";
   private static final String NAME_PREFIX = "cdap-";
+  private static final String TASK_WORKER = "task.worker";
   private static final int SERVICE_PORT = 80;
   private static final String ENCODED_PAYLOAD = Base64.getEncoder()
       .encodeToString(
@@ -102,11 +110,17 @@ public class KubeDiscoveryServiceTest {
         Collections.singletonList(OWNER_REFERENCE),
         API_CLIENT_FACTORY,
         Collections.singletonList(LOAD_BALANCER_SERVICE_NAME),
-        LOAD_BALANCER_ANNOTATIONS);
+        LOAD_BALANCER_ANNOTATIONS,
+        ImmutableSet.of());
   }
 
   private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
       Map<String, String> podLabels) {
+    return createDiscoveryService(namespace, prefix, podLabels, ImmutableSet.of());
+  }
+
+  private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
+      Map<String, String> podLabels, ImmutableSet<String> endpointsBackedServices) {
     return new KubeDiscoveryService(
         namespace,
         prefix,
@@ -115,7 +129,8 @@ public class KubeDiscoveryServiceTest {
         Collections.emptyList(),
         API_CLIENT_FACTORY,
         Collections.emptyList(),
-        Collections.emptyMap());
+        Collections.emptyMap(),
+        endpointsBackedServices);
   }
 
   @Test
@@ -520,6 +535,93 @@ public class KubeDiscoveryServiceTest {
     Assert.assertFalse(
         noOwnerService.isServiceUpdateNeeded(currentService.getSpec().getPorts().get(0),
             currentService, discoverable));
+  }
+
+  @Test
+  public void testToDiscoverablesReturnsEmptySetWhenSubsetsAreDropped() {
+    // When every backing pod goes away, Kubernetes keeps the Endpoints object and drops its
+    // subsets rather than deleting it, so resourceDeleted never fires. An empty set is the only
+    // signal consumers get that there is nothing left to route to.
+    V1Endpoints endpoints = new V1Endpoints().metadata(taskWorkerEndpointsMetadata());
+
+    Assert.assertTrue(
+        kubeDiscoveryService.toDiscoverables(TASK_WORKER, endpoints).isEmpty());
+  }
+
+  @Test
+  public void testToDiscoverablesSkipsSubsetWithoutReadyAddresses() {
+    // Not-ready pods land in notReadyAddresses, leaving addresses null on the subset.
+    V1Endpoints endpoints = new V1Endpoints()
+        .metadata(taskWorkerEndpointsMetadata())
+        .addSubsetsItem(new V1EndpointSubset()
+            .ports(Collections.singletonList(new CoreV1EndpointPort().port(SERVICE_PORT))));
+
+    Assert.assertTrue(
+        kubeDiscoveryService.toDiscoverables(TASK_WORKER, endpoints).isEmpty());
+  }
+
+  @Test
+  public void testToDiscoverablesReturnsOneDiscoverablePerReadyPod() {
+    V1Endpoints endpoints = new V1Endpoints()
+        .metadata(taskWorkerEndpointsMetadata())
+        .addSubsetsItem(new V1EndpointSubset()
+            .addresses(Arrays.asList(
+                new V1EndpointAddress().ip("10.0.0.1"),
+                new V1EndpointAddress().ip("10.0.0.2")))
+            .ports(Collections.singletonList(new CoreV1EndpointPort().port(SERVICE_PORT))));
+
+    Set<Discoverable> discoverables =
+        kubeDiscoveryService.toDiscoverables(TASK_WORKER, endpoints);
+
+    Assert.assertEquals(new HashSet<>(Arrays.asList("10.0.0.1", "10.0.0.2")),
+        discoverables.stream()
+            .map(d -> d.getSocketAddress().getHostName())
+            .collect(Collectors.toSet()));
+    for (Discoverable discoverable : discoverables) {
+      Assert.assertEquals(TASK_WORKER, discoverable.getName());
+      Assert.assertEquals(SERVICE_PORT, discoverable.getSocketAddress().getPort());
+      // The payload lives on the Service, which Kubernetes does not copy onto Endpoints.
+      Assert.assertArrayEquals(new byte[0], discoverable.getPayload());
+    }
+  }
+
+  @Test
+  public void testTaskWorkerAddressesComeFromTheEndpointsWatcher() throws Exception {
+    try (KubeDiscoveryService service =
+        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+            ImmutableSet.of(TASK_WORKER))) {
+      service.discover(TASK_WORKER);
+
+      Assert.assertEquals(Collections.singleton(NAME_PREFIX + TASK_WORKER),
+          service.getEndpointsWatchedServices());
+      // An endpoints backed service is registered only with the endpoints watcher, never with the
+      // service watcher, so the service watcher is not started and cannot overwrite pod addresses.
+      Assert.assertTrue(service.getWatchedServices().isEmpty());
+    }
+  }
+
+  @Test
+  public void testNonEndpointsServicesUseServiceWatcher() throws Exception {
+    try (KubeDiscoveryService service =
+        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+            ImmutableSet.of(TASK_WORKER))) {
+      service.discover("metrics");
+
+      // Configuring pod level discovery for the task worker must not silently move other
+      // services in this process off ClusterIP load balancing.
+      Assert.assertEquals(Collections.singleton(NAME_PREFIX + "metrics"),
+          service.getWatchedServices());
+      Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
+    }
+  }
+
+  private V1ObjectMeta taskWorkerEndpointsMetadata() {
+    // Kubernetes copies the Service labels onto the Endpoints object it manages, which is what
+    // lets the endpoints watcher reuse the same cdap.service selector. It does not copy the
+    // Service annotations, so the cdap.service.payload annotation is deliberately absent here.
+    return new V1ObjectMeta()
+        .name(NAME_PREFIX + TASK_WORKER)
+        .labels(Collections.singletonMap("cdap.service", NAME_PREFIX + TASK_WORKER));
   }
 
   private V1Service getLoadBalancerService() {
