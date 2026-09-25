@@ -24,8 +24,8 @@ Installation using Apache Ambari
   **not** with Ambari.
 - A number of features are currently planned to be added, including:
 
-  - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__ and
-  - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
+  - select `CDAP metrics <https://cdap.atlassian.net/browse/CDAP-4108>`__ and
+  - a full `smoke test of CDAP functionality <https://cdap.atlassian.net/browse/CDAP-4105>`__ after installation.
 
 - If you are installing CDAP with the intention of using *replication,* see these
   instructions on :ref:`CDAP Replication <installation-replication>` *before* installing or starting CDAP.
