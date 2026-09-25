@@ -138,8 +138,7 @@ class PodState {
 
     /**
      * Handles a worker rejection: releases this request's slot and adopts the worker's reported
-     * namespace. The worker's task count is not copied, since those tasks aren't this proxy's to
-     * release.
+     * namespace.
      *
      * @param leasedNamespace the namespace the worker reports, or {@code null} to keep the current one
      */
