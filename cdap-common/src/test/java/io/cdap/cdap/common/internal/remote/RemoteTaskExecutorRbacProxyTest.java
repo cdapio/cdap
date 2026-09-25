@@ -174,6 +174,25 @@ public class RemoteTaskExecutorRbacProxyTest {
   }
 
   @Test
+  public void testEmbeddedNamespaceIsUsedWhateverTheOuterNamespace() throws Exception {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+
+    RunnableTaskRequest embedded = RunnableTaskRequest.getBuilder("EmbeddedTask")
+        .withNamespace(TENANT_NAMESPACE)
+        .build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder("OuterTask")
+        .withNamespace("other")
+        .withEmbeddedTaskRequest(embedded)
+        .build();
+
+    newExecutor(proxyEnabledConf()).runTask(request);
+
+    // Must match TaskWorkerHttpHandlerInternal, which admits the task under the embedded namespace.
+    Assert.assertEquals(Collections.singletonList(TENANT_NAMESPACE),
+        workerHandler.getNamespaceHeaders());
+  }
+
+  @Test
   public void testSystemNamespaceWithoutEmbeddedRequestKeepsSystemNamespace() throws Exception {
     register(Constants.Service.TASK_WORKER_MANAGER);
 
