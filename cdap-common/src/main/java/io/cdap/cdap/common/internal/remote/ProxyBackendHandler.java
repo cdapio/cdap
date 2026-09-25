@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import io.cdap.cdap.common.conf.Constants;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -60,9 +61,7 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                 // STEP 1: On a worker rejection, adopt the namespace it reports.
                 if (statusCode == HttpResponseStatus.CONFLICT.code()
                         || statusCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
-
-                    // X-Active-Tasks is ignored; see PodState#adoptRejectedLease.
-                    String leasedNamespace = resp.headers().get("X-Leased-Namespace");
+                    String leasedNamespace = resp.headers().get(Constants.Gateway.HEADER_LEASED_NAMESPACE);
 
                     state.adoptRejectedLease(leasedNamespace);
                     // adoptRejectedLease already released this request's slot.
@@ -73,7 +72,6 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
                         targetWorkerAddress, statusCode, state.getLeasedNamespace(),
                         state.getInflightRequests());
                 } else {
-                    // The local count is authoritative. The worker's X-Active-Tasks lags and would under-count.
                     state.recordActivity();
                 }
             }
