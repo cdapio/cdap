@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
@@ -42,6 +43,8 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -100,6 +103,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int concurrentRequestLimit;
 
+  /** Owns the namespace lease and credential; null unless running behind the task worker proxy. */
+  @Nullable
+  private final StickyLeaseManager stickyLeaseManager;
+
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
    */
@@ -107,22 +114,37 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
+    this(cConf, new RunnableTaskLauncher(cConf, discoveryService, discoveryServiceClient,
+        metricsCollectionService), stopper, metricsCollectionService);
+  }
+
+  /** Constructs the handler around an already built launcher, so tests can inject failures. */
+  @VisibleForTesting
+  TaskWorkerHttpHandlerInternal(CConfiguration cConf,
+      RunnableTaskLauncher runnableTaskLauncher, Consumer<String> stopper,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
-        discoveryService, discoveryServiceClient, metricsCollectionService);
+    this.runnableTaskLauncher = runnableTaskLauncher;
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
-    if (enableUserCodeIsolationEnabled) {
-      // Run only one request at a time in user code isolation mode.
+    boolean stickyLeaseEnabled = TaskWorkerManager.isEnabled(cConf);
+
+    // Isolation without the proxy runs one task at a time, since nothing coordinates the shared
+    // credential. With the proxy, the lease does, so the configured limit applies.
+    if (enableUserCodeIsolationEnabled && !stickyLeaseEnabled) {
       this.concurrentRequestLimit = 1;
     } else {
       this.concurrentRequestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
     }
+
+    this.stickyLeaseManager = stickyLeaseEnabled
+        ? new StickyLeaseManager(concurrentRequestLimit, new SidecarCredentialContext())
+        : null;
 
     // Restart the service to clean up and re-claim resources after user code
     // execution.
@@ -130,6 +152,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       taskDetails.emitMetrics(succeeded);
       final int pendingRequests = runningRequestCount.decrementAndGet();
       requestProcessedCount.incrementAndGet();
+
+      if (stickyLeaseManager != null) {
+        // Released after the response is written, and before any restart so the credential is wiped.
+        String namespace = taskDetails.getNamespace();
+        if (namespace != null) {
+          stickyLeaseManager.releaseTask(new NamespaceId(namespace));
+        }
+      }
 
       String className = taskDetails.getClassName();
       if (mustRestart.get() && pendingRequests == 0) {
@@ -145,11 +175,36 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       }
 
       if (requestProcessedCount.get() >= killAfterRequestCount) {
-        stopper.accept(className);
+        // Drain instead of stopping now, which would kill sibling tasks still running.
+        mustRestart.set(true);
+        if (pendingRequests == 0) {
+          stopper.accept(className);
+        }
       }
     };
 
     enablePeriodicRestart(cConf, stopper);
+  }
+
+  /** Returns the number of tasks this pod runs at once. */
+  @VisibleForTesting
+  int getConcurrentRequestLimit() {
+    return concurrentRequestLimit;
+  }
+
+  /**
+   * Returns the lease manager, or null when this pod does not run behind the Task Worker Manager proxy.
+   */
+  @VisibleForTesting
+  @Nullable
+  StickyLeaseManager getStickyLeaseManager() {
+    return stickyLeaseManager;
+  }
+
+  /** Returns the number of tasks currently holding a slot on this pod. */
+  @VisibleForTesting
+  int getRunningRequestCount() {
+    return runningRequestCount.get();
   }
 
   /**
@@ -222,58 +277,113 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
 
     long startTime = System.currentTimeMillis();
+    RunnableTaskRequest runnableTaskRequest;
+    RunnableTaskContext runnableTaskContext;
+    NamespaceId namespaceId;
+
+    // Admission: nothing here runs user code, so a failure only needs to release the slot.
     try {
-      RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
+      runnableTaskRequest = GSON.fromJson(
           request.content().toString(StandardCharsets.UTF_8),
           RunnableTaskRequest.class);
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
-          runnableTaskRequest);
-      try {
-        NamespaceId namespaceId;
-        if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
-          // For system app tasks
-          namespaceId = new NamespaceId(
-              runnableTaskRequest.getParam().getEmbeddedTaskRequest()
-                  .getNamespace());
-        } else {
-          namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
+      runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
+      namespaceId = new NamespaceId(TaskDetails.extractNamespace(runnableTaskRequest));
+
+      if (stickyLeaseManager != null) {
+        StickyLeaseManager.AdmissionStatus status = stickyLeaseManager.admitTask(namespaceId);
+        if (status != StickyLeaseManager.AdmissionStatus.SUCCESS) {
+          // Report the lease holder so the proxy can correct its routing table.
+          responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS, leaseRejectionHeaders());
+          runningRequestCount.decrementAndGet();
+          return;
         }
-        // set the GcpMetadataTaskContext before running the task.
-        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId,
-            cConf);
-        runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
-        TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
-            startTime, runnableTaskContext.isTerminateOnComplete(),
-            runnableTaskRequest);
-        responder.sendContent(HttpResponseStatus.OK,
-            new RunnableTaskBodyProducer(runnableTaskContext,
-                taskCompletionConsumer, taskDetails),
-            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-                MediaType.APPLICATION_OCTET_STREAM));
-      } catch (ClassNotFoundException | ClassCastException ex) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-            exceptionToJson(ex),
-            new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-                "application/json"));
-        // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
-        taskCompletionConsumer.accept(false,
-            new TaskDetails(metricsCollectionService, startTime, false,
-                runnableTaskRequest));
-      } finally {
-        // clear the GcpMetadataTaskContext after the task is completed.
-        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
       }
+    } catch (Exception ex) {
+      LOG.error("Failed to admit task {}",
+          request.content().toString(StandardCharsets.UTF_8), ex);
+      // A null request tells the completion consumer there is no lease to release.
+      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, false);
+      return;
+    }
+
+    // Launch: exactly one path below calls the completion consumer.
+    try {
+      if (stickyLeaseManager == null) {
+        // Under a lease the lease manager provisions and wipes the credential instead.
+        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
+      }
+      runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+      TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
+          startTime, runnableTaskContext.isTerminateOnComplete(),
+          runnableTaskRequest);
+      responder.sendContent(HttpResponseStatus.OK,
+          new RunnableTaskBodyProducer(runnableTaskContext,
+              taskCompletionConsumer, taskDetails),
+          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+              MediaType.APPLICATION_OCTET_STREAM));
+    } catch (ClassNotFoundException | ClassCastException ex) {
+      // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate
+      // the runner.
+      failTask(responder, HttpResponseStatus.BAD_REQUEST, ex, startTime, runnableTaskRequest,
+          false);
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
           request.content().toString(StandardCharsets.UTF_8), ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-          exceptionToJson(ex),
-          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-              "application/json"));
       // Potentially ran user code, hence terminate the runner.
+      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime,
+          runnableTaskRequest, true);
+    } catch (Throwable t) {
+      // An Error (e.g. NoClassDefFoundError): release the slot and lease, then rethrow.
       taskCompletionConsumer.accept(false,
-          new TaskDetails(metricsCollectionService, startTime, true, null));
+          new TaskDetails(metricsCollectionService, startTime, true,
+              runnableTaskRequest));
+      throw t;
+    } finally {
+      if (stickyLeaseManager == null) {
+        // Leased pods release in taskCompletionConsumer instead, once the response is written;
+        // releasing here would let the proxy hand the pod to another namespace mid-response.
+        clearTaskContextOrScheduleRestart();
+      }
     }
+  }
+
+  /**
+   * Reports a failed task and releases its slot, even if the response can't be sent.
+   *
+   * @param terminateOnComplete whether user code may have run
+   * @param request the originating request, or null if it couldn't be read
+   */
+  private void failTask(HttpResponder responder, HttpResponseStatus status, Exception ex,
+      long startTime, @Nullable RunnableTaskRequest request, boolean terminateOnComplete) {
+    try {
+      responder.sendString(status, exceptionToJson(ex),
+          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
+    } finally {
+      taskCompletionConsumer.accept(false,
+          new TaskDetails(metricsCollectionService, startTime, terminateOnComplete, request));
+    }
+  }
+
+  /** Wipes the credential on a pod without a lease, and restarts the pod if that fails. */
+  private void clearTaskContextOrScheduleRestart() {
+    try {
+      GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
+    } catch (IOException e) {
+      LOG.error("Failed to wipe the service account credential after the task finished. "
+          + "Restarting the task worker so the credential does not outlive the namespace that "
+          + "provisioned it.", e);
+      mustRestart.set(true);
+    }
+  }
+
+  /** Builds the rejection headers naming the namespace that holds this pod's lease. */
+  private DefaultHttpHeaders leaseRejectionHeaders() {
+    DefaultHttpHeaders headers = new DefaultHttpHeaders();
+    NamespaceId leased = stickyLeaseManager.getCurrentLease();
+    if (leased != null) {
+      headers.set(Constants.Gateway.HEADER_LEASED_NAMESPACE, leased.getNamespace());
+    }
+    return headers;
   }
 
   /**
@@ -380,6 +490,35 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       LOG.error("Error when sending chunks", cause);
       context.executeCleanupTask();
       taskCompletionConsumer.accept(false, taskDetails);
+    }
+  }
+
+  /** The pod's namespaced credential, held by the metadata sidecar. */
+  private final class SidecarCredentialContext implements NamespaceCredentialContext {
+
+    @Override
+    public void provision(NamespaceId namespace) {
+      try {
+        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespace, cConf);
+      } catch (IOException e) {
+        // The task must not run under the wrong identity; the lease manager unwinds its claim.
+        throw new UncheckedIOException(
+            "Failed to provision the service account credential for namespace "
+                + namespace.getNamespace(), e);
+      }
+    }
+
+    @Override
+    public void wipe() {
+      try {
+        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
+      } catch (IOException e) {
+        // Nothing upstream can handle this, so restart the idle pod rather than keep the credential.
+        LOG.error("Failed to wipe the service account credential after the last task finished. "
+            + "Restarting the task worker so the credential does not outlive the namespace that "
+            + "provisioned it.", e);
+        mustRestart.set(true);
+      }
     }
   }
 }
