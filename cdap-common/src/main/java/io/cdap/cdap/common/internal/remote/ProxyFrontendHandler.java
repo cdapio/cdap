@@ -50,34 +50,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ProxyFrontendHandler intercepts inbound HTTP requests from AppFabric, discovers available
- * Task Worker pods, selects a warm or idle worker pod based on the target namespace,
- * and streams the request payload across an outbound Netty TCP socket to the chosen worker.
- *
- * <p>Key Responsibilities:
- * <ul>
- *   <li>Namespace-Aware Routing: Matches requests to pods already warm for the target namespace
- *       or claims an idle pod.</li>
- *   <li>Outbound Socket Connection: Lazily opens an asynchronous Netty TCP socket to the chosen
- *       Task Worker pod and sets up the outbound SSL/HTTP pipeline.</li>
- *   <li>Bidirectional Backpressure: Pauses inbound reads while connecting or when outbound socket
- *       buffers are full, preventing out-of-memory errors under high traffic spikes.</li>
- *   <li>Zero-Copy Streaming: Forwards raw {@link io.netty.buffer.ByteBuf} chunks without JVM heap
- *       copies, managing explicit reference counting ({@code retain()}/{@code release()}).</li>
- * </ul>
+ * Routes AppFabric task requests to a task worker pod leased to the request's namespace and
+ * streams the request to it.
  */
 class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProxyFrontendHandler.class);
 
-    /**
-     * Outbound TLS context shared by every proxied connection.
-     *
-     * <p>An {@link SslContext} is immutable and thread safe once built, and building one allocates
-     * a full JSSE (or OpenSSL) context plus its session cache. Doing that per connection puts one
-     * of the most expensive operations in Netty directly on the request hot path, so it is built
-     * exactly once here and reused for the lifetime of the process.
-     */
+    /** Built once, since creating an SslContext per connection is expensive. */
     private static final SslContext CLIENT_SSL_CONTEXT = createClientSslContext();
 
     /** Fail fast on unreachable pods instead of waiting out Netty's 30s default. */
@@ -85,10 +65,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private final PodLeaseManager podLeaseManager;
     private final DiscoveryServiceClient discoveryServiceClient;
-    /**
-     * The connection to the task worker pod. This handler is installed on the CLIENT pipeline, so
-     * this is the peer channel: events arrive here from the client, writes go out to the worker.
-     */
+    /** The connection to the task worker; this handler sits on the client pipeline. */
     private Channel workerChannel;
     private boolean connecting = false;
     private boolean rejecting = false;
@@ -115,8 +92,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             }
 
             // STEP 2: Discover Live Task Worker Pods and Acquire a Lease
-            // Twill's DiscoveryServiceClient evaluates an in-memory discoverables cache backed by
-            // Kubernetes Endpoints watch events, giving sub-millisecond pod discovery without DNS lag.
+            // Discovery is served from an in-memory cache fed by the Kubernetes Endpoints watch.
             Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
             podLeaseManager.syncDiscovery(discoverables);
             String targetWorkerAddress = podLeaseManager.acquireLease(targetNamespace);
@@ -132,10 +108,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
             final String chosenWorker = targetWorkerAddress;
 
-            // Split on the LAST colon, not the first. Addresses are built in
-            // PodLeaseManager#syncDiscovery as hostString + ":" + port, and for an IPv6 pod
-            // hostString is itself colon separated (for example 2001:db8::1:11015). Splitting on
-            // the first colon would hand a hex group to Integer.parseInt instead of the port.
+            // Split on the last colon so IPv6 hosts keep their colons.
             int portSeparator = chosenWorker.lastIndexOf(':');
             int workerPort = portSeparator < 0 ? -1 : parsePort(chosenWorker.substring(portSeparator + 1));
             if (workerPort < 0) {
@@ -151,16 +124,11 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             LOG.debug("Opening connection to task worker {} for namespace {}",
                     targetWorkerAddress, targetNamespace);
 
-            // STEP 4: Establish Outbound TCP Socket to Chosen Task Worker Pod
-            // 1. Temporarily pause reading from the client (AppFabric) socket so data does not pile up in RAM
-            //    while the TCP handshake to the worker is completing.
+            // STEP 4: Connect to the worker, pausing client reads until the connection is up.
             ctx.channel().config().setAutoRead(false);
             connecting = true;
 
-            // 2. Initialize the outbound Netty client Bootstrap.
-            //    Sharing ctx.channel().eventLoop() ensures that both inbound and outbound channels run on the same
-            //    event loop thread, guaranteeing thread safety without thread context-switching overhead.
-
+            // Share the client's event loop so both channels are handled on one thread.
             Bootstrap b = new Bootstrap();
             b.group(ctx.channel().eventLoop())
              .channel(NioSocketChannel.class)
@@ -170,33 +138,22 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  @Override
                  protected void initChannel(SocketChannel ch) {
                      ChannelPipeline p = ch.pipeline();
-                     // Attach SSL handler for internal TLS encrypted communication with the worker pod.
-                     // The context is process wide, see CLIENT_SSL_CONTEXT.
                      p.addLast(CLIENT_SSL_CONTEXT.newHandler(ch.alloc(), workerHost, workerPort));
-                     // HTTP codec for encoding requests to worker and decoding responses from worker
                      p.addLast(new HttpClientCodec());
-                     // Attach backend handler to stream worker responses back to AppFabric
                      p.addLast(new ProxyBackendHandler(ctx.channel(), podLeaseManager, chosenWorker));
                  }
              });
 
-            // 3. Queue the request header BEFORE initiating the connect.
-            //    b.connect() can complete inline (an immediate resolver failure, or a connect that
-            //    finishes on this event loop before addListener returns), in which case the
-            //    listener below runs synchronously and drains the queue. If the header were
-            //    enqueued afterwards it would land in a queue nobody will ever poll again, and the
-            //    request would hang with its body streaming into a socket that never got a header.
+            // Queue the header before connecting, since the listener can run inline and drain the queue.
             pendingMessages.add(msg);
 
-            // 4. Initiate non-blocking asynchronous TCP connect to the Task Worker IP and Port
             ChannelFuture f = b.connect(workerHost, workerPort);
             workerChannel = f.channel();
 
-            // 5. Register listener to handle connection success or failure
             f.addListener((ChannelFutureListener) future -> {
                 connecting = false;
                 if (future.isSuccess()) {
-                    // Flush any request headers/chunks that arrived while TCP connection was being negotiated
+                    // Flush everything queued while connecting.
                     LOG.debug("Connected to task worker {}", chosenWorker);
                     Object pendingMsg = pendingMessages.poll();
                     while (pendingMsg != null) {
@@ -218,7 +175,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         } else if (msg instanceof HttpContent) {
             // STEP 5: Stream Inbound HTTP Request Body Chunks
             if (rejecting) {
-                // If this request was rejected, drain and release remaining body chunks to prevent TCP reset
+                // Drain the rejected request's body before closing, so the client isn't reset mid-upload.
                 boolean isLast = msg instanceof io.netty.handler.codec.http.LastHttpContent;
                 ReferenceCountUtil.release(msg);
                 if (isLast) {
@@ -230,14 +187,12 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 // Socket still connecting or queue not yet drained: preserve ordering
                 pendingMessages.add(msg);
             } else if (workerChannel != null && workerChannel.isActive()) {
-                // Outbound socket active: stream raw ByteBuf directly to worker without copying to Java Heap!
                 workerChannel.writeAndFlush(msg);
             } else {
                 ReferenceCountUtil.release(msg);
             }
         } else {
-            // HttpServerCodec only emits HttpRequest and HttpContent, so this is unreachable today.
-            // Releasing anyway means a future pipeline change cannot turn into a silent buffer leak.
+            // Unreachable with HttpServerCodec; release anyway to avoid leaks.
             LOG.debug("Discarding unexpected inbound message type {}", msg.getClass().getName());
             ReferenceCountUtil.release(msg);
         }
@@ -254,17 +209,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        // Backpressure on the response direction.
-        //
-        // This handler is installed on the client pipeline, so this fires when the CLIENT's own
-        // write buffer crosses a watermark. That buffer holds response bytes we are relaying back
-        // to AppFabric, and the only thing feeding it is our reads from the worker. So when the
-        // client stops keeping up, stop pulling from the worker.
-        //
-        // The request direction is the mirror of this and lives in
-        // ProxyBackendHandler#channelWritabilityChanged. Each handler reacts to its own channel's
-        // writability, because Netty raises this event only on the pipeline of the channel whose
-        // buffer actually moved.
+        // Response-direction backpressure: stop reading from the worker while the client can't keep up.
         Channel clientChannel = ctx.channel();
         if (workerChannel != null && workerChannel.isActive()) {
             workerChannel.config().setAutoRead(clientChannel.isWritable());
@@ -274,9 +219,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        // If the client goes away while the outbound connect is still in flight, the connect
-        // listener may never run, so anything already queued would never be written and never be
-        // released. Drain it here; the queue is empty on the normal path so this is a no-op.
+        // Release anything queued if the client leaves before the connect completes.
         releasePendingMessages();
 
         // When client closes connection, cleanly close the outbound worker socket
@@ -304,15 +247,8 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * Fails the current request with the given status without tearing the connection down
-     * immediately.
-     *
-     * <p>The response is written now, but the channel is closed only once
-     * {@link io.netty.handler.codec.http.LastHttpContent} arrives (see the {@code rejecting} branch
-     * in {@link #channelRead}). Closing right away would leave the client mid-upload of a body that
-     * can run to many megabytes, and the resulting TCP reset would frequently destroy the response
-     * before AppFabric managed to read it, turning a clean retryable status into an opaque
-     * connection error.
+     * Responds with {@code status} and closes the connection once the request body is drained,
+     * so the client isn't reset mid-upload.
      */
     private void reject(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status) {
         rejecting = true;
@@ -341,9 +277,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
                 .build();
         } catch (SSLException e) {
-            // The proxy cannot forward a single request without TLS to the workers, so there is no
-            // degraded mode worth limping along in. Failing at class initialization surfaces the
-            // real cause instead of a stream of confusing handshake errors at request time.
+            // Fail at startup: the proxy can't forward anything without TLS.
             throw new IllegalStateException(
                 "Failed to build the outbound SSL context for the task worker proxy", e);
         }
