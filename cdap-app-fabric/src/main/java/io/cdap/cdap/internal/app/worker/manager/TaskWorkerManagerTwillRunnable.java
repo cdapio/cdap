@@ -72,19 +72,12 @@ public class TaskWorkerManagerTwillRunnable extends AbstractTwillRunnable {
   }
 
   /**
-   * Builds the injector for the proxy container.
-   *
-   * <p>This is a deliberately small module set. The proxy reads a namespace header, picks a task
-   * worker pod, and streams bytes to it; it never publishes metrics, writes audit log entries, or
-   * authenticates on its own behalf, so no metrics, audit log, or messaging module is installed.
-   * The authentication and remote authenticator modules are present only because
-   * {@link RemoteLogAppenderModule} needs them transitively to build its {@code RemoteClient}.
+   * Builds the injector for the proxy container. The authentication modules are only there because
+   * {@link RemoteLogAppenderModule} needs them to build its {@code RemoteClient}.
    */
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf) {
-    // Unlike the task worker, the proxy has no ZooKeeper/Kafka fallback. It exists to watch
-    // Kubernetes V1Endpoints so it can route to individual task worker pods, which has no analogue
-    // on the old Hadoop stack, and it is only ever launched from a Kubernetes master environment.
+    // No ZooKeeper fallback: the proxy only runs on Kubernetes, where it watches V1Endpoints.
     MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
     if (masterEnv == null) {
       throw new IllegalStateException(
@@ -147,8 +140,7 @@ public class TaskWorkerManagerTwillRunnable extends AbstractTwillRunnable {
       Uninterruptibles.getUninterruptibly(future);
       LOG.debug("Task worker manager stopped");
     } catch (ExecutionException e) {
-      // Returning normally would tell Twill this runnable completed successfully, so a crashed
-      // proxy would be indistinguishable from a clean stop. Propagate so the container fails.
+      // Propagate so a crashed proxy fails the container instead of looking like a clean stop.
       LOG.error("Task worker manager failed", e.getCause());
       Throwables.propagateIfPossible(e.getCause());
       throw new RuntimeException(e.getCause());

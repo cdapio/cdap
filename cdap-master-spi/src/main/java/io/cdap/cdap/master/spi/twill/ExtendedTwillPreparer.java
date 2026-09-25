@@ -53,18 +53,8 @@ public interface ExtendedTwillPreparer extends TwillPreparer {
   ExtendedTwillPreparer addProbes(String runnableName, Map<String, String> probeConf);
 
   /**
-   * Requests a deployment strategy that never runs two generations of the runnable's pod at the
-   * same time.
-   *
-   * <p>The Kubernetes default RollingUpdate strategy derives {@code maxSurge} from 25% of the
-   * replica count rounded <em>up</em>, and {@code maxUnavailable} from 25% rounded <em>down</em>.
-   * At a single replica that resolves to {@code maxSurge=1, maxUnavailable=0}, so an update
-   * creates the replacement pod and waits for it to become ready <em>before</em> deleting the
-   * original. For most services that overlap is desirable. For a runnable that owns unshared
-   * in-memory state, it means two instances briefly disagree about that state.
-   *
-   * <p>Callers that need at-most-one semantics must use this rather than relying on a replica
-   * count of one, which constrains the steady state but not the transition.
+   * Requests a deployment strategy that never runs two generations of the runnable's pod at once.
+   * Use this for at-most-one semantics; a replica count of one still overlaps pods during updates.
    */
   ExtendedTwillPreparer withRecreateStrategy();
 }
