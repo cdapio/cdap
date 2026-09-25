@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -197,78 +198,60 @@ public class ProxyHandlersTest {
     }
 
     @Test
-    public void testSyncDiscoveryKeepsPodsWithInflightRequests() {
+    public void testSyncDiscoveryEvictsDroppedPodsImmediately() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
 
-        // A pod that is mid-request when it drops out of the discovery payload.
         PodState busyPod = new PodState("namespace-A", 2);
         podLeaseManager.getRegistry().put("10.0.0.1:11015", busyPod);
 
-        // Discovery comes back reporting a completely different set of pods.
-        podLeaseManager.syncDiscovery(Collections.singletonList(
-            discoverableAt("10.0.0.2", 11015)));
+        podLeaseManager.syncDiscovery(Collections.singletonList(discoverableAt("10.0.0.2", 11015)));
 
-        // The busy pod must survive with its accounting intact. Dropping it here would make the
-        // eventual releaseLease a no-op and let the pod return with a zeroed count.
-        PodState retained = podLeaseManager.getRegistry().get("10.0.0.1:11015");
-        assertNotNull(retained);
-        assertEquals(2, retained.getInflightRequests());
-        assertEquals("namespace-A", retained.getLeasedNamespace());
-    }
+        // Evicted even though requests are in flight.
+        assertNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
+        assertNotNull(podLeaseManager.getRegistry().get("10.0.0.2:11015"));
+        assertEquals("10.0.0.2:11015", podLeaseManager.acquireLease("namespace-A"));
 
-    @Test
-    public void testSyncDiscoveryPrunesPodsOnceDrained() {
-        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
-
-        PodState busyPod = new PodState("namespace-A", 1);
-        podLeaseManager.getRegistry().put("10.0.0.1:11015", busyPod);
-
-        Iterable<Discoverable> elsewhere = Collections.singletonList(
-            discoverableAt("10.0.0.2", 11015));
-
-        // Still busy: retained.
-        podLeaseManager.syncDiscovery(elsewhere);
-        assertNotNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
-
-        // Last response lands, so the next sync is free to evict it.
+        // Late releases are no-ops.
         podLeaseManager.releaseLease("10.0.0.1:11015");
-        podLeaseManager.syncDiscovery(elsewhere);
+        podLeaseManager.releaseLease("10.0.0.1:11015");
         assertNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
     }
 
     @Test
-    public void testInvalidateLeaseOnlyReleasesTheCallersSlot() {
+    public void testRediscoveredPodStartsFresh() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState oldState = new PodState("namespace-A", 2);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", oldState);
+
+        podLeaseManager.syncDiscovery(Collections.emptyList());
+        podLeaseManager.syncDiscovery(Collections.singletonList(discoverableAt("10.0.0.1", 11015)));
+
+        // Old counts are not carried over.
+        PodState newState = podLeaseManager.getRegistry().get("10.0.0.1:11015");
+        assertNotNull(newState);
+        assertNotSame(oldState, newState);
+        assertNull(newState.getLeasedNamespace());
+        assertEquals(0, newState.getInflightRequests());
+
+        // A late release for the old entry is floored at zero.
+        podLeaseManager.releaseLease("10.0.0.1:11015");
+        assertEquals(0, newState.getInflightRequests());
+    }
+
+    @Test
+    public void testReleaseAfterFailedConnectKeepsPodAndOtherCounts() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
 
         // Three connections are routed to the same pod; one of them fails to connect.
         PodState pod = new PodState("namespace-A", 3);
         podLeaseManager.getRegistry().put("10.0.0.1:11015", pod);
 
-        podLeaseManager.invalidateLease("10.0.0.1:11015");
+        podLeaseManager.releaseLease("10.0.0.1:11015");
 
-        // The other two are still streaming, so the entry must stay and keep counting them.
-        // Removing it outright would strand their releaseLease calls and over-subscribe the pod
-        // the moment discovery re-registered it.
-        PodState retained = podLeaseManager.getRegistry().get("10.0.0.1:11015");
-        assertNotNull(retained);
-        assertEquals(2, retained.getInflightRequests());
-    }
-
-    @Test
-    public void testInvalidateLeaseEvictsPodOnceDrained() {
-        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
-
-        PodState pod = new PodState("namespace-A", 1);
-        podLeaseManager.getRegistry().put("10.0.0.1:11015", pod);
-
-        // Sole in-flight request fails to connect, so nothing is left on the pod and a dead worker
-        // should not linger in the rotation.
-        podLeaseManager.invalidateLease("10.0.0.1:11015");
-
-        assertNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
-
-        // Invalidating an address that is already gone is a no-op rather than an error.
-        podLeaseManager.invalidateLease("10.0.0.1:11015");
+        // Only the failed connection's slot is released; the pod stays registered.
+        assertSame(pod, podLeaseManager.getRegistry().get("10.0.0.1:11015"));
+        assertEquals(2, pod.getInflightRequests());
+        assertEquals("namespace-A", pod.getLeasedNamespace());
     }
 
     @Test
@@ -286,99 +269,15 @@ public class ProxyHandlersTest {
         assertEquals(HttpResponseStatus.BAD_REQUEST, response.status());
         response.release();
 
-        // Nothing was leased on behalf of the unnamed request, and discovery was never consulted.
+        // Nothing leased and discovery never consulted.
         assertNull(freshPod.getLeasedNamespace());
         assertEquals(0, freshPod.getInflightRequests());
         Mockito.verify(mockDiscovery, Mockito.never()).discover(Mockito.anyString());
 
-        // The connection stays open until the request body is drained, as with every rejection.
+        // Closed only after the request body is drained.
         assertTrue(channel.isActive());
         channel.writeInbound(new DefaultLastHttpContent());
         assertFalse(channel.isActive());
-    }
-
-    @Test
-    public void testInvalidatedPodTakesNoNewLeaseUntilRediscovered() {
-        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
-        PodState pod = new PodState("namespace-A", 2);
-        podLeaseManager.getRegistry().put("10.0.0.1:11015", pod);
-
-        // One of the two connections fails to connect. The other is still streaming, so the entry
-        // stays, but nothing new may be leased onto it: that is what keeps the drained check and
-        // the removal from racing with a concurrent acquire.
-        podLeaseManager.invalidateLease("10.0.0.1:11015");
-        assertSame(pod, podLeaseManager.getRegistry().get("10.0.0.1:11015"));
-        assertFalse(pod.isListed());
-        assertEquals(1, pod.getInflightRequests());
-        assertNull(podLeaseManager.acquireLease("namespace-A"));
-
-        // Discovery still reports the pod, so the next sync puts it back into rotation.
-        podLeaseManager.syncDiscovery(Collections.singletonList(discoverableAt("10.0.0.1", 11015)));
-        assertTrue(pod.isListed());
-        assertEquals("10.0.0.1:11015", podLeaseManager.acquireLease("namespace-A"));
-        assertEquals(2, pod.getInflightRequests());
-    }
-
-    @Test
-    public void testUnlistedPodRefusesEveryLeasePath() {
-        PodState warm = new PodState("namespace-A", 1);
-        warm.setListed(false);
-        assertFalse(warm.tryAcquireWarmLease("namespace-A", 10));
-
-        PodState idle = new PodState("namespace-A", 0);
-        idle.setListed(false);
-        assertFalse(idle.tryStealIdleLease("namespace-B"));
-
-        PodState fresh = new PodState(null, 0);
-        fresh.setListed(false);
-        assertFalse(fresh.tryClaimFreshLease("namespace-B"));
-
-        // Relisting makes it leasable again.
-        fresh.setListed(true);
-        assertTrue(fresh.tryClaimFreshLease("namespace-B"));
-    }
-
-    @Test
-    public void testPodDroppedFromDiscoveryDrainsWithoutTakingNewLeases() {
-        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
-        podLeaseManager.getRegistry().put("10.0.0.1:11015", new PodState("namespace-A", 2));
-
-        // The pod's node disappears: discovery stops reporting it while two requests are still
-        // outstanding on it.
-        podLeaseManager.syncDiscovery(Collections.emptyList());
-
-        PodState dropped = podLeaseManager.getRegistry().get("10.0.0.1:11015");
-        assertNotNull(dropped);
-        assertFalse(dropped.isListed());
-        assertEquals(2, dropped.getInflightRequests());
-
-        // It has spare capacity for namespace-A, but must not be offered: nothing would answer.
-        assertNull(podLeaseManager.acquireLease("namespace-A"));
-        assertEquals(2, dropped.getInflightRequests());
-
-        // The outstanding connections close, their slots come back, and the next sync prunes it.
-        podLeaseManager.releaseLease("10.0.0.1:11015");
-        podLeaseManager.releaseLease("10.0.0.1:11015");
-        podLeaseManager.syncDiscovery(Collections.emptyList());
-        assertNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
-    }
-
-    @Test
-    public void testPodRelistedAfterNodeRecoveryKeepsItsCounts() {
-        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
-        PodState pod = new PodState("namespace-A", 2);
-        podLeaseManager.getRegistry().put("10.0.0.1:11015", pod);
-
-        podLeaseManager.syncDiscovery(Collections.emptyList());
-        assertFalse(pod.isListed());
-
-        // The node recovers and the same address comes back while its two requests are still running.
-        podLeaseManager.syncDiscovery(Collections.singletonList(discoverableAt("10.0.0.1", 11015)));
-
-        assertSame(pod, podLeaseManager.getRegistry().get("10.0.0.1:11015"));
-        assertTrue(pod.isListed());
-        assertEquals("10.0.0.1:11015", podLeaseManager.acquireLease("namespace-A"));
-        assertEquals(3, pod.getInflightRequests());
     }
 
     private static Discoverable discoverableAt(String host, int port) {

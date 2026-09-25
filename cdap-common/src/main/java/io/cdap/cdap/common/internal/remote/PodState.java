@@ -21,130 +21,115 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * PodState represents the in-memory routing and lease status of an individual Task Worker pod.
  * Entirely lock-free, backing state via an immutable internal representation and AtomicReference CAS loops.
- *
- * <p>A PodState is either listed or unlisted, mirroring whether the most recent discovery sync
- * reported the pod. An unlisted pod stays in the registry only so that the requests still running
- * on it can release their slots; it is never offered for a new lease. Unlisting and every lease
- * acquisition are CAS transitions on the same reference, so once {@link #setListed(boolean)}
- * unlists a pod, no lease can be added to it until it is listed again.
  */
 class PodState {
+    /** Immutable snapshot of a pod's lease; every change swaps in a new instance via CAS. */
     private static class State {
         final String leasedNamespace;
         final int inflightRequests;
         final long lastActivityTime;
-        final boolean listed;
 
-        State(String leasedNamespace, int inflightRequests, long lastActivityTime, boolean listed) {
+        State(String leasedNamespace, int inflightRequests, long lastActivityTime) {
             this.leasedNamespace = leasedNamespace;
             this.inflightRequests = inflightRequests;
             this.lastActivityTime = lastActivityTime;
-            this.listed = listed;
         }
     }
 
     private final AtomicReference<State> stateRef;
 
+    /**
+     * Creates the lease state for a pod.
+     *
+     * @param leasedNamespace the namespace the pod is leased to, or {@code null} if unleased
+     * @param inflightRequests requests this proxy has routed to the pod and not yet released
+     */
     PodState(String leasedNamespace, int inflightRequests) {
         this.stateRef = new AtomicReference<>(new State(
             leasedNamespace,
             inflightRequests,
-            System.nanoTime(),
-            true
+            System.nanoTime()
         ));
     }
 
+    /** Returns the namespace the pod is leased to, or {@code null} if it has never been leased. */
     String getLeasedNamespace() {
         return stateRef.get().leasedNamespace;
     }
 
+    /** Returns the number of requests this proxy has routed to the pod and not yet released. */
     int getInflightRequests() {
         return stateRef.get().inflightRequests;
     }
 
+    /** Returns the {@link System#nanoTime()} of the last state change, used to pick idle pods to steal. */
     long getLastActivityTime() {
         return stateRef.get().lastActivityTime;
     }
 
-    boolean isListed() {
-        return stateRef.get().listed;
-    }
-
     /**
-     * Records whether the latest discovery sync reported this pod.
+     * Takes a slot if the pod is already leased to {@code namespace} and below {@code maxConcurrency}.
      *
-     * <p>A pod drops out of discovery when its container restarts in place, when it starts
-     * terminating, or when its node is marked NotReady. Its entry cannot be removed while requests
-     * are still in flight on it, because their releases would then find nothing to decrement. But
-     * it must not attract new requests either: a warm match on a pod that is gone costs the caller
-     * a connect timeout followed by a 502 and a retry, and if the node vanished without closing
-     * its sockets the entry can take up to the caller's read timeout to drain. Unlisting keeps the
-     * entry for accounting while taking it out of every lease path. If discovery reports the pod
-     * again it is simply relisted with its counts intact.
+     * @return {@code true} if a slot was taken
      */
-    void setListed(boolean listed) {
-        while (true) {
-            State current = stateRef.get();
-            if (current.listed == listed) {
-                return;
-            }
-            State next = new State(current.leasedNamespace, current.inflightRequests,
-                current.lastActivityTime, listed);
-            if (stateRef.compareAndSet(current, next)) {
-                return;
-            }
-        }
-    }
-
     boolean tryAcquireWarmLease(String namespace, int maxConcurrency) {
         while (true) {
             State current = stateRef.get();
-            if (!current.listed || !namespace.equals(current.leasedNamespace)
-                || current.inflightRequests >= maxConcurrency) {
+            if (!namespace.equals(current.leasedNamespace) || current.inflightRequests >= maxConcurrency) {
                 return false;
             }
-            State next = new State(current.leasedNamespace, current.inflightRequests + 1,
-                System.nanoTime(), true);
+            State next = new State(current.leasedNamespace, current.inflightRequests + 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
         }
     }
 
+    /**
+     * Leases a never-leased, idle pod to {@code namespace} and takes its first slot.
+     *
+     * @return {@code true} if the pod was claimed
+     */
     boolean tryClaimFreshLease(String namespace) {
         while (true) {
             State current = stateRef.get();
             // Fresh pod: must have NO namespace and 0 inflight
             boolean isUnleased = current.leasedNamespace == null || current.leasedNamespace.isEmpty();
-            if (!current.listed || !isUnleased || current.inflightRequests != 0) {
+            if (!isUnleased || current.inflightRequests != 0) {
                 return false;
             }
-            State next = new State(namespace, 1, System.nanoTime(), true);
+            State next = new State(namespace, 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
         }
     }
 
+    /**
+     * Re-leases an idle pod to {@code namespace}, whoever held it before, and takes its first slot.
+     *
+     * @return {@code true} if the pod was taken over
+     */
     boolean tryStealIdleLease(String namespace) {
         while (true) {
             State current = stateRef.get();
-            // Stealable pod: ANY routable pod with 0 inflight requests
-            if (!current.listed || current.inflightRequests != 0) {
+            // Stealable pod: ANY pod with 0 inflight requests
+            if (current.inflightRequests != 0) {
                 return false;
             }
-            State next = new State(namespace, 1, System.nanoTime(), true);
+            State next = new State(namespace, 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
         }
     }
 
+    /** Releases one slot. The count never drops below zero, so late releases are harmless. */
     void decrementInflightRequests() {
         while (true) {
             State current = stateRef.get();
-            State next = new State(current.leasedNamespace,
-                Math.max(0, current.inflightRequests - 1), System.nanoTime(), current.listed);
+            State next = new State(current.leasedNamespace, 
+                Math.max(0, current.inflightRequests - 1), System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return;
             }
@@ -152,43 +137,29 @@ class PodState {
     }
 
     /**
-     * Adopts the lease ownership reported by a rejecting worker and releases the occupancy slot
-     * that this proxy speculatively took for the request the worker refused.
+     * Handles a worker rejection: releases this request's slot and adopts the worker's reported
+     * namespace. The worker's task count is not copied, since those tasks aren't this proxy's to
+     * release.
      *
-     * <p>Only the leased namespace is adopted. The worker's reported active task count is
-     * deliberately not copied, because that count describes work owned by connections this proxy
-     * does not hold - typically tasks dispatched by a previous proxy process that was restarted.
-     * Their completion responses will never arrive on any channel this proxy owns, so a count
-     * adopted from a rejection is structurally un-decrementable. Copying it would pin a phantom
-     * occupancy on the pod for as long as it stays registered, permanently reducing its usable
-     * concurrency and hiding it from both the fresh-claim and idle-steal selection paths.
-     *
-     * <p>Adopting only the namespace keeps the half of the signal that is actually useful. The pod
-     * stops being a warm match for the rejected namespace, so retries are no longer pinned to the
-     * worker that just rejected them and will spill to a genuinely available pod, while the
-     * occupancy count continues to reflect only requests this proxy issued and will see complete.
-     *
-     * @param leasedNamespace the namespace the worker reports as holding the lease, or
-     *     {@code null} if the worker did not report one, in which case the currently recorded
-     *     owner is retained
+     * @param leasedNamespace the namespace the worker reports, or {@code null} to keep the current one
      */
     void adoptRejectedLease(String leasedNamespace) {
         while (true) {
             State current = stateRef.get();
             String nextNamespace = leasedNamespace != null ? leasedNamespace : current.leasedNamespace;
             State next = new State(nextNamespace, Math.max(0, current.inflightRequests - 1),
-                System.nanoTime(), current.listed);
+                System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return;
             }
         }
     }
     
+    /** Marks the pod as recently used, so it is less likely to be stolen. */
     void recordActivity() {
         while (true) {
             State current = stateRef.get();
-            State next = new State(current.leasedNamespace, current.inflightRequests, System.nanoTime(),
-                current.listed);
+            State next = new State(current.leasedNamespace, current.inflightRequests, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return;
             }
