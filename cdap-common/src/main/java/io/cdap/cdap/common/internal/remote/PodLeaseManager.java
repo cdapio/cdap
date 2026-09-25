@@ -56,16 +56,18 @@ class PodLeaseManager {
             activePods.add(d.getSocketAddress().getHostString() + ":" + d.getSocketAddress().getPort());
         }
 
+        boolean changed = false;
         for (String podIp : activePods) {
-            podRegistry.putIfAbsent(podIp, new PodState(null, 0));
+            changed |= podRegistry.putIfAbsent(podIp, new PodState(null, 0)) == null;
         }
 
         // Evict pods that discovery no longer reports, even with requests in flight. If a
         // partitioned node heals mid-task, the worker's 429 guard absorbs the over-send.
-        podRegistry.keySet().retainAll(activePods);
+        changed |= podRegistry.keySet().retainAll(activePods);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("PodLeaseManager synced leases: [{}]",
+        // Runs on every request, so only log when the pod set changed.
+        if (changed && LOG.isDebugEnabled()) {
+            LOG.debug("PodLeaseManager pod set changed, leases: [{}]",
                 podRegistry.entrySet().stream()
                     .map(e -> e.getKey() + "="
                         + (e.getValue().getLeasedNamespace() == null
