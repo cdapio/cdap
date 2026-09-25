@@ -80,14 +80,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      */
     private static final SslContext CLIENT_SSL_CONTEXT = createClientSslContext();
 
-    /**
-     * Upper bound on opening a TCP connection to a task worker pod.
-     *
-     * <p>Pods are on the cluster network, so a healthy connect completes in milliseconds. The
-     * case this bounds is a pod whose node has disappeared: nothing answers and nothing refuses,
-     * so without a limit the request would wait out Netty's 30 second default before failing
-     * over. Failing within a few seconds lets AppFabric's retry land on a live pod instead.
-     */
+    /** Fail fast on unreachable pods instead of waiting out Netty's 30s default. */
     private static final int WORKER_CONNECT_TIMEOUT_MS = 5000;
 
     private final PodLeaseManager podLeaseManager;
@@ -112,10 +105,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             HttpRequest req = (HttpRequest) msg;
 
             // STEP 1: Resolve the Target Namespace
-            // The namespace is the lease key, so a request without one cannot be placed. Falling
-            // back to a fixed namespace would pin or steal a pod on behalf of a tenant that never
-            // asked for it, and the worker would reject the task anyway because it cannot run a
-            // task without a namespace. Fail it here, before it costs a lease.
+            // The namespace is the lease key, so reject requests without one before leasing.
             String targetNamespace = req.headers().get(Constants.Gateway.HEADER_CDAP_NAMESPACE);
             if (targetNamespace == null || targetNamespace.trim().isEmpty()) {
                 LOG.warn("Rejecting task request {} {} without the {} header.",
@@ -132,8 +122,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             String targetWorkerAddress = podLeaseManager.acquireLease(targetNamespace);
 
             // STEP 3: Saturation Rejection (HTTP 429)
-            // No pod can take this request: every pod is either at its concurrency limit or busy
-            // under another namespace's lease. Fail fast so AppFabric backs off and retries.
+            // Every pod is at its limit or leased to another namespace, so fail fast and let AppFabric retry.
             if (targetWorkerAddress == null) {
                 LOG.warn("All task worker pods are saturated or leased to other namespaces. "
                          + "Rejecting request for namespace '{}'", targetNamespace);
@@ -150,12 +139,10 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             int portSeparator = chosenWorker.lastIndexOf(':');
             int workerPort = portSeparator < 0 ? -1 : parsePort(chosenWorker.substring(portSeparator + 1));
             if (workerPort < 0) {
-                // The address came out of our own registry, so a malformed value means the
-                // discovery payload is not what we expect. Hand back the slot we just took rather
-                // than leaking it, and fail this request instead of the whole proxy.
-                LOG.error("Task worker address '{}' is not a valid host:port. Dropping it from the registry.",
+                // Malformed discovery payload: release the slot and fail only this request.
+                LOG.error("Task worker address '{}' is not a valid host:port. Rejecting the request.",
                           chosenWorker);
-                podLeaseManager.invalidateLease(chosenWorker);
+                podLeaseManager.releaseLease(chosenWorker);
                 reject(ctx, msg, HttpResponseStatus.BAD_GATEWAY);
                 return;
             }
@@ -220,10 +207,9 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     // Resume reading remaining body chunks from the client
                     ctx.channel().config().setAutoRead(true);
                 } else {
-                    // If connection failed (worker crashed/terminated), evict from registry and release buffers
-                    LOG.warn("Failed to connect to task worker {}. Evicting it from the routing "
-                             + "registry.", chosenWorker);
-                    podLeaseManager.invalidateLease(chosenWorker);
+                    // Worker unreachable: release the slot and buffers; discovery evicts the pod.
+                    LOG.warn("Failed to connect to task worker {}.", chosenWorker, future.cause());
+                    podLeaseManager.releaseLease(chosenWorker);
                     releasePendingMessages();
                     ctx.channel().close();
                 }
