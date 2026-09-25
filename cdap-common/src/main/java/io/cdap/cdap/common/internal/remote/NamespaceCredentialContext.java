@@ -19,43 +19,22 @@ package io.cdap.cdap.common.internal.remote;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
- * The namespaced service account credential a task worker pod runs as.
- *
- * <p>On an RBAC instance this is not an abstraction over many credentials; it is one slot. The
- * pod's metadata sidecar holds a single mutable task context, and every task in the container
- * authenticates through it. That singularity is the reason {@link StickyLeaseManager} exists, and
- * it is why provisioning and wiping are modelled as transitions of one shared thing rather than as
- * something each task owns.
- *
- * <p>Kept as an interface so the lease manager stays a pure state machine with no knowledge of
- * GCP, HTTP, or configuration. The ordering it guarantees, provision at the first task and wipe at
- * the last, is the security property of the whole design, and it can only be asserted directly if
- * the sequence of calls is observable without a live sidecar.
+ * The single namespaced credential a task worker pod runs as, held by its metadata sidecar. An
+ * interface so {@link StickyLeaseManager} can be tested without a sidecar.
  */
 public interface NamespaceCredentialContext {
 
   /**
-   * Makes the pod authenticate as the given namespace.
+   * Makes the pod authenticate as the given namespace. Called under the lease manager's lock when
+   * the pod goes from idle to busy.
    *
-   * <p>Called while the lease manager holds its lock, only on the transition from idle to busy.
-   *
-   * @param namespace the namespace whose identity the pod should assume
-   * @throws RuntimeException if the credential could not be provisioned, in which case the
-   *     admission is unwound and the task must not run: running it would mean running as whatever
-   *     identity the pod happened to have
+   * @throws RuntimeException if provisioning fails; the task must then not run
    */
   void provision(NamespaceId namespace);
 
   /**
-   * Removes the credential from the pod.
-   *
-   * <p>Called while the lease manager holds its lock, only on the transition from busy to idle, so
-   * no task is running when it happens.
-   *
-   * <p>Implementations must not throw. There is no caller left to handle a failure here, since the
-   * task that triggered it has already finished and answered. An implementation that cannot wipe
-   * is responsible for making sure the pod stops taking work instead, so the credential dies with
-   * the process rather than outliving the namespace that provisioned it.
+   * Removes the credential. Called under the lease manager's lock when the pod goes idle. Must not
+   * throw; an implementation that can't wipe must stop the pod from taking more work.
    */
   void wipe();
 }
