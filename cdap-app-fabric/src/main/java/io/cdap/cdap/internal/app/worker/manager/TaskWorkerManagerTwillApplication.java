@@ -22,13 +22,9 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * The {@link TwillApplication} for launching the task worker manager netty proxy.
- *
- * <p>This is a standalone application rather than a third runnable inside
- * {@code TaskWorkerTwillApplication} because the proxy has a different lifecycle from the worker
- * pool: the pool scales with load and rolls freely, while the proxy is a singleton whose in-memory
- * lease table must not be duplicated. Folding it into the worker application would tie the two
- * together and make the pool's update semantics apply to the proxy.
+ * The {@link TwillApplication} for launching the task worker manager proxy. Kept separate from
+ * {@code TaskWorkerTwillApplication} because the proxy is a singleton and must not roll with the
+ * pool.
  */
 public class TaskWorkerManagerTwillApplication implements TwillApplication {
 

@@ -425,8 +425,7 @@ public class KubeTwillPreparerTest {
 
     V1Deployment deployment = buildDeployment(preparer);
 
-    // An unset strategy is what lets Kubernetes apply its RollingUpdate default. Every workload
-    // other than the task worker manager proxy relies on that, so the opt-in must not leak into them.
+    // Other workloads rely on the RollingUpdate default, so the strategy stays unset for them.
     Assert.assertNull(deployment.getSpec().getStrategy());
   }
 
@@ -449,8 +448,7 @@ public class KubeTwillPreparerTest {
 
     ExtendedTwillPreparer returned = preparer.withRecreateStrategy();
 
-    // TaskWorkerManagerServiceLauncher reassigns the preparer from this call and keeps configuring it,
-    // so returning anything other than the same instance would silently drop later settings.
+    // The launcher keeps configuring the returned preparer, so it must be the same instance.
     Assert.assertSame(preparer, returned);
   }
 
@@ -464,8 +462,7 @@ public class KubeTwillPreparerTest {
   }
 
   private V1Deployment buildDeployment(KubeTwillPreparer preparer) throws Exception {
-    // A single instance mirrors the task worker manager proxy, which is the only caller that opts into
-    // the Recreate strategy.
+    // A single instance, like the task worker manager proxy.
     RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
         MainRunnable.class.getSimpleName(), null,
         new DefaultResourceSpecification(1, 100, 1, 1, 1), Collections.emptyList());

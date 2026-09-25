@@ -68,10 +68,7 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
-   * The proxy keeps its namespace-to-pod lease table in memory, so two live pods hand the same
-   * task worker to two namespaces. A replica count of one does not prevent that during a rollout,
-   * because the default RollingUpdate strategy surges to a second pod first. This test guards the
-   * only thing that does prevent it.
+   * Recreate is what stops a rollout from briefly running two proxies.
    */
   @Test
   public void testLaunchRequestsRecreateStrategy() {
@@ -82,16 +79,14 @@ public class TaskWorkerManagerServiceLauncherTest {
 
     new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
 
-    // Ordering matters: the strategy has to be set while the preparer is still being configured,
-    // not after the deployment has already been submitted.
+    // The strategy must be set before the deployment is submitted.
     InOrder inOrder = Mockito.inOrder(preparer);
     inOrder.verify(preparer).withRecreateStrategy();
     inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
   }
 
   /**
-   * Only the Kubernetes preparer implements {@link ExtendedTwillPreparer}. On any other Twill
-   * runtime the launch must still go through rather than failing on a bad cast.
+   * Non-Kubernetes preparers don't implement {@link ExtendedTwillPreparer}; launch must still work.
    */
   @Test
   public void testLaunchWithoutExtendedPreparerStillStarts() {
@@ -106,9 +101,7 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
-   * The launcher runs on a fixed-rate schedule, so every iteration after the first must be a
-   * no-op. Launching a second application would defeat the single-instance guarantee just as
-   * surely as a surging rollout would.
+   * Iterations after the first must not launch a second proxy.
    */
   @Test
   public void testExistingControllerIsNotRelaunched() {
@@ -123,8 +116,7 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
-   * If a previous App Fabric generation left a proxy behind, the extras are terminated so that
-   * exactly one remains.
+   * Extra proxies left by a previous App Fabric are terminated so exactly one remains.
    */
   @Test
   public void testDuplicateControllersAreTerminated() {
@@ -142,9 +134,7 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
-   * The proxy pod runs its own KubeMasterEnvironment and needs to discover task worker pods
-   * directly via endpoints rather than the service ClusterIP. In addition, internal SSL cert path
-   * must be stripped as it is not mounted into the proxy pod.
+   * The proxy's cConf discovers task workers via endpoints and drops the unmounted internal cert.
    */
   @Test
   public void testLaunchConfiguresCConfForProxy() throws Exception {
@@ -167,8 +157,7 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
-   * Returns a preparer mock whose fluent setters return the mock itself, matching the contract
-   * every {@link TwillPreparer} implementation follows.
+   * Returns a preparer mock whose fluent setters return the mock itself.
    */
   private <T extends TwillPreparer> T mockPreparer(Class<T> preparerClass) {
     return mock(preparerClass, withSettings().defaultAnswer(Answers.RETURNS_SELF));
