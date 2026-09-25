@@ -38,9 +38,7 @@ public class TaskWorkerManagerTwillRunnableTest {
   }
 
   /**
-   * Resolves everything the runnable resolves on initialization. The proxy
-   * installs a deliberately minimal module set, so a missing transitive binding would otherwise
-   * only surface as a Guice CreationException when the pod starts in a cluster.
+   * Catches missing bindings in the proxy's minimal module set before they fail a pod at startup.
    */
   @Test
   public void testInjector() {
@@ -54,9 +52,7 @@ public class TaskWorkerManagerTwillRunnableTest {
   }
 
   /**
-   * The proxy watches Kubernetes endpoints to route to individual task worker pods, which has no
-   * analogue on the ZooKeeper/Kafka stack, so it refuses to build an injector without a master
-   * environment rather than silently falling back the way the task worker does.
+   * Without a master environment the injector fails instead of falling back to ZooKeeper.
    */
   @Test
   public void testInjectorRequiresMasterEnvironment() {
