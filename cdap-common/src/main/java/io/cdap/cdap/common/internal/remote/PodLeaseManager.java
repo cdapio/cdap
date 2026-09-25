@@ -109,8 +109,7 @@ class PodLeaseManager {
                 return entry.getKey();
             }
         }
-        
-        LOG.warn("PodLeaseManager: Cluster full! No available slots for namespace '{}'", namespace);
+
         return null;
     }
 
