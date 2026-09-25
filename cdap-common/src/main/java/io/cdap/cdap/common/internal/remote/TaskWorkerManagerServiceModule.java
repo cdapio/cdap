@@ -20,12 +20,8 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 
 /**
- * Guice bindings for the task worker manager netty proxy.
- *
- * <p>{@link TaskWorkerManagerService} must be a singleton: it owns the {@link PodLeaseManager} that
- * tracks which task worker pod is leased to which namespace. A second instance would keep a second,
- * independent lease registry and hand the same pod to two namespaces at once, which is exactly the
- * isolation guarantee the proxy exists to provide.
+ * Guice bindings for the task worker manager proxy. The service is a singleton because it owns the
+ * lease table; two instances could lease one pod to two namespaces.
  */
 public class TaskWorkerManagerServiceModule extends PrivateModule {
 

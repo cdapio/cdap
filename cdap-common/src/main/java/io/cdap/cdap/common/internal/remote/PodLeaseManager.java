@@ -32,9 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * PodLeaseManager handles lock-free Task Worker lease affinity based on logical namespaces.
- * It encapsulates the registry of active Task Worker pods and the logic to allocate or claim pods 
- * for incoming AppFabric requests without exceeding configured concurrency limits.
+ * Lock-free table of task worker pods and the namespace each is leased to.
  */
 class PodLeaseManager {
 
@@ -77,9 +75,8 @@ class PodLeaseManager {
     }
 
     /**
-     * Acquires a lease for the given namespace by first attempting a warm match, 
-     * and if full, attempting to claim an idle pod.
-     * 
+     * Leases a pod for {@code namespace}: a warm match first, then a fresh pod, then an idle steal.
+     *
      * @return The IP:Port address of the leased worker pod, or null if the cluster is full.
      */
     String acquireLease(String namespace) {

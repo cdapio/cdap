@@ -45,19 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Runs the centralized netty proxy that fronts the task worker pool.
- *
- * <p>On an RBAC instance, user code from different namespaces must never share a task worker JVM.
- * This service sits between App Fabric and the task workers, reads the
- * {@link Constants.Gateway#HEADER_CDAP_NAMESPACE} header off each inbound request, and asks
- * {@link PodLeaseManager} for a pod that is either already warm for that namespace or safe to claim.
- * It then streams the request straight through to that pod.
- *
- * <p>The pipeline is deliberately only {@link HttpServerCodec} plus {@link ProxyFrontendHandler}.
- * There is no {@code HttpObjectAggregator}: task requests carry serialized pipeline specs that can
- * run to many megabytes, and aggregating them would mean buffering every in-flight request body on
- * the proxy heap. Without it, {@link io.netty.buffer.ByteBuf} chunks are forwarded as they arrive
- * and the proxy's memory stays flat regardless of payload size.
+ * Netty proxy that routes task requests to task worker pods leased per namespace, so user code from
+ * different namespaces never shares a worker. Requests are streamed, not aggregated, to keep memory flat.
  */
 public class TaskWorkerManagerService extends AbstractIdleService {
 
@@ -92,9 +81,7 @@ public class TaskWorkerManagerService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerManagerService on {}:{}", bindAddress, bindPort);
 
-    // Warm the task worker discovery cache before we accept traffic. Twill populates its
-    // discoverables asynchronously, so touching it here means the first request through the proxy
-    // sees a populated pod registry instead of an empty one and an immediate HTTP 429.
+    // Warm the discovery cache so the first request doesn't see an empty pod list.
     discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
 
     bossGroup = new NioEventLoopGroup(bossThreads,
@@ -118,9 +105,7 @@ public class TaskWorkerManagerService extends AbstractIdleService {
 
     serverChannel = bootstrap.bind(bindAddress, bindPort).sync().channel();
 
-    // Announce only after the socket is listening, so nothing can be routed here before we can
-    // serve it. Registering the channel's own local address rather than the configured one picks up
-    // an ephemeral port when the configured port is 0.
+    // Register only once listening, using the bound address so port 0 works.
     InetSocketAddress boundAddress = (InetSocketAddress) serverChannel.localAddress();
     cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
         URIScheme.HTTP.createDiscoverable(Constants.Service.TASK_WORKER_MANAGER, boundAddress)));
