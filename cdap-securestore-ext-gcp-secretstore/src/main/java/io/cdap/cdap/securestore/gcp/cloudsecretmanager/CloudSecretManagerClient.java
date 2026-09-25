@@ -22,6 +22,10 @@ import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.UnaryCallSettings;
+import com.google.api.gax.tracing.ApiTracer;
+import com.google.api.gax.tracing.BaseApiTracer;
+import com.google.api.gax.tracing.BaseApiTracerFactory;
+import com.google.api.gax.tracing.SpanName;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import com.google.cloud.secretmanager.v1.AddSecretVersionRequest;
@@ -313,6 +317,30 @@ public class CloudSecretManagerClient {
       method.setRetryableCodes(RETRYABLE_CODES)
           .setRetrySettings(retrySettings);
     }
+    settings.getStubSettingsBuilder().setTracerFactory(new BaseApiTracerFactory() {
+      @Override
+      public ApiTracer newTracer(ApiTracer parent, SpanName spanName, OperationType operationType) {
+        return new BaseApiTracer() {
+          @Override
+          public void attemptFailed(Throwable error, Duration delay) {
+            if (error instanceof ApiException
+                && ((ApiException) error).getStatusCode().getCode() == StatusCode.Code.RESOURCE_EXHAUSTED) {
+              LOG.warn("GCP Secret Manager API request quota limit exceeded during {}, retrying in {} ms: {}",
+                  spanName.getMethodName(), delay.toMillis(), String.valueOf(error));
+            } else {
+              LOG.debug("Transient failure during GCP Secret Manager call {}, retrying in {} ms: {}",
+                  spanName.getMethodName(), delay.toMillis(), String.valueOf(error));
+            }
+          }
+
+          @Override
+          public void attemptFailedRetriesExhausted(Throwable error) {
+            LOG.error("Retries for GCP Secret Manager API Request exhausted for {}.",
+                spanName.getMethodName(), error);
+          }
+        };
+      }
+    });
   }
 
   private static RetrySettings createRetrySettings(RetrySettings defaults,
