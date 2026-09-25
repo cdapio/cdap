@@ -24,7 +24,6 @@ import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.ServiceException;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -53,8 +52,6 @@ import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Discovers a remote service and resolves URLs to that service.
@@ -62,7 +59,6 @@ import org.slf4j.LoggerFactory;
 public class RemoteClient {
 
   public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
 
   private final InternalAuthenticator internalAuthenticator;
   private final EndpointStrategy endpointStrategy;
@@ -70,18 +66,10 @@ public class RemoteClient {
   private final String discoverableServiceName;
   private final String basePath;
   private final RemoteAuthenticator remoteAuthenticator;
-  private final boolean rbacProxyEnabled;
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
       String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
       RemoteAuthenticator remoteAuthenticator) {
-    this(internalAuthenticator, discoveryClient, discoverableServiceName, httpRequestConfig,
-        basePath, remoteAuthenticator, false);
-  }
-
-  RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
-      String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
-      RemoteAuthenticator remoteAuthenticator, boolean rbacProxyEnabled) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
@@ -90,7 +78,6 @@ public class RemoteClient {
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.remoteAuthenticator = remoteAuthenticator;
-    this.rbacProxyEnabled = rbacProxyEnabled;
   }
 
   /**
@@ -104,14 +91,6 @@ public class RemoteClient {
    */
   public HttpRequest.Builder requestBuilder(HttpMethod method, String resource) {
     return HttpRequest.builder(method, resolve(resource));
-  }
-
-  /**
-   * Create a {@link HttpRequest.Builder} using the specified http method, resource, and routing key (namespace).
-   * This client will discover the service address and resolve it stickily using the routing key.
-   */
-  public HttpRequest.Builder requestBuilder(HttpMethod method, String resource, @Nullable String routingKey) {
-    return HttpRequest.builder(method, resolve(resource, routingKey));
   }
 
   private void setAuthHeader(BiConsumer<String, String> headerSetter, String header,
@@ -225,7 +204,6 @@ public class RemoteClient {
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl, headers,
         request.getBody(), request.getBodyLength(), request.getConsumer());
-    
     HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -282,15 +260,6 @@ public class RemoteClient {
    * @throws ServiceUnavailableException if the service could not be discovered
    */
   public URL resolve(String resource) {
-    return resolve(resource, null);
-  }
-
-  /**
-   * Discover the service address, then append the base path and specified resource to get the URL,
-   * using a routing key (e.g. namespace) to ensure sticky routing to the same pod. If routingKey is
-   * null, it falls back to the default random discovery strategy.
-   */
-  public URL resolve(String resource, @Nullable String routingKey) {
     Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(discoverableServiceName);
@@ -298,11 +267,7 @@ public class RemoteClient {
 
     URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
     try {
-      URL url = rewriteUrl(uri.toURL());
-      if (rbacProxyEnabled && Constants.Service.TASK_WORKER_MANAGER.equals(discoverableServiceName)) {
-        LOG.debug("Resolved task worker manager proxy {} for routingKey {}", url, routingKey);
-      }
-      return url;
+      return rewriteUrl(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
       throw new IllegalStateException(
