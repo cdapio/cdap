@@ -974,11 +974,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .endTemplate();
 
     if (recreateStrategy) {
-      // Leaving the strategy unset yields RollingUpdate, whose maxSurge is 25% rounded up, which
-      // is 1 even at a single replica. That starts the replacement pod before deleting the
-      // original, so two generations of the runnable are briefly live at once. Recreate deletes
-      // all existing pods before creating any new one, trading a short gap in availability for an
-      // at-most-one guarantee.
+      // Recreate deletes the old pod before starting the new one. The default RollingUpdate
+      // surges by one pod even at a single replica.
       spec.withStrategy(new V1DeploymentStrategy().type("Recreate"));
     }
 

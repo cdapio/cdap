@@ -47,14 +47,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Launches the task worker manager netty proxy that fronts the task worker pool.
- *
- * <p>App Fabric owns this launch for the same reason it owns the task worker pool launch: the
- * proxy only makes sense alongside a running pool, and keeping both on the same control plane
- * avoids a rollout ordering problem between the cdap-operator and App Fabric.
- *
- * <p>Singleton because each instance runs its own reconciliation schedule. Two instances would race
- * to launch the proxy, which must never have more than one replica.
+ * Launches the single task worker manager proxy that fronts the task worker pool. Singleton so
+ * that only one reconciliation loop can launch it.
  */
 @Singleton
 public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
@@ -68,9 +62,6 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
   private TwillController twillController;
   private ScheduledExecutorService executor;
 
-  /**
-   * Default constructor with injected configuration and {@link TwillRunner}.
-   */
   @Inject
   public TaskWorkerManagerServiceLauncher(CConfiguration cConf, Configuration hConf,
       TwillRunner twillRunner) {
@@ -110,9 +101,7 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
 
   @Override
   protected Scheduler scheduler() {
-    // Zero initial delay: App Fabric will start dispatching tasks through the proxy as soon as it
-    // is up, and callers only have a bounded retry budget to absorb the gap before the proxy
-    // registers itself in discovery.
+    // No initial delay: App Fabric starts dispatching through the proxy as soon as it's up.
     return Scheduler.newFixedRateSchedule(0,
         cConf.getInt(Constants.TaskWorkerManager.POOL_CHECK_INTERVAL), TimeUnit.SECONDS);
   }
@@ -125,10 +114,7 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
   }
 
   /**
-   * Reconciles the desired state (exactly one proxy application running) with the observed state.
-   *
-   * <p>Package-private so tests can drive a single iteration; production calls come only from
-   * {@link #runOneIteration()} on the scheduler thread.
+   * Ensures exactly one proxy application is running. Package-private for tests.
    */
   void run() {
     TwillController activeController = null;
@@ -166,10 +152,8 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
             hConf.writeXml(writer);
           }
 
-          // setInstances is a hardcoded 1 rather than a configuration key on purpose. The proxy
-          // keeps its namespace-to-pod lease table in memory and shares it with nothing, so a
-          // second replica would hand the same task worker pod to two namespaces at once. There is
-          // no valid reason for an operator to raise this, so there is no knob to raise.
+          // Always one instance: the lease table is in memory, so two proxies would lease the same
+          // pod to two namespaces.
           ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
               .setVirtualCores(cConf.getInt(Constants.TaskWorkerManager.CONTAINER_CORES))
               .setMemory(cConf.getInt(Constants.TaskWorkerManager.CONTAINER_MEMORY_MB),
@@ -187,29 +171,19 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
               NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
-          // Share the task worker priority class. The proxy is on the critical path for every task
-          // the workers execute, so it must not be evicted while the pool it fronts survives.
+          // Same priority class as the task workers, since every task goes through the proxy.
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
           if (priorityClass != null) {
             twillPreparer = twillPreparer.setSchedulerQueue(priorityClass);
           }
 
-          // The proxy keeps its namespace-to-pod lease table in memory and shares it with nothing,
-          // so two proxies would hand the same task worker pod to two namespaces. A replica count
-          // of one constrains the steady state but not the transition: the default RollingUpdate
-          // strategy surges to a second pod during an update. Recreate is what actually enforces
-          // at-most-one. Removing this reintroduces split-brain on every restart.
+          // Recreate, not RollingUpdate, so an update never runs two proxies at once.
           if (twillPreparer instanceof ExtendedTwillPreparer) {
             twillPreparer = ((ExtendedTwillPreparer) twillPreparer).withRecreateStrategy();
           }
 
-          // Note the deliberate absence of a SecurityContext. Calling withSecurityContext (as the
-          // task worker launcher does, to run workers under the user identity) would overwrite the
-          // pod's service account with the namespaced user service account. The proxy must inherit
-          // App Fabric's system service account instead, because only that account is granted
-          // get/list/watch on Kubernetes endpoints. Without that grant the endpoints watch fails,
-          // the failure is swallowed into a log warning, and the proxy rejects all traffic with an
-          // empty pod registry.
+          // No SecurityContext: the proxy needs App Fabric's system service account to watch
+          // Kubernetes endpoints.
 
           twillPreparer.setJVMOptions(TaskWorkerManagerTwillRunnable.class.getSimpleName(),
               cConf.get(Constants.TaskWorkerManager.CONTAINER_JVM_OPTS));

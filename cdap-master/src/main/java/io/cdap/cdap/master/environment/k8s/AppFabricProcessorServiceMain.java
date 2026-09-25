@@ -158,15 +158,8 @@ public class AppFabricProcessorServiceMain extends AbstractServiceMain<Environme
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
         RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
-    // Registered ahead of AppFabricProcessorService on purpose. Once the processor is up it will
-    // dispatch tasks through the proxy, and callers only have task.worker.retry.policy.max.time.secs
-    // worth of retries to absorb the gap before the proxy registers itself in discovery. Issuing
-    // the pod request first spends that budget on the pod starting rather than on us getting
-    // around to asking for it.
-    // Gated on the identical predicate that RemoteClientFactory, RemoteTaskExecutor and
-    // TaskWorkerHttpHandlerInternal use to decide whether to address task.worker.manager instead of
-    // task.worker. Any divergence here is a routing black hole in one direction and an orphaned
-    // pod in the other, so the condition is deliberately not restated.
+    // Started before AppFabricProcessorService so the proxy pod is requested before tasks are
+    // dispatched. Same predicate as RemoteTaskExecutor and TaskWorkerHttpHandlerInternal.
     if (TaskWorkerManager.isEnabled(cConf)) {
       services.add(injector.getInstance(TaskWorkerManagerServiceLauncher.class));
     }
