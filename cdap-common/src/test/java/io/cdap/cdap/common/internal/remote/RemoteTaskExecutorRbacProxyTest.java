@@ -23,7 +23,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -52,13 +51,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Tests how {@link RemoteTaskExecutor} routes task worker traffic once the RBAC netty proxy is in
- * play.
- *
- * <p>The routing decision is deliberately asserted through discovery rather than by reading private
- * state: the stub worker is registered under exactly one service name, so a task only completes if
- * the executor resolved that service. Registering under {@code task.worker.manager} alone and getting a
- * successful run is proof that the request went through the proxy, and not to the worker directly.
+ * Tests {@link RemoteTaskExecutor} routing with the task worker proxy. The stub worker is registered
+ * under one service name, so a task only succeeds if the executor resolved that service.
  */
 public class RemoteTaskExecutorRbacProxyTest {
 
@@ -226,9 +220,7 @@ public class RemoteTaskExecutorRbacProxyTest {
 
   @Test
   public void testProxyUnreachableFailsWithoutFallingBackToTaskWorker() {
-    // Only the worker is discoverable; the proxy is not. The executor must never reach the worker
-    // directly, because the proxy owns the per-namespace pod lease and a direct request would
-    // place a task the routing registry knows nothing about.
+    // Only the worker is discoverable; the executor must not bypass the proxy.
     register(Constants.Service.TASK_WORKER);
 
     try {
@@ -249,19 +241,6 @@ public class RemoteTaskExecutorRbacProxyTest {
   }
 
   @Test
-  public void testRemoteClientFactoryPropagatesProxyFlag() {
-    CConfiguration cConf = proxyEnabledConf();
-    RemoteClient proxyClient = newClientFactory(cConf).createRemoteClient(
-        Constants.Service.TASK_WORKER_MANAGER, new DefaultHttpRequestConfig(false),
-        Constants.Gateway.INTERNAL_API_VERSION_3);
-    register(Constants.Service.TASK_WORKER_MANAGER);
-
-    // Resolution against the proxy only succeeds when the factory wired the flag through to the
-    // client; otherwise the client would never be built against task.worker.manager at all.
-    Assert.assertNotNull(proxyClient.resolve("/worker/run", TENANT_NAMESPACE));
-  }
-
-  @Test
   public void testSystemWorkerTypeIsNeverProxied() throws Exception {
     // System worker traffic runs trusted platform code, so it must bypass the namespace proxy even
     // on an RBAC instance.
@@ -277,11 +256,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     Assert.assertEquals(Collections.singletonList(null), workerHandler.getNamespaceHeaders());
   }
 
-  /**
-   * Guards the credential restore in {@code runTask}. Every attempt encrypts whatever credential is
-   * on the thread local, so if a failed attempt leaves its own ciphertext behind, the next attempt
-   * encrypts that ciphertext again and the worker receives a token it cannot decrypt.
-   */
+  /** Guards the credential restore in {@code runTask}, so a retry doesn't re-encrypt ciphertext. */
   @Test
   public void testUserCredentialIsRestoredAfterAFailedAttempt() {
     register(Constants.Service.TASK_WORKER_MANAGER);
@@ -307,10 +282,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     Assert.assertSame(original, SecurityRequestContext.getUserCredential());
   }
 
-  /**
-   * Asserts that the executor built with the given configuration talks to {@code task.worker} and
-   * not to {@code task.worker.manager}.
-   */
+  /** Asserts the executor talks to {@code task.worker}, not {@code task.worker.manager}. */
   private void assertTargetsTaskWorkerOnly(CConfiguration cConf) throws Exception {
     register(Constants.Service.TASK_WORKER);
 
@@ -324,10 +296,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     return "feature." + Feature.RBAC_TASK_WORKER_MANAGER.getFeatureFlagString();
   }
 
-  /**
-   * Builds a configuration with both the feature flag and instance level RBAC turned on, and a
-   * retry budget short enough to keep the tests fast.
-   */
+  /** Builds a configuration with the flag and RBAC on, and a short retry budget. */
   private static CConfiguration proxyEnabledConf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(featureFlagKey(), true);
@@ -381,13 +350,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     };
   }
 
-  /**
-   * An {@link AeadCipher} that records every plaintext it is asked to encrypt. The ciphertext is a
-   * fixed marker rather than a function of the input: a credential that gets encrypted twice still
-   * shows up as a different recorded value on the second call, but the value cannot compound. That
-   * matters, because real re-encryption grows the credential on every pass, and a growing value
-   * would make a regression here hang instead of failing.
-   */
+  /** An {@link AeadCipher} that records each plaintext and returns a fixed marker. */
   private static final class RecordingAeadCipher implements AeadCipher {
 
     private static final byte[] CIPHER_TEXT = "encrypted".getBytes(StandardCharsets.UTF_8);
@@ -410,11 +373,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     }
   }
 
-  /**
-   * Stands in for a task worker. It records the routing header of every inbound request so tests
-   * can assert on what the executor actually put on the wire, and its response status is
-   * controllable so the saturation path can be exercised.
-   */
+  /** A stub task worker that records the namespace header and returns a configurable status. */
   @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
   public static final class StubWorkerHandler extends AbstractHttpHandler {
 

@@ -111,14 +111,10 @@ public class RemoteTaskExecutor {
       HttpRequestConfig httpRequestConfig, AeadCipher aeadCipher) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
 
-    // The netty proxy only makes sense on RBAC instances: it exists to lease a task worker pod per
-    // namespace so user code from two namespaces never shares a JVM. Both the feature flag and
-    // instance-level RBAC must be on, otherwise task.worker.manager isn't even deployed in the cluster.
+    // The proxy leases pods per namespace; it only exists when the flag and instance RBAC are on.
     boolean proxyConfigured = TaskWorkerManager.isEnabled(cConf);
 
-    // System worker traffic runs trusted platform code and is never leased per namespace, so it
-    // goes straight to system.worker. Scoping the flag here keeps the whole proxy code path in
-    // runTask (routing key, namespace header, circuit breaker) off for that worker type.
+    // System worker traffic runs trusted platform code, so it never goes through the proxy.
     this.rbacProxyEnabled = proxyConfigured && workerType == Type.TASK_WORKER;
 
     if (workerType == Type.TASK_WORKER) {
@@ -168,21 +164,13 @@ public class RemoteTaskExecutor {
       return Retries.callWithRetries((retryContext) -> {
         try {
           // STEP 1: Route on the namespace the worker will admit the task under.
-          String namespace = null;
-          String routingKey = null;
-          if (rbacProxyEnabled) {
-            namespace = TaskDetails.extractNamespace(runnableTaskRequest);
-            routingKey = namespace;
-          }
+          String namespace = rbacProxyEnabled ? TaskDetails.extractNamespace(runnableTaskRequest) : null;
 
-          // STEP 2: Construct the outbound request. There is deliberately no direct-to-worker
-          // fallback: the proxy holds the per-namespace pod lease, so bypassing it would leave the
-          // routing registry describing a placement that never happened. A proxy outage therefore
-          // fails the task rather than silently degrading, and cdap-operator is responsible for
-          // bringing the proxy back.
+          // STEP 2: Build the request. There is no direct-to-worker fallback, since that would bypass
+          // the proxy's lease table.
           HttpRequest.Builder requestBuilder =
-              remoteClient.requestBuilder(HttpMethod.POST, workerUrl, routingKey);
-          if (routingKey != null) {
+              remoteClient.requestBuilder(HttpMethod.POST, workerUrl);
+          if (namespace != null) {
             // Tells the netty proxy which namespace's leased pod this request belongs to.
             requestBuilder.addHeader(Constants.Gateway.HEADER_CDAP_NAMESPACE, namespace);
           }
@@ -208,11 +196,7 @@ public class RemoteTaskExecutor {
           try {
             httpResponse = remoteClient.execute(httpRequest);
           } finally {
-            // Restore in a finally block. The request can fail with an IOException or a
-            // ServiceException, and leaving the encrypted credential on the thread local would make
-            // the next retry encrypt the ciphertext again. Each pass grows the value and the worker
-            // can no longer decrypt it. That matters most during a proxy outage, which is exactly
-            // when this loop retries hardest.
+            // Restore even on failure, or the next retry would re-encrypt the ciphertext.
             if (isWorkerEncryptionRequired) {
               SecurityRequestContext.setUserCredential(currentCredential);
             }
@@ -222,10 +206,7 @@ public class RemoteTaskExecutor {
           LOG.trace("Received response from {} with status code {} in {} ms", serviceName,
               httpResponse.getResponseCode(), executionDurationMs);
 
-          // STEP 4: Handle Responses & Retryable Exceptions
-          // A 429 means no compute lease could be secured right now: either the proxy could not
-          // lease a pod for this namespace, or the worker hit its own concurrency limit. Retry with
-          // backoff rather than failing the pipeline outright.
+          // STEP 4: A 429 means no pod could be leased right now, so retry with backoff.
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new TaskWorkerSaturatedException(
                 String.format("Task Worker cluster is fully saturated (HTTP 429). Could not secure "
@@ -247,10 +228,7 @@ public class RemoteTaskExecutor {
               String.format("Received exception %s for %s", e.getMessage(),
                   runnableTaskRequest.getClassName()));
         } catch (ServiceException e) {
-          // 503 natively throws ServiceUnavailableException (which extends RetryableException),
-          // but 502 and 504 surface as a plain ServiceException, which the retry predicate does not
-          // match. Trap those two infrastructure errors and force a retry so a proxy that is
-          // restarting gets the full retry budget to come back.
+          // 503 is already retryable; retry 502 and 504 too, which are plain ServiceExceptions.
           if (e.getStatusCode() == HttpResponseStatus.BAD_GATEWAY.code()
               || e.getStatusCode() == HttpResponseStatus.GATEWAY_TIMEOUT.code()) {
             throw new RetryableException("Proxy infrastructure unreachable (HTTP "
@@ -281,11 +259,7 @@ public class RemoteTaskExecutor {
     }
   }
 
-  /**
-   * Returns true when the failure means we never got an answer out of the proxy, as opposed to the
-   * proxy returning an application level error. Only transport and discovery failures qualify, so
-   * a real task failure is never rewritten into an infrastructure message.
-   */
+  /** Returns true for transport and discovery failures, where the proxy never answered. */
   private static boolean isProxyUnreachable(Exception e) {
     return e instanceof ServiceUnavailableException
         || e instanceof NoRouteToHostException
@@ -293,11 +267,7 @@ public class RemoteTaskExecutor {
         || e instanceof SocketException;
   }
 
-  /**
-   * Builds the terminal error for a proxy that never answered. Without this the caller sees a bare
-   * "service is not available" for {@code task.worker.manager}, which reads like a task worker problem and
-   * gives no hint that the proxy is a separate deployment with its own lifecycle.
-   */
+  /** Builds the error for a proxy that never answered, pointing at the proxy deployment. */
   private ServiceException proxyUnreachableException(Exception cause, long startTime) {
     long elapsedSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
     warnOnceAboutUnreachableProxy();
@@ -310,10 +280,7 @@ public class RemoteTaskExecutor {
         cause, HttpResponseStatus.SERVICE_UNAVAILABLE);
   }
 
-  /**
-   * Logs the deployment level diagnosis a single time per JVM. Every task hitting an absent proxy
-   * fails the same way, so repeating this per task would bury the signal.
-   */
+  /** Logs the proxy deployment diagnosis once per JVM, since every task would fail the same way. */
   private static void warnOnceAboutUnreachableProxy() {
     if (!PROXY_UNREACHABLE_WARNING_LOGGED.compareAndSet(false, true)) {
       return;
@@ -426,11 +393,7 @@ public class RemoteTaskExecutor {
     TASK_WORKER
   }
 
-  /**
-   * Marks an HTTP 429 (no compute lease available) response so the outer handler can translate it
-   * into a caller-facing error without matching on the message text. Extends
-   * {@link RetryableException} so the retry predicate keeps retrying it.
-   */
+  /** Marks a 429 response; retryable, and translated into a caller-facing error once retries run out. */
   private static final class TaskWorkerSaturatedException extends RetryableException {
 
     TaskWorkerSaturatedException(String message) {

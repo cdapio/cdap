@@ -37,18 +37,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Tests how much work a task worker pod accepts: the limit it resolves across the three deployment
- * modes, and whether it gives that capacity back when a task fails.
- *
- * <p>The mode resolution is the security-critical branch. On an RBAC instance the pod holds a
- * single mutable namespaced credential, so running more than one task at a time is only safe when
- * something coordinates ownership of it. Getting this wrong in the permissive direction means user
- * code in one namespace can obtain a token for another.
- *
- * <p>The failure paths are the other half of the same property. A slot or a lease that is taken
- * and never released does not fail the request that hit it; it removes capacity from the pod for
- * the rest of the pod's life, and on an RBAC instance it also pins the namespaced credential in
- * the sidecar, because the wipe only fires when the active task count reaches zero.
+ * Tests the task worker's concurrency limit in each deployment mode, and that failed tasks give
+ * back their slot and lease.
  */
 public class TaskWorkerConcurrencyModeTest {
 
@@ -56,11 +46,7 @@ public class TaskWorkerConcurrencyModeTest {
   private static final String NAMESPACE = "ns1";
   private static final Gson GSON = new Gson();
 
-  /**
-   * A launcher that fails in a chosen way instead of running anything. Driving the real launcher
-   * would mean shipping a class that fails in the exact way under test and trusting the
-   * container's classloading to cooperate.
-   */
+  /** A launcher that fails in a chosen way instead of running anything. */
   private static final class ThrowingLauncher extends RunnableTaskLauncher {
 
     private final Throwable failure;
@@ -100,10 +86,7 @@ public class TaskWorkerConcurrencyModeTest {
         new NoOpMetricsCollectionService());
   }
 
-  /**
-   * Builds a handler whose tasks always fail in the given way. RBAC and the proxy move together
-   * here because that is the only combination CDF deploys with a lease.
-   */
+  /** Builds a leased (RBAC plus proxy) handler whose tasks always fail in the given way. */
   private static TaskWorkerHttpHandlerInternal newFailingHandler(boolean proxyEnabled,
       Throwable failure) {
     return new TaskWorkerHttpHandlerInternal(newCConf(proxyEnabled, proxyEnabled, proxyEnabled),
@@ -152,10 +135,7 @@ public class TaskWorkerConcurrencyModeTest {
 
   @Test
   public void testProxyFlagWithoutRbacFallsBackToNonRbacBehaviour() {
-    // The proxy is only deployed on RBAC instances. If the flag is somehow on without RBAC, the
-    // worker must land on exactly the non-RBAC configuration, matching what RemoteClientFactory
-    // decides on the client side. Any other outcome means the two ends of the wire disagree about
-    // how many tasks a pod accepts.
+    // Flag without RBAC must behave exactly like non-RBAC, matching RemoteTaskExecutor's routing.
     TaskWorkerHttpHandlerInternal handler = newHandler(false, false, true);
 
     Assert.assertEquals(CONFIGURED_LIMIT, handler.getConcurrentRequestLimit());
@@ -164,10 +144,7 @@ public class TaskWorkerConcurrencyModeTest {
 
   @Test
   public void testIsolationDisabledOnRbacStillHonoursTheConfiguredLimit() {
-    // Documents today's behaviour rather than endorsing it: an RBAC instance that explicitly turns
-    // isolation off and runs without the proxy gets concurrent tasks sharing one credential
-    // context. CDF never produces this combination, since it only sets the isolation key on
-    // non-RBAC instances.
+    // Documents existing behaviour; CDF never turns isolation off on RBAC instances.
     TaskWorkerHttpHandlerInternal handler = newHandler(true, false, false);
 
     Assert.assertEquals(CONFIGURED_LIMIT, handler.getConcurrentRequestLimit());
