@@ -24,20 +24,15 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link StickyLeaseManager}, with particular attention to the credential lifetime: the
- * whole point of the class is that the namespaced credential is provisioned exactly once per burst
- * of overlapping tasks and wiped the instant the pod goes idle.
+ * Tests for {@link StickyLeaseManager}, especially that the credential is provisioned once per
+ * burst of tasks and wiped when the pod goes idle.
  */
 public class StickyLeaseManagerTest {
 
   private static final NamespaceId NS1 = new NamespaceId("ns1");
   private static final NamespaceId NS2 = new NamespaceId("ns2");
 
-  /**
-   * Records credential provisioning and wiping so tests can assert on the exact sequence rather
-   * than just the final state. Order matters here: a wipe landing after a provision for the same
-   * burst would leave running tasks without an identity.
-   */
+  /** Records provision and wipe calls in order. */
   private static final class RecordingCredentialSink implements NamespaceCredentialContext {
 
     private final List<String> events = new ArrayList<>();

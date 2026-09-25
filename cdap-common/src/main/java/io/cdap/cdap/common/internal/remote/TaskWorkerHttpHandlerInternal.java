@@ -83,12 +83,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(
       BasicThrowable.class, new BasicThrowableCodec()).create();
 
-  /**
-   * Response header naming the namespace that currently holds this pod's lease. Read by
-   * {@link ProxyBackendHandler} on a rejection to correct the proxy's routing table.
-   */
-  private static final String LEASED_NAMESPACE_HEADER = "X-Leased-Namespace";
-
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
 
@@ -109,11 +103,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int concurrentRequestLimit;
 
-  /**
-   * Owns the namespace lease and the lifetime of the namespaced credential on this pod. Null on
-   * instances that do not run behind the Task Worker Manager proxy, where there is either no per-task
-   * credential at all or only ever one task in flight.
-   */
+  /** Owns the namespace lease and credential; null unless running behind the task worker proxy. */
   @Nullable
   private final StickyLeaseManager stickyLeaseManager;
 
@@ -128,14 +118,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         metricsCollectionService), stopper, metricsCollectionService);
   }
 
-  /**
-   * Constructs the handler around an already built launcher.
-   *
-   * <p>Exists so that tests can drive the handler's failure paths, which is otherwise awkward: the
-   * launcher loads and instantiates the task class, so provoking a specific failure would mean
-   * shipping a class that fails in that exact way and relying on the container's classloading to
-   * cooperate.
-   */
+  /** Constructs the handler around an already built launcher, so tests can inject failures. */
   @VisibleForTesting
   TaskWorkerHttpHandlerInternal(CConfiguration cConf,
       RunnableTaskLauncher runnableTaskLauncher, Consumer<String> stopper,
@@ -151,16 +134,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
     boolean stickyLeaseEnabled = TaskWorkerManager.isEnabled(cConf);
 
-    // Three deployment modes decide how many tasks may share this pod.
-    //
-    //   Non-RBAC: user code isolation is off and there is no per-task credential to protect, so
-    //       the pod runs at the configured limit. Tasks from different namespaces may share it.
-    //   RBAC without the proxy: one namespaced credential lives in a single mutable context on
-    //       the pod and nothing coordinates ownership of it, so exactly one task may run.
-    //   RBAC with the proxy: the lease coordinates ownership of that credential, which is what
-    //       makes it safe to run the configured limit again. The proxy reads the same
-    //       task.worker.request.limit for its own dispatch ceiling, so the two agree by
-    //       construction.
+    // Isolation without the proxy runs one task at a time, since nothing coordinates the shared
+    // credential. With the proxy, the lease does, so the configured limit applies.
     if (enableUserCodeIsolationEnabled && !stickyLeaseEnabled) {
       this.concurrentRequestLimit = 1;
     } else {
@@ -179,13 +154,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       requestProcessedCount.incrementAndGet();
 
       if (stickyLeaseManager != null) {
-        // The leased pod's counterpart to the clearTaskContextOrScheduleRestart() call in run()'s
-        // finally. It runs here rather than there because the pod must keep counting as busy
-        // until the response is off the wire, not because the credential is still in use. See
-        // that finally for what goes wrong if the count drops earlier.
-        //
-        // Released before any restart decision below, so that a pod shutting down still wipes the
-        // credential on its way out.
+        // Released after the response is written, and before any restart so the credential is wiped.
         String namespace = taskDetails.getNamespace();
         if (namespace != null) {
           stickyLeaseManager.releaseTask(new NamespaceId(namespace));
@@ -206,10 +175,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       }
 
       if (requestProcessedCount.get() >= killAfterRequestCount) {
-        // Stop accepting work and let the pod drain. Stopping outright here would kill any task
-        // still running alongside this one: the HTTP service is given two seconds to wind down,
-        // which is nothing against a task that can run for half a minute. This was unreachable
-        // while isolation mode pinned concurrency to one, because there was never a sibling.
+        // Drain instead of stopping now, which would kill sibling tasks still running.
         mustRestart.set(true);
         if (pendingRequests == 0) {
           stopper.accept(className);
@@ -220,10 +186,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     enablePeriodicRestart(cConf, stopper);
   }
 
-  /**
-   * Returns the number of tasks this pod will run at once, after the deployment mode has been
-   * resolved.
-   */
+  /** Returns the number of tasks this pod runs at once. */
   @VisibleForTesting
   int getConcurrentRequestLimit() {
     return concurrentRequestLimit;
@@ -238,12 +201,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     return stickyLeaseManager;
   }
 
-  /**
-   * Returns the number of tasks currently occupying a slot on this pod.
-   *
-   * <p>Every admission path is gated on this count, so a slot that is taken and never released
-   * takes capacity with it permanently. Tests assert it returns to zero on the failure paths.
-   */
+  /** Returns the number of tasks currently holding a slot on this pod. */
   @VisibleForTesting
   int getRunningRequestCount() {
     return runningRequestCount.get();
@@ -323,9 +281,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     RunnableTaskContext runnableTaskContext;
     NamespaceId namespaceId;
 
-    // Admission. Everything that has to succeed before the pod commits to running the task, and
-    // nothing that can run user code. Failing here means no lease is held and nothing executed,
-    // so the slot is released without claiming otherwise.
+    // Admission: nothing here runs user code, so a failure only needs to release the slot.
     try {
       runnableTaskRequest = GSON.fromJson(
           request.content().toString(StandardCharsets.UTF_8),
@@ -336,8 +292,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       if (stickyLeaseManager != null) {
         StickyLeaseManager.AdmissionStatus status = stickyLeaseManager.admitTask(namespaceId);
         if (status != StickyLeaseManager.AdmissionStatus.SUCCESS) {
-          // The pod is busy with another namespace, or saturated. Name the namespace that actually
-          // holds the lease so the proxy can correct its routing table instead of retrying here.
+          // Report the lease holder so the proxy can correct its routing table.
           responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS, leaseRejectionHeaders());
           runningRequestCount.decrementAndGet();
           return;
@@ -346,22 +301,15 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     } catch (Exception ex) {
       LOG.error("Failed to admit task {}",
           request.content().toString(StandardCharsets.UTF_8), ex);
-      // The task never started, so nothing is owed to the lease. Naming no request is what says
-      // so: the completion consumer releases a lease only for a named namespace, and an admission
-      // that threw has already unwound its own claim.
+      // A null request tells the completion consumer there is no lease to release.
       failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, false);
       return;
     }
 
-    // Launch. Exactly one path below calls the completion consumer for this task: on success the
-    // body producer does it once the response has been written, otherwise the matching catch does
-    // it here. No path both hands off and cleans up, which is why none of them need to know what
-    // the others did.
+    // Launch: exactly one path below calls the completion consumer.
     try {
       if (stickyLeaseManager == null) {
-        // set the GcpMetadataTaskContext before running the task. Under a lease the credential
-        // belongs to the whole burst of tasks rather than to this one, so the lease manager owns
-        // both ends of its lifetime and neither happens here.
+        // Under a lease the lease manager provisions and wipes the credential instead.
         GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
       }
       runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
@@ -385,46 +333,25 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime,
           runnableTaskRequest, true);
     } catch (Throwable t) {
-      // An Error rather than an Exception, most plausibly a NoClassDefFoundError while loading a
-      // user artifact. Nothing downstream exists to release the slot or the lease, and every
-      // recovery path is gated on the active task count reaching zero, so leaving it incremented
-      // would brick the pod permanently and disable the credential wipe with it. Release here,
-      // then let the Error propagate: swallowing an OutOfMemoryError to return a tidy 500 is the
-      // worse trade.
+      // An Error (e.g. NoClassDefFoundError): release the slot and lease, then rethrow.
       taskCompletionConsumer.accept(false,
           new TaskDetails(metricsCollectionService, startTime, true,
               runnableTaskRequest));
       throw t;
     } finally {
       if (stickyLeaseManager == null) {
-        // Without a lease the credential belongs to this one task, so it is wiped here, the moment
-        // the task is done with it.
-        //
-        // The absence of an else branch is deliberate and is the one asymmetry in this method. A
-        // leased pod releases in taskCompletionConsumer instead, which Netty invokes from
-        // RunnableTaskBodyProducer once the response has been written and the context's cleanup
-        // task has run. Releasing it here would drop the active task count to zero while the body
-        // is still streaming, letting the proxy hand the pod to another namespace mid-response.
-        // Tightening the lease manager's admission rules to compensate does not rescue it: the
-        // proxy cannot observe in-flight responses, so a worker that refuses on that basis only
-        // manufactures rejections the proxy will retry into forever.
+        // Leased pods release in taskCompletionConsumer instead, once the response is written;
+        // releasing here would let the proxy hand the pod to another namespace mid-response.
         clearTaskContextOrScheduleRestart();
       }
     }
   }
 
   /**
-   * Reports a failed task to the caller and gives the pod back its capacity.
+   * Reports a failed task and releases its slot, even if the response can't be sent.
    *
-   * <p>The release happens in a finally because the pod's capacity must not depend on the caller
-   * still being there to hear about the failure. A responder that throws, because the connection
-   * went away or the response was already committed, would otherwise take a slot with it and, on a
-   * leased pod, keep the namespaced credential alive with nothing running.
-   *
-   * @param terminateOnComplete whether user code may have run, which is what decides if the pod is
-   *     a candidate for recycling
-   * @param request the originating request, or null if the failure happened before it could be
-   *     read, in which case no lease is released
+   * @param terminateOnComplete whether user code may have run
+   * @param request the originating request, or null if it couldn't be read
    */
   private void failTask(HttpResponder responder, HttpResponseStatus status, Exception ex,
       long startTime, @Nullable RunnableTaskRequest request, boolean terminateOnComplete) {
@@ -437,15 +364,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
-  /**
-   * Wipes the namespaced credential from the sidecar on a pod that runs without a lease, and
-   * recycles the pod if the wipe fails.
-   *
-   * <p>Mirrors what the lease manager does on its own wipe, for the same reason: by the time this
-   * runs the response is already on the wire, so there is nothing to report the failure to, and a
-   * credential that outlives the task that provisioned it is not something to leave behind on a
-   * pod that goes on to serve other namespaces. The restart costs one cold start.
-   */
+  /** Wipes the credential on a pod without a lease, and restarts the pod if that fails. */
   private void clearTaskContextOrScheduleRestart() {
     try {
       GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
@@ -457,19 +376,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
-  /**
-   * Builds the headers that tell the Task Worker Manager proxy who really owns this pod, so it can heal
-   * its routing table after guessing wrong.
-   *
-   * <p>Only the leased namespace is reported. The active task count is deliberately omitted: it
-   * counts work owned by connections the proxy does not hold, so the proxy could never decrement
-   * it and adopting it would strand the pod.
-   */
+  /** Builds the rejection headers naming the namespace that holds this pod's lease. */
   private DefaultHttpHeaders leaseRejectionHeaders() {
     DefaultHttpHeaders headers = new DefaultHttpHeaders();
     NamespaceId leased = stickyLeaseManager.getCurrentLease();
     if (leased != null) {
-      headers.set(LEASED_NAMESPACE_HEADER, leased.getNamespace());
+      headers.set(Constants.Gateway.HEADER_LEASED_NAMESPACE, leased.getNamespace());
     }
     return headers;
   }
@@ -581,14 +493,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
-  /**
-   * The pod's namespaced credential, as held by the metadata sidecar running alongside this
-   * container.
-   *
-   * <p>An inner class rather than a lambda pair because the two halves have genuinely different
-   * failure policies, and both of those policies are about this handler's state rather than about
-   * credentials.
-   */
+  /** The pod's namespaced credential, held by the metadata sidecar. */
   private final class SidecarCredentialContext implements NamespaceCredentialContext {
 
     @Override
@@ -596,8 +501,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       try {
         GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespace, cConf);
       } catch (IOException e) {
-        // The task cannot run as the right identity, so it must not run at all. The lease manager
-        // unwinds its claim and this surfaces as a 500 from the run handler.
+        // The task must not run under the wrong identity; the lease manager unwinds its claim.
         throw new UncheckedIOException(
             "Failed to provision the service account credential for namespace "
                 + namespace.getNamespace(), e);
@@ -609,10 +513,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       try {
         GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
       } catch (IOException e) {
-        // Nothing further up can act on this: the task has already finished and its response is on
-        // the wire. Rather than leave a namespaced credential sitting on an idle pod, recycle the
-        // pod so the credential dies with the process. The pod is idle by definition at this
-        // point, so the restart costs one cold start and no running work.
+        // Nothing upstream can handle this, so restart the idle pod rather than keep the credential.
         LOG.error("Failed to wipe the service account credential after the last task finished. "
             + "Restarting the task worker so the credential does not outlive the namespace that "
             + "provisioned it.", e);
