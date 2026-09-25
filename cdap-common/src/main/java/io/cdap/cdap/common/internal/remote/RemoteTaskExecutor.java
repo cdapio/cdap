@@ -38,7 +38,6 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.proto.BasicThrowable;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.common.http.HttpMethod;
@@ -168,23 +167,11 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
-          // STEP 1: Determine the Effective Tenant Namespace.
-          // For SystemAppTask execution (e.g. system services running user pipeline tasks),
-          // unwrap the embedded namespace so the task worker executes under the user's tenant
-          // context. Only relevant when the proxy is in play; otherwise there is nothing to route.
+          // STEP 1: Route on the namespace the worker will admit the task under.
           String namespace = null;
           String routingKey = null;
           if (rbacProxyEnabled) {
-            namespace = runnableTaskRequest.getNamespace();
-            if (NamespaceId.SYSTEM.getNamespace().equals(namespace)
-                && runnableTaskRequest.getParam() != null
-                && runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
-              String embeddedNamespace =
-                  runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace();
-              if (embeddedNamespace != null && !embeddedNamespace.isEmpty()) {
-                namespace = embeddedNamespace;
-              }
-            }
+            namespace = TaskDetails.extractNamespace(runnableTaskRequest);
             routingKey = namespace;
           }
 
