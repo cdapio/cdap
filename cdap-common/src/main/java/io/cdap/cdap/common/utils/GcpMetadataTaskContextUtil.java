@@ -71,11 +71,15 @@ public final class GcpMetadataTaskContextUtil {
         SecurityRequestContext.getUserCredential());
     String setContextEndpoint = String.format("%s/set-context",
         getSidecarMetadataServiceEndpoint(cConf));
-    HttpRequest httpRequest =
+    HttpRequest.Builder setContextBuilder =
         HttpRequest.put(new URL(setContextEndpoint))
             .withBody(GSON.toJson(gcpMetadataTaskContext))
-            .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .build();
+            .addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+    String sidecarToken = SidecarAuthToken.get();
+    if (sidecarToken != null) {
+      setContextBuilder.addHeader(SidecarAuthToken.HEADER, sidecarToken);
+    }
+    HttpRequest httpRequest = setContextBuilder.build();
     HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
     LOG.debug("Set namespace '{}' response: {}", namespaceId.getNamespace(),
         tokenResponse.getResponseCode());
@@ -93,7 +97,13 @@ public final class GcpMetadataTaskContextUtil {
     }
     String clearContextEndpoint = String.format("%s/clear-context",
         getSidecarMetadataServiceEndpoint(cConf));
-    HttpRequest httpRequest = HttpRequest.delete(new URL(clearContextEndpoint)).build();
+    HttpRequest.Builder clearContextBuilder =
+        HttpRequest.delete(new URL(clearContextEndpoint));
+    String sidecarToken = SidecarAuthToken.get();
+    if (sidecarToken != null) {
+      clearContextBuilder.addHeader(SidecarAuthToken.HEADER, sidecarToken);
+    }
+    HttpRequest httpRequest = clearContextBuilder.build();
     HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
     LOG.debug("Clear context response: {}", tokenResponse.getResponseCode());
   }
