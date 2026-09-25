@@ -65,11 +65,25 @@ final class DFSSeekableInputStream extends SeekableInputStream {
 
   @Override
   public void close() throws IOException {
+    Throwable error = null;
     try {
       super.close();
+    } catch (Throwable t) {
+      error = t;
+      throw t;
     } finally {
       if (sizeProvider instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) sizeProvider);
+        try {
+          ((Closeable) sizeProvider).close();
+        } catch (IOException e) {
+          if (error != null) {
+            error.addSuppressed(e);
+          } else {
+            // If super.close() succeeded but the provider failed,
+            // you should probably still know about it.
+            throw e;
+          }
+        }
       }
     }
   }

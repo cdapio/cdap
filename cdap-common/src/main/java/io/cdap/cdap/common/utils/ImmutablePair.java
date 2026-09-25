@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.utils;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 /**
@@ -83,7 +84,7 @@ public final class ImmutablePair<A, B> {
    */
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("first", first)
         .add("second", second)
         .toString();

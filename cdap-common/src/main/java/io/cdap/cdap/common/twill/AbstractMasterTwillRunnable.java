@@ -110,7 +110,8 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       Preconditions.checkArgument(!services.isEmpty(), "Should have at least one service");
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      Throwables.throwIfUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -137,7 +138,9 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
     } catch (InterruptedException e) {
       LOG.debug("Waiting on latch interrupted {}", name);
     } catch (ExecutionException e) {
-      throw Throwables.propagate(e.getCause());
+      Throwable cause = e.getCause();
+      Throwables.throwIfUnchecked(cause);
+      throw new RuntimeException(cause);
     }
   }
 
@@ -153,7 +156,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   private Service.Listener createServiceListener(final String name,
       final SettableFuture<String> future) {
-    return new ServiceListenerAdapter() {
+    return new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         LOG.info("Service " + name + " terminated");

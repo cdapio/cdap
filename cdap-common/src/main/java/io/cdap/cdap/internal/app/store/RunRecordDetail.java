@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
@@ -186,7 +187,7 @@ public class RunRecordDetail extends RunRecord {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("programRunId", getProgramRunId())
         .add("startTs", getStartTs())
         .add("runTs", getRunTs())

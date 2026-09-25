@@ -90,20 +90,20 @@ public class KafkaClientModule extends PrivateModule {
     @Override
     public ZKClientService get() {
       String kafkaZkQuorum = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_QUORUM);
-      ZKClientService zkClientService;
+      ZKClientService tmpZkClientService;
       final AtomicInteger startedCount = new AtomicInteger();
 
       if (kafkaZkQuorum == null) {
         // If there is no separate zookeeper quorum, use the shared ZKClientService.
-        zkClientService = injector.getInstance(ZKClientService.class);
+        tmpZkClientService = injector.getInstance(ZKClientService.class);
 
         String kafkaNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
         if (kafkaNamespace != null) {
           if (!kafkaNamespace.startsWith("/")) {
             kafkaNamespace = "/" + kafkaNamespace;
           }
-          zkClientService = ZKClientServices.delegate(
-              ZKClients.namespace(zkClientService, kafkaNamespace));
+          tmpZkClientService = ZKClientServices.delegate(
+              ZKClients.namespace(tmpZkClientService, kafkaNamespace));
         }
 
         // Since it is the shared ZKClientService, we don't want the KafkaClientService or BrokerService to
@@ -111,7 +111,7 @@ public class KafkaClientModule extends PrivateModule {
         startedCount.set(1);
       } else {
         // Otherwise create a new ZKClientService
-        zkClientService = ZKClientServices.delegate(
+        tmpZkClientService = ZKClientServices.delegate(
             ZKClients.reWatchOnExpire(
                 ZKClients.retryOnFailure(
                     ZKClientService.Builder.of(kafkaZkQuorum)
@@ -124,6 +124,8 @@ public class KafkaClientModule extends PrivateModule {
             )
         );
       }
+      // Assign to a final variable for use in the inner class
+      final ZKClientService zkClientService = tmpZkClientService;
 
       // Wrap the ZKClientService using simple reference counting for start/stop
       // The logic doesn't need to be sophisticated since it is a private binding and only used by the
@@ -131,19 +133,44 @@ public class KafkaClientModule extends PrivateModule {
       // made to the start/stop methods.
       return new ForwardingZKClientService(zkClientService) {
         @Override
-        public ListenableFuture<State> start() {
+        public Service startAsync() {
           if (startedCount.getAndIncrement() == 0) {
-            return super.start();
+            return zkClientService.startAsync();
           }
-          return Futures.immediateFuture(State.RUNNING);
+          return this;
         }
 
         @Override
-        public ListenableFuture<State> stop() {
+        public Service stopAsync() {
           if (startedCount.decrementAndGet() == 0) {
-            return super.stop();
+            return zkClientService.stopAsync();
           }
-          return Futures.immediateFuture(State.TERMINATED);
+          return this;
+        }
+
+        @Override
+        public void awaitRunning() {
+          zkClientService.awaitRunning();
+        }
+
+        @Override
+        public void awaitRunning(long timeout, TimeUnit unit) throws java.util.concurrent.TimeoutException {
+          zkClientService.awaitRunning(timeout, unit);
+        }
+
+        @Override
+        public void awaitTerminated() {
+          zkClientService.awaitTerminated();
+        }
+
+        @Override
+        public void awaitTerminated(long timeout, TimeUnit unit) throws java.util.concurrent.TimeoutException {
+          zkClientService.awaitTerminated(timeout, unit);
+        }
+
+        @Override
+        public Throwable failureCause() {
+          return zkClientService.failureCause();
         }
       };
     }
@@ -166,12 +193,12 @@ public class KafkaClientModule extends PrivateModule {
 
     @Override
     protected final void startUp() throws Exception {
-      zkClientService.startAndWait();
+      zkClientService.startAsync().awaitRunning();
       try {
-        delegate.startAndWait();
+        delegate.startAsync().awaitRunning();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
@@ -182,16 +209,16 @@ public class KafkaClientModule extends PrivateModule {
     @Override
     protected final void shutDown() throws Exception {
       try {
-        delegate.stopAndWait();
+        delegate.stopAsync().awaitTerminated();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
         throw e;
       }
-      zkClientService.stopAndWait();
+      zkClientService.stopAsync().awaitTerminated();
     }
 
     protected T getDelegate() {

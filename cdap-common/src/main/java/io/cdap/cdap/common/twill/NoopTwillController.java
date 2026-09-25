@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.common.twill;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,25 +28,82 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.internal.AbstractExecutionServiceController;
 import org.apache.twill.internal.RunIds;
 
 /**
  * A no-op {@link TwillController}.
  */
-final class NoopTwillController extends AbstractExecutionServiceController implements
+final class NoopTwillController extends AbstractIdleService implements
     TwillController {
 
+  private final RunId runId;
+
   NoopTwillController() {
-    super(RunIds.generate());
+    this.runId = RunIds.generate();
   }
 
+  @Override
+  public Future<? extends ServiceController> terminate() {
+    stopAsync();
+    return CompletableFuture.completedFuture(this);
+  }
+
+  @Override
+  public void onRunning(final Runnable runnable, Executor executor) {
+    if (isRunning()) {
+      executor.execute(runnable);
+      return;
+    }
+    Service.Listener listener = new Service.Listener() {
+      @Override
+      public void running() {
+        runnable.run();
+      }
+    };
+    addListener(listener, executor);
+  }
+
+  @Override
+  public void onTerminated(final Runnable runnable, Executor executor) {
+    if (state() == State.TERMINATED || state() == State.FAILED) {
+      executor.execute(runnable);
+      return;
+    }
+    Service.Listener listener = new Service.Listener() {
+      @Override
+      public void terminated(State from) {
+        runnable.run();
+      }
+      @Override
+      public void failed(State from, Throwable failure) {
+        runnable.run();
+      }
+    };
+    addListener(listener, executor);
+  }
+
+  @Override
+  public ServiceController.TerminationStatus getTerminationStatus() {
+    if (state() == State.TERMINATED) {
+      return ServiceController.TerminationStatus.SUCCEEDED;
+    }
+    if (state() == State.FAILED) {
+      return ServiceController.TerminationStatus.FAILED;
+    }
+    return null; // Running or starting
+  }
+  @Override
+  public RunId getRunId() {
+    return runId;
+  }
   @Override
   public void addLogHandler(LogHandler handler) {
     // no-op

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.logging;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import java.lang.reflect.Method;
@@ -113,7 +114,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("systemTags", systemTags)
         .toString();
   }
@@ -140,7 +141,7 @@ public abstract class AbstractLoggingContext implements LoggingContext {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("name", name)
           .add("value", value)
           .toString();
