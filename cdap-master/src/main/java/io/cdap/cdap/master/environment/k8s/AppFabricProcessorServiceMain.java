@@ -35,6 +35,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.SystemWorker;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
+import io.cdap.cdap.common.internal.remote.TaskWorkerManager;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
@@ -53,6 +54,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricProcessorService;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
+import io.cdap.cdap.internal.app.worker.manager.TaskWorkerManagerServiceLauncher;
 import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -156,6 +158,12 @@ public class AppFabricProcessorServiceMain extends AbstractServiceMain<Environme
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
         RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
+    // Started before AppFabricProcessorService so the proxy pod is requested before tasks are
+    // dispatched. Same predicate as RemoteTaskExecutor and TaskWorkerHttpHandlerInternal.
+    if (TaskWorkerManager.isEnabled(cConf)) {
+      services.add(injector.getInstance(TaskWorkerManagerServiceLauncher.class));
+    }
+
     services.add(injector.getInstance(AppFabricProcessorService.class));
     services.add(new RetryOnStartFailureService(
         () -> injector.getInstance(NamespaceInitializerService.class),
