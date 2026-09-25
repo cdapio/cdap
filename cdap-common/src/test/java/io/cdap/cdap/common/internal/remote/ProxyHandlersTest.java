@@ -100,14 +100,10 @@ public class ProxyHandlersTest {
         PodState pod1 = new PodState(null, 0);
         PodState pod2 = new PodState(null, 0);
 
-        // Force the last activity time back to mark it as completely idle
         registry.put("127.0.0.1:8081", pod1);
         registry.put("127.0.0.1:8082", pod2);
 
-        // PodState is asserted directly rather than through ProxyFrontendHandler: the handler routes
-        // via Bootstrap.connect, which is asynchronous and not readable synchronously from an
-        // EmbeddedChannel without mocking Bootstrap. PodState is what actually dictates isolation.
-        
+        // Tested on PodState directly, since the handler's async connect can't run on an EmbeddedChannel.
         boolean acquired = pod1.tryClaimFreshLease("namespace-A");
         assertTrue(acquired);
         assertEquals("namespace-A", pod1.getLeasedNamespace());
