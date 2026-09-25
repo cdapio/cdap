@@ -129,7 +129,7 @@ public class ProxyHandlersTest {
     }
 
     @Test
-    public void testSelfHealingAdoptsNamespaceButNotTaskCount() {
+    public void testRejectionAdoptsNamespaceAndReleasesSlot() {
         CConfiguration cConf = CConfiguration.create();
         cConf.setInt(Constants.TaskWorker.REQUEST_LIMIT, 10);
         PodLeaseManager podLeaseManager = new PodLeaseManager(cConf);
@@ -142,19 +142,16 @@ public class ProxyHandlersTest {
             new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080");
         EmbeddedChannel workerChannel = new EmbeddedChannel(backendHandler);
 
-        // The worker rejects the request: it is actually leased to namespace-B and reports seven
-        // active tasks belonging to connections this proxy does not own.
+        // The worker rejects the request because it is leased to namespace-B.
         DefaultFullHttpResponse conflictResponse =
             new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONFLICT);
-        conflictResponse.headers().set("X-Leased-Namespace", "namespace-B");
-        conflictResponse.headers().set("X-Active-Tasks", "7");
+        conflictResponse.headers().set(Constants.Gateway.HEADER_LEASED_NAMESPACE, "namespace-B");
 
         workerChannel.writeInbound(conflictResponse);
 
         // Ownership is adopted, so retries stop treating this pod as a warm match for namespace-A.
         assertEquals("namespace-B", pod1.getLeasedNamespace());
-        // The reported count is discarded and the speculative slot is released. Adopting 7 here
-        // would be un-decrementable, since no completion for those tasks will ever reach us.
+        // The slot taken for the rejected request is released.
         assertEquals(0, pod1.getInflightRequests());
 
         FullHttpResponse relayedClientResponse = inboundClientChannel.readOutbound();
