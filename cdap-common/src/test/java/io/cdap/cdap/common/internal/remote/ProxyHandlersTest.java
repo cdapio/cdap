@@ -248,6 +248,43 @@ public class ProxyHandlersTest {
     }
 
     @Test
+    public void testWarmMatchPicksLeastLoadedPod() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState busy = new PodState("namespace-A", 7);
+        PodState light = new PodState("namespace-A", 2);
+        PodState other = new PodState("namespace-B", 0);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", busy);
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", light);
+        podLeaseManager.getRegistry().put("10.0.0.3:11015", other);
+
+        assertEquals("10.0.0.2:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals(3, light.getInflightRequests());
+        assertEquals(7, busy.getInflightRequests());
+        assertEquals(0, other.getInflightRequests());
+    }
+
+    @Test
+    public void testWarmMatchFillsEvenlyWithoutClaimingFreshPods() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState first = new PodState("namespace-A", 0);
+        PodState second = new PodState("namespace-A", 0);
+        PodState fresh = new PodState(null, 0);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", first);
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", second);
+        podLeaseManager.getRegistry().put("10.0.0.3:11015", fresh);
+
+        for (int i = 0; i < 10; i++) {
+            assertNotNull(podLeaseManager.acquireLease("namespace-A"));
+        }
+
+        // Spread over the two warm pods; the fresh pod stays free for other namespaces.
+        assertEquals(5, first.getInflightRequests());
+        assertEquals(5, second.getInflightRequests());
+        assertNull(fresh.getLeasedNamespace());
+        assertEquals(0, fresh.getInflightRequests());
+    }
+
+    @Test
     public void testMissingNamespaceHeaderIsRejectedBeforeLeasing() {
         DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
