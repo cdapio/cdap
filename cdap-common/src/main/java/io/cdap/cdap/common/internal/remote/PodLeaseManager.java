@@ -22,6 +22,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -82,12 +83,23 @@ class PodLeaseManager {
      * @return The IP:Port address of the leased worker pod, or null if the cluster is full.
      */
     String acquireLease(String namespace) {
-        // STEP 1: Warm Match Selection
+        // STEP 1: Warm match on the least-loaded pod already leased to this namespace. Counts are
+        // snapshotted because concurrent requests change them mid-sort.
+        List<Map.Entry<String, Integer>> warmPods = new ArrayList<>();
         for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
-            if (entry.getValue().tryAcquireWarmLease(namespace, maxConcurrentTasks)) {
-                LOG.info("PodLeaseManager: Found warm match for '{}' at {}. Occupancy: {}", 
-                         namespace, entry.getKey(), entry.getValue().getInflightRequests());
-                return entry.getKey();
+            PodState state = entry.getValue();
+            int inflight = state.getInflightRequests();
+            if (namespace.equals(state.getLeasedNamespace()) && inflight < maxConcurrentTasks) {
+                warmPods.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), inflight));
+            }
+        }
+        warmPods.sort(Map.Entry.comparingByValue());
+        for (Map.Entry<String, Integer> candidate : warmPods) {
+            PodState state = podRegistry.get(candidate.getKey());
+            if (state != null && state.tryAcquireWarmLease(namespace, maxConcurrentTasks)) {
+                LOG.info("PodLeaseManager: Found warm match for '{}' at {}. Occupancy: {}",
+                         namespace, candidate.getKey(), state.getInflightRequests());
+                return candidate.getKey();
             }
         }
 
