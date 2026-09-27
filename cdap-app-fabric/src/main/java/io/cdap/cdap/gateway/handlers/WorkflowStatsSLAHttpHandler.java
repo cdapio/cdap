@@ -33,8 +33,12 @@ import io.cdap.cdap.internal.app.store.WorkflowTable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.WorkflowStatistics;
 import io.cdap.cdap.proto.WorkflowStatsComparison;
+import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -64,13 +68,26 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
   private final Store store;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final MetricsSystemClient metricsSystemClient;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
   WorkflowStatsSLAHttpHandler(Store store, MRJobInfoFetcher mrJobInfoFetcher,
-      MetricsSystemClient metricsSystemClient) {
+      MetricsSystemClient metricsSystemClient, ContextAccessEnforcer contextAccessEnforcer) {
     this.store = store;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.metricsSystemClient = metricsSystemClient;
+    this.contextAccessEnforcer = contextAccessEnforcer;
+  }
+
+  /**
+   * Enforces that the requesting principal has {@link StandardPermission#GET} access to the
+   * workflow program identified by the request path before any run statistics are read.
+   */
+  private void enforceWorkflowAccess(String namespaceId, String appId, String workflowId)
+      throws Exception {
+    ProgramReference programReference = Ids.namespace(namespaceId).appReference(appId)
+        .program(ProgramType.WORKFLOW, workflowId);
+    contextAccessEnforcer.enforce(programReference, StandardPermission.GET);
   }
 
   /**
@@ -94,6 +111,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       @QueryParam("start") @DefaultValue("now-1d") String start,
       @QueryParam("end") @DefaultValue("now") String end,
       @QueryParam("percentile") @DefaultValue("90.0") List<Double> percentiles) throws Exception {
+    enforceWorkflowAccess(namespaceId, appId, workflowId);
     long startTime = TimeMathParser.parseTimeInSeconds(start);
     long endTime = TimeMathParser.parseTimeInSeconds(end);
 
@@ -149,6 +167,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       @PathParam("run-id") String runId,
       @QueryParam("limit") @DefaultValue("10") int limit,
       @QueryParam("interval") @DefaultValue("10s") String interval) throws Exception {
+    enforceWorkflowAccess(namespaceId, appId, workflowId);
     if (limit <= 0) {
       throw new BadRequestException("Limit has to be greater than 0. Entered value was : " + limit);
     }
@@ -207,6 +226,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       @PathParam("workflow-id") String workflowId,
       @PathParam("run-id") String runId,
       @QueryParam("other-run-id") String otherRunId) throws Exception {
+    enforceWorkflowAccess(namespaceId, appId, workflowId);
     WorkflowRunMetrics detailedStatistics = getDetailedRecord(new NamespaceId(namespaceId), appId,
         workflowId, runId);
     WorkflowRunMetrics otherDetailedStatistics = getDetailedRecord(new NamespaceId(namespaceId),
