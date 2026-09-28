@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -310,9 +311,98 @@ public class ProxyHandlersTest {
         assertFalse(channel.isActive());
     }
 
+    @Test
+    public void testSyncDiscoveryRecordsNodeName() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+        podLeaseManager.syncDiscovery(Arrays.asList(
+            discoverableAt("10.0.0.1", 11015, "node-a"),
+            discoverableAt("10.0.0.2", 11015)));
+
+        assertEquals("node-a", podLeaseManager.getRegistry().get("10.0.0.1:11015").getNodeName());
+        assertNull(podLeaseManager.getRegistry().get("10.0.0.2:11015").getNodeName());
+    }
+
+    @Test
+    public void testHotNamespaceSpreadsBusyPodsAcrossNodes() {
+        CConfiguration cConf = CConfiguration.create();
+        cConf.setInt(Constants.TaskWorker.REQUEST_LIMIT, 10);
+        PodLeaseManager podLeaseManager = new PodLeaseManager(cConf);
+        // 10 / 10 / 5 workers, as on the benchmark cluster.
+        Map<String, String> nodeByPod = new HashMap<>();
+        for (int i = 0; i < 25; i++) {
+            String node = i < 10 ? "node-a" : i < 20 ? "node-b" : "node-c";
+            String address = "10.0.0." + i + ":11015";
+            nodeByPod.put(address, node);
+            podLeaseManager.getRegistry().put(address, new PodState(null, 0, node));
+        }
+
+        for (int i = 0; i < 50; i++) {
+            assertNotNull(podLeaseManager.acquireLease("namespace-A"));
+        }
+
+        Map<String, Integer> busyPodsPerNode = new HashMap<>();
+        for (Map.Entry<String, PodState> entry : podLeaseManager.getRegistry().entrySet()) {
+            if (entry.getValue().getInflightRequests() > 0) {
+                busyPodsPerNode.merge(nodeByPod.get(entry.getKey()), 1, Integer::sum);
+            }
+        }
+        // Five full pods spread 2 / 2 / 1, never 4 / 0 / 1.
+        Integer[] counts = busyPodsPerNode.values().toArray(new Integer[0]);
+        Arrays.sort(counts);
+        assertEquals(Arrays.asList(1, 2, 2), Arrays.asList(counts));
+    }
+
+    @Test
+    public void testFreshClaimAvoidsBusyNode() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", new PodState("namespace-B", 8, "node-a"));
+        PodState freshOnBusyNode = new PodState(null, 0, "node-a");
+        PodState freshOnIdleNode = new PodState(null, 0, "node-b");
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", freshOnBusyNode);
+        podLeaseManager.getRegistry().put("10.0.0.3:11015", freshOnIdleNode);
+
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertNull(freshOnBusyNode.getLeasedNamespace());
+    }
+
+    @Test
+    public void testWarmTieBreaksOnNodeLoad() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", new PodState("namespace-B", 8, "node-a"));
+        PodState warmOnBusyNode = new PodState("namespace-A", 3, "node-a");
+        PodState warmOnIdleNode = new PodState("namespace-A", 3, "node-b");
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", warmOnBusyNode);
+        podLeaseManager.getRegistry().put("10.0.0.3:11015", warmOnIdleNode);
+
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals(3, warmOnBusyNode.getInflightRequests());
+        assertEquals(4, warmOnIdleNode.getInflightRequests());
+    }
+
+    @Test
+    public void testIdleStealPrefersLeastLoadedNodeOverLru() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", new PodState("namespace-B", 5, "node-a"));
+        // Older, so LRU alone would pick it.
+        PodState idleOnBusyNode = new PodState("namespace-C", 0, "node-a");
+        PodState idleOnIdleNode = new PodState("namespace-D", 0, "node-b");
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", idleOnBusyNode);
+        podLeaseManager.getRegistry().put("10.0.0.3:11015", idleOnIdleNode);
+
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals("namespace-C", idleOnBusyNode.getLeasedNamespace());
+    }
+
     private static Discoverable discoverableAt(String host, int port) {
         Discoverable discoverable = mock(Discoverable.class);
         when(discoverable.getSocketAddress()).thenReturn(new InetSocketAddress(host, port));
+        return discoverable;
+    }
+
+    private static Discoverable discoverableAt(String host, int port, String nodeName) {
+        Discoverable discoverable = discoverableAt(host, port);
+        when(discoverable.getPayload()).thenReturn(nodeName.getBytes(StandardCharsets.UTF_8));
         return discoverable;
     }
 }
