@@ -580,9 +580,29 @@ public class KubeDiscoveryServiceTest {
     for (Discoverable discoverable : discoverables) {
       Assert.assertEquals(TASK_WORKER, discoverable.getName());
       Assert.assertEquals(SERVICE_PORT, discoverable.getSocketAddress().getPort());
-      // The payload lives on the Service, which Kubernetes does not copy onto Endpoints.
+      // No node name on the address, so the payload stays empty.
       Assert.assertArrayEquals(new byte[0], discoverable.getPayload());
     }
+  }
+
+  @Test
+  public void testToDiscoverablesCarriesNodeNameInPayload() {
+    V1Endpoints endpoints = new V1Endpoints()
+        .metadata(taskWorkerEndpointsMetadata())
+        .addSubsetsItem(new V1EndpointSubset()
+            .addresses(Arrays.asList(
+                new V1EndpointAddress().ip("10.0.0.1").nodeName("node-a"),
+                new V1EndpointAddress().ip("10.0.0.2")))
+            .ports(Collections.singletonList(new CoreV1EndpointPort().port(SERVICE_PORT))));
+
+    Map<String, String> nodeByIp = new HashMap<>();
+    for (Discoverable d : kubeDiscoveryService.toDiscoverables(TASK_WORKER, endpoints)) {
+      nodeByIp.put(d.getSocketAddress().getHostName(),
+          new String(d.getPayload(), StandardCharsets.UTF_8));
+    }
+
+    Assert.assertEquals("node-a", nodeByIp.get("10.0.0.1"));
+    Assert.assertEquals("", nodeByIp.get("10.0.0.2"));
   }
 
   @Test

@@ -40,6 +40,7 @@ import io.kubernetes.client.util.generic.options.ListOptions;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -756,10 +757,9 @@ public class KubeDiscoveryService implements DiscoveryService,
   /**
    * Creates a {@link Set} of {@link Discoverable} directly from live {@link V1Endpoints}.
    *
-   * <p>The discoverables carry an empty payload. CDAP records the payload (the URI scheme) as an
-   * annotation on the {@link V1Service}, and Kubernetes copies a Service's labels onto its
-   * Endpoints object but not its annotations. Consumers must therefore not derive the scheme from
-   * these discoverables; an empty payload here does not mean the pods serve plain HTTP.
+   * <p>The payload is the pod's node name (UTF-8), or empty if unknown. It is not a URI scheme:
+   * CDAP records the scheme as an annotation on the {@link V1Service}, and Kubernetes does not copy
+   * annotations onto Endpoints, so consumers must not derive the scheme from these discoverables.
    *
    * @param name      name of the service
    * @param endpoints the live Kubernetes Endpoints object
@@ -781,9 +781,10 @@ public class KubeDiscoveryService implements DiscoveryService,
       }
 
       for (V1EndpointAddress address : addresses) {
+        byte[] payload = address.getNodeName() == null
+            ? EMPTY_PAYLOAD : address.getNodeName().getBytes(StandardCharsets.UTF_8);
         for (CoreV1EndpointPort port : ports) {
-          Discoverable d = createDiscoverable(name, address.getIp(),
-              port.getPort(), EMPTY_PAYLOAD);
+          Discoverable d = createDiscoverable(name, address.getIp(), port.getPort(), payload);
           if (d != null) {
             discoverables.add(d);
           }
