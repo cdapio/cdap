@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * PodState represents the in-memory routing and lease status of an individual Task Worker pod.
@@ -37,19 +38,39 @@ class PodState {
     }
 
     private final AtomicReference<State> stateRef;
+    @Nullable
+    private final String nodeName;
+
+    /**
+     * Creates the lease state for a pod on an unknown node.
+     *
+     * @param leasedNamespace the namespace the pod is leased to, or {@code null} if unleased
+     * @param inflightRequests requests this proxy has routed to the pod and not yet released
+     */
+    PodState(String leasedNamespace, int inflightRequests) {
+        this(leasedNamespace, inflightRequests, null);
+    }
 
     /**
      * Creates the lease state for a pod.
      *
      * @param leasedNamespace the namespace the pod is leased to, or {@code null} if unleased
      * @param inflightRequests requests this proxy has routed to the pod and not yet released
+     * @param nodeName the Kubernetes node running the pod, or {@code null} if unknown
      */
-    PodState(String leasedNamespace, int inflightRequests) {
+    PodState(String leasedNamespace, int inflightRequests, @Nullable String nodeName) {
         this.stateRef = new AtomicReference<>(new State(
             leasedNamespace,
             inflightRequests,
             System.nanoTime()
         ));
+        this.nodeName = nodeName;
+    }
+
+    /** Returns the Kubernetes node running the pod, or {@code null} if unknown. */
+    @Nullable
+    String getNodeName() {
+        return nodeName;
     }
 
     /** Returns the namespace the pod is leased to, or {@code null} if it has never been leased. */
