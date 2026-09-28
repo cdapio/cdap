@@ -75,5 +75,5 @@ Post a message at one of the two CDAP groups:
 
 - `CDAP Developers: cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
 
-We also have a `JIRA for filing issues. <https://issues.cask.co/browse/CDAP>`__
+We also have a `JIRA for filing issues. <https://cdap.atlassian.net/browse/CDAP>`__
 
