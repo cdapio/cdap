@@ -226,6 +226,9 @@ class PodLeaseManager {
             return;
         }
         long backoff = state.markUnavailable(nanoClock.getAsLong());
+        if (backoff == 0) {
+            return;
+        }
         LOG.info("Skipping task worker {} for {}s after {}.", workerAddress,
             TimeUnit.NANOSECONDS.toSeconds(backoff), reason);
     }

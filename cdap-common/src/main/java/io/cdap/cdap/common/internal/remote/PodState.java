@@ -217,17 +217,27 @@ class PodState {
     /**
      * Handles a pod that refused a connection or is draining to restart: releases this request's
      * slot and skips the pod until a backoff expires. The next request after that probes it. The
-     * namespace is dropped, since the pod comes back as a new JVM without a lease.
+     * namespace is dropped, since the pod comes back as a new JVM without a lease. Failures while
+     * the pod is already backing off come from requests routed before it went down, so they don't
+     * extend the backoff.
      *
-     * @return the backoff in nanoseconds
+     * @return the new backoff in nanoseconds, or 0 if the pod was already backing off
      */
     long markUnavailable(long nowNanos) {
         while (true) {
             State current = stateRef.get();
+            int inflight = Math.max(0, current.inflightRequests - 1);
+            if (current.failures > 0 && nowNanos - current.unavailableUntil < 0) {
+                State next = new State(current.leasedNamespace, inflight, current.lastActivityTime,
+                    current.failures, current.unavailableUntil);
+                if (stateRef.compareAndSet(current, next)) {
+                    return 0L;
+                }
+                continue;
+            }
             int failures = current.failures + 1;
             long backoff = backoffNanos(failures);
-            State next = new State(null, Math.max(0, current.inflightRequests - 1), nowNanos, failures,
-                nowNanos + backoff);
+            State next = new State(null, inflight, nowNanos, failures, nowNanos + backoff);
             if (stateRef.compareAndSet(current, next)) {
                 return backoff;
             }
