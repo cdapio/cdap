@@ -888,6 +888,7 @@ public final class Constants {
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
     public static final String API_KEY = "X-ApiKey";
     public static final String HEADER_CDAP_NAMESPACE = "X-CDAP-Namespace";
+    public static final String HEADER_LEASED_NAMESPACE = "X-Leased-Namespace";
     public static final String APP_DEPLOYMENT_SKIPPED_HEADER = "X-CDAP-App-Deployment-Skipped";
 
     /**
