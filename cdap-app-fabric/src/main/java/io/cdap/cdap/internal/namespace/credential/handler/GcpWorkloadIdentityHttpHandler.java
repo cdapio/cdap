@@ -38,6 +38,7 @@ import io.cdap.cdap.proto.credential.NamespaceWorkloadIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.NamespacePermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -130,6 +131,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity")
   public void getIdentity(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
+    accessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.GET);
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
     CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
         NamespaceId.SYSTEM.getNamespace(),
