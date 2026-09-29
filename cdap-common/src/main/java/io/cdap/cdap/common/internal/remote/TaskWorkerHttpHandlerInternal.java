@@ -212,7 +212,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
     if (mustRestart.get()) {
-      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      // Tell the proxy this pod is about to restart, so it backs off instead of retrying it.
+      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS,
+          new DefaultHttpHeaders().set(Constants.Gateway.HEADER_WORKER_DRAINING, "true"));
       return;
     }
     if (runningRequestCount.incrementAndGet() > concurrentRequestLimit) {

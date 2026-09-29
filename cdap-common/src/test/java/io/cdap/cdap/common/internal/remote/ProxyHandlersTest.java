@@ -24,6 +24,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
@@ -45,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -154,6 +156,8 @@ public class ProxyHandlersTest {
         assertEquals("namespace-B", pod1.getLeasedNamespace());
         // The slot taken for the rejected request is released.
         assertEquals(0, pod1.getInflightRequests());
+        // A lease rejection means the worker is up, so the pod is not backed off.
+        assertTrue(pod1.isAvailable(System.nanoTime()));
 
         FullHttpResponse relayedClientResponse = inboundClientChannel.readOutbound();
         assertNotNull(relayedClientResponse);
@@ -233,16 +237,16 @@ public class ProxyHandlersTest {
     }
 
     @Test
-    public void testReleaseAfterFailedConnectKeepsPodAndOtherCounts() {
+    public void testReleaseSlotKeepsLeaseAndOtherCounts() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
 
-        // Three connections are routed to the same pod; one of them fails to connect.
+        // Three requests are routed to the same pod; one of them finishes.
         PodState pod = new PodState("namespace-A", 3);
         podLeaseManager.getRegistry().put("10.0.0.1:11015", pod);
 
         podLeaseManager.releaseSlot("10.0.0.1:11015");
 
-        // Only the failed connection's slot is released; the pod stays registered.
+        // Only that request's slot is released; the pod stays registered and leased.
         assertSame(pod, podLeaseManager.getRegistry().get("10.0.0.1:11015"));
         assertEquals(2, pod.getInflightRequests());
         assertEquals("namespace-A", pod.getLeasedNamespace());
@@ -392,6 +396,125 @@ public class ProxyHandlersTest {
 
         assertEquals("10.0.0.3:11015", podLeaseManager.acquireSlot("namespace-A"));
         assertEquals("namespace-C", idleOnBusyNode.getLeasedNamespace());
+    }
+
+    @Test
+    public void testBackoffDoublesThenCaps() {
+        assertEquals(TimeUnit.SECONDS.toNanos(10), PodState.backoffNanos(1));
+        assertEquals(TimeUnit.SECONDS.toNanos(20), PodState.backoffNanos(2));
+        assertEquals(TimeUnit.SECONDS.toNanos(30), PodState.backoffNanos(3));
+        assertEquals(TimeUnit.SECONDS.toNanos(30), PodState.backoffNanos(1000));
+    }
+
+    @Test
+    public void testUnavailablePodIsSkippedUntilBackoffExpires() {
+        AtomicLong clock = new AtomicLong();
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), clock::get);
+        // The restarting pod is idle, so least-loaded selection would otherwise pick it first.
+        PodState restarting = new PodState("namespace-A", 1);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", restarting);
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", new PodState("namespace-B", 10));
+
+        podLeaseManager.markUnavailable("10.0.0.1:11015", "a failed connect");
+
+        // The slot is released and the lease dropped, since the pod restarts without one.
+        assertEquals(0, restarting.getInflightRequests());
+        assertNull(restarting.getLeasedNamespace());
+        // Neither a fresh claim nor a steal may pick it while it backs off.
+        assertNull(podLeaseManager.acquireSlot("namespace-A"));
+        assertNull(podLeaseManager.acquireSlot("namespace-C"));
+
+        // Once the backoff expires, the next request probes it.
+        clock.set(TimeUnit.SECONDS.toNanos(10));
+        assertEquals("10.0.0.1:11015", podLeaseManager.acquireSlot("namespace-A"));
+    }
+
+    @Test
+    public void testBackoffGrowsUntilPodAnswers() {
+        AtomicLong clock = new AtomicLong();
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), clock::get);
+        PodState pod = new PodState(null, 0);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+
+        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        // The probe at 10s fails too, so the next backoff is 20s.
+        clock.set(TimeUnit.SECONDS.toNanos(10));
+        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(29)));
+        assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(30)));
+
+        // The probe at 30s gets an answer, which resets the backoff.
+        clock.set(TimeUnit.SECONDS.toNanos(30));
+        EmbeddedChannel inboundClientChannel = new EmbeddedChannel();
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080"));
+        workerChannel.writeInbound(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK));
+        assertNotNull(inboundClientChannel.readOutbound());
+
+        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(39)));
+        assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(40)));
+    }
+
+    @Test
+    public void testBackingOffPodStillCountsTowardNodeLoad() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), () -> 0L);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", new PodState("namespace-B", 4, "node-a"));
+        podLeaseManager.getRegistry().put("10.0.0.2:11015", new PodState(null, 0, "node-a"));
+        podLeaseManager.getRegistry().put("10.0.0.3:11015", new PodState(null, 0, "node-b"));
+        podLeaseManager.getRegistry().put("10.0.0.4:11015", new PodState("namespace-C", 2, "node-b"));
+
+        // Leaves three tasks still running on node-a, against two on node-b.
+        podLeaseManager.markUnavailable("10.0.0.1:11015", "a drain rejection");
+
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireSlot("namespace-A"));
+    }
+
+    @Test
+    public void testDrainRejectionBacksOffPod() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState pod = new PodState("namespace-A", 1);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+
+        EmbeddedChannel inboundClientChannel = new EmbeddedChannel();
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080"));
+        DefaultFullHttpResponse drainResponse =
+            new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.TOO_MANY_REQUESTS);
+        drainResponse.headers().set(Constants.Gateway.HEADER_WORKER_DRAINING, "true");
+
+        workerChannel.writeInbound(drainResponse);
+
+        assertFalse(pod.isAvailable(System.nanoTime()));
+        assertEquals(0, pod.getInflightRequests());
+        assertNull(pod.getLeasedNamespace());
+        // The 429 still reaches AppFabric, which retries.
+        FullHttpResponse relayedClientResponse = inboundClientChannel.readOutbound();
+        assertEquals(HttpResponseStatus.TOO_MANY_REQUESTS, relayedClientResponse.status());
+        relayedClientResponse.release();
+    }
+
+    @Test
+    public void testFailedConnectBacksOffPod() {
+        DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+        Discoverable worker = discoverableAt("127.0.0.1", 11015);
+        ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
+        when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(worker).iterator());
+        when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+        EmbeddedChannel channel = new EmbeddedChannel(new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+        HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+        req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+        // An EmbeddedChannel's event loop can't register the NIO worker channel, so the connect
+        // fails at once and runs the failure path.
+        channel.writeInbound(req);
+
+        PodState pod = podLeaseManager.getRegistry().get("127.0.0.1:11015");
+        assertNotNull(pod);
+        assertFalse(pod.isAvailable(System.nanoTime()));
+        assertEquals(0, pod.getInflightRequests());
+        assertFalse(channel.isActive());
     }
 
     private static Discoverable discoverableAt(String host, int port) {

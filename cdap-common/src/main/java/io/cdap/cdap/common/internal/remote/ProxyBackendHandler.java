@@ -57,7 +57,14 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
             PodState state = podLeaseManager.getRegistry().get(targetWorkerAddress);
 
-            if (state != null) {
+            if (statusCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()
+                    && Boolean.parseBoolean(resp.headers().get(Constants.Gateway.HEADER_WORKER_DRAINING))) {
+                // The worker is about to restart: back off instead of retrying it or adopting its lease.
+                podLeaseManager.markUnavailable(targetWorkerAddress, "a drain rejection");
+                decremented = true;
+            } else if (state != null) {
+                // Any other response means the worker is up.
+                state.markReachable();
                 // STEP 1: On a worker rejection, adopt the namespace it reports.
                 if (statusCode == HttpResponseStatus.CONFLICT.code()
                         || statusCode == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {

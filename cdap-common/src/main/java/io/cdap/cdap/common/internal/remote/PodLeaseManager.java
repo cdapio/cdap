@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -41,10 +43,17 @@ class PodLeaseManager {
 
     private final Map<String, PodState> podRegistry;
     private final int maxConcurrentTasks;
+    private final LongSupplier nanoClock;
 
     PodLeaseManager(CConfiguration cConf) {
+        this(cConf, System::nanoTime);
+    }
+
+    /** Takes the clock that backoffs are measured against, so tests can control it. */
+    PodLeaseManager(CConfiguration cConf, LongSupplier nanoClock) {
         this.podRegistry = new ConcurrentHashMap<>();
         this.maxConcurrentTasks = cConf.getInt(Constants.TaskWorker.REQUEST_LIMIT, 10);
+        this.nanoClock = nanoClock;
     }
 
     /**
@@ -143,14 +152,20 @@ class PodLeaseManager {
         return null;
     }
 
-    /** Snapshots every pod with its own and its node's in-flight counts. */
+    /**
+     * Snapshots every available pod with its own and its node's in-flight counts. Pods that are
+     * backing off are left out, but their in-flight tasks still count toward their node.
+     */
     private List<Candidate> snapshotCandidates() {
+        long now = nanoClock.getAsLong();
         List<Candidate> candidates = new ArrayList<>(podRegistry.size());
         Map<String, Integer> nodeInflight = new HashMap<>();
         for (Map.Entry<String, PodState> entry : podRegistry.entrySet()) {
             Candidate candidate = new Candidate(entry.getKey(), entry.getValue());
-            candidates.add(candidate);
             nodeInflight.merge(candidate.nodeKey, candidate.podInflight, Integer::sum);
+            if (entry.getValue().isAvailable(now)) {
+                candidates.add(candidate);
+            }
         }
         for (Candidate candidate : candidates) {
             candidate.nodeInflight = nodeInflight.get(candidate.nodeKey);
@@ -200,7 +215,29 @@ class PodLeaseManager {
             state.decrementInflightRequests();
         }
     }
-    
+
+    /**
+     * Releases one slot and skips the pod until its backoff expires. Used when the pod refuses a
+     * connection or is draining to restart, since discovery keeps listing it until it's back.
+     */
+    void markUnavailable(String workerAddress, String reason) {
+        PodState state = podRegistry.get(workerAddress);
+        if (state == null) {
+            return;
+        }
+        long backoff = state.markUnavailable(nanoClock.getAsLong());
+        LOG.info("Skipping task worker {} for {}s after {}.", workerAddress,
+            TimeUnit.NANOSECONDS.toSeconds(backoff), reason);
+    }
+
+    /** Clears any backoff on the pod, since it just answered a request. */
+    void markReachable(String workerAddress) {
+        PodState state = podRegistry.get(workerAddress);
+        if (state != null) {
+            state.markReachable();
+        }
+    }
+
     /** Intended primarily for testing. */
     Map<String, PodState> getRegistry() {
         return podRegistry;

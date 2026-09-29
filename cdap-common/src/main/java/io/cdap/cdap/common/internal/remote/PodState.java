@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -24,16 +25,37 @@ import javax.annotation.Nullable;
  * Entirely lock-free, backing state via an immutable internal representation and AtomicReference CAS loops.
  */
 class PodState {
+
+    // A restart keeps the port closed for 12s to 88s (median 29s), so probe early and often.
+    private static final long BACKOFF_BASE_NANOS = TimeUnit.SECONDS.toNanos(10);
+    private static final long BACKOFF_MAX_NANOS = TimeUnit.SECONDS.toNanos(30);
+
     /** Immutable snapshot of a pod's lease; every change swaps in a new instance via CAS. */
     private static class State {
         final String leasedNamespace;
         final int inflightRequests;
         final long lastActivityTime;
+        /** Failed connects or drain rejections since the pod last answered a request. */
+        final int failures;
+        /** {@link System#nanoTime()} until which the pod is skipped, if {@code failures > 0}. */
+        final long unavailableUntil;
 
         State(String leasedNamespace, int inflightRequests, long lastActivityTime) {
+            this(leasedNamespace, inflightRequests, lastActivityTime, 0, 0L);
+        }
+
+        State(String leasedNamespace, int inflightRequests, long lastActivityTime, int failures,
+              long unavailableUntil) {
             this.leasedNamespace = leasedNamespace;
             this.inflightRequests = inflightRequests;
             this.lastActivityTime = lastActivityTime;
+            this.failures = failures;
+            this.unavailableUntil = unavailableUntil;
+        }
+
+        /** Returns a copy with new lease fields and the same backoff. */
+        State withLease(String leasedNamespace, int inflightRequests, long lastActivityTime) {
+            return new State(leasedNamespace, inflightRequests, lastActivityTime, failures, unavailableUntil);
         }
     }
 
@@ -99,7 +121,7 @@ class PodState {
             if (!namespace.equals(current.leasedNamespace) || current.inflightRequests >= maxConcurrency) {
                 return false;
             }
-            State next = new State(current.leasedNamespace, current.inflightRequests + 1, System.nanoTime());
+            State next = current.withLease(current.leasedNamespace, current.inflightRequests + 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
@@ -119,7 +141,7 @@ class PodState {
             if (!isUnleased || current.inflightRequests != 0) {
                 return false;
             }
-            State next = new State(namespace, 1, System.nanoTime());
+            State next = current.withLease(namespace, 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
@@ -138,7 +160,7 @@ class PodState {
             if (current.inflightRequests != 0) {
                 return false;
             }
-            State next = new State(namespace, 1, System.nanoTime());
+            State next = current.withLease(namespace, 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
@@ -149,7 +171,7 @@ class PodState {
     void decrementInflightRequests() {
         while (true) {
             State current = stateRef.get();
-            State next = new State(current.leasedNamespace, 
+            State next = current.withLease(current.leasedNamespace, 
                 Math.max(0, current.inflightRequests - 1), System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return;
@@ -167,7 +189,7 @@ class PodState {
         while (true) {
             State current = stateRef.get();
             String nextNamespace = leasedNamespace != null ? leasedNamespace : current.leasedNamespace;
-            State next = new State(nextNamespace, Math.max(0, current.inflightRequests - 1),
+            State next = current.withLease(nextNamespace, Math.max(0, current.inflightRequests - 1),
                 System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return;
@@ -179,10 +201,58 @@ class PodState {
     void recordActivity() {
         while (true) {
             State current = stateRef.get();
-            State next = new State(current.leasedNamespace, current.inflightRequests, System.nanoTime());
+            State next = current.withLease(current.leasedNamespace, current.inflightRequests, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return;
             }
         }
+    }
+
+    /** Returns whether the pod can take requests at {@code nowNanos}, i.e. it is not backing off. */
+    boolean isAvailable(long nowNanos) {
+        State current = stateRef.get();
+        return current.failures == 0 || nowNanos - current.unavailableUntil >= 0;
+    }
+
+    /**
+     * Handles a pod that refused a connection or is draining to restart: releases this request's
+     * slot and skips the pod until a backoff expires. The next request after that probes it. The
+     * namespace is dropped, since the pod comes back as a new JVM without a lease.
+     *
+     * @return the backoff in nanoseconds
+     */
+    long markUnavailable(long nowNanos) {
+        while (true) {
+            State current = stateRef.get();
+            int failures = current.failures + 1;
+            long backoff = backoffNanos(failures);
+            State next = new State(null, Math.max(0, current.inflightRequests - 1), nowNanos, failures,
+                nowNanos + backoff);
+            if (stateRef.compareAndSet(current, next)) {
+                return backoff;
+            }
+        }
+    }
+
+    /** Clears the backoff once the pod answers a request. */
+    void markReachable() {
+        while (true) {
+            State current = stateRef.get();
+            if (current.failures == 0) {
+                return;
+            }
+            State next = new State(current.leasedNamespace, current.inflightRequests, current.lastActivityTime,
+                0, 0L);
+            if (stateRef.compareAndSet(current, next)) {
+                return;
+            }
+        }
+    }
+
+    /** Returns the backoff after {@code failures} consecutive failures: 10s, 20s, then 30s. */
+    static long backoffNanos(int failures) {
+        // Clamp the shift so a long outage can't overflow it.
+        int shift = Math.min(Math.max(failures, 1) - 1, 2);
+        return Math.min(BACKOFF_BASE_NANOS << shift, BACKOFF_MAX_NANOS);
     }
 }
