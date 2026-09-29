@@ -457,6 +457,30 @@ public class ProxyHandlersTest {
     }
 
     @Test
+    public void testConcurrentFailuresStartOneBackoff() {
+        AtomicLong clock = new AtomicLong();
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), clock::get);
+        PodState pod = new PodState("namespace-A", 4);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+
+        // Four requests were already connecting when the pod went down.
+        for (int i = 0; i < 4; i++) {
+            podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        }
+
+        // Every slot is released, but the backoff is still the first one.
+        assertEquals(0, pod.getInflightRequests());
+        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(9)));
+        assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(10)));
+
+        // The failed probe at 10s is the second failure, not the fifth.
+        clock.set(TimeUnit.SECONDS.toNanos(10));
+        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(29)));
+        assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(30)));
+    }
+
+    @Test
     public void testBackingOffPodStillCountsTowardNodeLoad() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), () -> 0L);
         podLeaseManager.getRegistry().put("10.0.0.1:11015", new PodState("namespace-B", 4, "node-a"));
