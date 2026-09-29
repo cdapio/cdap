@@ -95,7 +95,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             // Discovery is served from an in-memory cache fed by the Kubernetes Endpoints watch.
             Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
             podLeaseManager.syncDiscovery(discoverables);
-            String targetWorkerAddress = podLeaseManager.acquireLease(targetNamespace);
+            String targetWorkerAddress = podLeaseManager.acquireSlot(targetNamespace);
 
             // STEP 3: Saturation Rejection (HTTP 429)
             // Every pod is at its limit or leased to another namespace, so fail fast and let AppFabric retry.
@@ -115,7 +115,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 // Malformed discovery payload: release the slot and fail only this request.
                 LOG.error("Task worker address '{}' is not a valid host:port. Rejecting the request.",
                           chosenWorker);
-                podLeaseManager.releaseLease(chosenWorker);
+                podLeaseManager.releaseSlot(chosenWorker);
                 reject(ctx, msg, HttpResponseStatus.BAD_GATEWAY);
                 return;
             }
@@ -166,7 +166,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 } else {
                     // Worker unreachable: release the slot and buffers; discovery evicts the pod.
                     LOG.warn("Failed to connect to task worker {}.", chosenWorker, future.cause());
-                    podLeaseManager.releaseLease(chosenWorker);
+                    podLeaseManager.releaseSlot(chosenWorker);
                     releasePendingMessages();
                     ctx.channel().close();
                 }

@@ -77,7 +77,7 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
             }
         } else if (msg instanceof LastHttpContent) {
             // STEP 2: Release the slot once the response completes.
-            releaseOccupancy();
+            releaseSlot();
         }
 
         // STEP 3: Relay to AppFabric, then read the next chunk from the worker.
@@ -102,16 +102,16 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         ctx.fireChannelWritabilityChanged();
     }
 
-    private void releaseOccupancy() {
+    private void releaseSlot() {
         if (!decremented) {
-            podLeaseManager.releaseLease(targetWorkerAddress);
+            podLeaseManager.releaseSlot(targetWorkerAddress);
             decremented = true;
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        releaseOccupancy();
+        releaseSlot();
         // If backend worker disconnects or crashes, flush and close the client socket
         ProxyFrontendHandler.closeOnFlush(clientChannel);
     }
@@ -119,7 +119,7 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         LOG.error("Error on the connection to task worker {}", targetWorkerAddress, cause);
-        releaseOccupancy();
+        releaseSlot();
         ProxyFrontendHandler.closeOnFlush(ctx.channel());
     }
 }
