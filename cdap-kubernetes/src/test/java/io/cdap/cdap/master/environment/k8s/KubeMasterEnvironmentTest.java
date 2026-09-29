@@ -19,6 +19,7 @@ package io.cdap.cdap.master.environment.k8s;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.common.TemporaryLocalFileProvider;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
@@ -386,5 +387,17 @@ public class KubeMasterEnvironmentTest {
                                 container.getName(),
                                 pod.getMetadata().getName()));
     }
+  }
+
+  @Test
+  public void testParseEndpointsServices() {
+    Assert.assertEquals(ImmutableSet.of(), KubeMasterEnvironment.parseEndpointsServices(null));
+    Assert.assertEquals(ImmutableSet.of(), KubeMasterEnvironment.parseEndpointsServices(""));
+    Assert.assertEquals(ImmutableSet.of("task.worker"),
+        KubeMasterEnvironment.parseEndpointsServices("task.worker"));
+    // The value is user settable, so a stray space or trailing comma must not register a name
+    // that can never match a service.
+    Assert.assertEquals(ImmutableSet.of("task.worker", "preview.runner"),
+        KubeMasterEnvironment.parseEndpointsServices(" task.worker , preview.runner,,"));
   }
 }
