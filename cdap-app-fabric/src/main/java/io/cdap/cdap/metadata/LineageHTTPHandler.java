@@ -32,6 +32,7 @@ import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
 import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
@@ -142,6 +143,8 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
       @PathParam("program-type") String programType,
       @PathParam("program-name") String programName,
       @PathParam("run-id") String runId) throws Exception {
+    accessEnforcer.enforce(new NamespaceId(namespaceId), authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     ProgramReference programReference = null;
     try {
       RunIds.fromString(runId);
