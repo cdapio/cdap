@@ -233,7 +233,7 @@ class PodLeaseManager {
             TimeUnit.NANOSECONDS.toSeconds(backoff), reason);
     }
 
-    /** Clears any backoff on the pod, since it just answered a request. */
+    /** Clears any backoff on the pod, since a connection to it just succeeded. */
     void markReachable(String workerAddress) {
         PodState state = podRegistry.get(workerAddress);
         if (state != null) {

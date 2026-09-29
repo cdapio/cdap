@@ -153,6 +153,9 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             f.addListener((ChannelFutureListener) future -> {
                 connecting = false;
                 if (future.isSuccess()) {
+                    // The worker is listening again, so clear any backoff now rather than when this
+                    // task's response arrives, which can take a minute.
+                    podLeaseManager.markReachable(chosenWorker);
                     // Flush everything queued while connecting.
                     LOG.debug("Connected to task worker {}", chosenWorker);
                     Object pendingMsg = pendingMessages.poll();

@@ -35,7 +35,7 @@ class PodState {
         final String leasedNamespace;
         final int inflightRequests;
         final long lastActivityTime;
-        /** Failed connects or drain rejections since the pod last answered a request. */
+        /** Failed connects or drain rejections since the last successful connect. */
         final int failures;
         /** {@link System#nanoTime()} until which the pod is skipped, if {@code failures > 0}. */
         final long unavailableUntil;
@@ -244,7 +244,7 @@ class PodState {
         }
     }
 
-    /** Clears the backoff once the pod answers a request. */
+    /** Clears the backoff once a connection to the pod succeeds. */
     void markReachable() {
         while (true) {
             State current = stateRef.get();

@@ -430,7 +430,7 @@ public class ProxyHandlersTest {
     }
 
     @Test
-    public void testBackoffGrowsUntilPodAnswers() {
+    public void testBackoffGrowsUntilConnectSucceeds() {
         AtomicLong clock = new AtomicLong();
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), clock::get);
         PodState pod = new PodState(null, 0);
@@ -443,17 +443,31 @@ public class ProxyHandlersTest {
         assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(29)));
         assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(30)));
 
-        // The probe at 30s gets an answer, which resets the backoff.
+        // The probe at 30s connects, which resets the backoff.
         clock.set(TimeUnit.SECONDS.toNanos(30));
+        podLeaseManager.markReachable("worker1:8080");
+
+        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(39)));
+        assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(40)));
+    }
+
+    @Test
+    public void testLateResponseKeepsBackoff() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create(), () -> 0L);
+        PodState pod = new PodState("namespace-A", 2);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+        podLeaseManager.markUnavailable("worker1:8080", "a drain rejection");
+
+        // A task the draining worker accepted earlier completes.
         EmbeddedChannel inboundClientChannel = new EmbeddedChannel();
         EmbeddedChannel workerChannel = new EmbeddedChannel(
             new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080"));
         workerChannel.writeInbound(new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK));
         assertNotNull(inboundClientChannel.readOutbound());
 
-        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
-        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(39)));
-        assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(40)));
+        // The worker is still about to restart, so it stays skipped.
+        assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(9)));
     }
 
     @Test
