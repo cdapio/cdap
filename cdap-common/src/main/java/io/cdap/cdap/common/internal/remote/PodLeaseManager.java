@@ -79,12 +79,13 @@ class PodLeaseManager {
     }
 
     /**
-     * Leases a pod for {@code namespace}: a warm match first, then a fresh pod, then an idle steal.
-     * Warm matches break ties on node load; fresh claims and steals prefer the least-loaded node.
+     * Takes a slot on a pod for {@code namespace}: a warm pod already leased to it first, else it
+     * leases a fresh pod, then an idle one. Warm matches break ties on node load; fresh claims and
+     * steals prefer the least-loaded node.
      *
-     * @return The IP:Port address of the leased worker pod, or null if the cluster is full.
+     * @return the IP:Port address of the pod, or null if every pod is full or leased elsewhere
      */
-    String acquireLease(String namespace) {
+    String acquireSlot(String namespace) {
         // Counts are snapshotted because concurrent requests change them mid-sort.
         List<Candidate> candidates = snapshotCandidates();
 
@@ -190,9 +191,10 @@ class PodLeaseManager {
     }
 
     /**
-     * Releases one slot on the given worker pod. Eviction is left to {@link #syncDiscovery}.
+     * Releases one slot on the given worker pod. The pod stays leased to its namespace; eviction
+     * is left to {@link #syncDiscovery}.
      */
-    void releaseLease(String workerAddress) {
+    void releaseSlot(String workerAddress) {
         PodState state = podRegistry.get(workerAddress);
         if (state != null) {
             state.decrementInflightRequests();

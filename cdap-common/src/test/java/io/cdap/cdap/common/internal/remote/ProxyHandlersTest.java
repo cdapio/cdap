@@ -203,11 +203,11 @@ public class ProxyHandlersTest {
         // Evicted even though requests are in flight.
         assertNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
         assertNotNull(podLeaseManager.getRegistry().get("10.0.0.2:11015"));
-        assertEquals("10.0.0.2:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals("10.0.0.2:11015", podLeaseManager.acquireSlot("namespace-A"));
 
         // Late releases are no-ops.
-        podLeaseManager.releaseLease("10.0.0.1:11015");
-        podLeaseManager.releaseLease("10.0.0.1:11015");
+        podLeaseManager.releaseSlot("10.0.0.1:11015");
+        podLeaseManager.releaseSlot("10.0.0.1:11015");
         assertNull(podLeaseManager.getRegistry().get("10.0.0.1:11015"));
     }
 
@@ -228,7 +228,7 @@ public class ProxyHandlersTest {
         assertEquals(0, newState.getInflightRequests());
 
         // A late release for the old entry is floored at zero.
-        podLeaseManager.releaseLease("10.0.0.1:11015");
+        podLeaseManager.releaseSlot("10.0.0.1:11015");
         assertEquals(0, newState.getInflightRequests());
     }
 
@@ -240,7 +240,7 @@ public class ProxyHandlersTest {
         PodState pod = new PodState("namespace-A", 3);
         podLeaseManager.getRegistry().put("10.0.0.1:11015", pod);
 
-        podLeaseManager.releaseLease("10.0.0.1:11015");
+        podLeaseManager.releaseSlot("10.0.0.1:11015");
 
         // Only the failed connection's slot is released; the pod stays registered.
         assertSame(pod, podLeaseManager.getRegistry().get("10.0.0.1:11015"));
@@ -258,7 +258,7 @@ public class ProxyHandlersTest {
         podLeaseManager.getRegistry().put("10.0.0.2:11015", light);
         podLeaseManager.getRegistry().put("10.0.0.3:11015", other);
 
-        assertEquals("10.0.0.2:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals("10.0.0.2:11015", podLeaseManager.acquireSlot("namespace-A"));
         assertEquals(3, light.getInflightRequests());
         assertEquals(7, busy.getInflightRequests());
         assertEquals(0, other.getInflightRequests());
@@ -275,7 +275,7 @@ public class ProxyHandlersTest {
         podLeaseManager.getRegistry().put("10.0.0.3:11015", fresh);
 
         for (int i = 0; i < 10; i++) {
-            assertNotNull(podLeaseManager.acquireLease("namespace-A"));
+            assertNotNull(podLeaseManager.acquireSlot("namespace-A"));
         }
 
         // Spread over the two warm pods; the fresh pod stays free for other namespaces.
@@ -338,7 +338,7 @@ public class ProxyHandlersTest {
         }
 
         for (int i = 0; i < 50; i++) {
-            assertNotNull(podLeaseManager.acquireLease("namespace-A"));
+            assertNotNull(podLeaseManager.acquireSlot("namespace-A"));
         }
 
         Map<String, Integer> busyPodsPerNode = new HashMap<>();
@@ -362,7 +362,7 @@ public class ProxyHandlersTest {
         podLeaseManager.getRegistry().put("10.0.0.2:11015", freshOnBusyNode);
         podLeaseManager.getRegistry().put("10.0.0.3:11015", freshOnIdleNode);
 
-        assertEquals("10.0.0.3:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireSlot("namespace-A"));
         assertNull(freshOnBusyNode.getLeasedNamespace());
     }
 
@@ -375,7 +375,7 @@ public class ProxyHandlersTest {
         podLeaseManager.getRegistry().put("10.0.0.2:11015", warmOnBusyNode);
         podLeaseManager.getRegistry().put("10.0.0.3:11015", warmOnIdleNode);
 
-        assertEquals("10.0.0.3:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireSlot("namespace-A"));
         assertEquals(3, warmOnBusyNode.getInflightRequests());
         assertEquals(4, warmOnIdleNode.getInflightRequests());
     }
@@ -390,7 +390,7 @@ public class ProxyHandlersTest {
         podLeaseManager.getRegistry().put("10.0.0.2:11015", idleOnBusyNode);
         podLeaseManager.getRegistry().put("10.0.0.3:11015", idleOnIdleNode);
 
-        assertEquals("10.0.0.3:11015", podLeaseManager.acquireLease("namespace-A"));
+        assertEquals("10.0.0.3:11015", podLeaseManager.acquireSlot("namespace-A"));
         assertEquals("namespace-C", idleOnBusyNode.getLeasedNamespace());
     }
 
