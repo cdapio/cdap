@@ -22,6 +22,8 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
@@ -416,6 +418,61 @@ public class KubeTwillPreparerTest {
     Assert.assertEquals("The filtered map should contain the correct entries with prefixes removed.", expected, actual);
   }
 
+
+  @Test
+  public void testBuildDeploymentDefaultsToUnsetStrategy() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+
+    V1Deployment deployment = buildDeployment(preparer);
+
+    // Other workloads rely on the RollingUpdate default, so the strategy stays unset for them.
+    Assert.assertNull(deployment.getSpec().getStrategy());
+  }
+
+  @Test
+  public void testBuildDeploymentWithRecreateStrategy() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withRecreateStrategy();
+
+    V1Deployment deployment = buildDeployment(preparer);
+
+    Assert.assertNotNull(deployment.getSpec().getStrategy());
+    Assert.assertEquals("Recreate", deployment.getSpec().getStrategy().getType());
+    // Recreate only enforces at-most-one pod in combination with a single replica.
+    Assert.assertEquals(Integer.valueOf(1), deployment.getSpec().getReplicas());
+  }
+
+  @Test
+  public void testWithRecreateStrategyIsFluent() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+
+    ExtendedTwillPreparer returned = preparer.withRecreateStrategy();
+
+    // The launcher keeps configuring the returned preparer, so it must be the same instance.
+    Assert.assertSame(preparer, returned);
+  }
+
+  private KubeTwillPreparer createSystemNamespacePreparer() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(),
+        null, "default", createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null, null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+    return preparer;
+  }
+
+  private V1Deployment buildDeployment(KubeTwillPreparer preparer) throws Exception {
+    // A single instance, like the task worker manager proxy.
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null,
+        new DefaultResourceSpecification(1, 100, 1, 1, 1), Collections.emptyList());
+    V1ObjectMeta metadata = preparer.createResourceMetadata(V1Deployment.class,
+        MainRunnable.class.getSimpleName(), 0, false);
+
+    return preparer.buildDeployment(metadata,
+        Collections.singletonMap(MainRunnable.class.getSimpleName(), runtimeSpec),
+        new LocalLocationFactory().create("yes"));
+  }
 
   private static Map<String, String> getTwillConfigs() {
     HashMap<String, String> cConf = new HashMap<>();

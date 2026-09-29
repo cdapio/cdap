@@ -51,4 +51,11 @@ public interface ExtendedTwillPreparer extends TwillPreparer {
    * Example : It can be used for a Liveness Probe in k8s
    */
   ExtendedTwillPreparer addProbes(String runnableName, Map<String, String> probeConf);
+
+  /**
+   * Requests a deployment strategy that never runs two generations of the runnable's pod at once.
+   * Use this for at-most-one semantics; a replica count of one still overlaps pods during updates.
+   */
+  ExtendedTwillPreparer withRecreateStrategy();
 }
+
