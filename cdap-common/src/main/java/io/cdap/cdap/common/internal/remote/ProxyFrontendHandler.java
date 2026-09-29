@@ -164,9 +164,10 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     // Resume reading remaining body chunks from the client
                     ctx.channel().config().setAutoRead(true);
                 } else {
-                    // Worker unreachable: release the slot and buffers; discovery evicts the pod.
+                    // Usually a restarting worker. Discovery keeps listing it while the container
+                    // boots, so back off rather than letting least-loaded selection pick it again.
                     LOG.warn("Failed to connect to task worker {}.", chosenWorker, future.cause());
-                    podLeaseManager.releaseSlot(chosenWorker);
+                    podLeaseManager.markUnavailable(chosenWorker, "a failed connect");
                     releasePendingMessages();
                     ctx.channel().close();
                 }
