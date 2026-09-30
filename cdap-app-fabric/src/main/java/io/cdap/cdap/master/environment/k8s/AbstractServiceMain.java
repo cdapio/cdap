@@ -226,7 +226,11 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     LOG.info("Starting all services for {}", getClass().getName());
     for (Service service : services) {
       LOG.info("Starting service {} for {}", service, getClass().getName());
-      service.startAsync().awaitRunning();
+      if (service.state() == Service.State.NEW) {
+        service.startAsync().awaitRunning();
+      } else {
+        service.awaitRunning();
+      }
     }
     LOG.info("All services for {} started", getClass().getName());
   }
@@ -237,7 +241,11 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     for (Service service : Lists.reverse(services)) {
       LOG.info("Stopping service {} for {}", service, getClass().getName());
       try {
-        service.stopAsync().awaitTerminated();
+        Service.State state = service.state();
+        if (state != Service.State.FAILED && state != Service.State.TERMINATED
+            && state != Service.State.NEW) {
+          service.stopAsync().awaitTerminated();
+        }
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure each service has a chance to stop
         LOG.warn("Exception raised when stopping service {} for {}", service, getClass().getName(),

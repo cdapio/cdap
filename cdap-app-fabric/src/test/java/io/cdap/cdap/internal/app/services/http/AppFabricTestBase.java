@@ -130,6 +130,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
+import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
@@ -532,7 +533,7 @@ public abstract class AppFabricTestBase {
     if (pluginClassesJson != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJson);
     }
-    builder.withBody(artifactContents::getInput);
+    builder.withBody((ContentProvider<? extends InputStream>) artifactContents::getInput);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 
