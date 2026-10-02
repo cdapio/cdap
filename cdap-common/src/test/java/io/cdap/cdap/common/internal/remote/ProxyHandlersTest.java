@@ -107,7 +107,7 @@ public class ProxyHandlersTest {
         registry.put("127.0.0.1:8082", pod2);
 
         // Tested on PodState directly, since the handler's async connect can't run on an EmbeddedChannel.
-        boolean acquired = pod1.tryClaimFreshLease("namespace-A");
+        boolean acquired = pod1.tryClaimFreshLease("namespace-A", 10);
         assertTrue(acquired);
         assertEquals("namespace-A", pod1.getLeasedNamespace());
         assertEquals(1, pod1.getInflightRequests());
@@ -120,15 +120,15 @@ public class ProxyHandlersTest {
 
         // 11th request for namespace-A must fail on Pod 1, spill to Pod 2
         assertFalse(pod1.tryAcquireWarmLease("namespace-A", 10));
-        assertTrue(pod2.tryClaimFreshLease("namespace-A"));
+        assertTrue(pod2.tryClaimFreshLease("namespace-A", 10));
         assertEquals("namespace-A", pod2.getLeasedNamespace());
         
         // Namespace Isolation: namespace-B must go to an entirely new pod, but we don't have one!
         // It will fail because pod1 and pod2 are both leased by namespace-A.
         assertFalse(pod1.tryAcquireWarmLease("namespace-B", 10));
         assertFalse(pod2.tryAcquireWarmLease("namespace-B", 10));
-        assertFalse(pod1.tryStealIdleLease("namespace-B"));
-        assertFalse(pod2.tryStealIdleLease("namespace-B"));
+        assertFalse(pod1.tryStealIdleLease("namespace-B", 10));
+        assertFalse(pod2.tryStealIdleLease("namespace-B", 10));
     }
 
     @Test
@@ -174,11 +174,11 @@ public class ProxyHandlersTest {
         // retry straight back to the worker that just rejected it.
         assertFalse(pod.tryAcquireWarmLease("namespace-A", 10));
         // Nor is it claimable as an unleased pod, since it now has a known owner.
-        assertFalse(pod.tryClaimFreshLease("namespace-A"));
+        assertFalse(pod.tryClaimFreshLease("namespace-A", 10));
 
         // It does stay a last-resort steal candidate, which is what allows progress once every pod
         // in the cluster is leased.
-        assertTrue(pod.tryStealIdleLease("namespace-A"));
+        assertTrue(pod.tryStealIdleLease("namespace-A", 10));
     }
 
     @Test
@@ -553,6 +553,36 @@ public class ProxyHandlersTest {
         assertFalse(pod.isAvailable(System.nanoTime()));
         assertEquals(0, pod.getInflightRequests());
         assertFalse(channel.isActive());
+    }
+
+    @Test
+    public void testFreshClaimJoinsSameNamespaceWinner() {
+        // Another request for namespace-A claimed the fresh pod after this request's snapshot.
+        PodState pod = new PodState("namespace-A", 1);
+
+        assertTrue(pod.tryClaimFreshLease("namespace-A", 10));
+        assertEquals("namespace-A", pod.getLeasedNamespace());
+        assertEquals(2, pod.getInflightRequests());
+
+        // A different namespace or a full pod still fails.
+        assertFalse(pod.tryClaimFreshLease("namespace-B", 10));
+        PodState fullPod = new PodState("namespace-A", 10);
+        assertFalse(fullPod.tryClaimFreshLease("namespace-A", 10));
+    }
+
+    @Test
+    public void testIdleStealJoinsSameNamespaceWinner() {
+        // Another request for namespace-A stole the idle pod after this request's snapshot.
+        PodState pod = new PodState("namespace-A", 1);
+
+        assertTrue(pod.tryStealIdleLease("namespace-A", 10));
+        assertEquals("namespace-A", pod.getLeasedNamespace());
+        assertEquals(2, pod.getInflightRequests());
+
+        // A different namespace or a full pod still fails.
+        assertFalse(pod.tryStealIdleLease("namespace-B", 10));
+        PodState fullPod = new PodState("namespace-A", 10);
+        assertFalse(fullPod.tryStealIdleLease("namespace-A", 10));
     }
 
     private static Discoverable discoverableAt(String host, int port) {
