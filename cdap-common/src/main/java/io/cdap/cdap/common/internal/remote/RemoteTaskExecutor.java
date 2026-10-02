@@ -80,7 +80,12 @@ public class RemoteTaskExecutor {
       (throwable instanceof RetryableException) || (throwable instanceof ServiceException)
           || (throwable instanceof SocketTimeoutException) || (throwable instanceof SocketException)
           || (throwable instanceof NoRouteToHostException);
+  // A read timeout or reset may come after the worker started the task, so direct calls only
+  // retry RetryableExceptions, which include refused connections.
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
+      throwable instanceof RetryableException;
+  // The proxy closes the connection without a response when it can't reach a worker.
+  private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER_PROXY = throwable ->
       (throwable instanceof RetryableException)
           || (throwable instanceof SocketException)
           || (throwable instanceof SocketTimeoutException)
@@ -111,11 +116,10 @@ public class RemoteTaskExecutor {
       HttpRequestConfig httpRequestConfig, AeadCipher aeadCipher) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
 
-    // The proxy leases pods per namespace; it only exists when the flag and instance RBAC are on.
-    boolean proxyConfigured = TaskWorkerManager.isEnabled(cConf);
-
-    // System worker traffic runs trusted platform code, so it never goes through the proxy.
-    this.rbacProxyEnabled = proxyConfigured && workerType == Type.TASK_WORKER;
+    // Only multi-worker pools run the proxy; a single worker is called directly and its lease
+    // enforces isolation. System worker traffic is trusted platform code and never uses the proxy.
+    this.rbacProxyEnabled =
+        TaskWorkerManager.isProxyEnabled(cConf) && workerType == Type.TASK_WORKER;
 
     if (workerType == Type.TASK_WORKER) {
       this.serviceName = rbacProxyEnabled
@@ -136,7 +140,8 @@ public class RemoteTaskExecutor {
       this.workerUrl = TASK_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.TASK_WORKER + ".");
-      this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
+      this.retryablePredicate = rbacProxyEnabled
+          ? RETRYABLE_PREDICATE_TASK_WORKER_PROXY : RETRYABLE_PREDICATE_TASK_WORKER;
       this.isWorkerEncryptionRequired = true;
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;

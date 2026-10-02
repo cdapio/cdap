@@ -79,11 +79,13 @@ public class TaskWorkerConcurrencyModeTest {
 
   private static TaskWorkerHttpHandlerInternal newHandler(boolean authorizationEnabled,
       boolean userCodeIsolationEnabled, boolean proxyEnabled) {
+    return newHandler(newCConf(authorizationEnabled, userCodeIsolationEnabled, proxyEnabled));
+  }
+
+  private static TaskWorkerHttpHandlerInternal newHandler(CConfiguration cConf) {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    return new TaskWorkerHttpHandlerInternal(
-        newCConf(authorizationEnabled, userCodeIsolationEnabled, proxyEnabled),
-        discoveryService, discoveryService, className -> { },
-        new NoOpMetricsCollectionService());
+    return new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService,
+        className -> { }, new NoOpMetricsCollectionService());
   }
 
   /** Builds a leased (RBAC plus proxy) handler whose tasks always fail in the given way. */
@@ -131,6 +133,17 @@ public class TaskWorkerConcurrencyModeTest {
     Assert.assertEquals(CONFIGURED_LIMIT, handler.getConcurrentRequestLimit());
     Assert.assertNotNull("The lease is what makes the raised limit safe",
         handler.getStickyLeaseManager());
+  }
+
+  @Test
+  public void testSingleWorkerKeepsLeaseAndConfiguredLimit() {
+    // Clients call a single worker directly, so its own lease keeps namespaces apart.
+    CConfiguration cConf = newCConf(true, true, true);
+    cConf.setInt(TaskWorker.CONTAINER_COUNT, 1);
+    TaskWorkerHttpHandlerInternal handler = newHandler(cConf);
+
+    Assert.assertEquals(CONFIGURED_LIMIT, handler.getConcurrentRequestLimit());
+    Assert.assertNotNull(handler.getStickyLeaseManager());
   }
 
   @Test
