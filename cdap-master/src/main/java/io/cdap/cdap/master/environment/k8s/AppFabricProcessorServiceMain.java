@@ -159,8 +159,8 @@ public class AppFabricProcessorServiceMain extends AbstractServiceMain<Environme
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
         RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     // Started before AppFabricProcessorService so the proxy pod is requested before tasks are
-    // dispatched. Same predicate as RemoteTaskExecutor and TaskWorkerHttpHandlerInternal.
-    if (TaskWorkerManager.isEnabled(cConf)) {
+    // dispatched. Same predicate as RemoteTaskExecutor's routing.
+    if (TaskWorkerManager.isProxyEnabled(cConf)) {
       services.add(injector.getInstance(TaskWorkerManagerServiceLauncher.class));
     }
 
