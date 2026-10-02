@@ -291,10 +291,9 @@ public class RemoteTaskExecutor {
       return;
     }
     LOG.warn("The {} proxy could not be reached and {} is enabled, so no task worker request can "
-            + "succeed. The proxy is created by cdap-operator, not by CDAP, so this is expected if "
-            + "the flag was turned on against an operator that does not deploy the {} service. "
-            + "This message is logged once.",
-        Constants.Service.TASK_WORKER_MANAGER, PROXY_FEATURE_FLAG_KEY, Constants.Service.TASK_WORKER_MANAGER);
+            + "succeed. The app-fabric processor launches the proxy; check its logs and the task "
+            + "worker manager deployment. This message is logged once.",
+        Constants.Service.TASK_WORKER_MANAGER, PROXY_FEATURE_FLAG_KEY);
   }
 
   private Exception getTaskException(ServiceException e) {
