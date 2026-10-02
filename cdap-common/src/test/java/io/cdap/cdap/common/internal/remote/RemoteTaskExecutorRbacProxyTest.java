@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,16 +30,20 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.encryption.CipherException;
+import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import org.apache.twill.common.Cancellable;
@@ -124,6 +129,34 @@ public class RemoteTaskExecutorRbacProxyTest {
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
 
     assertTargetsTaskWorkerOnly(cConf);
+  }
+
+  @Test
+  public void testSingleWorkerIsCalledDirectly() throws Exception {
+    assertTargetsTaskWorkerOnly(singleWorkerConf());
+    // The worker reads the namespace from the request body, so no routing header is sent.
+    Assert.assertEquals(Collections.singletonList(null), workerHandler.getNamespaceHeaders());
+  }
+
+  @Test
+  public void testSingleWorkerReadTimeoutIsNotRetried() {
+    CConfiguration cConf = singleWorkerConf();
+    register(Constants.Service.TASK_WORKER);
+    workerHandler.setResponseDelayMillis(1000L);
+    RemoteTaskExecutor executor = new RemoteTaskExecutor(cConf, new NoOpMetricsCollectionService(),
+        newClientFactory(cConf), RemoteTaskExecutor.Type.TASK_WORKER,
+        new HttpRequestConfig(1000, 200, false), mockAeadCipher);
+
+    try {
+      executor.runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected the read timeout to surface");
+    } catch (Exception e) {
+      Assert.assertTrue("Expected SocketTimeoutException but got " + e.getClass(),
+          e instanceof SocketTimeoutException);
+    }
+
+    // The worker may already be running the task, so a retry could run it twice.
+    Assert.assertEquals(1, workerHandler.getRequestCount());
   }
 
   @Test
@@ -310,6 +343,13 @@ public class RemoteTaskExecutorRbacProxyTest {
     return cConf;
   }
 
+  /** Builds a proxy enabled configuration with a single task worker. */
+  private static CConfiguration singleWorkerConf() {
+    CConfiguration cConf = proxyEnabledConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_COUNT, 1);
+    return cConf;
+  }
+
   private RemoteClientFactory newClientFactory(CConfiguration cConf) {
     return new RemoteClientFactory(discoveryService, new NoOpInternalAuthenticator(),
         new NoOpRemoteAuthenticator(), cConf);
@@ -373,7 +413,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     }
   }
 
-  /** A stub task worker that records the namespace header and returns a configurable status. */
+  /** A stub task worker that records namespace headers; its status and delay are configurable. */
   @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
   public static final class StubWorkerHandler extends AbstractHttpHandler {
 
@@ -382,6 +422,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     private final AtomicInteger requestCount = new AtomicInteger();
     private final AtomicInteger statusCode =
         new AtomicInteger(HttpResponseStatus.OK.code());
+    private final AtomicLong responseDelayMillis = new AtomicLong();
 
     @POST
     @Path("/worker/run")
@@ -399,6 +440,11 @@ public class RemoteTaskExecutorRbacProxyTest {
       requestCount.incrementAndGet();
       namespaceHeaders.add(request.headers().get(Constants.Gateway.HEADER_CDAP_NAMESPACE));
 
+      long delayMillis = responseDelayMillis.get();
+      if (delayMillis > 0) {
+        Uninterruptibles.sleepUninterruptibly(delayMillis, TimeUnit.MILLISECONDS);
+      }
+
       int code = statusCode.get();
       if (code != HttpResponseStatus.OK.code()) {
         responder.sendStatus(HttpResponseStatus.valueOf(code));
@@ -411,10 +457,15 @@ public class RemoteTaskExecutorRbacProxyTest {
       namespaceHeaders.clear();
       requestCount.set(0);
       statusCode.set(HttpResponseStatus.OK.code());
+      responseDelayMillis.set(0L);
     }
 
     void setStatusCode(int code) {
       statusCode.set(code);
+    }
+
+    void setResponseDelayMillis(long millis) {
+      responseDelayMillis.set(millis);
     }
 
     int getRequestCount() {
