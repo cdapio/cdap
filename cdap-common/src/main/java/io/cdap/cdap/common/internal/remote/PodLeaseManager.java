@@ -125,7 +125,7 @@ class PodLeaseManager {
         }
         freshPods.sort(Comparator.comparingInt(c -> c.nodeInflight));
         for (Candidate candidate : freshPods) {
-            if (candidate.state.tryClaimFreshLease(namespace)) {
+            if (candidate.state.tryClaimFreshLease(namespace, maxConcurrentTasks)) {
                 LOG.info("PodLeaseManager: Claimed fresh unleased pod for '{}' at {} on {} (node in-flight {})",
                          namespace, candidate.address, candidate.state.getNodeName(), candidate.nodeInflight);
                 return candidate.address;
@@ -142,7 +142,7 @@ class PodLeaseManager {
         idlePods.sort(Comparator.<Candidate>comparingInt(c -> c.nodeInflight)
             .thenComparingLong(c -> c.lastActivityTime));
         for (Candidate candidate : idlePods) {
-            if (candidate.state.tryStealIdleLease(namespace)) {
+            if (candidate.state.tryStealIdleLease(namespace, maxConcurrentTasks)) {
                 LOG.info("PodLeaseManager: Stealing idle lease for '{}' at {} on {} (node in-flight {})",
                          namespace, candidate.address, candidate.state.getNodeName(), candidate.nodeInflight);
                 return candidate.address;

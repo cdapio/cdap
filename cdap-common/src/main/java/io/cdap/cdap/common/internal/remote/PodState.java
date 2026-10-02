@@ -129,19 +129,23 @@ class PodState {
     }
 
     /**
-     * Leases a never-leased, idle pod to {@code namespace} and takes its first slot.
+     * Leases a never-leased, idle pod to {@code namespace} and takes its first slot, or takes a
+     * slot if another request for {@code namespace} just claimed it and it is below
+     * {@code maxConcurrency}.
      *
-     * @return {@code true} if the pod was claimed
+     * @return {@code true} if a slot was taken
      */
-    boolean tryClaimFreshLease(String namespace) {
+    boolean tryClaimFreshLease(String namespace, int maxConcurrency) {
         while (true) {
             State current = stateRef.get();
-            // Fresh pod: must have NO namespace and 0 inflight
             boolean isUnleased = current.leasedNamespace == null || current.leasedNamespace.isEmpty();
-            if (!isUnleased || current.inflightRequests != 0) {
+            boolean isFresh = isUnleased && current.inflightRequests == 0;
+            boolean isSameNamespaceWithRoom =
+                namespace.equals(current.leasedNamespace) && current.inflightRequests < maxConcurrency;
+            if (!isFresh && !isSameNamespaceWithRoom) {
                 return false;
             }
-            State next = current.withLease(namespace, 1, System.nanoTime());
+            State next = current.withLease(namespace, current.inflightRequests + 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
@@ -149,18 +153,22 @@ class PodState {
     }
 
     /**
-     * Re-leases an idle pod to {@code namespace}, whoever held it before, and takes its first slot.
+     * Re-leases an idle pod to {@code namespace}, whoever held it before, and takes its first slot,
+     * or takes a slot if another request for {@code namespace} just stole it and it is below
+     * {@code maxConcurrency}.
      *
-     * @return {@code true} if the pod was taken over
+     * @return {@code true} if a slot was taken
      */
-    boolean tryStealIdleLease(String namespace) {
+    boolean tryStealIdleLease(String namespace, int maxConcurrency) {
         while (true) {
             State current = stateRef.get();
-            // Stealable pod: ANY pod with 0 inflight requests
-            if (current.inflightRequests != 0) {
+            boolean isIdle = current.inflightRequests == 0;
+            boolean isSameNamespaceWithRoom =
+                namespace.equals(current.leasedNamespace) && current.inflightRequests < maxConcurrency;
+            if (!isIdle && !isSameNamespaceWithRoom) {
                 return false;
             }
-            State next = current.withLease(namespace, 1, System.nanoTime());
+            State next = current.withLease(namespace, current.inflightRequests + 1, System.nanoTime());
             if (stateRef.compareAndSet(current, next)) {
                 return true;
             }
