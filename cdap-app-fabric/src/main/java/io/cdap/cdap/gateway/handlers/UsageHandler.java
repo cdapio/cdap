@@ -24,6 +24,8 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -41,10 +43,12 @@ public class UsageHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();
   private final UsageRegistry registry;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  public UsageHandler(UsageRegistry registry) {
+  public UsageHandler(UsageRegistry registry, ContextAccessEnforcer contextAccessEnforcer) {
     this.registry = registry;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @GET
@@ -53,6 +57,7 @@ public class UsageHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespaceId,
       @PathParam("app-id") String appId) {
     final ApplicationId id = new ApplicationId(namespaceId, appId);
+    contextAccessEnforcer.enforce(id, StandardPermission.GET);
     Set<DatasetId> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ids));
   }
@@ -66,6 +71,7 @@ public class UsageHandler extends AbstractHttpHandler {
       @PathParam("program-id") String programId) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
+    contextAccessEnforcer.enforce(id, StandardPermission.GET);
     Set<DatasetId> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ids));
   }
@@ -77,6 +83,7 @@ public class UsageHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespaceId,
       @PathParam("dataset-id") String datasetId) {
     final DatasetId id = new DatasetId(namespaceId, datasetId);
+    contextAccessEnforcer.enforce(id, StandardPermission.GET);
     Set<ProgramId> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ids));
   }
