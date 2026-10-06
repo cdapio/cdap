@@ -579,6 +579,7 @@ public final class Constants {
     public static final String CONTAINER_CORES = "task.worker.manager.container.num.cores";
     public static final String CONTAINER_JVM_OPTS = "task.worker.manager.container.jvm.opts";
     public static final String POOL_CHECK_INTERVAL = "task.worker.manager.pool.check.interval";
+    // Read by KubeMasterEnvironment, which can't depend on cdap-common; keep the two keys in sync.
     public static final String ENDPOINTS_SERVICES = "master.environment.k8s.endpoints.services";
   }
 
