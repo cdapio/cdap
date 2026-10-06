@@ -119,6 +119,7 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         releaseSlot();
         // If backend worker disconnects or crashes, flush and close the client socket
         ProxyFrontendHandler.closeOnFlush(clientChannel);
+        ctx.fireChannelInactive();
     }
 
     @Override
