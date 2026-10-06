@@ -218,7 +218,8 @@ class PodLeaseManager {
 
     /**
      * Releases one slot and skips the pod until its backoff expires. Used when the pod refuses a
-     * connection or is draining to restart, since discovery keeps listing it until it's back.
+     * connection, fails the TLS handshake or is draining to restart, since discovery keeps
+     * listing it until it's back.
      */
     void markUnavailable(String workerAddress, String reason) {
         PodState state = podRegistry.get(workerAddress);
@@ -233,7 +234,7 @@ class PodLeaseManager {
             TimeUnit.NANOSECONDS.toSeconds(backoff), reason);
     }
 
-    /** Clears any backoff on the pod, since a connection to it just succeeded. */
+    /** Clears any backoff on the pod, since a TLS handshake with it just succeeded. */
     void markReachable(String workerAddress) {
         PodState state = podRegistry.get(workerAddress);
         if (state != null) {

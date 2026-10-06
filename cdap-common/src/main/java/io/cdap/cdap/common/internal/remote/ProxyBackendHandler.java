@@ -24,6 +24,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,5 +128,28 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         LOG.error("Error on the connection to task worker {}", targetWorkerAddress, cause);
         releaseSlot();
         ProxyFrontendHandler.closeOnFlush(ctx.channel());
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+        if (evt instanceof SslHandshakeCompletionEvent) {
+            onHandshakeComplete((SslHandshakeCompletionEvent) evt);
+        }
+        ctx.fireUserEventTriggered(evt);
+    }
+
+    private void onHandshakeComplete(SslHandshakeCompletionEvent evt) {
+        if (evt.isSuccess()) {
+            // Cleared here, not on TCP connect, so a pod that fails TLS keeps escalating its backoff.
+            podLeaseManager.markReachable(targetWorkerAddress);
+            return;
+        }
+        // The caller already left, so we closed this mid-handshake; that says nothing about the pod.
+        if (!clientChannel.isActive() || decremented) {
+            return;
+        }
+        // Fires before exceptionCaught, so this request's slot is still held and released here.
+        podLeaseManager.markUnavailable(targetWorkerAddress, "a failed TLS handshake");
+        decremented = true;
     }
 }

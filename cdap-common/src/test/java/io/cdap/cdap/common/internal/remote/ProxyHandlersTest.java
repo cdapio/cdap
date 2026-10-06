@@ -41,6 +41,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.util.ResourceLeakDetector;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -63,6 +64,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -459,7 +462,7 @@ public class ProxyHandlersTest {
         assertFalse(pod.isAvailable(TimeUnit.SECONDS.toNanos(29)));
         assertTrue(pod.isAvailable(TimeUnit.SECONDS.toNanos(30)));
 
-        // The probe at 30s connects, which resets the backoff.
+        // The probe at 30s completes its TLS handshake, which resets the backoff.
         clock.set(TimeUnit.SECONDS.toNanos(30));
         podLeaseManager.markReachable("worker1:8080");
 
@@ -697,6 +700,112 @@ public class ProxyHandlersTest {
             assertEquals("namespace-A", pod.getLeasedNamespace());
 
             client.close().sync();
+            server.close().sync();
+        } finally {
+            group.shutdownGracefully(0, 1, TimeUnit.SECONDS).sync();
+        }
+    }
+
+    @Test
+    public void testHandshakeFailureBacksOffPodAndReleasesOneSlot() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState pod = new PodState("namespace-A", 2);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(new EmbeddedChannel(), podLeaseManager, "worker1:8080"));
+
+        SSLHandshakeException cause = new SSLHandshakeException("bad certificate");
+        workerChannel.pipeline().fireUserEventTriggered(new SslHandshakeCompletionEvent(cause));
+        // SslHandler raises the same failure through exceptionCaught right after the event.
+        workerChannel.pipeline().fireExceptionCaught(cause);
+
+        assertFalse(pod.isAvailable(System.nanoTime()));
+        assertEquals("Only this request's slot is released", 1, pod.getInflightRequests());
+    }
+
+    @Test
+    public void testHandshakeSuccessClearsBackoff() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState pod = new PodState("namespace-A", 2);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+        podLeaseManager.markUnavailable("worker1:8080", "a failed connect");
+        assertFalse(pod.isAvailable(System.nanoTime()));
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(new EmbeddedChannel(), podLeaseManager, "worker1:8080"));
+
+        workerChannel.pipeline().fireUserEventTriggered(SslHandshakeCompletionEvent.SUCCESS);
+
+        assertTrue(pod.isAvailable(System.nanoTime()));
+        assertEquals("A handshake doesn't release the slot", 1, pod.getInflightRequests());
+    }
+
+    @Test
+    public void testCallerLeavingDuringHandshakeDoesNotBackOff() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState pod = new PodState("namespace-A", 1);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+        EmbeddedChannel inboundClientChannel = new EmbeddedChannel();
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080"));
+
+        // The caller left, so the frontend closes the worker mid-handshake and the handshake fails.
+        inboundClientChannel.close();
+        workerChannel.pipeline().fireUserEventTriggered(
+            new SslHandshakeCompletionEvent(new SSLException("SSLEngine closed already")));
+        workerChannel.close();
+
+        assertTrue(pod.isAvailable(System.nanoTime()));
+        assertEquals(0, pod.getInflightRequests());
+        assertEquals("namespace-A", pod.getLeasedNamespace());
+    }
+
+    @Test
+    public void testWorkerFailingTlsIsBackedOff() throws Exception {
+        NioEventLoopGroup group = new NioEventLoopGroup(1);
+        try (ServerSocket worker = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
+            DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+            Discoverable discoverable = discoverableAt("127.0.0.1", worker.getLocalPort());
+            ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
+            when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(discoverable).iterator());
+            when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+            PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+            LocalAddress proxyAddress = new LocalAddress("proxy-tls-failure-test");
+            CompletableFuture<Channel> accepted = new CompletableFuture<>();
+            Channel server = new ServerBootstrap().group(group).channel(LocalServerChannel.class)
+                .childHandler(new ChannelInitializer<LocalChannel>() {
+                    @Override
+                    protected void initChannel(LocalChannel ch) {
+                        ch.pipeline().addLast(new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+                        accepted.complete(ch);
+                    }
+                }).bind(proxyAddress).sync().channel();
+            Channel client = new Bootstrap().group(group).channel(LocalChannel.class)
+                .handler(new ChannelInboundHandlerAdapter()).connect(proxyAddress).sync().channel();
+            Channel clientChannel = accepted.get(10, TimeUnit.SECONDS);
+
+            HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+            req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+            clientChannel.eventLoop().submit(() -> clientChannel.pipeline().fireChannelRead(req)).sync();
+
+            // The worker accepts TCP but answers the ClientHello in plaintext, so TLS fails.
+            try (Socket workerSide = worker.accept()) {
+                workerSide.setSoTimeout(10_000);
+                InputStream in = workerSide.getInputStream();
+                byte[] buf = new byte[4096];
+                assertTrue(in.read(buf) > 0);
+                workerSide.getOutputStream().write(
+                    "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n".getBytes(StandardCharsets.US_ASCII));
+                while (in.read(buf) >= 0) {
+                    // Wait for the proxy to close the connection.
+                }
+            }
+
+            assertTrue("The caller's connection is closed", client.closeFuture().await(10, TimeUnit.SECONDS));
+            PodState pod = podLeaseManager.getRegistry().get("127.0.0.1:" + worker.getLocalPort());
+            assertFalse(pod.isAvailable(System.nanoTime()));
+            assertEquals(0, pod.getInflightRequests());
+
             server.close().sync();
         } finally {
             group.shutdownGracefully(0, 1, TimeUnit.SECONDS).sync();
