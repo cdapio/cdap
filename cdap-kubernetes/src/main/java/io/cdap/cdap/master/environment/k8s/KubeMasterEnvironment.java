@@ -142,7 +142,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String LOAD_BALANCER_SERVICES = "master.environment.k8s.loadBalancerServices";
 
   // A comma separated list of service names for which service endpoints (pod IPs) are to be watched
-  // instead of service ClusterIPs.
+  // instead of service ClusterIPs. Keep in sync with Constants.TaskWorkerManager.ENDPOINTS_SERVICES.
   private static final String ENDPOINTS_SERVICES = "master.environment.k8s.endpoints.services";
 
   // A comma separated list of key value pairs to be added as annotations in the k8s load balancer services.

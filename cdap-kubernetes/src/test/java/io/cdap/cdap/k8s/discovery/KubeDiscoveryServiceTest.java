@@ -606,6 +606,24 @@ public class KubeDiscoveryServiceTest {
   }
 
   @Test
+  public void testToDiscoverablesSkipsPortWithoutNumber() {
+    V1Endpoints endpoints = new V1Endpoints()
+        .metadata(taskWorkerEndpointsMetadata())
+        .addSubsetsItem(new V1EndpointSubset()
+            .addresses(Collections.singletonList(new V1EndpointAddress().ip("10.0.0.1")))
+            .ports(Arrays.asList(
+                new CoreV1EndpointPort().name("unnumbered"),
+                new CoreV1EndpointPort().port(SERVICE_PORT))));
+
+    Set<Discoverable> discoverables =
+        kubeDiscoveryService.toDiscoverables(TASK_WORKER, endpoints);
+
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(SERVICE_PORT,
+        discoverables.iterator().next().getSocketAddress().getPort());
+  }
+
+  @Test
   public void testTaskWorkerAddressesComeFromTheEndpointsWatcher() throws Exception {
     try (KubeDiscoveryService service =
         createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
