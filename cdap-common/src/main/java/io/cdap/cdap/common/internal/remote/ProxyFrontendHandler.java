@@ -157,9 +157,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             f.addListener((ChannelFutureListener) future -> {
                 connecting = false;
                 if (future.isSuccess()) {
-                    // The worker is listening again, so clear any backoff now rather than when this
-                    // task's response arrives, which can take a minute.
-                    podLeaseManager.markReachable(chosenWorker);
+                    // The backoff is cleared by ProxyBackendHandler once the TLS handshake succeeds.
                     if (!ctx.channel().isActive()) {
                         // The caller left while we were connecting; closing the worker releases the slot.
                         workerChannel.close();
