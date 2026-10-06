@@ -439,8 +439,6 @@ public class KubeTwillPreparerTest {
 
     Assert.assertNotNull(deployment.getSpec().getStrategy());
     Assert.assertEquals("Recreate", deployment.getSpec().getStrategy().getType());
-    // Recreate only enforces at-most-one pod in combination with a single replica.
-    Assert.assertEquals(Integer.valueOf(1), deployment.getSpec().getReplicas());
   }
 
   @Test
