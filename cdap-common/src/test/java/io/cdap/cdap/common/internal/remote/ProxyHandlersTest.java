@@ -18,10 +18,18 @@ package io.cdap.cdap.common.internal.remote;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.channel.local.LocalAddress;
+import io.netty.channel.local.LocalChannel;
+import io.netty.channel.local.LocalServerChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -39,12 +47,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -583,6 +596,65 @@ public class ProxyHandlersTest {
         assertFalse(pod.tryStealIdleLease("namespace-B", 10));
         PodState fullPod = new PodState("namespace-A", 10);
         assertFalse(fullPod.tryStealIdleLease("namespace-A", 10));
+    }
+
+    @Test
+    public void testClientLeavingMidConnectReleasesSlotWithoutBackoff() throws Exception {
+        NioEventLoopGroup group = new NioEventLoopGroup(1);
+        try (ServerSocket worker = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
+            DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+            Discoverable discoverable = discoverableAt("127.0.0.1", worker.getLocalPort());
+            ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
+            when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(discoverable).iterator());
+            when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+            PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+            // A LocalChannel can run on a NIO event loop, so the frontend can open a real worker connection.
+            LocalAddress proxyAddress = new LocalAddress("proxy-mid-connect-test");
+            CompletableFuture<Channel> accepted = new CompletableFuture<>();
+            Channel server = new ServerBootstrap().group(group).channel(LocalServerChannel.class)
+                .childHandler(new ChannelInitializer<LocalChannel>() {
+                    @Override
+                    protected void initChannel(LocalChannel ch) {
+                        ch.pipeline().addLast(new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+                        accepted.complete(ch);
+                    }
+                }).bind(proxyAddress).sync().channel();
+            Channel client = new Bootstrap().group(group).channel(LocalChannel.class)
+                .handler(new ChannelInboundHandlerAdapter()).connect(proxyAddress).sync().channel();
+            Channel clientChannel = accepted.get(10, TimeUnit.SECONDS);
+
+            HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+            req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+            // One event loop task: the connect listener can't run until the client is already gone.
+            clientChannel.eventLoop().submit(() -> {
+                clientChannel.pipeline().fireChannelRead(req);
+                clientChannel.close();
+            }).sync();
+
+            // The worker sees its connection closed rather than left open with no request on it.
+            try (Socket workerSide = worker.accept()) {
+                workerSide.setSoTimeout(10_000);
+                InputStream in = workerSide.getInputStream();
+                byte[] buf = new byte[4096];
+                while (in.read(buf) >= 0) {
+                    // Discard the TLS ClientHello until the proxy closes the connection.
+                }
+            }
+            PodState pod = podLeaseManager.getRegistry().get("127.0.0.1:" + worker.getLocalPort());
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+            while (pod.getInflightRequests() != 0 && System.nanoTime() < deadline) {
+                TimeUnit.MILLISECONDS.sleep(20);
+            }
+            assertEquals(0, pod.getInflightRequests());
+            assertTrue(pod.isAvailable(System.nanoTime()));
+            assertEquals("namespace-A", pod.getLeasedNamespace());
+
+            client.close().sync();
+            server.close().sync();
+        } finally {
+            group.shutdownGracefully(0, 1, TimeUnit.SECONDS).sync();
+        }
     }
 
     private static Discoverable discoverableAt(String host, int port) {
