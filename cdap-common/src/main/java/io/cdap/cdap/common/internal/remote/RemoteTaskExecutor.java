@@ -86,10 +86,7 @@ public class RemoteTaskExecutor {
       throwable instanceof RetryableException;
   // The proxy closes the connection without a response when it can't reach a worker.
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER_PROXY = throwable ->
-      (throwable instanceof RetryableException)
-          || (throwable instanceof SocketException)
-          || (throwable instanceof SocketTimeoutException)
-          || (throwable instanceof NoRouteToHostException);
+      throwable instanceof RetryableException || isSocketFailure(throwable);
   private static final String PROXY_FEATURE_FLAG_KEY =
       "feature." + Feature.RBAC_TASK_WORKER_MANAGER.getFeatureFlagString();
   /** Guards the deployment level diagnosis so it is logged once per JVM rather than per task. */
@@ -267,10 +264,12 @@ public class RemoteTaskExecutor {
 
   /** Returns true for transport and discovery failures, where the proxy never answered. */
   private static boolean isProxyUnreachable(Exception e) {
-    return e instanceof ServiceUnavailableException
-        || e instanceof NoRouteToHostException
-        || e instanceof SocketTimeoutException
-        || e instanceof SocketException;
+    return e instanceof ServiceUnavailableException || isSocketFailure(e);
+  }
+
+  /** Returns true if the proxy connection failed; covers NoRouteToHostException too. */
+  private static boolean isSocketFailure(Throwable t) {
+    return t instanceof SocketException || t instanceof SocketTimeoutException;
   }
 
   /** Builds the error for a proxy that never answered, pointing at the proxy deployment. */
