@@ -29,6 +29,7 @@ import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.http.AbstractHttpHandler;
@@ -39,6 +40,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -249,6 +251,45 @@ public class RemoteTaskExecutorRbacProxyTest {
     // cluster would surface as a hard pipeline failure.
     Assert.assertTrue("Expected more than one attempt, got " + workerHandler.getRequestCount(),
         workerHandler.getRequestCount() > 1);
+  }
+
+  @Test
+  public void testGatewayErrorsAreRetried() {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+
+    for (HttpResponseStatus status : Arrays.asList(HttpResponseStatus.BAD_GATEWAY,
+        HttpResponseStatus.GATEWAY_TIMEOUT)) {
+      workerHandler.reset();
+      workerHandler.setStatusCode(status.code());
+
+      try {
+        newExecutor(proxyEnabledConf()).runTask(taskRequest(TENANT_NAMESPACE));
+        Assert.fail("Expected " + status + " to fail once the retry budget was exhausted");
+      } catch (Exception e) {
+        Assert.assertTrue("Expected a ServiceException cause for " + status + " but got " + e,
+            e.getCause() instanceof ServiceException);
+        Assert.assertEquals(status.code(), ((ServiceException) e.getCause()).getStatusCode());
+      }
+
+      Assert.assertTrue("Expected " + status + " to be retried, got "
+          + workerHandler.getRequestCount() + " attempts", workerHandler.getRequestCount() > 1);
+    }
+  }
+
+  @Test
+  public void testForbiddenIsNotRetried() {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    workerHandler.setStatusCode(HttpResponseStatus.FORBIDDEN.code());
+
+    try {
+      newExecutor(proxyEnabledConf()).runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected a 403 to fail the task");
+    } catch (Exception e) {
+      Assert.assertTrue("Expected UnauthorizedException but got " + e.getClass(),
+          e instanceof UnauthorizedException);
+    }
+
+    Assert.assertEquals(1, workerHandler.getRequestCount());
   }
 
   @Test

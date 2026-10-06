@@ -22,18 +22,32 @@ import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.ArtifactLocalizer;
 import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.features.Feature;
+import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
+import io.cdap.http.NettyHttpService;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /**
@@ -96,8 +110,12 @@ public class TaskWorkerConcurrencyModeTest {
   }
 
   private static FullHttpRequest runRequest() {
+    return runRequest(NAMESPACE);
+  }
+
+  private static FullHttpRequest runRequest(String namespace) {
     return requestWithBody(GSON.toJson(RunnableTaskRequest.getBuilder("com.example.SomeTask")
-        .withNamespace(NAMESPACE)
+        .withNamespace(namespace)
         .build()));
   }
 
@@ -271,5 +289,97 @@ public class TaskWorkerConcurrencyModeTest {
     Assert.assertEquals("As many failures as the pod has slots: if each one leaked, the pod would "
         + "now reject every request it ever receives", 0, handler.getRunningRequestCount());
     Assert.assertEquals(0, leaseManager.getActiveTaskCount());
+  }
+
+  @Test
+  public void testOtherNamespaceIsRejectedWithTheLeaseHolder() {
+    // The responder is a mock, so the first response never finishes and its lease stays held.
+    TaskWorkerHttpHandlerInternal handler = new TaskWorkerHttpHandlerInternal(
+        newCConf(true, true, true), new CallbackLauncher(() -> { }), className -> { },
+        new NoOpMetricsCollectionService());
+    handler.run(runRequest(NAMESPACE), Mockito.mock(HttpResponder.class));
+
+    HttpResponder rejected = Mockito.mock(HttpResponder.class);
+    handler.run(runRequest("ns2"), rejected);
+
+    ArgumentCaptor<HttpHeaders> headers = ArgumentCaptor.forClass(HttpHeaders.class);
+    Mockito.verify(rejected).sendStatus(Mockito.eq(HttpResponseStatus.TOO_MANY_REQUESTS),
+        headers.capture());
+    // The proxy adopts this header to fix its routing table.
+    Assert.assertEquals(NAMESPACE,
+        headers.getValue().get(Constants.Gateway.HEADER_LEASED_NAMESPACE));
+    Assert.assertEquals("Only the admitted task holds a slot", 1, handler.getRunningRequestCount());
+  }
+
+  @Test
+  public void testFailedCredentialWipeRestartsThePod() throws Exception {
+    NettyHttpService sidecar = NettyHttpService.builder("metadata-sidecar")
+        .setHost(InetAddress.getLoopbackAddress().getHostName())
+        .setHttpHandlers(new StubSidecarHandler())
+        .build();
+    sidecar.start();
+    try {
+      CConfiguration cConf = newCConf(true, true, true);
+      cConf.setBoolean("feature." + Feature.NAMESPACED_SERVICE_ACCOUNTS.getFeatureFlagString(),
+          true);
+      cConf.setInt(ArtifactLocalizer.PORT, sidecar.getBindAddress().getPort());
+      // Only the failed wipe may restart the pod, not the request count.
+      cConf.setInt(TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
+      List<String> stopped = new ArrayList<>();
+
+      // Provisioning succeeds, then the sidecar goes away so the wipe after the task fails.
+      TaskWorkerHttpHandlerInternal handler = new TaskWorkerHttpHandlerInternal(cConf,
+          new CallbackLauncher(() -> {
+            stopQuietly(sidecar);
+            throw new IllegalStateException("simulated task failure");
+          }), stopped::add, new NoOpMetricsCollectionService());
+      handler.run(runRequest(NAMESPACE), Mockito.mock(HttpResponder.class));
+
+      Assert.assertEquals("A credential that can't be wiped must not outlive its namespace",
+          Collections.singletonList("com.example.SomeTask"), stopped);
+    } finally {
+      stopQuietly(sidecar);
+    }
+  }
+
+  private static void stopQuietly(NettyHttpService service) {
+    try {
+      service.stop();
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /** A launcher that runs a callback instead of a task; the callback may throw. */
+  private static final class CallbackLauncher extends RunnableTaskLauncher {
+
+    private final Runnable callback;
+
+    private CallbackLauncher(Runnable callback) {
+      super(Guice.createInjector());
+      this.callback = callback;
+    }
+
+    @Override
+    public void launchRunnableTask(RunnableTaskContext context) {
+      callback.run();
+    }
+  }
+
+  /** Accepts the metadata sidecar's set and clear context calls. */
+  @Path("/")
+  public static final class StubSidecarHandler extends AbstractHttpHandler {
+
+    @PUT
+    @Path("/set-context")
+    public void setContext(FullHttpRequest request, HttpResponder responder) {
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+
+    @DELETE
+    @Path("/clear-context")
+    public void clearContext(FullHttpRequest request, HttpResponder responder) {
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
   }
 }
