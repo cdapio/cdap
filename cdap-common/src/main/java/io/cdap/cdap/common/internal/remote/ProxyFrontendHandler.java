@@ -156,6 +156,11 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     // The worker is listening again, so clear any backoff now rather than when this
                     // task's response arrives, which can take a minute.
                     podLeaseManager.markReachable(chosenWorker);
+                    if (!ctx.channel().isActive()) {
+                        // The caller left while we were connecting; closing the worker releases the slot.
+                        workerChannel.close();
+                        return;
+                    }
                     // Flush everything queued while connecting.
                     LOG.debug("Connected to task worker {}", chosenWorker);
                     Object pendingMsg = pendingMessages.poll();
