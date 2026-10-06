@@ -157,6 +157,27 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
+   * A failed launch retries every tick, so it must not leave a run directory behind each time.
+   */
+  @Test
+  public void testStartFailureCleansUpRunDirectory() throws Exception {
+    TwillPreparer preparer = mockPreparer(TwillPreparer.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class)))
+        .thenThrow(new IllegalStateException("simulated launch failure"));
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    TaskWorkerManagerServiceLauncher launcher =
+        new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner);
+    launcher.run();
+
+    verify(preparer).start(anyLong(), any(TimeUnit.class));
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+        cConf.get(Constants.AppFabric.TEMP_DIR));
+    Assert.assertTrue("The launcher should have created its temp dir", tmpDir.isDirectory());
+    Assert.assertArrayEquals(new String[0], tmpDir.list());
+  }
+
+  /**
    * Returns a preparer mock whose fluent setters return the mock itself.
    */
   private <T extends TwillPreparer> T mockPreparer(Class<T> preparerClass) {
