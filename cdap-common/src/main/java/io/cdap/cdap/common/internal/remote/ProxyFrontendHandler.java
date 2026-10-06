@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
 
@@ -144,6 +145,9 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                  }
              });
 
+            // One request per worker connection: the worker closes it after responding, which closes the
+            // caller's connection too, so a keep-alive request can't reuse a stale workerChannel.
+            HttpUtil.setKeepAlive(req, false);
             // Queue the header before connecting, since the listener can run inline and drain the queue.
             pendingMessages.add(msg);
 

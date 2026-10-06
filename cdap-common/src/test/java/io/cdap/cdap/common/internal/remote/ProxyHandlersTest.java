@@ -23,6 +23,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -38,6 +39,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ResourceLeakDetector;
 import org.apache.twill.discovery.Discoverable;
@@ -59,6 +61,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
@@ -566,6 +569,49 @@ public class ProxyHandlersTest {
         assertFalse(pod.isAvailable(System.nanoTime()));
         assertEquals(0, pod.getInflightRequests());
         assertFalse(channel.isActive());
+    }
+
+    @Test
+    public void testForwardedRequestAsksWorkerToClose() {
+        DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+        Discoverable worker = discoverableAt("127.0.0.1", 11015);
+        ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
+        when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(worker).iterator());
+        when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+        EmbeddedChannel channel = new EmbeddedChannel(new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+        HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+        req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+        assertTrue(HttpUtil.isKeepAlive(req));
+
+        channel.writeInbound(req);
+
+        // The header is marked before it is queued for the worker, whatever the connect outcome.
+        assertFalse(HttpUtil.isKeepAlive(req));
+    }
+
+    @Test
+    public void testBackendPropagatesChannelInactive() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState pod = new PodState("namespace-A", 1);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+        AtomicBoolean nextHandlerSawInactive = new AtomicBoolean();
+
+        EmbeddedChannel inboundClientChannel = new EmbeddedChannel();
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080"),
+            new ChannelInboundHandlerAdapter() {
+                @Override
+                public void channelInactive(ChannelHandlerContext ctx) {
+                    nextHandlerSawInactive.set(true);
+                }
+            });
+
+        workerChannel.close();
+
+        assertTrue(nextHandlerSawInactive.get());
+        assertEquals(0, pod.getInflightRequests());
     }
 
     @Test
