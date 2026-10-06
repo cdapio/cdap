@@ -32,6 +32,7 @@ import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
@@ -63,6 +64,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -701,6 +703,74 @@ public class ProxyHandlersTest {
 
             client.close().sync();
             server.close().sync();
+        } finally {
+            group.shutdownGracefully(0, 1, TimeUnit.SECONDS).sync();
+        }
+    }
+
+    @Test
+    public void testConnectKeepsBackpressureWhenFlushFillsWorkerBuffer() throws Exception {
+        NioEventLoopGroup group = new NioEventLoopGroup(1);
+        try (ServerSocket worker = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
+            DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+            Discoverable discoverable = discoverableAt("127.0.0.1", worker.getLocalPort());
+            ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
+            when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(discoverable).iterator());
+            when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+            PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+            LocalAddress proxyAddress = new LocalAddress("proxy-connect-backpressure-test");
+            AtomicInteger callerReads = new AtomicInteger();
+            CompletableFuture<Channel> accepted = new CompletableFuture<>();
+            Channel server = new ServerBootstrap().group(group).channel(LocalServerChannel.class)
+                .childHandler(new ChannelInitializer<LocalChannel>() {
+                    @Override
+                    protected void initChannel(LocalChannel ch) {
+                        ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                                callerReads.incrementAndGet();
+                                ctx.fireChannelRead(msg);
+                            }
+                        });
+                        ch.pipeline().addLast(new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+                        accepted.complete(ch);
+                    }
+                }).bind(proxyAddress).sync().channel();
+            Channel client = new Bootstrap().group(group).channel(LocalChannel.class)
+                .handler(new ChannelInboundHandlerAdapter()).connect(proxyAddress).sync().channel();
+            Channel clientChannel = accepted.get(10, TimeUnit.SECONDS);
+
+            HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+            req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+            // One event loop task, so the whole body is queued before the worker connect completes.
+            clientChannel.eventLoop().submit(() -> {
+                // Sent through the transport, so the caller's pending read is used up by the header.
+                client.writeAndFlush(req);
+                // Twice the worker channel's default 64 KiB high write watermark.
+                for (int i = 0; i < 4; i++) {
+                    clientChannel.pipeline().fireChannelRead(
+                        new DefaultHttpContent(Unpooled.wrappedBuffer(new byte[32 * 1024])));
+                }
+                // Stays in the caller's inbound buffer until the proxy reads from the caller again.
+                client.writeAndFlush(new DefaultLastHttpContent(Unpooled.wrappedBuffer(new byte[1024])));
+            }).sync();
+
+            // The worker never reads past the ClientHello, so the body stays queued on the proxy.
+            try (Socket workerSide = worker.accept()) {
+                workerSide.setSoTimeout(10_000);
+                // The ClientHello means the connect listener has already drained the queue.
+                assertTrue(workerSide.getInputStream().read() >= 0);
+                // Submitted after the listener and any writability event it queued, so both have run.
+                boolean autoRead = clientChannel.eventLoop().submit(() -> clientChannel.config().isAutoRead())
+                    .get(10, TimeUnit.SECONDS);
+                int reads = clientChannel.eventLoop().submit(callerReads::get).get(10, TimeUnit.SECONDS);
+                assertFalse(autoRead);
+                assertEquals("The last chunk must wait while the worker is unwritable", 5, reads);
+
+                client.close().sync();
+                server.close().sync();
+            }
         } finally {
             group.shutdownGracefully(0, 1, TimeUnit.SECONDS).sync();
         }

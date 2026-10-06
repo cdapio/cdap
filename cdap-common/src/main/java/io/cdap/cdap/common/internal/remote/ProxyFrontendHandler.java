@@ -171,8 +171,8 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                         pendingMsg = pendingMessages.poll();
                     }
                     workerChannel.flush();
-                    // Resume reading remaining body chunks from the client
-                    ctx.channel().config().setAutoRead(true);
+                    // Resume reading the body unless the flush already filled the worker's buffer.
+                    ctx.channel().config().setAutoRead(workerChannel.isWritable());
                 } else {
                     // Usually a restarting worker. Discovery keeps listing it while the container
                     // boots, so back off rather than letting least-loaded selection pick it again.
