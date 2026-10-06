@@ -342,6 +342,41 @@ public class TaskWorkerConcurrencyModeTest {
     }
   }
 
+  @Test
+  public void testFailedWipeAfterFailedTaskRestartsDirectWorker() throws Exception {
+    // Without a lease the wipe runs after a failed task's completion, which has already checked
+    // the restart flag, so the wipe failure has to stop the pod itself.
+    NettyHttpService sidecar = NettyHttpService.builder("metadata-sidecar")
+        .setHost(InetAddress.getLoopbackAddress().getHostName())
+        .setHttpHandlers(new StubSidecarHandler())
+        .build();
+    sidecar.start();
+    try {
+      CConfiguration cConf = newCConf(true, true, false);
+      cConf.setBoolean("feature." + Feature.NAMESPACED_SERVICE_ACCOUNTS.getFeatureFlagString(),
+          true);
+      cConf.setInt(ArtifactLocalizer.PORT, sidecar.getBindAddress().getPort());
+      // Only the failed wipe may restart the pod, not the request count.
+      cConf.setInt(TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
+      List<String> stopped = new ArrayList<>();
+
+      // Provisioning succeeds, then the sidecar goes away so the wipe after the task fails.
+      TaskWorkerHttpHandlerInternal handler = new TaskWorkerHttpHandlerInternal(cConf,
+          new CallbackLauncher(() -> {
+            stopQuietly(sidecar);
+            throw new IllegalStateException("simulated task failure");
+          }), stopped::add, new NoOpMetricsCollectionService());
+      Assert.assertNull(handler.getStickyLeaseManager());
+      handler.run(runRequest(NAMESPACE), Mockito.mock(HttpResponder.class));
+
+      Assert.assertEquals("Otherwise the pod refuses every task while holding the credential "
+          + "until the periodic restart", Collections.singletonList(""), stopped);
+      Assert.assertEquals(0, handler.getRunningRequestCount());
+    } finally {
+      stopQuietly(sidecar);
+    }
+  }
+
   private static void stopQuietly(NettyHttpService service) {
     try {
       service.stop();
