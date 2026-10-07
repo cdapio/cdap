@@ -84,6 +84,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
+  private final Consumer<String> stopper;
 
   /**
    * Holds the total number of requests that have been executed by this handler
@@ -125,6 +126,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = runnableTaskLauncher;
+    this.stopper = stopper;
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
@@ -302,7 +304,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
           new TaskDetails(metricsCollectionService, startTime, true, runnableTaskRequest));
       throw t;
     } finally {
-      clearTaskContext();
+      clearTaskContextOrScheduleRestart();
     }
   }
 
@@ -323,13 +325,25 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
   }
 
-  /** Clears the GcpMetadataTaskContext after the task is completed. */
-  private void clearTaskContext() {
+  /**
+   * Clears the GcpMetadataTaskContext after the task is completed, and restarts the pod if that
+   * fails so the credential does not outlive the namespace that provisioned it.
+   */
+  private void clearTaskContextOrScheduleRestart() {
     try {
       GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
     } catch (IOException e) {
       // The task's slot was already released; failing here must not release it again.
-      LOG.error("Failed to wipe the service account credential after the task finished.", e);
+      LOG.error("Failed to wipe the service account credential after the task finished. "
+          + "Restarting the task worker so the credential does not outlive the namespace that "
+          + "provisioned it.", e);
+      mustRestart.set(true);
+      // A failed task ran the completion consumer before this wipe, so nothing else would act on
+      // the flag and the pod would refuse every task while holding the credential. If a request
+      // is still running, its own completion stops the pod.
+      if (runningRequestCount.get() == 0) {
+        stopper.accept("");
+      }
     }
   }
 
