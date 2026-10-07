@@ -269,7 +269,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
           request.content().toString(StandardCharsets.UTF_8), ex);
-      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, true);
+      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, false);
       return;
     }
 

@@ -26,6 +26,7 @@ import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.features.Feature;
 import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.buffer.Unpooled;
@@ -40,12 +41,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /**
@@ -135,10 +138,13 @@ public class TaskWorkerFailureHandlingTest {
   @Test
   public void testUnparseableRequestReleasesTheSlot() {
     TaskWorkerHttpHandlerInternal handler = newHandler(() -> { });
+    HttpResponder responder = Mockito.mock(HttpResponder.class);
 
-    handler.run(requestWithBody("this is not json"), Mockito.mock(HttpResponder.class));
+    handler.run(requestWithBody("this is not json"), responder);
 
     Assert.assertEquals(0, handler.getRunningRequestCount());
+    Mockito.verify(responder).sendString(Mockito.eq(HttpResponseStatus.INTERNAL_SERVER_ERROR),
+        Mockito.anyString(), Mockito.any(HttpHeaders.class));
   }
 
   @Test
@@ -223,6 +229,44 @@ public class TaskWorkerFailureHandlingTest {
       HttpResponder next = Mockito.mock(HttpResponder.class);
       handler.run(runRequest(), next);
       Mockito.verify(next).sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+    } finally {
+      stopQuietly(sidecar);
+    }
+  }
+
+  @Test
+  public void testFailedCredentialWipeDefersStopWhileATaskRuns() throws Exception {
+    NettyHttpService sidecar = startSidecar();
+    try {
+      CConfiguration cConf = sidecarCConf(newCConf(false), sidecar);
+      List<String> stopped = new ArrayList<>();
+      AtomicInteger launches = new AtomicInteger();
+      // The first task succeeds and keeps its slot until its response is sent. The second loses
+      // the sidecar mid-task, so its wipe fails while the first is still holding a slot.
+      TaskWorkerHttpHandlerInternal handler = newHandler(cConf, () -> {
+        if (launches.incrementAndGet() == 2) {
+          stopQuietly(sidecar);
+          throw new IllegalStateException("simulated task failure");
+        }
+      }, stopped::add);
+
+      HttpResponder running = Mockito.mock(HttpResponder.class);
+      handler.run(runRequest(), running);
+      ArgumentCaptor<BodyProducer> producer = ArgumentCaptor.forClass(BodyProducer.class);
+      Mockito.verify(running).sendContent(Mockito.eq(HttpResponseStatus.OK), producer.capture(),
+          Mockito.any(HttpHeaders.class));
+
+      handler.run(runRequest(), Mockito.mock(HttpResponder.class));
+
+      Assert.assertTrue("Stopping now would kill the task that is still running",
+          stopped.isEmpty());
+      Assert.assertEquals(1, handler.getRunningRequestCount());
+
+      producer.getValue().finished();
+
+      Assert.assertEquals("The last running task must stop the pod once it finishes",
+          Collections.singletonList(TASK_CLASS), stopped);
+      Assert.assertEquals(0, handler.getRunningRequestCount());
     } finally {
       stopQuietly(sidecar);
     }
