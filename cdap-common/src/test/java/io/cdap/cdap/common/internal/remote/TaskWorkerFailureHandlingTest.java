@@ -37,6 +37,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
@@ -180,6 +183,21 @@ public class TaskWorkerFailureHandlingTest {
     } finally {
       stopQuietly(sidecar);
     }
+  }
+
+  @Test
+  public void testTaskThatThrowsCountsTowardTheRestart() {
+    CConfiguration cConf = newCConf(true);
+    cConf.setInt(TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
+    List<String> stopped = new ArrayList<>();
+    TaskWorkerHttpHandlerInternal handler = newHandler(cConf, () -> {
+      throw new IllegalStateException("simulated task failure");
+    }, stopped::add);
+
+    handler.run(runRequest(), Mockito.mock(HttpResponder.class));
+
+    Assert.assertEquals("User code may have run, so isolation must restart the pod",
+        Collections.singletonList(TASK_CLASS), stopped);
   }
 
   static NettyHttpService startSidecar() throws Exception {
