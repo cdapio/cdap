@@ -96,6 +96,7 @@ public class RemoteTaskExecutor {
   private final boolean isWorkerEncryptionRequired;
   private final String serviceName;
   private final boolean rbacProxyEnabled;
+  private final boolean leaseAware;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -112,6 +113,9 @@ public class RemoteTaskExecutor {
     // enforces isolation. System worker traffic is trusted platform code and never uses the proxy.
     this.rbacProxyEnabled =
         TaskWorkerManager.isProxyEnabled(cConf) && workerType == Type.TASK_WORKER;
+    // Task workers lease themselves to a namespace whenever the manager is on, with or without
+    // the proxy; only then does a 429 mean no lease was available.
+    this.leaseAware = TaskWorkerManager.isEnabled(cConf) && workerType == Type.TASK_WORKER;
 
     if (workerType == Type.TASK_WORKER) {
       this.serviceName = rbacProxyEnabled
@@ -203,8 +207,13 @@ public class RemoteTaskExecutor {
           LOG.trace("Received response from {} with status code {} in {} ms", serviceName,
               httpResponse.getResponseCode(), executionDurationMs);
 
-          // STEP 4: A 429 means no pod could be leased right now, so retry with backoff.
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+            if (!leaseAware) {
+              throw new RetryableException(
+                  String.format("Received response code %s for %s", httpResponse.getResponseCode(),
+                      runnableTaskRequest.getClassName()));
+            }
+            // STEP 4: A 429 means no pod could be leased right now, so retry with backoff.
             throw new TaskWorkerSaturatedException(
                 String.format("Task Worker cluster is fully saturated (HTTP 429). Could not secure "
                         + "a compute lease for %s. Triggering backoff...",

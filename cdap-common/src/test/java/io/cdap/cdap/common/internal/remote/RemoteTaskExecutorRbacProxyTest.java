@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -257,6 +258,40 @@ public class RemoteTaskExecutorRbacProxyTest {
 
     // A 429 must be retried rather than failing the first time, otherwise a momentarily saturated
     // cluster would surface as a hard pipeline failure.
+    Assert.assertTrue("Expected more than one attempt, got " + workerHandler.getRequestCount(),
+        workerHandler.getRequestCount() > 1);
+  }
+
+  @Test
+  public void testSaturationWithoutLeasesFailsAsBefore() throws Exception {
+    CConfiguration rbacOff = proxyEnabledConf();
+    rbacOff.setBoolean(Constants.Security.Authorization.ENABLED, false);
+    for (CConfiguration cConf : Arrays.asList(flagOffConf(), rbacOff)) {
+      register(Constants.Service.TASK_WORKER);
+      assertSaturationFailsAsBefore(newExecutor(cConf));
+      registrations.forEach(Cancellable::cancel);
+      registrations.clear();
+    }
+    // System workers never lease, even with the manager on.
+    register(Constants.Service.SYSTEM_WORKER);
+    assertSaturationFailsAsBefore(new RemoteTaskExecutor(proxyEnabledConf(),
+        new NoOpMetricsCollectionService(), newClientFactory(proxyEnabledConf()),
+        RemoteTaskExecutor.Type.SYSTEM_WORKER, mockAeadCipher));
+  }
+
+  /** Asserts a 429 is retried and then surfaces as the plain retryable error, as on develop. */
+  private void assertSaturationFailsAsBefore(RemoteTaskExecutor executor) {
+    workerHandler.reset();
+    workerHandler.setStatusCode(HttpResponseStatus.TOO_MANY_REQUESTS.code());
+
+    try {
+      executor.runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected a failure once the retry budget was exhausted");
+    } catch (Exception e) {
+      Assert.assertTrue("Expected RetryableException but got " + e,
+          e instanceof RetryableException);
+      Assert.assertTrue(e.getMessage(), e.getMessage().startsWith("Received response code 429"));
+    }
     Assert.assertTrue("Expected more than one attempt, got " + workerHandler.getRequestCount(),
         workerHandler.getRequestCount() > 1);
   }
