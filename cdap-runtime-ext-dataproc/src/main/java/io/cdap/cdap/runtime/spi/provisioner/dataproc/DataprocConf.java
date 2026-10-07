@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -122,6 +123,8 @@ final class DataprocConf {
 
   private static final Splitter COMMA_SPLITTER =
     Splitter.on(',').trimResults().omitEmptyStrings();
+  private static final Splitter RANK_SPLITTER =
+    Splitter.on(';').trimResults().omitEmptyStrings();
 
   private final String accountKey;
   private final String region;
@@ -140,7 +143,7 @@ final class DataprocConf {
   private final int masterDiskGb;
   private final String masterDiskType;
   private final String masterMachineType;
-  private final List<String> masterFlexVmMachineTypes;
+  private final List<List<String>> masterFlexVmMachineTypes;
   private final List<String> masterFlexVmDiskTypes;
 
   private final int workerNumNodes;
@@ -150,7 +153,7 @@ final class DataprocConf {
   private final int workerDiskGb;
   private final String workerDiskType;
   private final String workerMachineType;
-  private final List<String> workerFlexVmMachineTypes;
+  private final List<List<String>> workerFlexVmMachineTypes;
   private final List<String> workerFlexVmDiskTypes;
 
   private final long pollCreateDelay;
@@ -205,10 +208,10 @@ final class DataprocConf {
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
       int masterNumNodes, int masterCpus, int masterMemoryMb,
       int masterDiskGb, String masterDiskType, @Nullable String masterMachineType,
-      List<String> masterFlexVmMachineTypes, List<String> masterFlexVmDiskTypes,
+      List<List<String>> masterFlexVmMachineTypes, List<String> masterFlexVmDiskTypes,
       int workerNumNodes, int secondaryWorkerNumNodes, int workerCpus, int workerMemoryMb,
       int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
-      List<String> workerFlexVmMachineTypes, List<String> workerFlexVmDiskTypes,
+      List<List<String>> workerFlexVmMachineTypes, List<String> workerFlexVmDiskTypes,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
       @Nullable String tempBucket, @Nullable String serviceAccount, boolean preferExternalIp,
@@ -367,6 +370,14 @@ final class DataprocConf {
 
   public List<String> getWorkerFlexVmMachineTypes() {
     return formatMachineType(workerFlexVmMachineTypes, workerCpus, workerMemoryMb);
+  }
+
+  public List<Integer> getMasterFlexVmRanks() {
+    return getRanks(masterFlexVmMachineTypes);
+  }
+
+  public List<Integer> getWorkerFlexVmRanks() {
+    return getRanks(workerFlexVmMachineTypes);
   }
 
   public List<String> getMasterFlexVmDiskTypes() {
@@ -596,6 +607,11 @@ final class DataprocConf {
   }
 
   private String getMachineType(@Nullable String type, int cpus, int memoryMb) {
+    // A full machine type always contains a hyphen (n2-standard-2, custom-2-8192) while a family
+    // never does (n1, n2d, e2), so full names skip the derivation below and are used as given.
+    if (type != null && type.contains("-")) {
+      return type.toLowerCase(Locale.ROOT);
+    }
     // n1 is of format custom-cpu-memory
     // other types are of format type-custom-cpu-memory. For example, n2d-custom-4-16
     String typePrefix = type == null || type.isEmpty() || "n1".equals(type.toLowerCase())
@@ -705,7 +721,8 @@ final class DataprocConf {
     if (masterDiskType == null) {
       masterDiskType = "pd-standard";
     }
-    final List<String> masterFlexVmMachineTypes = getStringList(properties, MASTER_FLEX_VM_MACHINE_TYPES);
+    final List<List<String>> masterFlexVmMachineTypes =
+        getRankedStringList(properties, MASTER_FLEX_VM_MACHINE_TYPES);
     final List<String> masterFlexVmDiskTypes = getDiskTypeList(properties, MASTER_FLEX_VM_DISK_TYPES);
     final int workerDiskGb = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
@@ -713,7 +730,8 @@ final class DataprocConf {
     if (workerDiskType == null) {
       workerDiskType = "pd-standard";
     }
-    final List<String> workerFlexVmMachineTypes = getStringList(properties, WORKER_FLEX_VM_MACHINE_TYPES);
+    final List<List<String>> workerFlexVmMachineTypes =
+        getRankedStringList(properties, WORKER_FLEX_VM_MACHINE_TYPES);
     final List<String> workerFlexVmDiskTypes = getDiskTypeList(properties, WORKER_FLEX_VM_DISK_TYPES);
 
     final long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
@@ -887,12 +905,40 @@ final class DataprocConf {
     }
   }
 
-  private List<String> formatMachineType(List<String> flexTypes, int cpus, int memoryMb) {
+  private List<String> formatMachineType(List<List<String>> flexTypes, int cpus, int memoryMb) {
     List<String> result = flexTypes.stream()
+      .flatMap(List::stream)
       .map(type -> getMachineType(type, cpus, memoryMb))
       .collect(Collectors.toList());
 
     return Collections.unmodifiableList(result);
+  }
+
+  /**
+   * Returns the rank of each machine type, in the same order as the flattened machine types.
+   */
+  private static List<Integer> getRanks(List<List<String>> flexTypes) {
+    List<Integer> ranks = new ArrayList<>();
+    for (int rank = 0; rank < flexTypes.size(); rank++) {
+      ranks.addAll(Collections.nCopies(flexTypes.get(rank).size(), rank));
+    }
+    return Collections.unmodifiableList(ranks);
+  }
+
+  /**
+   * Parses a property where ';' separates ranks and ',' separates the values within a rank.
+   * For example, "n4-standard-4, n2; e2" gives rank 0 = [n4-standard-4, n2] and rank 1 = [e2].
+   */
+  private static List<List<String>> getRankedStringList(Map<String, String> properties,
+      String key) {
+    String val = getString(properties, key);
+    if (Strings.isNullOrEmpty(val)) {
+      return Collections.emptyList();
+    }
+    return RANK_SPLITTER.splitToList(val).stream()
+      .map(COMMA_SPLITTER::splitToList)
+      .filter(group -> !group.isEmpty())
+      .collect(Collectors.toList());
   }
 
   /**

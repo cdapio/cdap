@@ -715,6 +715,26 @@ public class DataprocProvisionerTest {
   }
 
   @Test
+  public void testAcceptsFullMachineTypeNamesAndRanks() {
+    Map<String, String> props = baseProps();
+    props.put("masterMachineType", "n2-standard-2");
+    props.put("workerMachineType", "n2");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4-standard-4, e2 ; ; custom-2-8192");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "N4-HIGHMEM-8, n1");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertEquals("n2-standard-2", conf.getMasterMachineType());
+    Assert.assertEquals("n2-custom-2-8192", conf.getWorkerMachineType());
+    Assert.assertEquals(Arrays.asList("n4-standard-4", "e2-custom-2-8192", "custom-2-8192"),
+                        conf.getWorkerFlexVmMachineTypes());
+    Assert.assertEquals(Arrays.asList(0, 0, 1), conf.getWorkerFlexVmRanks());
+    Assert.assertEquals(Arrays.asList("n4-highmem-8", "custom-2-8192"),
+                        conf.getMasterFlexVmMachineTypes());
+    Assert.assertEquals(Arrays.asList(0, 0), conf.getMasterFlexVmRanks());
+  }
+
+  @Test
   public void testFlexVmDefaultEmpty() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
