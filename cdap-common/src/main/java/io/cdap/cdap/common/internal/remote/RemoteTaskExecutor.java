@@ -138,7 +138,10 @@ public class RemoteTaskExecutor {
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
           }
 
-          // Encrypting user credentials for task worker calls
+          HttpRequest httpRequest = requestBuilder.build();
+
+          // Encrypting user credentials for task worker calls. Nothing may run between swapping in
+          // the encrypted copy and the try below, or a failure would skip the restore.
           Credential currentCredential = SecurityRequestContext.getUserCredential();
           if (isWorkerEncryptionRequired && currentCredential != null) {
             String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
@@ -147,7 +150,6 @@ public class RemoteTaskExecutor {
             SecurityRequestContext.setUserCredential(encryptedCredential);
           }
 
-          HttpRequest httpRequest = requestBuilder.build();
           HttpResponse httpResponse;
           try {
             httpResponse = remoteClient.execute(httpRequest);
