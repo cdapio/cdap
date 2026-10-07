@@ -99,6 +99,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int concurrentRequestLimit;
+  /** Only the task worker manager reads the draining header; without it, answer as before. */
+  private final boolean sendDrainingHeader;
 
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
@@ -108,6 +110,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
+    this.sendDrainingHeader = TaskWorkerManager.isEnabled(cConf);
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
@@ -212,6 +215,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
     if (mustRestart.get()) {
+      if (!sendDrainingHeader) {
+        responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+        return;
+      }
       // Tell the proxy this pod is about to restart, so it backs off instead of retrying it.
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS,
           new DefaultHttpHeaders().set(Constants.Gateway.HEADER_WORKER_DRAINING, "true"));
