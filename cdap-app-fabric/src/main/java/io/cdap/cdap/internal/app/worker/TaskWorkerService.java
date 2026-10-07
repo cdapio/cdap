@@ -29,6 +29,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
+import io.cdap.cdap.common.internal.remote.TaskWorkerManager;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.http.ChannelPipelineModifier;
@@ -84,7 +85,7 @@ public class TaskWorkerService extends AbstractIdleService {
             Constants.Service.TASK_WORKER, false)
         .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.TaskWorker.PORT))
-        .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
+        .setExecThreadPoolSize(getExecThreadPoolSize(cConf))
         .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
@@ -127,6 +128,20 @@ public class TaskWorkerService extends AbstractIdleService {
      * the service gets stopped.
      */
     stop();
+  }
+
+  /**
+   * Tasks hold their exec thread until they finish. With the task worker manager on, isolation
+   * no longer clamps the request limit to 1, so keep one thread more than the limit to leave
+   * /ping answerable when the worker is full. Without the manager the configured size is used.
+   */
+  @VisibleForTesting
+  static int getExecThreadPoolSize(CConfiguration cConf) {
+    int execThreads = cConf.getInt(TaskWorker.EXEC_THREADS);
+    if (!TaskWorkerManager.isEnabled(cConf)) {
+      return execThreads;
+    }
+    return Math.max(execThreads, cConf.getInt(TaskWorker.REQUEST_LIMIT) + 1);
   }
 
   @VisibleForTesting

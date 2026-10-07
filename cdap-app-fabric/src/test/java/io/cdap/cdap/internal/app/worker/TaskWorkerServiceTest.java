@@ -32,6 +32,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -492,6 +493,31 @@ public class TaskWorkerServiceTest {
     Assert.assertEquals(connectionRefusedCount, 1);
     TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
+  }
+
+  @Test
+  public void testExecThreadPoolSizeIsUnchangedWithoutTheManager() {
+    // RBAC off, with and without the flag.
+    Assert.assertEquals(10, TaskWorkerService.getExecThreadPoolSize(poolConf(false, false, 10)));
+    Assert.assertEquals(10, TaskWorkerService.getExecThreadPoolSize(poolConf(true, false, 10)));
+    // RBAC on, flag off.
+    Assert.assertEquals(10, TaskWorkerService.getExecThreadPoolSize(poolConf(false, true, 10)));
+  }
+
+  @Test
+  public void testExecThreadPoolSizeLeavesAThreadForPingWithTheManager() {
+    Assert.assertEquals(11, TaskWorkerService.getExecThreadPoolSize(poolConf(true, true, 10)));
+    Assert.assertEquals(20, TaskWorkerService.getExecThreadPoolSize(poolConf(true, true, 20)));
+  }
+
+  private CConfiguration poolConf(boolean managerFlag, boolean rbac, int execThreads) {
+    CConfiguration cConf = createCConf();
+    cConf.setBoolean("feature." + Feature.RBAC_TASK_WORKER_MANAGER.getFeatureFlagString(),
+        managerFlag);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, rbac);
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 10);
+    cConf.setInt(TaskWorker.EXEC_THREADS, execThreads);
+    return cConf;
   }
 
   public static class TestRunnableClass implements RunnableTask {
