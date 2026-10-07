@@ -148,11 +148,15 @@ public class RemoteTaskExecutor {
           }
 
           HttpRequest httpRequest = requestBuilder.build();
-          HttpResponse httpResponse = remoteClient.execute(httpRequest);
-
-          // Resetting user credentials for further execution of current request
-          if (isWorkerEncryptionRequired) {
-            SecurityRequestContext.setUserCredential(currentCredential);
+          HttpResponse httpResponse;
+          try {
+            httpResponse = remoteClient.execute(httpRequest);
+          } finally {
+            // Resetting user credentials for further execution of current request. Restore even on
+            // failure, or the next retry would encrypt the already encrypted credential.
+            if (isWorkerEncryptionRequired) {
+              SecurityRequestContext.setUserCredential(currentCredential);
+            }
           }
 
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
