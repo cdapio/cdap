@@ -43,6 +43,8 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     private final String targetWorkerAddress;
 
     private boolean decremented = false;
+    /** Set once the frontend owns the reply (a 503) and the caller connection's close. */
+    private boolean answeredByFrontend = false;
 
     ProxyBackendHandler(Channel clientChannel, PodLeaseManager podLeaseManager, String targetWorkerAddress) {
         this.clientChannel = clientChannel;
@@ -118,8 +120,11 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         releaseSlot();
-        // If backend worker disconnects or crashes, flush and close the client socket
-        ProxyFrontendHandler.closeOnFlush(clientChannel);
+        // If backend worker disconnects or crashes, flush and close the client socket, unless the
+        // frontend is answering 503 and closes it once the request is drained.
+        if (!answeredByFrontend) {
+            ProxyFrontendHandler.closeOnFlush(clientChannel);
+        }
         ctx.fireChannelInactive();
     }
 
@@ -151,5 +156,10 @@ class ProxyBackendHandler extends ChannelInboundHandlerAdapter {
         // Fires before exceptionCaught, so this request's slot is still held and released here.
         podLeaseManager.markUnavailable(targetWorkerAddress, "a failed TLS handshake");
         decremented = true;
+        // No request byte got past TLS, so the task didn't start: let the frontend answer 503.
+        // Both channels share one event loop, so this runs inline.
+        answeredByFrontend = true;
+        clientChannel.pipeline().fireUserEventTriggered(
+            ProxyFrontendHandler.WorkerUnreachableEvent.INSTANCE);
     }
 }
