@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
@@ -42,6 +43,7 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -107,11 +109,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
+    this(cConf, new RunnableTaskLauncher(cConf, discoveryService, discoveryServiceClient,
+        metricsCollectionService), stopper, metricsCollectionService);
+  }
+
+  /** Constructs the handler around an already built launcher, so tests can inject failures. */
+  @VisibleForTesting
+  TaskWorkerHttpHandlerInternal(CConfiguration cConf,
+      RunnableTaskLauncher runnableTaskLauncher, Consumer<String> stopper,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
-        discoveryService, discoveryServiceClient, metricsCollectionService);
+    this.runnableTaskLauncher = runnableTaskLauncher;
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
@@ -150,6 +160,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     };
 
     enablePeriodicRestart(cConf, stopper);
+  }
+
+  /** Returns the number of tasks currently holding a slot on this pod. */
+  @VisibleForTesting
+  int getRunningRequestCount() {
+    return runningRequestCount.get();
   }
 
   /**
@@ -222,57 +238,87 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
 
     long startTime = System.currentTimeMillis();
+    RunnableTaskRequest runnableTaskRequest;
+    RunnableTaskContext runnableTaskContext;
+    NamespaceId namespaceId;
+
+    // Reading the request runs no user code, so a failure only needs to release the slot.
     try {
-      RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
+      runnableTaskRequest = GSON.fromJson(
           request.content().toString(StandardCharsets.UTF_8),
           RunnableTaskRequest.class);
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
-          runnableTaskRequest);
-      try {
-        NamespaceId namespaceId;
-        if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
-          // For system app tasks
-          namespaceId = new NamespaceId(
-              runnableTaskRequest.getParam().getEmbeddedTaskRequest()
-                  .getNamespace());
-        } else {
-          namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
-        }
-        // set the GcpMetadataTaskContext before running the task.
-        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId,
-            cConf);
-        runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
-        TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
-            startTime, runnableTaskContext.isTerminateOnComplete(),
-            runnableTaskRequest);
-        responder.sendContent(HttpResponseStatus.OK,
-            new RunnableTaskBodyProducer(runnableTaskContext,
-                taskCompletionConsumer, taskDetails),
-            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-                MediaType.APPLICATION_OCTET_STREAM));
-      } catch (ClassNotFoundException | ClassCastException ex) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-            exceptionToJson(ex),
-            new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-                "application/json"));
-        // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
-        taskCompletionConsumer.accept(false,
-            new TaskDetails(metricsCollectionService, startTime, false,
-                runnableTaskRequest));
-      } finally {
-        // clear the GcpMetadataTaskContext after the task is completed.
-        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
+      runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
+      if (runnableTaskRequest.getParam().getEmbeddedTaskRequest() != null) {
+        // For system app tasks
+        namespaceId = new NamespaceId(
+            runnableTaskRequest.getParam().getEmbeddedTaskRequest().getNamespace());
+      } else {
+        namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
       }
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
           request.content().toString(StandardCharsets.UTF_8), ex);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-          exceptionToJson(ex),
-          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-              "application/json"));
+      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, true);
+      return;
+    }
+
+    // Exactly one path below calls the completion consumer.
+    try {
+      // set the GcpMetadataTaskContext before running the task.
+      GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId, cConf);
+      runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+      TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
+          startTime, runnableTaskContext.isTerminateOnComplete(),
+          runnableTaskRequest);
+      responder.sendContent(HttpResponseStatus.OK,
+          new RunnableTaskBodyProducer(runnableTaskContext,
+              taskCompletionConsumer, taskDetails),
+          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+              MediaType.APPLICATION_OCTET_STREAM));
+    } catch (ClassNotFoundException | ClassCastException ex) {
+      // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate
+      // the runner.
+      failTask(responder, HttpResponseStatus.BAD_REQUEST, ex, startTime, runnableTaskRequest,
+          false);
+    } catch (Exception ex) {
+      LOG.error("Failed to run task {}",
+          request.content().toString(StandardCharsets.UTF_8), ex);
       // Potentially ran user code, hence terminate the runner.
+      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, true);
+    } catch (Throwable t) {
+      // An Error (e.g. NoClassDefFoundError) from user code: give the slot back, then rethrow.
       taskCompletionConsumer.accept(false,
           new TaskDetails(metricsCollectionService, startTime, true, null));
+      throw t;
+    } finally {
+      clearTaskContext();
+    }
+  }
+
+  /**
+   * Reports a failed task and releases its slot, even if the response can't be sent.
+   *
+   * @param terminateOnComplete whether user code may have run
+   * @param request the originating request, or null if it couldn't be read
+   */
+  private void failTask(HttpResponder responder, HttpResponseStatus status, Exception ex,
+      long startTime, @Nullable RunnableTaskRequest request, boolean terminateOnComplete) {
+    try {
+      responder.sendString(status, exceptionToJson(ex),
+          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
+    } finally {
+      taskCompletionConsumer.accept(false,
+          new TaskDetails(metricsCollectionService, startTime, terminateOnComplete, request));
+    }
+  }
+
+  /** Clears the GcpMetadataTaskContext after the task is completed. */
+  private void clearTaskContext() {
+    try {
+      GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
+    } catch (IOException e) {
+      // The task's slot was already released; failing here must not release it again.
+      LOG.error("Failed to wipe the service account credential after the task finished.", e);
     }
   }
 
