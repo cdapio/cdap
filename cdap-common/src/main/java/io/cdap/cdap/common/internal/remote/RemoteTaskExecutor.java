@@ -54,7 +54,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.NoRouteToHostException;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -78,15 +77,11 @@ public class RemoteTaskExecutor {
   private static final String SYSTEM_WORKER_URL = "/system/run";
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
       (throwable instanceof RetryableException) || (throwable instanceof ServiceException)
-          || (throwable instanceof SocketTimeoutException) || (throwable instanceof SocketException)
-          || (throwable instanceof NoRouteToHostException);
-  // A read timeout or reset may come after the worker started the task, so direct calls only
-  // retry RetryableExceptions, which include refused connections.
+          || (throwable instanceof SocketTimeoutException);
+  // Also used behind the proxy: it answers 503 (a RetryableException) only when the request never
+  // reached a worker, and a reset or read timeout may come after the task started.
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
-      throwable instanceof RetryableException;
-  // The proxy closes the connection without a response when it can't reach a worker.
-  private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER_PROXY = throwable ->
-      throwable instanceof RetryableException || isSocketFailure(throwable);
+      (throwable instanceof RetryableException);
   private static final String PROXY_FEATURE_FLAG_KEY =
       "feature." + Feature.RBAC_TASK_WORKER_MANAGER.getFeatureFlagString();
   /** Guards the deployment level diagnosis so it is logged once per JVM rather than per task. */
@@ -137,8 +132,7 @@ public class RemoteTaskExecutor {
       this.workerUrl = TASK_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.TASK_WORKER + ".");
-      this.retryablePredicate = rbacProxyEnabled
-          ? RETRYABLE_PREDICATE_TASK_WORKER_PROXY : RETRYABLE_PREDICATE_TASK_WORKER;
+      this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
       this.isWorkerEncryptionRequired = true;
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;
@@ -230,14 +224,6 @@ public class RemoteTaskExecutor {
           throw new RetryableException(
               String.format("Received exception %s for %s", e.getMessage(),
                   runnableTaskRequest.getClassName()));
-        } catch (ServiceException e) {
-          // 503 is already retryable; retry 502 and 504 too, which are plain ServiceExceptions.
-          if (e.getStatusCode() == HttpResponseStatus.BAD_GATEWAY.code()
-              || e.getStatusCode() == HttpResponseStatus.GATEWAY_TIMEOUT.code()) {
-            throw new RetryableException("Proxy infrastructure unreachable (HTTP "
-                + e.getStatusCode() + "). Forcing retry.", e);
-          }
-          throw e; // Non-infrastructure ServiceExceptions (like 403 or 401) must fail immediately
         }
       }, retryStrategy, retryablePredicate);
     } catch (ServiceException se) {
@@ -255,26 +241,27 @@ public class RemoteTaskExecutor {
                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime)),
             e, HttpResponseStatus.TOO_MANY_REQUESTS);
       }
-      if (rbacProxyEnabled && isProxyUnreachable(e)) {
-        throw proxyUnreachableException(e, startTime);
+      if (rbacProxyEnabled && e instanceof ServiceUnavailableException) {
+        throw proxyUnreachableException((ServiceUnavailableException) e, startTime);
       }
       throw e;
     }
   }
 
-  /** Returns true for transport and discovery failures, where the proxy never answered. */
-  private static boolean isProxyUnreachable(Exception e) {
-    return e instanceof ServiceUnavailableException || isSocketFailure(e);
-  }
-
-  /** Returns true if the proxy connection failed; covers NoRouteToHostException too. */
-  private static boolean isSocketFailure(Throwable t) {
-    return t instanceof SocketException || t instanceof SocketTimeoutException;
-  }
-
-  /** Builds the error for a proxy that never answered, pointing at the proxy deployment. */
-  private ServiceException proxyUnreachableException(Exception cause, long startTime) {
+  /**
+   * Builds the error for a task the proxy path never ran: the proxy answered that no task worker
+   * was reachable, or the proxy itself was refused or not discovered.
+   */
+  private ServiceException proxyUnreachableException(ServiceUnavailableException cause,
+      long startTime) {
     long elapsedSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
+    if (ProxyFrontendHandler.WORKER_UNREACHABLE_BODY.equals(cause.getMessage())) {
+      return new ServiceException(
+          String.format("The %s proxy could not reach a task worker for %d seconds, so the task "
+                  + "was not run. Check that the %s pods are running and accepting connections.",
+              Constants.Service.TASK_WORKER_MANAGER, elapsedSeconds, Constants.Service.TASK_WORKER),
+          cause, HttpResponseStatus.SERVICE_UNAVAILABLE);
+    }
     warnOnceAboutUnreachableProxy();
     return new ServiceException(
         String.format("Could not reach the %s proxy after %d seconds, so the task was not run. "

@@ -37,6 +37,12 @@ import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -46,9 +52,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -254,25 +262,111 @@ public class RemoteTaskExecutorRbacProxyTest {
   }
 
   @Test
-  public void testGatewayErrorsAreRetried() {
-    register(Constants.Service.TASK_WORKER_MANAGER);
+  public void testGatewayErrorsAreNotRetried() throws Exception {
+    // Same as develop with the flag off; behind the proxy a 502 is a discovery bug and a 504
+    // never comes from the proxy, so neither is worth a retry.
+    for (CConfiguration cConf : Arrays.asList(proxyEnabledConf(), flagOffConf())) {
+      String serviceName = TaskWorkerManager.isProxyEnabled(cConf)
+          ? Constants.Service.TASK_WORKER_MANAGER : Constants.Service.TASK_WORKER;
+      register(serviceName);
+      for (HttpResponseStatus status : Arrays.asList(HttpResponseStatus.BAD_GATEWAY,
+          HttpResponseStatus.GATEWAY_TIMEOUT)) {
+        workerHandler.reset();
+        workerHandler.setStatusCode(status.code());
 
-    for (HttpResponseStatus status : Arrays.asList(HttpResponseStatus.BAD_GATEWAY,
-        HttpResponseStatus.GATEWAY_TIMEOUT)) {
-      workerHandler.reset();
-      workerHandler.setStatusCode(status.code());
+        try {
+          newExecutor(cConf).runTask(taskRequest(TENANT_NAMESPACE));
+          Assert.fail("Expected " + status + " to fail the task via " + serviceName);
+        } catch (ServiceException e) {
+          Assert.assertEquals(status.code(), e.getStatusCode());
+        }
+
+        Assert.assertEquals(status + " via " + serviceName, 1, workerHandler.getRequestCount());
+      }
+      registrations.forEach(Cancellable::cancel);
+      registrations.clear();
+    }
+  }
+
+  @Test
+  public void testProxyWorkerUnreachableIsRetriedThenReportedAsNotRun() {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    workerHandler.setStatusCode(HttpResponseStatus.SERVICE_UNAVAILABLE.code());
+    workerHandler.setResponseBody(ProxyFrontendHandler.WORKER_UNREACHABLE_BODY);
+
+    try {
+      newExecutor(proxyEnabledConf()).runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected the task to fail once the retry budget was exhausted");
+    } catch (Exception e) {
+      Assert.assertTrue("Expected ServiceException but got " + e.getClass(),
+          e instanceof ServiceException);
+      Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(),
+          ((ServiceException) e).getStatusCode());
+      // The proxy answered, so the error must point at the workers, not the proxy deployment.
+      Assert.assertTrue("Error should blame the task workers, got: " + e.getMessage(),
+          e.getMessage().contains("could not reach a task worker"));
+    }
+
+    Assert.assertTrue("Expected more than one attempt, got " + workerHandler.getRequestCount(),
+        workerHandler.getRequestCount() > 1);
+  }
+
+  @Test
+  public void testProxyReadTimeoutIsNotRetried() {
+    CConfiguration cConf = proxyEnabledConf();
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    workerHandler.setResponseDelayMillis(1000L);
+    RemoteTaskExecutor executor = new RemoteTaskExecutor(cConf, new NoOpMetricsCollectionService(),
+        newClientFactory(cConf), RemoteTaskExecutor.Type.TASK_WORKER,
+        new HttpRequestConfig(1000, 200, false), mockAeadCipher);
+
+    try {
+      executor.runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected the read timeout to surface");
+    } catch (Exception e) {
+      Assert.assertTrue("Expected SocketTimeoutException but got " + e.getClass(),
+          e instanceof SocketTimeoutException);
+    }
+
+    // The worker behind the proxy may already be running the task, so a retry could run it twice.
+    Assert.assertEquals(1, workerHandler.getRequestCount());
+  }
+
+  @Test
+  public void testSystemWorkerConnectionResetIsNotRetried() throws Exception {
+    // Develop behaviour: a reset may come after the system worker started the task.
+    try (ServerSocket resettingWorker = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
+      AtomicInteger connections = new AtomicInteger();
+      Thread acceptor = new Thread(() -> {
+        while (!resettingWorker.isClosed()) {
+          try (Socket socket = resettingWorker.accept()) {
+            connections.incrementAndGet();
+            socket.setSoLinger(true, 0);
+          } catch (IOException e) {
+            return;
+          }
+        }
+      });
+      acceptor.setDaemon(true);
+      acceptor.start();
+      registrations.add(discoveryService.register(new Discoverable(Constants.Service.SYSTEM_WORKER,
+          new InetSocketAddress(InetAddress.getLoopbackAddress(), resettingWorker.getLocalPort()))));
+      CConfiguration cConf = flagOffConf();
+      RemoteTaskExecutor executor = new RemoteTaskExecutor(cConf,
+          new NoOpMetricsCollectionService(), newClientFactory(cConf),
+          RemoteTaskExecutor.Type.SYSTEM_WORKER, mockAeadCipher);
 
       try {
-        newExecutor(proxyEnabledConf()).runTask(taskRequest(TENANT_NAMESPACE));
-        Assert.fail("Expected " + status + " to fail once the retry budget was exhausted");
-      } catch (Exception e) {
-        Assert.assertTrue("Expected a ServiceException cause for " + status + " but got " + e,
-            e.getCause() instanceof ServiceException);
-        Assert.assertEquals(status.code(), ((ServiceException) e.getCause()).getStatusCode());
+        executor.runTask(taskRequest(TENANT_NAMESPACE));
+        Assert.fail("Expected the reset to surface");
+      } catch (SocketException expected) {
+        // The develop predicate doesn't retry SocketException for system workers.
       }
 
-      Assert.assertTrue("Expected " + status + " to be retried, got "
-          + workerHandler.getRequestCount() + " attempts", workerHandler.getRequestCount() > 1);
+      // HttpURLConnection itself may resend a POST once on a reset (sun.net.http.retryPost);
+      // anything more would come from the executor's retry loop.
+      Assert.assertTrue("Expected at most 2 connections, got " + connections.get(),
+          connections.get() <= 2);
     }
   }
 
@@ -384,6 +478,13 @@ public class RemoteTaskExecutorRbacProxyTest {
     return cConf;
   }
 
+  /** Builds a configuration with RBAC on and the flag off, which must behave like develop. */
+  private static CConfiguration flagOffConf() {
+    CConfiguration cConf = proxyEnabledConf();
+    cConf.setBoolean(featureFlagKey(), false);
+    return cConf;
+  }
+
   /** Builds a proxy enabled configuration with a single task worker. */
   private static CConfiguration singleWorkerConf() {
     CConfiguration cConf = proxyEnabledConf();
@@ -464,6 +565,7 @@ public class RemoteTaskExecutorRbacProxyTest {
     private final AtomicInteger statusCode =
         new AtomicInteger(HttpResponseStatus.OK.code());
     private final AtomicLong responseDelayMillis = new AtomicLong();
+    private final AtomicReference<String> responseBody = new AtomicReference<>();
 
     @POST
     @Path("/worker/run")
@@ -488,7 +590,12 @@ public class RemoteTaskExecutorRbacProxyTest {
 
       int code = statusCode.get();
       if (code != HttpResponseStatus.OK.code()) {
-        responder.sendStatus(HttpResponseStatus.valueOf(code));
+        String body = responseBody.get();
+        if (body == null) {
+          responder.sendStatus(HttpResponseStatus.valueOf(code));
+        } else {
+          responder.sendString(HttpResponseStatus.valueOf(code), body);
+        }
         return;
       }
       responder.sendString(HttpResponseStatus.OK, TASK_RESULT);
@@ -499,6 +606,11 @@ public class RemoteTaskExecutorRbacProxyTest {
       requestCount.set(0);
       statusCode.set(HttpResponseStatus.OK.code());
       responseDelayMillis.set(0L);
+      responseBody.set(null);
+    }
+
+    void setResponseBody(String body) {
+      responseBody.set(body);
     }
 
     void setStatusCode(int code) {
