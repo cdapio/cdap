@@ -292,12 +292,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
           request.content().toString(StandardCharsets.UTF_8), ex);
-      // Potentially ran user code, hence terminate the runner.
-      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime, null, true);
+      // Potentially ran user code, hence terminate the runner. The request names the task class,
+      // which the restart check and the metrics need.
+      failTask(responder, HttpResponseStatus.INTERNAL_SERVER_ERROR, ex, startTime,
+          runnableTaskRequest, true);
     } catch (Throwable t) {
       // An Error (e.g. NoClassDefFoundError) from user code: give the slot back, then rethrow.
       taskCompletionConsumer.accept(false,
-          new TaskDetails(metricsCollectionService, startTime, true, null));
+          new TaskDetails(metricsCollectionService, startTime, true, runnableTaskRequest));
       throw t;
     } finally {
       clearTaskContext();
