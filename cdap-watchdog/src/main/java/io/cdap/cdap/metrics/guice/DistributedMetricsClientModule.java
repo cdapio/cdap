@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.metrics.guice;
 
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
@@ -24,11 +23,9 @@ import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
-import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 
@@ -58,7 +55,7 @@ final class DistributedMetricsClientModule extends PrivateModule {
       return datumWriterFactory.create(METRIC_RECORD_TYPE,
           schemaGenerator.generate(METRIC_RECORD_TYPE.getType()));
     } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

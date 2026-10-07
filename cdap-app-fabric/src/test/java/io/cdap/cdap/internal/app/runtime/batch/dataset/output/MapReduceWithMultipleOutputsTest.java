@@ -25,6 +25,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.List;
 import org.apache.twill.filesystem.Location;
@@ -70,7 +71,10 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
   private List<String> readFromOutput(FileSet fileSet, String relativePath) throws IOException {
     // small amount of data, so expect all data from just 1 file
     Location location = fileSet.getLocation(relativePath).append("part-m-00000");
-    return CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(location), Charsets.UTF_8));
+    try (InputStreamReader reader = new InputStreamReader(Locations.newInputSupplier(location).getInput(),
+                                                          Charsets.UTF_8)) {
+      return CharStreams.readLines(reader);
+    }
   }
 
   @Test

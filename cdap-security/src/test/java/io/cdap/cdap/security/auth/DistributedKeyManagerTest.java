@@ -31,6 +31,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -117,8 +118,8 @@ DistributedKeyManagerTest extends TestTokenManager {
         new TestingTokenManager(manager1, injector1.getInstance(UserIdentityCodec.class));
     TestingTokenManager tokenManager2 =
         new TestingTokenManager(manager2, injector2.getInstance(UserIdentityCodec.class));
-    tokenManager1.startAndWait();
-    tokenManager2.startAndWait();
+    tokenManager1.startAsync().awaitRunning();
+    tokenManager2.startAsync().awaitRunning();
 
     long now = System.currentTimeMillis();
     UserIdentity ident1 = new UserIdentity("testuser", UserIdentity.IdentifierType.EXTERNAL,
@@ -136,8 +137,8 @@ DistributedKeyManagerTest extends TestTokenManager {
     assertEquals(token1.getIdentifier().getGroups(), token2.getIdentifier().getGroups());
     assertEquals(token1, token2);
 
-    tokenManager1.stopAndWait();
-    tokenManager2.stopAndWait();
+    tokenManager1.stopAsync().awaitTerminated();
+    tokenManager2.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -160,21 +161,21 @@ DistributedKeyManagerTest extends TestTokenManager {
     DistributedKeyManager keyManager = getKeyManager(injector1, true);
     TokenManager tokenManager = new TokenManager(keyManager,
         injector1.getInstance(UserIdentityCodec.class));
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
     return new ImmutablePair<>(tokenManager, injector1.getInstance(AccessTokenCodec.class));
   }
 
   private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader)
       throws Exception {
     ZKClientService zk = injector.getInstance(ZKClientService.class);
-    zk.startAndWait();
+    zk.startAsync().awaitRunning();
     WaitableDistributedKeyManager keyManager =
         new WaitableDistributedKeyManager(injector.getInstance(CConfiguration.class),
             injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
             })),
             zk);
 
-    keyManager.startAndWait();
+    keyManager.startAsync().awaitRunning();
     if (expectLeader) {
       Tasks.waitFor(true, () -> keyManager.getCurrentKey() != null, 5L, TimeUnit.SECONDS);
     }

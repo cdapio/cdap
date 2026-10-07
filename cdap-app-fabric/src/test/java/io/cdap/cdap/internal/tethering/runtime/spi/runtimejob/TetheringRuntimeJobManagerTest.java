@@ -137,11 +137,11 @@ public class TetheringRuntimeJobManagerTest {
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     tetheringStore = injector.getInstance(TetheringStore.class);
     PeerMetadata metadata = new PeerMetadata(Collections.singletonList(new NamespaceAllocation(TETHERED_NAMESPACE_NAME,
                                                                                                null,
@@ -163,11 +163,11 @@ public class TetheringRuntimeJobManagerTest {
   @AfterClass
   public static void tearDown() throws TopicNotFoundException, IOException {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
     messagingService.deleteTopic(topicId);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 

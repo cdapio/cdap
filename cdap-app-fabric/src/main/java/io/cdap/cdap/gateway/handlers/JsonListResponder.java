@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.gateway.handlers;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
 import io.cdap.http.ChunkResponder;
@@ -83,7 +82,7 @@ public abstract class JsonListResponder {
       prepareWrite();
       gson.toJson(value, value.getClass(), jsonWriter);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

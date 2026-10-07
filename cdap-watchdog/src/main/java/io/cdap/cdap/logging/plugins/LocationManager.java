@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Syncable;
 import java.io.Closeable;
@@ -175,7 +174,10 @@ public class LocationManager implements Flushable, Closeable, Syncable {
 
     for (LocationOutputStream locationOutputStream : locations) {
       // we do not want to throw any exception rather close all the open output streams. so close quietly
-      Closeables.closeQuietly(locationOutputStream);
+      try {
+        locationOutputStream.close();
+      } catch (Exception ignored) {
+      }
     }
 
     activeLocations.clear();

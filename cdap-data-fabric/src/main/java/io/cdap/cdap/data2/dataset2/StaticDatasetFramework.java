@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2;
 
-import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
@@ -62,7 +61,7 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework {
         }
       });
     } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -80,7 +79,7 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework {
           });
       return modules;
     } catch (ExecutionException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

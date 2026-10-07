@@ -61,7 +61,7 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
     txManager = new TransactionManager(new Configuration());
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -90,7 +90,7 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
 
   @AfterClass
   public static void afterClass() {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   @Override

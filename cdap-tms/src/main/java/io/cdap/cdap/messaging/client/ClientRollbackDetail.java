@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.messaging.client;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
 import java.io.ByteArrayInputStream;
@@ -92,7 +91,7 @@ final class ClientRollbackDetail implements RollbackDetail {
       return decoded;
     } catch (IOException e) {
       // This shouldn't happen, otherwise the server and client is not compatible
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

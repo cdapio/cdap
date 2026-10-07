@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -159,7 +158,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Runnable initialized: {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -291,14 +290,26 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.warn("Program {} interrupted.", name, e);
     } catch (ExecutionException e) {
       LOG.error("Program {} execution failed.", name, e);
-      throw Throwables.propagate(Throwables.getRootCause(e));
+      throw new RuntimeException(Throwables.getRootCause(e));
     } finally {
       LOG.info("Program run {} completed. Releasing resources.", programRunId);
 
       // Close the Program and the ProgramRunner
-      Closeables.closeQuietly(program);
+      try {
+
+        program.close();
+
+      } catch (Exception ignored) {
+
+      }
       if (programRunner instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) programRunner);
+        try {
+
+          ((Closeable) programRunner).close();
+
+        } catch (Exception ignored) {
+
+        }
       }
 
       stopCoreServices();
@@ -351,7 +362,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
           System.currentTimeMillis() - startTime);
 
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -483,16 +494,22 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private void startCoreServices() {
     // Starts the core services
     for (Service service : coreServices) {
-      service.startAndWait();
+      service.startAsync().awaitRunning();
     }
   }
 
   private void stopCoreServices() {
-    Closeables.closeQuietly(logAppenderInitializer);
+    try {
+
+      logAppenderInitializer.close();
+
+    } catch (Exception ignored) {
+
+    }
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
       } catch (Exception e) {
         LOG.warn("Exception raised when stopping service {} during program termination.", service,
             e);

@@ -70,13 +70,13 @@ public class ErrorLogsClassifierTest {
     List<MetricValues> metricValuesList = new ArrayList<>();
     MetricsCollectionService mockMetricsCollectionService =
         getMockCollectionService(metricValuesList);
-    mockMetricsCollectionService.startAndWait();
+    mockMetricsCollectionService.startAsync().awaitRunning();
     CConfiguration cConf = Mockito.mock(CConfiguration.class);
     ErrorLogsClassifier classifier = new ErrorLogsClassifier(cConf, mockMetricsCollectionService);
     classifier.classify(closeableIterator, responder, "namespace", "program", "app", "run");
     List<ErrorClassificationResponse> responses =
         GSON.fromJson(responder.getResponseContentAsString(), LIST_TYPE);
-    mockMetricsCollectionService.stopAndWait();
+    mockMetricsCollectionService.stopAsync().awaitTerminated();
     Assert.assertEquals(1, responses.size());
     Assert.assertEquals("stageName", responses.get(0).getStageName());
     Assert.assertEquals("errorCategory-'stageName'", responses.get(0).getErrorCategory());
@@ -98,7 +98,7 @@ public class ErrorLogsClassifierTest {
     List<MetricValues> metricValuesList = new ArrayList<>();
     MetricsCollectionService mockMetricsCollectionService =
         getMockCollectionService(metricValuesList);
-    mockMetricsCollectionService.startAndWait();
+    mockMetricsCollectionService.startAsync().awaitRunning();
     CConfiguration cConf = Mockito.mock(CConfiguration.class);
     ErrorLogsClassifier classifier = new ErrorLogsClassifier(cConf, mockMetricsCollectionService);
     LogEvent logEvent3 = new LogEvent(getEvent3(IllegalArgumentException.class.getName()),
@@ -112,10 +112,10 @@ public class ErrorLogsClassifierTest {
     Mockito.when(spy.getRuleList()).thenReturn(getRulesList());
     Mockito.doCallRealMethod().when(spy).classify(Mockito.any(), Mockito.any(), Mockito.any(),
         Mockito.any(), Mockito.any(), Mockito.any());
-    mockMetricsCollectionService.startAndWait();
+    mockMetricsCollectionService.startAsync().awaitRunning();
     CloseableIterator<LogEvent> closeableIterator = getCloseableIterator(events.iterator());
     spy.classify(closeableIterator, responder, "namespace", "program", "app", "run2");
-    mockMetricsCollectionService.stopAndWait();
+    mockMetricsCollectionService.stopAsync().awaitTerminated();
     List<ErrorClassificationResponse> responses =
         GSON.fromJson(responder.getResponseContentAsString(), LIST_TYPE);
     Assert.assertEquals(1, responses.size());

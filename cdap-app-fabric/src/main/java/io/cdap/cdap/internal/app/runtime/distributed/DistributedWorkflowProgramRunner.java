@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.Resources;
@@ -26,7 +25,6 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
-import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.api.workflow.WorkflowActionNode;
 import io.cdap.cdap.api.workflow.WorkflowConditionNode;
 import io.cdap.cdap.api.workflow.WorkflowForkNode;
@@ -169,7 +167,13 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
         }
       } finally {
         if (runner instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) runner);
+          try {
+
+            ((Closeable) runner).close();
+
+          } catch (Exception ignored) {
+
+          }
         }
       }
     }

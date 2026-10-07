@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.gateway.router;
 
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.security.KeyStores;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
 import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
 import io.cdap.cdap.gateway.router.handlers.ConfigBasedRequestBlockingHandler;
@@ -141,7 +142,7 @@ public class NettyRouter extends AbstractIdleService {
   protected void startUp() throws Exception {
     // If internal authorization enforcement is enabled, we avoid re-initialization of the token manager.
     if (SecurityUtil.isManagedSecurity(cConf) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
-      tokenValidator.startAndWait();
+      Services.startAndWait(tokenValidator);
     }
     ChannelGroup channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     serverCancellable = startServer(createServerBootstrap(channelGroup), channelGroup);
@@ -157,14 +158,13 @@ public class NettyRouter extends AbstractIdleService {
     serverCancellable.cancel();
     // If internal authorization enforcement is enabled, we avoid duplicate cleanup of the token manager.
     if (SecurityUtil.isManagedSecurity(cConf) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
-      tokenValidator.stopAndWait();
+      Services.stopAndWait(tokenValidator);
     }
 
     LOG.info("Stopped Netty Router.");
   }
 
-  @Override
-  protected Executor executor(final State state) {
+  protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
     return runnable -> {
       Thread t = new Thread(runnable, String.format("NettyRouter-%d", id.incrementAndGet()));

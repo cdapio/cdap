@@ -17,19 +17,16 @@
 package io.cdap.cdap.internal.app.runtime.worker;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
-import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.worker.WorkerSpecification;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -160,10 +157,16 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       ProgramController controller = new WorkerControllerServiceAdapter(worker,
           program.getId().run(runId));
-      worker.start();
+      worker.startAsync();
       return controller;
     } catch (Throwable t) {
-      Closeables.closeQuietly(pluginInstantiator);
+      try {
+
+        pluginInstantiator.close();
+
+      } catch (Exception ignored) {
+
+      }
       throw t;
     }
   }

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.logbuffer.recover;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.logging.logbuffer.LogBufferEvent;
 import io.cdap.cdap.logging.logbuffer.LogBufferFileOffset;
@@ -169,7 +168,10 @@ public class LogBufferReader implements Closeable {
      */
     public void close() {
       // close input stream wrapped by this reader
-      Closeables.closeQuietly(inputStream);
+      try {
+        inputStream.close();
+      } catch (Exception ignored) {
+      }
     }
   }
 }

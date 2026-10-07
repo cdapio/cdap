@@ -127,7 +127,7 @@ public abstract class TableTest<T extends Table> {
   public void before() {
     Configuration txConf = new Configuration();
     TransactionManager txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     txClient = new InMemoryTxSystemClient(txManager);
   }
 

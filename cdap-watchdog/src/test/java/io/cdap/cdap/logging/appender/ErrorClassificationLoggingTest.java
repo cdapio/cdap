@@ -147,6 +147,6 @@ public class ErrorClassificationLoggingTest {
 
   @AfterClass
   public static void cleanUp() {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 }

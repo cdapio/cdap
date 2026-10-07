@@ -42,13 +42,13 @@ public class AccessTokenValidator extends AbstractIdleService implements TokenVa
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting up AccessTokenValidator service");
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down AccessTokenValidator service");
-    tokenManager.stopAndWait();
+    tokenManager.stopAsync().awaitTerminated();
   }
 
   @Override

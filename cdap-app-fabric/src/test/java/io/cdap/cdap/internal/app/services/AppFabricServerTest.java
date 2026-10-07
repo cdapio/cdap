@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Suppliers;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -49,15 +48,13 @@ public class AppFabricServerTest {
     try {
       AppFabricServer server = injector.getInstance(AppFabricServer.class);
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-      Service.State state = server.startAndWait();
-      Assert.assertSame(state, Service.State.RUNNING);
+      server.startAsync().awaitRunning();
 
       final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
         () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
       Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
 
-      state = server.stopAndWait();
-      Assert.assertSame(state, Service.State.TERMINATED);
+      server.stopAsync().awaitTerminated();
 
       Tasks.waitFor(true, () -> endpointStrategy.pick() == null, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
@@ -74,7 +71,7 @@ public class AppFabricServerTest {
     try {
       final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AppFabricServer appFabricServer = injector.getInstance(AppFabricServer.class);
-      appFabricServer.startAndWait();
+      appFabricServer.startAsync().awaitRunning();
       Assert.assertTrue(appFabricServer.isRunning());
 
       Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(
@@ -91,7 +88,7 @@ public class AppFabricServerTest {
       // Would throw exception if the server does not support ssl.
       // "javax.net.ssl.SSLException: Unrecognized SSL message, plaintext connection?"
       socket.startHandshake();
-      appFabricServer.stopAndWait();
+      appFabricServer.stopAsync().awaitTerminated();
     } finally {
       AppFabricTestHelper.shutdown();
     }

@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
@@ -73,7 +74,7 @@ public class GrantAccessToken {
   public void init() {
     // TokenManager may have already been started in AbstractServiceMain if internal auth is enabled.
     if (!tokenManager.isRunning()) {
-      tokenManager.start();
+      tokenManager.startAsync().awaitRunning();
     }
   }
 
@@ -81,7 +82,7 @@ public class GrantAccessToken {
    * Stop the TokenManager.
    */
   public void destroy() {
-    tokenManager.stop();
+    tokenManager.stopAsync();
   }
 
   /**

@@ -20,7 +20,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
@@ -168,7 +168,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("log", log)
         .add("offset", getOffset())
         .toString();
@@ -188,7 +188,7 @@ public class LogsServiceMainTest extends MasterServiceMainTestBase {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("offset", offset)
         .toString();
     }

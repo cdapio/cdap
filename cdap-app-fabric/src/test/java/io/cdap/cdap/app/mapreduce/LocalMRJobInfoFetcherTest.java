@@ -57,10 +57,10 @@ public class LocalMRJobInfoFetcherTest {
 
   public static Injector startMetricsService(CConfiguration conf) throws Exception {
     Injector injector = Guice.createInjector(new AppFabricTestModule(conf));
-    injector.getInstance(TransactionManager.class).startAndWait();
+    injector.getInstance(TransactionManager.class).startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
-    injector.getInstance(DatasetOpExecutorService.class).startAndWait();
-    injector.getInstance(DatasetService.class).startAndWait();
+    injector.getInstance(DatasetOpExecutorService.class).startAsync().awaitRunning();
+    injector.getInstance(DatasetService.class).startAsync().awaitRunning();
     return injector;
   }
 

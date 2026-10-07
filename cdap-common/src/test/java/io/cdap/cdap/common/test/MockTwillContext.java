@@ -56,7 +56,8 @@ public final class MockTwillContext implements TwillContext {
     try {
       return InetAddress.getLocalHost();
     } catch (UnknownHostException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

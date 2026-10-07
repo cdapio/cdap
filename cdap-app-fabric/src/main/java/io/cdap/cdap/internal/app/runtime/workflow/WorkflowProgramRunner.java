@@ -17,19 +17,16 @@
 package io.cdap.cdap.internal.app.runtime.workflow;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
-import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -153,11 +150,11 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       // service can be fully captured by the controller.
       ProgramController controller = new WorkflowProgramController(program.getId().run(runId),
           driver);
-      driver.start();
+      driver.startAsync();
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

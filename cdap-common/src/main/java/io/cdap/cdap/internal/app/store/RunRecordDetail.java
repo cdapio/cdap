@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
@@ -26,7 +27,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -186,7 +186,7 @@ public class RunRecordDetail extends RunRecord {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("programRunId", getProgramRunId())
         .add("startTs", getStartTs())
         .add("runTs", getRunTs())

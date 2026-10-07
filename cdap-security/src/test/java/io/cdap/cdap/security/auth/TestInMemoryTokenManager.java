@@ -36,7 +36,7 @@ public class TestInMemoryTokenManager extends TestTokenManager {
     Injector injector = Guice.createInjector(new IOModule(), new CoreSecurityRuntimeModule().getStandaloneModules(),
                                              new ConfigModule(), new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<>(tokenManager, tokenCodec);
   }

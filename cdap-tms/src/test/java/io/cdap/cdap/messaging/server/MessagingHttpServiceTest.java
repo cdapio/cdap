@@ -130,13 +130,13 @@ public class MessagingHttpServiceTest {
     );
 
     httpService = injector.getInstance(MessagingHttpService.class);
-    httpService.startAndWait();
+    httpService.startAsync().awaitRunning();
     client = new DefaultClientMessagingService(injector.getInstance(RemoteClientFactory.class), compressPayload);
   }
 
   @After
   public void afterTest() {
-    httpService.stopAndWait();
+    httpService.stopAsync().awaitTerminated();
   }
 
   @Test

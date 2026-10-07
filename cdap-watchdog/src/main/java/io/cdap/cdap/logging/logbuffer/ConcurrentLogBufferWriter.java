@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.logbuffer;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -92,8 +91,9 @@ public class ConcurrentLogBufferWriter implements Closeable {
     }
 
     if (!pendingLogBufferRequest.isSuccess()) {
-      Throwables.propagateIfInstanceOf(pendingLogBufferRequest.getFailureCause(),
-          IOException.class);
+      if (pendingLogBufferRequest.getFailureCause() instanceof IOException) {
+        throw (IOException) pendingLogBufferRequest.getFailureCause();
+      }
       throw new IOException("Unable to write log event to log buffer",
           pendingLogBufferRequest.getFailureCause());
     }

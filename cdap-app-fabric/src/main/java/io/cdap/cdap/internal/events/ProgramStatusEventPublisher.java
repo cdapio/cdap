@@ -108,12 +108,12 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
 
   @Override
   public void startPublish() {
-    super.startAndWait();
+    super.startAsync().awaitRunning();
   }
 
   @Override
   public void stopPublish() {
-    this.stop();
+    this.stopAsync();
   }
 
   @Override

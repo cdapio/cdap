@@ -40,10 +40,10 @@ public class StandaloneMainTest {
 
     Assert.assertSame(previewRunnerManager, previewRunStopper);
     TransactionManager txManager = sdk.getInjector().getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    previewHttpServer.startAndWait();
-    ((Service) previewRunnerManager).startAndWait();
-    ((Service) previewRunnerManager).stopAndWait();
-    previewHttpServer.stopAndWait();
+    txManager.startAsync().awaitRunning();
+    previewHttpServer.startAsync().awaitRunning();
+    ((Service) previewRunnerManager).startAsync().awaitRunning();
+    ((Service) previewRunnerManager).stopAsync().awaitTerminated();
+    previewHttpServer.stopAsync().awaitTerminated();
   }
 }

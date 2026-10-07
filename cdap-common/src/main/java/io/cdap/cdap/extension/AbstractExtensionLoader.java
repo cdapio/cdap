@@ -322,7 +322,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
         return input.toURI().toURL();
       } catch (MalformedURLException e) {
         // Shouldn't happen
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }).toArray(URL[]::new);
 

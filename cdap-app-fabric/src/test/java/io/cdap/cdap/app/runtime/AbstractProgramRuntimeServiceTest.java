@@ -110,7 +110,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.start();
+      service.startAsync().awaitRunning();
       return controller;
     };
 
@@ -123,7 +123,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                          null, launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       List<ProgramController> controllers = new ArrayList<>();
       for (int i = 0; i < 5; i++) {
@@ -151,7 +151,7 @@ public class AbstractProgramRuntimeServiceTest {
 
       Assert.assertEquals(2, threadNames.size());
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -166,7 +166,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                          null, launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
@@ -178,7 +178,7 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(true, () ->  runtimeService.list(ProgramType.WORKER).isEmpty(),
                     5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -190,20 +190,20 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
     ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId.run(runId));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
                                                                              null, null, null);
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                              extraInfo, launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
 
     // The lookup will get deadlock for CDAP-3716
     Assert.assertNotNull(runtimeService.lookup(programId, runId));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
 
-    runtimeService.stopAndWait();
+    runtimeService.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -229,7 +229,7 @@ public class AbstractProgramRuntimeServiceTest {
         }
       };
 
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       try {
         ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -268,11 +268,11 @@ public class AbstractProgramRuntimeServiceTest {
         }
 
       } finally {
-        runtimeService.stopAndWait();
+        runtimeService.stopAsync().awaitTerminated();
       }
 
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -289,7 +289,7 @@ public class AbstractProgramRuntimeServiceTest {
                                    remoteClientFactory, true);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null,
         launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
@@ -301,7 +301,7 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
                     5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -323,7 +323,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.start();
+      service.startAsync().awaitRunning();
       return controller;
     };
   }

@@ -117,7 +117,7 @@ public class RuntimeServiceRoutingTest {
           bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
             String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
             String expected = "Bearer " + Base64.getEncoder().encodeToString(
-              Hashing.md5().hashString(programRunId.toString()).asBytes());
+              Hashing.md5().hashString(programRunId.toString(), StandardCharsets.UTF_8).asBytes());
             if (!expected.equals(authHeader)) {
               throw new UnauthenticatedException("Program run " + programRunId + " is not authorized");
             }
@@ -143,12 +143,12 @@ public class RuntimeServiceRoutingTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     messagingService.createTopic(new DefaultTopicMetadata(NamespaceId.SYSTEM.topic("topic")));
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    runtimeServer.startAsync().awaitRunning();
 
     mockService = NettyHttpService.builder(MOCK_SERVICE)
       .setHost(InetAddress.getLocalHost().getCanonicalHostName())
@@ -164,9 +164,9 @@ public class RuntimeServiceRoutingTest {
   public void afterTest() throws Exception {
     mockServiceCancellable.cancel();
     mockService.stop();
-    runtimeServer.stopAndWait();
+    runtimeServer.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 
@@ -269,7 +269,8 @@ public class RuntimeServiceRoutingTest {
 
     @Override
     public Credential getCredentials() {
-      String credentialValue = Base64.getEncoder().encodeToString(Hashing.md5().hashString(programRunId.toString())
+      String credentialValue = Base64.getEncoder().encodeToString(Hashing.md5().hashString(programRunId.toString(),
+              StandardCharsets.UTF_8)
                                                                     .asBytes());
       return new Credential(credentialValue, Credential.CredentialType.EXTERNAL_BEARER);
     }

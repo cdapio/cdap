@@ -30,11 +30,11 @@ import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.guice.ExternalAuthenticationModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import java.util.concurrent.TimeUnit;
-import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,14 +101,15 @@ public class RouterMain extends DaemonMain {
       LOG.info("Router initialized.");
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
-      throw Throwables.propagate(t);
+      Throwables.propagateIfPossible(t);
+      throw new RuntimeException(t);
     }
   }
 
   @Override
   public void start() throws Exception {
     LOG.info("Starting Router...");
-    io.cdap.cdap.common.service.Services.startAndWait(zkClientService,
+    Services.startAndWait(zkClientService,
         cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
         TimeUnit.MILLISECONDS,
         String.format("Connection timed out while trying to start "
@@ -116,14 +117,14 @@ public class RouterMain extends DaemonMain {
                 + "ZooKeeper quorum settings are correct in "
                 + "cdap-site.xml. Currently configured as: %s",
             zkClientService.getConnectString()));
-    router.startAndWait();
+    Services.startAndWait(router);
     LOG.info("Router started.");
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping Router...");
-    Futures.getUnchecked(Services.chainStop(router, zkClientService));
+    Futures.getUnchecked(org.apache.twill.internal.Services.chainStop(router, zkClientService));
     LOG.info("Router stopped.");
   }
 

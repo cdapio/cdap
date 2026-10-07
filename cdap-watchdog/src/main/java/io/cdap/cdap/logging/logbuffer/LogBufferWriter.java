@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.logbuffer;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import java.io.BufferedOutputStream;
@@ -154,7 +153,11 @@ public class LogBufferWriter implements Flushable, Closeable {
       LOG.warn("Error while flushing log buffer output stream.", e);
     }
 
-    Closeables.closeQuietly(currOutputStream);
+    try {
+      currOutputStream.close();
+    } catch (Exception ignored) {
+      // Ignored because we are closing the writer and performing final cleanup.
+    }
     executorService.shutdown();
   }
 
@@ -184,7 +187,11 @@ public class LogBufferWriter implements Flushable, Closeable {
   private Location rotateFile(OutputStream currOutputStream) throws IOException {
     currOutputStream.flush();
     // close current location output stream
-    Closeables.closeQuietly(currOutputStream);
+    try {
+      currOutputStream.close();
+    } catch (Exception ignored) {
+      // Ignored because we are rotating the file and creating a new output stream.
+    }
 
     writtenBytes = 0;
     currOffset = 0;

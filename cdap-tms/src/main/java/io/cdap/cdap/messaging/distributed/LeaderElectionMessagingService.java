@@ -127,14 +127,14 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
             latch.countDown();
           }
         });
-    leaderElection.startAndWait();
+    leaderElection.startAsync().awaitRunning();
     latch.await();
   }
 
   @Override
   protected void shutDown() throws Exception {
     try {
-      leaderElection.stopAndWait();
+      leaderElection.stopAsync().awaitTerminated();
     } catch (Exception e) {
       // It can happen if it is currently disconnected from ZK. There is no harm in just continue the shutdown process.
       LOG.warn("Exception during shutting down leader election", e);
@@ -209,7 +209,7 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     }
 
     if (oldService != null) {
-      oldService.stopAndWait();
+      oldService.stopAsync().awaitTerminated();
     }
   }
 
@@ -217,11 +217,11 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        service.startAndWait();
+        service.startAsync().awaitRunning();
         // If failed to mark the service to become available, this means the follower() call happened before this,
         // so just go ahead and shutdown the service.
         if (!delegate.attemptMark(service, true)) {
-          service.stopAndWait();
+          service.stopAsync().awaitTerminated();
         }
       }
     };
@@ -260,15 +260,15 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
 
     @Override
     protected void startUp() throws Exception {
-      messagingService.startAndWait();
-      httpService.startAndWait();
+      messagingService.startAsync().awaitRunning();
+      httpService.startAsync().awaitRunning();
     }
 
     @Override
     protected void shutDown() throws Exception {
       try {
-        httpService.stopAndWait();
-        messagingService.stopAndWait();
+        httpService.stopAsync().awaitTerminated();
+        messagingService.stopAsync().awaitTerminated();
       } finally {
         // Clear the table cache on shutting down.
         cacheProvider.clear();

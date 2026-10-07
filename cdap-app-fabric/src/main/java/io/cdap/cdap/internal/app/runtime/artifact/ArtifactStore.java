@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -411,7 +410,7 @@ public class ArtifactStore {
       return new ArtifactDetail(new ArtifactDescriptor(artifactId.getNamespace().getId(),
           artifactId.toArtifactId(), artifactLocation), artifactMeta);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -756,8 +755,12 @@ public class ArtifactStore {
     try {
       destination = copyFileToDestination(artifactId, artifactContent, entityImpersonator);
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw Throwables.propagate(e);
+      if (e instanceof IOException) {
+
+        throw (IOException) e;
+
+      }
+      throw new RuntimeException(e);
     }
 
     // now try and write the metadata for the artifact
@@ -1066,7 +1069,7 @@ public class ArtifactStore {
       throw ioe;
     } catch (Exception e) {
       // this should not happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

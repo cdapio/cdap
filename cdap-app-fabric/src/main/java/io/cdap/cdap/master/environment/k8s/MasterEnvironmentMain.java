@@ -39,8 +39,6 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnableContext;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
-import io.cdap.cdap.security.auth.context.SystemAuthenticationContext;
-import io.cdap.cdap.security.auth.context.WorkerAuthenticationContext;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
@@ -159,7 +157,7 @@ public class MasterEnvironmentMain {
             runnable.stop();
             Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
-          Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
+          Optional.ofNullable(tokenManager).ifPresent(s -> s.stopAsync().awaitTerminated());
         }));
         runnable.run(runnableArgs);
         completed.set(true);
@@ -192,7 +190,7 @@ public class MasterEnvironmentMain {
           new AuthenticationContextModules().getMasterModule());
       if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
         tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startAndWait();
+        tokenManager.startAsync().awaitRunning();
       }
     } else {
       // cdap-secret is NOT mounted, use worker authentication context

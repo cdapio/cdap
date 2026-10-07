@@ -81,7 +81,7 @@ public class ServiceSocksProxyTest {
     discoveryService.register(ResolvingDiscoverable.of((new Discoverable("test-service",
                                                                          httpService.getBindAddress()))));
     proxyServer = new ServiceSocksProxy(discoveryService, (user, pass) -> USER.equals(user) && PASS.equals(pass));
-    proxyServer.startAndWait();
+    proxyServer.startAsync().awaitRunning();
 
     defaultProxySelector = ProxySelector.getDefault();
 
@@ -113,7 +113,7 @@ public class ServiceSocksProxyTest {
   public static void finish() throws Exception {
     Authenticator.setDefault(null);
     ProxySelector.setDefault(defaultProxySelector);
-    proxyServer.stopAndWait();
+    proxyServer.stopAsync().awaitTerminated();
     httpService.stop();
   }
 

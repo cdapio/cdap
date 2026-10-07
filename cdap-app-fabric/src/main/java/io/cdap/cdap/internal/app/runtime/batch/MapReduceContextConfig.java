@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -240,7 +239,7 @@ public final class MapReduceContextConfig {
       conf.writeXml(stringWriter);
     } catch (IOException e) {
       LOG.error("Unable to serialize CConfiguration into xml");
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     hConf.set(HCONF_ATTR_CCONF, stringWriter.toString());
   }

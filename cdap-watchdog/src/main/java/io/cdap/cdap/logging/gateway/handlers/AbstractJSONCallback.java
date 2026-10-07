@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.HttpResponder;
@@ -69,7 +68,7 @@ public abstract class AbstractJSONCallback extends AbstractChunkedCallback {
       encodeSend(CharBuffer.wrap(GSON.toJson(encodeSend(logEvent))), false);
     } catch (IOException e) {
       // Just propagate the exception, the caller of this Callback should be handling it.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

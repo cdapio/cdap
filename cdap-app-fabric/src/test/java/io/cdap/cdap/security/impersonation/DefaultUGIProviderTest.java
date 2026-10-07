@@ -17,7 +17,7 @@
 package io.cdap.cdap.security.impersonation;
 
 
-import com.google.common.io.Files;
+
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -236,7 +236,9 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   private Location copyFileToHDFS(Location hdfsKeytabDir, File localFile) throws IOException {
     Location remoteFile = hdfsKeytabDir.append(localFile.getName());
     Assert.assertTrue(remoteFile.createNew());
-    Files.copy(localFile, Locations.newOutputSupplier(remoteFile));
+    try (java.io.OutputStream os = Locations.newOutputSupplier(remoteFile).getOutput()) {
+      java.nio.file.Files.copy(localFile.toPath(), os);
+    }
     return remoteFile;
   }
 

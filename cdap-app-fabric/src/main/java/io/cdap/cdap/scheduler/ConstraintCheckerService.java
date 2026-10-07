@@ -192,9 +192,9 @@ class ConstraintCheckerService extends AbstractIdleService {
       boolean emptyScan = true;
 
       try (CloseableIterator<Job> jobQueueIter = jobQueue.getJobs(partition, lastConsumed)) {
-        Stopwatch stopWatch = new Stopwatch().start();
+        Stopwatch stopWatch = Stopwatch.createUnstarted().start();
         // limit the batches of the scan to 1000ms
-        while (!stopping && stopWatch.elapsedMillis() < 1000) {
+        while (!stopping && stopWatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS) < 1000) {
           if (!jobQueueIter.hasNext()) {
             lastConsumed = null;
             return emptyScan;

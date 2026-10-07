@@ -20,11 +20,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
+import java.nio.file.Files;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
-import io.cdap.cdap.api.dataset.module.DatasetType;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.DatasetModuleCannotBeDeletedException;
 import io.cdap.cdap.common.DatasetModuleNotFoundException;
@@ -108,7 +107,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Override
   protected void startUp() throws Exception {
-    txClientService.startAndWait();
+    txClientService.startAsync().awaitRunning();
     deleteSystemModules();
     deployDefaultModules();
     if (!extensionModules.isEmpty()) {
@@ -118,7 +117,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Override
   protected void shutDown() throws Exception {
-    txClientService.stopAndWait();
+    txClientService.stopAsync().awaitTerminated();
   }
 
   /**
@@ -271,8 +270,11 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
       });
     } catch (Exception e) {
       // the only checked exception that the callable throws is IOException
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      if (e instanceof IOException) {
+        throw (IOException) e;
+      }
+      throw new RuntimeException(e);
     }
 
     // verify namespace directory exists
@@ -322,7 +324,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
           Locations.mkdirsIfNotExists(archiveDir);
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
-          Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+          try (java.io.OutputStream os = tmpLocation.getOutputStream()) {
+            Files.copy(uploadedFile.toPath(), os);
+          }
 
           // Finally, move archive to final location
           LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);
@@ -383,7 +387,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
         LOG.debug("Not adding {} module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
-        throw Throwables.propagate(th);
+        Throwables.throwIfUnchecked(th);
+        throw new RuntimeException(th);
       }
     }
   }
@@ -419,7 +424,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
         LOG.debug("Not adding {} extension module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
-        throw Throwables.propagate(th);
+        Throwables.throwIfUnchecked(th);
+        throw new RuntimeException(th);
       }
     }
   }

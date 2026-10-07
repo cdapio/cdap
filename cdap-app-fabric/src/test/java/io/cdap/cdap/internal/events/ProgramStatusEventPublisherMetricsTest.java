@@ -51,13 +51,13 @@ public class ProgramStatusEventPublisherMetricsTest {
     MetricsProvider mockMetricsProvider = getMockMetricsProvider();
     List<MetricValues> metricValuesList = new ArrayList<>();
     MetricsCollectionService mockMetricsCollectionService = getMockCollectionService(metricValuesList);
-    mockMetricsCollectionService.startAndWait();
+    mockMetricsCollectionService.startAsync().awaitRunning();
     ProgramStatusEventPublisher programStatusEventPublisher = new ProgramStatusEventPublisher(
       CConfiguration.create(), null, mockMetricsCollectionService, null, mockMetricsProvider
     );
     programStatusEventPublisher.initialize(Collections.singleton(new DummyEventWriter()));
     programStatusEventPublisher.processMessages(null, getMockNotification());
-    mockMetricsCollectionService.stopAndWait();
+    mockMetricsCollectionService.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricValuesList.size());
     Assert.assertTrue(containsMetric(metricValuesList.get(0), Constants.Metrics.ProgramEvent.PUBLISHED_COUNT));
   }

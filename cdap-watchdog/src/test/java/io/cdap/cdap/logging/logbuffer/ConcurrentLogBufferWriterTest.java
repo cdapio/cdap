@@ -81,7 +81,7 @@ public class ConcurrentLogBufferWriterTest {
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
@@ -97,7 +97,7 @@ public class ConcurrentLogBufferWriterTest {
 
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(5, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 
@@ -122,7 +122,7 @@ public class ConcurrentLogBufferWriterTest {
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
@@ -156,7 +156,7 @@ public class ConcurrentLogBufferWriterTest {
 
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(100, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 
