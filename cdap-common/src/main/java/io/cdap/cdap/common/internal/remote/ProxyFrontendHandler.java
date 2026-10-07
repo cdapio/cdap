@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -32,12 +33,16 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.Queue;
 import org.apache.twill.discovery.Discoverable;
@@ -64,12 +69,25 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     /** Fail fast on unreachable pods instead of waiting out Netty's 30s default. */
     private static final int WORKER_CONNECT_TIMEOUT_MS = 5000;
 
+    /**
+     * Body of the 503 sent when no byte of the request reached a worker, so the task didn't start
+     * and the caller can safely retry. {@link RemoteTaskExecutor} matches on it.
+     */
+    static final String WORKER_UNREACHABLE_BODY =
+        "The task worker could not be reached; the request was not forwarded.";
+
+    /** Sent by {@link ProxyBackendHandler} to the caller's pipeline when the worker's TLS fails. */
+    enum WorkerUnreachableEvent {
+        INSTANCE
+    }
+
     private final PodLeaseManager podLeaseManager;
     private final DiscoveryServiceClient discoveryServiceClient;
     /** The connection to the task worker; this handler sits on the client pipeline. */
     private Channel workerChannel;
     private boolean connecting = false;
     private boolean rejecting = false;
+    private boolean requestComplete = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
 
     ProxyFrontendHandler(PodLeaseManager podLeaseManager, DiscoveryServiceClient discoveryServiceClient) {
@@ -79,6 +97,9 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof LastHttpContent) {
+            requestComplete = true;
+        }
         if (msg instanceof HttpRequest) {
             HttpRequest req = (HttpRequest) msg;
 
@@ -178,8 +199,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                     // boots, so back off rather than letting least-loaded selection pick it again.
                     LOG.warn("Failed to connect to task worker {}.", chosenWorker, future.cause());
                     podLeaseManager.markUnavailable(chosenWorker, "a failed connect");
-                    releasePendingMessages();
-                    ctx.channel().close();
+                    respondWorkerUnreachable(ctx);
                 }
             });
 
@@ -187,10 +207,11 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             // STEP 5: Stream Inbound HTTP Request Body Chunks
             if (rejecting) {
                 // Drain the rejected request's body before closing, so the client isn't reset mid-upload.
-                boolean isLast = msg instanceof io.netty.handler.codec.http.LastHttpContent;
+                boolean isLast = msg instanceof LastHttpContent;
                 ReferenceCountUtil.release(msg);
                 if (isLast) {
-                    ctx.channel().close();
+                    // Close after the rejection is written; a plain close() can drop it.
+                    closeOnFlush(ctx.channel());
                 }
                 return;
             }
@@ -246,6 +267,15 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         closeOnFlush(ctx.channel());
     }
 
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt == WorkerUnreachableEvent.INSTANCE) {
+            respondWorkerUnreachable(ctx);
+            return;
+        }
+        ctx.fireUserEventTriggered(evt);
+    }
+
     /**
      * Releases every buffer still sitting in the pending queue and empties it.
      */
@@ -263,11 +293,36 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      */
     private void reject(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status) {
         rejecting = true;
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status);
-        response.headers().set("Content-Length", "0");
-        response.headers().set("Connection", "close");
-        ctx.writeAndFlush(response);
+        ctx.writeAndFlush(closingResponse(status, Unpooled.EMPTY_BUFFER));
         ReferenceCountUtil.release(msg);
+    }
+
+    /**
+     * Answers 503 for a request that never reached the worker (connect or TLS failure), so the
+     * caller knows the task didn't start and can retry it on another pod.
+     */
+    private void respondWorkerUnreachable(ChannelHandlerContext ctx) {
+        releasePendingMessages();
+        if (rejecting || !ctx.channel().isActive()) {
+            return;
+        }
+        rejecting = true;
+        ChannelFuture written = ctx.writeAndFlush(closingResponse(
+            HttpResponseStatus.SERVICE_UNAVAILABLE,
+            Unpooled.copiedBuffer(WORKER_UNREACHABLE_BODY, StandardCharsets.UTF_8)));
+        if (requestComplete) {
+            written.addListener(ChannelFutureListener.CLOSE);
+            return;
+        }
+        // Reads were paused for the connect; resume so the body drains and the last chunk closes.
+        ctx.channel().config().setAutoRead(true);
+    }
+
+    private static FullHttpResponse closingResponse(HttpResponseStatus status, ByteBuf body) {
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, body);
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, body.readableBytes());
+        response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+        return response;
     }
 
     /**

@@ -31,6 +31,7 @@ import io.netty.channel.local.LocalAddress;
 import io.netty.channel.local.LocalChannel;
 import io.netty.channel.local.LocalServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -554,15 +555,10 @@ public class ProxyHandlersTest {
     }
 
     @Test
-    public void testFailedConnectBacksOffPod() {
-        DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
-        Discoverable worker = discoverableAt("127.0.0.1", 11015);
-        ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
-        when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(worker).iterator());
-        when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+    public void testFailedConnectBacksOffPodAndAnswers503() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
-
-        EmbeddedChannel channel = new EmbeddedChannel(new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+        EmbeddedChannel channel = new EmbeddedChannel(
+            new ProxyFrontendHandler(podLeaseManager, discoveryOf(discoverableAt("127.0.0.1", 11015))));
         HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
         req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
         // An EmbeddedChannel's event loop can't register the NIO worker channel, so the connect
@@ -573,7 +569,43 @@ public class ProxyHandlersTest {
         assertNotNull(pod);
         assertFalse(pod.isAvailable(System.nanoTime()));
         assertEquals(0, pod.getInflightRequests());
+        assertWorkerUnreachableResponse(channel.readOutbound());
+        // Reads resume so the rest of the body drains, and the last chunk closes the connection.
+        assertTrue(channel.config().isAutoRead());
+        assertTrue(channel.isActive());
+        ByteBuf body = Unpooled.wrappedBuffer(new byte[16]);
+        channel.writeInbound(new DefaultLastHttpContent(body));
+        assertEquals(0, body.refCnt());
         assertFalse(channel.isActive());
+    }
+
+    @Test
+    public void testFailedConnectAfterFullRequestAnswers503AndCloses() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        EmbeddedChannel channel = new EmbeddedChannel(
+            new ProxyFrontendHandler(podLeaseManager, discoveryOf(discoverableAt("127.0.0.1", 11015))));
+        DefaultFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+            "/api", Unpooled.wrappedBuffer(new byte[16]));
+        req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+
+        channel.writeInbound(req);
+
+        assertEquals(0, req.refCnt());
+        assertWorkerUnreachableResponse(channel.readOutbound());
+        assertFalse(channel.isActive());
+    }
+
+    @Test
+    public void testWorkerUnreachableEventAnswers503Once() {
+        EmbeddedChannel channel = new EmbeddedChannel(
+            new ProxyFrontendHandler(new PodLeaseManager(CConfiguration.create()),
+                                     mock(DiscoveryServiceClient.class)));
+
+        channel.pipeline().fireUserEventTriggered(ProxyFrontendHandler.WorkerUnreachableEvent.INSTANCE);
+        channel.pipeline().fireUserEventTriggered(ProxyFrontendHandler.WorkerUnreachableEvent.INSTANCE);
+
+        assertWorkerUnreachableResponse(channel.readOutbound());
+        assertNull(channel.readOutbound());
     }
 
     @Test
@@ -830,14 +862,37 @@ public class ProxyHandlersTest {
     }
 
     @Test
-    public void testWorkerFailingTlsIsBackedOff() throws Exception {
+    public void testHandshakeFailureHandsTheReplyToTheFrontend() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState pod = new PodState("namespace-A", 1);
+        podLeaseManager.getRegistry().put("worker1:8080", pod);
+        AtomicInteger unreachableEvents = new AtomicInteger();
+        EmbeddedChannel inboundClientChannel = new EmbeddedChannel(new ChannelInboundHandlerAdapter() {
+            @Override
+            public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+                if (evt == ProxyFrontendHandler.WorkerUnreachableEvent.INSTANCE) {
+                    unreachableEvents.incrementAndGet();
+                }
+            }
+        });
+        EmbeddedChannel workerChannel = new EmbeddedChannel(
+            new ProxyBackendHandler(inboundClientChannel, podLeaseManager, "worker1:8080"));
+
+        workerChannel.pipeline().fireUserEventTriggered(
+            new SslHandshakeCompletionEvent(new SSLHandshakeException("bad certificate")));
+        workerChannel.close();
+
+        assertEquals(1, unreachableEvents.get());
+        assertTrue("The frontend closes the caller after its 503", inboundClientChannel.isActive());
+        assertEquals(0, pod.getInflightRequests());
+    }
+
+    @Test
+    public void testWorkerFailingTlsIsBackedOffAndAnswered503() throws Exception {
         NioEventLoopGroup group = new NioEventLoopGroup(1);
         try (ServerSocket worker = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
-            DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
-            Discoverable discoverable = discoverableAt("127.0.0.1", worker.getLocalPort());
-            ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
-            when(serviceDiscovered.iterator()).thenReturn(Collections.singletonList(discoverable).iterator());
-            when(mockDiscovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+            DiscoveryServiceClient mockDiscovery =
+                discoveryOf(discoverableAt("127.0.0.1", worker.getLocalPort()));
             PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
 
             LocalAddress proxyAddress = new LocalAddress("proxy-tls-failure-test");
@@ -850,13 +905,25 @@ public class ProxyHandlersTest {
                         accepted.complete(ch);
                     }
                 }).bind(proxyAddress).sync().channel();
+            CompletableFuture<Object> callerResponse = new CompletableFuture<>();
             Channel client = new Bootstrap().group(group).channel(LocalChannel.class)
-                .handler(new ChannelInboundHandlerAdapter()).connect(proxyAddress).sync().channel();
+                .handler(new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                        // The server pipeline has no codec, so the response arrives as an object.
+                        if (!callerResponse.complete(msg)) {
+                            io.netty.util.ReferenceCountUtil.release(msg);
+                        }
+                    }
+                }).connect(proxyAddress).sync().channel();
             Channel clientChannel = accepted.get(10, TimeUnit.SECONDS);
 
             HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
             req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
-            clientChannel.eventLoop().submit(() -> clientChannel.pipeline().fireChannelRead(req)).sync();
+            clientChannel.eventLoop().submit(() -> {
+                clientChannel.pipeline().fireChannelRead(req);
+                clientChannel.pipeline().fireChannelRead(new DefaultLastHttpContent());
+            }).sync();
 
             // The worker accepts TCP but answers the ClientHello in plaintext, so TLS fails.
             try (Socket workerSide = worker.accept()) {
@@ -871,6 +938,7 @@ public class ProxyHandlersTest {
                 }
             }
 
+            assertWorkerUnreachableResponse(callerResponse.get(10, TimeUnit.SECONDS));
             assertTrue("The caller's connection is closed", client.closeFuture().await(10, TimeUnit.SECONDS));
             PodState pod = podLeaseManager.getRegistry().get("127.0.0.1:" + worker.getLocalPort());
             assertFalse(pod.isAvailable(System.nanoTime()));
@@ -880,6 +948,28 @@ public class ProxyHandlersTest {
         } finally {
             group.shutdownGracefully(0, 1, TimeUnit.SECONDS).sync();
         }
+    }
+
+    private static void assertWorkerUnreachableResponse(Object msg) {
+        assertTrue("Expected a full response, got " + msg, msg instanceof FullHttpResponse);
+        FullHttpResponse response = (FullHttpResponse) msg;
+        try {
+            assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE, response.status());
+            assertEquals(ProxyFrontendHandler.WORKER_UNREACHABLE_BODY,
+                         response.content().toString(StandardCharsets.UTF_8));
+            assertEquals("close", response.headers().get("Connection"));
+        } finally {
+            response.release();
+        }
+    }
+
+    private static DiscoveryServiceClient discoveryOf(Discoverable discoverable) {
+        DiscoveryServiceClient discovery = mock(DiscoveryServiceClient.class);
+        ServiceDiscovered serviceDiscovered = mock(ServiceDiscovered.class);
+        when(serviceDiscovered.iterator()).thenAnswer(
+            invocation -> Collections.singletonList(discoverable).iterator());
+        when(discovery.discover(Mockito.anyString())).thenReturn(serviceDiscovered);
+        return discovery;
     }
 
     private static Discoverable discoverableAt(String host, int port) {
