@@ -707,11 +707,40 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(props);
 
-    List<String> expectedWorkerTypes = Arrays.asList("n2-custom-2-8192", "e2-custom-2-8192");
-    Assert.assertEquals(expectedWorkerTypes, conf.getWorkerFlexVmMachineTypes());
+    // Comma-only values form a single rank, as before.
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "n2-custom-2-8192", null),
+                      new FlexVmChoice(0, "e2-custom-2-8192", null)),
+        conf.getWorkerFlexVmChoices());
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "custom-2-8192", null),
+                      new FlexVmChoice(0, "n2d-custom-2-8192", null)),
+        conf.getMasterFlexVmChoices());
+  }
 
-    List<String> expectedMasterTypes = Arrays.asList("custom-2-8192", "n2d-custom-2-8192");
-    Assert.assertEquals(expectedMasterTypes, conf.getMasterFlexVmMachineTypes());
+  @Test
+  public void testAcceptsFullMachineTypeNamesAndRanks() {
+    Map<String, String> props = baseProps();
+    props.put("masterMachineType", "n2-standard-2");
+    props.put("workerMachineType", "n2");
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4-standard-4, e2 ; ; custom-2-8192");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "Hyperdisk-Balanced, pd-ssd ; pd-balanced");
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "N4-HIGHMEM-8, n1");
+
+    DataprocConf conf = DataprocConf.create(props);
+
+    Assert.assertEquals("n2-standard-2", conf.getMasterMachineType());
+    Assert.assertEquals("n2-custom-2-8192", conf.getWorkerMachineType());
+    // ';' separates ranks and empty ranks are dropped; disk types pair up rank by rank.
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "n4-standard-4", "hyperdisk-balanced"),
+                      new FlexVmChoice(0, "e2-custom-2-8192", "pd-ssd"),
+                      new FlexVmChoice(1, "custom-2-8192", "pd-balanced")),
+        conf.getWorkerFlexVmChoices());
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "n4-highmem-8", null),
+                      new FlexVmChoice(0, "custom-2-8192", null)),
+        conf.getMasterFlexVmChoices());
   }
 
   @Test
@@ -723,10 +752,8 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(props);
 
-    Assert.assertTrue(conf.getWorkerFlexVmMachineTypes().isEmpty());
-    Assert.assertTrue(conf.getMasterFlexVmMachineTypes().isEmpty());
-    Assert.assertTrue(conf.getWorkerFlexVmDiskTypes().isEmpty());
-    Assert.assertTrue(conf.getMasterFlexVmDiskTypes().isEmpty());
+    Assert.assertTrue(conf.getWorkerFlexVmChoices().isEmpty());
+    Assert.assertTrue(conf.getMasterFlexVmChoices().isEmpty());
   }
 
 
@@ -746,8 +773,10 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(properties);
 
-    Assert.assertEquals(Arrays.asList("pd-standard", "hyperdisk-balanced"),
-                        conf.getMasterFlexVmDiskTypes());
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "n2d-custom-2-8192", "pd-standard"),
+                      new FlexVmChoice(0, "n4-custom-2-8192", "hyperdisk-balanced")),
+        conf.getMasterFlexVmChoices());
   }
 
 
@@ -788,13 +817,15 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(props);
 
-    List<String> expectedWorkerTypes = Arrays.asList(
-      "n2-custom-4-16384", "e2-custom-4-16384", "c2-custom-4-16384");
-    Assert.assertEquals(expectedWorkerTypes, conf.getWorkerFlexVmMachineTypes());
-
-    List<String> expectedMasterTypes = Arrays.asList(
-      "custom-8-32768", "n2d-custom-8-32768");
-    Assert.assertEquals(expectedMasterTypes, conf.getMasterFlexVmMachineTypes());
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "n2-custom-4-16384", null),
+                      new FlexVmChoice(0, "e2-custom-4-16384", null),
+                      new FlexVmChoice(0, "c2-custom-4-16384", null)),
+        conf.getWorkerFlexVmChoices());
+    Assert.assertEquals(
+        Arrays.asList(new FlexVmChoice(0, "custom-8-32768", null),
+                      new FlexVmChoice(0, "n2d-custom-8-32768", null)),
+        conf.getMasterFlexVmChoices());
   }
 
   @Test
@@ -819,25 +850,54 @@ public class DataprocProvisionerTest {
 
     DataprocConf conf = DataprocConf.create(props);
 
-    Assert.assertThrows(
-      UnsupportedOperationException.class,
-      () -> conf.getMasterFlexVmMachineTypes().add("should-not-be-allowed")
-    );
+    Assert.assertThrows(UnsupportedOperationException.class,
+                        () -> conf.getMasterFlexVmChoices().remove(0));
+    Assert.assertThrows(UnsupportedOperationException.class,
+                        () -> conf.getWorkerFlexVmChoices().remove(0));
+  }
 
-    Assert.assertThrows(
-      UnsupportedOperationException.class,
-      () -> conf.getWorkerFlexVmMachineTypes().add("should-not-be-allowed")
-    );
+  @Test
+  public void testFlexVmDiskTypeRankCountMismatchRejected() {
+    Map<String, String> props = baseProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4-standard-2, n2; e2");
+    // A flat disk type list against two machine type ranks leaves the pairing ambiguous.
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "hyperdisk-balanced, pd-balanced, pd-balanced");
 
-    Assert.assertThrows(
-      UnsupportedOperationException.class,
-      () -> conf.getMasterFlexVmDiskTypes().add("should-not-be-allowed")
-    );
+    DataprocRuntimeException e = Assert.assertThrows(DataprocRuntimeException.class,
+                                                     () -> provisioner.validateProperties(props));
+    Assert.assertEquals(ErrorType.USER, e.getErrorType());
+    Assert.assertEquals(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION,
+                        e.getErrorCategory());
+    Assert.assertTrue(e.getMessage().contains(
+        "Invalid worker Flex VM config. Found 2 machine type rank(s) but 1 disk type rank(s)"));
+  }
 
-    Assert.assertThrows(
-      UnsupportedOperationException.class,
-      () -> conf.getWorkerFlexVmDiskTypes().add("should-not-be-allowed")
-    );
+  @Test
+  public void testFlexVmDiskTypeCountMismatchWithinRankRejected() {
+    Map<String, String> props = baseProps();
+    props.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4, n4d; e2");
+    props.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES, "hyperdisk-balanced; pd-balanced");
+
+    DataprocRuntimeException e = Assert.assertThrows(DataprocRuntimeException.class,
+                                                     () -> provisioner.validateProperties(props));
+    Assert.assertEquals(ErrorType.USER, e.getErrorType());
+    // The message echoes the machine types as typed so the user can map it back to their input.
+    Assert.assertTrue(e.getMessage().contains(
+        "Invalid worker Flex VM config. Rank 0 has 2 machine type(s) [n4, n4d] "
+            + "but 1 disk type(s) [hyperdisk-balanced]"));
+  }
+
+  @Test
+  public void testFlexVmDuplicateMachineTypeRejected() {
+    Map<String, String> props = baseProps();
+    // n2 resolves to n2-custom-2-8192 in both ranks.
+    props.put(DataprocConf.MASTER_FLEX_VM_MACHINE_TYPES, "n4-standard-2, n2; e2, n2");
+
+    DataprocRuntimeException e = Assert.assertThrows(DataprocRuntimeException.class,
+                                                     () -> provisioner.validateProperties(props));
+    Assert.assertEquals(ErrorType.USER, e.getErrorType());
+    Assert.assertTrue(e.getMessage().contains(
+        "Invalid master Flex VM config. Machine type 'n2-custom-2-8192' is listed more than once"));
   }
 
   @Test
