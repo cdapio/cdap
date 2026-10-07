@@ -200,6 +200,34 @@ public class TaskWorkerFailureHandlingTest {
         Collections.singletonList(TASK_CLASS), stopped);
   }
 
+  @Test
+  public void testFailedCredentialWipeRestartsThePod() throws Exception {
+    // The wipe runs after a failed task's completion, which has already checked the restart flag,
+    // so the wipe failure has to stop the pod itself.
+    NettyHttpService sidecar = startSidecar();
+    try {
+      CConfiguration cConf = sidecarCConf(newCConf(true), sidecar);
+      List<String> stopped = new ArrayList<>();
+      // Provisioning succeeds, then the sidecar goes away so the wipe after the task fails.
+      TaskWorkerHttpHandlerInternal handler = newHandler(cConf, () -> {
+        stopQuietly(sidecar);
+        throw new IllegalStateException("simulated task failure");
+      }, stopped::add);
+
+      handler.run(runRequest(), Mockito.mock(HttpResponder.class));
+
+      Assert.assertEquals("A credential that can't be wiped must not outlive its namespace",
+          Collections.singletonList(""), stopped);
+      Assert.assertEquals(0, handler.getRunningRequestCount());
+
+      HttpResponder next = Mockito.mock(HttpResponder.class);
+      handler.run(runRequest(), next);
+      Mockito.verify(next).sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+    } finally {
+      stopQuietly(sidecar);
+    }
+  }
+
   static NettyHttpService startSidecar() throws Exception {
     NettyHttpService sidecar = NettyHttpService.builder("metadata-sidecar")
         .setHost(InetAddress.getLoopbackAddress().getHostName())
