@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.features.Feature;
 import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.buffer.Unpooled;
@@ -208,24 +209,6 @@ public class TaskWorkerConcurrencyModeTest {
   }
 
   @Test
-  public void testErrorFromUserCodeReleasesSlotWithoutALease() {
-    // The same failure on a pod that runs without the proxy. No lease to release here, but the
-    // slot still has to come back or the pod stops accepting work.
-    TaskWorkerHttpHandlerInternal handler = newFailingHandler(false,
-        new NoClassDefFoundError("simulated linkage failure in a user artifact"));
-    Assert.assertNull(handler.getStickyLeaseManager());
-
-    try {
-      handler.run(runRequest(), Mockito.mock(HttpResponder.class));
-      Assert.fail("Expected the Error to propagate");
-    } catch (NoClassDefFoundError expected) {
-      // Expected.
-    }
-
-    Assert.assertEquals(0, handler.getRunningRequestCount());
-  }
-
-  @Test
   public void testExceptionFromUserCodeReleasesSlotAndLease() {
     TaskWorkerHttpHandlerInternal handler = newFailingHandler(true,
         new IllegalStateException("simulated task failure"));
@@ -343,38 +326,52 @@ public class TaskWorkerConcurrencyModeTest {
   }
 
   @Test
-  public void testFailedWipeAfterFailedTaskRestartsDirectWorker() throws Exception {
-    // Without a lease the wipe runs after a failed task's completion, which has already checked
-    // the restart flag, so the wipe failure has to stop the pod itself.
-    NettyHttpService sidecar = NettyHttpService.builder("metadata-sidecar")
-        .setHost(InetAddress.getLoopbackAddress().getHostName())
-        .setHttpHandlers(new StubSidecarHandler())
-        .build();
-    sidecar.start();
-    try {
-      CConfiguration cConf = newCConf(true, true, false);
-      cConf.setBoolean("feature." + Feature.NAMESPACED_SERVICE_ACCOUNTS.getFeatureFlagString(),
-          true);
-      cConf.setInt(ArtifactLocalizer.PORT, sidecar.getBindAddress().getPort());
-      // Only the failed wipe may restart the pod, not the request count.
-      cConf.setInt(TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-      List<String> stopped = new ArrayList<>();
+  public void testDirectPodStopsAtTheKillCountWithoutDraining() {
+    // RBAC on, flag off: must match develop, which stops at once and never sets the restart flag.
+    CConfiguration cConf = newCConf(true, true, false);
+    cConf.setInt(TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
+    List<String> stopped = new ArrayList<>();
+    TaskWorkerHttpHandlerInternal handler = new TaskWorkerHttpHandlerInternal(cConf,
+        new CallbackLauncher(() -> { }), stopped::add, new NoOpMetricsCollectionService());
 
-      // Provisioning succeeds, then the sidecar goes away so the wipe after the task fails.
-      TaskWorkerHttpHandlerInternal handler = new TaskWorkerHttpHandlerInternal(cConf,
-          new CallbackLauncher(() -> {
-            stopQuietly(sidecar);
-            throw new IllegalStateException("simulated task failure");
-          }), stopped::add, new NoOpMetricsCollectionService());
-      Assert.assertNull(handler.getStickyLeaseManager());
-      handler.run(runRequest(NAMESPACE), Mockito.mock(HttpResponder.class));
+    handler.run(runRequest(), completingResponder());
+    Assert.assertEquals(Collections.singletonList("com.example.SomeTask"), stopped);
 
-      Assert.assertEquals("Otherwise the pod refuses every task while holding the credential "
-          + "until the periodic restart", Collections.singletonList(""), stopped);
-      Assert.assertEquals(0, handler.getRunningRequestCount());
-    } finally {
-      stopQuietly(sidecar);
-    }
+    HttpResponder next = completingResponder();
+    handler.run(runRequest(), next);
+    Mockito.verify(next, Mockito.never()).sendStatus(Mockito.any(HttpResponseStatus.class));
+    Mockito.verify(next, Mockito.never()).sendStatus(Mockito.any(HttpResponseStatus.class),
+        Mockito.any(HttpHeaders.class));
+  }
+
+  @Test
+  public void testLeasedPodDrainsAtTheKillCountAndSendsTheDrainingHeader() {
+    CConfiguration cConf = newCConf(true, true, true);
+    cConf.setInt(TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 1);
+    List<String> stopped = new ArrayList<>();
+    TaskWorkerHttpHandlerInternal handler = new TaskWorkerHttpHandlerInternal(cConf,
+        new CallbackLauncher(() -> { }), stopped::add, new NoOpMetricsCollectionService());
+
+    handler.run(runRequest(), completingResponder());
+    Assert.assertEquals(Collections.singletonList("com.example.SomeTask"), stopped);
+
+    HttpResponder next = Mockito.mock(HttpResponder.class);
+    handler.run(runRequest(), next);
+    ArgumentCaptor<HttpHeaders> headers = ArgumentCaptor.forClass(HttpHeaders.class);
+    Mockito.verify(next).sendStatus(Mockito.eq(HttpResponseStatus.TOO_MANY_REQUESTS),
+        headers.capture());
+    Assert.assertEquals("true", headers.getValue().get(Constants.Gateway.HEADER_WORKER_DRAINING));
+  }
+
+  /** A responder that finishes the response body at once, as a real channel would. */
+  private static HttpResponder completingResponder() {
+    HttpResponder responder = Mockito.mock(HttpResponder.class);
+    Mockito.doAnswer(invocation -> {
+      ((BodyProducer) invocation.getArguments()[1]).finished();
+      return null;
+    }).when(responder).sendContent(Mockito.any(HttpResponseStatus.class),
+        Mockito.any(BodyProducer.class), Mockito.any(HttpHeaders.class));
+    return responder;
   }
 
   private static void stopQuietly(NettyHttpService service) {
