@@ -21,6 +21,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -61,9 +66,12 @@ public final class PipelineTriggers {
    * trigger is enabled, only {"target1": "value1"} is added. Otherwise, the code will ignore the ID check and
    * {"target1": "value1", "target2": "value2"} is added.
    *
+   * @param mappings map to populate with resolved runtime argument mappings
    * @param triggerInfo {@link ProgramStatusTriggerInfo} with plugin properties
    * @param propertiesMapping  {@link TriggeringPropertyMapping} for using the plugin
    * @param compositeTriggerEnabled  whether the composite trigger is enabled
+   * @throws ProgramFailureException if a plugin property mapping applies to the triggering pipeline but the
+   *     resolved plugin properties of the triggering run are not available
    */
   public static void addSchedulePropertiesMapping(Map<String, String> mappings,
                                                   ProgramStatusTriggerInfo triggerInfo,
@@ -117,6 +125,21 @@ public final class PipelineTriggers {
         LOG.warn("The name of the stage cannot be null in plugin property mapping, "
           + "skip this mapping: '{}'.", mapping);
         continue;
+      }
+      if (resolvedProperties == null) {
+        String errorReason = String.format(
+          "Resolved plugin properties for stage '%s' from run '%s' of triggering pipeline '%s' in namespace '%s' "
+            + "are not available. Verify that the triggering pipeline run completed successfully and re-run this "
+            + "pipeline.",
+          stageName, triggerInfo.getRunId(), triggerInfo.getApplicationName(), triggerInfo.getNamespace());
+        String errorMessage = String.format(
+          "Cannot apply plugin property mapping '%s' because resolved plugin properties for run '%s' of triggering "
+            + "pipeline '%s' in namespace '%s' were not yet persisted when this run was launched, or the triggering "
+            + "run terminated before recording its stage properties.",
+          mapping, triggerInfo.getRunId(), triggerInfo.getApplicationName(), triggerInfo.getNamespace());
+        throw ErrorUtils.getProgramFailureException(
+          new ErrorCategory(ErrorCategoryEnum.SCHEDULES_AND_TRIGGERS),
+          errorReason, errorMessage, ErrorType.SYSTEM, false, null);
       }
       Map<String, String> pluginProperties = resolvedProperties.get(stageName);
       if (pluginProperties == null) {
