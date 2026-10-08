@@ -29,17 +29,25 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -260,6 +268,58 @@ public class RemoteTaskExecutorTest {
     Assert.assertEquals("failure", metricsKey.get(Constants.Metrics.Tag.STATUS));
     int retryCount = Integer.parseInt(metricsKey.get(Constants.Metrics.Tag.TRIES));
     Assert.assertTrue(retryCount > 1);
+  }
+
+  @Test
+  public void testUserCredentialIsRestoredAfterFailedAttempts() throws Exception {
+    // Point discovery at a closed port, so every attempt fails inside execute() after the
+    // credential was encrypted. A missing registration would fail before encryption.
+    registered.cancel();
+    int closedPort;
+    try (ServerSocket socket = new ServerSocket(0)) {
+      closedPort = socket.getLocalPort();
+    }
+    registered = discoveryService.register(new Discoverable(Constants.Service.TASK_WORKER,
+        new InetSocketAddress(InetAddress.getLoopbackAddress(), closedPort)));
+    CConfiguration retryConf = CConfiguration.copy(cConf);
+    String prefix = Constants.Service.TASK_WORKER + ".";
+    retryConf.set(prefix + Constants.Retry.TYPE, "fixed.delay");
+    retryConf.setInt(prefix + Constants.Retry.MAX_RETRIES, 2);
+    retryConf.setLong(prefix + Constants.Retry.DELAY_BASE_MS, 10L);
+    List<String> encryptedPlaintexts = Collections.synchronizedList(new ArrayList<>());
+    AeadCipher recordingCipher = new AeadCipher() {
+      @Override
+      public byte[] encrypt(byte[] plainData, byte[] associatedData) {
+        encryptedPlaintexts.add(new String(plainData, StandardCharsets.UTF_8));
+        return ("encrypted-" + encryptedPlaintexts.size()).getBytes(StandardCharsets.UTF_8);
+      }
+
+      @Override
+      public byte[] decrypt(byte[] cipherData, byte[] associatedData) {
+        return cipherData;
+      }
+    };
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(retryConf, mockMetricsCollector,
+        remoteClientFactory, RemoteTaskExecutor.Type.TASK_WORKER, recordingCipher);
+    RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName())
+      .withParam("param").withNamespace("testNamespace").build();
+    Credential credential = new Credential("plain-token", Credential.CredentialType.EXTERNAL);
+    SecurityRequestContext.setUserCredential(credential);
+    try {
+      remoteTaskExecutor.runTask(runnableTaskRequest);
+      Assert.fail("Expected the task to fail without a registered task worker");
+    } catch (Exception e) {
+      // expected
+    } finally {
+      Credential afterRun = SecurityRequestContext.getUserCredential();
+      SecurityRequestContext.reset();
+      Assert.assertSame(credential, afterRun);
+    }
+    Assert.assertTrue("Expected more than one attempt, got " + encryptedPlaintexts,
+        encryptedPlaintexts.size() > 1);
+    for (String plaintext : encryptedPlaintexts) {
+      Assert.assertEquals("plain-token", plaintext);
+    }
   }
 
   private boolean hasMetric(Map<String, Long> metricValues, String metricName) {
