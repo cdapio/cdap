@@ -197,7 +197,11 @@ public class RemoteTaskExecutor {
           try {
             httpResponse = remoteClient.execute(httpRequest);
           } finally {
-            // Restore even on failure, or the next retry would re-encrypt the ciphertext.
+            // Restore even on failure, or the next retry would re-encrypt the ciphertext and the
+            // worker would reject it with "decryption failed". Behind the Task Worker Manager proxy
+            // this is the common case, not an edge case: the proxy answers 503 while a task worker
+            // restarts, RemoteClient throws ServiceUnavailableException (a RetryableException) for
+            // it, and this loop retries.
             if (isWorkerEncryptionRequired) {
               SecurityRequestContext.setUserCredential(currentCredential);
             }
