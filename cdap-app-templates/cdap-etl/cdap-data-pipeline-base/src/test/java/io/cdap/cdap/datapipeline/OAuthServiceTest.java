@@ -66,6 +66,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     public void token(FullHttpRequest request, HttpResponder responder) {
       responder.sendString(HttpResponseStatus.OK, "{\"access_token\":\"mock_access_token\",\"expires_in\":3600}");
     }
+
+    @POST
+    @Path("/token-invalid")
+    public void invalidToken(FullHttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+          "{\"error\":\"invalid_grant\",\"error_description\":\"expired access/refresh token\"}");
+    }
   }
 
   @BeforeClass
@@ -544,5 +551,56 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         200, response.getResponseCode());
     String body = response.getResponseBodyAsString();
     Assert.assertTrue(body.contains("mock_access_token"));
+  }
+
+  @Test
+  public void testGetOAuthCredentialValidityInvalidTokenStandard() throws Exception {
+    String providerName = "testInvalidStandard";
+    String credentialName = "cred1";
+    String invalidTokenUrl = "http://localhost:" + mockTokenPort + "/token-invalid";
+
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
+        invalidTokenUrl, "clientid", "clientsecret");
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
+    Assert.assertEquals("Create provider failed: " + createResp.getResponseBodyAsString(),
+        200, createResp.getResponseCode());
+
+    OAuthRefreshToken refreshToken = new OAuthRefreshToken("revoked_refresh_token", "http://redirect");
+    getSecureStoreManager().put("system",
+        "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
+        GSON.toJson(refreshToken), "Standard Invalid Test", Collections.emptyMap());
+
+    HttpResponse response = makeGetCall("provider/" + providerName +
+        "/credential/" + credentialName + "/valid");
+
+    Assert.assertEquals(200, response.getResponseCode());
+    String body = response.getResponseBodyAsString();
+    Assert.assertTrue(body.replaceAll("\\s+", "").contains("\"isValid\":false"));
+  }
+
+  @Test
+  public void testGetOAuthCredentialValidityInvalidTokenRTR() throws Exception {
+    String providerName = "testInvalidRtr";
+    String credentialName = "cred1";
+    String invalidTokenUrl = "http://localhost:" + mockTokenPort + "/token-invalid";
+
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
+        invalidTokenUrl, "clientid", "clientsecret", OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+        null, AuthType.STANDARD, RefreshType.RTR);
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
+    Assert.assertEquals("Create provider failed: " + createResp.getResponseBodyAsString(),
+        200, createResp.getResponseCode());
+
+    OAuthRefreshToken refreshToken = new OAuthRefreshToken("revoked_refresh_token", "http://redirect");
+    getSecureStoreManager().put("system",
+        "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
+        GSON.toJson(refreshToken), "RTR Invalid Test", Collections.emptyMap());
+
+    HttpResponse response = makeGetCall("provider/" + providerName +
+        "/credential/" + credentialName + "/valid");
+
+    Assert.assertEquals(200, response.getResponseCode());
+    String body = response.getResponseBodyAsString();
+    Assert.assertTrue(body.replaceAll("\\s+", "").contains("\"isValid\":false"));
   }
 }
