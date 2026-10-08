@@ -64,6 +64,8 @@ public final class PipelineTriggers {
    * @param triggerInfo {@link ProgramStatusTriggerInfo} with plugin properties
    * @param propertiesMapping  {@link TriggeringPropertyMapping} for using the plugin
    * @param compositeTriggerEnabled  whether the composite trigger is enabled
+   * @throws IllegalStateException if a plugin property mapping applies to the triggering pipeline but the
+   *     resolved plugin properties of the triggering run are not available
    */
   public static void addSchedulePropertiesMapping(Map<String, String> mappings,
                                                   ProgramStatusTriggerInfo triggerInfo,
@@ -117,6 +119,13 @@ public final class PipelineTriggers {
         LOG.warn("The name of the stage cannot be null in plugin property mapping, "
           + "skip this mapping: '{}'.", mapping);
         continue;
+      }
+      if (resolvedProperties == null) {
+        throw new IllegalStateException(String.format(
+          "Resolved plugin properties of run '%s' of the triggering pipeline '%s' in namespace '%s' are not "
+            + "available, so plugin property mapping '%s' cannot be applied. The final workflow token of the "
+            + "triggering run was not committed when this run was launched.",
+          triggerInfo.getRunId(), triggerInfo.getApplicationName(), triggerInfo.getNamespace(), mapping));
       }
       Map<String, String> pluginProperties = resolvedProperties.get(stageName);
       if (pluginProperties == null) {
