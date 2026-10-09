@@ -642,6 +642,13 @@ public final class Constants {
     public static final String PROGRAM_STATUS_EVENT_FETCH_SIZE = "scheduler.program.status.event.fetch.size";
 
     public static final String JOB_QUEUE_NUM_PARTITIONS = "scheduler.job.queue.num.partitions";
+
+    public static final String WORKFLOW_TOKEN_MAX_WAIT_MS =
+        "scheduler.workflow.token.max.wait.ms";
+    public static final String WORKFLOW_TOKEN_MAPPING_PROPERTY_KEY =
+        "scheduler.workflow.token.mapping.property.key";
+    public static final String WORKFLOW_TOKEN_REQUIRED_KEY =
+        "scheduler.workflow.token.required.key";
   }
 
   /**

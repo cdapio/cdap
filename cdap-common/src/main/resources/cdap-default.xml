@@ -986,6 +986,34 @@
     </description>
   </property>
 
+  <property>
+    <name>scheduler.workflow.token.max.wait.ms</name>
+    <value>60000</value>
+    <description>
+      Maximum time in milliseconds that the scheduler waits for a triggering
+      workflow run's final workflow token to become available before proceeding
+      with launching the triggered schedule.
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.workflow.token.mapping.property.key</name>
+    <value>triggering.properties.mapping</value>
+    <description>
+      Schedule property key that holds the JSON specification mapping
+      properties from a triggering pipeline to the triggered pipeline.
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.workflow.token.required.key</name>
+    <value>resolved.plugin.properties.map</value>
+    <description>
+      Key in the triggering workflow run's USER-scoped workflow token whose
+      presence indicates that the final workflow token has been committed.
+    </description>
+  </property>
+
 
   <property>
     <name>time.event.topic</name>
@@ -6877,6 +6905,16 @@
     <description>
       If true, admins can define allowlist for JEXL expressions in Wrangler directives.
       Only the whitelisted classes, methods and properties will be allowed in the JEXL scripts.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.workflow.token.constraint.enabled</name>
+    <value>false</value>
+    <description>
+      If true, the scheduler waits for a triggering workflow run's final
+      workflow token before launching a triggered schedule that maps plugin
+      properties.
     </description>
   </property>
 </configuration>
