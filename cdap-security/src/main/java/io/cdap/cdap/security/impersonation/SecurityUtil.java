@@ -287,7 +287,7 @@ public final class SecurityUtil {
       NamespacedEntityId entityId) throws AccessException {
     ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
     if (impersonationInfo == null) {
-      // here we don't need to get the keytab file since we use delegation tokens accross system containers
+      // here we don't need to get the keytab file since we use delegation tokens across system containers
       return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
     }
     return impersonationInfo;
