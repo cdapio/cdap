@@ -470,6 +470,61 @@ public class DataprocClientTest {
   }
 
   @Test
+  public void testCreateClusterWithRankedFlexVmConfig() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "n4-standard-4, n2; e2");
+    properties.put(DataprocConf.WORKER_FLEX_VM_DISK_TYPES,
+                   "hyperdisk-balanced, pd-balanced, pd-balanced");
+    DataprocConf conf = DataprocConf.create(properties);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    when(clusterControllerClientMock.createClusterAsync(eq(conf.getProjectId()),
+                                                        eq(conf.getRegion()),
+                                                        clusterCaptor.capture()))
+      .thenReturn(operationFuture);
+    ApiFuture<ClusterOperationMetadata> apiFuture = mock(ApiFuture.class);
+    when(apiFuture.get()).thenReturn(ClusterOperationMetadata.getDefaultInstance());
+    when(operationFuture.getMetadata()).thenReturn(apiFuture);
+
+    mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
+      .createCluster("ranked-cluster", "2.0", Collections.emptyMap(), false, null);
+
+    InstanceFlexibilityPolicy policy =
+        clusterCaptor.getValue().getConfig().getWorkerConfig().getInstanceFlexibilityPolicy();
+    Assert.assertEquals(3, policy.getInstanceSelectionListCount());
+    Assert.assertEquals(0, policy.getInstanceSelectionList(0).getRank());
+    Assert.assertEquals(Collections.singletonList("n4-standard-4"),
+                        policy.getInstanceSelectionList(0).getMachineTypesList());
+    Assert.assertEquals(0, policy.getInstanceSelectionList(1).getRank());
+    Assert.assertEquals(Collections.singletonList("n2-custom-4-15360"),
+                        policy.getInstanceSelectionList(1).getMachineTypesList());
+    Assert.assertEquals(1, policy.getInstanceSelectionList(2).getRank());
+    Assert.assertEquals(Collections.singletonList("e2-custom-4-15360"),
+                        policy.getInstanceSelectionList(2).getMachineTypesList());
+  }
+
+  @Test
+  public void testDuplicateFlexVmMachineTypeRejected() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("accountKey", "{ \"type\": \"test\"}");
+    properties.put(DataprocConf.PROJECT_ID_KEY, "dummy-project");
+    properties.put("zone", "us-test1-c");
+    properties.put(DataprocConf.WORKER_FLEX_VM_MACHINE_TYPES, "; n4-standard-4, n2 ; e2, n2");
+    DataprocClient client = mockDataprocClientFactory.create(
+        DataprocConf.create(properties), new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+
+    DataprocRuntimeException e = Assert.assertThrows(DataprocRuntimeException.class,
+        () -> client.createCluster("dup-cluster", "2.0", Collections.emptyMap(), false, null));
+    Assert.assertTrue(e.getMessage().contains("n2-custom-4-15360"));
+    Assert.assertEquals(ErrorType.USER, e.getErrorType());
+  }
+
+  @Test
   public void testCreateClusterWithFlexVmButNoDiskConfig() throws Exception {
     Map<String, String> properties = new HashMap<>();
     properties.put("accountKey", "{ \"type\": \"test\"}");
