@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.AppWithDatasetDuplicate;
@@ -40,7 +41,10 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Gateway;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesService;
@@ -153,12 +157,16 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
           MetadataServiceClient metadataServiceClient,
           AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
           MessagingService messagingService, Impersonator impersonator,
-          CapabilityReader capabilityReader) {
+          CapabilityReader capabilityReader,
+          RemoteClientFactory remoteClientFactory,
+          @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION)
+          AeadCipher userEncryptionAeadCipher) {
 
         return Mockito.spy(new ApplicationLifecycleService(cConf, store, scheduleManager,
             usageRegistry, preferencesService, metricsSystemClient, ownerAdmin, artifactRepository,
             managerFactory, metadataServiceClient, accessEnforcer, authenticationContext,
-            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService()));
+            messagingService, impersonator, capabilityReader, new NoOpMetricsCollectionService(),
+            remoteClientFactory, userEncryptionAeadCipher));
       }
     });
   }

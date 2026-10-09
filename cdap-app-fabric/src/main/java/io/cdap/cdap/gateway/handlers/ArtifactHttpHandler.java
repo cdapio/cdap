@@ -44,6 +44,7 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.ArtifactRangeNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
@@ -572,7 +573,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @QueryParam("artifactScope") final String pluginScope,
       @QueryParam("limit") @DefaultValue("2147483647") String limit,
       @QueryParam("order") @DefaultValue("UNORDERED") String order)
-      throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException, InvalidArtifactRangeException {
+      throws NotFoundException, BadRequestException, InvalidArtifactRangeException {
 
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);

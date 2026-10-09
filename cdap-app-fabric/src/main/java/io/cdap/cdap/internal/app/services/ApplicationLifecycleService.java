@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -27,11 +28,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.ProgramSpecification;
-import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
 import io.cdap.cdap.api.app.ApplicationSpecification;
-import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -41,12 +41,18 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
@@ -59,13 +65,18 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.utils.BatchingConsumer;
 import io.cdap.cdap.config.PreferencesService;
@@ -73,23 +84,30 @@ import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.gateway.handlers.AppDeployStrategy;
-import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.deploy.InMemoryAppConfigUpdater;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationDeployScope;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationDeployable;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.artifact.ApplicationClassCodec;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.state.AppStateKey;
 import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
+import io.cdap.cdap.internal.app.worker.AppConfigUpdateRequest;
+import io.cdap.cdap.internal.app.worker.AppConfigUpdateTask;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
@@ -123,11 +141,12 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.common.http.HttpRequestConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
@@ -146,6 +165,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -160,9 +180,29 @@ import org.slf4j.LoggerFactory;
 public class ApplicationLifecycleService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
-  private static final Gson GSON =
-      new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
-          .create();
+  private static final Gson GSON = new GsonBuilder()
+      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
+  private static final Gson TASK_GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+      .create();
+  private static final Map<String, BiFunction<String, Throwable, Exception>> REMOTE_EXCEPTIONS =
+      ImmutableMap.<String, BiFunction<String, Throwable, Exception>>builder()
+          .put(UnsupportedOperationException.class.getName(), UnsupportedOperationException::new)
+          .put(InvalidArtifactException.class.getName(), InvalidArtifactException::new)
+          .put(BadRequestException.class.getName(), BadRequestException::new)
+          .put(ServiceUnavailableException.class.getName(),
+              (msg, cause) -> new ServiceUnavailableException(
+                  Constants.Service.TASK_WORKER, msg, cause))
+          .put(NotFoundException.class.getName(), NotFoundException::new)
+          .put(ArtifactNotFoundException.class.getName(), NotFoundException::new)
+          .put(PluginNotExistsException.class.getName(), NotFoundException::new)
+          .put(NamespaceNotFoundException.class.getName(), NotFoundException::new)
+          .put(UnauthorizedException.class.getName(), UnauthorizedException::new)
+          .build();
 
   /**
    * Store manages non-runtime lifecycle.
@@ -187,6 +227,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int appsScanBatchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final RemoteTaskExecutor remoteTaskExecutor;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -202,7 +243,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService,
+      RemoteClientFactory remoteClientFactory,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION)
+      AeadCipher userEncryptionAeadCipher) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -225,6 +269,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    int connectTimeout = cConf.getInt(
+        Constants.TaskWorker.CONFIGURATOR_HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
+    int readTimeout = cConf.getInt(Constants.TaskWorker.CONFIGURATOR_HTTP_CLIENT_READ_TIMEOUT_MS);
+    HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
+        remoteClientFactory, RemoteTaskExecutor.Type.TASK_WORKER, httpRequestConfig,
+        userEncryptionAeadCipher);
   }
 
   @Override
@@ -814,34 +865,46 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     io.cdap.cdap.proto.id.ArtifactId artifactId =
         Artifacts.toProtoArtifactId(appId.getParent(),
             artifactDetail.getDescriptor().getArtifactId());
-    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId,
-        this.impersonator);
+
+    AppConfigUpdateRequest request = new AppConfigUpdateRequest(
+        appId,
+        artifactId,
+        appClass,
+        appSpec,
+        updateActions,
+        allowedArtifactScopes,
+        allowSnapshot);
 
     String updatedAppConfig;
-    DefaultApplicationUpdateContext updateContext =
-        new DefaultApplicationUpdateContext(appId.getParent(), appId,
-            artifactDetail.getDescriptor().getArtifactId(),
-            artifactRepository, appSpec.getConfiguration(), updateActions,
-            allowedArtifactScopes, allowSnapshot, appSpec);
+    if (!NamespaceId.SYSTEM.equals(artifactId.getParent())
+        && cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
+      RunnableTaskRequest taskRequest =
+          RunnableTaskRequest.getBuilder(AppConfigUpdateTask.class.getName())
+              .withParam(TASK_GSON.toJson(request))
+              .withNamespace(appId.getNamespace())
+              .build();
 
-    try (CloseableClassLoader artifactClassLoader =
-        artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor(),
-            classLoaderImpersonator)) {
-      Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
-      // Run config update logic for the application to generate updated config.
-      if (!(appMain instanceof Application)) {
+      byte[] bytes;
+      try {
+        bytes = remoteTaskExecutor.runTask(taskRequest);
+      } catch (RemoteExecutionException e) {
+        throw unwrapRemoteExecutionException(e);
+      }
+      if (bytes == null || bytes.length == 0) {
         throw new IllegalStateException(
-            String.format("Application main class is of invalid type: %s",
-                appMain.getClass().getName()));
+            String.format("Received empty or null response from task worker for application %s",
+                appId));
       }
-      Application<?> app = (Application<?>) appMain;
-      Type configType = Artifacts.getConfigType(app.getClass());
-      if (!app.isUpdateSupported()) {
-        String errorMessage = String.format("Application %s does not support update.", appId);
-        throw new UnsupportedOperationException(errorMessage);
+      updatedAppConfig = new String(bytes, StandardCharsets.UTF_8);
+    } else {
+      EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId,
+          this.impersonator);
+      try (CloseableClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(
+          artifactDetail.getDescriptor(),
+          classLoaderImpersonator)) {
+        updatedAppConfig = InMemoryAppConfigUpdater.updateAppConfig(
+            request, artifactClassLoader, artifactRepository);
       }
-      ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
-      updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
 
     String versionId = appId.getVersion();
@@ -1728,5 +1791,29 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     store.updateApplicationSourceControlMeta(updateScmMetaRequests);
+  }
+
+  @VisibleForTesting
+  static Exception unwrapRemoteExecutionException(RemoteExecutionException e) {
+    if (e.getCause() == null) {
+      return e;
+    }
+    for (Throwable t : Throwables.getCausalChain(e.getCause())) {
+      if (!(t instanceof RemoteTaskException)) {
+        return e;
+      }
+
+      RemoteTaskException rte = (RemoteTaskException) t;
+      String className = rte.getRemoteExceptionClassName();
+      BiFunction<String, Throwable, Exception> constructor = REMOTE_EXCEPTIONS.get(className);
+      if (constructor != null) {
+        return constructor.apply(rte.getMessage(), e);
+      }
+      if (!RuntimeException.class.getName().equals(className)
+          && !Exception.class.getName().equals(className)) {
+        return e;
+      }
+    }
+    return e;
   }
 }

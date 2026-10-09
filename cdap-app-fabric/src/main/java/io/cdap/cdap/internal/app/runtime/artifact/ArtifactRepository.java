@@ -171,29 +171,6 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
       throws IOException, ArtifactNotFoundException;
 
   /**
-   * Returns a {@link SortedMap} of plugin artifact to plugin available for the given artifact. The
-   * keys are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins
-   * available to the given artifact.
-   *
-   * @param namespace the namespace to get plugins from
-   * @param artifactId the id of the artifact to get plugins for
-   * @param pluginType the type of plugins to get
-   * @param pluginName the name of plugins to get
-   * @param pluginPredicate the predicate for the plugin
-   * @param limit the limit number of the result
-   * @param order the order of the result
-   * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if there was an exception reading plugin metadata from the artifact
-   *     store
-   */
-  SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
-      NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
-      com.google.common.base.Predicate<io.cdap.cdap.proto.id.ArtifactId> pluginPredicate,
-      int limit, ArtifactSortOrder order)
-      throws IOException, PluginNotExistsException, ArtifactNotFoundException;
-
-  /**
    * Returns a {@link Map.Entry} representing the plugin information for the plugin being
    * requested.
    *

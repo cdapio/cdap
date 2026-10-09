@@ -19,6 +19,10 @@ package io.cdap.cdap.internal.app.services;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
@@ -27,33 +31,63 @@ import io.cdap.cdap.MetadataEmitApp;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Gateway;
+import io.cdap.cdap.common.encryption.AeadCipher;
+import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
+import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
+import io.cdap.cdap.data2.registry.UsageRegistry;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
+import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.worker.AppConfigUpdateTask;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
 import io.cdap.cdap.internal.capability.CapabilityWriter;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -67,15 +101,26 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.Read;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -87,6 +132,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
@@ -97,6 +143,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 /**
  *
@@ -861,6 +909,293 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.getApplicationsCount(null);
   }
 
+  /**
+   * Test application subclass that supports config updates.
+   */
+  public static class UpdatableConfigTestApp extends ConfigTestApp {
+    @Override
+    public boolean isUpdateSupported() {
+      return true;
+    }
+
+    @Override
+    public ApplicationUpdateResult<ConfigClass> updateConfig(
+        ApplicationUpdateContext updateContext) throws Exception {
+      ConfigClass currentConfig = updateContext.getConfig(ConfigClass.class);
+      return new ApplicationUpdateResult<>(currentConfig);
+    }
+  }
+
+  @Test
+  public void testUpgradeUserApplicationLocallyWhenPoolDisabled() throws Exception {
+    String appName = "userUpgradeLocalApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteClient mockRemoteClient = createMockTaskWorkerRemoteClient();
+    ApplicationLifecycleService service = createServiceWithRemoteClient(mockRemoteClient, false);
+
+    try {
+      ApplicationId upgradedId = service.upgradeLatestApplication(
+          deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+      Assert.assertEquals(appName, upgradedId.getApplication());
+      Assert.assertNotEquals(deployedAppId.getVersion(), upgradedId.getVersion());
+      Mockito.verify(mockRemoteClient, Mockito.never()).execute(Mockito.any(HttpRequest.class));
+    } finally {
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  @Test
+  public void testUpgradeUserApplicationDelegatesToRemoteTaskExecutor() throws Exception {
+    String appName = "userUpgradeRemoteApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteClient mockRemoteClient = createMockTaskWorkerRemoteClient();
+    ApplicationLifecycleService service = createServiceWithRemoteClient(mockRemoteClient, true);
+
+    ConfigTestApp.ConfigClass updatedConfig =
+        new ConfigTestApp.ConfigClass("upgradedTable", "upgradedResp");
+    HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+    Mockito.when(mockResponse.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
+    Mockito.when(mockResponse.getUncompressedResponseBody())
+        .thenReturn(GSON.toJson(updatedConfig).getBytes(StandardCharsets.UTF_8));
+    Mockito.when(mockRemoteClient.execute(Mockito.any(HttpRequest.class))).thenReturn(mockResponse);
+
+    try {
+      ApplicationId upgradedId = service.upgradeLatestApplication(
+          deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+      Assert.assertEquals(appName, upgradedId.getApplication());
+      ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
+      Mockito.verify(mockRemoteClient, Mockito.times(1)).execute(requestCaptor.capture());
+      RunnableTaskRequest capturedRequest = decodeTaskRequest(requestCaptor.getValue());
+      Assert.assertEquals(
+          AppConfigUpdateTask.class.getName(), capturedRequest.getClassName());
+      Assert.assertEquals(
+          deployedAppId.getNamespace(), capturedRequest.getNamespace());
+      ApplicationDetail upgradedDetail =
+          getAppDetails(Id.Namespace.DEFAULT.getId(), appName);
+      Assert.assertTrue(upgradedDetail.getConfiguration().contains("upgradedTable"));
+      Assert.assertTrue(upgradedDetail.getConfiguration().contains("upgradedResp"));
+    } finally {
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testUpgradeUserApplicationUnwrapsRemoteTaskException() throws Exception {
+    String appName = "userUpgradeExceptionApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteClient mockRemoteClient = createMockTaskWorkerRemoteClient();
+    ApplicationLifecycleService service = createServiceWithRemoteClient(mockRemoteClient, true);
+
+    HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+    Mockito.when(mockResponse.getResponseCode()).thenReturn(HttpURLConnection.HTTP_BAD_REQUEST);
+    Mockito.when(mockResponse.getResponseBodyAsString())
+        .thenReturn(new Gson().toJson(
+            new BasicThrowable(new UnsupportedOperationException("Update not supported"))));
+    Mockito.when(mockRemoteClient.execute(Mockito.any(HttpRequest.class))).thenReturn(mockResponse);
+
+    try {
+      service.upgradeLatestApplication(
+          deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+    } finally {
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  @Test
+  public void testUpgradeUserApplicationEmptyRemoteResponseFails() throws Exception {
+    String appName = "userUpgradeEmptyRespApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteClient mockRemoteClient = createMockTaskWorkerRemoteClient();
+    ApplicationLifecycleService service = createServiceWithRemoteClient(mockRemoteClient, true);
+
+    try {
+      for (byte[] emptyPayload : Arrays.asList(null, new byte[0])) {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.getResponseCode()).thenReturn(HttpURLConnection.HTTP_OK);
+        Mockito.when(mockResponse.getUncompressedResponseBody()).thenReturn(emptyPayload);
+        Mockito.when(mockRemoteClient.execute(Mockito.any(HttpRequest.class)))
+            .thenReturn(mockResponse);
+        try {
+          service.upgradeLatestApplication(
+              deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+          Assert.fail("Expected IllegalStateException for null or empty task worker response");
+        } catch (IllegalStateException e) {
+          Assert.assertTrue(
+              e.getMessage().contains("Received empty or null response from task worker"));
+        }
+      }
+    } finally {
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  @Test
+  public void testUnwrapRemoteExecutionException() {
+    RemoteExecutionException noCause = Mockito.mock(RemoteExecutionException.class);
+    Assert.assertSame(noCause,
+        ApplicationLifecycleService.unwrapRemoteExecutionException(noCause));
+
+    RemoteExecutionException nonRemoteCause = new RemoteExecutionException(
+        new RemoteTaskException(
+            RuntimeException.class.getName(), "io failure", new IOException("disk")));
+    Assert.assertSame(nonRemoteCause,
+        ApplicationLifecycleService.unwrapRemoteExecutionException(nonRemoteCause));
+
+    RemoteExecutionException unsupported = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new UnsupportedOperationException("no update")));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(unsupported)
+            instanceof UnsupportedOperationException);
+
+    RemoteExecutionException wrappedUnsupported = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new RuntimeException(new UnsupportedOperationException("wrapped"))));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(wrappedUnsupported)
+            instanceof UnsupportedOperationException);
+
+    RemoteExecutionException checkedWrappedBadRequest =
+        RemoteExecutionException.fromBasicThrowable(
+            new BasicThrowable(new Exception(new BadRequestException("checked wrapped"))));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(checkedWrappedBadRequest)
+            instanceof BadRequestException);
+
+    RemoteExecutionException invalidArtifact = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new InvalidArtifactException("bad artifact")));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(invalidArtifact)
+            instanceof InvalidArtifactException);
+
+    RemoteExecutionException badRequest = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new BadRequestException("bad request")));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(badRequest)
+            instanceof BadRequestException);
+
+    for (Exception notFound : Arrays.asList(
+        new NotFoundException("not found"),
+        new ArtifactNotFoundException(NamespaceId.DEFAULT.artifact("a", "1.0.0")),
+        new PluginNotExistsException(NamespaceId.DEFAULT, "type", "name"),
+        new NamespaceNotFoundException(NamespaceId.DEFAULT))) {
+      RemoteExecutionException remote = RemoteExecutionException.fromBasicThrowable(
+          new BasicThrowable(notFound));
+      Assert.assertTrue(
+          ApplicationLifecycleService.unwrapRemoteExecutionException(remote)
+              instanceof NotFoundException);
+    }
+
+    RemoteExecutionException unauthorized = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new UnauthorizedException("denied")));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(unauthorized)
+            instanceof UnauthorizedException);
+
+    RemoteExecutionException unavailable = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new ServiceUnavailableException("svc", "down")));
+    Assert.assertTrue(
+        ApplicationLifecycleService.unwrapRemoteExecutionException(unavailable)
+            instanceof ServiceUnavailableException);
+
+    RemoteExecutionException internal = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new IllegalStateException("internal")));
+    Assert.assertSame(internal,
+        ApplicationLifecycleService.unwrapRemoteExecutionException(internal));
+
+    RemoteExecutionException runtimeOnly = RemoteExecutionException.fromBasicThrowable(
+        new BasicThrowable(new RuntimeException("plain runtime")));
+    Assert.assertSame(runtimeOnly,
+        ApplicationLifecycleService.unwrapRemoteExecutionException(runtimeOnly));
+  }
+
+  private RemoteClient createMockTaskWorkerRemoteClient() {
+    RemoteClient mockRemoteClient = Mockito.mock(RemoteClient.class);
+    Mockito.when(mockRemoteClient.requestBuilder(Mockito.eq(HttpMethod.POST), Mockito.anyString()))
+        .thenAnswer(inv -> HttpRequest.builder(
+            inv.getArgument(0), new URL("http://localhost" + inv.getArgument(1))));
+    return mockRemoteClient;
+  }
+
+  private ApplicationLifecycleService createServiceWithRemoteClient(
+      RemoteClient remoteClient, boolean poolEnabled) {
+    CConfiguration serviceConf = CConfiguration.copy(cConf);
+    serviceConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, poolEnabled);
+    RemoteClientFactory mockRemoteClientFactory = Mockito.mock(RemoteClientFactory.class);
+    Mockito.when(mockRemoteClientFactory.createRemoteClient(
+            Mockito.eq(Constants.Service.TASK_WORKER), Mockito.any(), Mockito.anyString()))
+        .thenReturn(remoteClient);
+    return new ApplicationLifecycleService(
+        serviceConf,
+        getInjector().getInstance(Store.class),
+        getInjector().getInstance(ScheduleManager.class),
+        getInjector().getInstance(UsageRegistry.class),
+        getInjector().getInstance(PreferencesService.class),
+        getInjector().getInstance(MetricsSystemClient.class),
+        getInjector().getInstance(OwnerAdmin.class),
+        artifactRepository,
+        getInjector().getInstance(
+            Key.get(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+            })),
+        getInjector().getInstance(MetadataServiceClient.class),
+        getInjector().getInstance(AccessEnforcer.class),
+        getInjector().getInstance(AuthenticationContext.class),
+        getInjector().getInstance(MessagingService.class),
+        getInjector().getInstance(Impersonator.class),
+        getInjector().getInstance(CapabilityReader.class),
+        getInjector().getInstance(MetricsCollectionService.class),
+        mockRemoteClientFactory,
+        getInjector().getInstance(
+            Key.get(AeadCipher.class,
+                Names.named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION))));
+  }
+
+  private RunnableTaskRequest decodeTaskRequest(HttpRequest httpRequest) throws IOException {
+    boolean compressed = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
+    try (InputStream rawStream = httpRequest.getBody().getInput();
+        InputStream stream = compressed ? new GZIPInputStream(rawStream) : rawStream;
+        Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+      return new Gson().fromJson(reader, RunnableTaskRequest.class);
+    }
+  }
+
+  private ApplicationId deployUserUpgradeTestApp(String appName) throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appName);
+    Id.Artifact artifactId =
+        Id.Artifact.from(Id.Namespace.DEFAULT, appName + "Artifact", "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(
+        locationFactory, UpdatableConfigTestApp.class, new Manifest(), new ClassAcceptor() {
+          final Set<String> visibleResources = ProgramResources.getVisibleResources();
+
+          @Override
+          public boolean accept(String className, URL classUrl, URL classPathUrl) {
+            return !visibleResources.contains(className.replace('.', '/') + ".class")
+                && !className.startsWith("org.apache.spark.")
+                && (!className.startsWith(ApplicationLifecycleServiceTest.class.getName())
+                    || className.equals(UpdatableConfigTestApp.class.getName()));
+          }
+        });
+    HttpResponse addArtifactResp;
+    try {
+      addArtifactResp = addArtifact(
+          artifactId, Locations.newInputSupplier(appJar), Collections.emptySet());
+    } finally {
+      appJar.delete();
+    }
+    Assert.assertEquals(addArtifactResp.getResponseBodyAsString(),
+        200, addArtifactResp.getResponseCode());
+    HttpResponse deployResp =
+        deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+    Assert.assertEquals(deployResp.getResponseBodyAsString(), 200, deployResp.getResponseCode());
+    ApplicationDetail detail = getAppDetails(Id.Namespace.DEFAULT.getId(), appName);
+    return new ApplicationId(Id.Namespace.DEFAULT.getId(), appName, detail.getAppVersion());
+  }
+
+  private void cleanupUpgradeTestUserApp(ApplicationId deployedAppId, String appName)
+      throws Exception {
+    deleteAppAndData(deployedAppId);
+    Id.Artifact artifactId =
+        Id.Artifact.from(Id.Namespace.DEFAULT, appName + "Artifact", "1.0.0-SNAPSHOT");
+    deleteArtifact(artifactId, 200);
+  }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {
     Tasks.waitFor(expected, () -> getProgramRuns(Id.Program.fromEntityId(programId), status).size(),

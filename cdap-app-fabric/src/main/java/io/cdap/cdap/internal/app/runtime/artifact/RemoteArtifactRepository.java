@@ -122,10 +122,11 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   public SortedMap<ArtifactDescriptor, PluginClass>
   getPlugins(NamespaceId namespace, Id.Artifact artifactId,
       String pluginType, String pluginName,
-      Predicate<ArtifactId> pluginPredicate, int limit,
+      @Nullable Predicate<ArtifactId> pluginPredicate, int limit,
       ArtifactSortOrder order)
-      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    throw new UnsupportedOperationException();
+      throws IOException, NotFoundException {
+    return artifactRepositoryReader.getPlugins(
+        namespace, artifactId, pluginType, pluginName, pluginPredicate, limit, order);
   }
 
   @Override

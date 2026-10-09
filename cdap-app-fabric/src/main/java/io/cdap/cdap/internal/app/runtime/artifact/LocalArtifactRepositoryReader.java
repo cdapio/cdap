@@ -16,14 +16,22 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Predicate;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.SortedMap;
+import javax.annotation.Nullable;
 
 /**
  * Implementation for {@link ArtifactRepositoryReader} to fetch artifact metadata directly from
@@ -52,5 +60,14 @@ public class LocalArtifactRepositoryReader implements ArtifactRepositoryReader {
   public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit,
       ArtifactSortOrder order) {
     return artifactStore.getArtifacts(range, limit, order);
+  }
+
+  @Override
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
+      NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
+      @Nullable Predicate<ArtifactId> pluginPredicate, int limit, ArtifactSortOrder order)
+      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName,
+        pluginPredicate, limit, order);
   }
 }
