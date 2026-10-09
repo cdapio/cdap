@@ -332,15 +332,17 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       throw new OAuthServiceException(response.getResponseCode(),
           "Request for access token did not return 200. Response code: " + response.getResponseCode()
               + " , response message: " + response.getResponseMessage()
-              + " , response body: " + response.getResponseBodyAsString());
+              + " , response body: " + response.getResponseBodyAsString(),
+          null, true);
     }
 
     RefreshTokenResponse tokenResponse = GSON.fromJson(
         response.getResponseBodyAsString(), RefreshTokenResponse.class);
 
-    if (Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
+    if (tokenResponse == null || Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
-          "Access token response body does not have access token: " + response.getResponseBodyAsString());
+          "Access token response body does not have access token: " + response.getResponseBodyAsString(),
+          null, true);
     }
     // If provider returned a rotated refresh token, persist the updated refresh token
     String newRefreshToken = tokenResponse.getRefreshToken();
@@ -514,24 +516,21 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         return;
       }
 
-      // 2. For RTR providers, attempt token rotation refresh to verify validity
-      if (RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
-        fetchOAuthCredentialWithRefreshTokenRotation(oauthProvider, provider, credentialId);
+      // 2. Verify credential by refreshing token (via RTR leasing or Standard refresh)
+      try {
+        if (RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
+          fetchOAuthCredentialWithRefreshTokenRotation(oauthProvider, provider, credentialId);
+        } else {
+          executeTokenRefresh(oauthProvider, provider, credentialId);
+        }
         responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
-        return;
+      } catch (OAuthServiceException e) {
+        if (e.isProviderError()) {
+          responder.sendString(GSON.toJson(new CredentialIsValidResponse(false)));
+          return;
+        }
+        throw e;
       }
-
-      // 3. For Standard providers, verify refresh token validity with third-party endpoint
-      OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
-      HttpResponse response = HttpRequests.execute(
-          createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
-      if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new OAuthServiceException(response.getResponseCode(),
-            "Request for access token did not return 200. Response code: " + response.getResponseCode()
-                + " , response message: " + response.getResponseMessage()
-                + " , response body: " + response.getResponseBodyAsString());
-      }
-      responder.sendString(GSON.toJson(new CredentialIsValidResponse(true)));
     });
   }
 
@@ -750,19 +749,28 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private static class OAuthServiceException extends Exception {
 
     private final int status;
+    private final boolean providerError;
 
     OAuthServiceException(int status, String message, Throwable cause) {
-      super(message, cause);
-      this.status = status;
+      this(status, message, cause, false);
     }
 
     OAuthServiceException(int status, String message) {
-      super(message);
+      this(status, message, null, false);
+    }
+
+    OAuthServiceException(int status, String message, Throwable cause, boolean providerError) {
+      super(message, cause);
       this.status = status;
+      this.providerError = providerError;
     }
 
     int getStatus() {
       return this.status;
+    }
+
+    boolean isProviderError() {
+      return this.providerError;
     }
 
     void respond(HttpServiceResponder responder) {
