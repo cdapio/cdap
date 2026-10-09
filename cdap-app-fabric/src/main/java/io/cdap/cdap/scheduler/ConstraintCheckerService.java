@@ -16,8 +16,11 @@
 
 package io.cdap.cdap.scheduler;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -26,20 +29,27 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
+import io.cdap.cdap.internal.app.runtime.schedule.constraint.WorkflowTokenAvailableConstraint;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueue;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
@@ -51,9 +61,11 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +82,8 @@ class ConstraintCheckerService extends AbstractIdleService {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
   private final TransactionRunner transactionRunner;
+  private final boolean workflowTokenConstraintEnabled;
+  private final WorkflowTokenAvailableConstraint workflowTokenAvailableConstraint;
   private ScheduleTaskRunner taskRunner;
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping;
@@ -89,6 +103,45 @@ class ConstraintCheckerService extends AbstractIdleService {
     this.cConf = cConf;
     this.transactionRunner = transactionRunner;
     this.metricsCollectionService = metricsCollectionService;
+    this.workflowTokenConstraintEnabled =
+        Feature.WORKFLOW_TOKEN_CONSTRAINT.isEnabled(new DefaultFeatureFlagsProvider(cConf));
+    this.workflowTokenAvailableConstraint =
+        new WorkflowTokenAvailableConstraint(
+            cConf.getLong(Constants.Scheduler.WORKFLOW_TOKEN_MAX_WAIT_MS, 60_000L),
+            cConf.get(
+                Constants.Scheduler.WORKFLOW_TOKEN_MAPPING_PROPERTY_KEY,
+                "triggering.properties.mapping"),
+            cConf.get(
+                Constants.Scheduler.WORKFLOW_TOKEN_REQUIRED_KEY,
+                "resolved.plugin.properties.map"),
+            metricsCollectionService);
+  }
+
+  @VisibleForTesting
+  Iterable<Constraint> getEffectiveConstraints(Job job) {
+    List<? extends Constraint> persistedConstraints = job.getSchedule().getConstraints();
+    if (!workflowTokenConstraintEnabled
+        || !containsProgramStatusTrigger(job.getSchedule().getTrigger())) {
+      return Iterables.concat(persistedConstraints, ImmutableList.<Constraint>of());
+    }
+    return Iterables.concat(
+        persistedConstraints, ImmutableList.<Constraint>of(workflowTokenAvailableConstraint));
+  }
+
+  @VisibleForTesting
+  static boolean containsProgramStatusTrigger(@Nullable Trigger trigger) {
+    if (trigger instanceof ProgramStatusTrigger) {
+      return true;
+    }
+    if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
+      for (SatisfiableTrigger child :
+          ((AbstractSatisfiableCompositeTrigger) trigger).getTriggers()) {
+        if (containsProgramStatusTrigger(child)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -310,7 +363,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       ConstraintResult.SatisfiedState satisfiedState = ConstraintResult.SatisfiedState.SATISFIED;
 
       ConstraintContext constraintContext = new ConstraintContext(job, now, store);
-      for (Constraint constraint : job.getSchedule().getConstraints()) {
+      for (Constraint constraint : getEffectiveConstraints(job)) {
         if (!(constraint instanceof CheckableConstraint)) {
           // this shouldn't happen, since implementation of Constraint in ProgramSchedule
           // should implement CheckableConstraint
