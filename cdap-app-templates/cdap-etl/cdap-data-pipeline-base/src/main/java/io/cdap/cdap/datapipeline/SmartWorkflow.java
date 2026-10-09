@@ -121,8 +121,10 @@ import java.util.stream.Collectors;
  */
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
+  // Also read by app-fabric WorkflowTokenAvailableConstraint; keep in sync.
   static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
 
+  // Also read by app-fabric WorkflowTokenAvailableConstraint; keep in sync.
   private static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
 
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
