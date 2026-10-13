@@ -385,6 +385,58 @@ public class ProxyHandlersTest {
     }
 
     @Test
+    public void testDrainingAnswers503WithoutLeasing() {
+        DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState freshPod = new PodState(null, 0);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", freshPod);
+        ProxyDrainState drainState = new ProxyDrainState();
+        drainState.startDraining();
+
+        EmbeddedChannel channel = new EmbeddedChannel(
+            new ProxyFrontendHandler(podLeaseManager, mockDiscovery, drainState));
+        HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+        req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+        channel.writeInbound(req);
+
+        // A 503 is what App Fabric retries; the body says why.
+        FullHttpResponse response = channel.readOutbound();
+        assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE, response.status());
+        assertEquals(ProxyFrontendHandler.PROXY_DRAINING_BODY,
+                     response.content().toString(StandardCharsets.UTF_8));
+        assertEquals("close", response.headers().get("Connection"));
+        response.release();
+
+        // Never given a worker, so it doesn't hold up the shutdown.
+        assertNull(freshPod.getLeasedNamespace());
+        assertEquals(0, drainState.getInFlight());
+        Mockito.verify(mockDiscovery, Mockito.never()).discover(Mockito.anyString());
+
+        channel.writeInbound(new DefaultLastHttpContent());
+        assertFalse(channel.isActive());
+    }
+
+    @Test
+    public void testRequestCountsAsInFlightUntilItsConnectionCloses() {
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        ProxyDrainState drainState = new ProxyDrainState();
+        EmbeddedChannel channel = new EmbeddedChannel(new ProxyFrontendHandler(
+            podLeaseManager, discoveryOf(discoverableAt("127.0.0.1", 11015)), drainState));
+        HttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/api");
+        req.headers().set(Constants.Gateway.HEADER_CDAP_NAMESPACE, "namespace-A");
+
+        // The EmbeddedChannel can't host the worker connection, so the connect fails and the request
+        // is answered 503; it still counts until the caller's connection closes.
+        channel.writeInbound(req);
+        assertWorkerUnreachableResponse(channel.readOutbound());
+        assertEquals(1, drainState.getInFlight());
+
+        channel.writeInbound(new DefaultLastHttpContent());
+        assertFalse(channel.isActive());
+        assertEquals(0, drainState.getInFlight());
+    }
+
+    @Test
     public void testSyncDiscoveryRecordsNodeName() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
 

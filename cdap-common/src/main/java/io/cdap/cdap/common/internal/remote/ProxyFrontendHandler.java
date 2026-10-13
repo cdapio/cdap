@@ -84,6 +84,13 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      */
     static final String PING_PATH = "/ping";
 
+    /**
+     * Body of the 503 sent for a task request that arrives while the proxy is shutting down. The
+     * request wasn't given a worker, so App Fabric retries it on the replacement proxy.
+     */
+    static final String PROXY_DRAINING_BODY =
+        "The task worker manager proxy is shutting down; the request was not forwarded.";
+
     /** Sent by {@link ProxyBackendHandler} to the caller's pipeline when the worker's TLS fails. */
     enum WorkerUnreachableEvent {
         INSTANCE
@@ -91,16 +98,25 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 
     private final PodLeaseManager podLeaseManager;
     private final DiscoveryServiceClient discoveryServiceClient;
+    private final ProxyDrainState drainState;
     /** The connection to the task worker; this handler sits on the client pipeline. */
     private Channel workerChannel;
     private boolean connecting = false;
     private boolean rejecting = false;
     private boolean requestComplete = false;
+    /** Whether this connection's task request is counted in {@link #drainState}. */
+    private boolean countedForDrain = false;
     private final Queue<Object> pendingMessages = new LinkedList<>();
 
     ProxyFrontendHandler(PodLeaseManager podLeaseManager, DiscoveryServiceClient discoveryServiceClient) {
+        this(podLeaseManager, discoveryServiceClient, new ProxyDrainState());
+    }
+
+    ProxyFrontendHandler(PodLeaseManager podLeaseManager, DiscoveryServiceClient discoveryServiceClient,
+                         ProxyDrainState drainState) {
         this.podLeaseManager = podLeaseManager;
         this.discoveryServiceClient = discoveryServiceClient;
+        this.drainState = drainState;
     }
 
     @Override
@@ -128,6 +144,14 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
 
+            // STEP 1b: Shutting down. Not given a worker yet, so a 503 tells App Fabric the task didn't
+            // run and it retries on the replacement proxy.
+            if (drainState.isDraining()) {
+                respondAndClose(ctx, msg, HttpResponseStatus.SERVICE_UNAVAILABLE,
+                                Unpooled.copiedBuffer(PROXY_DRAINING_BODY, StandardCharsets.UTF_8));
+                return;
+            }
+
             // STEP 2: Discover Live Task Worker Pods and Acquire a Lease
             // Discovery is served from an in-memory cache fed by the Kubernetes Endpoints watch.
             Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.TASK_WORKER);
@@ -141,6 +165,14 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                          + "Rejecting request for namespace '{}'", targetNamespace);
                 respondAndClose(ctx, msg, HttpResponseStatus.TOO_MANY_REQUESTS);
                 return;
+            }
+
+            // Shutdown waits for this request until its connection closes, which happens once the
+            // response has been delivered or the request has failed.
+            if (!countedForDrain) {
+                countedForDrain = true;
+                drainState.requestStarted();
+                ctx.channel().closeFuture().addListener(closed -> drainState.requestFinished());
             }
 
             final String chosenWorker = targetWorkerAddress;
@@ -307,8 +339,13 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      * so the client isn't reset mid-upload.
      */
     private void respondAndClose(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status) {
+        respondAndClose(ctx, msg, status, Unpooled.EMPTY_BUFFER);
+    }
+
+    private void respondAndClose(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status,
+                                 ByteBuf body) {
         rejecting = true;
-        ctx.writeAndFlush(closingResponse(status, Unpooled.EMPTY_BUFFER));
+        ctx.writeAndFlush(closingResponse(status, body));
         ReferenceCountUtil.release(msg);
     }
 

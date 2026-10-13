@@ -5682,6 +5682,17 @@
   </property>
 
   <property>
+    <name>task.worker.manager.drain.timeout.secs</name>
+    <value>60</value>
+    <description>
+      On a graceful stop (pod deletion, node drain, upgrade), how long, in seconds, the task worker
+      manager proxy keeps running to deliver the responses of task requests already sent to a task
+      worker. New task requests are answered 503 meanwhile, which App Fabric retries on the
+      replacement proxy. Requests still running when this passes are closed.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.manager.container.num.cores</name>
     <value>2</value>
     <description>

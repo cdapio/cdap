@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -59,6 +60,8 @@ public class TaskWorkerManagerService extends AbstractIdleService {
   private final PodLeaseManager podLeaseManager;
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ProxyDrainState drainState;
+  private final long drainTimeoutMillis;
 
   private EventLoopGroup bossGroup;
   private EventLoopGroup workerGroup;
@@ -68,6 +71,12 @@ public class TaskWorkerManagerService extends AbstractIdleService {
   @Inject
   TaskWorkerManagerService(CConfiguration cConf, DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient) {
+    this(cConf, discoveryService, discoveryServiceClient, new ProxyDrainState());
+  }
+
+  @VisibleForTesting
+  TaskWorkerManagerService(CConfiguration cConf, DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient, ProxyDrainState drainState) {
     this.bindAddress = cConf.get(Constants.TaskWorkerManager.ADDRESS);
     this.bindPort = cConf.getInt(Constants.TaskWorkerManager.PORT);
     this.bossThreads = cConf.getInt(Constants.TaskWorkerManager.BOSS_THREADS);
@@ -75,6 +84,9 @@ public class TaskWorkerManagerService extends AbstractIdleService {
     this.podLeaseManager = new PodLeaseManager(cConf);
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.drainState = drainState;
+    this.drainTimeoutMillis =
+        TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.TaskWorkerManager.DRAIN_TIMEOUT_SECS));
   }
 
   @Override
@@ -99,7 +111,8 @@ public class TaskWorkerManagerService extends AbstractIdleService {
             ChannelPipeline pipeline = ch.pipeline();
             pipeline.addLast(new HttpServerCodec());
             // No HttpObjectAggregator here on purpose: see the class javadoc.
-            pipeline.addLast(new ProxyFrontendHandler(podLeaseManager, discoveryServiceClient));
+            pipeline.addLast(
+                new ProxyFrontendHandler(podLeaseManager, discoveryServiceClient, drainState));
           }
         });
 
@@ -117,15 +130,27 @@ public class TaskWorkerManagerService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.debug("Stopping TaskWorkerManagerService");
 
-    // Deregister first so App Fabric stops resolving this pod, then drain and close channels.
+    // Deregister first so App Fabric stops resolving this pod.
     if (cancelDiscovery != null) {
       cancelDiscovery.cancel();
     }
+    // Stop accepting connections. Accepted connections stay open, so responses already on their way
+    // back from a task worker can still be delivered.
+    if (serverChannel != null) {
+      serverChannel.close().awaitUninterruptibly();
+    }
+
+    // New task requests are answered 503 from here on; App Fabric retries them on the replacement.
+    // This thread then waits while the event loops deliver the in-flight responses.
+    drainState.startDraining();
+    if (drainState.awaitDrained(drainTimeoutMillis)) {
+      LOG.info("All in-flight task worker requests finished; stopping the proxy");
+    } else {
+      LOG.warn("{} task worker request(s) still in flight after {} seconds; closing them",
+          drainState.getInFlight(), TimeUnit.MILLISECONDS.toSeconds(drainTimeoutMillis));
+    }
 
     List<Future<?>> futures = new ArrayList<>();
-    if (serverChannel != null) {
-      futures.add(serverChannel.close());
-    }
     if (bossGroup != null) {
       futures.add(bossGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS));
     }
