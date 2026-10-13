@@ -27,6 +27,7 @@ import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
@@ -48,6 +49,13 @@ import javax.ws.rs.PathParam;
 
 /**
  * A netty http handler for metadata REST API for the messaging system.
+ *
+ * <p>Every endpoint first authorizes the caller on the namespace it addresses, before anything
+ * else about the request is looked at: {@link StandardPermission#UPDATE} is needed to create,
+ * update or delete a topic and {@link StandardPermission#GET} to read or list topics. Topics are
+ * authorized through their namespace because authorization does not support topics as entities.
+ * When internal authentication is enabled, only internal callers can access the topics of the
+ * system namespace.
  */
 @Path("/v1/namespaces/{namespace}")
 public final class MetadataHandler extends AbstractHttpHandler {
@@ -65,10 +73,12 @@ public final class MetadataHandler extends AbstractHttpHandler {
   };
 
   private final MessagingService messagingService;
+  private final MessagingHandlerAuthorizer authorizer;
 
   @Inject
-  MetadataHandler(MessagingService messagingService) {
+  MetadataHandler(MessagingService messagingService, MessagingHandlerAuthorizer authorizer) {
     this.messagingService = messagingService;
+    this.authorizer = authorizer;
   }
 
   @PUT
@@ -76,7 +86,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void createTopic(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.UPDATE).topic(topic);
     messagingService.createTopic(
         new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -87,7 +97,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void updateTopic(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.UPDATE).topic(topic);
     messagingService.updateTopic(
         new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -98,7 +108,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void getTopic(HttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.GET).topic(topic);
     TopicMetadata metadata =
         new DefaultTopicMetadata(topicId, messagingService.getTopicMetadataProperties(topicId));
     responder.sendJson(HttpResponseStatus.OK,
@@ -109,9 +119,10 @@ public final class MetadataHandler extends AbstractHttpHandler {
   @Path("/topics")
   public void listTopics(HttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace) throws Exception {
+    NamespaceId namespaceId = authorizer.authorize(namespace, StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(
-            Lists.transform(messagingService.listTopics(new NamespaceId(namespace)), TOPIC_TO_NAME),
+            Lists.transform(messagingService.listTopics(namespaceId), TOPIC_TO_NAME),
             TOPIC_LIST_TYPE));
   }
 
@@ -120,7 +131,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void deleteTopic(HttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.UPDATE).topic(topic);
     messagingService.deleteTopic(topicId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
