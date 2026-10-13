@@ -90,7 +90,7 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
       Thread.currentThread().interrupt();
       LOG.warn("Interrupted while terminating the task worker manager proxy", e);
     } catch (Exception e) {
-      LOG.warn("Failed to terminate TaskWorkerManagerServiceLauncher run", e);
+      LOG.warn("Failed to terminate the task worker manager proxy", e);
     }
     if (executor != null) {
       executor.shutdownNow();
@@ -193,11 +193,17 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
           }
 
           // Readiness only, so the Service routes to a new proxy once it answers GET /ping.
+          // The probe scheme follows ssl.internal.enabled because the proxy listens on HTTPS when
+          // internal TLS is enabled and plain HTTP otherwise.
           if (cConf.getBoolean(Constants.TaskWorkerManager.PROBE_ENABLED)
               && twillPreparer instanceof ExtendedTwillPreparer) {
+            Map<String, String> probeProps = new HashMap<>(
+                cConf.getPropsWithPrefix(Constants.TaskWorkerManager.PROBE_PREFIX));
+            probeProps.put("k8s.readiness.http.scheme",
+                cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? "HTTPS" : "HTTP");
             twillPreparer = ((ExtendedTwillPreparer) twillPreparer).addProbes(
                 TaskWorkerManagerTwillRunnable.class.getSimpleName(),
-                cConf.getPropsWithPrefix(Constants.TaskWorkerManager.PROBE_PREFIX));
+                Collections.unmodifiableMap(probeProps));
           }
 
           // No SecurityContext: the proxy needs App Fabric's system service account to watch

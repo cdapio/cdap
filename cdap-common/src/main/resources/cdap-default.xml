@@ -5759,7 +5759,8 @@
     <name>task.worker.manager.probe.k8s.readiness.http.scheme</name>
     <value>HTTP</value>
     <description>
-      Scheme of the proxy readiness probe. The proxy listens on plain HTTP.
+      Scheme of the proxy readiness probe. TaskWorkerManagerServiceLauncher sets this to HTTPS when
+      ssl.internal.enabled is true and HTTP otherwise.
     </description>
   </property>
 

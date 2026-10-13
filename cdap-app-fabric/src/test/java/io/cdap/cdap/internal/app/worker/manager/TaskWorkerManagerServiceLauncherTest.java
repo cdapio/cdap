@@ -142,6 +142,59 @@ public class TaskWorkerManagerServiceLauncherTest {
         conf.get("k8s.readiness.http.port"));
   }
 
+  /**
+   * When internal TLS is enabled, the readiness probe must use HTTPS to match the proxy server.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testLaunchReadinessProbeUsesHttpsWhenInternalSslEnabled() {
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    ArgumentCaptor<Map<String, String>> probeConf = ArgumentCaptor.forClass(Map.class);
+    verify(preparer).addProbes(
+        eq(TaskWorkerManagerTwillRunnable.class.getSimpleName()), probeConf.capture());
+    Assert.assertEquals("HTTPS", probeConf.getValue().get("k8s.readiness.http.scheme"));
+  }
+
+  @Test
+  public void testLaunchSetsSchedulerQueueWhenPriorityClassConfigured() {
+    cConf.set(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME, "high-priority");
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).setSchedulerQueue("high-priority");
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+  }
+
+  @Test
+  public void testShutDownTerminatesActiveControllerAndExecutor() throws Exception {
+    TwillController existing = mock(TwillController.class);
+    Mockito.doReturn(com.google.common.util.concurrent.Futures.immediateFuture(existing))
+        .when(existing).terminate();
+    when(twillRunner.lookup(TaskWorkerManagerTwillApplication.NAME))
+        .thenReturn(Collections.singletonList(existing));
+
+    TaskWorkerManagerServiceLauncher launcher =
+        new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner);
+    java.util.concurrent.ScheduledExecutorService executor = launcher.executor();
+    launcher.run();
+    launcher.shutDown();
+
+    verify(existing).terminate();
+    Assert.assertTrue(executor.isShutdown());
+  }
+
   @Test
   public void testLaunchWithoutProbes() {
     cConf.setBoolean(Constants.TaskWorkerManager.PROBE_ENABLED, false);
