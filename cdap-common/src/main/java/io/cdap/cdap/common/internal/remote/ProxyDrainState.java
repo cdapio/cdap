@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,10 +24,10 @@ import org.slf4j.LoggerFactory;
  * Tracks the task requests the proxy has taken on, so that shutting down can wait until their
  * responses have been delivered instead of cutting them off.
  *
- * <p>A request counts from the moment it is given a task worker slot until its App Fabric
- * connection closes. The proxy carries one task request per connection and closes the connection
- * once the response has been flushed, so a closed connection means the response was delivered or
- * the request failed.
+ * <p>A request counts from the moment it passes the drain check until its App Fabric connection
+ * closes (or until it is rejected before connecting to a worker). The proxy carries one task
+ * request per connection and closes the connection once the response has been flushed, so a closed
+ * connection means the response was delivered or the request failed.
  */
 final class ProxyDrainState {
 
@@ -40,6 +41,21 @@ final class ProxyDrainState {
   /** Whether shutdown has started; new task requests must be turned away. */
   boolean isDraining() {
     return draining;
+  }
+
+  /**
+   * Atomically checks that the proxy is not draining and increments the in-flight count.
+   *
+   * @return {@code true} if the request was admitted, {@code false} if the proxy is draining
+   */
+  boolean tryStartRequest() {
+    synchronized (lock) {
+      if (draining) {
+        return false;
+      }
+      inFlight++;
+      return true;
+    }
   }
 
   /** Called when a request is given a task worker slot. */
@@ -67,7 +83,9 @@ final class ProxyDrainState {
 
   /** Stops new task requests from being taken on. */
   void startDraining() {
-    draining = true;
+    synchronized (lock) {
+      draining = true;
+    }
   }
 
   /**
@@ -77,15 +95,18 @@ final class ProxyDrainState {
    * @return {@code true} if every request finished, {@code false} if the timeout passed first
    */
   boolean awaitDrained(long timeoutMillis) throws InterruptedException {
-    long deadline = System.currentTimeMillis() + timeoutMillis;
+    long deadlineNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
     synchronized (lock) {
       while (inFlight > 0) {
-        long remaining = deadline - System.currentTimeMillis();
-        if (remaining <= 0) {
+        long remainingNanos = deadlineNanos - System.nanoTime();
+        if (remainingNanos <= 0) {
           return false;
         }
+        // Floor to 1ms while remainingNanos > 0 so sub-millisecond remainders don't call wait(0).
+        long waitMillis = Math.max(1L,
+            Math.min(TimeUnit.NANOSECONDS.toMillis(remainingNanos), PROGRESS_LOG_INTERVAL_MILLIS));
         // Woken by requestFinished() reaching 0; the periodic wake-up only logs progress.
-        lock.wait(Math.min(remaining, PROGRESS_LOG_INTERVAL_MILLIS));
+        lock.wait(waitMillis);
         if (inFlight > 0) {
           LOG.info("Waiting for {} in-flight task worker request(s) before stopping", inFlight);
         }

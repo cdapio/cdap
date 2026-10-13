@@ -20,14 +20,21 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.security.HttpsEnabler;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HttpsURLConnection;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Tests that {@link TaskWorkerManagerService} waits for in-flight task requests when it stops.
+ * Tests that {@link TaskWorkerManagerService} waits for in-flight task requests when it stops and
+ * configures TLS according to {@code ssl.internal.enabled}.
  */
 public class TaskWorkerManagerServiceTest {
 
@@ -84,6 +91,28 @@ public class TaskWorkerManagerServiceTest {
     Assert.assertEquals(Service.State.TERMINATED, service.stop().get(10, TimeUnit.SECONDS));
 
     Assert.assertTrue(System.currentTimeMillis() - start < TimeUnit.SECONDS.toMillis(10));
+  }
+
+  @Test
+  public void testInternalSslEnabledServesHttpsAndRegistersHttpsScheme() throws Exception {
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
+    TaskWorkerManagerService service = startService();
+    try {
+      Discoverable discoverable =
+          discoveryService.discover(Constants.Service.TASK_WORKER_MANAGER).iterator().next();
+      Assert.assertEquals(URIScheme.HTTPS, URIScheme.getScheme(discoverable));
+
+      URL pingUrl = URIScheme.createURI(discoverable, "%s", ProxyFrontendHandler.PING_PATH).toURL();
+      HttpsURLConnection conn = (HttpsURLConnection) pingUrl.openConnection();
+      new HttpsEnabler().setTrustAll(true).enable(conn);
+      try {
+        Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+      } finally {
+        conn.disconnect();
+      }
+    } finally {
+      service.stopAndWait();
+    }
   }
 
   private TaskWorkerManagerService startService() {

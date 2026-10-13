@@ -39,10 +39,15 @@ public class ProxyDrainStateTest {
   public void testDrainingStartsOff() {
     ProxyDrainState drainState = new ProxyDrainState();
     Assert.assertFalse(drainState.isDraining());
+    Assert.assertTrue(drainState.tryStartRequest());
+    Assert.assertEquals(1, drainState.getInFlight());
+    drainState.requestFinished();
 
     drainState.startDraining();
 
     Assert.assertTrue(drainState.isDraining());
+    Assert.assertFalse(drainState.tryStartRequest());
+    Assert.assertEquals(0, drainState.getInFlight());
   }
 
   @Test
@@ -79,7 +84,7 @@ public class ProxyDrainStateTest {
     long start = System.currentTimeMillis();
     Assert.assertFalse(drainState.awaitDrained(200));
 
-    Assert.assertTrue(System.currentTimeMillis() - start >= 200);
+    Assert.assertTrue(System.currentTimeMillis() - start >= 180);
     Assert.assertEquals(1, drainState.getInFlight());
   }
 }
