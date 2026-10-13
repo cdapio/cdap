@@ -450,6 +450,26 @@ public class KubeTwillPreparerTest {
     Assert.assertSame(preparer, returned);
   }
 
+  @Test
+  public void testBuildDeploymentWithTerminationGracePeriod() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+
+    ExtendedTwillPreparer returned = preparer.withTerminationGracePeriod(75);
+    V1Deployment deployment = buildDeployment(preparer);
+
+    Assert.assertSame(preparer, returned);
+    Assert.assertEquals(Long.valueOf(75),
+        deployment.getSpec().getTemplate().getSpec().getTerminationGracePeriodSeconds());
+  }
+
+  @Test
+  public void testBuildDeploymentKeepsClusterDefaultGracePeriod() throws Exception {
+    V1Deployment deployment = buildDeployment(createSystemNamespacePreparer());
+
+    Assert.assertNull(
+        deployment.getSpec().getTemplate().getSpec().getTerminationGracePeriodSeconds());
+  }
+
   private KubeTwillPreparer createSystemNamespacePreparer() throws Exception {
     KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(),
         null, "default", createPodInfo(), createTwillSpecification(), createRunId("abc-123"),

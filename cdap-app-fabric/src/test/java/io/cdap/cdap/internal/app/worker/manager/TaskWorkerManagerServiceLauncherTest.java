@@ -90,6 +90,32 @@ public class TaskWorkerManagerServiceLauncherTest {
   }
 
   /**
+   * Kubernetes must not kill the proxy while it drains in-flight requests: the pod's grace period
+   * exceeds the proxy JVM's stop wait, which exceeds the drain timeout.
+   */
+  @Test
+  public void testLaunchOutwaitsTheDrain() throws Exception {
+    cConf.setLong(Constants.TaskWorkerManager.DRAIN_TIMEOUT_SECS, 60);
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    ArgumentCaptor<TwillApplication> appCaptor = ArgumentCaptor.forClass(TwillApplication.class);
+    when(twillRunner.prepare(appCaptor.capture())).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).withTerminationGracePeriod(75L);
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+    TaskWorkerManagerTwillApplication app =
+        (TaskWorkerManagerTwillApplication) appCaptor.getValue();
+    CConfiguration launchedCConf = CConfiguration.create(new File(app.getCConfFileUri()));
+    Assert.assertEquals(70L, launchedCConf.getLong(Constants.Master.RUNNABLE_STOP_TIMEOUT_SECS));
+    // Only the proxy's own copy is changed.
+    Assert.assertEquals(30L, cConf.getLong(Constants.Master.RUNNABLE_STOP_TIMEOUT_SECS));
+  }
+
+  /**
    * The default readiness probe targets the proxy's own /ping on its bind port, over plain HTTP.
    */
   @Test

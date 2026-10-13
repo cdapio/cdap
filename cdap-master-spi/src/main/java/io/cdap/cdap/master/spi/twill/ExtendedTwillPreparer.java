@@ -57,5 +57,11 @@ public interface ExtendedTwillPreparer extends TwillPreparer {
    * Use this for at-most-one semantics; a replica count of one still overlaps pods during updates.
    */
   ExtendedTwillPreparer withRecreateStrategy();
+
+  /**
+   * Sets how long the runnable's pod may take to stop after it is asked to, before it is killed.
+   * Applies to runnables deployed as a Kubernetes Deployment; unset keeps the cluster default.
+   */
+  ExtendedTwillPreparer withTerminationGracePeriod(long seconds);
 }
 

@@ -5674,6 +5674,15 @@
   </property>
 
   <property>
+    <name>master.environment.k8s.runnable.stop.timeout.secs</name>
+    <value>30</value>
+    <description>
+      When a master environment runnable's pod is stopped, how long, in seconds, its JVM waits for
+      the runnable to finish stopping before it exits.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.manager.pool.check.interval</name>
     <value>30</value>
     <description>

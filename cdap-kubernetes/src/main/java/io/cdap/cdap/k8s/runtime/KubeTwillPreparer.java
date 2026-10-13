@@ -218,6 +218,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private final V1EmptyDirVolumeSource workDirVolumeSource;
   private boolean shouldLocalizeConfigurationAsConfigmap;
   private boolean recreateStrategy;
+  private Long terminationGracePeriodSeconds;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -286,6 +287,12 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   @Override
   public ExtendedTwillPreparer withRecreateStrategy() {
     this.recreateStrategy = true;
+    return this;
+  }
+
+  @Override
+  public ExtendedTwillPreparer withTerminationGracePeriod(long seconds) {
+    this.terminationGracePeriodSeconds = seconds;
     return this;
   }
 
@@ -963,6 +970,10 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification()
         .getInstances();
+    V1PodSpec podSpec = createPodSpec(runtimeConfigLocation, runtimeSpecs);
+    if (terminationGracePeriodSeconds != null) {
+      podSpec.setTerminationGracePeriodSeconds(terminationGracePeriodSeconds);
+    }
     V1DeploymentFluent.SpecNested<V1DeploymentBuilder> spec = new V1DeploymentBuilder()
         .withMetadata(metadata)
         .withNewSpec()
@@ -970,7 +981,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .withReplicas(replicas)
         .withNewTemplate()
         .withMetadata(metadata)
-        .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
+        .withSpec(podSpec)
         .endTemplate();
 
     if (recreateStrategy) {

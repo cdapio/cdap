@@ -54,6 +54,10 @@ import org.slf4j.LoggerFactory;
 public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerManagerServiceLauncher.class);
+  // Time for the proxy to close its event loops after the drain, before its JVM gives up on it.
+  private static final long STOP_TIMEOUT_MARGIN_SECS = 10;
+  // Time for the JVM to exit after that, before Kubernetes kills the pod.
+  private static final long GRACE_PERIOD_MARGIN_SECS = 15;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -139,6 +143,11 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
           // which is not mounted into the proxy pod.
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
           cConfCopy.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
+          // On a graceful stop the proxy drains in-flight requests (see TaskWorkerManagerService),
+          // so its JVM must outwait the drain, and Kubernetes must outwait the JVM.
+          long drainTimeoutSecs = cConf.getLong(Constants.TaskWorkerManager.DRAIN_TIMEOUT_SECS);
+          cConfCopy.setLong(Constants.Master.RUNNABLE_STOP_TIMEOUT_SECS,
+              drainTimeoutSecs + STOP_TIMEOUT_MARGIN_SECS);
           // Instruct KubeMasterEnvironment in the proxy pod to discover task worker pod endpoints
           // directly via V1Endpoints rather than the ClusterIP.
           cConfCopy.set(Constants.TaskWorkerManager.ENDPOINTS_SERVICES, Constants.Service.TASK_WORKER);
@@ -179,7 +188,8 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
 
           // Recreate, not RollingUpdate, so an update never runs two proxies at once.
           if (twillPreparer instanceof ExtendedTwillPreparer) {
-            twillPreparer = ((ExtendedTwillPreparer) twillPreparer).withRecreateStrategy();
+            twillPreparer = ((ExtendedTwillPreparer) twillPreparer).withRecreateStrategy()
+                .withTerminationGracePeriod(drainTimeoutSecs + GRACE_PERIOD_MARGIN_SECS);
           }
 
           // Readiness only, so the Service routes to a new proxy once it answers GET /ping.

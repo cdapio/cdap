@@ -117,6 +117,9 @@ public final class Constants {
 
     public static final String EXTENSIONS_DIR = "master.environment.extensions.dir";
     public static final String MAX_INSTANCES = "master.service.max.instances";
+    // How long a stopping master environment runnable's JVM waits for it before exiting.
+    public static final String RUNNABLE_STOP_TIMEOUT_SECS =
+        "master.environment.k8s.runnable.stop.timeout.secs";
   }
 
   /**
