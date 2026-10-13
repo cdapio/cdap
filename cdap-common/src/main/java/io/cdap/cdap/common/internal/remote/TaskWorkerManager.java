@@ -22,26 +22,12 @@ import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.features.Feature;
 
 /**
- * Single source of truth for whether the centralized Task Worker Manager proxy is active on this CDAP
- * instance.
+ * Decides whether task workers run under namespace leases ({@link #isEnabled}) and whether clients
+ * reach them through the Task Worker Manager proxy ({@link #isProxyEnabled}). Clients, workers and
+ * the proxy launcher all read these, so they can't disagree.
  *
- * <p>Both halves of the proxy path depend on this answer and they must never disagree:
- * <ul>
- *   <li>{@link RemoteClientFactory} and {@link RemoteTaskExecutor} use it to decide whether
- *       AppFabric addresses {@code task.worker.manager} instead of {@code task.worker}.</li>
- *   <li>{@link TaskWorkerHttpHandlerInternal} uses it to decide whether a task worker pod runs
- *       under a namespace lease at full concurrency, or stays clamped to a single task.</li>
- * </ul>
- *
- * <p>If the client side routed through the proxy while the worker side stayed clamped, the proxy
- * would dispatch up to {@code task.worker.request.limit} concurrent tasks to a pod that accepts
- * one, and every surplus request would bounce. Keeping the predicate in one place makes that
- * mismatch impossible to introduce by editing only one of the call sites.
- *
- * <p>The instance-level RBAC check is deliberately {@link Constants.Security.Authorization#ENABLED}
- * rather than the namespaced service accounts feature flag. Authorization is what CDF uses to
- * decide whether to deploy the {@code task.worker.manager} service at all, so it is the condition that
- * determines whether the proxy physically exists in the cluster.
+ * <p>RBAC is read from {@link Constants.Security.Authorization#ENABLED} rather than the namespaced
+ * service accounts flag, because instance-level authorization is what CDF enables the proxy for.
  */
 public final class TaskWorkerManager {
 
@@ -50,7 +36,7 @@ public final class TaskWorkerManager {
   }
 
   /**
-   * Returns whether task worker traffic is routed through the Task Worker Manager proxy.
+   * Returns whether task workers admit tasks under a namespace lease at full concurrency.
    *
    * @param cConf the CDAP configuration to read the feature flag and RBAC setting from
    * @return true when both the feature flag and instance-level RBAC are enabled
@@ -58,5 +44,16 @@ public final class TaskWorkerManager {
   public static boolean isEnabled(CConfiguration cConf) {
     return Feature.RBAC_TASK_WORKER_MANAGER.isEnabled(new DefaultFeatureFlagsProvider(cConf))
         && cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+  }
+
+  /**
+   * Returns whether task worker traffic goes through the proxy. A single worker leaves the proxy
+   * nothing to route, so clients call it directly and its lease enforces isolation.
+   *
+   * @param cConf the CDAP configuration to read the feature flag, RBAC setting and pool size from
+   * @return true when {@link #isEnabled} holds and there is more than one task worker
+   */
+  public static boolean isProxyEnabled(CConfiguration cConf) {
+    return isEnabled(cConf) && cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT) > 1;
   }
 }
