@@ -121,21 +121,21 @@ public class ServerResource extends ExternalResource {
   public class ServerHandler extends AbstractHttpHandler {
 
     @GET
-    @Path("/v1/echo/{name}")
+    @Path("/test/echo/{name}")
     public void echo(HttpRequest request, final HttpResponder responder,
                      @PathParam("name") String name) throws InterruptedException, IOException {
       responder.sendString(HttpResponseStatus.OK, name);
     }
 
     @GET
-    @Path("/v1/repeat/{name}")
+    @Path("/test/repeat/{name}")
     public void repeat(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws InterruptedException, IOException {
       responder.sendString(HttpResponseStatus.OK, name);
     }
 
     @POST
-    @Path("/v1/upload")
+    @Path("/test/upload")
     public void upload(FullHttpRequest request, HttpResponder responder) throws InterruptedException, IOException {
 
       ByteBuf content = request.content();
@@ -153,7 +153,7 @@ public class ServerResource extends ExternalResource {
     }
 
     @POST
-    @Path("/v1/deploy")
+    @Path("/test/deploy")
     public BodyConsumer deploy(HttpRequest request, final HttpResponder responder) throws InterruptedException {
       return new BodyConsumer() {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -185,7 +185,7 @@ public class ServerResource extends ExternalResource {
     }
 
     @GET
-    @Path("/v1/sleep")
+    @Path("/test/sleep")
     public void sleep(HttpRequest request, HttpResponder responder,
                       @QueryParam("sleepMillis") long sleepMillis) throws Exception {
       TimeUnit.MILLISECONDS.sleep(sleepMillis);

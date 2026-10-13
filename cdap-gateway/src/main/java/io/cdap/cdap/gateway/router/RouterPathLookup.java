@@ -61,6 +61,12 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
+   * First path segment of the internal API (messaging, remote system operations, impersonation).
+   * Its handlers are reached through service discovery only, so the router never forwards it.
+   */
+  private static final String INTERNAL_API_VERSION_1_TOKEN = "v1";
+
+  /**
    * Returns the CDAP service which will handle the HttpRequest.
    *
    * @param requestPath Normalized (and query string removed) URI path
@@ -70,12 +76,18 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   @Nullable
   public RouteDestination getRoutingService(String requestPath, HttpRequest httpRequest) {
     try {
-      String method = httpRequest.method().name();
-      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StreamSupport
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
+      // This check has to stay ahead of the method parsing below: AllowedMethod.valueOf throws for
+      // methods such as PATCH, OPTIONS and HEAD, and the catch block would then route them to app-fabric.
+      if (uriParts[0].equals(INTERNAL_API_VERSION_1_TOKEN)) {
+        return DONT_ROUTE;
+      }
+
+      String method = httpRequest.method().name();
+      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
       }

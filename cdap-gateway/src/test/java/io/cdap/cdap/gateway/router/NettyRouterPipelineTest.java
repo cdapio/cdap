@@ -121,7 +121,7 @@ public class NettyRouterPipelineTest {
     byte [] requestBody = generatePostData();
     InetSocketAddress address = ROUTER.getRouterAddress();
     final Request request = new RequestBuilder("POST")
-      .setUrl(String.format("http://%s:%d%s", address.getHostName(), address.getPort(), "/v1/upload"))
+      .setUrl(String.format("http://%s:%d%s", address.getHostName(), address.getPort(), "/test/upload"))
       .setContentLength(requestBody.length)
       .setBody(requestBody)
       .build();
@@ -181,7 +181,7 @@ public class NettyRouterPipelineTest {
     Channel channel = bootstrap.connect(address.getHostName(), address.getPort()).sync().channel();
     for (int i = 0; i < 5; i++) {
       HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1,
-                                                       HttpMethod.GET, "/v1/sleep?sleepMillis=3000");
+                                                       HttpMethod.GET, "/test/sleep?sleepMillis=3000");
       request.headers().set(HttpHeaderNames.HOST, HOSTNAME);
       channel.writeAndFlush(request);
     }
@@ -205,7 +205,7 @@ public class NettyRouterPipelineTest {
   private void deploy(int num) throws Exception {
 
     InetSocketAddress address = ROUTER.getRouterAddress();
-    String path = String.format("http://%s:%d/v1/deploy", address.getHostName(), address.getPort());
+    String path = String.format("http://%s:%d/test/deploy", address.getHostName(), address.getPort());
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location programJar = AppJarHelper.createDeploymentJar(lf, DummyApp.class);
